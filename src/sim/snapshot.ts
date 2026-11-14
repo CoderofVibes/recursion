@@ -6,27 +6,40 @@
 
 import type { MassProperties } from '../contracts/ship.ts';
 import type { SensorTarget, ShipKinematics, TruthWorld } from '../contracts/truth/index.ts';
-import type { Vec2 } from '../lib/vec2.ts';
+import * as quat from '../lib/quat.ts';
+import type { Vec3 } from '../lib/vec3.ts';
 
 /** A body-frame point (structural datum origin) in the inertial frame. */
 export function bodyPointToWorld(
-  point: Vec2,
+  point: Vec3,
   kinematics: ShipKinematics,
   mp: MassProperties,
-): Vec2 {
-  const c = Math.cos(kinematics.attitude);
-  const s = Math.sin(kinematics.attitude);
-  const dx = point.x - mp.centerOfMass.x;
-  const dy = point.y - mp.centerOfMass.y;
+): Vec3 {
+  const r = quat.rotate(kinematics.attitude, {
+    x: point.x - mp.centerOfMass.x,
+    y: point.y - mp.centerOfMass.y,
+    z: point.z - mp.centerOfMass.z,
+  });
   return {
-    x: kinematics.position.x + c * dx - s * dy,
-    y: kinematics.position.y + s * dx + c * dy,
+    x: kinematics.position.x + r.x,
+    y: kinematics.position.y + r.y,
+    z: kinematics.position.z + r.z,
   };
 }
 
-/** The ship's footprint polygon in the inertial frame (counter-clockwise). */
-export function hullInWorld(kinematics: ShipKinematics, mp: MassProperties): Vec2[] {
-  return mp.footprint.map((p) => bodyPointToWorld(p, kinematics, mp));
+/**
+ * The ship's hull in the inertial frame: for each prism, its corners, the outline at `zMin`
+ * (counter-clockwise seen from body +z) followed by the same outline at `zMax`.
+ */
+export function hullInWorld(kinematics: ShipKinematics, mp: MassProperties): Vec3[][] {
+  return mp.hull.map((prism) => [
+    ...prism.outline.map((p) =>
+      bodyPointToWorld({ x: p.x, y: p.y, z: prism.zMin }, kinematics, mp),
+    ),
+    ...prism.outline.map((p) =>
+      bodyPointToWorld({ x: p.x, y: p.y, z: prism.zMax }, kinematics, mp),
+    ),
+  ]);
 }
 
 /**
@@ -40,8 +53,8 @@ export function sensorTargets(world: TruthWorld): SensorTarget[] {
     targets.push({
       id: b.id,
       kind: 'body',
-      relativePosition: { x: b.position.x - p.x, y: b.position.y - p.y },
-      relativeVelocity: { x: b.velocity.x - v.x, y: b.velocity.y - v.y },
+      relativePosition: { x: b.position.x - p.x, y: b.position.y - p.y, z: b.position.z - p.z },
+      relativeVelocity: { x: b.velocity.x - v.x, y: b.velocity.y - v.y, z: b.velocity.z - v.z },
       radius: b.radius,
     });
   }
@@ -49,8 +62,8 @@ export function sensorTargets(world: TruthWorld): SensorTarget[] {
     targets.push({
       id: a.id,
       kind: 'asteroid',
-      relativePosition: { x: a.position.x - p.x, y: a.position.y - p.y },
-      relativeVelocity: { x: a.velocity.x - v.x, y: a.velocity.y - v.y },
+      relativePosition: { x: a.position.x - p.x, y: a.position.y - p.y, z: a.position.z - p.z },
+      relativeVelocity: { x: a.velocity.x - v.x, y: a.velocity.y - v.y, z: a.velocity.z - v.z },
       radius: a.radius,
     });
   }

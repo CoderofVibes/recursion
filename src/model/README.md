@@ -96,13 +96,17 @@ Extensions: `distance-law` (adds the exponent; a law shared by every body) and `
 | `aging.ts` | Aging of ship calibrations (§3.7): classes, accrual by ship time, use and condition drops, transit histories |
 | `probes.ts` | Tracked asteroids as test-particle arcs (§10): asteroid fixes plus the ship's path from its window fits |
 | `diagnostics.ts` | Empirical acceleration (§6.4/§9.4), GM-against-distance slope (§9.2), per-burn response (§9.5) |
-| `adapt.ts` | Black Box records → arcs: bearing+range pairing, normal points, accelerometer bins while thrusting, thrust segments from executed burns × nominal ratings with recorded attitude, arcs broken at contacts |
+| `adapt.ts` | Black Box records → arcs: bearing+range pairing, normal points, accelerometer bins while thrusting, thrust segments from executed burns and hands-on throttle (`fly`) × nominal ratings with recorded attitude, arcs broken at contacts |
 | `engine.ts` | `buildModel`: structure from briefing and adopted extensions, Tier G with per-arc deviations of ship calibrations, Tier L per body (ship then asteroid windows), present state, `ModelState`; `carriedCalibration` |
 | `forecast.ts` | Plan → segments (attitude targets resolved at ignition from the believed state), envelope, horizon, believed inertial frame, body and asteroid tracks, closest approaches |
 | `extensions.ts` | Test / adopt / revoke; validated spans; earned hedge in force per body |
 | `report.ts` | Console diagnostics as JSON |
 | `service.ts`, `worker.ts`, `rpc.ts`, `client.ts` | Live state, worker, RPC, main-thread client |
 | `settings.ts` | Every `[ASSUMED]` constant (stored in `ModelState.settings`), aging rates included |
+
+**3D contracts, planar estimator (A11, first step).** The contracts are three-dimensional; the estimator is still planar and converts only where contract data enters or leaves. In: bearings as their azimuth, attitude as the yaw of a rotation about +z, accelerometer and relative-position records as x and y, covariances as their x–y block, mount directions and attitude targets as angles in the plane. Out: forecast samples, tracks and the present estimate with z = 0, no out-of-plane covariance and a yaw-only attitude. Every such place is marked `// LIFT(2G):`.
+
+**Hands-on thrust.** An executed `fly` with throttle above zero is a burn of the ship's first `main-engine` at that throttle, from its time to the next executed `fly`, a `cutoff` of that engine or of `'all'`, or the last recorded time; direction from the recorded attitude. RCS translation from `fly` is not modelled yet.
 
 **Frames.** The estimator works relative to the primary (at rest at each arc epoch, §3.4). Forecast positions are in the briefing's believed inertial frame: the modelled bodies' barycentre moves uniformly from its believed arrival state. `prograde`/`retrograde` mean the direction of that believed inertial velocity, held from ignition for the burn.
 

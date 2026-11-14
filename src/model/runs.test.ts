@@ -14,14 +14,19 @@ import { describe, expect, it } from 'vitest';
 import rawValidation from '../../tests/vectors/estimator/extension-validation.json?raw';
 import { emptyArchive, withExtensionDecision, withExtensionTest } from '../blackbox/archive.ts';
 import { MemoryBlackBoxStore } from '../blackbox/store.ts';
-import type {
-  AttemptRecord,
-  BelievedBody,
-  EncounterBriefing,
-  MassProperties,
-  Measurement,
-  ParameterPrior,
+import {
+  cov3FromPlanar,
+  isotropicInertia,
+  prismHull,
+  type AttemptRecord,
+  type BelievedBody,
+  type EncounterBriefing,
+  type MassProperties,
+  type Measurement,
+  type ParameterPrior,
+  type ShipEstimate,
 } from '../contracts/index.ts';
+import * as quat from '../lib/quat.ts';
 import { createRng } from '../lib/rng.ts';
 import { compileArc, simulate } from './dynamics.ts';
 import type { ModelContext } from './engine.ts';
@@ -33,34 +38,39 @@ const R0 = 1e6;
 const v = JSON.parse(rawValidation) as VectorJson;
 const lawCase = v.cases.find((c) => c.id === 'distance-law')!;
 const binaryCase = v.cases.find((c) => c.id === 'overlooked-body')!;
+// LIFT(2G): the scenarios in this file are planar (z = 0, yaw-only attitude, flat hull).
 const massProperties: MassProperties = {
   mass: MASS,
-  centerOfMass: { x: 0, y: 0 },
-  inertia: 1e5,
-  footprint: [
-    { x: -5, y: -2 },
-    { x: 5, y: -2 },
-    { x: 5, y: 2 },
-    { x: -5, y: 2 },
-  ],
+  centerOfMass: { x: 0, y: 0, z: 0 },
+  inertia: isotropicInertia(1e5),
+  hull: prismHull(
+    [
+      { x: -5, y: -2 },
+      { x: 5, y: -2 },
+      { x: 5, y: 2 },
+      { x: -5, y: 2 },
+    ],
+    0,
+    0,
+  ),
 };
-const arrival = {
+const arrival: ShipEstimate = {
   t: 0,
-  position: { x: 1e6, y: 0 },
-  velocity: { x: 0, y: 100 },
-  positionCov: [1e8, 0, 1e8] as const,
-  velocityCov: [100, 0, 100] as const,
-  attitude: 0,
+  position: { x: 1e6, y: 0, z: 0 },
+  velocity: { x: 0, y: 100, z: 0 },
+  positionCov: cov3FromPlanar([1e8, 0, 1e8]),
+  velocityCov: cov3FromPlanar([100, 0, 100]),
+  attitude: quat.fromYaw(0),
   attitudeSigma: 1e-3,
-  angularRate: 0,
+  angularVelocity: { x: 0, y: 0, z: 0 },
 };
 
 const body = (id: string, x: number, y: number, vx = 0, vy = 0, sigma = 1e3): BelievedBody => ({
   id,
   name: id,
-  position: { x, y },
-  velocity: { x: vx, y: vy },
-  positionCov: [sigma ** 2, 0, sigma ** 2],
+  position: { x, y, z: 0 },
+  velocity: { x: vx, y: vy, z: 0 },
+  positionCov: cov3FromPlanar([sigma ** 2, 0, sigma ** 2]),
   radius: id === 'A' ? 2.5e5 : 1.6e5,
   tracked: true,
 });
@@ -113,7 +123,7 @@ describe('each run starts from different geometry (A10)', () => {
     objectives: [],
     arrivalEstimate: {
       ...arrival,
-      position: { x: arrival.position.x + shift.x, y: arrival.position.y + shift.y },
+      position: { x: arrival.position.x + shift.x, y: arrival.position.y + shift.y, z: 0 },
     },
     arrivalConfiguration: 'stowed',
     priors,
@@ -298,8 +308,8 @@ describe('asteroid fixes a passing test fits widen its validated span (A5)', () 
           t,
           source: 'cam',
           target: id,
-          value: [Math.atan2(dy, dx) + rng.normal(0, sb)],
-          sigma: [sb],
+          value: [Math.atan2(dy, dx) + rng.normal(0, sb), 0],
+          sigma: [sb, sb],
         },
         {
           kind: 'range',
@@ -323,9 +333,9 @@ describe('asteroid fixes a passing test fits widen its validated span (A5)', () 
     {
       asteroids: ['ast-far', 'ast-near'].map((id) => ({
         id,
-        position: { x: 0, y: 0 },
-        velocity: { x: 0, y: 0 },
-        positionCov: [1e10, 0, 1e10] as const,
+        position: { x: 0, y: 0, z: 0 },
+        velocity: { x: 0, y: 0, z: 0 },
+        positionCov: cov3FromPlanar([1e10, 0, 1e10]),
         radius: 5e3,
         tracked: true,
       })),

@@ -13,16 +13,16 @@ const body = (id: string, x: number, y: number, radius: number): MassiveBody => 
   name: id,
   gm: 1e9,
   radius,
-  position: { x, y },
-  velocity: { x: 0, y: 0 },
+  position: { x, y, z: 0 },
+  velocity: { x: 0, y: 0, z: 0 },
   fixed: true,
 });
 
 /** The sun is toward −x, so shadows fall toward +x. */
-const SUN: Sun = { direction: { x: -1, y: 0 }, irradiance: 600 };
+const SUN: Sun = { direction: { x: -1, y: 0, z: 0 }, irradiance: 600 };
 
 /** A world with the ship at the origin, built on the real encounter's ship systems. */
-function world(over: Partial<TruthWorld>, ship = { x: 0, y: 0 }): TruthWorld {
+function world(over: Partial<TruthWorld>, ship = { x: 0, y: 0, z: 0 }): TruthWorld {
   const base = createGravityRange().definition.world;
   return {
     ...base,
@@ -38,19 +38,19 @@ describe('shadow bands (parallel rays, A3)', () => {
   const planet = body('p', 0, 0, 100);
 
   it('covers the band directly behind a body and nothing else', () => {
-    expect(inShadow({ x: 500, y: 0 }, [planet], SUN)).toBe(true);
-    expect(inShadow({ x: 5e6, y: 99 }, [planet], SUN)).toBe(true);
-    expect(inShadow({ x: 500, y: 101 }, [planet], SUN)).toBe(false);
-    expect(inShadow({ x: -500, y: 0 }, [planet], SUN)).toBe(false);
+    expect(inShadow({ x: 500, y: 0, z: 0 }, [planet], SUN)).toBe(true);
+    expect(inShadow({ x: 5e6, y: 99, z: 0 }, [planet], SUN)).toBe(true);
+    expect(inShadow({ x: 500, y: 101, z: 0 }, [planet], SUN)).toBe(false);
+    expect(inShadow({ x: -500, y: 0, z: 0 }, [planet], SUN)).toBe(false);
   });
 
   it('can leave one body out', () => {
-    expect(inShadow({ x: 500, y: 0 }, [planet], SUN, 'p')).toBe(false);
+    expect(inShadow({ x: 500, y: 0, z: 0 }, [planet], SUN, 'p')).toBe(false);
   });
 
   it('gives full irradiance in the open, none in shadow, none without a sun', () => {
-    const lit = world({ bodies: [planet] }, { x: -500, y: 0 });
-    const dark = world({ bodies: [planet] }, { x: 500, y: 0 });
+    const lit = world({ bodies: [planet] }, { x: -500, y: 0, z: 0 });
+    const dark = world({ bodies: [planet] }, { x: 500, y: 0, z: 0 });
     expect(sunlightAt(lit, lit.ship.kinematics.position)).toEqual({
       direction: SUN.direction,
       irradiance: 600,
@@ -82,11 +82,21 @@ describe('what the camera can see', () => {
       {
         bodies: [body('p', 0, 0, 100)],
         asteroids: [
-          { id: 'dark', position: { x: 400, y: 50 }, velocity: { x: 0, y: 0 }, radius: 1 },
-          { id: 'lit', position: { x: 400, y: 300 }, velocity: { x: 0, y: 0 }, radius: 1 },
+          {
+            id: 'dark',
+            position: { x: 400, y: 50, z: 0 },
+            velocity: { x: 0, y: 0, z: 0 },
+            radius: 1,
+          },
+          {
+            id: 'lit',
+            position: { x: 400, y: 300, z: 0 },
+            velocity: { x: 0, y: 0, z: 0 },
+            radius: 1,
+          },
         ],
       },
-      { x: 400, y: 1000 },
+      { x: 400, y: 1000, z: 0 },
     );
     expect(visible(w)).toMatchObject({ dark: false, lit: true });
   });
@@ -96,17 +106,22 @@ describe('what the camera can see', () => {
       {
         bodies: [body('near', 0, 500, 100)],
         asteroids: [
-          { id: 'far', position: { x: 0, y: 1500 }, velocity: { x: 0, y: 0 }, radius: 1 },
+          {
+            id: 'far',
+            position: { x: 0, y: 1500, z: 0 },
+            velocity: { x: 0, y: 0, z: 0 },
+            radius: 1,
+          },
         ],
       },
-      { x: 0, y: 0 },
+      { x: 0, y: 0, z: 0 },
     );
     expect(visible(w)).toEqual({ near: true, far: false });
   });
 
   it('sees only the night side from inside a body shadow', () => {
     // 34° off the sun line, so glare does not apply; the ship sits in the body's shadow band.
-    const w = world({ bodies: [body('p', -300, 0, 250)] }, { x: 0, y: 200 });
+    const w = world({ bodies: [body('p', -300, 0, 250)] }, { x: 0, y: 200, z: 0 });
     expect(inShadow(w.ship.kinematics.position, w.bodies, SUN)).toBe(true);
     expect(visible(w)).toEqual({ p: false });
   });
@@ -121,14 +136,14 @@ describe('buildEnvironment', () => {
   it('describes the tick start: time, kinematics, last specific force, scene and sunlight', () => {
     const setup = createGravityRange();
     const sim = createSimulation(setup.definition.world, { dt: setup.definition.dt });
-    const state = { ...sim.initial, specificForce: { x: 0.5, y: -0.1 } };
+    const state = { ...sim.initial, specificForce: { x: 0.5, y: -0.1, z: 0 } };
     const env = buildEnvironment(state, {
       knownSizeTargets: ['alpha', 'beta'],
       sunExclusionAngle: 0.35,
     });
     expect(env.t).toBe(0);
     expect(env.kinematics).toBe(state.world.ship.kinematics);
-    expect(env.specificForce).toEqual({ x: 0.5, y: -0.1 });
+    expect(env.specificForce).toEqual({ x: 0.5, y: -0.1, z: 0 });
     expect(env.targets).toHaveLength(2 + state.world.asteroids.length);
     expect(env.sunlight.irradiance).toBe(setup.definition.world.sun!.irradiance);
     const scene = env.fieldSignals['ship-environment'] as {

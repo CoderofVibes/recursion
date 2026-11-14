@@ -7,6 +7,7 @@ import type { Command } from '../contracts/commands.ts';
 import type { Asteroid } from '../contracts/truth/index.ts';
 import { createGravityRange, HIDDEN } from '../content/gravity-range/index.ts';
 import { hashState } from '../lib/hash.ts';
+import { quat } from '../lib/index.ts';
 import type { EncounterSetup } from './encounter.ts';
 import { createTruthStepper, type DueCommand, type GameTruthState } from './truth-step.ts';
 
@@ -49,12 +50,17 @@ function run(
 function withObstacle(offset: number, closingSpeed: number): EncounterSetup {
   const world = setup.definition.world;
   const k = world.ship.kinematics;
-  const dir = { x: Math.cos(k.attitude), y: Math.sin(k.attitude) };
+  const yaw = quat.yawOf(k.attitude);
+  const dir = { x: Math.cos(yaw), y: Math.sin(yaw) };
   const rock: Asteroid = {
     id: 'rock',
     radius: 50,
-    position: { x: k.position.x + dir.x * offset, y: k.position.y + dir.y * offset },
-    velocity: { x: k.velocity.x - dir.x * closingSpeed, y: k.velocity.y - dir.y * closingSpeed },
+    position: { x: k.position.x + dir.x * offset, y: k.position.y + dir.y * offset, z: 0 },
+    velocity: {
+      x: k.velocity.x - dir.x * closingSpeed,
+      y: k.velocity.y - dir.y * closingSpeed,
+      z: 0,
+    },
   };
   return {
     ...setup,
@@ -103,7 +109,7 @@ describe('truth step', () => {
       thruster: 'main-engine',
       throttle: 1,
       duration: 10,
-      attitude: { reference: 'inertial', angle: attitude },
+      attitude: { reference: 'inertial', attitude },
     };
     const before = run(setup, 60).state;
     const { state, executed } = run(setup, 80, { 60: [manual(burn)] });
@@ -127,9 +133,9 @@ describe('truth step', () => {
   });
 
   it('is deterministic and survives a JSON save and restore part way', () => {
-    const attitude = setup.definition.world.ship.kinematics.attitude + 1;
+    const attitude = quat.fromYaw(quat.yawOf(setup.definition.world.ship.kinematics.attitude) + 1);
     const commands = {
-      50: [manual({ kind: 'attitude', target: { reference: 'inertial', angle: attitude } })],
+      50: [manual({ kind: 'attitude', target: { reference: 'inertial', attitude } })],
       150: [manual({ kind: 'burn', thruster: 'main-engine', throttle: 0.6, duration: 7.5 })],
     };
     const a = run(setup, 300, commands);

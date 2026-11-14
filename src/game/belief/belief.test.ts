@@ -5,6 +5,7 @@
 
 import { describe, expect, it } from 'vitest';
 import type { Measurement } from '../../contracts/index.ts';
+import { quat } from '../../lib/index.ts';
 import { loadShipDefinition } from '../../ship/index.ts';
 import { burnDuration, burnSteps } from './maneuver.ts';
 import { resolveAttitude, resolveCommand, type NavigationView } from './resolve.ts';
@@ -34,23 +35,26 @@ describe('belief side of the game layer stays on its side (P11)', () => {
 
 describe('attitude references resolve from the believed navigation solution', () => {
   const nav: NavigationView = {
-    ship: { position: { x: -1000, y: 0 }, velocity: { x: 0, y: -100 } },
+    ship: {
+      position: { x: -1000, y: 0, z: 0 },
+      velocity: { x: 0, y: -100, z: 0 },
+      attitude: quat.fromYaw(0),
+    },
     bodies: [
-      { id: 'alpha', position: { x: 0, y: 0 }, velocity: { x: 0, y: 0 } },
-      { id: 'beta', position: { x: 4000, y: 0 }, velocity: { x: 0, y: 40 } },
+      { id: 'alpha', position: { x: 0, y: 0, z: 0 }, velocity: { x: 0, y: 0, z: 0 } },
+      { id: 'beta', position: { x: 4000, y: 0, z: 0 }, velocity: { x: 0, y: 40, z: 0 } },
     ],
-    asteroids: [{ id: 'a-01', position: { x: -1000, y: 500 } }],
+    asteroids: [{ id: 'a-01', position: { x: -1000, y: 500, z: 0 } }],
   };
   const angle = (target: Parameters<typeof resolveAttitude>[0]): number => {
     const resolved = resolveAttitude(target, nav);
     if (resolved?.reference !== 'inertial') throw new Error('not resolved');
-    return resolved.angle;
+    return quat.yawOf(resolved.attitude);
   };
 
   it('prograde is the believed inertial velocity', () => {
     expect(angle({ reference: 'prograde' })).toBeCloseTo(-Math.PI / 2, 12);
     expect(angle({ reference: 'retrograde' })).toBeCloseTo(Math.PI / 2, 12);
-    expect(angle({ reference: 'prograde', offset: 0.1 })).toBeCloseTo(-Math.PI / 2 + 0.1, 12);
   });
 
   it('toward and away follow the believed position of a body or an asteroid', () => {
@@ -59,19 +63,34 @@ describe('attitude references resolve from the believed navigation solution', ()
     expect(angle({ reference: 'toward', target: 'a-01' })).toBeCloseTo(Math.PI / 2, 12);
   });
 
+  it('points the body axis along a given direction, roll held', () => {
+    expect(angle({ reference: 'direction', direction: { x: 0, y: 2, z: 0 } })).toBeCloseTo(
+      Math.PI / 2,
+      12,
+    );
+    const up = resolveAttitude({ reference: 'direction', direction: { x: 0, y: 0, z: 3 } }, nav);
+    if (up?.reference !== 'inertial') throw new Error('not resolved');
+    const axis = quat.axisX(up.attitude);
+    expect(axis.x).toBeCloseTo(0, 12);
+    expect(axis.y).toBeCloseTo(0, 12);
+    expect(axis.z).toBeCloseTo(1, 12);
+    const none = { reference: 'direction', direction: { x: 0, y: 0, z: 0 } } as const;
+    expect(resolveAttitude(none, nav)).toBeUndefined();
+  });
+
   it('passes inertial, rate and free through untouched', () => {
-    const inertial = { reference: 'inertial', angle: 1 } as const;
+    const inertial = { reference: 'inertial', attitude: quat.fromYaw(1) } as const;
     expect(resolveAttitude(inertial, nav)).toBe(inertial);
     expect(resolveAttitude({ reference: 'free' }, nav)).toEqual({ reference: 'free' });
-    expect(resolveAttitude({ reference: 'rate', rate: 0.01 }, nav)).toEqual({
+    expect(resolveAttitude({ reference: 'rate', rate: { x: 0, y: 0, z: 0.01 } }, nav)).toEqual({
       reference: 'rate',
-      rate: 0.01,
+      rate: { x: 0, y: 0, z: 0.01 },
     });
   });
 
   it('cannot resolve what the ship does not know', () => {
     expect(resolveAttitude({ reference: 'toward', target: 'nowhere' }, nav)).toBeUndefined();
-    const still = { ...nav, ship: { ...nav.ship, velocity: { x: 0, y: 0 } } };
+    const still = { ...nav, ship: { ...nav.ship, velocity: { x: 0, y: 0, z: 0 } } };
     expect(resolveAttitude({ reference: 'prograde' }, still)).toBeUndefined();
   });
 
@@ -80,7 +99,7 @@ describe('attitude references resolve from the believed navigation solution', ()
     expect(resolveCommand(mark, nav)).toBe(mark);
     expect(
       resolveCommand({ kind: 'attitude', target: { reference: 'toward', target: 'alpha' } }, nav),
-    ).toEqual({ kind: 'attitude', target: { reference: 'inertial', angle: 0 } });
+    ).toEqual({ kind: 'attitude', target: { reference: 'inertial', attitude: quat.fromYaw(0) } });
     const burn = resolveCommand(
       {
         kind: 'burn',
@@ -112,8 +131,8 @@ describe('telemetry is recorded on change', () => {
     t,
     source: 'camera',
     target: 'alpha',
-    value: [0.1],
-    sigma: [5e-5],
+    value: [0.1, 0],
+    sigma: [5e-5, 5e-5],
   });
 
   it('keeps the first reading, changes beyond the deadband and a keepalive', () => {

@@ -9,7 +9,7 @@ describe('baseline mass properties (C02, C13)', () => {
     const initial = createShipSystemsState(definition);
     expect(initial.massProperties.mass).toBe(30374);
     expect(initial.massProperties.centerOfMass.x).toBeCloseTo(-0.33285, 6);
-    expect(initial.massProperties.inertia).toBeCloseTo(325048.751, 3);
+    expect(initial.massProperties.inertia.moments.z).toBeCloseTo(325048.751, 3);
     const empty = computeMassProperties(
       { ...initial, tanks: { ...initial.tanks, 'main-propellant': 0 } },
       definition,

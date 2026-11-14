@@ -49,6 +49,7 @@ export function targetFixes(
     if (m.kind !== 'bearing' || !m.target || !keep(m.target)) continue;
     const r = ranges.get(`${m.t}|${m.source}|${m.target}`);
     if (!r) continue;
+    // LIFT(2G): a bearing enters as its azimuth ([0]); elevation ([1]) is ignored.
     out.push({
       t: m.t,
       source: m.source,

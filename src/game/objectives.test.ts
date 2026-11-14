@@ -20,7 +20,11 @@ function at(r: number, degrees: number, t: number, main = 6000): TruthWorld {
     ship: {
       kinematics: {
         ...base.ship.kinematics,
-        position: { x: alpha.position.x + r * Math.cos(a), y: alpha.position.y + r * Math.sin(a) },
+        position: {
+          x: alpha.position.x + r * Math.cos(a),
+          y: alpha.position.y + r * Math.sin(a),
+          z: 0,
+        },
       },
       systems: {
         ...base.ship.systems,

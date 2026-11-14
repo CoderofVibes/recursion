@@ -5,7 +5,7 @@
  */
 
 import { createRng } from '../../lib/rng.ts';
-import * as v from '../../lib/vec2.ts';
+import * as v from '../../lib/vec3.ts';
 import type {
   EquipmentState,
   EnvironmentEffects,
@@ -25,6 +25,12 @@ import {
 } from './generate.ts';
 
 const SEED = 'gravity-range-mock';
+
+/**
+ * [FICTIONAL] mock sunlight direction: 135° round from +x and 20° above the bodies' plane.
+ * The real expedition's brightness is an owner content decision.
+ */
+const SUN_DIRECTION = v.fromAzEl((3 * Math.PI) / 4, (20 * Math.PI) / 180);
 const NOISE_STREAMS = ['sensors.optical', 'sensors.imu', 'sensors.star-tracker', 'telemetry'];
 
 const dryMass =
@@ -82,13 +88,12 @@ export const mockTruthWorld: TruthWorld = {
       position: ARRIVAL.position,
       velocity: ARRIVAL.velocity,
       attitude: ARRIVAL.attitude,
-      angularRate: 0,
+      angularVelocity: v.ZERO,
     },
     systems: mockShipSystemsState,
   },
   fields: [],
-  // [FICTIONAL] mock sunlight; the real expedition's brightness is an owner content decision.
-  sun: { direction: v.fromAngle((3 * Math.PI) / 4), irradiance: 900 },
+  sun: { direction: SUN_DIRECTION, irradiance: 900 },
   hidden: {
     'thruster.main-engine.scale': TRUE_THRUST_SCALE,
     'sensor.imu.bias-x': TRUE_IMU_BIAS_X,
@@ -128,8 +133,8 @@ export const mockEnvironmentEffects: EnvironmentEffects = {
   ],
   intensity: {},
   fieldSignals: {},
-  // The ship is ~106 km off Alpha's shadow axis (Alpha's radius is 40 km), so fully lit.
-  sunlight: { direction: v.fromAngle((3 * Math.PI) / 4), irradiance: 900 },
+  // The ship is over 100 km off Alpha's shadow axis (Alpha's radius is 40 km), so fully lit.
+  sunlight: { direction: SUN_DIRECTION, irradiance: 900 },
 };
 
 /** True trajectories behind the two fixture attempts (1 s samples), for debugging and tests. */

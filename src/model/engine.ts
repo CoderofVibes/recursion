@@ -15,6 +15,7 @@ import type {
   BelievedAsteroid,
   BelievedBody,
   CalibrationProfile,
+  Cov2,
   CovarianceMatrix,
   DataSupport,
   EncounterBriefing,
@@ -39,7 +40,7 @@ import {
   transitHistory,
   type AgingHistory,
 } from './aging.ts';
-import { arcsFromRecord, type ArcBuild, type Burn } from './adapt.ts';
+import { arcsFromRecord, planarCov, type ArcBuild, type Burn } from './adapt.ts';
 import {
   compileArc,
   simulate,
@@ -207,6 +208,7 @@ export function briefingBodiesAt(ctx: ModelContext, spec: ModelSpec, t: number):
   const rel = spec.bodies.slice(1).map((id) => {
     const b = briefingBody(ctx, id);
     if (!p || !b) return [0, 0, 0, 0];
+    // LIFT(2G): briefing bodies enter as their x and y; z is ignored.
     return [
       b.position.x - p.position.x,
       b.position.y - p.position.y,
@@ -409,9 +411,10 @@ export function tierGProblem(
       const pBody = briefingBody(actx, spec.primary);
       others.forEach((id, k) => {
         const b = briefingBody(actx, id);
+        // LIFT(2G): the prior on a body's position uses the xx and yy variances only.
         const posSigma = Math.sqrt(
-          Math.max(b?.positionCov[0] ?? 0, b?.positionCov[2] ?? 0) +
-            Math.max(pBody?.positionCov[0] ?? 0, pBody?.positionCov[2] ?? 0),
+          Math.max(b?.positionCov[0] ?? 0, b?.positionCov[3] ?? 0) +
+            Math.max(pBody?.positionCov[0] ?? 0, pBody?.positionCov[3] ?? 0),
         );
         const mean = prior[k]!;
         const nFix = rangeFixes(a, id).length;
@@ -989,9 +992,11 @@ export function arrivalState(ctx: ModelContext, spec: ModelSpec): PresentState {
   const vx = p?.velocity.x ?? 0;
   const vy = p?.velocity.y ?? 0;
   const cov = zeros(4, 4);
-  const pc = a.positionCov;
-  const vc = a.velocityCov;
-  const bc = p?.positionCov ?? [0, 0, 0];
+  // LIFT(2G): the arrival estimate and the primary enter as x and y, with the x–y block of
+  // their covariances.
+  const pc = planarCov(a.positionCov);
+  const vc = planarCov(a.velocityCov);
+  const bc: Cov2 = p ? planarCov(p.positionCov) : [0, 0, 0];
   cov.data[0] = pc[0] + bc[0];
   cov.data[1] = cov.data[4] = pc[1] + bc[1];
   cov.data[5] = pc[2] + bc[2];

@@ -17,7 +17,7 @@ const uniformPush: FieldFactory = {
   create: (spec) => ({
     id: spec.id,
     kind: spec.kind,
-    acceleration: () => ({ x: 0.01, y: 0 }),
+    acceleration: () => ({ x: 0.01, y: 0, z: 0 }),
   }),
 };
 
@@ -26,7 +26,7 @@ const thrustHalver: FieldFactory = {
   create: (spec) => ({
     id: spec.id,
     kind: spec.kind,
-    modifyThrust: (f) => ({ x: f.x / 2, y: f.y / 2 }),
+    modifyThrust: (f) => ({ x: f.x / 2, y: f.y / 2, z: f.z / 2 }),
   }),
 };
 
@@ -57,7 +57,7 @@ describe('field hook', () => {
     const r = sim.run(sim.initial, 100);
     expect(r.state.world.ship.kinematics.position.x).toBeCloseTo(0.5 * 0.01 * 100 * 100, 9);
     expect(r.state.world.asteroids[0]!.position.x).toBeCloseTo(50, 9);
-    expect(r.state.specificForce).toEqual({ x: 0, y: 0 }); // fields act like gravity here
+    expect(r.state.specificForce).toEqual({ x: 0, y: 0, z: 0 }); // fields act like gravity here
   });
 
   it('modified thrust moves the ship and is what the accelerometer feels', () => {

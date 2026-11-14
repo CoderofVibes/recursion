@@ -2,26 +2,32 @@ import { describe, expect, it } from 'vitest';
 import baseline from '../../data/ship-baseline.json';
 import type { Command } from '../contracts/commands.ts';
 import type { EnvironmentEffects, ShipSystemsState } from '../contracts/truth/ship.ts';
+import { fromYaw } from '../lib/quat.ts';
 import { applyCommands } from './commands.ts';
 import { createShipSystemsState, loadShipDefinition, stepShipSystems } from './index.ts';
 
 const definition = loadShipDefinition();
 const env = (state: ShipSystemsState): EnvironmentEffects => ({
   t: state.t,
-  kinematics: { position: { x: 0, y: 0 }, velocity: { x: 0, y: 0 }, attitude: 0, angularRate: 0 },
-  specificForce: { x: 0, y: 0 },
+  kinematics: {
+    position: { x: 0, y: 0, z: 0 },
+    velocity: { x: 0, y: 0, z: 0 },
+    attitude: fromYaw(0),
+    angularVelocity: { x: 0, y: 0, z: 0 },
+  },
+  specificForce: { x: 0, y: 0, z: 0 },
   targets: [
     {
       id: 'target',
       kind: 'body',
-      relativePosition: { x: 10000, y: 0 },
-      relativeVelocity: { x: 0, y: 0 },
+      relativePosition: { x: 10000, y: 0, z: 0 },
+      relativeVelocity: { x: 0, y: 0, z: 0 },
       radius: 100,
     },
   ],
   intensity: {},
   fieldSignals: {},
-  sunlight: { direction: { x: 1, y: 0 }, irradiance: 0 },
+  sunlight: { direction: { x: 1, y: 0, z: 0 }, irradiance: 0 },
 });
 
 describe('1C loader and physical arrival', () => {
@@ -31,10 +37,11 @@ describe('1C loader and physical arrival', () => {
     expect(definition.tanks).toHaveLength(7);
     expect(state.massProperties.mass).toBe(30374);
     expect(state.massProperties.centerOfMass.x).toBeCloseTo(-0.3328504642, 8);
-    expect(state.massProperties.inertia).toBeCloseTo(325048.751, 2);
+    expect(state.massProperties.inertia.moments.z).toBeCloseTo(325048.751, 2);
     expect(definition.equipment.find((e) => e.id === 'main-engine')?.mount?.position).toEqual({
       x: -7,
       y: 0.08,
+      z: 0,
     });
     expect(definition.equipment.find((e) => e.id === 'eclss-b')?.sheddable).toBe(false);
     expect(definition.systems).toEqual(baseline);
@@ -99,6 +106,27 @@ describe('ordered command boundary', () => {
     expect(result.actuators.thrusts).toHaveLength(0);
     expect(result.state.tanks['main-propellant']).toBe(6000);
   });
+
+  it('points a sensor along a finite, non-zero direction of any length and rejects the rest', () => {
+    const state = createShipSystemsState(definition);
+    const pointed = applyCommands(state, definition, [
+      { kind: 'point', sensor: 'camera', target: null, direction: { x: 3, y: 4, z: 0 } },
+    ]);
+    expect(pointed.events).toHaveLength(0);
+    expect(pointed.state.ext?.sensorPointing).toEqual({
+      camera: { target: null, direction: { x: 3, y: 4, z: 0 }, settleUntil: 5 },
+    });
+    const commands: Command[] = [
+      { kind: 'point', sensor: 'camera', target: null },
+      { kind: 'point', sensor: 'camera', target: null, direction: { x: 0, y: 0, z: 0 } },
+      { kind: 'point', sensor: 'camera', target: null, direction: { x: 1, y: NaN, z: 0 } },
+      { kind: 'point', sensor: 'camera', target: 'target', direction: { x: Infinity, y: 0, z: 0 } },
+    ];
+    const rejected = applyCommands(state, definition, commands);
+    expect(rejected.events).toHaveLength(commands.length);
+    expect(rejected.events.every((e) => e.kind === 'command-rejected')).toBe(true);
+    expect(rejected.state).toEqual(state);
+  });
 });
 
 describe('ship step integration', () => {
@@ -136,7 +164,7 @@ describe('ship step integration', () => {
     const initial = createShipSystemsState(definition);
     const state: ShipSystemsState = {
       ...initial,
-      attitudeTarget: { reference: 'inertial', angle: 1 },
+      attitudeTarget: { reference: 'inertial', attitude: fromYaw(1) },
     };
     const all = stepShipSystems(
       state,
@@ -159,7 +187,7 @@ describe('ship step integration', () => {
     const resumed = stepShipSystems(
       one.state,
       definition,
-      [{ kind: 'attitude', target: { reference: 'inertial', angle: 1 } }],
+      [{ kind: 'attitude', target: { reference: 'inertial', attitude: fromYaw(1) } }],
       env(one.state),
       0.1,
     );

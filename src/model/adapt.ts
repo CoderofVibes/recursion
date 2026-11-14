@@ -13,14 +13,20 @@
 import type {
   AttemptRecord,
   AttitudeTarget,
+  Cov2,
+  Cov3,
   EquipmentSpec,
   ExecutedCommand,
   Measurement,
   Plan,
   ShipDefinition,
 } from '../contracts/index.ts';
+import * as quat from '../lib/quat.ts';
 import type { Arc, EstMeasurement, ThrustSegment } from './dynamics.ts';
 import type { ModelSettings } from './settings.ts';
+
+// LIFT(2G): the estimator is planar; a contract Cov3 enters as its x–y block [xx, xy, yy].
+export const planarCov = (c: Cov3): Cov2 => [c[0], c[1], c[3]];
 
 export interface ThrusterInfo {
   readonly id: string;
@@ -40,8 +46,14 @@ export function thrusterInfo(ship: ShipDefinition, id: string): ThrusterInfo | n
     id,
     thrust,
     isp: e.params.isp ?? 0,
+    // LIFT(2G): thrust direction as an angle in the body x–y plane; the mount's z is ignored.
     bodyAngle: dir ? Math.atan2(dir.y, dir.x) : 0,
   };
+}
+
+/** The engine hands-on throttle drives: the first `main-engine` in the ship definition. */
+export function mainEngineOf(ship: ShipDefinition): string | undefined {
+  return ship.equipment.find((e) => e.kind === 'main-engine')?.id;
 }
 
 /** Dry mass from the nominal design (structure plus equipment). */
@@ -60,8 +72,43 @@ export interface Burn {
   readonly attitude?: AttitudeTarget;
 }
 
-/** Burns from executed commands (rejected commands never reached the ship). */
-export function burnsFromExecuted(executed: readonly ExecutedCommand[], tEnd = Infinity): Burn[] {
+/** How hands-on thrust (`fly` commands) becomes burns. */
+export interface HandsOnThrust {
+  /** The engine the hands-on throttle drives (`mainEngineOf`). */
+  readonly engine: string;
+  /** Where a hands-on burn that is still open stops: the end of the record. Finite. */
+  readonly until: number;
+}
+
+/** Hands-on thrust for a ship, or undefined when it has no main engine. */
+export function handsOnThrust(ship: ShipDefinition, until: number): HandsOnThrust | undefined {
+  const engine = mainEngineOf(ship);
+  return engine === undefined ? undefined : { engine, until };
+}
+
+/** Latest recorded time of an attempt (its end, if it has ended). */
+export function recordEnd(rec: AttemptRecord): number {
+  if (rec.outcome.kind !== 'in-progress') return rec.outcome.t;
+  let t = 0;
+  for (const list of [rec.measurements, rec.executed, rec.events])
+    for (const q of list) if (q.t > t) t = q.t;
+  return t;
+}
+
+/**
+ * Burns from executed commands (rejected commands never reached the ship).
+ *
+ * Hands-on thrust (DECISIONS A8, A11): with `handsOn` given, an executed `fly` whose throttle is
+ * above zero is a burn of the main engine at that throttle, from its time until the next
+ * executed `fly`, a `cutoff` of that engine or of 'all', or the end of the record; a `fly` with
+ * zero throttle ends it. Its direction comes from the recorded attitude, as for any burn.
+ * Without `handsOn`, `fly` commands are ignored.
+ */
+export function burnsFromExecuted(
+  executed: readonly ExecutedCommand[],
+  tEnd = Infinity,
+  handsOn?: HandsOnThrust,
+): Burn[] {
   const order = executed
     .map((c, i) => [c, i] as const)
     .sort((a, b) => a[0].t - b[0].t || a[1] - b[1]);
@@ -101,6 +148,16 @@ export function burnsFromExecuted(executed: readonly ExecutedCommand[], tEnd = I
     } else if (cmd.kind === 'cutoff') {
       if (cmd.thruster === 'all') for (const thr of [...active.keys()]) close(thr, c.t);
       else close(cmd.thruster, c.t);
+    } else if (cmd.kind === 'fly' && handsOn) {
+      // LIFT(2G): only the throttle of a `fly` is modelled; its RCS translation is not.
+      close(handsOn.engine, c.t);
+      if (cmd.input.throttle > 0)
+        active.set(handsOn.engine, {
+          t0: c.t,
+          tEnd: handsOn.until,
+          throttle: cmd.input.throttle,
+          limited: c.status === 'limited',
+        });
     }
   }
   for (const thr of [...active.keys()]) close(thr, tEnd);
@@ -109,15 +166,16 @@ export function burnsFromExecuted(executed: readonly ExecutedCommand[], tEnd = I
     .map((b, index) => ({ ...b, index }));
 }
 
-/** Attitude knowledge from star-tracker records: latest value at or before t. */
+/** Attitude knowledge from star-tracker records: latest value (yaw, rad) at or before t. */
 export class AttitudeLog {
   private readonly t: number[] = [];
   private readonly v: number[] = [];
   constructor(measurements: readonly Measurement[]) {
     for (const m of measurements)
-      if (m.kind === 'attitude' && m.value.length > 0) {
+      if (m.kind === 'attitude' && m.value.length > 2) {
         this.t.push(m.t);
-        this.v.push(m.value[0]!);
+        // LIFT(2G): attitude assumed a rotation about +z, so the rotation vector's z is the yaw.
+        this.v.push(m.value[2]!);
       }
   }
   get size(): number {
@@ -243,7 +301,8 @@ export function segmentsFor(
       const mid = 0.5 * (t0 + t1);
       const g = mass.gaugeAt(mid);
       const m = Math.max(1, g.mass - consumedBefore(mid, g.t === -Infinity ? -Infinity : g.t));
-      const fallback = b.attitude?.reference === 'inertial' ? b.attitude.angle : 0;
+      // LIFT(2G): a commanded inertial attitude enters as its yaw (azimuth of the body axis).
+      const fallback = b.attitude?.reference === 'inertial' ? quat.yawOf(b.attitude.attitude) : 0;
       const attitude = att.at(t0) ?? fallback;
       segments.push({
         t0,
@@ -283,6 +342,7 @@ export function estMeasurements(
   const accelBins = new Map<string, { t: number[]; fx: number[]; fy: number[]; s2: number[] }>();
   for (const m of measurements) {
     if (m.kind === 'bearing' && m.target && bodies.has(m.target)) {
+      // LIFT(2G): a bearing enters as its azimuth ([0]); elevation ([1]) is ignored.
       const r = ranges.get(key(m))?.find((q) => !used.has(q));
       if (r) {
         used.add(r);
@@ -302,6 +362,7 @@ export function estMeasurements(
           sigma: [m.sigma[0]!],
         });
     } else if (m.kind === 'relative-position' && m.target && bodies.has(m.target)) {
+      // LIFT(2G): relative position enters as x and y; z ([2]) is ignored.
       out.push({
         kind: 'relpos',
         t: m.t,
@@ -322,6 +383,7 @@ export function estMeasurements(
         accelBins.set(k, acc);
       }
       acc.t.push(m.t);
+      // LIFT(2G): specific force enters as body x and y; az ([2]) is ignored.
       acc.fx.push(m.value[0]!);
       acc.fy.push(m.value[1]!);
       acc.s2.push(0.5 * (m.sigma[0]! ** 2 + m.sigma[1]! ** 2));
@@ -404,7 +466,7 @@ function wrapAngle(a: number): number {
 export function arcsFromRecord(rec: AttemptRecord, ctx: AdaptContext): ArcBuild {
   // A burn still running when the attempt ended stops there; in progress, it runs to its end.
   const tEnd = rec.outcome.kind === 'in-progress' ? Infinity : rec.outcome.t;
-  const burns = burnsFromExecuted(rec.executed, tEnd);
+  const burns = burnsFromExecuted(rec.executed, tEnd, handsOnThrust(ctx.ship, recordEnd(rec)));
   const att = new AttitudeLog(rec.measurements);
   const mass = new MassLog(ctx.ship, rec.measurements, arrivalMassOf(ctx));
   const breaks = rec.events

@@ -1,13 +1,13 @@
 import { useEffect, useRef } from 'react';
 import { covEllipse } from '../../contracts/index.ts';
 import type {
-  Cov2,
   Forecast,
   ForecastDraft,
   TrailPoint,
   Vec2,
   ViewSnapshot,
 } from '../../contracts/index.ts';
+import { yawOf } from '../../lib/quat.ts';
 
 /**
  * Flight-plane plot for the integration bench: a plain 2D drawing of the `ViewSnapshot`, in
@@ -95,7 +95,8 @@ export function Plot({ frame, span, follow }: PlotProps) {
         context.globalAlpha = 0.35;
         f.samples.forEach((s, i) => {
           if (i % 10 !== 0) return;
-          const e = covEllipse(s.positionCov as Cov2);
+          // LIFT(2G): the envelope is the covariance's x–y block.
+          const e = covEllipse([s.positionCov[0], s.positionCov[1], s.positionCov[3]]);
           context.beginPath();
           context.ellipse(
             sx(s.position),
@@ -117,15 +118,17 @@ export function Plot({ frame, span, follow }: PlotProps) {
           ring(objective.region.center, objective.region.radius, ink.accent, [6, 6]);
 
       // Sensor coverage.
-      for (const sector of view.coverage.sectors) {
+      for (const sector of view.coverage.cones) {
+        // LIFT(2G): a cone is drawn as its x–y sector about the axis's azimuth.
+        const center = Math.atan2(sector.axis.y, sector.axis.x);
         context.beginPath();
         context.moveTo(sx(ship.position), sy(ship.position));
         context.arc(
           sx(ship.position),
           sy(ship.position),
           sector.range * scale,
-          -(sector.center + sector.halfWidth),
-          -(sector.center - sector.halfWidth),
+          -(center + sector.halfAngle),
+          -(center - sector.halfAngle),
         );
         context.closePath();
         context.fillStyle = ink.line;
@@ -182,13 +185,15 @@ export function Plot({ frame, span, follow }: PlotProps) {
       // The ship: body axis tick, velocity tick, thrust tick.
       const x = sx(ship.position);
       const y = sy(ship.position);
+      // LIFT(2G): the body axis is drawn at the attitude's yaw.
+      const yaw = yawOf(ship.attitude);
       context.beginPath();
       context.arc(x, y, 3, 0, 2 * Math.PI);
       context.fillStyle = ink.fg;
       context.fill();
       context.beginPath();
       context.moveTo(x, y);
-      context.lineTo(x + 14 * Math.cos(ship.attitude), y - 14 * Math.sin(ship.attitude));
+      context.lineTo(x + 14 * Math.cos(yaw), y - 14 * Math.sin(yaw));
       context.strokeStyle = ink.fg;
       context.lineWidth = 2;
       context.stroke();
@@ -204,7 +209,7 @@ export function Plot({ frame, span, follow }: PlotProps) {
       if (view.ship.thrust.length > 0) {
         context.beginPath();
         context.moveTo(x, y);
-        context.lineTo(x - 18 * Math.cos(ship.attitude), y + 18 * Math.sin(ship.attitude));
+        context.lineTo(x - 18 * Math.cos(yaw), y + 18 * Math.sin(yaw));
         context.strokeStyle = ink.warn;
         context.lineWidth = 3;
         context.stroke();

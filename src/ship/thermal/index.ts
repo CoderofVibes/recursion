@@ -6,6 +6,7 @@ import type {
 } from '../../contracts/truth/ship.ts';
 import type { ShipEvent } from '../../contracts/measurements.ts';
 import type { JsonValue } from '../../contracts/units.ts';
+import { yawOf } from '../../lib/quat.ts';
 import { getGeometry } from '../config/configuration.ts';
 import { bounded, systems } from '../power/baseline.ts';
 
@@ -51,8 +52,10 @@ export function stepThermal(
   // Sunlight arrives with body shadows already applied (DECISIONS A3); only the sink
   // temperature still comes from the optional fieldSignals.illumination adapter.
   const irradiance = Math.max(0, env.sunlight.irradiance);
+  // LIFT(2G): planar sun incidence, from the sun's azimuth against the yaw of the body axis.
   const sunAngle = Math.atan2(env.sunlight.direction.y, env.sunlight.direction.x);
-  const incidence = irradiance > 0 ? Math.max(0, Math.cos(sunAngle - env.kinematics.attitude)) : 0;
+  const incidence =
+    irradiance > 0 ? Math.max(0, Math.cos(sunAngle - yawOf(env.kinematics.attitude))) : 0;
   const sink =
     typeof light?.sinkTemperature === 'number'
       ? Math.max(0, light.sinkTemperature)

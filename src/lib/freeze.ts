@@ -3,10 +3,14 @@
  * (DECISIONS P10: the dotted line is the forecast as issued, frozen).
  */
 
-export type DeepReadonly<T> = T extends (infer U)[]
-  ? readonly DeepReadonly<U>[]
-  : T extends readonly (infer U)[]
-    ? readonly DeepReadonly<U>[]
+/**
+ * Deeply readonly T. Arrays and tuples keep their shape: a `[number, number, number]` stays a
+ * three-element tuple (readonly); it does not widen to `readonly number[]`.
+ */
+export type DeepReadonly<T> = T extends (...args: never[]) => unknown
+  ? T
+  : T extends readonly unknown[]
+    ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
     : T extends object
       ? { readonly [K in keyof T]: DeepReadonly<T[K]> }
       : T;

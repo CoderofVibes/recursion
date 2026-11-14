@@ -22,7 +22,8 @@ const fmt = (v: number, digits = 0): string =>
  * has exactly three entries, so rebuild the triple before handing it to the contract helper.
  */
 export function sigmaKm(cov: readonly number[], k: number): number {
-  return covEllipse([cov[0] ?? 0, cov[1] ?? 0, cov[2] ?? 0], k).major / KM;
+  // LIFT(2G): the x–y block [xx, xy, yy] of a Cov3 [xx, xy, xz, yy, yz, zz].
+  return covEllipse([cov[0] ?? 0, cov[1] ?? 0, cov[3] ?? 0], k).major / KM;
 }
 
 function need<T>(v: T | undefined, what: string): T {

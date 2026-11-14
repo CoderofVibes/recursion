@@ -18,17 +18,29 @@ import type { Command } from './commands.ts';
 import type { Kelvin, LatticeExposure, NewtonSeconds, Seconds } from './units.ts';
 
 export type MeasurementKind =
-  /** [θ] rad: inertial direction from ship to target centre. Needs `target`. */
+  /**
+   * [azimuth, elevation] rad: inertial direction from ship to target centre. Azimuth is
+   * atan2(y, x) in (−π, π]; elevation is the angle above the inertial x–y plane, asin(z / ρ).
+   * `sigma` is per component, so the azimuth sigma already carries the 1 / cos(elevation)
+   * factor of an isotropic pointing error. Needs `target`.
+   */
   | 'bearing'
   /** [ρ] m: distance from ship to target centre. Needs `target`. */
   | 'range'
-  /** [x, y] m: ship position relative to target centre, inertial frame. Needs `target`. */
+  /** [x, y, z] m: ship position relative to target centre, inertial frame. Needs `target`. */
   | 'relative-position'
-  /** [ax, ay] m/s²: non-gravitational specific force, body frame. Gravity is never sensed. */
+  /**
+   * [ax, ay, az] m/s²: non-gravitational specific force, body frame. Gravity is never sensed.
+   */
   | 'accel'
-  /** [ψ] rad: attitude (star tracker). */
+  /**
+   * [φx, φy, φz] rad: attitude (star tracker) as the rotation vector (axis × angle, angle in
+   * [0, π]) of the body-to-inertial rotation; `quat.fromRotationVector` in src/lib turns it
+   * back into a quaternion. `sigma` is the error about each body axis. A yaw ψ about inertial
+   * +z is [0, 0, ψ].
+   */
   | 'attitude'
-  /** [ω] rad/s: angular rate (gyro). */
+  /** [ωx, ωy, ωz] rad/s: angular velocity (gyro), body frame. */
   | 'rate'
   /** [v]: housekeeping reading, unit given by the channel. Needs `channel`. */
   | 'telemetry'

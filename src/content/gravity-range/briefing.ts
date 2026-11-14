@@ -15,8 +15,9 @@ import type {
   ParameterPrior,
   ShipEstimate,
 } from '../../contracts/index.ts';
-import { isoCov2 } from '../../contracts/index.ts';
+import { cov3FromPlanar, isoCov2 } from '../../contracts/index.ts';
 import type { TruthWorld } from '../../contracts/truth/index.ts';
+import { fromYaw, yawOf } from '../../lib/quat.ts';
 import { createRng } from '../../lib/rng.ts';
 
 export const ENCOUNTER_ID = 'gravity-range';
@@ -74,7 +75,7 @@ export const OBJECTIVES: readonly Objective[] = [
     label: 'ORBIT 450–550 KM',
     target: 'alpha',
     // Mid-band circle about Alpha (the contract has no annulus yet; see the 2F handoff).
-    region: { center: { x: 0, y: 0 }, radius: (BAND.inner + BAND.outer) / 2 },
+    region: { center: { x: 0, y: 0, z: 0 }, radius: (BAND.inner + BAND.outer) / 2 },
   },
   { id: 'reserve', kind: 'custom', label: `RESERVE ${RESERVE.minimum} KG` },
 ];
@@ -83,6 +84,8 @@ export function briefing(world: TruthWorld, seed: string): EncounterBriefing {
   const rng = createRng(seed).stream('content.briefing');
   const alpha = world.bodies.find((b) => b.id === 'alpha')!;
   const noisy = (value: number, sigma: number): number => rng.normal(value, sigma);
+  // LIFT(2G): the survey is planar: no z error is drawn (z = 0), covariances have no z terms,
+  // and the attitude estimate is a yaw.
   const relative = (
     p: { x: number; y: number },
     v: { x: number; y: number },
@@ -92,22 +95,25 @@ export function briefing(world: TruthWorld, seed: string): EncounterBriefing {
     position: {
       x: noisy(p.x - alpha.position.x, sigmaP),
       y: noisy(p.y - alpha.position.y, sigmaP),
+      z: 0,
     },
     velocity: {
       x: noisy(v.x - alpha.velocity.x, sigmaV),
       y: noisy(v.y - alpha.velocity.y, sigmaV),
+      z: 0,
     },
   });
+  const planarCov = (sigma: number) => cov3FromPlanar(isoCov2(sigma));
 
   const k = world.ship.kinematics;
   const arrivalEstimate: ShipEstimate = {
     t: 0,
     ...relative(k.position, k.velocity, SIGMA.shipPosition, SIGMA.shipVelocity),
-    positionCov: isoCov2(SIGMA.shipPosition),
-    velocityCov: isoCov2(SIGMA.shipVelocity),
-    attitude: noisy(k.attitude, SIGMA.attitude),
+    positionCov: planarCov(SIGMA.shipPosition),
+    velocityCov: planarCov(SIGMA.shipVelocity),
+    attitude: fromYaw(noisy(yawOf(k.attitude), SIGMA.attitude)),
     attitudeSigma: SIGMA.attitude,
-    angularRate: 0,
+    angularVelocity: { x: 0, y: 0, z: 0 },
   };
 
   const knownBodies: BelievedBody[] = world.bodies.map((b) =>
@@ -115,9 +121,9 @@ export function briefing(world: TruthWorld, seed: string): EncounterBriefing {
       ? {
           id: b.id,
           name: b.name,
-          position: { x: 0, y: 0 },
-          velocity: { x: 0, y: 0 },
-          positionCov: isoCov2(0),
+          position: { x: 0, y: 0, z: 0 },
+          velocity: { x: 0, y: 0, z: 0 },
+          positionCov: planarCov(0),
           radius: b.radius,
           tracked: false,
           lastFix: 0,
@@ -126,7 +132,7 @@ export function briefing(world: TruthWorld, seed: string): EncounterBriefing {
           id: b.id,
           name: b.name,
           ...relative(b.position, b.velocity, SIGMA.betaPosition, SIGMA.betaVelocity),
-          positionCov: isoCov2(SIGMA.betaPosition),
+          positionCov: planarCov(SIGMA.betaPosition),
           radius: b.radius,
           tracked: false,
           lastFix: 0,
@@ -138,7 +144,7 @@ export function briefing(world: TruthWorld, seed: string): EncounterBriefing {
     .map((a) => ({
       id: a.id,
       ...relative(a.position, a.velocity, SIGMA.asteroidPosition, SIGMA.asteroidVelocity),
-      positionCov: isoCov2(SIGMA.asteroidPosition),
+      positionCov: planarCov(SIGMA.asteroidPosition),
       radius: a.radius,
       tracked: false,
       lastSeen: 0,

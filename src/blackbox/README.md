@@ -52,7 +52,7 @@ const cmp = compareAttempts(recordA, recordB, await model.report());
 | `confounding`, `a.coverage` | Confounding indicator (§9.3) and what each attempt lacks |
 | `a.missing` | Missing data, stated plainly (no model report, no fitted data, no forecast, unmeasured forecasts…) |
 
-`forecastDivergence(forecast, record)` and `diffCommands(a, b)` are usable on their own.
+`forecastDivergence(forecast, record)` and `diffCommands(a, b)` are usable on their own. Divergence is still measured in the x–y plane (bearing azimuth, the envelope's x–y block; marked `// LIFT(2G):`).
 
 ## Procedures (`procedures.ts`, P9)
 
@@ -63,7 +63,7 @@ const match = matchProcedure(p, { encounterId, configuration, estimate });   // 
 const plan = procedurePlan(p, planId, epoch);                                 // replay as a plan
 ```
 
-Saved items are the commands that reached the ship between `from` and `to` (not rejected ones, not protection actions). `matchProcedure` says which condition differs (encounter, configuration, position, velocity, attitude); only a full match replays exactly.
+Saved items are the commands that reached the ship between `from` and `to` (not rejected ones, not protection actions). `matchProcedure` says which condition differs (encounter, configuration, position, velocity, attitude); only a full match replays exactly. Position and velocity differences are 3D distances; the attitude difference is the angle of the rotation between the two attitudes.
 
 ## Tests
 

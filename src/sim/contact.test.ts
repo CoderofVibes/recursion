@@ -79,7 +79,7 @@ describe('impact', () => {
     expect(c.impulse).toBeCloseTo(1.2 * 100 * mp.mass, 3); // (1 + e)·v·m, through the CoM
     const k = r.state.world.ship.kinematics;
     expect(k.velocity.x).toBeCloseTo(-20, 9); // rebounds at e·v
-    expect(k.angularRate).toBeCloseTo(0, 12);
+    expect(k.angularVelocity.z).toBeCloseTo(0, 12);
     expect(k.position.x).toBeCloseTo(988, 6); // left touching the surface
     expect(r.state.contacts).toEqual(['a-01']);
     // The accelerometer feels the impulse.
@@ -105,7 +105,7 @@ describe('impact', () => {
     const c = r.contacts[0]!;
     expect(c.point.x).toBeCloseTo(7, 9);
     expect(c.point.y).toBeCloseTo(2, 9); // the top corner
-    expect(r.state.world.ship.kinematics.angularRate).not.toBe(0);
+    expect(r.state.world.ship.kinematics.angularVelocity.z).not.toBe(0);
   });
 
   it('pushing into an object keeps the hull outside, with one impact event', () => {

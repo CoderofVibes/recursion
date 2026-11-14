@@ -12,7 +12,7 @@ import type {
   TruthWorld,
 } from '../contracts/truth/index.ts';
 import type { JsonValue } from '../contracts/units.ts';
-import type { Vec2 } from '../lib/vec2.ts';
+import type { Vec3 } from '../lib/vec3.ts';
 import type { SimState } from '../sim/index.ts';
 import { sensorTargets } from '../sim/index.ts';
 
@@ -29,11 +29,12 @@ export interface EnvironmentOptions {
  * its own centre).
  */
 export function inShadow(
-  point: Vec2,
+  point: Vec3,
   bodies: readonly MassiveBody[],
   sun: Sun,
   skip?: string,
 ): boolean {
+  // LIFT(2G): shadows are bands in the x–y plane (z ignored), not cylinders.
   const sx = sun.direction.x;
   const sy = sun.direction.y;
   for (const b of bodies) {
@@ -47,9 +48,9 @@ export function inShadow(
 }
 
 /** Sunlight at a point: the sun's direction, and its irradiance unless a body is in the way. */
-export function sunlightAt(world: TruthWorld, point: Vec2): EnvironmentEffects['sunlight'] {
+export function sunlightAt(world: TruthWorld, point: Vec3): EnvironmentEffects['sunlight'] {
   const sun = world.sun;
-  if (!sun) return { direction: { x: 1, y: 0 }, irradiance: 0 };
+  if (!sun) return { direction: { x: 1, y: 0, z: 0 }, irradiance: 0 };
   return {
     direction: sun.direction,
     irradiance: inShadow(point, world.bodies, sun) ? 0 : sun.irradiance,
@@ -57,7 +58,8 @@ export function sunlightAt(world: TruthWorld, point: Vec2): EnvironmentEffects['
 }
 
 /** True when a body's disc blocks the straight line from `from` to `to`. */
-function occluded(from: Vec2, to: Vec2, bodies: readonly MassiveBody[], skip: string): boolean {
+function occluded(from: Vec3, to: Vec3, bodies: readonly MassiveBody[], skip: string): boolean {
+  // LIFT(2G): the line of sight and the bodies' discs are compared in the x–y plane (z ignored).
   const ex = to.x - from.x;
   const ey = to.y - from.y;
   const len2 = ex * ex + ey * ey;
@@ -95,10 +97,11 @@ export function targetVisibility(
       visibility[target.id] = false;
       continue;
     }
+    // LIFT(2G): range and the glare angle are measured in the x–y plane (z ignored).
     const rx = target.relativePosition.x;
     const ry = target.relativePosition.y;
     const range = Math.hypot(rx, ry);
-    const centre = { x: ship.x + rx, y: ship.y + ry };
+    const centre = { x: ship.x + rx, y: ship.y + ry, z: ship.z + target.relativePosition.z };
     const body = target.kind === 'body' ? world.bodies.find((b) => b.id === target.id) : undefined;
     const lit = !inShadow(centre, world.bodies, sun, target.id);
     // The ship inside a body's own shadow sees only that body's unlit side.
