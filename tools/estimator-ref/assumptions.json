@@ -1,0 +1,108 @@
+{
+  "version": 1,
+  "note": "Every input the 1G reference generator uses. Edit here and re-run `python tools/estimator-ref/generate.py` to regenerate all estimator vectors. Labels follow docs/build-plan/README.md Conventions. Values marked 'pending 1B' or 'pending 1C' are placeholders until those packages merge.",
+  "gravity": {
+    "normalization": "P4: a = (mu / r0^2) (r0 / r)^n, mu in m^3/s^2 = Newtonian-equivalent GM at r0, one shared fixed r0",
+    "r0": 1.0e6,
+    "nTrue": 2.5,
+    "label": "ASSUMED",
+    "source": "DECISIONS P4; r0 and masses from the 1B candidate scale (branch p1/1b-physics, unmerged). Pending 1B merge."
+  },
+  "bodies": {
+    "A": { "mu": 1.0e10, "radius": 2.5e5, "label": "ASSUMED", "source": "1B candidate primary (pending 1B)" },
+    "B": { "mu": 2.5e9, "radius": 1.6e5, "separation": 4.0e6, "label": "ASSUMED", "source": "1B candidate secondary and separation (pending 1B)" }
+  },
+  "camera": {
+    "ifov": 1.38e-4,
+    "fov": 0.338,
+    "centroidPxFine": 0.1,
+    "centroidPxCoarse": 1.0,
+    "pMinFine": 0.3,
+    "rangeFloor": 2.0e-3,
+    "limbFraction": 0.5,
+    "minResolvedPx": 10,
+    "kDamage": 3.0,
+    "label": "ASSUMED",
+    "source": "IFOV/FOV from the DD05 test camera (25 mm lens, 3.45 um pixels, 2448 px); sub-pixel vs coarse limb processing after DD05; range floor is a play value bounded by DD05's ~1% prototype residual. Pending 1C."
+  },
+  "starTracker": {
+    "sigma": 3.88e-5,
+    "rateDegrade": 0.0175,
+    "rateMax": 0.0175,
+    "label": "ESTABLISHED: S04 (8 arcsec pointing knowledge; tracking limits 0.3-3 deg/s); rate values ASSUMED at 1 deg/s"
+  },
+  "gyro": {
+    "biasStability": 7.27e-7,
+    "arw": 5.82e-6,
+    "label": "ESTABLISHED: S04 (0.15 deg/h bias stability, 0.02 deg/sqrt(h) ARW), converted to rad/s and rad/sqrt(s)"
+  },
+  "accelerometer": {
+    "vrw": 3.33e-4,
+    "biasStability": 2.94e-5,
+    "sampleInterval": 60.0,
+    "label": "ESTABLISHED: S04 (0.02 (m/s)/sqrt(h) VRW, 3 ug bias stability); sample interval ASSUMED (Black Box rate)"
+  },
+  "truthShip": {
+    "kE": 0.97,
+    "dE": 0.004,
+    "kA": 1.0,
+    "camBias": 2.0e-5,
+    "label": "ASSUMED",
+    "source": "Scenario truth: engine 3% under nominal, 4 mrad thrust misalignment, 20 urad camera-to-star-tracker misalignment"
+  },
+  "priors": {
+    "muA": { "mean": 1.02e10, "sigma": 3.0e8, "note": "arrival calibration at r0, 2% off truth" },
+    "nFree": { "mean": 2.0, "sigma": 1.0 },
+    "kE": { "mean": 1.0, "sigma": 0.05 },
+    "dE": { "mean": 0.0, "sigma": 0.01 },
+    "kA": { "mean": 1.0, "sigma": 1.0e-3 },
+    "camBias": { "mean": 0.0, "sigma": 1.0e-4 },
+    "emp": { "mean": 0.0, "sigma": 1.0e-2 },
+    "muExtraBody": { "mean": 0.0, "sigma": 1.0e11 },
+    "label": "ASSUMED"
+  },
+  "windows": {
+    "sweep": 0.7,
+    "lnRange": 0.15,
+    "minFixes": 12,
+    "keepFixes": 6,
+    "profileStep": 0.1,
+    "profileCurvature": 0.01,
+    "profileRidge": 10.0,
+    "localScalePriorSigma": 0.5,
+    "anchorWindows": 2,
+    "anchorSlopePriorSigma": 0.2,
+    "label": "ASSUMED",
+    "source": "Tier L: a window closes after the bearing sweeps 0.7 rad (40 deg) or ln(range) spans 0.15, with at least 12 fixes. Scale-free, so independent of the 1B scale."
+  },
+  "hedge": {
+    "sigmaH": 0.3,
+    "sigmaHFloor": 0.01,
+    "horizonFraction": 0.1,
+    "label": "ASSUMED",
+    "source": "Play value: outside the distance range the data covers, the law may deviate like an exponent change of +/-0.3. Owner/playtest may tune."
+  },
+  "validation": {
+    "heldOutSigmaK": 3.0,
+    "adoptPenaltyPerParam": "ln(m)",
+    "confoundedRho": 0.9,
+    "label": "ASSUMED"
+  },
+  "integrator": {
+    "method": "RK4",
+    "dt": 60.0,
+    "truthCheckDt": 15.0,
+    "fdStep": 1.0e-3,
+    "label": "ASSUMED",
+    "source": "Reference generator only. Truth integration checked against a 4x finer step (reported per vector)."
+  },
+  "seeds": {
+    "newton-recovers-gm": 1101,
+    "inv25-newton-two-distances": 1201,
+    "inv25-exponent-coverage": 1301,
+    "missing-body-signature": 1401,
+    "burn-only-confounded": 1501,
+    "extension-validation": 1601,
+    "forecast-envelope": 1701
+  }
+}
