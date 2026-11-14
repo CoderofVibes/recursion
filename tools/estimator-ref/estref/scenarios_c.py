@@ -76,7 +76,9 @@ def v_extension_validation():
     rows = local_fits(ref, [held], DT, g_sigma=AS["windows"]["localScalePriorSigma"], **win_kw())
     rmin, rmax = coverage(train)
     eh = earned_hedge(rows, rmin, rmax, float(sn), AS["hedge"]["sigmaH"], AS["hedge"]["sigmaHFloor"])
-    eX["earnedHedge"] = {"reference": ref, "trainingCoverage": [rmin, rmax], "heldOutWindows": rows, **eh}
+    eX["earnedHedge"] = {"reference": ref, "trainingCoverage": [rmin, rmax], "heldOutWindows": rows, "body": "A", **eh}
+    vr = eh["validatedRange"]
+    ck.add("validated-range", "The earned hedge is recorded with its validated range: 0.6-1.4 r0 on body A (training plus held-out distances)", vr, vr is not None and 0.58e6 < vr[0] < 0.62e6 and 1.38e6 < vr[1] < 1.42e6)
     ck.add("hedge-earned", "Validated exponent extension earns a hedge below 1/5 of the default sigma_h", eh["sigmaH"], eh["sigmaH"] < 0.2 * AS["hedge"]["sigmaH"])
     cases.append({
         "id": "distance-law",
