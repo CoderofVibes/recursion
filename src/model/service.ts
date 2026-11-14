@@ -24,14 +24,19 @@ import type {
   Plan,
   ShipEvent,
 } from '../contracts/index.ts';
-import { buildModel, type ModelContext, type ModelSnapshot, type TierLCache } from './engine.ts';
+import {
+  buildModel,
+  modelSpec,
+  type ModelContext,
+  type ModelSnapshot,
+  type TierLCache,
+} from './engine.ts';
 import {
   adoptExtension,
-  adoptedOf,
   extensionStates,
-  hedgeOf,
   revokeExtension,
   testExtension,
+  validatedHedges,
   type ExtensionRecord,
 } from './extensions.ts';
 import { buildForecast, type ForecastDetail, type ForecastRequest } from './forecast.ts';
@@ -54,7 +59,10 @@ export interface AttemptDelta {
 
 export interface LoadInput {
   readonly attempts: readonly AttemptRecord[];
+  /** Every rule test (BlackBoxArchive.extensionTests). */
   readonly extensions?: readonly ExtensionRecord[];
+  /** Adopted rules (BlackBoxArchive.adoptedExtensions). */
+  readonly adopted?: readonly ExtensionId[];
   /** Version of the model before this load (0 for a fresh save). */
   readonly version?: number;
 }
@@ -64,7 +72,10 @@ type Mutable<T> = { -readonly [K in keyof T]: T[K] };
 export class ModelService {
   private readonly ctx: ModelContext;
   private attempts: AttemptRecord[] = [];
-  private history: ExtensionRecord[] = [];
+  private tests: ExtensionRecord[] = [];
+  private adoptedRules: ExtensionId[] = [];
+  /** Revoked in this session (BlackBoxArchive keeps only the adopted list). */
+  private revokedRules: ExtensionId[] = [];
   private current: Mutable<AttemptRecord> | null = null;
   private snap: ModelSnapshot;
   private version = 0;
@@ -83,8 +94,14 @@ export class ModelService {
     return this.snap;
   }
 
+  /** Every rule test, in the order run (for BlackBoxArchive.extensionTests). */
   get extensions(): readonly ExtensionRecord[] {
-    return this.history;
+    return this.tests;
+  }
+
+  /** Adopted rules (for BlackBoxArchive.adoptedExtensions). */
+  get adopted(): readonly ExtensionId[] {
+    return this.adoptedRules;
   }
 
   private allAttempts(): AttemptRecord[] {
@@ -92,14 +109,20 @@ export class ModelService {
   }
 
   private build(version: number, parent?: number, reuse?: ModelSnapshot): ModelSnapshot {
-    const hedge = hedgeOf(this.history);
+    const spec = modelSpec(this.ctx, this.adoptedRules);
+    const validated = validatedHedges(
+      this.tests,
+      this.adoptedRules,
+      spec.bodies,
+      spec.settings.validatedRangeSharedLaw === 1,
+    );
     return buildModel(
       {
         context: this.ctx,
         attempts: this.allAttempts(),
-        adopted: adoptedOf(this.history),
-        extensions: extensionStates(this.history),
-        ...(hedge !== undefined ? { hedge } : {}),
+        adopted: this.adoptedRules,
+        extensions: extensionStates(this.tests, this.adoptedRules, this.revokedRules),
+        validated,
         version,
         ...(parent !== undefined ? { parent } : {}),
         ...(this.current ? { current: this.current.id } : {}),
@@ -120,7 +143,9 @@ export class ModelService {
     this.attempts = input.attempts
       .filter((a) => a.encounterId === this.ctx.encounterId)
       .map((a) => ({ ...a }));
-    this.history = [...(input.extensions ?? [])];
+    this.tests = [...(input.extensions ?? [])];
+    this.adoptedRules = [...(input.adopted ?? [])];
+    this.revokedRules = [];
     this.current = null;
     this.version = input.version ?? 0;
     return this.bump();
@@ -191,26 +216,28 @@ export class ModelService {
     const rec = testExtension(
       this.ctx,
       this.attempts,
-      adoptedOf(this.history),
+      this.adoptedRules,
       ext,
       training,
       heldOut,
       this.version,
     );
-    this.history = [...this.history, rec];
+    this.tests = [...this.tests, rec];
     this.snap = this.build(this.version, this.snap.state.parent, this.snap);
     return rec;
   }
 
   /** The player adopts a rule that passed its held-out test. New version. */
   adopt(ext: ExtensionId): ModelState {
-    this.history = adoptExtension(this.history, ext);
+    this.adoptedRules = adoptExtension(this.tests, this.adoptedRules, ext);
+    this.revokedRules = this.revokedRules.filter((e) => e !== ext);
     return this.bump();
   }
 
   /** The player revokes an adopted rule. New version. */
   revoke(ext: ExtensionId): ModelState {
-    this.history = revokeExtension(this.history, ext);
+    this.adoptedRules = revokeExtension(this.adoptedRules, ext);
+    this.revokedRules = [...this.revokedRules, ext];
     return this.bump();
   }
 

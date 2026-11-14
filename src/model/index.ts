@@ -24,13 +24,15 @@ export {
 } from './engine.ts';
 export {
   adoptExtension,
-  adoptedOf,
   extensionStates,
-  hedgeOf,
+  isSharedLaw,
   isTestableExtension,
   revokeExtension,
+  spansOf,
   testExtension,
+  validatedHedges,
   type ExtensionRecord,
+  type ValidatedHedge,
 } from './extensions.ts';
 export {
   buildForecast,

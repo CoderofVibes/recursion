@@ -17,6 +17,7 @@ export {
   reissue,
   withAdoptedExtensions,
   withAttempt,
+  withExtensionTest,
   withLead,
   withProcedure,
   withoutProcedure,

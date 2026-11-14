@@ -11,7 +11,13 @@ import {
   type BurnResponse,
   type EmpiricalRow,
 } from './diagnostics.ts';
-import { EXPONENT_ID, referenceFor, type ModelContext, type ModelSnapshot } from './engine.ts';
+import {
+  EXPONENT_ID,
+  referenceFor,
+  type ModelContext,
+  type ModelDerived,
+  type ModelSnapshot,
+} from './engine.ts';
 import { asteroidOf, attemptOfArc } from './probes.ts';
 import { confounding, residualSummary, type Confounding, type ResidualClass } from './solve.ts';
 
@@ -77,7 +83,10 @@ export interface ModelReport {
   readonly confounding: Confounding | null;
   readonly coverage: readonly DataCoverage[];
   readonly noiseScale: number;
-  readonly hedge: number;
+  /** Default hedge σ_h0 outside sampled distances (§8.2). */
+  readonly defaultHedge: number;
+  /** Per body: validated spans of adopted rules and their earned σ_e (§7.4, A5). */
+  readonly validated: ModelDerived['validated'];
 }
 
 /** §9.1–§9.3 from a snapshot. Cheap: no new fits. */
@@ -172,7 +181,8 @@ export function modelReport(snap: ModelSnapshot): ModelReport {
     confounding: conf,
     coverage,
     noiseScale: d.noiseScale,
-    hedge: d.hedge,
+    defaultHedge: d.sigmaH0,
+    validated: d.validated,
   };
 }
 

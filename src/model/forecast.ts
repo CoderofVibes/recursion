@@ -40,6 +40,8 @@ import {
 import { compileArc, simulate, type Arc, type Structure, type ThrustSegment } from './dynamics.ts';
 import {
   EXPONENT_ID,
+  agingBetween,
+  arcCalibration,
   arrivalState,
   misalignId,
   presentState,
@@ -319,24 +321,39 @@ export function buildForecast(
   if (times.length === 0) times.push(Math.max(req.issuedAt, tNow));
 
   const profiles: ProfileFit[] = [...d.profiles, ...d.flatProfiles];
+  // Engine terms for burns (§3.7, §8.2): the current arc's values and σ (arrival value plus its
+  // deviation), else the arrival value, else the prior; plus aging from the last measurement
+  // that constrained them to the time of issue.
+  const shipArcs = d.problem.builds.get(req.record.id)?.arcs ?? [];
+  const lastArc = shipArcs[shipArcs.length - 1];
+  const current = new Map((lastArc ? arcCalibration(d, lastArc.id) : []).map((c) => [c.id, c]));
+  const engineTerm = (id: string, fallback: number, fallbackSigma: number) => {
+    const c = current.get(id);
+    const prior = ctx.priors.find((p) => p.id === id);
+    const value = c?.value ?? d.values[id] ?? prior?.value ?? fallback;
+    const sigma = c?.sigma ?? d.sigmas[id] ?? prior?.sigma ?? fallbackSigma;
+    const aged = agingBetween(d, req.record, id, c?.tLast ?? 0, req.issuedAt).variance;
+    return { value, sigma: Math.sqrt(sigma * sigma + aged) };
+  };
+  const engines: Record<string, { kE: number; dE: number }> = {};
   const engineSigmas: Record<string, [number, number]> = {};
-  for (const thr of Object.keys(ref.engines ?? {}))
-    engineSigmas[thr] = [
-      d.sigmas[scaleId(thr)] ?? s.priorThrustScaleSigma,
-      d.sigmas[misalignId(thr)] ?? s.priorMisalignmentSigma,
-    ];
-  // Thrusters never fitted fly with prior values and prior σ.
-  const engines: Record<string, { kE: number; dE: number }> = { ...(ref.engines ?? {}) };
-  for (const c of commands) {
-    if (!c.thruster || engines[c.thruster]) continue;
-    const ps = ctx.priors.find((p) => p.id === scaleId(c.thruster!));
-    const pm = ctx.priors.find((p) => p.id === misalignId(c.thruster!));
-    engines[c.thruster] = { kE: ps?.value ?? 1, dE: pm?.value ?? 0 };
-    engineSigmas[c.thruster] = [
-      ps?.sigma ?? s.priorThrustScaleSigma,
-      pm?.sigma ?? s.priorMisalignmentSigma,
-    ];
+  const engineValues: Record<string, number> = {};
+  for (const thr of [
+    ...new Set(commands.flatMap((c) => (c.thruster ? [c.thruster] : []))),
+  ].sort()) {
+    const k = engineTerm(scaleId(thr), 1, s.priorThrustScaleSigma);
+    const m = engineTerm(misalignId(thr), 0, s.priorMisalignmentSigma);
+    engines[thr] = { kE: k.value, dE: m.value };
+    engineSigmas[thr] = [k.sigma, m.sigma];
+    engineValues[scaleId(thr)] = k.value;
+    engineValues[misalignId(thr)] = m.value;
   }
+  const engineIds = Object.keys(engineValues);
+  const engineCov = new Array<number>(engineIds.length * engineIds.length).fill(0);
+  engineIds.forEach((id, i) => {
+    const m = /^thruster\.(.+)\.(scale|misalignment)$/.exec(id)!;
+    engineCov[i * engineIds.length + i] = engineSigmas[m[1]!]![m[2] === 'scale' ? 0 : 1] ** 2;
+  });
   const muSigma: Record<string, number> = {};
   for (const o of others)
     if (!d.profiles.some((p) => p.body === o.id)) muSigma[o.id] = d.sigmas[`body.${o.id}.mu`] ?? 0;
@@ -350,7 +367,8 @@ export function buildForecast(
     times,
     dt: s.dt,
     s2: 1, // the present-state covariance already carries s²
-    sigmaH: d.hedge,
+    sigmaH: d.sigmaH0,
+    validated: d.validated,
     engineSigma: [0, 0],
     engineSigmas,
     muSigma,
@@ -400,6 +418,12 @@ export function buildForecast(
     }
     const prof = profiles.find((p) => p.body === dominant);
     const extrapolating = prof ? L(prof, dist[dominant]!) !== 0 : true;
+    // Validated: extrapolating, but inside an adopted rule's validated span (§7.4, A5).
+    const validated =
+      extrapolating &&
+      (d.validated[dominant]?.spans ?? []).some(
+        ([lo, hi]) => lo <= dist[dominant]! && dist[dominant]! <= hi,
+      );
     const positionCov = toCov2(cv.total);
     primaryAt.set(t, frame.bodyPos[spec.primary]!);
     samples.push({
@@ -408,6 +432,7 @@ export function buildForecast(
       velocity: frame.ship.velocity,
       positionCov,
       extrapolating,
+      ...(validated ? { validated } : {}),
     });
     sigmaMajor.push({
       t,
@@ -481,7 +506,8 @@ export function buildForecast(
       times: aTimes,
       dt: s.dt,
       s2: 1,
-      sigmaH: d.hedge,
+      sigmaH: d.sigmaH0,
+      validated: d.validated,
       engineSigma: [0, 0],
       muSigma,
       h: s.fdStep,
@@ -560,7 +586,17 @@ export function buildForecast(
       extensions: adopted,
       calibration: snap.state.calibration,
       noiseScale: d.noiseScale,
-      hedge: d.hedge,
+      hedge: d.sigmaH0,
+      ...(Object.keys(d.validated).length > 0
+        ? {
+            earnedHedge: Object.fromEntries(
+              Object.entries(d.validated).map(([b, v]) => [b, { sigma: v.sigmaE, spans: v.spans }]),
+            ),
+          }
+        : {}),
+      ...(engineIds.length > 0
+        ? { engine: { values: engineValues, covariance: { ids: engineIds, values: engineCov } } }
+        : {}),
     },
     horizon: samples.length > 0 ? samples[samples.length - 1]!.t : req.issuedAt,
     samples,

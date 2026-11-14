@@ -171,14 +171,18 @@ describe('storage and rebuild (P8)', () => {
       archive = withAttempt(archive, fin);
     }
     expect(nextAttemptIndex(archive)).toBe(4);
-    await store.putMeta({ adoptedExtensions: [], leads: [], extensions: [] });
+    await store.putMeta({ adoptedExtensions: [], leads: [], extensionTests: [] });
     const loaded = await store.load();
     expect(loaded.archive.attempts.map((a) => a.id)).toEqual(['att1', 'att2', 'att3']);
     const f = loaded.archive.attempts[2]!.forecasts[0]!;
     expect(Object.isFrozen(f) && Object.isFrozen(f.samples)).toBe(true);
     expect(hashState(f)).toBe(hashState(issued));
     const rebuilt = new ModelService(ctx);
-    rebuilt.load({ attempts: loaded.archive.attempts, extensions: loaded.extensions });
+    rebuilt.load({
+      attempts: loaded.archive.attempts,
+      extensions: loaded.archive.extensionTests,
+      adopted: loaded.archive.adoptedExtensions,
+    });
     expect(hashState(content(rebuilt.state))).toBe(hashState(content(live.state)));
   });
 });

@@ -17,7 +17,8 @@ export type ServiceMethod =
   | 'burns'
   | 'empirical'
   | 'state'
-  | 'extensions';
+  | 'extensions'
+  | 'adopted';
 
 export interface RpcRequest {
   readonly id: number;
@@ -36,6 +37,8 @@ export function dispatch(service: ModelService, method: string, args: readonly u
       return service.state;
     case 'extensions':
       return service.extensions;
+    case 'adopted':
+      return service.adopted;
     case 'load':
       return service.load(args[0] as Parameters<ModelService['load']>[0]);
     case 'beginAttempt':
