@@ -1,5 +1,5 @@
 /**
- * Black Box persistence (P8): attempts, procedures, adopted extensions, leads and the history of
+ * Black Box persistence (P8): attempts, procedures, adopted extensions, leads and every test of
  * extension tests survive reloads. IndexedDB in the browser; an in-memory store (which still
  * serialises, to behave like storage) for tests and environments without IndexedDB.
  *
@@ -20,13 +20,13 @@ import { emptyArchive, reissue } from './archive.ts';
 export interface BlackBoxMeta {
   readonly adoptedExtensions: BlackBoxArchive['adoptedExtensions'];
   readonly leads: readonly Lead[];
-  /** Every extension test with its numbers (spec §6.1). Not in BlackBoxArchive yet. */
-  readonly extensions: readonly ExtensionRecord[];
+  /** Every rule test with its numbers (spec §6.1), never edited (BlackBoxArchive.extensionTests). */
+  readonly extensionTests: readonly ExtensionRecord[];
 }
 
 export interface StoredBlackBox {
-  readonly archive: BlackBoxArchive;
-  readonly extensions: readonly ExtensionRecord[];
+  /** Includes `extensionTests` (the model's ExtensionRecord, a superset of the contract's). */
+  readonly archive: BlackBoxArchive & { readonly extensionTests: readonly ExtensionRecord[] };
 }
 
 export interface BlackBoxStore {
@@ -51,8 +51,8 @@ function assemble(
       procedures,
       adoptedExtensions: meta?.adoptedExtensions ?? [],
       leads: meta?.leads ?? [],
+      extensionTests: meta?.extensionTests ?? [],
     },
-    extensions: meta?.extensions ?? [],
   };
 }
 

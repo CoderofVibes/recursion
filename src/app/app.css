@@ -1,9 +1,13 @@
-/* Placeholder styling only. Tokens and visual direction come from 1E (src/theme). */
+/* Placeholder styling for the 2F integration bench only. Tokens and visual direction come from
+   1E (src/theme); the console (2D) and 3D view (2E) replace this screen. */
 :root {
   --bg: #07090c;
   --fg: #b9c4cc;
   --dim: #5b6670;
   --accent: #7fd1c7;
+  --warn: #d9a05b;
+  --other: #8f9bd8;
+  --line: #1c232b;
   color-scheme: dark;
 }
 
@@ -22,44 +26,165 @@ body {
   background: var(--bg);
   color: var(--fg);
   font-family: ui-monospace, 'Cascadia Mono', 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 0.8rem;
 }
 
-.placeholder {
-  min-height: 100%;
+.bench-wait {
+  height: 100%;
   display: grid;
   place-content: center;
-  gap: 2rem;
-  padding: 1rem;
-}
-
-.placeholder h1 {
-  margin: 0;
-  font-weight: 400;
   letter-spacing: 0.6em;
-  font-size: clamp(1.25rem, 4vw, 2rem);
   color: var(--accent);
-  text-align: center;
 }
 
-.placeholder dl {
+.bench {
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 22rem;
+}
+
+.bench-view {
+  position: relative;
+  min-height: 0;
+}
+
+.bench-plot {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.bench-legend {
+  position: absolute;
+  left: 1rem;
+  bottom: 1rem;
+  display: flex;
+  gap: 1.5rem;
+  color: var(--accent);
+  letter-spacing: 0.12em;
+}
+
+.bench-side {
+  border-left: 1px solid var(--line);
+  padding: 1rem;
+  overflow-y: auto;
+  display: grid;
+  gap: 0.9rem;
+  align-content: start;
+}
+
+.bench-side h1 {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 400;
+  letter-spacing: 0.3em;
+  color: var(--accent);
+}
+
+.bench-side dl {
   margin: 0;
   display: grid;
-  gap: 0.4rem;
-  font-size: 0.85rem;
+  gap: 0.25rem;
 }
 
-.placeholder dl > div {
+.bench-side dl > div {
   display: grid;
-  grid-template-columns: 9rem 1fr;
-  gap: 1rem;
+  grid-template-columns: 7rem 1fr;
+  gap: 0.75rem;
 }
 
-.placeholder dt {
+.bench-side dt {
   color: var(--dim);
   text-transform: uppercase;
-  letter-spacing: 0.15em;
+  letter-spacing: 0.12em;
 }
 
-.placeholder dd {
+.bench-side dd {
   margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.bench-side fieldset {
+  margin: 0;
+  padding: 0.5rem;
+  border: 1px solid var(--line);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+}
+
+.bench-side legend {
+  padding: 0 0.4rem;
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+.bench-side label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--dim);
+}
+
+.bench-side button,
+.bench-side select,
+.bench-side input {
+  font: inherit;
+  color: var(--fg);
+  background: transparent;
+  border: 1px solid var(--line);
+  padding: 0.3rem 0.55rem;
+}
+
+.bench-side input {
+  width: 4.5rem;
+}
+
+.bench-side button {
+  cursor: pointer;
+}
+
+.bench-side button:hover:not(:disabled),
+.bench-side button.on {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.bench-side button:disabled {
+  color: var(--dim);
+  cursor: default;
+}
+
+.bench-note {
+  flex-basis: 100%;
+  color: var(--accent);
+}
+
+.bench-events {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.2rem;
+  color: var(--dim);
+}
+
+.bench-events span {
+  color: var(--fg);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 760px) {
+  .bench {
+    grid-template-columns: 1fr;
+    grid-template-rows: 55vh auto;
+    height: auto;
+  }
+
+  .bench-side {
+    border-left: 0;
+    border-top: 1px solid var(--line);
+  }
 }

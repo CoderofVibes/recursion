@@ -410,6 +410,8 @@ class Work {
       },
       fields: prev.fields,
       hidden: prev.hidden,
+      // The sun is light only (A3) and never moves; carry it over unchanged.
+      ...(prev.sun ? { sun: prev.sun } : {}),
     };
     return {
       world,

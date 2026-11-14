@@ -4,7 +4,7 @@
 
 Every prompt assumes the thread first reads `docs/CREATIVE_BRIEF.md`, `docs/DECISIONS.md`, `docs/build-plan/README.md` § Conventions, `docs/design/expedition.md`, `docs/design/encounter-template.md`, `src/contracts/README.md` and the Phase 3 handoffs, uses the 3E harness to check every route it authors, and finishes with `docs/handoffs/<id>.md`.
 
-Every encounter must pose at least one unknown that knowledge carried in from earlier encounters does not answer (DECISIONS A5), and its harness report includes the 3E cakewalk check.
+Every encounter must pose at least one unknown that knowledge carried in from earlier encounters does not answer (DECISIONS A5), and its harness report includes the 3E cakewalk check. It also defines the ranges its starting geometry varies within from run to run (A10).
 
 ---
 

@@ -15,7 +15,7 @@ import type {
 import type { Arc, BodyDef, EstMeasurement, Ref, Structure, ThrustSegment } from './dynamics.ts';
 import type { Param } from './solve.ts';
 
-export type RefJson = number | { param: string };
+export type RefJson = number | { param: string } | { sum: RefJson[] };
 
 export interface ModelJson {
   law: { form: string; r0: number; exponent: RefJson };
@@ -198,7 +198,9 @@ export interface VectorJson {
 }
 
 export function refOf(r: RefJson): Ref {
-  return typeof r === 'number' ? r : r.param;
+  if (typeof r === 'number') return r;
+  if ('sum' in r) return r.sum.map(refOf);
+  return r.param;
 }
 
 export function toStructure(m: ModelJson): Structure {
@@ -249,6 +251,7 @@ export function referenceScale(name: string): number {
   if (name === 'law.n') return 1e-3;
   if (name === 'camera.bias') return 1e-5;
   if (name === 'engine.kE' || name === 'engine.dE') return 1e-3;
+  if (/\.engine\.d(kE|dE)$/.test(name)) return 1e-3;
   if (name === 'accel.kA') return 1e-4;
   if (/\.emp\d+\.(R|T)$/.test(name)) return 1e-6;
   throw new Error(`no reference scale for ${name}`);

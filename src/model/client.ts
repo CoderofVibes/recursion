@@ -47,6 +47,7 @@ export interface ModelClient {
   revoke(ext: ExtensionId): Promise<ModelState>;
   state(): Promise<ModelState>;
   extensions(): Promise<readonly ExtensionRecord[]>;
+  adopted(): Promise<readonly ExtensionId[]>;
   report(): Promise<ModelReport>;
   burns(attempts?: readonly AttemptId[]): Promise<BurnReport[]>;
   empirical(): Promise<EmpiricalReport | null>;
@@ -128,6 +129,7 @@ export function createModelClient(opts: { worker?: boolean } = {}): ModelClient 
     revoke: (ext) => c('revoke', ext),
     state: () => c('state'),
     extensions: () => c('extensions'),
+    adopted: () => c('adopted'),
     report: () => c('report'),
     burns: (attempts) => c('burns', attempts),
     empirical: () => c('empirical'),

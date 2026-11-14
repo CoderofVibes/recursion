@@ -110,3 +110,14 @@ describe.each([
     expect(hashState(world)).toBe(before);
   });
 });
+
+describe('sunlight survives stepping (A3)', () => {
+  it('step and run carry the sun over unchanged', () => {
+    expect(mockTruthWorld.sun).toBeDefined();
+    const sim = createSimulation(mockTruthWorld, { dt: 1 });
+    const stepped = sim.step(sim.initial, undefined).state;
+    expect(stepped.world.sun).toEqual(mockTruthWorld.sun);
+    const ran = sim.run(sim.initial, 10).state;
+    expect(ran.world.sun).toEqual(mockTruthWorld.sun);
+  });
+});

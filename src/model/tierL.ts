@@ -11,6 +11,7 @@ import {
   wrap,
   SHIP_REFS,
   type Arc,
+  type ArcSolution,
   type BodyDef,
   type CompiledArc,
   type EstMeasurement,
@@ -221,6 +222,28 @@ export function makeWindows(
   });
 }
 
+/** All range fixes of an arc on `body` as one window (a short track not yet cut into windows). */
+export function wholeArcWindow(arc: Arc, body: string, powered = false): Window | null {
+  const fixes = rangeFixes(arc, body);
+  if (fixes.length === 0) return null;
+  const rr = fixes.map((q) => q.z[1]!);
+  let sweep = 0;
+  for (let i = 1; i < fixes.length; i++) sweep += wrap(fixes[i]!.z[0]! - fixes[i - 1]!.z[0]!);
+  return {
+    id: `${arc.id}.all`,
+    arc: arc.id,
+    index: 0,
+    t0: fixes[0]!.t,
+    t1: fixes[fixes.length - 1]!.t,
+    fixes,
+    powered,
+    rGeo: Math.exp(rr.reduce((q, r) => q + Math.log(r), 0) / rr.length),
+    rMin: Math.min(...rr),
+    rMax: Math.max(...rr),
+    sweep: Math.abs(sweep),
+  };
+}
+
 // ---------------------------------------------------------------------------------------------
 // Initial guesses (§4.5)
 // ---------------------------------------------------------------------------------------------
@@ -347,6 +370,12 @@ export function azimuth(arc: Arc, body: string, t0: number, t1: number): number 
   return Math.atan2(s, c);
 }
 
+export interface LocalFitResult {
+  readonly row: WindowFit;
+  /** The window's own fit: the ship's path over the window, relative to the window's body. */
+  readonly solution: ArcSolution;
+}
+
 export function localFit(
   ref: ReferenceLaw,
   arc: Arc,
@@ -354,6 +383,16 @@ export function localFit(
   dt: number,
   gPrior: readonly [number, number] = [1, 0.5],
 ): WindowFit {
+  return localFitDetailed(ref, arc, w, dt, gPrior).row;
+}
+
+export function localFitDetailed(
+  ref: ReferenceLaw,
+  arc: Arc,
+  w: Window,
+  dt: number,
+  gPrior: readonly [number, number] = [1, 0.5],
+): LocalFitResult {
   const sub: Arc = { id: w.id, epoch: w.t0, commands: arc.commands, meas: w.fixes };
   const st = refStructure(ref, w.t0, { gs: '{att}.g' });
   const params: Param[] = [
@@ -367,9 +406,19 @@ export function localFit(
       group: w.id,
     },
   ];
-  const res = new Problem(st, [sub], params, { dt }).solve(params.map((p) => p.init));
+  const prob = new Problem(st, [sub], params, { dt });
+  const res = prob.solve(params.map((p) => p.init));
   const [g, sg] = fitGet(res, `${w.id}.g`);
-  return {
+  const solution: ArcSolution = {
+    arc: sub,
+    structure: st,
+    x: res.x,
+    idx: prob.idx,
+    P: res.P,
+    rel: params.map((_, i) => i),
+    scale: prob.scale,
+  };
+  const row: WindowFit = {
     window: w.id,
     arc: w.arc,
     body: ref.body,
@@ -386,6 +435,7 @@ export function localFit(
     converged: res.converged,
     azimuth: azimuth(arc, ref.body, w.t0, w.t1),
   };
+  return { row, solution };
 }
 
 /** Local fits of every coasting window of every arc (optionally filtered). */
@@ -530,8 +580,29 @@ export function buildProfile(
   };
 }
 
-/** ProfileDef for the calibrated law; optional per-node perturbation refs and hedge exponent. */
-export function profileDef(prof: ProfileFit, dNodes?: readonly string[], eta?: string): ProfileDef {
+/** Union of distance spans as sorted disjoint [lo, hi] (spec §7.4). */
+export function mergeSpans(spans: readonly (readonly [number, number])[]): [number, number][] {
+  const out: [number, number][] = [];
+  for (const [lo, hi] of [...spans]
+    .map((q) => [q[0], q[1]] as [number, number])
+    .sort((a, b) => a[0] - b[0])) {
+    const last = out[out.length - 1];
+    if (last && lo <= last[1]) last[1] = Math.max(last[1], hi);
+    else out.push([lo, hi]);
+  }
+  return out;
+}
+
+/**
+ * ProfileDef for the calibrated law; optional per-node perturbation refs, the default hedge
+ * exponent, and the earned exponent with the validated spans it applies in (§8.2).
+ */
+export function profileDef(
+  prof: ProfileFit,
+  dNodes?: readonly string[],
+  eta?: string,
+  earned?: { etaE: string; spans: readonly (readonly [number, number])[] },
+): ProfileDef {
   const lr0 = Math.log(prof.r0);
   return {
     body: prof.body,
@@ -541,6 +612,9 @@ export function profileDef(prof: ProfileFit, dNodes?: readonly string[], eta?: s
     rMax: prof.rMax,
     ...(dNodes ? { dNodes } : {}),
     ...(eta !== undefined ? { eta } : {}),
+    ...(earned && earned.spans.length > 0
+      ? { etaE: earned.etaE, validated: mergeSpans(earned.spans) }
+      : {}),
   };
 }
 
@@ -684,7 +758,10 @@ export function anchorState(
 export interface CovSplit {
   readonly state: Matrix;
   readonly profile: Matrix;
+  /** Both hedge parts: earned inside validated spans and default elsewhere (§8.3). */
   readonly hedge: Matrix;
+  readonly hedgeEarned: Matrix;
+  readonly hedgeDefault: Matrix;
   readonly engine: Matrix;
   readonly mass: Matrix;
   readonly total: Matrix;
@@ -711,8 +788,15 @@ export interface ForecastCoreInput {
   readonly dt: number;
   /** Noise scale s² on the present-state covariance. */
   readonly s2: number;
-  /** Hedge σ_h (0 disables). */
+  /** Default hedge σ_h0 outside sampled distances (0 disables). */
   readonly sigmaH: number;
+  /** Per body: validated spans (m) where the earned σ_e applies instead (§7.4, §8.2). */
+  readonly validated?: Readonly<
+    Record<
+      string,
+      { readonly spans: readonly (readonly [number, number])[]; readonly sigmaE: number }
+    >
+  >;
   /** Engine σ for planned burns: kE, dE of the default engine (ref.kE, ref.dE). */
   readonly engineSigma: readonly [number, number];
   /** Per-thruster σ (kE, dE); values come from ref.engines. */
@@ -747,12 +831,22 @@ export function forecastCore(inp: ForecastCoreInput): ForecastCoreResult {
     scale.push(1e-3, 1e-3);
   }
   const etaIdx: number[] = [];
+  const etaEIdx: [number, number][] = [];
   const nodeIdx: number[][] = [];
   const pdefs: ProfileDef[] = profiles.map((p, j) => {
     etaIdx.push(names.length);
     names.push(`f.eta${j}`);
     x.push(0);
     scale.push(1e-2);
+    const v = inp.validated?.[p.body];
+    let earned: { etaE: string; spans: readonly (readonly [number, number])[] } | undefined;
+    if (v && v.spans.length > 0) {
+      etaEIdx.push([names.length, v.sigmaE]);
+      names.push(`f.etaE${j}`);
+      x.push(0);
+      scale.push(1e-2);
+      earned = { etaE: `f.etaE${j}`, spans: v.spans };
+    }
     const nodes: string[] = [];
     const idxs: number[] = [];
     p.g.forEach((_, b) => {
@@ -763,7 +857,7 @@ export function forecastCore(inp: ForecastCoreInput): ForecastCoreResult {
       scale.push(1e-2);
     });
     nodeIdx.push(idxs);
-    return profileDef(p, nodes, `f.eta${j}`);
+    return profileDef(p, nodes, `f.eta${j}`, earned);
   });
   const muIdx: [number, number][] = [];
   const others = (ref.others ?? []).map((o) => {
@@ -854,7 +948,9 @@ export function forecastCore(inp: ForecastCoreInput): ForecastCoreResult {
       (a, b) => (a === b ? engineCols[a]![1] ** 2 : 0),
       k,
     );
-    const hedge = outer(etaIdx, (a, b) => (a === b ? sh2 : 0), k);
+    const hedgeDefault = outer(etaIdx, (a, b) => (a === b ? sh2 : 0), k);
+    const hedgeEarned = add(...etaEIdx.map(([i, se]) => outer([i], () => se * se, k)));
+    const hedge = add(hedgeDefault, hedgeEarned);
     const profile = add(
       ...profiles.map((p, j) =>
         outer(nodeIdx[j]!, (a, b) => p.covariance.data[a * p.covariance.cols + b]!, k),
@@ -865,6 +961,8 @@ export function forecastCore(inp: ForecastCoreInput): ForecastCoreResult {
       state,
       profile,
       hedge,
+      hedgeEarned,
+      hedgeDefault,
       engine,
       mass,
       total: add(state, profile, hedge, engine, mass),
@@ -944,6 +1042,8 @@ export interface EarnedHedge {
   readonly delta?: number;
   readonly ell?: number;
   readonly sigmaH: number;
+  /** Validated range: training coverage joined with the held-out windows (§7.4). */
+  readonly validatedRange?: readonly [number, number];
 }
 
 export function earnedHedge(
@@ -963,5 +1063,13 @@ export function earnedHedge(
   const delta = Math.sqrt(ext.reduce((s, e) => s + e[0] * e[0], 0) / ext.length);
   const ell = ext.reduce((s, e) => s + e[1], 0) / ext.length;
   const v = Math.sqrt(sigmaN * sigmaN + (delta / ell) ** 2);
-  return { nWindowsOutside: ext.length, delta, ell, sigmaH: Math.min(sigmaH0, Math.max(floor, v)) };
+  const heldMin = Math.min(...heldOutRows.map((r) => r.rMin));
+  const heldMax = Math.max(...heldOutRows.map((r) => r.rMax));
+  return {
+    nWindowsOutside: ext.length,
+    delta,
+    ell,
+    sigmaH: Math.min(sigmaH0, Math.max(floor, v)),
+    validatedRange: [Math.min(trainRMin, heldMin), Math.max(trainRMax, heldMax)],
+  };
 }

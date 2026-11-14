@@ -37,9 +37,9 @@ Dotted paths, shared by the model's estimates and truth's `HiddenParameters`:
 | `sensor.<equipmentId>.bias-x`, `.bias-y`, `.bias` | Sensor biases | sensor unit |
 | `sensor.<equipmentId>.scale` | Accelerometer scale factor (true / nominal) | — |
 | `unmodeled.<n>.mu`, `.x`, `.y` | Extra body never seen (extension `unmodeled-body`, unseen mode) | m³/s², m |
+| `empirical.ax`, `empirical.ay` | Constant unexplained acceleration (extension `empirical-acceleration`) | m/s² |
 
 Extension ids may carry a target: `unmodeled-body:<bodyId>` is the seen mode, a briefed body the model left out; it fits that body's `body.<bodyId>.mu`.
-| `empirical.ax`, `empirical.ay` | Constant unexplained acceleration (extension `empirical-acceleration`) | m/s² |
 
 ### Telemetry channels
 
@@ -113,16 +113,16 @@ What the crew knows from the spec sheets. True deviations live in truth.
 - `Forecast` — an issued forecast: deep-frozen and branded. Only `issueForecast(draft)` creates one; it copies the draft first. When loading from storage, pass records through `issueForecast` again.
 
 ### `attempt.ts` — Black Box (P8)
-- `AttemptRecord` — id, index, encounter, `start` (arrival estimate, configuration, model version, and `transit` for a later encounter), committed `plans`, `executed` commands, issued `forecasts`, `measurements`, `events`, `outcome` (`AttemptOutcome`: in-progress, lost with cause, recalled, completed), `modelVersionAtEnd`. No truth.
+- `AttemptRecord` — id, index, encounter, `start` (arrival estimate, configuration, model version, `transit` for a later encounter, and the `briefing` this attempt was given, since run geometry varies, A10), committed `plans`, `executed` commands, issued `forecasts`, `measurements`, `events`, `outcome` (`AttemptOutcome`: in-progress, lost with cause, recalled, completed), `modelVersionAtEnd`. No truth.
   - **Measurement order is canonical:** Black Box appends measurements in acquisition order (time, then the order the ship step emitted them). The array index is the sequence number; the model sorts by (attempt, index), never re-sorts by value (1G spec §11.3).
   - **Thrust segments for the model** are derived belief-side from `executed` burn and cutoff commands × nominal ratings in `ShipDefinition`, with attitude from recorded attitude measurements, never from `ActuatorOutput` (truth). A `limited` burn is a segment whose commanded level is uncertain; give it a wider prior.
 - `TransitRecord` — the ship's history between encounters (ship time, commanded Δv, camera power cycles, condition changes) from the completed attempt that carried it onward. 3D writes it on arrival; the model ages ship calibrations with it (1G spec §3.7). Every attempt of an encounter repeats the same transit.
 - `Lead`, `LeadStatus` — the chart of leads.
-- `BlackBoxArchive` — everything preserved across recurrence: attempts, procedures, adopted extensions, leads, and `extensionTests` (`ExtensionTestRecord`: every rule test with its training and held-out attempts, evidence, identifiability, fitted values and resulting state; never edited).
+- `BlackBoxArchive` — everything preserved across recurrence: attempts, procedures, adopted extensions, leads, `extensionTests` (`ExtensionTestRecord`: every rule test with its training and held-out attempts, evidence, identifiability, fitted values and resulting state; never edited), and `extensionDecisions` (every adopt and revoke, in order).
 
 ### `encounter.ts` — player-visible briefing
-- `Objective` — kind, short label, optional region / moving target / time window.
-- `EncounterBriefing` — objectives, arrival estimate and configuration, model `priors`, objects visible on arrival.
+- `Objective` — kind (including `depart`), short label, optional region / moving target / time window, a distance `band` about the target, `depart` (leave beyond a distance at a minimum speed, e.g. a slingshot exit, A6) and `maxDeltaV`.
+- `EncounterBriefing` — objectives, arrival estimate and configuration, model `priors`, objects visible on arrival, and the law's shared `referenceRadius` r₀ (P4). Each run's briefing differs with its geometry (A10); attempts record theirs in `AttemptStart.briefing`.
 
 ### `view.ts` — what the console and 3D view receive
 - `ViewSnapshot` — `t`, paused, warp, `world` (`BelievedWorld`), `ship` (`ShipView`: footprint, CoM, `ThrustTick`s), measured `trail`, issued `forecasts`, sensor `coverage` (`SensorSector`s; everything else is unknown), objectives, optional two-attempt `compare` (`AttemptOverlay`s) and `selection`.
