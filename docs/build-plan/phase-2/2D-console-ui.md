@@ -8,6 +8,7 @@ Recursion is a browser-based spacecraft engineering roguelike for NASA Space App
 - `docs/DECISIONS.md`: P5, P6, P8, P9, P10.
 - `docs/build-plan/README.md` § Conventions; `src/contracts/README.md`.
 - Inputs: `docs/design/visual-direction.md`, `src/theme/`, `prototypes/visual/` (1E).
+- Contracts: `ViewSnapshot` (`src/contracts/view.ts`), `BelievedShip`/`EquipmentStatus` (`belief.ts`), `ModelState` (`model.ts`), `Plan`/`Command`/`Procedure` (`commands.ts`), `AttemptRecord` (`attempt.ts`). Fixtures: `viewSnapshot`, `viewSnapshotCompare`, `archive`, `models`, `shipDefinition`, `briefing` from `src/contracts/fixtures/index.ts`. `src/console/` is lint-blocked from truth.
 
 ## Goal
 The console panels for the Gravity range, built against the fixtures in `src/contracts/fixtures/` so they work before the simulation is wired in.

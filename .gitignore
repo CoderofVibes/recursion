@@ -23,3 +23,6 @@ __pycache__/
 .DS_Store
 Thumbs.db
 .idea/
+
+# Local Claude Code preview config (each worktree makes its own; ports differ)
+.claude/launch.json

@@ -15,7 +15,7 @@ Put the **Gravity range** in the owner's hands and answer one question: can a pl
 1. **Game loop:** prepare (safe, paused) → commit plan (forecast issued and frozen) → operate (time warp) → observe → compare → revise → try again.
 2. **Recurrence v0** (P8): loss or voluntary Recall resets all physical state to the arrival condition; Black Box and the model persist.
 3. **Encounter:** two massive bodies at 1B's playable scale, an asteroid field on the same law, a moving gap or rendezvous objective, limited propellant. Arrival calibration at r₀ makes the Newtonian forecast look right at first and drift as the player explores.
-4. Wire 2A truth + 2B ship systems → measurements → 2C model and Black Box → 2D console + 2E view.
+4. Wire 2A truth + 2B ship systems → measurements → 2C model and Black Box → 2D console + 2E view, following `src/contracts/README.md` § One simulation tick. `src/game/` builds `EnvironmentEffects` and `ViewSnapshot`; it is the only code holding truth and belief. `mockEncounter` (`src/contracts/fixtures/truth.ts`) stands in until `src/content/gravity-range/` exists.
 5. Merge Phase 2 branches; resolve contract requests; update `docs/DECISIONS.md` (move proven items to Demonstrated).
 
 ## Done when

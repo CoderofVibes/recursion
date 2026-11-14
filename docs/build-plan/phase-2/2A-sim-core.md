@@ -8,6 +8,7 @@ Recursion is a browser-based spacecraft engineering roguelike for NASA Space App
 - `docs/DECISIONS.md`: P1 planar, P2 deterministic, P4 normalization, P11 truth/belief boundary.
 - `docs/build-plan/README.md` § Conventions; `src/contracts/README.md`.
 - Inputs: `docs/physics/derivation.md`, `tests/vectors/physics.json` (1B); `docs/verification/gmat.md`, `tests/vectors/gmat/` (1D); `docs/handoffs/1B.md`, `1D.md`.
+- Contracts: `src/contracts/truth/world.ts` (`TruthWorld`, `GravityLaw`, `MassiveBody.coupling`), `truth/ship.ts` (`ShipKinematics`, `ActuatorOutput`), `truth/fields.ts` (`EnvironmentField`, `createFieldRegistry`), `truth/events.ts` (`SimEvent`); README § One simulation tick. Fixture to start from: `mockTruthWorld` in `src/contracts/fixtures/truth.ts`. Utilities: `src/lib/` (`v2`, `createFixedStepClock`, `hashState`).
 
 ## Goal
 The truth simulation: deterministic, fast enough for forecasting, and independently checked against the physics and GMAT vectors. Your implementation is the independent check on 1B's mathematics, so derive from the equations, not from 1B's scripts.
@@ -19,7 +20,7 @@ The truth simulation: deterministic, fast enough for forecasting, and independen
 1. Fixed-step integrator per 1B's recommendation (or your reasoned alternative, noted in the handoff).
 2. Gravity with a configurable exponent and normalization (P4 unless 1B recommends otherwise; if they disagree, request a decision rather than choosing silently). The same law acts on the ship, asteroids and the massive bodies.
 3. Massive bodies (fixed or orbiting per 1B's playable scale), asteroids as test particles, the ship as a planar rigid body: position, velocity, attitude, angular rate; forces and torques from thrusters at their mounting points, so an offset centre of mass produces torque.
-4. Takes actuator outputs from the ship-systems step (contract signature) and environment fields from the registry (none yet beyond gravity; keep the hook).
+4. Takes `ActuatorOutput` from the ship-systems step (body-frame forces at application points, pure torque, mass properties) and fields from the `FieldRegistry` (none yet beyond gravity; keep the hook). Report the previous step's non-gravitational acceleration so the game layer can fill `EnvironmentEffects.specificForce`.
 5. Clearance and contact: ship footprint polygon against body and asteroid radii; report minimum clearance and contacts as events.
 6. Snapshot output for the views and an event stream.
 7. Pure functions, no DOM, Web Worker friendly. Target: 10⁵ steps in well under 100 ms.
