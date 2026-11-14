@@ -4,13 +4,13 @@
  * Gravity is built into the simulation. Everything else (Inverse Wells, the Chain Link Fence
  * lattice, later phenomena) is a field: a factory registered by kind, instantiated from a
  * JSON spec in the encounter definition. A field may do any combination of: add acceleration,
- * modify the thrust response, produce radiation exposure, emit a raw sensor signal.
+ * modify the thrust response, produce lattice intensity, emit a raw sensor signal.
  * Field implementations live in src/sim/fields/<kind>.ts.
  */
 
 import type { Vec2 } from '../../lib/vec2.ts';
 import type { FieldId } from '../ids.ts';
-import type { GrayPerSecond, JsonValue, Seconds } from '../units.ts';
+import type { JsonValue, LatticeIntensity, Seconds } from '../units.ts';
 
 /** Data form of a field, stored in encounter definitions and saves. */
 export interface FieldInstanceSpec {
@@ -30,8 +30,11 @@ export interface EnvironmentField {
    * and velocity, return the force actually applied. Identity outside the field.
    */
   modifyThrust?(force: Vec2, position: Vec2, velocity: Vec2, t: Seconds): Vec2;
-  /** Dose rate at a point in the flight plane. */
-  doseRate?(position: Vec2, t: Seconds): GrayPerSecond;
+  /**
+   * Lattice intensity at a point in the flight plane. The game layer samples it over each
+   * equipment item's occupied geometry (never just the ship's centre of mass, 1C).
+   */
+  intensity?(position: Vec2, t: Seconds): LatticeIntensity;
   /** Raw signal sensors could pick up at a position (processed by ship systems). */
   signal?(position: Vec2, t: Seconds): JsonValue;
 }

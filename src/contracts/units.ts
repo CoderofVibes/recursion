@@ -22,9 +22,13 @@ export type Kelvin = number;
 export type Volts = number;
 export type Hertz = number;
 export type Bytes = number;
-/** Absorbed dose, J/kg. */
-export type Gray = number;
-export type GrayPerSecond = number;
+/**
+ * Lattice field intensity, in the fictional "lattice unit" (Chain Link Fence). Not a real
+ * radiation dose: see data/ship-baseline.json radiation.exposureUnit (1C).
+ */
+export type LatticeIntensity = number;
+/** Accumulated lattice exposure: intensity × susceptibility × time, "lattice-unit·s". */
+export type LatticeExposure = number;
 /** Dimensionless value in [0, 1]. */
 export type Fraction = number;
 

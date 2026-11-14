@@ -11,7 +11,15 @@
 
 import type { Vec2 } from '../lib/vec2.ts';
 import type { BusId, ConfigurationId, EquipmentId, TankId, ThermalNodeId } from './ids.ts';
-import type { Kelvin, KilogramMeters2, Kilograms, Seconds, Volts, Watts } from './units.ts';
+import type {
+  JsonValue,
+  Kelvin,
+  KilogramMeters2,
+  Kilograms,
+  Seconds,
+  Volts,
+  Watts,
+} from './units.ts';
 
 export type EquipmentKind =
   | 'power-source'
@@ -125,6 +133,12 @@ export interface ShipDefinition {
   readonly thermalNodes: readonly ThermalNodeSpec[];
   readonly configurations: readonly ConfigurationSpec[];
   readonly defaultConfiguration: ConfigurationId;
+  /**
+   * Full ship-systems detail from the 1C baseline (per-mode power and heat, buses, thermal
+   * loops, radiators, reactants, recorder, radiation profiles...). For src/ship only; other
+   * code uses the typed fields above.
+   */
+  readonly systems?: Readonly<Record<string, JsonValue>>;
 }
 
 /** Mass properties of the ship as it is right now (configuration and propellant included). */

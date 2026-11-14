@@ -1,0 +1,3143 @@
+{
+  "version": 1,
+  "status": "proposal-for-owner",
+  "units": "SI",
+  "label": "ASSUMED",
+  "provenance": {
+    "inheritance": "Every numeric leaf, including array elements and metadata, inherits the nearest ancestor label and source, unless its object overrides them. ASSUMED is the root default. mechanismSources justify mechanisms only, never a hardware rating.",
+    "derived": "Calculated values retain ASSUMED when any sizing input is assumed. Validation demonstrates arithmetic only, never playability or flight qualification.",
+    "unitConventions": "mass kg; position/footprints m; intrinsicInertia kg m^2; power/heat/generatedPower W; energy J; time/delay s; temperature K; angle rad; thrust N; minimumImpulse N s; Isp s; dataRate byte/s; storage byte; sampleRate Hz; thermalCapacity J/K; conductance W/K; exposure fictional lattice-unit s. Counts, fractions and schema version are dimensionless. Suffixes override these conventions."
+  },
+  "constants": {
+    "g0": {
+      "value": 9.80665,
+      "label": "ASSUMED",
+      "unit": "m/s^2",
+      "note": "Conventional standard gravity adopted for Isp; never substitute local gravity."
+    },
+    "sigma": {
+      "value": 5.670374419e-08,
+      "label": "ESTABLISHED",
+      "source": "S23",
+      "unit": "W/(m^2 K^4)",
+      "locator": "NIST SP959 p1"
+    }
+  },
+  "ship": {
+    "name": "Recursion return vehicle",
+    "crew": 4,
+    "dryMass": 24000,
+    "initialWetMass": 30374,
+    "initialConfiguration": "radiators",
+    "bodyFrame": "x forward, y left; origin fixed to structure; positive yaw counterclockwise; positions are not COM-relative",
+    "dryMassDefinition": "Sum equipment, including crew, retained cabin consumables and tank dry hardware. Excludes propellant and fuel-cell reactants/product. Waste stays aboard; no silent mass loss.",
+    "footprints": {
+      "stowed": [
+        [
+          -8,
+          -2.5
+        ],
+        [
+          8,
+          -2.5
+        ],
+        [
+          8,
+          2.5
+        ],
+        [
+          -8,
+          2.5
+        ]
+      ],
+      "radiators": [
+        [
+          -8,
+          -2.5
+        ],
+        [
+          -4,
+          -10
+        ],
+        [
+          1,
+          -10
+        ],
+        [
+          8,
+          -2.5
+        ],
+        [
+          8,
+          2.5
+        ],
+        [
+          1,
+          10
+        ],
+        [
+          -4,
+          10
+        ],
+        [
+          -8,
+          2.5
+        ]
+      ],
+      "solar": [
+        [
+          -8,
+          -2.5
+        ],
+        [
+          0,
+          -12
+        ],
+        [
+          6,
+          -12
+        ],
+        [
+          8,
+          -2.5
+        ],
+        [
+          8,
+          2.5
+        ],
+        [
+          6,
+          12
+        ],
+        [
+          0,
+          12
+        ],
+        [
+          -8,
+          2.5
+        ]
+      ],
+      "allDeployed": [
+        [
+          -8,
+          -2.5
+        ],
+        [
+          -4,
+          -10
+        ],
+        [
+          0,
+          -12
+        ],
+        [
+          6,
+          -12
+        ],
+        [
+          8,
+          -2.5
+        ],
+        [
+          8,
+          2.5
+        ],
+        [
+          6,
+          12
+        ],
+        [
+          0,
+          12
+        ],
+        [
+          -4,
+          10
+        ],
+        [
+          -8,
+          2.5
+        ]
+      ]
+    },
+    "footprintPolicy": "Conservative occupied envelopes, not emitting areas. For asymmetric or intermediate deployment use convex hull of hull and each appendage polygon; continuous swept envelope during motion. Do not interpolate only endpoint COMs."
+  },
+  "equipment": [
+    {
+      "id": "habitat-structure",
+      "subsystem": "structure",
+      "mass": 17438,
+      "position": [
+        0,
+        0
+      ],
+      "intrinsicInertia": 180000,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 250,
+        "tempMax": 340
+      },
+      "thermalNode": "cabin",
+      "bus": null,
+      "initialMode": "off",
+      "redundancy": "None",
+      "failureProtection": "Pressure boundary/structure not repaired automatically; mass residual includes docking, plumbing, shielding and contingency hardware.",
+      "radiationProfile": "passive",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S21"
+      ]
+    },
+    {
+      "id": "crew",
+      "subsystem": "crew",
+      "mass": 320,
+      "position": [
+        3,
+        0
+      ],
+      "intrinsicInertia": 320,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "occupied": {
+          "power": 0,
+          "heat": 400,
+          "dataRate": 0,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 283,
+        "tempMax": 308
+      },
+      "thermalNode": "cabin",
+      "bus": null,
+      "initialMode": "occupied",
+      "redundancy": "None",
+      "failureProtection": "Metabolic heat persists with power off; limits are cabin comfort/safety modelling assumptions, not hardware cutoffs.",
+      "radiationProfile": "passive",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S05"
+      ]
+    },
+    {
+      "id": "cabin-stores",
+      "subsystem": "life-support",
+      "mass": 800,
+      "position": [
+        3,
+        0
+      ],
+      "intrinsicInertia": 800,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 273,
+        "tempMax": 313
+      },
+      "thermalNode": "cabin",
+      "bus": null,
+      "initialMode": "off",
+      "redundancy": "None",
+      "failureProtection": "Retain waste mass; finite oxygen/food/water/sorbent subsets, no automatic refill.",
+      "radiationProfile": "passive",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "DD02"
+      ]
+    },
+    {
+      "id": "main-tank",
+      "subsystem": "tank",
+      "mass": 800,
+      "position": [
+        -2,
+        0
+      ],
+      "intrinsicInertia": 800,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 263,
+        "tempMax": 323
+      },
+      "thermalNode": "service",
+      "bus": null,
+      "initialMode": "off",
+      "redundancy": "None",
+      "failureProtection": "Loss of function; isolate failed branch; deliberate restart only if recoverable.",
+      "radiationProfile": "passive",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S03",
+        "S01"
+      ]
+    },
+    {
+      "id": "rcs-tanks",
+      "subsystem": "tank",
+      "mass": 100,
+      "position": [
+        -1,
+        0
+      ],
+      "intrinsicInertia": 100,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 263,
+        "tempMax": 323
+      },
+      "thermalNode": "service",
+      "bus": null,
+      "initialMode": "off",
+      "redundancy": "None",
+      "failureProtection": "Loss of function; isolate failed branch; deliberate restart only if recoverable.",
+      "radiationProfile": "passive",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S03",
+        "S01"
+      ]
+    },
+    {
+      "id": "xenon-tank",
+      "subsystem": "tank",
+      "mass": 40,
+      "position": [
+        -3,
+        0
+      ],
+      "intrinsicInertia": 40,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 263,
+        "tempMax": 323
+      },
+      "thermalNode": "service",
+      "bus": null,
+      "initialMode": "off",
+      "redundancy": "None",
+      "failureProtection": "Loss of function; isolate failed branch; deliberate restart only if recoverable.",
+      "radiationProfile": "passive",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S03",
+        "S01"
+      ]
+    },
+    {
+      "id": "reactant-tanks",
+      "subsystem": "tank",
+      "mass": 80,
+      "position": [
+        1,
+        0
+      ],
+      "intrinsicInertia": 80,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 263,
+        "tempMax": 323
+      },
+      "thermalNode": "service",
+      "bus": null,
+      "initialMode": "off",
+      "redundancy": "None",
+      "failureProtection": "Loss of function; isolate failed branch; deliberate restart only if recoverable.",
+      "radiationProfile": "passive",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S03",
+        "S01"
+      ]
+    },
+    {
+      "id": "product-water-tank",
+      "subsystem": "tank",
+      "mass": 20,
+      "position": [
+        2,
+        0
+      ],
+      "intrinsicInertia": 20,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 263,
+        "tempMax": 323
+      },
+      "thermalNode": "service",
+      "bus": null,
+      "initialMode": "off",
+      "redundancy": "None",
+      "failureProtection": "Loss of function; isolate failed branch; deliberate restart only if recoverable.",
+      "radiationProfile": "passive",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S03",
+        "S01"
+      ]
+    },
+    {
+      "id": "solar-left",
+      "subsystem": "generation",
+      "mass": 300,
+      "position": [
+        3,
+        2
+      ],
+      "intrinsicInertia": 700,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "stowed": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "deployed": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 12000
+        },
+        "deploying": {
+          "power": 100,
+          "heat": 100,
+          "dataRate": 0,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 173,
+        "tempMax": 373
+      },
+      "thermalNode": "external-loop",
+      "bus": "main-a",
+      "initialMode": "stowed",
+      "redundancy": "Other wing; shared illumination",
+      "failureProtection": "Damaged cells derate; motor failure freezes deployment. Solar thermal balance goes to exterior, not cabin loop; generatedPower is only a rated ceiling.",
+      "radiationProfile": "standard",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S01",
+        "S21"
+      ]
+    },
+    {
+      "id": "radiator-left",
+      "subsystem": "thermal",
+      "mass": 250,
+      "position": [
+        -2,
+        2
+      ],
+      "intrinsicInertia": 500,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "hold": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "moving": {
+          "power": 80,
+          "heat": 80,
+          "dataRate": 0,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 200,
+        "tempMax": 350
+      },
+      "thermalNode": "external-loop",
+      "bus": "main-a",
+      "initialMode": "hold",
+      "redundancy": "Other branch; shared external fluid",
+      "failureProtection": "Leak isolates branch; motor jam fixes current geometry; no instant stow after loss of power.",
+      "radiationProfile": "standard",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S02",
+        "S11"
+      ]
+    },
+    {
+      "id": "solar-right",
+      "subsystem": "generation",
+      "mass": 300,
+      "position": [
+        3,
+        -2
+      ],
+      "intrinsicInertia": 700,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "stowed": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "deployed": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 12000
+        },
+        "deploying": {
+          "power": 100,
+          "heat": 100,
+          "dataRate": 0,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 173,
+        "tempMax": 373
+      },
+      "thermalNode": "external-loop",
+      "bus": "main-b",
+      "initialMode": "stowed",
+      "redundancy": "Other wing; shared illumination",
+      "failureProtection": "Damaged cells derate; motor failure freezes deployment. Solar thermal balance goes to exterior, not cabin loop; generatedPower is only a rated ceiling.",
+      "radiationProfile": "standard",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S01",
+        "S21"
+      ]
+    },
+    {
+      "id": "radiator-right",
+      "subsystem": "thermal",
+      "mass": 250,
+      "position": [
+        -2,
+        -2
+      ],
+      "intrinsicInertia": 500,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "hold": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "moving": {
+          "power": 80,
+          "heat": 80,
+          "dataRate": 0,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 200,
+        "tempMax": 350
+      },
+      "thermalNode": "external-loop",
+      "bus": "main-b",
+      "initialMode": "hold",
+      "redundancy": "Other branch; shared external fluid",
+      "failureProtection": "Leak isolates branch; motor jam fixes current geometry; no instant stow after loss of power.",
+      "radiationProfile": "standard",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S02",
+        "S11"
+      ]
+    },
+    {
+      "id": "fuel-cell-a",
+      "subsystem": "generation",
+      "mass": 180,
+      "position": [
+        -1,
+        1
+      ],
+      "intrinsicInertia": 180,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "following": {
+          "power": 0,
+          "heat": 6000,
+          "dataRate": 0,
+          "generatedPower": 6000
+        }
+      },
+      "limits": {
+        "tempMin": 278,
+        "tempMax": 333
+      },
+      "thermalNode": "service",
+      "bus": "main-a",
+      "initialMode": "following",
+      "redundancy": "Other stack; shared reactants/cooling",
+      "failureProtection": "Reactant exhaustion/overtemp stops generation; heat and generatedPower scale with actual dispatch.",
+      "radiationProfile": "standard",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S01"
+      ]
+    },
+    {
+      "id": "battery-a",
+      "subsystem": "storage",
+      "mass": 200,
+      "position": [
+        1,
+        1
+      ],
+      "intrinsicInertia": 200,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "idle": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "discharge": {
+          "power": 0,
+          "heat": 210.52631578947344,
+          "dataRate": 0,
+          "generatedPower": 4000
+        },
+        "charge": {
+          "power": 2000,
+          "heat": 100,
+          "dataRate": 0,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 263,
+        "tempMax": 318
+      },
+      "thermalNode": "service",
+      "bus": "main-a",
+      "initialMode": "idle",
+      "redundancy": "Other pack; independent contactor",
+      "failureProtection": "Temperature/SOC/current clamps; deliberate reset after trip; irreversible capacity loss persists.",
+      "radiationProfile": "power-switch",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S01"
+      ]
+    },
+    {
+      "id": "pdu-a",
+      "subsystem": "distribution",
+      "mass": 70,
+      "position": [
+        0,
+        1
+      ],
+      "intrinsicInertia": 70,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "active": {
+          "power": 30,
+          "heat": 30,
+          "dataRate": 0,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 263,
+        "tempMax": 333
+      },
+      "thermalNode": "service",
+      "bus": "main-a",
+      "initialMode": "active",
+      "redundancy": "Other isolated PDU",
+      "failureProtection": "RPC isolates branch; failed source contactor can remove one main bus. Essential converter loss is dynamic heat added here.",
+      "radiationProfile": "power-switch",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S17",
+        "S06"
+      ]
+    },
+    {
+      "id": "eclss-a",
+      "subsystem": "life-support",
+      "mass": 450,
+      "position": [
+        4,
+        1
+      ],
+      "intrinsicInertia": 450,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "active": {
+          "power": 1800,
+          "heat": 1800,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "standby": {
+          "power": 80,
+          "heat": 80,
+          "dataRate": 0,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 278,
+        "tempMax": 313
+      },
+      "thermalNode": "cabin",
+      "bus": "essential",
+      "initialMode": "active",
+      "redundancy": "Other air train; common cabin and consumables",
+      "failureProtection": "Last healthy active air train is not shed. Supply/cooling failure still causes hazard. Spare selection deliberate.",
+      "radiationProfile": "hardened",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S05",
+        "S05P",
+        "DD02"
+      ]
+    },
+    {
+      "id": "internal-pump-a",
+      "subsystem": "thermal",
+      "mass": 30,
+      "position": [
+        2,
+        1
+      ],
+      "intrinsicInertia": 30,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "active": {
+          "power": 120,
+          "heat": 120,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "standby": {
+          "power": 5,
+          "heat": 5,
+          "dataRate": 0,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 278,
+        "tempMax": 323
+      },
+      "thermalNode": "cabin",
+      "bus": "essential",
+      "initialMode": "active",
+      "redundancy": "Spare pump; same water loop",
+      "failureProtection": "Stall removes forced conductance; selected spare restores flow only if no leak/freeze.",
+      "radiationProfile": "standard",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S09",
+        "S10"
+      ]
+    },
+    {
+      "id": "external-pump-a",
+      "subsystem": "thermal",
+      "mass": 40,
+      "position": [
+        -2,
+        1
+      ],
+      "intrinsicInertia": 40,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "active": {
+          "power": 180,
+          "heat": 180,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "standby": {
+          "power": 5,
+          "heat": 5,
+          "dataRate": 0,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 200,
+        "tempMax": 333
+      },
+      "thermalNode": "service",
+      "bus": "essential",
+      "initialMode": "active",
+      "redundancy": "Spare pump; same ammonia loop",
+      "failureProtection": "Stall halts forced transfer/rejection; shared leak defeats both.",
+      "radiationProfile": "standard",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S09"
+      ]
+    },
+    {
+      "id": "flight-cpu-a",
+      "subsystem": "avionics",
+      "mass": 25,
+      "position": [
+        2,
+        0.5
+      ],
+      "intrinsicInertia": 25,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "active": {
+          "power": 120,
+          "heat": 120,
+          "dataRate": 4000,
+          "generatedPower": 0
+        },
+        "standby": {
+          "power": 20,
+          "heat": 20,
+          "dataRate": 100,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 263,
+        "tempMax": 323
+      },
+      "thermalNode": "cabin",
+      "bus": "essential",
+      "initialMode": "active",
+      "redundancy": "Other CPU; common software assumptions",
+      "failureProtection": "Watchdog/reset can recover logic; no automatic removal of dose or shared-model errors.",
+      "radiationProfile": "hardened",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S20",
+        "DD10"
+      ]
+    },
+    {
+      "id": "imu-a",
+      "subsystem": "sensing",
+      "mass": 8,
+      "position": [
+        0,
+        0.1
+      ],
+      "intrinsicInertia": 2,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "active": {
+          "power": 15,
+          "heat": 15,
+          "dataRate": 2400,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 273,
+        "tempMax": 313
+      },
+      "thermalNode": "cabin",
+      "bus": "essential",
+      "initialMode": "active",
+      "redundancy": "Other IMU; independent bias",
+      "failureProtection": "Invalid samples flagged; no gravity truth readout.",
+      "radiationProfile": "hardened",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S04",
+        "DD10"
+      ]
+    },
+    {
+      "id": "star-tracker-a",
+      "subsystem": "sensing",
+      "mass": 8,
+      "position": [
+        6,
+        1
+      ],
+      "intrinsicInertia": 3,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "active": {
+          "power": 20,
+          "heat": 20,
+          "dataRate": 128,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 263,
+        "tempMax": 313
+      },
+      "thermalNode": "service",
+      "bus": "essential",
+      "initialMode": "active",
+      "redundancy": "Other head; shared sky/catalog",
+      "failureProtection": "Lost lock invalidates attitude sample; does not reveal position.",
+      "radiationProfile": "standard",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S04"
+      ]
+    },
+    {
+      "id": "fuel-cell-b",
+      "subsystem": "generation",
+      "mass": 180,
+      "position": [
+        -1,
+        -1
+      ],
+      "intrinsicInertia": 180,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "following": {
+          "power": 0,
+          "heat": 6000,
+          "dataRate": 0,
+          "generatedPower": 6000
+        }
+      },
+      "limits": {
+        "tempMin": 278,
+        "tempMax": 333
+      },
+      "thermalNode": "service",
+      "bus": "main-b",
+      "initialMode": "following",
+      "redundancy": "Other stack; shared reactants/cooling",
+      "failureProtection": "Reactant exhaustion/overtemp stops generation; heat and generatedPower scale with actual dispatch.",
+      "radiationProfile": "standard",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S01"
+      ]
+    },
+    {
+      "id": "battery-b",
+      "subsystem": "storage",
+      "mass": 200,
+      "position": [
+        1,
+        -1
+      ],
+      "intrinsicInertia": 200,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "idle": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "discharge": {
+          "power": 0,
+          "heat": 210.52631578947344,
+          "dataRate": 0,
+          "generatedPower": 4000
+        },
+        "charge": {
+          "power": 2000,
+          "heat": 100,
+          "dataRate": 0,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 263,
+        "tempMax": 318
+      },
+      "thermalNode": "service",
+      "bus": "main-b",
+      "initialMode": "idle",
+      "redundancy": "Other pack; independent contactor",
+      "failureProtection": "Temperature/SOC/current clamps; deliberate reset after trip; irreversible capacity loss persists.",
+      "radiationProfile": "power-switch",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S01"
+      ]
+    },
+    {
+      "id": "pdu-b",
+      "subsystem": "distribution",
+      "mass": 70,
+      "position": [
+        0,
+        -1
+      ],
+      "intrinsicInertia": 70,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "active": {
+          "power": 30,
+          "heat": 30,
+          "dataRate": 0,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 263,
+        "tempMax": 333
+      },
+      "thermalNode": "service",
+      "bus": "main-b",
+      "initialMode": "active",
+      "redundancy": "Other isolated PDU",
+      "failureProtection": "RPC isolates branch; failed source contactor can remove one main bus. Essential converter loss is dynamic heat added here.",
+      "radiationProfile": "power-switch",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S17",
+        "S06"
+      ]
+    },
+    {
+      "id": "eclss-b",
+      "subsystem": "life-support",
+      "mass": 450,
+      "position": [
+        4,
+        -1
+      ],
+      "intrinsicInertia": 450,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "active": {
+          "power": 1800,
+          "heat": 1800,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "standby": {
+          "power": 80,
+          "heat": 80,
+          "dataRate": 0,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 278,
+        "tempMax": 313
+      },
+      "thermalNode": "cabin",
+      "bus": "essential",
+      "initialMode": "standby",
+      "redundancy": "Other air train; common cabin and consumables",
+      "failureProtection": "Last healthy active air train is not shed. Supply/cooling failure still causes hazard. Spare selection deliberate.",
+      "radiationProfile": "hardened",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S05",
+        "S05P",
+        "DD02"
+      ]
+    },
+    {
+      "id": "internal-pump-b",
+      "subsystem": "thermal",
+      "mass": 30,
+      "position": [
+        2,
+        -1
+      ],
+      "intrinsicInertia": 30,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "active": {
+          "power": 120,
+          "heat": 120,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "standby": {
+          "power": 5,
+          "heat": 5,
+          "dataRate": 0,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 278,
+        "tempMax": 323
+      },
+      "thermalNode": "cabin",
+      "bus": "essential",
+      "initialMode": "standby",
+      "redundancy": "Spare pump; same water loop",
+      "failureProtection": "Stall removes forced conductance; selected spare restores flow only if no leak/freeze.",
+      "radiationProfile": "standard",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S09",
+        "S10"
+      ]
+    },
+    {
+      "id": "external-pump-b",
+      "subsystem": "thermal",
+      "mass": 40,
+      "position": [
+        -2,
+        -1
+      ],
+      "intrinsicInertia": 40,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "active": {
+          "power": 180,
+          "heat": 180,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "standby": {
+          "power": 5,
+          "heat": 5,
+          "dataRate": 0,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 200,
+        "tempMax": 333
+      },
+      "thermalNode": "service",
+      "bus": "essential",
+      "initialMode": "standby",
+      "redundancy": "Spare pump; same ammonia loop",
+      "failureProtection": "Stall halts forced transfer/rejection; shared leak defeats both.",
+      "radiationProfile": "standard",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S09"
+      ]
+    },
+    {
+      "id": "flight-cpu-b",
+      "subsystem": "avionics",
+      "mass": 25,
+      "position": [
+        2,
+        -0.5
+      ],
+      "intrinsicInertia": 25,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "active": {
+          "power": 120,
+          "heat": 120,
+          "dataRate": 4000,
+          "generatedPower": 0
+        },
+        "standby": {
+          "power": 20,
+          "heat": 20,
+          "dataRate": 100,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 263,
+        "tempMax": 323
+      },
+      "thermalNode": "cabin",
+      "bus": "essential",
+      "initialMode": "standby",
+      "redundancy": "Other CPU; common software assumptions",
+      "failureProtection": "Watchdog/reset can recover logic; no automatic removal of dose or shared-model errors.",
+      "radiationProfile": "hardened",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S20",
+        "DD10"
+      ]
+    },
+    {
+      "id": "imu-b",
+      "subsystem": "sensing",
+      "mass": 8,
+      "position": [
+        0,
+        -0.1
+      ],
+      "intrinsicInertia": 2,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "active": {
+          "power": 15,
+          "heat": 15,
+          "dataRate": 2400,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 273,
+        "tempMax": 313
+      },
+      "thermalNode": "cabin",
+      "bus": "essential",
+      "initialMode": "active",
+      "redundancy": "Other IMU; independent bias",
+      "failureProtection": "Invalid samples flagged; no gravity truth readout.",
+      "radiationProfile": "hardened",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S04",
+        "DD10"
+      ]
+    },
+    {
+      "id": "star-tracker-b",
+      "subsystem": "sensing",
+      "mass": 8,
+      "position": [
+        6,
+        -1
+      ],
+      "intrinsicInertia": 3,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "active": {
+          "power": 20,
+          "heat": 20,
+          "dataRate": 128,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 263,
+        "tempMax": 313
+      },
+      "thermalNode": "service",
+      "bus": "essential",
+      "initialMode": "active",
+      "redundancy": "Other head; shared sky/catalog",
+      "failureProtection": "Lost lock invalidates attitude sample; does not reveal position.",
+      "radiationProfile": "standard",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S04"
+      ]
+    },
+    {
+      "id": "interface-hx",
+      "subsystem": "thermal",
+      "mass": 150,
+      "position": [
+        0,
+        0
+      ],
+      "intrinsicInertia": 150,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "regulated": {
+          "power": 20,
+          "heat": 20,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "antifreeze": {
+          "power": 220,
+          "heat": 220,
+          "dataRate": 0,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 278,
+        "tempMax": 323
+      },
+      "thermalNode": "hx-water",
+      "bus": "essential",
+      "initialMode": "regulated",
+      "redundancy": "Bypass/heater protection, single boundary",
+      "failureProtection": "Cold soak with stagnant water can freeze/rupture; protect water side even if ammonia liquid.",
+      "radiationProfile": "standard",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S10"
+      ]
+    },
+    {
+      "id": "main-engine",
+      "subsystem": "propulsion",
+      "mass": 600,
+      "position": [
+        -7,
+        0.08
+      ],
+      "intrinsicInertia": 300,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "ready": {
+          "power": 30,
+          "heat": 30,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "firing": {
+          "power": 180,
+          "heat": 4180,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "heater": {
+          "power": 100,
+          "heat": 100,
+          "dataRate": 0,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 278,
+        "tempMax": 343
+      },
+      "thermalNode": "service",
+      "bus": "essential",
+      "initialMode": "ready",
+      "redundancy": "No full main-engine spare; RCS limited fallback",
+      "failureProtection": "Overtemp/valve fault inhibits firing; gimbal jam leaves fixed measured offset. Limits describe assembly/cold plate, not combustion gas.",
+      "radiationProfile": "standard",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S03"
+      ]
+    },
+    {
+      "id": "rcs-forward-left",
+      "subsystem": "propulsion",
+      "mass": 60,
+      "position": [
+        5,
+        2
+      ],
+      "intrinsicInertia": 20,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "ready": {
+          "power": 15,
+          "heat": 15,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "heater": {
+          "power": 80,
+          "heat": 80,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "fire-one": {
+          "power": 40,
+          "heat": 140,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "fire-two": {
+          "power": 65,
+          "heat": 265,
+          "dataRate": 0,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 278,
+        "tempMax": 343
+      },
+      "thermalNode": "service",
+      "bus": "essential",
+      "initialMode": "ready",
+      "redundancy": "A/B duplicated jets per pod; shared tanks/pod",
+      "failureProtection": "Cold spare must warm before firing; failed jet remains unavailable; controller trip isolates pod.",
+      "radiationProfile": "standard",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S03",
+        "S15",
+        "DD09"
+      ]
+    },
+    {
+      "id": "rcs-forward-right",
+      "subsystem": "propulsion",
+      "mass": 60,
+      "position": [
+        5,
+        -2
+      ],
+      "intrinsicInertia": 20,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "ready": {
+          "power": 15,
+          "heat": 15,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "heater": {
+          "power": 80,
+          "heat": 80,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "fire-one": {
+          "power": 40,
+          "heat": 140,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "fire-two": {
+          "power": 65,
+          "heat": 265,
+          "dataRate": 0,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 278,
+        "tempMax": 343
+      },
+      "thermalNode": "service",
+      "bus": "essential",
+      "initialMode": "ready",
+      "redundancy": "A/B duplicated jets per pod; shared tanks/pod",
+      "failureProtection": "Cold spare must warm before firing; failed jet remains unavailable; controller trip isolates pod.",
+      "radiationProfile": "standard",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S03",
+        "S15",
+        "DD09"
+      ]
+    },
+    {
+      "id": "rcs-aft-left",
+      "subsystem": "propulsion",
+      "mass": 60,
+      "position": [
+        -5,
+        2
+      ],
+      "intrinsicInertia": 20,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "ready": {
+          "power": 15,
+          "heat": 15,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "heater": {
+          "power": 80,
+          "heat": 80,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "fire-one": {
+          "power": 40,
+          "heat": 140,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "fire-two": {
+          "power": 65,
+          "heat": 265,
+          "dataRate": 0,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 278,
+        "tempMax": 343
+      },
+      "thermalNode": "service",
+      "bus": "essential",
+      "initialMode": "ready",
+      "redundancy": "A/B duplicated jets per pod; shared tanks/pod",
+      "failureProtection": "Cold spare must warm before firing; failed jet remains unavailable; controller trip isolates pod.",
+      "radiationProfile": "standard",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S03",
+        "S15",
+        "DD09"
+      ]
+    },
+    {
+      "id": "rcs-aft-right",
+      "subsystem": "propulsion",
+      "mass": 60,
+      "position": [
+        -5,
+        -2
+      ],
+      "intrinsicInertia": 20,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "ready": {
+          "power": 15,
+          "heat": 15,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "heater": {
+          "power": 80,
+          "heat": 80,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "fire-one": {
+          "power": 40,
+          "heat": 140,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "fire-two": {
+          "power": 65,
+          "heat": 265,
+          "dataRate": 0,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 278,
+        "tempMax": 343
+      },
+      "thermalNode": "service",
+      "bus": "essential",
+      "initialMode": "ready",
+      "redundancy": "A/B duplicated jets per pod; shared tanks/pod",
+      "failureProtection": "Cold spare must warm before firing; failed jet remains unavailable; controller trip isolates pod.",
+      "radiationProfile": "standard",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S03",
+        "S15",
+        "DD09"
+      ]
+    },
+    {
+      "id": "ion-drive",
+      "subsystem": "propulsion",
+      "mass": 100,
+      "position": [
+        -7,
+        0
+      ],
+      "intrinsicInertia": 50,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "idle": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "firing": {
+          "power": 7220,
+          "heat": 2300,
+          "dataRate": 0,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 273,
+        "tempMax": 333
+      },
+      "thermalNode": "service",
+      "bus": "payload",
+      "initialMode": "idle",
+      "redundancy": "No spare; optional",
+      "failureProtection": "High-voltage trip disables unit; genuine NEXT-scale thrust only.",
+      "radiationProfile": "standard",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S08"
+      ]
+    },
+    {
+      "id": "camera",
+      "subsystem": "sensing",
+      "mass": 30,
+      "position": [
+        7,
+        0
+      ],
+      "intrinsicInertia": 10,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "survey": {
+          "power": 60,
+          "heat": 60,
+          "dataRate": 100000,
+          "generatedPower": 0
+        },
+        "track": {
+          "power": 120,
+          "heat": 120,
+          "dataRate": 500000,
+          "generatedPower": 0
+        },
+        "detail": {
+          "power": 200,
+          "heat": 200,
+          "dataRate": 1000000,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 273,
+        "tempMax": 313
+      },
+      "thermalNode": "service",
+      "bus": "payload",
+      "initialMode": "track",
+      "redundancy": "One camera; star heads do not replace range imagery",
+      "failureProtection": "Smear, darkness, thermal state and occlusion cause invalid observations; power cannot repair optics.",
+      "radiationProfile": "standard",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "DD05",
+        "DD07"
+      ]
+    },
+    {
+      "id": "science-processor",
+      "subsystem": "processing",
+      "mass": 30,
+      "position": [
+        1,
+        0.5
+      ],
+      "intrinsicInertia": 15,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "idle": {
+          "power": 40,
+          "heat": 40,
+          "dataRate": 1000,
+          "generatedPower": 0
+        },
+        "science": {
+          "power": 350,
+          "heat": 350,
+          "dataRate": 100000,
+          "generatedPower": 0
+        },
+        "lattice": {
+          "power": 1000,
+          "heat": 1000,
+          "dataRate": 200000,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 263,
+        "tempMax": 323
+      },
+      "thermalNode": "service",
+      "bus": "payload",
+      "initialMode": "idle",
+      "redundancy": "Flight CPU retains essential control",
+      "failureProtection": "Throttle on heat/power; errors invalidate products. Lattice software itself is fictional.",
+      "radiationProfile": "standard",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S20"
+      ]
+    },
+    {
+      "id": "black-box",
+      "subsystem": "data",
+      "mass": 20,
+      "position": [
+        2,
+        0
+      ],
+      "intrinsicInertia": 10,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "minimum": {
+          "power": 15,
+          "heat": 15,
+          "dataRate": 4096,
+          "generatedPower": 0
+        },
+        "normal": {
+          "power": 35,
+          "heat": 35,
+          "dataRate": 40960,
+          "generatedPower": 0
+        },
+        "high": {
+          "power": 100,
+          "heat": 100,
+          "dataRate": 204800,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 263,
+        "tempMax": 323
+      },
+      "thermalNode": "cabin",
+      "bus": "essential",
+      "initialMode": "normal",
+      "redundancy": "ECC plus protected metadata partition; one recorder",
+      "failureProtection": "ECC/scrub and reset restore logic only; saturation stops optional acquisition; missing samples remain missing.",
+      "radiationProfile": "hardened",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S20"
+      ]
+    },
+    {
+      "id": "comms",
+      "subsystem": "communications",
+      "mass": 60,
+      "position": [
+        6,
+        0
+      ],
+      "intrinsicInertia": 30,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "listen": {
+          "power": 20,
+          "heat": 20,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "transmit": {
+          "power": 250,
+          "heat": 170,
+          "dataRate": 125000,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 263,
+        "tempMax": 333
+      },
+      "thermalNode": "service",
+      "bus": "payload",
+      "initialMode": "listen",
+      "redundancy": "Low-gain fallback included in assembly",
+      "failureProtection": "No receiver means zero achieved rate; transmit heat excludes 80 W radiated RF.",
+      "radiationProfile": "standard",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S07",
+        "S22"
+      ]
+    },
+    {
+      "id": "console",
+      "subsystem": "avionics",
+      "mass": 50,
+      "position": [
+        4,
+        0
+      ],
+      "intrinsicInertia": 25,
+      "modes": {
+        "off": {
+          "power": 0,
+          "heat": 0,
+          "dataRate": 0,
+          "generatedPower": 0
+        },
+        "active": {
+          "power": 100,
+          "heat": 100,
+          "dataRate": 1000,
+          "generatedPower": 0
+        },
+        "dim": {
+          "power": 40,
+          "heat": 40,
+          "dataRate": 1000,
+          "generatedPower": 0
+        }
+      },
+      "limits": {
+        "tempMin": 273,
+        "tempMax": 313
+      },
+      "thermalNode": "cabin",
+      "bus": "essential",
+      "initialMode": "active",
+      "redundancy": "Local emergency controls abstracted",
+      "failureProtection": "Loss prevents normal UI commands; not a ship truth oracle.",
+      "radiationProfile": "standard",
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S20"
+      ]
+    }
+  ],
+  "propellant": [
+    {
+      "id": "main-propellant",
+      "initialMass": 6000,
+      "capacity": 6000,
+      "position": [
+        -2,
+        0
+      ],
+      "intrinsicInertiaPerKg": 1,
+      "Isp": 320,
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S03",
+        "S12"
+      ],
+      "feedPolicy": "Main mixture locked; RCS defaults balanced draw from both tanks, isolation permits one-sided draw; xenon separate. Clamp impulse to available mass."
+    },
+    {
+      "id": "rcs-left",
+      "initialMass": 150,
+      "capacity": 150,
+      "position": [
+        -1,
+        1
+      ],
+      "intrinsicInertiaPerKg": 1,
+      "Isp": 220,
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S03",
+        "S12"
+      ],
+      "feedPolicy": "Main mixture locked; RCS defaults balanced draw from both tanks, isolation permits one-sided draw; xenon separate. Clamp impulse to available mass."
+    },
+    {
+      "id": "rcs-right",
+      "initialMass": 150,
+      "capacity": 150,
+      "position": [
+        -1,
+        -1
+      ],
+      "intrinsicInertiaPerKg": 1,
+      "Isp": 220,
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S03",
+        "S12"
+      ],
+      "feedPolicy": "Main mixture locked; RCS defaults balanced draw from both tanks, isolation permits one-sided draw; xenon separate. Clamp impulse to available mass."
+    },
+    {
+      "id": "xenon",
+      "initialMass": 20,
+      "capacity": 20,
+      "position": [
+        -3,
+        0
+      ],
+      "intrinsicInertiaPerKg": 1,
+      "Isp": 4190,
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S03",
+        "S12"
+      ],
+      "feedPolicy": "Main mixture locked; RCS defaults balanced draw from both tanks, isolation permits one-sided draw; xenon separate. Clamp impulse to available mass."
+    }
+  ],
+  "reactants": [
+    {
+      "id": "fuel-cell-hydrogen",
+      "initialMass": 6,
+      "capacity": 6,
+      "position": [
+        1,
+        0
+      ],
+      "intrinsicInertiaPerKg": 1,
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S01"
+      ]
+    },
+    {
+      "id": "fuel-cell-oxygen",
+      "initialMass": 48,
+      "capacity": 48,
+      "position": [
+        1,
+        0
+      ],
+      "intrinsicInertiaPerKg": 1,
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S01"
+      ]
+    },
+    {
+      "id": "product-water",
+      "initialMass": 0,
+      "capacity": 54,
+      "position": [
+        2,
+        0
+      ],
+      "intrinsicInertiaPerKg": 1,
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S01"
+      ]
+    }
+  ],
+  "buses": [
+    {
+      "id": "main-a",
+      "voltage": 120,
+      "maxPower": 16000,
+      "owner": "pdu-a",
+      "sourceIds": [
+        "solar-left",
+        "fuel-cell-a",
+        "battery-a"
+      ],
+      "tie": "Normally open, commanded close only after fault isolation; max transfer 6000 W."
+    },
+    {
+      "id": "main-b",
+      "voltage": 120,
+      "maxPower": 16000,
+      "owner": "pdu-b",
+      "sourceIds": [
+        "solar-right",
+        "fuel-cell-b",
+        "battery-b"
+      ],
+      "tie": "Normally open, commanded close only after fault isolation; max transfer 6000 W."
+    },
+    {
+      "id": "essential",
+      "voltage": 28,
+      "maxPower": 5000,
+      "converterEfficiency": 0.95,
+      "owner": "pdu-a",
+      "backupOwner": "pdu-b",
+      "feedPolicy": "OR-isolated dual feed; one converter supplies rated load, two do not double capacity; loss heat belongs to the supplying PDU."
+    },
+    {
+      "id": "payload",
+      "voltage": 120,
+      "maxPower": 14000,
+      "owner": "pdu-b",
+      "feedPolicy": "Normally main-b; can transfer to main-a through isolated tie."
+    }
+  ],
+  "power": {
+    "mechanismSources": [
+      "S01",
+      "S17",
+      "S06"
+    ],
+    "tieMaxPower": 6000,
+    "generationDispatch": "Solar first, fuel cells follow residual demand, battery supplies remaining deficit. Curtail solar at full storage; no automatic dump heat. Charge only with real surplus, respecting limits. Dispatch per isolated bus first. Initial stacks start at zero output and ramp while the batteries bridge; no transient overgeneration. Transfer generation only across a healthy closed tie; reserve threshold inhibits optional loads, never the essential chain.",
+    "loadPriorities": [
+      "essential-air-cooling-flight",
+      "active-actuation",
+      "tracking-and-recording",
+      "science-processing",
+      "optional-electric-propulsion"
+    ],
+    "shedOrder": [
+      "ion-drive",
+      "science-processor",
+      "comms",
+      "camera",
+      "black-box-high-rate"
+    ],
+    "nonSheddable": [
+      "eclss-a",
+      "internal-pump-a",
+      "external-pump-a",
+      "flight-cpu-a",
+      "imu-a",
+      "black-box-minimum"
+    ],
+    "reserveEnergyPerBattery": 7200000,
+    "essentialFloorPolicy": "Active life-support chain cannot be commanded off or automatically shed; substitute healthy spare first. Genuine shortage produces unmet demand and crew hazard, not invented power. Active actuator interruption is logged with achieved impulse.",
+    "rpc": {
+      "tripCurrentMultiple": 1.5,
+      "tripDelay": 0.02,
+      "resetDelay": 5,
+      "resetPolicy": "Latched open until deliberate reset after fault clears; no reset of dose, capacity loss or burnout. Fast trips integrate fractional-step fault energy.",
+      "latchFaultCurrentMultiple": 3
+    },
+    "branchRatingPolicy": "Load RPC rating = max mode input / branch bus voltage * branchHeadroom. Source contactor rating = max generatedPower / source bus voltage * branchHeadroom, bidirectional battery contactor uses max(chargePower, dischargePower). PDU/converter feeder ratings derive from bus maxPower, not housekeeping load.",
+    "branchHeadroom": 1.25
+  },
+  "generation": {
+    "mechanismSources": [
+      "S01"
+    ],
+    "solar": {
+      "referenceIrradiance": 1361,
+      "efficiency": 0.22,
+      "areaPerWing": 40,
+      "maxPowerPerWing": 12000,
+      "initialIrradiance": 0,
+      "formula": "min(maxPower, irradiance * area * efficiency * max(0, normal dot lightDirection) * deployment * condition); zero in shadow. Irradiance is measured environment input, not inferred from fictional gravity.",
+      "initialPolicy": "Unknown illumination is conservatively zero until measured; arrays stowed initially."
+    },
+    "fuelCell": {
+      "maxPowerPerStack": 6000,
+      "oxygenPerHydrogen": 8,
+      "waterPerHydrogen": 9,
+      "rampRateWPerS": 1000,
+      "initialPowerPerStack": 0,
+      "formula": "hydrogenDot=P/(efficiencyHHV*HHV); oxygenDot=8*hydrogenDot; productDot=9*hydrogenDot; heat=P*(1/efficiencyHHV-1). HHV reference closes energy with retained liquid water; includes condensation heat in this effective model. P is net bus output, auxiliaries already included.",
+      "productPolicy": "Store product in product-water tank. Full tank or either exhausted reactant stops stack. No electrolyser in this baseline, no free refill.",
+      "netEfficiencyHHV": 0.5,
+      "hydrogenHHV": 142000000
+    },
+    "battery": {
+      "capacityPerPack": 36000000,
+      "initialEnergyPerPack": 28800000,
+      "maxDischargePowerPerPack": 4000,
+      "maxChargePowerPerPack": 2000,
+      "chargeEfficiency": 0.95,
+      "dischargeEfficiency": 0.95,
+      "chargeTempMin": 278,
+      "chargeTempMax": 308,
+      "dischargeTempMin": 263,
+      "dischargeTempMax": 318,
+      "formula": "E_dot=etaCharge*P_charge-P_discharge/etaDischarge; Q=P_charge*(1-etaCharge)+P_discharge*(1/etaDischarge-1). Never charge and discharge same pack concurrently."
+    }
+  },
+  "thermalNodes": [
+    {
+      "id": "cabin",
+      "capacity": 12000000,
+      "initialTemperature": 295,
+      "warnTemperature": 303,
+      "failureTemperature": 313,
+      "mechanismSources": [
+        "S02",
+        "S05"
+      ],
+      "controlTargetTemperature": 295
+    },
+    {
+      "id": "service",
+      "capacity": 4000000,
+      "initialTemperature": 295,
+      "warnTemperature": 313,
+      "failureTemperature": 333,
+      "mechanismSources": [
+        "S02"
+      ],
+      "controlTargetTemperature": 295
+    },
+    {
+      "id": "external-loop",
+      "capacity": 1200000,
+      "initialTemperature": 285,
+      "warnTemperature": 320,
+      "failureTemperature": 340,
+      "mechanismSources": [
+        "S09",
+        "S10"
+      ],
+      "controlTargetTemperature": 285
+    },
+    {
+      "id": "hx-water",
+      "capacity": 60000,
+      "initialTemperature": 290,
+      "controlTargetTemperature": 290,
+      "warnTemperature": 278,
+      "failureTemperature": 273.15,
+      "mechanismSources": [
+        "S10"
+      ],
+      "note": "Local water-side temperature, not cabin air. Warning/failure here are lower bounds; dwell rule determines rupture."
+    }
+  ],
+  "thermalLoops": [
+    {
+      "id": "internal-water",
+      "pumpIds": [
+        "internal-pump-a",
+        "internal-pump-b"
+      ],
+      "from": "cabin",
+      "to": "hx-water",
+      "exchanger": "interface-hx",
+      "conductance": 1500,
+      "maxHeatTransport": 15000,
+      "freezeTemperature": 273.15,
+      "bypassThreshold": 278,
+      "mechanismSources": [
+        "S09",
+        "S10"
+      ],
+      "policy": "One active pump sufficient. Regulated bypass limits transfer to avoid freezing water at the exchanger; disabled flow plus disabled heater in a cold soak can still freeze. Freeze rupture latched; restart does not repair. Thermostatic flow/bypass regulates source node at its control target; Q_transfer=min(conductance*max(T_source-T_sink,0),maxHeatTransport,max(0,Q_source+controlGain*(T_source-T_target))). When source is colder, retain signed passive conduction; failed-open regulation allows signed forced conduction and water freeze risk. Radiator rejection also requires external-pump flow.",
+      "controlGain": 1000
+    },
+    {
+      "id": "external-ammonia",
+      "pumpIds": [
+        "external-pump-a",
+        "external-pump-b"
+      ],
+      "from": "service",
+      "to": "external-loop",
+      "conductance": 2500,
+      "maxHeatTransport": 30000,
+      "freezeTemperature": 195.4,
+      "mechanismSources": [
+        "S09",
+        "S10"
+      ],
+      "policy": "Shared cold-plate loop serves service electronics, fuel cells and two radiator branches. Two pumps are spares, not independent loops; common leak defeats both. Isolating one radiator preserves other branch. Thermostatic flow/bypass regulates source node at its control target; Q_transfer=min(conductance*max(T_source-T_sink,0),maxHeatTransport,max(0,Q_source+controlGain*(T_source-T_target))). When source is colder, retain signed passive conduction; failed-open regulation allows signed forced conduction and water freeze risk. Radiator rejection also requires external-pump flow.",
+      "controlGain": 1000
+    }
+  ],
+  "radiators": {
+    "mechanismSources": [
+      "S02",
+      "S11",
+      "S02"
+    ],
+    "emissivity": 0.85,
+    "solarAbsorptivity": 0.15,
+    "emittingAreaPerWing": 50,
+    "stowedEffectiveAreaPerWing": 5,
+    "referenceSinkTemperature": 3,
+    "referenceViewFactor": 1,
+    "deploymentTime": 20,
+    "maxPointingRate": 0.02,
+    "initialPointingAngle": 0,
+    "formula": "Q=epsilon*sigma*A_emit*viewFactor*(T^4-T_sink^4)-alpha*irradiance*A_projected; A_emit includes both emitting faces. A_projected is one-sided geometric planform. Pointing changes absorbed light and obstruction/view factors, not an arbitrary cosine to empty space.",
+    "statePolicy": "Deployment and pointing are distinct continuous states. Stalled motor freezes geometry. No heat rejection from cabin/service through a stalled pump except declared passive conductance.",
+    "passiveConductance": 10,
+    "louverMinEmissionFraction": 0.05,
+    "louverMaxEmissionFraction": 1,
+    "louverTargetTemperature": 285,
+    "louverResponseTime": 10,
+    "louverPolicy": "Thermostatic louvers reduce effective IR emission; target external-loop temperature with continuously bounded opening. Radiation formula multiplied by louverEmissionFraction on emitted IR only, not on absorbed light. A jam preserves last opening. Initial fraction balances arrival steady heat at target, batteries bridge stack startup. Louvers and branch isolation are included in radiator assembly mass. This is an assumed lumped control model, not an ISS louver claim."
+  },
+  "configuration": {
+    "mechanismSources": [
+      "S21",
+      "S24"
+    ],
+    "solarDeploymentTime": 30,
+    "appendages": [
+      {
+        "id": "radiator-left",
+        "stowedPosition": [
+          -2,
+          2
+        ],
+        "deployedPosition": [
+          -2,
+          6
+        ],
+        "stowedInertia": 500,
+        "deployedInertia": 2500,
+        "stowedPolygon": [
+          [
+            -4,
+            1.5
+          ],
+          [
+            1,
+            1.5
+          ],
+          [
+            1,
+            2.5
+          ],
+          [
+            -4,
+            2.5
+          ]
+        ],
+        "deployedPolygon": [
+          [
+            -4,
+            2
+          ],
+          [
+            1,
+            2
+          ],
+          [
+            1,
+            10
+          ],
+          [
+            -4,
+            10
+          ]
+        ]
+      },
+      {
+        "id": "radiator-right",
+        "stowedPosition": [
+          -2,
+          -2
+        ],
+        "deployedPosition": [
+          -2,
+          -6
+        ],
+        "stowedInertia": 500,
+        "deployedInertia": 2500,
+        "stowedPolygon": [
+          [
+            -4,
+            -2.5
+          ],
+          [
+            1,
+            -2.5
+          ],
+          [
+            1,
+            -1.5
+          ],
+          [
+            -4,
+            -1.5
+          ]
+        ],
+        "deployedPolygon": [
+          [
+            -4,
+            -10
+          ],
+          [
+            1,
+            -10
+          ],
+          [
+            1,
+            -2
+          ],
+          [
+            -4,
+            -2
+          ]
+        ]
+      },
+      {
+        "id": "solar-left",
+        "stowedPosition": [
+          3,
+          2
+        ],
+        "deployedPosition": [
+          3,
+          7
+        ],
+        "stowedInertia": 700,
+        "deployedInertia": 3500,
+        "stowedPolygon": [
+          [
+            0,
+            1.5
+          ],
+          [
+            6,
+            1.5
+          ],
+          [
+            6,
+            2.5
+          ],
+          [
+            0,
+            2.5
+          ]
+        ],
+        "deployedPolygon": [
+          [
+            0,
+            2
+          ],
+          [
+            6,
+            2
+          ],
+          [
+            6,
+            12
+          ],
+          [
+            0,
+            12
+          ]
+        ]
+      },
+      {
+        "id": "solar-right",
+        "stowedPosition": [
+          3,
+          -2
+        ],
+        "deployedPosition": [
+          3,
+          -7
+        ],
+        "stowedInertia": 700,
+        "deployedInertia": 3500,
+        "stowedPolygon": [
+          [
+            0,
+            -2.5
+          ],
+          [
+            6,
+            -2.5
+          ],
+          [
+            6,
+            -1.5
+          ],
+          [
+            0,
+            -1.5
+          ]
+        ],
+        "deployedPolygon": [
+          [
+            0,
+            -12
+          ],
+          [
+            6,
+            -12
+          ],
+          [
+            6,
+            -2
+          ],
+          [
+            0,
+            -2
+          ]
+        ]
+      }
+    ],
+    "interpolation": "Linear extension of centroid and polygon vertices; intrinsic inertia interpolated as a simplified rail deployment, not a detailed hinge model. Preserve angular momentum as I changes; actuator energy is charged. Pointing tilts out of the flight plane: use conservative in-plane envelope."
+  },
+  "propulsion": {
+    "mechanismSources": [
+      "S03",
+      "S08",
+      "S12",
+      "S13",
+      "S14",
+      "S15",
+      "DD09"
+    ],
+    "main": {
+      "equipmentId": "main-engine",
+      "resourceIds": [
+        "main-propellant"
+      ],
+      "thrust": 24000,
+      "Isp": 320,
+      "minimumImpulse": 2400,
+      "mountMisalignment": 0.003,
+      "gimbalLimit": 0.035,
+      "gimbalRate": 0.02,
+      "chemicalHeatAtFullThrust": 4000,
+      "policy": "Pressure-fed storable bipropellant represented by one mixture-locked tank; on/off or pulse train, no arbitrary deep throttle. Gimbal aims through current COM if in range; output force at mount. Exhaust carries most chemical energy, not bus power.",
+      "direction": [
+        1,
+        0
+      ]
+    },
+    "rcs": {
+      "thrustPerJet": 200,
+      "Isp": 220,
+      "minimumImpulsePerJet": 10,
+      "mountMisalignment": 0.002,
+      "warmupTime": 20,
+      "warmupTemperature": 285,
+      "maxSimultaneousJetsPerPod": 2,
+      "chemicalHeatPerFiringJet": 100,
+      "bankPolicy": "A active initially, B isolated unpowered spare. Each bank contains the same eight directions; share propellant/cooling/structure. Switching requires power, warm state and calibration; never restores dose or clogs.",
+      "jets": [
+        {
+          "id": "rcs-forward-left-a-0",
+          "equipmentId": "rcs-forward-left",
+          "bank": "a",
+          "direction": [
+            1,
+            0
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-forward-left-a-1",
+          "equipmentId": "rcs-forward-left",
+          "bank": "a",
+          "direction": [
+            0,
+            1
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-forward-left-b-0",
+          "equipmentId": "rcs-forward-left",
+          "bank": "b",
+          "direction": [
+            1,
+            0
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-forward-left-b-1",
+          "equipmentId": "rcs-forward-left",
+          "bank": "b",
+          "direction": [
+            0,
+            1
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-forward-right-a-0",
+          "equipmentId": "rcs-forward-right",
+          "bank": "a",
+          "direction": [
+            -1,
+            0
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-forward-right-a-1",
+          "equipmentId": "rcs-forward-right",
+          "bank": "a",
+          "direction": [
+            0,
+            1
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-forward-right-b-0",
+          "equipmentId": "rcs-forward-right",
+          "bank": "b",
+          "direction": [
+            -1,
+            0
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-forward-right-b-1",
+          "equipmentId": "rcs-forward-right",
+          "bank": "b",
+          "direction": [
+            0,
+            1
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-aft-left-a-0",
+          "equipmentId": "rcs-aft-left",
+          "bank": "a",
+          "direction": [
+            1,
+            0
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-aft-left-a-1",
+          "equipmentId": "rcs-aft-left",
+          "bank": "a",
+          "direction": [
+            0,
+            -1
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-aft-left-b-0",
+          "equipmentId": "rcs-aft-left",
+          "bank": "b",
+          "direction": [
+            1,
+            0
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-aft-left-b-1",
+          "equipmentId": "rcs-aft-left",
+          "bank": "b",
+          "direction": [
+            0,
+            -1
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-aft-right-a-0",
+          "equipmentId": "rcs-aft-right",
+          "bank": "a",
+          "direction": [
+            -1,
+            0
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-aft-right-a-1",
+          "equipmentId": "rcs-aft-right",
+          "bank": "a",
+          "direction": [
+            0,
+            -1
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-aft-right-b-0",
+          "equipmentId": "rcs-aft-right",
+          "bank": "b",
+          "direction": [
+            -1,
+            0
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-aft-right-b-1",
+          "equipmentId": "rcs-aft-right",
+          "bank": "b",
+          "direction": [
+            0,
+            -1
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        }
+      ],
+      "zeroNetForceYawTorquePerBank": [
+        -1600,
+        4000
+      ],
+      "bankThermalApproximation": "In the initial node model, both banks share their pod's service-node temperature. Minimum readiness time is a valve/ignition checkout, with heating only when below warmupTemperature. An unpowered spare is not assumed physically cold when its surroundings are warm. Independent cold nozzle behavior requires local thermal states in Phase3; do not invent a cold temperature in the stub."
+    },
+    "ion": {
+      "equipmentId": "ion-drive",
+      "resourceIds": [
+        "xenon"
+      ],
+      "enabledByDefault": false,
+      "thrust": 0.236,
+      "Isp": 4190,
+      "busPower": 7220,
+      "onboardHeatUpperBound": 2300,
+      "minimumOnTime": 60,
+      "policy": "Optional full-power/off long-coast capability. Force and Isp retain S08 reference operating point; no encounter-scale boost. Heat is a conservative assumed allocation, not source-measured bus dissipation.",
+      "direction": [
+        1,
+        0
+      ]
+    }
+  },
+  "sensing": {
+    "mechanismSources": [
+      "S04",
+      "DD05",
+      "DD07",
+      "DD10"
+    ],
+    "camera": {
+      "warmupTime": 20,
+      "calibrationTime": 10,
+      "settleTime": 5,
+      "referenceRange": 10000,
+      "referenceExposure": 0.05,
+      "minExposure": 0.005,
+      "maxExposure": 0.5,
+      "nominalAngularSigma": 5e-05,
+      "angularFloor": 2e-05,
+      "referenceTrackingPower": 120,
+      "minTrackingPower": 60,
+      "maxUsefulPower": 200,
+      "maxSmearAngle": 0.0001,
+      "rangePriorFraction": 0.05,
+      "rangeFloor": 10,
+      "formula": "sigmaAngle=max(floor, nominal*sqrt(referencePower/clamp(P,min,max))*sqrt(referenceExposure/exposure))/condition; transverse sigma=range*sigmaAngle. Reject when abs(angularRate)*exposure exceeds maxSmearAngle, target absent, or optics invalid. No measurement below minimum power. Range sigma=max(rangeFloor,rangePriorFraction*range) only for a declared known-size/shape target; otherwise bearing-only until triangulation. Reject condition<=0; otherwise condition must be clamped to (0,1]. sigma is only for valid targets with adequate signal; low-light invalidity is separate. Clamp commanded exposure to [minExposure,maxExposure] before evaluating quality or smear.",
+      "policy": "Power changes frame processing/exposure duty; never grants target identity, absolute range or visibility through an occluder. Dark scenes can fail even at full power. Camera raw frames optional, no truth-state storage."
+    },
+    "starTracker": {
+      "angularSigma": 4e-05,
+      "sampleRate": 2,
+      "maxAngularRate": 0.01,
+      "catalogPolicy": "No assumed Earth-catalog match. Bootstrap a local relative star map if stars visible; choose arbitrary inertial yaw origin. Lost solutions increase covariance, no perfect attitude fallback."
+    },
+    "imu": {
+      "sampleRate": 50,
+      "accelerationSigma": 0.0001,
+      "accelerationBias": 5e-05,
+      "gyroSigma": 1e-05,
+      "gyroBias": 2e-06,
+      "policy": "Specific force only (P7); gravity comes from tracking. Correct lever-arm angular acceleration/centripetal terms to COM using measured attitude rates; keep correction uncertainty. Bias and noise are measured-model assumptions, seeded streams only."
+    },
+    "latticeProcessing": {
+      "label": "FICTIONAL",
+      "equipmentId": "science-processor",
+      "sensorIds": [
+        "camera",
+        "imu-a",
+        "star-tracker-a"
+      ],
+      "minPower": 350,
+      "fullPower": 1000,
+      "minUpdateRate": 0.2,
+      "fullUpdateRate": 2,
+      "policy": "Additional software on existing hardware; no new sensor, no hidden truth channel to the ordinary forecaster. Use imperfect reconstruction measurements and their uncertainties. Reconstruction does not shield components."
+    }
+  },
+  "recorder": {
+    "mechanismSources": [
+      "S20"
+    ],
+    "equipmentId": "black-box",
+    "capacity": 8000000000,
+    "bytesPerSample": 4096,
+    "minimumSampleRate": 1,
+    "normalSampleRate": 10,
+    "highSampleRate": 50,
+    "rawFrameRateBytes": 1000000,
+    "reservedEventCapacity": 100000000,
+    "powerMinimum": 15,
+    "powerNormal": 35,
+    "powerHigh": 100,
+    "fullPolicy": "Stop optional raw frames then high-rate telemetry; preserve command/configuration/fault metadata in reserved capacity; if reservation fills, stop new records with visible warning. No silent overwrite. Never alter previously issued forecasts. Record sample packets select timestamped features from offered equipment streams, not every raw output byte. Optional raw frames add rawFrameRateBytes to storage and require camera detail plus science processing mode.",
+    "persistence": {
+      "label": "FICTIONAL",
+      "policy": "P8 recurrence retains all acquired records and knowledge. Capacity limits new onboard acquisition during an attempt, never erases prior attempt archives. Recorder power loss causes gaps, not loss of already recorded data. Survival across recurrence is not conventional hardware reliability."
+    }
+  },
+  "communications": {
+    "mechanismSources": [
+      "S07",
+      "S22"
+    ],
+    "equipmentId": "comms",
+    "transmitRfPower": 80,
+    "maxDataRate": 125000,
+    "beamHalfAngle": 0.03,
+    "policy": "No authenticated receiver/link initially; actual downlink is zero until measured endpoint, geometry, pointing and link margin support it. Rated rate is an assumed ceiling, not a distance-independent promise. RF output leaves ship; remaining electrical draw heats service node."
+  },
+  "lifeSupport": {
+    "mechanismSources": [
+      "S05",
+      "S05P",
+      "DD02"
+    ],
+    "oxygenInitial": 30,
+    "foodInitial": 24,
+    "potableWaterInitial": 100,
+    "sorbentCO2Capacity": 40,
+    "crewHeat": 400,
+    "initialCabinCO2": 0,
+    "CO2HazardBudget": 2,
+    "oxygenRatePerCrew": 9.722222222222223e-06,
+    "foodRatePerCrew": 7.175925925925926e-06,
+    "waterRatePerCrew": 4.074074074074074e-05,
+    "CO2RatePerCrew": 1.1574074074074073e-05,
+    "policy": "Stored-gas and replaceable sorbent survival mode; no oxygen electrolyser or water recycler simulated. Consumables are subsets of cabin-stores equipment mass, not extra dry mass. Consumed mass becomes retained atmosphere/waste. Active scrubber consumes finite sorbent capacity; loss accumulates cabin CO2. Hazard budget is an assumed simplified inventory alarm, not medical physiology. Fuel-cell oxygen is separate, not available to crew by default."
+  },
+  "radiation": {
+    "label": "FICTIONAL",
+    "mechanismSources": [
+      "R04",
+      "R05"
+    ],
+    "exposureUnit": "lattice-unit s, not Gy(Si)",
+    "dosePolicy": "Each component integrates local intensity * susceptibility * dt at its moving occupied geometry; off equipment still accumulates. Spatial sampling and sweep resolution are field-owner responsibilities; never use only ship COM.",
+    "profiles": {
+      "passive": {
+        "susceptibility": 0,
+        "degradationStart": 1000,
+        "failureExposure": 5000,
+        "upsetInterval": 0,
+        "latchInterval": 0,
+        "burnoutIntensity": 1000
+      },
+      "hardened": {
+        "susceptibility": 0.5,
+        "degradationStart": 40,
+        "failureExposure": 160,
+        "upsetInterval": 12,
+        "latchInterval": 40,
+        "burnoutIntensity": 20
+      },
+      "standard": {
+        "susceptibility": 1,
+        "degradationStart": 20,
+        "failureExposure": 80,
+        "upsetInterval": 6,
+        "latchInterval": 20,
+        "burnoutIntensity": 10
+      },
+      "power-switch": {
+        "susceptibility": 0.8,
+        "degradationStart": 30,
+        "failureExposure": 120,
+        "upsetInterval": 0,
+        "latchInterval": 25,
+        "burnoutIntensity": 8
+      }
+    },
+    "burnoutDwell": 0.1,
+    "maxLeakageFraction": 0.25,
+    "restartTime": 5,
+    "algorithm": "Use integrated-exposure integer bucket crossings for upsets/latches while energized, advancing bucket cursors while off so no backlog fires at power-on. Protected SEL trips local branch; excess electrical input becomes heat until isolation. For powered components, integrate contiguous time above profile burnoutIntensity (raw local intensity); crossing burnoutDwell causes irreversible failure even with protection. FailureExposure causes irreversible failure regardless of power. Degradation increases leakage linearly from degradationStart to failureExposure; multiply operating draw by 1+maxLeakageFraction*clamp((D-start)/(failure-start),0,1), with extra draw as heat. Resolve competing events in time order, failures before trips before upsets for exact ties. Preserve D and permanent states on reset.",
+    "abstraction": "Dose-like degradation imitates cumulative ionizing damage; deterministic upset/latch buckets imitate single-event outcomes but are not physical SEE probability or TID causation. Material-selective harm to electronics with no modeled acute crew dose is fictional. Real SEU need not damage hardware; real current limiting cannot guarantee survival.",
+    "examples": [
+      {
+        "id": "ordinary-glance",
+        "intensity": 1,
+        "duration": 8,
+        "profile": "standard"
+      },
+      {
+        "id": "ordinary-severe-powered",
+        "intensity": 25,
+        "duration": 0.1,
+        "profile": "standard"
+      }
+    ],
+    "geometryPolicy": "Compact assemblies use their moving mount point as a declared approximation; appendages use their whole current polygon, taking the maximum local intensity conservatively. Structure/crew/passive tanks have zero susceptibility in this selective fictional model. Collision geometry still covers the full envelope. Phase3 field integrator must sweep between samples to avoid skipping thin strands."
+  },
+  "referenceAnchors": [
+    {
+      "id": "next-full",
+      "label": "ESTABLISHED",
+      "source": "S08",
+      "locator": "Table 3, report p11 / PDF p15",
+      "thrust": 0.236,
+      "Isp": 4190,
+      "busPower": 7220,
+      "systemEfficiency": 0.67,
+      "reportedMassFlow": 5.76e-06,
+      "note": "Rounded measured/reference tuple; Isp equation yields slightly different mass flow. Adopt equation for mass conservation."
+    },
+    {
+      "id": "rcs-isp-range",
+      "label": "ESTABLISHED",
+      "source": "S03",
+      "locator": "4.6.1",
+      "IspRange": [
+        200,
+        235
+      ],
+      "note": "Survey hydrazine class, not certification of proposed 200 N jets."
+    },
+    {
+      "id": "camera-schedule",
+      "label": "ESTABLISHED",
+      "source": "DD07",
+      "locator": "p1 OpNav operations",
+      "warmupTime": 3600,
+      "calibrationTime": 600,
+      "note": "Artemis I pass scheduling, not universal camera requirements.",
+      "slewAndSettleTimeUpperBound": 900
+    },
+    {
+      "id": "crew-reference",
+      "label": "ESTABLISHED",
+      "source": "DD02",
+      "locator": "Table 1 p5",
+      "oxygenKgPerCrewDay": 0.84,
+      "foodKgPerCrewDay": 0.62,
+      "waterKgPerCrewDay": 3.52,
+      "CO2KgPerCrewDay": 1,
+      "note": "Reference design consumption, actual load depends on activity."
+    },
+    {
+      "id": "cell-specific-energy",
+      "label": "ESTABLISHED",
+      "source": "S01",
+      "locator": "3.4",
+      "cellWhPerKgRange": [
+        150,
+        270
+      ],
+      "note": "Cells, not complete flight packs."
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "arrival",
+      "configuration": "radiators",
+      "overrides": {}
+    },
+    {
+      "id": "stowed-transit",
+      "configuration": "stowed",
+      "overrides": {}
+    },
+    {
+      "id": "survey",
+      "configuration": "allDeployed",
+      "overrides": {
+        "camera": "detail",
+        "science-processor": "science",
+        "black-box": "high"
+      }
+    },
+    {
+      "id": "lattice-burn",
+      "configuration": "radiators",
+      "overrides": {
+        "camera": "detail",
+        "science-processor": "lattice",
+        "black-box": "high",
+        "main-engine": "firing",
+        "rcs-forward-left": "fire-one",
+        "rcs-aft-right": "fire-one"
+      }
+    },
+    {
+      "id": "ion-survey",
+      "configuration": "allDeployed",
+      "overrides": {
+        "camera": "detail",
+        "science-processor": "science",
+        "black-box": "high",
+        "ion-drive": "firing"
+      },
+      "tieClosed": true
+    },
+    {
+      "id": "ion-survey-tie-open",
+      "configuration": "allDeployed",
+      "overrides": {
+        "camera": "detail",
+        "science-processor": "science",
+        "black-box": "high",
+        "ion-drive": "firing"
+      },
+      "tieClosed": false
+    }
+  ],
+  "thermalProtection": {
+    "label": "ASSUMED",
+    "mechanismSources": [
+      "S02",
+      "S10"
+    ],
+    "derateMargin": 5,
+    "damageMargin": 10,
+    "damageDwell": 30,
+    "freezeRuptureDwell": 60,
+    "policy": "Equipment temp is attached node temp in the stub, including cooling dependencies; labels refer to assembly/cold-plate temperature, not plume gas. Begin derating above tempMax-derateMargin; latch electrical overtemp trip at tempMax. Uncooled residual heat above tempMax+damageMargin for damageDwell causes permanent failure; deliberately retained history prevents cooling from healing damage. Electronics below tempMin unavailable until warmed. Passive structure/tanks/crew use hazard state rather than electrical trip. If water-side exchanger stays below freezeTemperature with no protecting flow/heater for freezeRuptureDwell, latch rupture; rates are deliberately simplified, not component qualification data. Low-temperature inhibition applies to normal operation, not to commanded antifreeze or warmup heaters while intact and powered; otherwise cold equipment could never recover. Heater overtemperature and permanent-damage protections still apply."
+  },
+  "thermalLinks": [
+    {
+      "id": "hx-to-ammonia",
+      "from": "hx-water",
+      "to": "external-loop",
+      "conductance": 2000,
+      "passiveConductance": 10,
+      "maxHeatTransport": 15000,
+      "controlGain": 1000,
+      "heaterEnableTemperature": 278,
+      "heaterDisableTemperature": 283,
+      "mechanismSources": [
+        "S09",
+        "S10"
+      ],
+      "policy": "External pump moves ammonia past core even if internal water pump stalls. Regulated ammonia bypass holds hx-water target; failed-open bypass uses signed conductance*(T_core-T_external), allowing cold soak below water freezing. Antifreeze mode of interface-hx adds its declared heater power only when powered. Cabin-to-core heat collapses to passive conductance if internal pump stops. This separate local state is required for Phase3 freeze behavior; Phase2 may collapse it only while explicitly deferring freeze simulation."
+    }
+  ]
+}

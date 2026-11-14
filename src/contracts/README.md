@@ -15,7 +15,7 @@ Types and tiny helpers only. No game logic. Everything here is plain, JSON-seria
 
 ## Conventions
 
-- **Units:** SI everywhere (m, kg, s, N, W, J, K, rad, Gy). `units.ts` aliases document intent; they are plain numbers. Fields carry no unit suffix; the JSDoc says the unit when it is not obvious.
+- **Units:** SI everywhere (m, kg, s, N, W, J, K, rad). The one exception is the fictional lattice exposure (`LatticeIntensity`, `LatticeExposure`), which is not a real radiation dose (1C). `units.ts` aliases document intent; they are plain numbers. Fields carry no unit suffix; the JSDoc says the unit when it is not obvious.
 - **Time:** sim seconds since the encounter's arrival (t = 0). Plans use times relative to their epoch.
 - **Angles:** radians, counter-clockwise from inertial +x. Attitude is the inertial angle of body +x.
 - **Body frame:** origin at the structural datum; +x is the body axis (the direction the main engine pushes the ship); +y is 90° counter-clockwise. Footprints are counter-clockwise polygons in this frame.
@@ -53,7 +53,7 @@ Dotted paths, shared by the model's estimates and truth's `HiddenParameters`:
 | `attitude` | [ψ] rad | — | Star tracker |
 | `rate` | [ω] rad/s | — | Gyro |
 | `telemetry` | [v] | `channel` | Housekeeping reading |
-| `dose-rate` | [Ḋ] Gy/s | — | At the sensing equipment |
+| `lattice-intensity` | [I] lattice units | — | Fictional field intensity at the sensing equipment |
 | `field-signal` | field-specific | `field` | Processed field product (e.g. lattice reconstruction) |
 
 `sigma` always has the same length as `value` (one-sigma per component).
@@ -61,7 +61,7 @@ Dotted paths, shared by the model's estimates and truth's `HiddenParameters`:
 ## Files
 
 ### `units.ts`, `ids.ts`
-Unit aliases (`Seconds`, `Meters`, `Watts`, `Gray`, …), `JsonValue`, and ID aliases (`BodyId`, `EquipmentId`, `AttemptId`, `ParameterId`, …).
+Unit aliases (`Seconds`, `Meters`, `Watts`, `LatticeExposure`, …), `JsonValue`, and ID aliases (`BodyId`, `EquipmentId`, `AttemptId`, `ParameterId`, …).
 
 ### `estimates.ts`
 - `Gaussian` — `{ mean, sigma }`.
@@ -70,7 +70,7 @@ Unit aliases (`Seconds`, `Meters`, `Watts`, `Gray`, …), `JsonValue`, and ID al
 
 ### `ship.ts` — nominal design (shared)
 What the crew knows from the spec sheets. True deviations live in truth.
-- `ShipDefinition` — structure mass/CoM/inertia, `equipment`, `tanks`, `buses`, `thermalNodes`, `configurations`, `defaultConfiguration`. Loaded from `data/ship-baseline.json` (1C) by ship systems (2B).
+- `ShipDefinition` — structure mass/CoM/inertia, `equipment`, `tanks`, `buses`, `thermalNodes`, `configurations`, `defaultConfiguration`, and optional `systems` (the full 1C detail, for `src/ship` only). Ship systems (2B) builds it from `data/ship-baseline.json` (1C), whose frame (x forward, y left, yaw counter-clockwise) matches ours.
 - `EquipmentSpec` — `kind` (`EquipmentKind`), mass, body-frame position, `ratedPower`, bus, thermal node, `modes`/`defaultMode`, optional `mount` (thruster force direction or sensor boresight), `redundancyGroup`, `sheddable`, and nominal `params` (named SI ratings such as `thrust`, `isp`, `capacity`, `sigmaBearing`; names set by 1C/2B).
 - `TankSpec`, `BusSpec`, `ThermalNodeSpec`.
 - `ConfigurationSpec` — footprint polygon, equipment that moves, param overrides (`"radiator-1.area"`), transition time.
@@ -89,7 +89,7 @@ What the crew knows from the spec sheets. True deviations live in truth.
 
 ### `belief.ts` — the believed world
 - `ShipEstimate` — navigation estimate: position, velocity, their covariances, attitude (+ sigma), angular rate.
-- `BelievedShip` — `ShipEstimate` + configuration, `massProperties` (from design and gauged propellant), `equipment` (`EquipmentStatus`: mode, allocation, measured draw, health estimate, temperature, faults, readings), gauged `propellant`, latest `telemetry`.
+- `BelievedShip` — `ShipEstimate` + configuration, `massProperties` (from design and gauged propellant), `equipment` (`EquipmentStatus`: mode, allocation, measured draw, health estimate, tripped, temperature, faults, readings), gauged `propellant`, latest `telemetry`.
 - `BelievedBody`, `BelievedAsteroid` — position/velocity with covariance, radius, `tracked`, last fix. Gravity parameters are in the model, not here.
 - `BelievedField` — whether the ship perceives a field, plus plugin `visual` data for `src/view3d/fields/`.
 - `BelievedWorld` — `t`, `modelVersion`, ship, bodies, asteroids, fields.
@@ -120,15 +120,15 @@ What the crew knows from the spec sheets. True deviations live in truth.
 - `ViewSnapshot` — `t`, paused, warp, `world` (`BelievedWorld`), `ship` (`ShipView`: footprint, CoM, `ThrustTick`s), measured `trail`, issued `forecasts`, sensor `coverage` (`SensorSector`s; everything else is unknown), objectives, optional two-attempt `compare` (`AttemptOverlay`s) and `selection`.
 
 ### `truth/` — TRUTH, not for belief-side code
-- `world.ts` — `GravityLaw` (`exponent`), `MassiveBody` (`coupling` k in a = k / rⁿ, units m^(n+1)·s⁻²; `fixed`), `Asteroid` (test particle), `HiddenParameters` (true values by parameter ID), `TruthWorld`.
-- `ship.ts` — `ShipKinematics` (CoM position, velocity, attitude, rate; integrated by 2A); `ShipSystemsState` (configuration and transition, `EquipmentState`s, tank propellant, thermal node temperatures, recorder, accumulated dose, attitude target, active burns, derived `massProperties`, seeded noise `rng` states, `ext` for subsystem extras); `ShipTruth`; `ThrustOutput` and `ActuatorOutput` (body-frame forces at application points, pure torque, mass properties); `SensorTarget`; `EnvironmentEffects` (kinematics, previous step's specific force, sensor targets, dose rate per equipment, field signals); `ShipStepResult`; and the step signature:
+- `world.ts` — `GravityLaw` (`exponent` n and one shared `referenceRadius` r0), `MassiveBody` (`gm` in m³/s², `radius` as collision envelope only, `fixed`); acceleration toward a body is (gm / r0²)(r0 / r)ⁿ (P4, clarified by 1B); `Asteroid` (massless test particle), `HiddenParameters` (true values by parameter ID), `TruthWorld`.
+- `ship.ts` — `ShipKinematics` (CoM position, velocity, attitude, rate; integrated by 2A); `ShipSystemsState` (configuration and transition, `EquipmentState`s, tank propellant, thermal node temperatures, recorder, accumulated lattice exposure, attitude target, active burns, derived `massProperties`, seeded noise `rng` states, `ext` for subsystem extras); `ShipTruth`; `ThrustOutput` and `ActuatorOutput` (body-frame forces at application points, pure torque, mass properties); `SensorTarget`; `EnvironmentEffects` (kinematics, previous step's specific force, sensor targets, lattice intensity per equipment, field signals); `ShipStepResult`; and the step signature:
 
   ```ts
   type ShipSystemsStep = (state, config: ShipDefinition, commands, envEffects, dt)
     => { state, actuators, measurements, events };
   ```
   Pure: noise comes from the `rng` states carried in `state`, so identical inputs give identical outputs and recurrence replays exactly (P2, P9).
-- `fields.ts` — `FieldInstanceSpec` (JSON), `EnvironmentField` (optional `acceleration`, `modifyThrust`, `doseRate`, `signal`), `FieldFactory`, `FieldRegistry`, `createFieldRegistry()`. Implementations go in `src/sim/fields/<kind>.ts`.
+- `fields.ts` — `FieldInstanceSpec` (JSON), `EnvironmentField` (optional `acceleration`, `modifyThrust`, `intensity`, `signal`), `FieldFactory`, `FieldRegistry`, `createFieldRegistry()`. Implementations go in `src/sim/fields/<kind>.ts`.
 - `events.ts` — `SimEvent` (true clearance minima, impacts with contact point, field boundary crossings) and `TruthEvent = SimEvent | ShipEvent`.
 - `encounter.ts` — `EncounterDefinition`: briefing, ship definition, true world at arrival (recurrence resets to exactly this), root seed, step size.
 
@@ -149,4 +149,4 @@ Mock "Gravity range" data so console, 3D view and model work can start before th
 | `fixtures/truth.ts` | `mockEncounter`, `mockTruthWorld`, `mockShipSystemsState`, `mockEnvironmentEffects`, `mockTruthTracks` | No |
 | `fixtures/generate.ts` | The mock generator (a small integrator, not the simulation) | No |
 
-The story: the world uses the inverse-2.5 law; the model starts Newtonian, calibrated at arrival. Attempt 1 (prograde burn, recalled at 1800 s): its forecast is within tens of metres early and about a kilometre off by the end. Model v2 refits masses only. Attempt 2 (retrograde burn toward Alpha): its forecast predicts a 9 km miss of asteroid a-07; the ship hits it at 1500 s. Model v3 enables the distance-law extension and validates against attempt 2.
+The story: the world uses the inverse-2.5 law; the model starts Newtonian, calibrated at arrival. Attempt 1 (prograde burn, recalled at 1800 s): its forecast is within tens of metres early and about 3 km off by the end. Model v2 refits masses only. Attempt 2 (retrograde burn toward Alpha): its forecast predicts a 9 km miss of asteroid a-07; the ship hits it at 1500 s. Model v3 enables the distance-law extension and validates against attempt 2.

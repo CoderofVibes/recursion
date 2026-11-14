@@ -20,8 +20,8 @@ import {
   TRUE_EXPONENT,
   TRUE_IMU_BIAS_X,
   TRUE_THRUST_SCALE,
+  REFERENCE_RADIUS,
   buildMockScenario,
-  trueCoupling,
 } from './generate.ts';
 
 const SEED = 'gravity-range-mock';
@@ -43,6 +43,7 @@ export const mockShipSystemsState: ShipSystemsState = {
         allocation: e.ratedPower,
         powerDraw: e.ratedPower,
         condition: 1,
+        tripped: false,
         temperature: 293,
         faults: [],
         values: e.kind === 'battery' ? { charge: 1.5e8 } : {},
@@ -52,7 +53,7 @@ export const mockShipSystemsState: ShipSystemsState = {
   tanks: { 'tank-main': arrivalPropellant },
   thermal: { 'node-avionics': 293, 'node-power': 300, 'node-prop': 288 },
   recorder: { sampleRate: 2, bytesUsed: 0, capacity: 2e10 },
-  dose: {},
+  exposure: {},
   attitudeTarget: { reference: 'prograde' },
   burns: [],
   massProperties: mockMassProperties(mockShipDefinition, 'stowed', arrivalPropellant),
@@ -65,11 +66,11 @@ const scenario = buildMockScenario();
 
 export const mockTruthWorld: TruthWorld = {
   t: 0,
-  law: { exponent: TRUE_EXPONENT },
+  law: { exponent: TRUE_EXPONENT, referenceRadius: REFERENCE_RADIUS },
   bodies: MOCK_BODIES.map((b) => ({
     id: b.id,
     name: b.name,
-    coupling: trueCoupling(b),
+    gm: b.mu,
     radius: b.radius,
     position: b.position,
     velocity: v.ZERO,
@@ -123,7 +124,7 @@ export const mockEnvironmentEffects: EnvironmentEffects = {
         radius: a.radius,
       })),
   ],
-  doseRate: {},
+  intensity: {},
   fieldSignals: {},
 };
 

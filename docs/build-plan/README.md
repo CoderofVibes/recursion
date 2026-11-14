@@ -25,7 +25,7 @@ Phases 1 and 2 have one ready-to-launch prompt file per section. Phases 3–5 ar
 | 1E | Visual direction, then the standing UI lane | Claude, live with owner, all build | [phase-1/1E-visual-direction.md](phase-1/1E-visual-direction.md) | — |
 | 1F | Expedition and encounter design | GPT/Codex | [phase-1/1F-expedition-design.md](phase-1/1F-expedition-design.md) | — |
 | 1G | Predictive model specification | GPT/Codex | [phase-1/1G-predictive-model-spec.md](phase-1/1G-predictive-model-spec.md) | — |
-| 2A | Simulation core | Claude | [phase-2/2A-sim-core.md](phase-2/2A-sim-core.md) | 1A, 1B, 1D |
+| 2A | Simulation core | Claude | [phase-2/2A-sim-core.md](phase-2/2A-sim-core.md) | 1A, 1B (1D's vectors join later) |
 | 2B | Ship systems v1 | GPT/Codex | [phase-2/2B-ship-systems.md](phase-2/2B-ship-systems.md) | 1A, 1C |
 | 2C | Predictive model and Black Box | Claude | [phase-2/2C-model-and-blackbox.md](phase-2/2C-model-and-blackbox.md) | 1A, 1G |
 | 2D | Console UI | Claude | [phase-2/2D-console-ui.md](phase-2/2D-console-ui.md) | 1A, 1E |

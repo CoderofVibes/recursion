@@ -49,6 +49,8 @@ export interface EquipmentStatus {
   readonly powerDraw: Watts;
   /** Health estimate, 0 failed to 1 nominal. */
   readonly condition: number;
+  /** Protection reported as tripped. */
+  readonly tripped: boolean;
   readonly temperature?: number;
   readonly faults: readonly string[];
   /** Equipment-specific readings, e.g. { charge: 1.2e8 } for a battery (SI). */

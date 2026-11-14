@@ -2,7 +2,7 @@
  * TRUTH. The ship's real physical and systems state, and the ship-systems step contract.
  *
  * One simulation tick (the game layer runs it):
- *   1. Game builds EnvironmentEffects from the truth world (sensor scene, dose, last step's
+ *   1. Game builds EnvironmentEffects from the truth world (sensor scene, lattice intensity, last step's
  *      non-gravitational acceleration).
  *   2. Ship systems: step(state, config, commands, envEffects, dt)
  *        → { state, actuators, measurements, events }
@@ -26,12 +26,12 @@ import type { MassProperties, ShipDefinition } from '../ship.ts';
 import type {
   Bytes,
   Fraction,
-  Gray,
-  GrayPerSecond,
   Hertz,
   JsonValue,
   Kelvin,
   Kilograms,
+  LatticeExposure,
+  LatticeIntensity,
   Meters,
   NewtonMeters,
   Radians,
@@ -55,8 +55,10 @@ export interface EquipmentState {
   readonly mode: string;
   readonly allocation: Watts;
   readonly powerDraw: Watts;
-  /** 0 failed to 1 nominal. */
+  /** Permanent condition: 0 failed to 1 nominal. */
   readonly condition: Fraction;
+  /** Protection has tripped (resettable, unlike condition). */
+  readonly tripped: boolean;
   readonly temperature?: Kelvin;
   readonly faults: readonly string[];
   /** Equipment-specific state, SI, e.g. { charge: 1.2e8 } for a battery. */
@@ -85,11 +87,14 @@ export interface ShipSystemsState {
     readonly bytesUsed: Bytes;
     readonly capacity: Bytes;
   };
-  /** Accumulated dose per equipment item (Chain Link Fence, Phase 3). */
-  readonly dose: Readonly<Record<EquipmentId, Gray>>;
+  /** Accumulated lattice exposure per equipment item (Chain Link Fence, Phase 3). */
+  readonly exposure: Readonly<Record<EquipmentId, LatticeExposure>>;
   readonly attitudeTarget: AttitudeTarget;
   readonly burns: readonly ActiveBurn[];
-  /** Derived each step from configuration and propellant; the simulation reads it. */
+  /**
+   * Derived each step from configuration (interpolated during transitions) and consumables.
+   * The single authoritative geometry for inertia, cooling and clearance.
+   */
   readonly massProperties: MassProperties;
   /**
    * Seeded noise streams, one per noise source (e.g. "sensors.optical"). Initialise from
@@ -142,8 +147,8 @@ export interface EnvironmentEffects {
    */
   readonly specificForce: Vec2;
   readonly targets: readonly SensorTarget[];
-  /** Dose rate at each equipment item's position. */
-  readonly doseRate: Readonly<Record<EquipmentId, GrayPerSecond>>;
+  /** Lattice intensity over each equipment item's occupied geometry (sampled by the game layer). */
+  readonly intensity: Readonly<Record<EquipmentId, LatticeIntensity>>;
   /** Raw field signals available to sensor processing modes, keyed by field. */
   readonly fieldSignals: Readonly<Record<FieldId, JsonValue>>;
 }
