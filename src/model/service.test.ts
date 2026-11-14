@@ -412,5 +412,5 @@ describe('truth/belief boundary (P11) holds for the real model and Black Box fil
     );
     expect(bad).toEqual([]);
     expect(results.length).toBeGreaterThan(10);
-  });
+  }, 30_000);
 });

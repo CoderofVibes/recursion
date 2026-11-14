@@ -12,10 +12,13 @@ import {
   type EmpiricalRow,
 } from './diagnostics.ts';
 import { EXPONENT_ID, referenceFor, type ModelContext, type ModelSnapshot } from './engine.ts';
+import { asteroidOf, attemptOfArc } from './probes.ts';
 import { confounding, residualSummary, type Confounding, type ResidualClass } from './solve.ts';
 
 export interface StrengthPoint {
   readonly attempt: AttemptId;
+  /** Set when the window came from a tracked asteroid (a probe at its own distances, §10). */
+  readonly probe?: string;
   readonly window: string;
   readonly start: number;
   readonly end: number;
@@ -90,7 +93,8 @@ export function modelReport(snap: ModelSnapshot): ModelReport {
       referenceMu: mu,
       referenceExponent: n,
       points: rows.map((w) => ({
-        attempt: w.arc.split('~')[0]!,
+        attempt: attemptOfArc(w.arc),
+        ...(asteroidOf(w.arc) !== null ? { probe: asteroidOf(w.arc)! } : {}),
         window: w.window,
         start: w.t0,
         end: w.t1,

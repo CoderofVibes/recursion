@@ -176,7 +176,18 @@ export function testExtension(
       extd.fit.names.includes(p.name) ? fitGet(extd.fit, p.name)[0] : p.init,
     );
     const solutions = new Map<string, ArcSolution>(
-      extd.problem.arcs.map((a) => [a.id, { arc: a, x, idx, structure: extd.problem.structure }]),
+      extd.problem.arcs.map((a) => [
+        a.id,
+        {
+          arc: a,
+          x,
+          idx,
+          structure: extd.problem.structure,
+          P: null,
+          rel: [],
+          scale: Float64Array.from(extd.problem.params, (p) => p.scale),
+        },
+      ]),
     );
     const heldArc = extd.problem.arcs.find((a) => a.id === extd.heldArcId)!;
     const ref = referenceFor({ spec, values, solutions }, spec.primary, heldArc.id, ctx);

@@ -37,7 +37,7 @@ import {
   thrusterInfo,
   type Burn,
 } from './adapt.ts';
-import { compileArc, simulate, type Structure, type ThrustSegment } from './dynamics.ts';
+import { compileArc, simulate, type Arc, type Structure, type ThrustSegment } from './dynamics.ts';
 import {
   EXPONENT_ID,
   arrivalState,
@@ -45,11 +45,20 @@ import {
   presentState,
   referenceFor,
   scaleId,
+  windowRule,
   type ModelContext,
   type ModelSnapshot,
   type PresentState,
 } from './engine.ts';
-import { forecastCore, majorSigma, type ProfileFit } from './tierL.ts';
+import { asteroidOf } from './probes.ts';
+import {
+  anchorState,
+  forecastCore,
+  majorSigma,
+  makeWindows,
+  wholeArcWindow,
+  type ProfileFit,
+} from './tierL.ts';
 
 export interface ForecastRequest {
   readonly id: ForecastId;
@@ -63,6 +72,16 @@ export interface ForecastRequest {
   readonly duration?: number;
   /** Sample spacing, s (default settings.forecastStep). */
   readonly step?: number;
+}
+
+/** How a tracked asteroid entered the forecast (spec §10). */
+export interface AsteroidForecastNote {
+  readonly id: string;
+  /** False when its track was too short to forecast; it is then absent from `objects`. */
+  readonly forecast: boolean;
+  /** Time of its last fix used, and how many normal points its present state came from. */
+  readonly tLast?: number;
+  readonly fixes?: number;
 }
 
 export interface ForecastDetail {
@@ -79,6 +98,7 @@ export interface ForecastDetail {
   /** How the present state was obtained. */
   readonly presentSource: PresentState['source'];
   readonly presentTime: number;
+  readonly asteroids: readonly AsteroidForecastNote[];
 }
 
 const toCov2 = (m: { data: Float64Array }): Cov2 => [
@@ -353,6 +373,7 @@ export function buildForecast(
   const approach = new Map<string, ClosestApproach>();
   const L = (p: ProfileFit, r: number) =>
     r > p.rMax ? Math.log(r / p.rMax) : r < p.rMin ? Math.log(r / p.rMin) : 0;
+  const primaryAt = new Map<number, Vec2>();
   for (let k = 0; k < fc.times.length; k++) {
     const rel = fc.mean[k]!;
     const bodies = fc.bodies[k]!;
@@ -380,6 +401,7 @@ export function buildForecast(
     const prof = profiles.find((p) => p.body === dominant);
     const extrapolating = prof ? L(prof, dist[dominant]!) !== 0 : true;
     const positionCov = toCov2(cv.total);
+    primaryAt.set(t, frame.bodyPos[spec.primary]!);
     samples.push({
       t,
       position: frame.ship.position,
@@ -416,6 +438,92 @@ export function buildForecast(
         approach.set(id, { id, t, distance: clearance, sigma: sig });
       }
     }
+  }
+
+  // Tracked asteroids (§10): each from its latest probe arc, flown under the same law.
+  const asteroidNotes: AsteroidForecastNote[] = [];
+  const latestProbe = new Map<string, Arc>();
+  for (const a of d.probes.get(req.record.id) ?? []) latestProbe.set(asteroidOf(a.id)!, a);
+  const primaryProfile = d.profiles.find((p) => p.body === spec.primary) ?? null;
+  const shipAt = new Map(samples.map((q) => [q.t, q]));
+  for (const [ast, arc] of latestProbe) {
+    let wins = makeWindows(arc, spec.primary, windowRule(s))
+      .filter((w) => !w.powered && w.fixes.length >= s.windowKeepFixes)
+      .slice(-s.anchorWindows);
+    if (wins.length === 0) {
+      const all = wholeArcWindow(arc, spec.primary);
+      wins = all && all.fixes.length >= s.windowKeepFixes ? [all] : [];
+    }
+    if (wins.length === 0) {
+      asteroidNotes.push({ id: ast, forecast: false });
+      continue;
+    }
+    const aref = referenceFor(d, spec.primary, arc.id, ctx);
+    const anc = anchorState(aref, primaryProfile, arc, wins, s.dt, {
+      h: s.fdStep,
+      gPrior: [1, s.localScalePriorSigma],
+      slopeSigma: s.anchorSlopePriorSigma,
+      extraProfiles: d.profiles.filter((p) => p.body !== spec.primary),
+    });
+    const aTimes = samples.map((q) => q.t).filter((t) => t >= anc.tNow);
+    if (aTimes.length === 0) {
+      asteroidNotes.push({ id: ast, forecast: false });
+      continue;
+    }
+    const PA = { rows: 4, cols: 4, data: anc.covariance.data.map((v) => v * d.noiseScale) };
+    const afc = forecastCore({
+      ref: aref,
+      profiles,
+      commands: [],
+      tNow: anc.tNow,
+      xNow: anc.state,
+      PNow: PA,
+      times: aTimes,
+      dt: s.dt,
+      s2: 1,
+      sigmaH: d.hedge,
+      engineSigma: [0, 0],
+      muSigma,
+      h: s.fdStep,
+    });
+    const radiusA = ctx.asteroids?.find((q) => q.id === ast)?.radius ?? 0;
+    const track: { t: number; position: Vec2; positionCov: Cov2 }[] = [];
+    for (let k = 0; k < afc.times.length; k++) {
+      const rel = afc.mean[k]!;
+      const ob = afc.bodies[k]!;
+      const cv = afc.cov[k]!;
+      let nearest = Math.hypot(rel[0]!, rel[1]!);
+      for (let j = 0; j < nOthers; j++)
+        nearest = Math.min(nearest, Math.hypot(rel[0]! - ob[4 * j]!, rel[1]! - ob[4 * j + 1]!));
+      if (majorSigma(cv.total) > s.horizonFraction * nearest) break;
+      const t = afc.times[k]!;
+      const p0 = primaryAt.get(t)!;
+      const position = { x: p0.x + rel[0]!, y: p0.y + rel[1]! };
+      const positionCov = toCov2(cv.total);
+      track.push({ t, position, positionCov });
+      const ship = shipAt.get(t)!;
+      const dx = ship.position.x - position.x;
+      const dy = ship.position.y - position.y;
+      const r = Math.hypot(dx, dy);
+      const clearance = r - radiusA - hull;
+      const prev = approach.get(ast);
+      if (!prev || clearance < prev.distance) {
+        const ux = dx / r;
+        const uy = dy / r;
+        const c0 = ship.positionCov[0] + positionCov[0];
+        const c1 = ship.positionCov[1] + positionCov[1];
+        const c2 = ship.positionCov[2] + positionCov[2];
+        const sig = Math.sqrt(Math.max(0, ux * ux * c0 + 2 * ux * uy * c1 + uy * uy * c2));
+        approach.set(ast, { id: ast, t, distance: clearance, sigma: sig });
+      }
+    }
+    if (track.length > 0) tracks.set(ast, track);
+    asteroidNotes.push({
+      id: ast,
+      forecast: track.length > 0,
+      tLast: anc.tNow,
+      fixes: anc.info.nFixes,
+    });
   }
 
   const presentFrame = (() => {
@@ -459,7 +567,15 @@ export function buildForecast(
     objects,
     closestApproaches: [...approach.values()],
   };
-  return { draft, detail: { sigmaMajor, presentSource: present.source, presentTime: tNow } };
+  return {
+    draft,
+    detail: {
+      sigmaMajor,
+      presentSource: present.source,
+      presentTime: tNow,
+      asteroids: asteroidNotes,
+    },
+  };
 }
 
 function lastValue(rec: AttemptRecord, kind: 'rate' | 'attitude'): number | undefined {

@@ -12,6 +12,7 @@
 import type {
   AttemptId,
   AttemptRecord,
+  BelievedAsteroid,
   BelievedBody,
   CalibrationProfile,
   CovarianceMatrix,
@@ -35,11 +36,14 @@ import {
   usable,
   SHIP_REFS,
   type Arc,
+  type ArcSolution as DynArcSolution,
   type BodyDef,
   type EngineDef,
+  type Ref,
   type Structure,
 } from './dynamics.ts';
 import { zeros, type Matrix } from './linalg.ts';
+import { probeArcs, shipArcOf } from './probes.ts';
 import { resolveSettings, settingsRecord, type ModelSettings } from './settings.ts';
 import { fitGet, fitNu, stagedFit, type FitResult, type Param } from './solve.ts';
 import {
@@ -49,13 +53,14 @@ import {
   flatProfile,
   guessBody,
   guessShip,
-  localFit,
+  localFitDetailed,
   makeWindows,
   noiseScale,
   rangeFixes,
   shipParams,
   type Anchor,
   type FrozenBody,
+  type LocalFitResult,
   type ProfileFit,
   type ReferenceLaw,
   type WindowFit,
@@ -73,6 +78,8 @@ export interface ModelContext {
   readonly priors: readonly ParameterPrior[];
   /** Bodies known on arrival, as believed at t = 0 (briefing). */
   readonly bodies: readonly BelievedBody[];
+  /** Asteroids known on arrival (briefing): their radii set forecast clearances. */
+  readonly asteroids?: readonly BelievedAsteroid[];
   readonly ship: ShipDefinition;
   /** Navigation estimate on arrival (briefing). */
   readonly arrival: ShipEstimate;
@@ -92,6 +99,7 @@ export function contextFromBriefing(
     encounterId: briefing.id,
     priors: briefing.priors,
     bodies: briefing.knownBodies,
+    asteroids: briefing.knownAsteroids,
     ship,
     arrival: briefing.arrivalEstimate,
     ...opts,
@@ -425,12 +433,57 @@ export interface ModelInput {
   readonly current?: AttemptId;
 }
 
-export interface ArcSolution {
-  readonly arc: Arc;
-  /** Parameter vector and index of the Tier G fit (or priors when not fitted). */
-  readonly x: Float64Array;
-  readonly idx: ReadonlyMap<string, number>;
-  readonly structure: Structure;
+/**
+ * A ship arc's believed trajectory: the structure, parameter vector and index it was fitted
+ * with (Tier G, or a fit of that arc alone with the globals frozen), with covariance.
+ */
+export type ArcSolution = DynArcSolution;
+
+/** Replace global parameter names by their values (arc-local names stay parameters). */
+function freezeRef(r: Ref, values: Readonly<Record<string, number>>): Ref {
+  if (typeof r === 'object') return r.map((q) => freezeRef(q, values));
+  if (typeof r === 'string') return values[r] ?? r;
+  return r;
+}
+
+export function frozenStructure(
+  st: Structure,
+  values: Readonly<Record<string, number>>,
+): Structure {
+  const f = (r: Ref) => freezeRef(r, values);
+  const engines: Record<string, EngineDef> = {};
+  for (const [k, e] of Object.entries(st.engines ?? {})) engines[k] = { kE: f(e.kE), dE: f(e.dE) };
+  return {
+    ...st,
+    n: f(st.n),
+    bodies: st.bodies.map((b) => ({ ...b, mu: f(b.mu) })),
+    engine: { kE: f(st.engine.kE), dE: f(st.engine.dE) },
+    engines,
+    kA: f(st.kA),
+    camBias: f(st.camBias),
+  };
+}
+
+/** Fit one arc's own parameters with the globals frozen at `values` (in-flight refresh). */
+export function arcFit(
+  problem: TierGProblem,
+  values: Readonly<Record<string, number>>,
+  arc: Arc,
+  s: ModelSettings,
+): ArcSolution | null {
+  const params = problem.params.filter((p) => p.group === arc.id);
+  if (params.length === 0) return null;
+  const structure = frozenStructure(problem.structure, values);
+  const fit = stagedFit(structure, [arc], params, { dt: s.dt, h: s.fdStep });
+  return {
+    arc,
+    structure,
+    x: fit.x,
+    idx: new Map(params.map((p, i) => [p.name, i])),
+    P: fit.P,
+    rel: params.map((_, i) => i),
+    scale: Float64Array.from(params, (p) => p.scale),
+  };
 }
 
 export interface PresentState {
@@ -452,6 +505,8 @@ export interface ModelDerived {
   readonly values: Readonly<Record<string, number>>;
   readonly sigmas: Readonly<Record<string, number>>;
   readonly solutions: ReadonlyMap<string, ArcSolution>;
+  /** Tracked asteroids as test-particle arcs, per attempt (spec §10). */
+  readonly probes: ReadonlyMap<AttemptId, readonly Arc[]>;
   readonly windows: readonly WindowFit[];
   readonly profiles: readonly ProfileFit[];
   /** Covered ranges for bodies without a profile (hedge, §8.2). */
@@ -481,7 +536,8 @@ export function referenceFor(
     const m = /^thruster\.(.+)\.scale$/.exec(k);
     if (m) engines[m[1]!] = { kE: val, dE: v[misalignId(m[1]!)] ?? 0 };
   }
-  const sol = d.solutions.get(arcId);
+  // A probe arc flies in the same world as the ship arc it was built from.
+  const sol = d.solutions.get(arcId) ?? d.solutions.get(shipArcOf(arcId));
   const others: FrozenBody[] = spec.bodies
     .filter((b) => b !== body)
     .map((id) => ({
@@ -546,7 +602,7 @@ function believedPull(mu: number, n: number, r0: number, r: number): number {
 }
 
 /** Local fits keyed by window and reference law; results are identical with or without it. */
-export type TierLCache = Map<string, WindowFit>;
+export type TierLCache = Map<string, LocalFitResult>;
 
 export interface BuildOptions {
   /** Reuse these Tier G results instead of refitting (in-flight refresh, §11.2). */
@@ -579,25 +635,37 @@ export function buildModel(input: ModelInput, opts: BuildOptions = {}): ModelSna
     values[g] = reuse?.values[g] ?? x[i]!;
     sigmas[g] = reuse?.sigmas[g] ?? (useFit ? fitGet(fit!, g)[1] : (prm.priorSigma ?? 0));
   }
+  const scale = Float64Array.from(problem.params, (p) => p.scale);
   const solutions = new Map<string, ArcSolution>();
   for (const a of problem.arcs) {
     const old = reuse?.solutions.get(a.id);
+    if (old && old.arc.epoch === a.epoch && old.arc.meas.length === a.meas.length) {
+      solutions.set(a.id, old);
+      continue;
+    }
+    if (useFit) {
+      const rel = problem.params.flatMap((p, i) =>
+        p.group === 'global' || p.group === a.id ? [i] : [],
+      );
+      solutions.set(a.id, { arc: a, x, idx, structure: problem.structure, P: fit!.P, rel, scale });
+      continue;
+    }
+    // Not in a converged Tier G (in flight, or a fit that did not converge): fit the arc alone.
+    const own = arcFit(problem, values, a, s);
     solutions.set(
       a.id,
-      old && old.arc.epoch === a.epoch ? old : { arc: a, x, idx, structure: problem.structure },
+      own ?? { arc: a, x, idx, structure: problem.structure, P: null, rel: [], scale },
     );
   }
 
-  // Tier L per body with range fixes (§5).
+  // Tier L per body with range fixes (§5): first the ship's arcs, then the tracked asteroids'
+  // probe arcs (§10), whose fixes use the ship's path from its own window fits.
   const partial = { spec, values, solutions };
   const rule = windowRule(s);
-  const windows: WindowFit[] = [];
-  const profiles: ProfileFit[] = [];
-  const flatProfiles: ProfileFit[] = [];
   const n = spec.exponent ? (values[EXPONENT_ID] ?? 2) : 2;
-  for (const body of spec.bodies) {
-    const rows: WindowFit[] = [];
-    for (const a of problem.arcs) {
+  const fitWindows = (arcs: readonly Arc[], body: string): LocalFitResult[] => {
+    const out: LocalFitResult[] = [];
+    for (const a of arcs) {
       const ref = referenceFor(partial, body, a.id, ctx);
       for (const w of makeWindows(a, body, rule)) {
         // Coasting windows only; a sliver between two burns is too short to fit.
@@ -615,6 +683,7 @@ export function buildModel(input: ModelInput, opts: BuildOptions = {}): ModelSna
         }
         const key = opts.cache
           ? `${w.id}|${w.t0}|${w.t1}|${w.fixes.length}|${hashState([
+              w.fixes.map((f) => [f.t, f.z, f.sigma]),
               ref.mu,
               ref.n,
               ref.cam,
@@ -625,11 +694,63 @@ export function buildModel(input: ModelInput, opts: BuildOptions = {}): ModelSna
             ])}`
           : '';
         const hit = opts.cache?.get(key);
-        const row = hit ?? localFit(ref, a, w, s.dt, [1, s.localScalePriorSigma]);
-        if (!hit) opts.cache?.set(key, row);
-        rows.push(row);
+        const res = hit ?? localFitDetailed(ref, a, w, s.dt, [1, s.localScalePriorSigma]);
+        if (!hit) opts.cache?.set(key, res);
+        out.push(res);
       }
     }
+    return out;
+  };
+  const shipFits = new Map(spec.bodies.map((body) => [body, fitWindows(problem.arcs, body)]));
+
+  // The ship's path relative to each body: the window fit covering t (to the next window).
+  const paths = new Map(
+    spec.bodies.map((body) => {
+      const list = shipFits
+        .get(body)!
+        .map((r) => r.solution)
+        .sort((a, b) => a.arc.epoch - b.arc.epoch);
+      return [body, list] as const;
+    }),
+  );
+  const pathFor = (body: string, t: number): ArcSolution | null => {
+    const list = paths.get(body)!;
+    let best: ArcSolution | null = null;
+    for (const sol of list) if (sol.arc.epoch <= t) best = sol;
+    if (!best) return null;
+    const last = best.arc.meas[best.arc.meas.length - 1]!.t;
+    const next = list.find(
+      (q) =>
+        q.arc.epoch > best!.arc.epoch &&
+        shipArcOf(q.arc.id.split('.w')[0]!) === shipArcOf(best!.arc.id.split('.w')[0]!),
+    );
+    const until = next ? next.arc.epoch : last + s.normalPointInterval;
+    return t <= until ? best : null;
+  };
+  const probes = new Map<AttemptId, Arc[]>();
+  for (const rec of attempts) {
+    const shipArcs = problem.builds.get(rec.id)?.arcs ?? [];
+    if (shipArcs.length === 0) continue;
+    const list = probeArcs({
+      record: rec,
+      shipArcs,
+      bodies: spec.bodies,
+      pathFor,
+      cameraBias: values[`sensor.${spec.cameraId}.bias`] ?? 0,
+      dt: s.dt,
+      h: s.fdStep,
+      normalPointInterval: s.normalPointInterval,
+    });
+    if (list.length > 0) probes.set(rec.id, list);
+  }
+  const probeList = [...probes.values()].flat();
+  const allArcs = [...problem.arcs, ...probeList];
+
+  const windows: WindowFit[] = [];
+  const profiles: ProfileFit[] = [];
+  const flatProfiles: ProfileFit[] = [];
+  for (const body of spec.bodies) {
+    const rows = [...shipFits.get(body)!, ...fitWindows(probeList, body)].map((r) => r.row);
     windows.push(...rows);
     if (rows.length > 0)
       profiles.push(
@@ -640,7 +761,7 @@ export function buildModel(input: ModelInput, opts: BuildOptions = {}): ModelSna
         }),
       );
     else {
-      const ranges = problem.arcs.flatMap((a) => rangeFixes(a, body).map((m) => m.z[1]!));
+      const ranges = allArcs.flatMap((a) => rangeFixes(a, body).map((m) => m.z[1]!));
       flatProfiles.push(
         ranges.length > 0
           ? flatProfile(body, Math.min(...ranges), Math.max(...ranges), s.r0)
@@ -658,6 +779,7 @@ export function buildModel(input: ModelInput, opts: BuildOptions = {}): ModelSna
     values,
     sigmas,
     solutions,
+    probes,
     windows,
     profiles,
     flatProfiles,
@@ -862,7 +984,7 @@ function toModelState(
   const distance: Record<string, [number, number][]> = {};
   for (const body of d.spec.bodies) {
     const spans: [number, number][] = [];
-    for (const a of d.problem.arcs) {
+    for (const a of [...d.problem.arcs, ...[...d.probes.values()].flat()]) {
       const r = rangeFixes(a, body).map((m) => m.z[1]!);
       if (r.length > 0) spans.push([Math.min(...r), Math.max(...r)]);
     }

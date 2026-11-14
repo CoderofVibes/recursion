@@ -11,6 +11,7 @@ import {
   wrap,
   SHIP_REFS,
   type Arc,
+  type ArcSolution,
   type BodyDef,
   type CompiledArc,
   type EstMeasurement,
@@ -221,6 +222,28 @@ export function makeWindows(
   });
 }
 
+/** All range fixes of an arc on `body` as one window (a short track not yet cut into windows). */
+export function wholeArcWindow(arc: Arc, body: string, powered = false): Window | null {
+  const fixes = rangeFixes(arc, body);
+  if (fixes.length === 0) return null;
+  const rr = fixes.map((q) => q.z[1]!);
+  let sweep = 0;
+  for (let i = 1; i < fixes.length; i++) sweep += wrap(fixes[i]!.z[0]! - fixes[i - 1]!.z[0]!);
+  return {
+    id: `${arc.id}.all`,
+    arc: arc.id,
+    index: 0,
+    t0: fixes[0]!.t,
+    t1: fixes[fixes.length - 1]!.t,
+    fixes,
+    powered,
+    rGeo: Math.exp(rr.reduce((q, r) => q + Math.log(r), 0) / rr.length),
+    rMin: Math.min(...rr),
+    rMax: Math.max(...rr),
+    sweep: Math.abs(sweep),
+  };
+}
+
 // ---------------------------------------------------------------------------------------------
 // Initial guesses (§4.5)
 // ---------------------------------------------------------------------------------------------
@@ -347,6 +370,12 @@ export function azimuth(arc: Arc, body: string, t0: number, t1: number): number 
   return Math.atan2(s, c);
 }
 
+export interface LocalFitResult {
+  readonly row: WindowFit;
+  /** The window's own fit: the ship's path over the window, relative to the window's body. */
+  readonly solution: ArcSolution;
+}
+
 export function localFit(
   ref: ReferenceLaw,
   arc: Arc,
@@ -354,6 +383,16 @@ export function localFit(
   dt: number,
   gPrior: readonly [number, number] = [1, 0.5],
 ): WindowFit {
+  return localFitDetailed(ref, arc, w, dt, gPrior).row;
+}
+
+export function localFitDetailed(
+  ref: ReferenceLaw,
+  arc: Arc,
+  w: Window,
+  dt: number,
+  gPrior: readonly [number, number] = [1, 0.5],
+): LocalFitResult {
   const sub: Arc = { id: w.id, epoch: w.t0, commands: arc.commands, meas: w.fixes };
   const st = refStructure(ref, w.t0, { gs: '{att}.g' });
   const params: Param[] = [
@@ -367,9 +406,19 @@ export function localFit(
       group: w.id,
     },
   ];
-  const res = new Problem(st, [sub], params, { dt }).solve(params.map((p) => p.init));
+  const prob = new Problem(st, [sub], params, { dt });
+  const res = prob.solve(params.map((p) => p.init));
   const [g, sg] = fitGet(res, `${w.id}.g`);
-  return {
+  const solution: ArcSolution = {
+    arc: sub,
+    structure: st,
+    x: res.x,
+    idx: prob.idx,
+    P: res.P,
+    rel: params.map((_, i) => i),
+    scale: prob.scale,
+  };
+  const row: WindowFit = {
     window: w.id,
     arc: w.arc,
     body: ref.body,
@@ -386,6 +435,7 @@ export function localFit(
     converged: res.converged,
     azimuth: azimuth(arc, ref.body, w.t0, w.t1),
   };
+  return { row, solution };
 }
 
 /** Local fits of every coasting window of every arc (optionally filtered). */
