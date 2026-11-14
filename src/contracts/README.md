@@ -35,7 +35,10 @@ Dotted paths, shared by the model's estimates and truth's `HiddenParameters`:
 | `thruster.<equipmentId>.scale` | Thrust scale factor (true / nominal) | — |
 | `thruster.<equipmentId>.misalignment` | Thrust direction error | rad |
 | `sensor.<equipmentId>.bias-x`, `.bias-y`, `.bias` | Sensor biases | sensor unit |
-| `unmodeled.<n>.mu`, `.x`, `.y` | Extra body (extension `unmodeled-body`) | m³/s², m |
+| `sensor.<equipmentId>.scale` | Accelerometer scale factor (true / nominal) | — |
+| `unmodeled.<n>.mu`, `.x`, `.y` | Extra body never seen (extension `unmodeled-body`, unseen mode) | m³/s², m |
+
+Extension ids may carry a target: `unmodeled-body:<bodyId>` is the seen mode, a briefed body the model left out; it fits that body's `body.<bodyId>.mu`.
 | `empirical.ax`, `empirical.ay` | Constant unexplained acceleration (extension `empirical-acceleration`) | m/s² |
 
 ### Telemetry channels
@@ -102,7 +105,7 @@ What the crew knows from the spec sheets. True deviations live in truth.
 - `ResidualStats` — RMS residual split into coast and powered.
 - `CalibrationProfile` (A4, 1G spec §5.4) — per body: node `distances`, gravity `scale` relative to the reference law, node `covariance`, `inflation` diagnostic, and the `CalibrationWindow` local fits behind it (the "measured strength against distance" plot the console shows). Numbers at sampled distances only; never a rule.
 - `FitSummary` — χ², ν, effective parameters, iterations, converged.
-- `ModelState` — `version`, `parent`, parameters, covariance, extensions, support, residuals, `basedOn` (attempts, measurement count), `dataManifest`, `fit`, `calibration` (derived and cached), `settings`.
+- `ModelState` — `version`, `parent`, parameters, covariance, extensions, support, residuals, `basedOn` (attempts, measurement count), `dataManifest`, `fit`, `calibration` (derived and cached), `settings`, `noiseScale` s² (derived).
 - `KNOWN_EXTENSIONS` — `distance-law`, `unmodeled-body`, `thrust-response-region`, `empirical-acceleration`.
 
 ### `forecast.ts` (P6, P10)
@@ -115,7 +118,7 @@ What the crew knows from the spec sheets. True deviations live in truth.
   - **Thrust segments for the model** are derived belief-side from `executed` burn and cutoff commands × nominal ratings in `ShipDefinition`, with attitude from recorded attitude measurements, never from `ActuatorOutput` (truth). A `limited` burn is a segment whose commanded level is uncertain; give it a wider prior.
 - `TransitRecord` — the ship's history between encounters (ship time, commanded Δv, camera power cycles, condition changes) from the completed attempt that carried it onward. 3D writes it on arrival; the model ages ship calibrations with it (1G spec §3.7). Every attempt of an encounter repeats the same transit.
 - `Lead`, `LeadStatus` — the chart of leads.
-- `BlackBoxArchive` — everything preserved across recurrence: attempts, procedures, adopted extensions, leads.
+- `BlackBoxArchive` — everything preserved across recurrence: attempts, procedures, adopted extensions, leads, and `extensionTests` (`ExtensionTestRecord`: every rule test with its training and held-out attempts, evidence, identifiability, fitted values and resulting state; never edited).
 
 ### `encounter.ts` — player-visible briefing
 - `Objective` — kind, short label, optional region / moving target / time window.

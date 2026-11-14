@@ -684,8 +684,17 @@ describe('forecast-envelope', () => {
 // All claims
 // ---------------------------------------------------------------------------------------------
 
+/**
+ * Revision 2 claims (1G, DECISIONS A5) not built yet: validated range, and the new vectors
+ * carried-rule-forecast and parameter-aging (20 claims). Added by the integrator at merge so the
+ * revision 1 guard stays exact; 2C deletes this when it implements revision 2 (74 claims).
+ */
+const REVISION_2_PENDING: Readonly<Record<string, readonly string[]>> = {
+  'extension-validation': ['validated-range'],
+};
+
 describe('estimator vectors', () => {
-  it('all 54 claims hold, and each vector claim was evaluated', () => {
+  it('all 54 revision 1 claims hold, and each vector claim was evaluated', () => {
     const vectors = [
       rawNewton,
       rawTwo,
@@ -699,7 +708,13 @@ describe('estimator vectors', () => {
     for (const v of vectors) {
       const mine = claims.get(v.id);
       expect(mine, v.id).toBeDefined();
-      expect([...mine!.keys()].sort()).toEqual(v.checks.map((c) => c.id).sort());
+      const pending = REVISION_2_PENDING[v.id] ?? [];
+      expect([...mine!.keys()].sort()).toEqual(
+        v.checks
+          .map((c) => c.id)
+          .filter((id) => !pending.includes(id))
+          .sort(),
+      );
       for (const [id, ok] of mine!) expect(ok, `${v.id}/${id}`).toBe(true);
       total += mine!.size;
     }

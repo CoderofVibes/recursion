@@ -10,7 +10,15 @@
 import type { ShipEstimate } from './belief.ts';
 import type { ExecutedCommand, Plan, Procedure } from './commands.ts';
 import type { Forecast } from './forecast.ts';
-import type { AttemptId, ConfigurationId, EncounterId, ExtensionId, LeadId } from './ids.ts';
+import type {
+  AttemptId,
+  ConfigurationId,
+  EncounterId,
+  ExtensionId,
+  LeadId,
+  ParameterId,
+} from './ids.ts';
+import type { ExtensionState } from './model.ts';
 import type { LossCause, Measurement, ShipEvent } from './measurements.ts';
 import type { MetersPerSecond, Seconds } from './units.ts';
 
@@ -77,10 +85,36 @@ export interface Lead {
   readonly status: LeadStatus;
 }
 
+/**
+ * One test of a candidate rule, with its numbers (1G spec §6.1, §7). Black Box keeps every test,
+ * passed or not, and never edits one (spec §11.4).
+ */
+export interface ExtensionTestRecord {
+  /** Status after the test, with its held-out `validation` and `validatedSpans`. */
+  readonly state: ExtensionState;
+  readonly training: readonly AttemptId[];
+  readonly heldOut?: AttemptId;
+  /** Training evidence: cost drop against the adoption penalty, and whether it beat it (§7.1). */
+  readonly evidence?: {
+    readonly deltaCost: number;
+    readonly penalty: number;
+    readonly evidence: boolean;
+  };
+  readonly identifiable?: { readonly identifiable: boolean; readonly reasons: readonly string[] };
+  /** Fitted values of the parameters the extension adds. */
+  readonly fitted?: Readonly<
+    Record<ParameterId, { readonly value: number; readonly sigma: number }>
+  >;
+  /** Passed the held-out test with training evidence and identifiable parameters. */
+  readonly adoptable: boolean;
+}
+
 /** Everything Black Box preserves across recurrence. */
 export interface BlackBoxArchive {
   readonly attempts: readonly AttemptRecord[];
   readonly procedures: readonly Procedure[];
   readonly adoptedExtensions: readonly ExtensionId[];
   readonly leads: readonly Lead[];
+  /** Every extension test, in the order run. */
+  readonly extensionTests?: readonly ExtensionTestRecord[];
 }
