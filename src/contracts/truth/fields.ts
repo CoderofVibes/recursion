@@ -37,6 +37,11 @@ export interface EnvironmentField {
   intensity?(position: Vec2, t: Seconds): LatticeIntensity;
   /** Raw signal sensors could pick up at a position (processed by ship systems). */
   signal?(position: Vec2, t: Seconds): JsonValue;
+  /**
+   * True inside the field's region. When it changes for the ship between steps, the
+   * simulation emits a `field-boundary` SimEvent (2A request). Omit for fields with no edge.
+   */
+  inside?(position: Vec2, t: Seconds): boolean;
 }
 
 export interface FieldFactory {

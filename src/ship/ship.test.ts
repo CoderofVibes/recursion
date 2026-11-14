@@ -21,6 +21,7 @@ const env = (state: ShipSystemsState): EnvironmentEffects => ({
   ],
   intensity: {},
   fieldSignals: {},
+  sunlight: { direction: { x: 1, y: 0 }, irradiance: 0 },
 });
 
 describe('1C loader and physical arrival', () => {

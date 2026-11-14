@@ -48,16 +48,11 @@ export function stepThermal(
   const geometry = getGeometry(state, definition);
   const radiator = data.radiators;
   const light = env.fieldSignals.illumination as Record<string, JsonValue> | undefined;
-  const irradiance =
-    light?.shadow === true
-      ? 0
-      : typeof light?.irradiance === 'number'
-        ? Math.max(0, light.irradiance)
-        : 0;
-  const incidence =
-    typeof light?.angle === 'number'
-      ? Math.max(0, Math.cos(light.angle - env.kinematics.attitude))
-      : 0;
+  // Sunlight arrives with body shadows already applied (DECISIONS A3); only the sink
+  // temperature still comes from the optional fieldSignals.illumination adapter.
+  const irradiance = Math.max(0, env.sunlight.irradiance);
+  const sunAngle = Math.atan2(env.sunlight.direction.y, env.sunlight.direction.x);
+  const incidence = irradiance > 0 ? Math.max(0, Math.cos(sunAngle - env.kinematics.attitude)) : 0;
   const sink =
     typeof light?.sinkTemperature === 'number'
       ? Math.max(0, light.sinkTemperature)

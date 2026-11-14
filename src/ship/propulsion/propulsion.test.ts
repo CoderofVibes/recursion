@@ -13,6 +13,7 @@ const env: EnvironmentEffects = {
   targets: [],
   intensity: {},
   fieldSignals: {},
+  sunlight: { direction: { x: 1, y: 0 }, irradiance: 0 },
 };
 const definition = loadShipDefinition();
 function burning(id = 'main-engine', throttle = 1): ShipSystemsState {

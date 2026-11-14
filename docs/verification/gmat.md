@@ -317,7 +317,7 @@ persistent offset warrants checking configuration or units, not widening toleran
 
 ## Submission paragraph
 
-**Ready to paste (GMAT runs are complete; the game comparison is not yet):**
+**Ready to paste (GMAT runs and the game comparison are both complete):**
 
 > We used NASA's General Mission Analysis Tool (GMAT R2026a) to generate independent
 > reference trajectories for Recursion's starting Newtonian flight model. Four
@@ -326,10 +326,10 @@ persistent offset warrants checking configuration or units, not widening toleran
 > coast. GMAT propagated each case with a high-accuracy point-mass Earth model, and we
 > exported the results in SI units every 10 seconds. Repeat runs were bit-for-bit
 > identical, and the trajectories agree with independent orbit solutions to within
-> about a centimetre. These references are for comparison with the game's fixed-step
-> integrator; they cover ordinary gravity and rocket dynamics, not the game's fictional
-> inverse-2.5 gravity law.
+> about a centimetre. The game's own fixed-step integrator matches all four GMAT
+> references to within 2.2 cm, run at 6–25 millisecond steps because these low Earth
+> orbits turn about ten times faster than the game's encounters. The comparison covers
+> ordinary gravity and rocket dynamics, not the game's fictional inverse-2.5 gravity law.
 
-After phase 2A passes the comparison, a sentence may be added such as "The game's
-integrator matches all four GMAT references to within N cm," using the measured
-value. Do not claim that before 2A demonstrates it.
+Measured by 2A in `src/sim/gmat.test.ts` (DECISIONS D4, P17). Keep the step sizes in
+any shortened version of the claim.

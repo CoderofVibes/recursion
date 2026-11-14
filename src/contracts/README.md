@@ -135,7 +135,8 @@ What the crew knows from the spec sheets. True deviations live in truth.
 ### One simulation tick (for 2A, 2B, 2F)
 
 1. Game layer builds `EnvironmentEffects` from the truth world, including sunlight: the sun's direction, and its irradiance set to 0 when a massive body's disc blocks the line to the sun (parallel rays, so a body's shadow is a band behind it).
-2. Ship systems: `step(state, shipDefinition, commandsDueNow, envEffects, dt)` → new systems state, actuators, measurements, events.
+   `specificForce` is the previous step's `SimState.specificForce` (2A).
+2. Ship systems: `step(state, shipDefinition, commandsDueNow, envEffects, dt)` → new systems state, actuators, measurements, events. Note: 2B reports end-of-step `massProperties`, while the simulation applies one set for the whole step; the game layer should pass the average of the previous and new mass properties to keep burns second order (relative Δv error otherwise ≈ ṁ·dt / 2m, about 10⁻⁴ for the main engine at 1 s).
 3. Simulation integrates bodies, asteroids and the ship with the actuators; fields add acceleration or modify thrust; it reports `SimEvent`s.
 4. Game layer forwards measurements and sensed events to the model and Black Box, and builds the next `ViewSnapshot`.
 

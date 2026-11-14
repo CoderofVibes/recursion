@@ -74,7 +74,7 @@ Rejections are `command-rejected` events. Chemical throttles mean pulse duty, no
 
 **[ASSUMED]** Until dedicated environment fields are agreed, `EnvironmentEffects.fieldSignals` optionally carries:
 
-- `illumination`: `{ irradiance, angle, shadow?, sinkTemperature? }` in W/m², inertial radians and K. Missing light means zero solar; radiator reference sink is 1C's 3 K.
+- Sunlight comes from the typed `EnvironmentEffects.sunlight` (direction toward the sun, irradiance after body shadows; DECISIONS A3), added at integration. `illumination` now carries only an optional `{ sinkTemperature }` in K; without it the radiator reference sink is 1C's 3 K.
 - `ship-environment`: `{ starsVisible?, opticsValid?, visibility?: { [id]: boolean }, knownSizeTargets?: string[] }`. Present targets are eligible by default; game must remove or invalidate occluded/dark targets. Known-size defaults empty; stars default visible in an assumed locally bootstrapped relative frame, not an Earth catalogue match.
 
 Camera half-FOV defaults to `pi/6` (`params.fovHalfAngle` overrides). A settled target lock assumes ideal camera steering; target drift still incurs smear. Detailed gimbal travel/stellar-map acquisition await Phase 3. These are explicit **[ASSUMED]** adapter choices.

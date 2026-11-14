@@ -72,6 +72,7 @@ const environment = (t = 100): EnvironmentEffects => ({
   ],
   intensity: {},
   fieldSignals: {},
+  sunlight: { direction: { x: 1, y: 0 }, irradiance: 0 },
 });
 function changeEquipment(
   state: ShipSystemsState,

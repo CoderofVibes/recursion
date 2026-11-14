@@ -132,12 +132,10 @@ function dispatchPower(
   };
   const pdu: Record<Side, boolean> = { a: healthy('pdu-a'), b: healthy('pdu-b') };
   const geometry = getGeometry(state, definition);
-  const light = env.fieldSignals.illumination as Record<string, JsonValue> | undefined;
-  const irradiance = typeof light?.irradiance === 'number' ? Math.max(0, light.irradiance) : 0;
-  const incidence =
-    typeof light?.angle === 'number'
-      ? Math.max(0, Math.cos(light.angle - env.kinematics.attitude))
-      : 0;
+  // Sunlight arrives with body shadows already applied (irradiance 0 in shadow; DECISIONS A3).
+  const irradiance = Math.max(0, env.sunlight.irradiance);
+  const sunAngle = Math.atan2(env.sunlight.direction.y, env.sunlight.direction.x);
+  const incidence = irradiance > 0 ? Math.max(0, Math.cos(sunAngle - env.kinematics.attitude)) : 0;
   const sources: Record<
     Side,
     { solar: number; fuel: number; discharge: number; optionalDischarge: number }
@@ -148,7 +146,7 @@ function dispatchPower(
   for (const side of ['a', 'b'] as const) {
     const s = sources[side];
     const solarId = side === 'a' ? 'solar-left' : 'solar-right';
-    if (pdu[side] && healthy(solarId) && light?.shadow !== true) {
+    if (pdu[side] && healthy(solarId)) {
       s.solar =
         Math.min(
           data.generation.solar.maxPowerPerWing,
