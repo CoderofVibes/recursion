@@ -77,6 +77,14 @@ export type ShipEvent =
       readonly fault: string;
     }
   | { readonly kind: 'equipment-recovered'; readonly t: Seconds; readonly equipment: EquipmentId }
+  | {
+      /** Reported condition changed (1G spec §3.7: drops age ship calibrations). */
+      readonly kind: 'condition-changed';
+      readonly t: Seconds;
+      readonly equipment: EquipmentId;
+      /** New reported condition, 0 failed to 1 nominal (as EquipmentStatus.condition). */
+      readonly condition: number;
+    }
   | { readonly kind: 'breaker-trip'; readonly t: Seconds; readonly equipment: EquipmentId }
   | {
       readonly kind: 'load-shed';

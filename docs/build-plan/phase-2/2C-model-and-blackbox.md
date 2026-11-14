@@ -5,9 +5,9 @@
 ## Context
 Recursion is a browser-based spacecraft engineering roguelike for NASA Space Apps 2026. The ship's predictive model starts from known physics and improves from data the player acquires; Black Box preserves evidence across recurrence and helps the player compare attempts. Read first:
 - `docs/CREATIVE_BRIEF.md` §2, §3, §5, §13.
-- `docs/DECISIONS.md`: A4 (the owner's answer on P5: keep 1G's per-distance calibration; rules only from the player; what carries between encounters), P6, P7, P8, P9, P10, P11, P12.
+- `docs/DECISIONS.md`: A4 (the owner's answer on P5: keep 1G's per-distance calibration; rules only from the player; what carries between encounters), A5 (carried knowledge never makes the game easy), P6, P7, P8, P9, P10, P11, P12.
 - `docs/build-plan/README.md` § Conventions; `src/contracts/README.md`.
-- Inputs: `docs/model/estimator-spec.md` (start with §0 and §12), `tests/vectors/estimator/` (1G), `tools/estimator-ref/` (the Python reference: `core.py`, `fit.py`, `local.py`), `docs/handoffs/1G.md`. Ship systems (2B) are merged: see `src/ship/README.md` for what measurements and telemetry actually arrive.
+- Inputs: `docs/model/estimator-spec.md` (start with §0 and §12), `tests/vectors/estimator/` (1G), `tools/estimator-ref/` (the Python reference: `core.py`, `fit.py`, `local.py`), `docs/handoffs/1G.md` (its first table lists what revision 2 adds for A5: the two-part hedge with validated spans, per-arc aging of ship calibrations, aged priors). Ship systems (2B) are merged: see `src/ship/README.md` for what measurements and telemetry actually arrive.
 - Contracts: `ModelState`, `ParameterEstimate`, `ExtensionState` (with `status`), `CalibrationProfile`, `FitSummary` (`src/contracts/model.ts`); `ForecastDraft` (inputs now carry calibration, noise scale and hedge), `issueForecast` (`forecast.ts`); `AttemptRecord`, `BlackBoxArchive` (`attempt.ts`; read the measurement-order and thrust-segment rules in the README); `Measurement` (`measurements.ts`); `Procedure` (`commands.ts`); parameter-ID convention in `src/contracts/README.md`. Fixtures: `models`, `attempts`, `archive`, `procedure` in `src/contracts/fixtures/index.ts`. Both `src/model/` and `src/blackbox/` are lint-blocked from truth.
 
 ## Goal
@@ -25,7 +25,7 @@ The believed world: an estimator that learns from measurements, a forecast servi
 6. **Procedures** (P9): save a command sequence from an attempt; report whether current conditions match its origin.
 
 ## Tests
-All 54 claims in `tests/vectors/estimator/` (never pass a vector's `truth` block to the estimator; claims marked `compare: qualitative` check only their inequalities); forecast immutability; rebuild-from-records equals live state (spec §11.3); P11 lint passes. The vectors' sensor noise is 1G's placeholder, not 1C's: that is fine for correctness, and retuning to the real ship's noise belongs to balance (2F, 5A).
+All 74 claims in `tests/vectors/estimator/` (9 vectors, revision 2) (never pass a vector's `truth` block to the estimator; claims marked `compare: qualitative` check only their inequalities); forecast immutability; rebuild-from-records equals live state (spec §11.3); P11 lint passes. The vectors' sensor noise is 1G's placeholder, not 1C's: that is fine for correctness, and retuning to the real ship's noise belongs to balance (2F, 5A).
 
 ## Done when
 Tests pass; `src/model/README.md` and `src/blackbox/README.md` describe the APIs the console and game loop will call.

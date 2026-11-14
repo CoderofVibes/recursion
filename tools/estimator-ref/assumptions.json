@@ -82,6 +82,21 @@
     "label": "ASSUMED",
     "source": "Play value: outside the distance range the data covers, the law may deviate like an exponent change of +/-0.3. Owner/playtest may tune."
   },
+  "validatedRange": {
+    "transfer": "shared-law",
+    "label": "ASSUMED",
+    "source": "DECISIONS A5 item 5. A rule's earned hedge applies only inside the distance spans its passing held-out test covered (recorded per body). 'shared-law': a rule shared by all bodies (the exponent) applies its spans to every body, as A4 says adopted rules apply everywhere. 'same-body' is the stricter alternative."
+  },
+  "aging": {
+    "note": "Process noise for ship calibration parameters (DECISIONS A5 item 4). Random walk: variance grows by sigmaPerRootDay^2 per day of ship time, sigmaPerRootUse^2 per useRef of use, and (sigmaPerCondition * drop)^2 per drop in reported equipment condition. Play values; reasons in spec 3.7.",
+    "classes": {
+      "engine.kE": { "sigmaPerRootDay": 0.002, "sigmaPerRootUse": 0.005, "useRef": 100.0, "useUnit": "m/s of commanded delta-v", "sigmaPerCondition": 0.10, "equipment": "main-engine" },
+      "engine.dE": { "sigmaPerRootDay": 2.0e-4, "sigmaPerRootUse": 1.0e-3, "useRef": 100.0, "useUnit": "m/s of commanded delta-v", "sigmaPerCondition": 0.02, "equipment": "main-engine" },
+      "accel.kA": { "sigmaPerRootDay": 5.0e-5, "sigmaPerRootUse": 0.0, "useRef": 1.0, "useUnit": "none", "sigmaPerCondition": 0.01, "equipment": "imu" },
+      "camera.bias": { "sigmaPerRootDay": 5.0e-6, "sigmaPerRootUse": 1.0e-5, "useRef": 1.0, "useUnit": "camera power cycles", "sigmaPerCondition": 2.0e-4, "equipment": "nav-camera" }
+    },
+    "label": "ASSUMED"
+  },
   "validation": {
     "heldOutSigmaK": 3.0,
     "adoptPenaltyPerParam": "ln(m)",
@@ -103,6 +118,8 @@
     "missing-body-signature": 1401,
     "burn-only-confounded": 1501,
     "extension-validation": 1601,
-    "forecast-envelope": 1701
+    "forecast-envelope": 1701,
+    "carried-rule-forecast": 1801,
+    "parameter-aging": 1901
   }
 }

@@ -9,7 +9,7 @@
 
 import type { CovarianceMatrix, Gaussian } from './estimates.ts';
 import type { AttemptId, BodyId, ExtensionId, ParameterId } from './ids.ts';
-import type { Meters, Seconds } from './units.ts';
+import type { Meters, MetersPerSecond, Seconds } from './units.ts';
 
 /** Extensions proposed in DECISIONS P5. 1G may add more; ExtensionId stays a string. */
 export const KNOWN_EXTENSIONS = [
@@ -45,6 +45,36 @@ export interface ParameterEstimate {
    * 0 = prior only, 1 = fully determined by measurements.
    */
   readonly support: number;
+  /**
+   * Ship calibrations only (1G spec §3.7): set on the value used in one arc (arrival value plus
+   * that attempt's deviation). Absent for the arrival value and for world parameters.
+   */
+  readonly arc?: AttemptId;
+  /** Ship calibrations only: how much of sigma is fresh and how much has aged (spec §9.7). */
+  readonly freshness?: CalibrationFreshness;
+}
+
+/**
+ * Calibration freshness (1G spec §3.7, §9.7, DECISIONS A5). sigma² = sigmaMeasured² + sigmaAged².
+ * Ship calibrations loosen with ship time, use and damage until re-measured.
+ */
+export interface CalibrationFreshness {
+  /** Sigma as last measured. */
+  readonly sigmaMeasured: number;
+  /** Sigma added by aging since then (quadrature). */
+  readonly sigmaAged: number;
+  /** Ship time of the last measurement that constrained it; absent if never measured. */
+  readonly lastMeasured?: { readonly attempt: AttemptId; readonly t: Seconds };
+  /** What aged it since, in plain units. */
+  readonly since: {
+    readonly shipTime: Seconds;
+    /** Commanded Δv, m/s. */
+    readonly deltaV: MetersPerSecond;
+    /** Camera power-on transitions. */
+    readonly powerCycles: number;
+    /** Sum of drops in reported condition (0 to 1 scale). */
+    readonly conditionLost: number;
+  };
 }
 
 export type ValidationVerdict = 'better' | 'no-better' | 'worse';
@@ -69,12 +99,28 @@ export interface ValidationResult {
  */
 export type ExtensionStatus = 'candidate' | 'adopted' | 'rejected' | 'revoked';
 
+/**
+ * Distances one passing held-out test covered around one body (1G spec §7.4). The earned hedge
+ * applies only inside them. Which bodies a span applies to: DECISIONS A5.
+ */
+export interface ValidatedSpan {
+  /** The body the test's fixes were taken around. */
+  readonly body: BodyId;
+  readonly rMin: Meters;
+  readonly rMax: Meters;
+  /** Earned hedge σ_e from the test. */
+  readonly sigmaE: number;
+  readonly heldOutAttempt: AttemptId;
+}
+
 export interface ExtensionState {
   readonly id: ExtensionId;
   readonly status: ExtensionStatus;
   /** Model version at which it was last fitted. */
   readonly fittedAt?: number;
   readonly validation?: ValidationResult;
+  /** One per body per passing test; kept when a later test adds new distances (spec §7.4). */
+  readonly validatedSpans?: readonly ValidatedSpan[];
 }
 
 /** Where the model has evidence (local confidence). Outside these spans it is extrapolating. */

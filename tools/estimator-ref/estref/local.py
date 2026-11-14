@@ -153,11 +153,24 @@ def build_profile(rows, r0, delta=0.1, curv=0.01, ridge=10.0):
             "rMin": rmin, "rMax": rmax, "chi2": chi2, "nu": nu, "inflation": infl, "nWindows": len(u)}
 
 
-def profile_def(prof, dnodes=None, eta=0.0, body="A"):
+def merge_spans(spans):
+    """Union of distance spans as a sorted list of disjoint (lo, hi)."""
+    out = []
+    for lo, hi in sorted((float(a), float(b)) for a, b in spans):
+        if out and lo <= out[-1][1]:
+            out[-1] = (out[-1][0], max(out[-1][1], hi))
+        else:
+            out.append((lo, hi))
+    return out
+
+
+def profile_def(prof, dnodes=None, eta=0.0, eta_e=0.0, validated=None, body="A"):
     """ProfileDef for the calibrated law (reference law x profile). dnodes are
-    per-node perturbation refs; eta is the hedge exponent outside coverage (spec 8.2)."""
+    per-node perturbation refs; eta is the default hedge exponent outside
+    coverage, eta_e the earned one inside the validated spans (spec 8.2)."""
     un = [math.log(prof["r0"]) + v for v in prof["uNodes"]]
-    return ProfileDef(body, un, list(prof["g"]), prof["rMin"], prof["rMax"], dnodes=dnodes, eta=eta)
+    return ProfileDef(body, un, list(prof["g"]), prof["rMin"], prof["rMax"], dnodes=dnodes, eta=eta, eta_e=eta_e,
+                      validated=merge_spans(validated) if validated else None)
 
 
 def anchor_state(ref, prof, att: Attempt, wins, dt, h=1e-3, g_prior=(1.0, 0.5), slope_sigma=0.2):
@@ -198,19 +211,22 @@ def anchor_state(ref, prof, att: Attempt, wins, dt, h=1e-3, g_prior=(1.0, 0.5), 
     return t_last, x_now, P_now, info
 
 
-def forecast(ref, prof, att: Attempt, t_last, x_now, P_now, times, dt, s2, sigma_h, engine_sigma, h=1e-3):
+def forecast(ref, prof, att: Attempt, t_last, x_now, P_now, times, dt, s2, sigma_h, engine_sigma, h=1e-3,
+             validated=None, sigma_e=None, mu_sigma=0.0):
     """Spec 8: linearised forecast from the present state under the calibrated
     law (reference law x profile; prof = None gives the bare reference law).
-    Returns mean positions relative to the gauge body and the position
-    covariance split by source: state, profile (full node covariance), hedge, engine."""
+    Outside the covered range the hedge uses sigma_e inside the validated spans
+    of an adopted rule and the default sigma_h elsewhere. Returns mean positions
+    relative to the gauge body and the position covariance split by source:
+    state, profile (full node covariance), hedgeEarned, hedgeDefault, engine, mu."""
     aid = att.id + ".fc"
     nb = 0 if prof is None else len(prof["uNodes"])
-    names = [f"{aid}.ship.{k}" for k in ("x", "y", "vx", "vy")] + ["f.eta", "f.kE", "f.dE"] + [f"f.c{b}" for b in range(nb)]
+    names = [f"{aid}.ship.{k}" for k in ("x", "y", "vx", "vy")] + ["f.eta", "f.etaE", "f.kE", "f.dE", "f.mu"] + [f"f.c{b}" for b in range(nb)]
     idx = {nm: i for i, nm in enumerate(names)}
-    x = np.concatenate([x_now, [0.0, ref.get("kE", 1.0), ref.get("dE", 0.0)], np.zeros(nb)])
-    scale = np.concatenate([[1e3, 1e3, 1.0, 1.0, 1e-2, 1e-3, 1e-3], np.full(nb, 1e-2)])
-    pd = None if prof is None else profile_def(prof, dnodes=[f"f.c{b}" for b in range(nb)], eta="f.eta")
-    st = Structure(ref["r0"], ref["n"], [BodyDef("A", ref["mu"])], kE="f.kE", dE="f.dE", cam_bias=ref.get("cam", 0.0), profile=pd)
+    x = np.concatenate([x_now, [0.0, 0.0, ref.get("kE", 1.0), ref.get("dE", 0.0), ref["mu"]], np.zeros(nb)])
+    scale = np.concatenate([[1e3, 1e3, 1.0, 1.0, 1e-2, 1e-2, 1e-3, 1e-3, 1e-3 * ref["mu"]], np.full(nb, 1e-2)])
+    pd = None if prof is None else profile_def(prof, dnodes=[f"f.c{b}" for b in range(nb)], eta="f.eta", eta_e="f.etaE", validated=validated)
+    st = Structure(ref["r0"], ref["n"], [BodyDef("A", "f.mu")], kE="f.kE", dE="f.dE", cam_bias=ref.get("cam", 0.0), profile=pd)
     fsub = Attempt(aid, max(times) + dt, att.commands, [], epoch=t_last)
     q = len(x)
     X = np.tile(x, (2 * q + 1, 1))
@@ -221,14 +237,21 @@ def forecast(ref, prof, att: Attempt, t_last, x_now, P_now, times, dt, s2, sigma
     mean = rel[0]
     S = (rel[1::2] - rel[2::2]) / (2 * h * scale)[:, None, None]  # (q, T, 2)
     C = None if prof is None else np.array(prof["covariance"])
+    se = sigma_h if sigma_e is None else sigma_e
     out = []
     for t in range(len(times)):
         St = S[:, t, :].T  # (2, q)
-        c_state = s2 * St[:, :4] @ P_now @ St[:, :4].T
-        c_hedge = sigma_h**2 * np.outer(St[:, 4], St[:, 4])
-        c_eng = engine_sigma[0] ** 2 * np.outer(St[:, 5], St[:, 5]) + engine_sigma[1] ** 2 * np.outer(St[:, 6], St[:, 6])
-        c_prof = np.zeros((2, 2)) if prof is None else St[:, 7:] @ C @ St[:, 7:].T
-        out.append({"state": c_state, "profile": c_prof, "hedge": c_hedge, "engine": c_eng, "total": c_state + c_prof + c_hedge + c_eng})
+        c = {
+            "state": s2 * St[:, :4] @ P_now @ St[:, :4].T,
+            "hedgeDefault": sigma_h**2 * np.outer(St[:, 4], St[:, 4]),
+            "hedgeEarned": se**2 * np.outer(St[:, 5], St[:, 5]),
+            "engine": engine_sigma[0] ** 2 * np.outer(St[:, 6], St[:, 6]) + engine_sigma[1] ** 2 * np.outer(St[:, 7], St[:, 7]),
+            "mu": mu_sigma**2 * np.outer(St[:, 8], St[:, 8]),
+            "profile": np.zeros((2, 2)) if prof is None else St[:, 9:] @ C @ St[:, 9:].T,
+        }
+        c["hedge"] = c["hedgeDefault"] + c["hedgeEarned"]
+        c["total"] = c["state"] + c["profile"] + c["hedge"] + c["engine"] + c["mu"]
+        out.append(c)
     return mean, out
 
 
@@ -243,7 +266,9 @@ def mahalanobis(dev, cov):
 def earned_hedge(rows_heldout, train_rmin, train_rmax, sigma_n, sigma_h0, floor=0.01):
     """Spec 7.4: a validated rule earns a smaller hedge. Uses held-out windows
     that lie outside the training coverage: delta = rms(g - 1), ell = mean
-    |ln(r / nearest training edge)|. sigma_h = clamp(sqrt(sigma_n^2 + (delta/ell)^2), floor, sigma_h0)."""
+    |ln(r / nearest training edge)|. sigma_h = clamp(sqrt(sigma_n^2 + (delta/ell)^2), floor, sigma_h0).
+    The earned value applies only inside the validated range: the span from the
+    smallest to the largest distance of the test's training and held-out data."""
     ext = []
     for r in rows_heldout:
         if r["rGeoMean"] < train_rmin:
@@ -251,8 +276,11 @@ def earned_hedge(rows_heldout, train_rmin, train_rmax, sigma_n, sigma_h0, floor=
         elif r["rGeoMean"] > train_rmax:
             ext.append((r["g"] - 1.0, math.log(r["rGeoMean"] / train_rmax)))
     if not ext:
-        return {"nWindowsOutside": 0, "sigmaH": sigma_h0, "note": "held-out attempt did not leave the training coverage: nothing earned"}
+        return {"nWindowsOutside": 0, "sigmaH": sigma_h0, "validatedRange": None, "note": "held-out attempt did not leave the training coverage: nothing earned"}
     delta = math.sqrt(sum(e[0] ** 2 for e in ext) / len(ext))
     ell = sum(e[1] for e in ext) / len(ext)
     val = math.sqrt(sigma_n**2 + (delta / ell) ** 2)
-    return {"nWindowsOutside": len(ext), "delta": delta, "ell": ell, "sigmaH": min(sigma_h0, max(floor, val))}
+    held_min = min(r["rMin"] for r in rows_heldout)
+    held_max = max(r["rMax"] for r in rows_heldout)
+    return {"nWindowsOutside": len(ext), "delta": delta, "ell": ell, "sigmaH": min(sigma_h0, max(floor, val)),
+            "validatedRange": [min(train_rmin, held_min), max(train_rmax, held_max)]}

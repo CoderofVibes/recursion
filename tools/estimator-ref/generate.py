@@ -31,6 +31,8 @@ VECTORS = [
     ("burn-only-confounded", "scenarios_b", "v_burn_only"),
     ("extension-validation", "scenarios_c", "v_extension_validation"),
     ("forecast-envelope", "scenarios_c", "v_forecast_envelope"),
+    ("carried-rule-forecast", "scenarios_d", "v_carried_rule_forecast"),
+    ("parameter-aging", "scenarios_d", "v_parameter_aging"),
 ]
 
 

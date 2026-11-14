@@ -898,6 +898,15 @@ export function buildFixtures(): Fixtures {
             rmsAfter: 310,
             verdict: 'better',
           },
+          validatedSpans: [
+            {
+              body: 'alpha',
+              rMin: Math.min(...r1, ...r2),
+              rMax: Math.max(...r1, ...r2),
+              sigmaE: 0.019,
+              heldOutAttempt: 'attempt-0002',
+            },
+          ],
         },
       ],
       support: {

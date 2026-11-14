@@ -1,6 +1,6 @@
 # Predictive model: estimator specification
 
-Section 1G · Branch `p1/1g-model-spec` · For section 2C (implementation) and the integrator.
+Section 1G · Branch `p1/1g-model-spec` · For section 2C (implementation) and the integrator. **Revision 2** (2026-11-14, after DECISIONS A4 and A5).
 
 Everything here is **proposed** until 2C's implementation reproduces the vectors in `tests/vectors/estimator/`. Claims are labelled per the build-plan conventions:
 
@@ -9,7 +9,20 @@ Everything here is **proposed** until 2C's implementation reproduces the vectors
 - `[FICTIONAL]` a deliberate departure from real physics.
 - `[DEMONSTRATED: vector / check]` shown by the reference generator. `vector / check` names a file in `tests/vectors/estimator/` and a check id inside it.
 
-Scale (r₀, body masses) and sensor noise are placeholders pending 1B and 1C. They are parameters: edit `assumptions.json`, run `python tools/estimator-ref/generate.py`, and every vector regenerates.
+Scale (r₀, body masses) and sensor noise are parameters: edit `assumptions.json`, run `python tools/estimator-ref/generate.py`, and every vector regenerates. Sensor noise stays at 1G's values until balancing.
+
+**What revision 2 changes** (for anyone who built from revision 1):
+
+| Where | Change | Why |
+|---|---|---|
+| §3.7 (new), §3.6 | Ship calibration parameters age with ship time, use and damage; each arc gets a deviation from the arrival value | A5 item 4 |
+| §7.4 | A rule's earned hedge carries a validated range and applies only inside it | A5 item 5 |
+| §8.2, §8.3, §8.6 | The hedge has two parts (earned inside validated spans, default elsewhere); engine uncertainty in a forecast includes aging | both |
+| §9.7 (new), §10, §11.1, §11.5 (new) | Calibration freshness diagnostic; what carries between encounters | A4, A5 |
+| §3.5, §11.3, §13 | P8 answered (the encounter world resets); measurement order follows the contracts; open questions updated | integrator |
+| Vectors | `carried-rule-forecast` and `parameter-aging` added; `extension-validation` gains the validated range. Nothing in the other six vectors changed | — |
+
+Nothing in Tier L (§5), the solver (§4.4), the held-out test (§7.2), the present state (§8.1) or the horizon (§8.4) changed.
 
 ---
 
@@ -23,14 +36,15 @@ The model works like orbit-determination software: it fits numbers to tracking d
 | **Tier G** (global) | What are the numbers in the rules? Does a proposed rule hold? | Batch weighted least squares over all retained arcs, with priors; held-out validation | ~2 ms per 12 h arc iteration |
 | **Forecast** | What will my plan do, and how sure is that? | Present state from Tier L; adopted law × calibration profile; linearized covariance with a hedge outside sampled distances | ~2–30 ms |
 
-Four behaviours follow from this design and are demonstrated by the vectors:
+Five behaviours follow from this design and are demonstrated by the vectors:
 
 1. **Confident where data exists.** Inside distances the ship has sampled, the forecast uses gravity as measured there. With a Newtonian law in an inverse-2.5 world it is still within 1σ of truth for 8 h, and 31× closer than the uncalibrated law at 6 h. `[DEMONSTRATED: forecast-envelope / honest-coast, calibration-pays]`
 2. **Honest elsewhere.** Outside sampled distances the envelope widens with a hedge, and the forecast simply ends at a horizon when it can no longer say anything useful. `[DEMONSTRATED: forecast-envelope / hedge-needed, horizon-ends-dive]`
 3. **The model never invents a rule (P5).** The calibration profile is a table of numbers indexed by sampled distance. It cannot extrapolate. A rule (an extension) is enabled by the player, fitted from all retained data, and must pass a held-out attempt. `[DEMONSTRATED: extension-validation]`
 4. **Wrong structure is visible, and its cause is distinguishable.** Wrong distance law, missing body and engine mis-calibration each leave a different signature (§9.6).
+5. **Carried knowledge helps without making the next encounter easy (A5).** A validated rule tightens the envelope only at distances it was tested at; a new body's strength must still be measured; ship calibrations loosen with time, use and damage and must be re-earned. `[DEMONSTRATED: carried-rule-forecast, parameter-aging]`
 
-**One decision for the owner** sits inside this design, see §13 item 1: the calibration profile makes the model useful in familiar places before any rule is discovered. That fits P5 as proposed ("updates numbers, confident only where data exists"), but it is a choice.
+The owner approved this design, including the automatic per-distance calibration, as DECISIONS A4.
 
 ---
 
@@ -153,7 +167,7 @@ All measurements are relative (ship to body), so absolute position and velocity 
 
 An arc is one stretch of one attempt over which the dynamics are continuous. Its epoch is the time of its first retained measurement; state parameters are defined at the epoch and propagated forward. Arcs break at attempt boundaries and at any event the ship records as a discontinuity (collision, docking). Data gaps do not break arcs.
 
-Each arc carries its own ship state, and its own state for every modeled moving body other than the primary. Nothing is assumed about where bodies are at the start of each recurrence, so the estimator is indifferent to whether the universe resets with the ship (§13 item 2).
+Each arc carries its own ship state, and its own state for every modeled moving body other than the primary. Recurrence resets the whole encounter world, bodies and asteroids included (P8). The estimator does not rely on that: per-arc body states stay correct, and sharing one body state across the arcs of an encounter is a permitted refinement `[ASSUMED; not vector-tested]`. What the reset does justify is §3.7: every attempt starts with the same physical ship.
 
 ### 3.6 Parameters
 
@@ -170,10 +184,52 @@ Names are the contract with the vectors. `{att}` is an arc (attempt) id; `{win}`
 | `camera.bias` | bearing bias | global | 0 ± 1e-4 rad | 1e-5 |
 | `{att}.emp{k}.R, .T` | empirical acceleration, window k (§6.4) | arc | 0 ± 1e-2 m/s² | 1e-6 |
 | `{win}.g` | local gravity scale (§5.2) | window | 1 ± 0.5 | 1e-3 |
+| `{att}.engine.dkE`, `.ddE`, `{att}.accel.dkA`, `{att}.camera.dbias` | deviation of a ship parameter in this arc from its arrival value (§3.7) | arc | 0 ± aging accrued in the arc | as the parameter |
 
 All priors are `[ASSUMED]`. "Scale" is the finite-difference step and conditioning unit; results do not depend on it.
 
 Some parameters are not observable from some data. With a single body and no burns the whole picture can rotate, so `camera.bias` stays at its prior `[DEMONSTRATED: newton-recovers-gm, posterior σ = 1.0e-4]`. Priors hold such directions; the confounding indicator (§9.3) reports them.
+
+### 3.7 Aging of ship calibration parameters (A5)
+
+**What ages.** The ship's own calibrations: `engine.kE`, `engine.dE`, `accel.kA`, `camera.bias`. **What does not:** anything about the world (body GMs, the law, calibration profiles) and adopted rules. The world does not wear; the ship does.
+
+**The clock is the ship's.** Aging runs along the physical history of the hardware: ship time since arrival, what the hardware did, and what happened to it. Recurrence returns the ship to its arrival condition (P8), so every attempt of an encounter starts with the same hardware and nothing ages between attempts. Knowledge of the arrival condition therefore accumulates across attempts, as brief §3 asks ("familiar passages become easier").
+
+**Process noise.** Each parameter of class k is a random walk. Between two instants a and b on one physical history its variance grows by
+
+```
+Q_k(a -> b) = s_time,k^2 * (ship time elapsed) / 1 day
+            + s_use,k^2  * (use accrued) / U_ref,k
+            + sum over drops in the equipment's reported condition c in (a, b] of (s_cond,k * drop)^2
+```
+
+| Class | s_time (per √day) | s_use | s_cond (per unit of condition lost) | Use is measured as | Why the rates are plausible |
+|---|---|---|---|---|---|
+| `engine.kE` | 0.2% | 0.5% per √(100 m/s) | 10% | commanded Δv, `sum u * dt` over thrust segments | Thrust follows feed pressure, mixture and the state of injectors and nozzles, all of which change as propellant is used and deposits form. Voyager's thrusters lost efficiency as a fuel tube clogged with age `[ESTABLISHED: S15, DD09]`. Burns are verified from tracking afterwards because execution differs from command `[ESTABLISHED: DD03]`. The whole propellant budget (several hundred m/s) loosens the scale by about 1% |
+| `engine.dE` | 0.2 mrad | 1 mrad per √(100 m/s) | 20 mrad | commanded Δv | The thrust line has to pass through the center of mass, which moves as propellant drains, when a tank is isolated or an appendage moves; a jammed gimbal leaves a fixed offset (1C ship baseline; `[ESTABLISHED: S14, S24]` for the geometry). One centimeter of sideways shift on a 5 m arm is 2 mrad |
+| `accel.kA` | 50 ppm | none | 1% | — | Inertial sensors drift slowly (`[ESTABLISHED: S04]` gives bias stability; the scale-factor rate is assumed). Accumulated radiation dose shifts analog electronics `[ESTABLISHED: R04, R05, via 1C]` |
+| `camera.bias` | 5 µrad | 10 µrad per √(power cycle) | 200 µrad | camera power-on transitions in the executed commands | The camera-to-star-tracker alignment moves with the thermal state of the mount. Orion recalibrated its navigation camera on star fields before every pass and warmed it for an hour first `[ESTABLISHED: DD07]`. A structural hit shifts it |
+
+All rates are `[ASSUMED]` play values (`assumptions.json`, `aging.classes`). "Condition" is the believed `EquipmentStatus.condition` (0 failed, 1 nominal); only drops count.
+
+Worked example `[DEMONSTRATED: parameter-aging / aged-engine-scale, aging-within-attempt]`: an engine scale known to 0.2% is known to 1.8% after 12 ship days, 250 m/s of burns and one damage event (condition −0.15). Inside one attempt, 4 h 20 min and a 24 m/s burn loosen it only to 0.33%.
+
+**How aging enters the estimator.** Three places, one formula.
+
+1. **Tier G, inside an encounter.** Each ship parameter has one *arrival value* for the encounter (global) and, for each arc, a *deviation*: the value used in arc a is `p_arr + d_a`, with prior `d_a ~ N(0, Q_k(arrival -> last retained measurement of the arc))`. A healthy, lightly used attempt has a tight deviation and so informs the arrival value; a worn or damaged attempt gets a loose one and is fitted from its own data without spoiling the others. Report `p_arr + d_a` per arc with σ from the joint covariance. If the equipment's condition drops inside an arc, start a new deviation at the event `[ASSUMED; the vectors have one deviation per arc]`.
+2. **Forecast.** Planned burns use the current arc's value and covariance, plus `Q_k(last retained measurement of the arc -> forecast time)` (§8.2). Wear and damage since the last look widen the envelope until new data are taken.
+3. **A new encounter.** The prior for the new arrival value is the value of the arc that carried the ship onward, with variance `sigma^2 + Q_k(that arc's last measurement -> the new arrival)`.
+
+`[DEMONSTRATED: parameter-aging]`
+
+| Case | Result |
+|---|---|
+| Carried engine scale 0.970 ± 0.002, true value now 0.945. Old σ kept (no aging), quick look at one burn | 0.9671 ± 0.0019: **11.6σ from truth**. Stale confidence overrules the new data |
+| Same data, aged σ (1.8%) | 0.9434 ± 0.0057: 0.3σ from truth |
+| Aged σ, full coast-burn-coast calibration | 0.94487 ± 0.00036: re-earned |
+| Two attempts in one encounter, engine damaged in the second. One value for both | χ²/ν = 4.9, estimate 0.954 (between the two truths) |
+| Same, with per-arc deviations | χ²/ν = 0.90; 0.96945 ± 0.00035 (truth 0.970) and 0.93936 ± 0.00035 (truth 0.940) |
 
 ---
 
@@ -187,7 +243,7 @@ J(x) = sum_i ((z_i - h_i(x)) / sigma_i)^2                       data (chi2)
      + sum_B (x_B - m_B)^T Lambda_B (x_B - m_B)                 block priors (used by 7.2)
 ```
 
-Bearing residuals are wrapped to [−π, π). This is batch weighted least squares with a priori information, the "batch filter" of deep-space orbit determination: compute what each data point should be on the modeled trajectory, form residuals, adjust the model to minimize them `[ESTABLISHED: DD03]`.
+Per-arc deviations of ship parameters (§3.7) are ordinary arc-local parameters with independent priors; a model block may give a parameter as the sum of two (`{"sum": [...]}` in the vectors). Bearing residuals are wrapped to [−π, π). This is batch weighted least squares with a priori information, the "batch filter" of deep-space orbit determination: compute what each data point should be on the modeled trajectory, form residuals, adjust the model to minimize them `[ESTABLISHED: DD03]`.
 
 ### 4.2 Prediction
 
@@ -460,7 +516,7 @@ If the rule is right, the held-out data agree with the training posterior and T 
 
 A correct rule passes somewhere it never trained. A wrong one fails by orders of magnitude, and the diagnostics say why (§9.6).
 
-### 7.4 Earned hedge
+### 7.4 Earned hedge and validated range
 
 The forecast hedges outside sampled distances with `sigma_h` (§8.2). A validated rule earns a smaller hedge, from how well it extrapolated in its own held-out test:
 
@@ -468,11 +524,30 @@ The forecast hedges outside sampled distances with `sigma_h` (§8.2). A validate
 run Tier L on the held-out attempt under the trained law
 for held-out windows outside the training covered range:
     delta = rms(g - 1) ;  ell = mean |ln(r_geo / nearest training edge)|
-sigma_h(rule) = clamp( sqrt(sigma_n^2 + (delta / ell)^2),  0.01,  sigma_h0 )
+sigma_e = clamp( sqrt(sigma_n^2 + (delta / ell)^2),  0.01,  sigma_h0 )
 if no held-out window lies outside the training range: nothing is earned
 ```
 
-`[ASSUMED]`. The validated exponent earns σ_h = 0.019 against the default 0.3 (8 windows outside, δ = 0.0036, ℓ = 0.19). `[DEMONSTRATED: extension-validation / hedge-earned]` This is how "better understanding enables more confident maneuvers" (brief §5) becomes a number, and it rewards holding out an attempt that goes somewhere new.
+`[ASSUMED]`. The validated exponent earns σ_e = 0.019 against the default 0.3 (8 windows outside, δ = 0.0036, ℓ = 0.19). `[DEMONSTRATED: extension-validation / hedge-earned]`
+
+**The earned value applies only inside the rule's validated range (A5).** The test that earned it covered certain distances and no others:
+
+```
+for each body j in the passing test:
+    span_j = [smallest, largest] ship-to-body distance over the fixes of its training and held-out attempts
+the rule records {body, span, sigma_e, test} for each
+```
+
+In the example the span is 0.6–1.4 r₀ on body A. `[DEMONSTRATED: extension-validation / validated-range]` Outside every span the default σ_h0 stays, however well the rule did inside. A further passing test that reaches new distances adds its span; where a rule has several tests, spans are merged and the largest σ_e among them is used `[ASSUMED]`.
+
+**Which bodies a span applies to** `[ASSUMED]` (`validatedRange.transfer = "shared-law"`):
+
+- A rule whose parameters are shared by every body (the exponent) applies its spans to **every** body, in this encounter and later ones. A4 says adopted rules apply everywhere; the span says how far that confidence reaches: a distance of 0.6–1.4 r₀ from an attracting body.
+- A rule about one body or one region (an unmodeled body's GM, a well's thrust response) applies its spans to that body or region only.
+
+The stricter reading, "the same body only", is one setting away, but it makes the earned hedge do nothing at all: inside an encounter the held-out data are retained, so every validated distance is also a sampled one where the calibration profile already applies and the hedge is zero; and a new body would have no span. With the shared-law reading the earned hedge acts in exactly one situation: a distance the rule has been tested at, around a body not yet sampled there. That is the help A5 allows. What it does not give: the new body's strength (measured by Tier L, §5), or confidence at untested distances.
+
+This rewards testing a rule over a wide range: holding out an attempt that goes somewhere new both earns a smaller σ_e and widens the span.
 
 ### 7.5 Overfitting guards
 
@@ -513,29 +588,34 @@ Before the current arc has `N_min` fixes, the present state is the arrival state
 ### 8.2 Forecast law and uncertainty sources
 
 ```
-a(r, t) = sum_j a_j(r; adopted law)  *  g_j(ln |d_j|)  *  exp(-eta_j L_j(|d_j|))   +   a_T(plan; kE, dE)   [+ adopted region terms]
+a(r, t) = sum_j a_j(r; adopted law) * g_j(ln |d_j|) * exp(-eta_e,j Le_j - eta_d,j Ld_j)   +   a_T(plan; kE, dE)   [+ adopted region terms]
 
-L_j(r) = ln(r / r_max,j)  if r > r_max,j ;   ln(r / r_min,j)  if r < r_min,j ;   0 inside the covered range
+L_j(r)  = ln(r / r_max,j)  if r > r_max,j ;   ln(r / r_min,j)  if r < r_min,j ;   0 inside the covered range
+Le_j(r) = the part of that stretch of ln r, from the nearest covered edge to r, that lies inside validated spans (§7.4), signed like L_j
+Ld_j(r) = L_j(r) - Le_j(r)
 ```
 
-`g_j` is the calibration profile (1 for a body without one). The forecast mean uses `eta = 0`. Independent uncertainty sources:
+`g_j` is the calibration profile (1 for a body without one). The forecast mean uses `eta = 0`. With no adopted rule, or no span that applies to body j, `Le_j = 0` and all of `L_j` is default. Independent uncertainty sources:
 
 | Source | Variable | Distribution |
 |---|---|---|
 | present state | `x_now` | covariance `s2 P_now` |
 | calibration | profile node values `c` | node covariance `C infl` (§5.4) |
-| unsampled distances | hedge exponent `eta_j` per body | 0 ± `sigma_h` |
-| engine, for planned burns | `kE`, `dE` | Tier G posterior |
+| unsampled but validated distances | earned hedge exponent `eta_e,j` per body | 0 ± `sigma_e` (§7.4) |
+| unsampled, untested distances | default hedge exponent `eta_d,j` per body | 0 ± `sigma_h0` |
+| engine, for planned burns | `kE`, `dE` | current arc's value and covariance, plus aging since its last measurement (§3.7) |
 | bodies without a profile | `mu_j` | Tier G posterior |
 
-The hedge says: outside the distances my data cover, the law may bend away like an exponent change of ±σ_h. `sigma_h0 = 0.3` `[ASSUMED]`, reduced by §7.4 for a validated rule. It applies equally in every direction and to every body, and does not move the mean, so it carries no hidden knowledge of the true law (brief §3). The covered range of a body without a profile is the range of ship–body distances over all retained fixes.
+The hedge says: outside the distances my data cover, the law may bend away like an exponent change of ±σ. `sigma_h0 = 0.3` `[ASSUMED]`. It applies equally in every direction and to every body, and does not move the mean, so it carries no hidden knowledge of the true law (brief §3). The covered range of a body without a profile is the range of ship–body distances over all retained fixes; before any fix, it is the single distance of the present state.
 
 ### 8.3 Envelope
 
 With `S_q(t) = d r_rel(t) / dq` from the variational equations (§4.3) or central differences:
 
 ```
-P_pos(t) = s2 S_x P_now S_x^T  +  S_c (C infl) S_c^T  +  sigma_h^2 sum_j S_eta_j S_eta_j^T  +  S_E Sigma_E S_E^T  [+ sigma_mu_j^2 S_mu_j S_mu_j^T]
+P_pos(t) = s2 S_x P_now S_x^T  +  S_c (C infl) S_c^T
+         + sum_j ( sigma_e^2 S_eta_e,j S_eta_e,j^T  +  sigma_h0^2 S_eta_d,j S_eta_d,j^T )
+         + S_E Sigma_E S_E^T  [+ sigma_mu_j^2 S_mu_j S_mu_j^T]
 ```
 
 The envelope at time t is the ellipse of `P_pos(t)` (draw 2σ; P10). The profile needs one column per node: its full covariance is required. A single "scale the whole profile" mode was 3σ off inside sampled distances. `[DEMONSTRATED during development; see handoff]`
@@ -552,6 +632,19 @@ The envelope at time t is the ellipse of `P_pos(t)` (draw 2σ; P10). The profile
 
 "Error in σ" is the Mahalanobis distance of truth from the forecast. Without the hedge the 5 h dive point would be 28σ off. `[DEMONSTRATED: forecast-envelope / hedge-needed]`
 
+`[DEMONSTRATED: carried-rule-forecast]` A later encounter: a new body (μ = 6e9), 24 h of tracking over 1.04–1.15 r₀, then a dive. The exponent rule is carried with σ_e = 0.0185 and a validated span of 0.6–1.4 r₀. Three forecasts from the same data:
+
+| Hours ahead | Range (r₀) | Where | Carried rule (spec): error, envelope, earned / default hedge (km) | No rule carried: error, envelope (km) | Earned hedge everywhere (superseded): envelope (km) |
+|---|---|---|---|---|---|
+| 1.5 | 1.05 | sampled | 0.2, 0.4, 0 / 0 | 0.2, 0.4 | 0.4 |
+| 5.0 | 0.83 | validated, not sampled | 3.1, 2.5, 0.5 / 0 | 15, 7.3 | 2.5 |
+| 6.5 | 0.63 | validated, not sampled | 7.6, 6.3, 2.8 / 0 | 73, 35 | 6.3 |
+| 7.5 | 0.47 | below the validated span | 14.5, 14.1, 9.1 / 3.0 | ended after the 7 h point (0.63 r₀) | 14.0 |
+| 8.0 | 0.39 | below | 20, 28, 16.5 / 18.8 (last inside horizon) | — | 22.8 |
+| 8.5 | 0.34 | below | envelope 82 (default hedge 76): horizon passed | — | 38 |
+
+Read across: with nothing carried the forecast ends at 0.63 r₀; the carried rule takes it through the validated span with a hedge 12× smaller and an error about 10× smaller at 6.5 h; below the span the default hedge takes over and ends the forecast at 8.5 h, where applying the earned hedge everywhere would have left the envelope half as wide. Truth stays within 1.4σ throughout. In this encounter the largest single term inside the span is not the hedge but the calibration of the new body (8 windows): the unknown that carried knowledge does not cover.
+
 ### 8.4 Horizon
 
 ```
@@ -566,7 +659,7 @@ Past that point the linearization is unreliable and the envelope is too wide to 
 
 ### 8.6 Issued forecasts
 
-An issued forecast stores everything it used and produced: model version, reference law values, profile nodes and covariance, `x_now`, `P_now`, `s2`, `sigma_h`, the plan, and the sampled means and covariances up to the horizon. It is never recomputed (brief §3, P10). A new forecast is a new record.
+An issued forecast stores everything it used and produced: model version, reference law values, profile nodes and covariance, `x_now`, `P_now`, `s2`, both hedge sigmas and the validated spans they were applied with, the engine values and their aged covariance, the plan, and the sampled means and covariances up to the horizon. It is never recomputed (brief §3, P10). A new forecast is a new record.
 
 ---
 
@@ -622,6 +715,10 @@ The §6.4 fit, shown per window as `aR ± sigma` and `aT ± sigma`. A central-fo
 | Region thrust response | ≈ 1 | large only inside the region | clean | ≈ 1 | none | region extension; §9.5 shows it |
 | Sensor worse than it reports | uniformly > 1 | uniformly > 1 | noisy, no trend | ≈ 1 | none | `s2` widens the envelope; repair or re-power |
 
+### 9.7 Calibration freshness
+
+`[ASSUMED]` For each ship parameter show the value in use, its σ, and how that σ divides between "as last measured" and "aged since" (§3.7), with the drivers in plain units: time since last measured, Δv burned since, condition lost since. A calibration that is mostly aged is an invitation to re-measure (a coast, a short burn, a coast). For each adopted rule show its validated spans against the distances the plan visits (§7.4).
+
 ---
 
 ## 10. How player decisions feed the model
@@ -629,7 +726,8 @@ The §6.4 fit, shown per window as `aR ± sigma` and `aT ± sigma`. A central-fo
 | Decision | Mechanism | Effect on the model |
 |---|---|---|
 | **Route** (which distances are flown) | covered range and windows per distance (§5.4) | calibration and tight envelopes exist only where flown; σ(n) falls 6× with wide coverage (§6.2); the hedge applies elsewhere |
-| **Holding out an attempt that goes somewhere new** | §7.4 | a validated rule earns a small hedge |
+| **Holding out an attempt that goes somewhere new** | §7.4 | a validated rule earns a small hedge, and only over the distances the test covered; a wider test earns a wider span |
+| **Re-calibrating after wear, damage or a long gap** | §3.7 | a coast, a short burn and a coast re-earn the engine scale (1.8% back to 0.04% in the vector); skipping it leaves every planned burn with an aged, wide envelope |
 | **Sensor power** | σ_c and cadence (§2.1) | window σ_g ∝ σ_b / √fixes; below `p_fine` centroiding is 10× coarser |
 | **Pointing** | fixes exist only for bodies in view | a body never fixed with range has no profile; an untracked body can only be modeled in unseen mode |
 | **Tracking an asteroid** `[ASSUMED; specified only]` | an asteroid's arc is a test particle at *its* distances | its windows add coverage the ship never flew: a free probe, paid for in pointing and power |
@@ -649,9 +747,11 @@ The §6.4 fit, shown per window as `aR ± sigma` and `aT ± sigma`. A central-fo
 ModelState {
   version            integer, +1 whenever the structure or the Tier G values change
   parent             previous version
-  structure          law form, modeled bodies, extensions with status (candidate | adopted | rejected | revoked)
+  structure          law form, modeled bodies, extensions with status (candidate | adopted | rejected | revoked);
+                     each adopted rule also keeps its validated spans {body, rMin, rMax, sigma_e, test} (7.4)
   dataManifest       sorted ids of the records the fit used (or their hash)
-  global             names, values, covariance, priors
+  global             names, values, covariance, priors; for ship parameters the arrival value, and per arc the
+                     deviation with the aging accrual that set its prior (3.7)
   fit                chi2, nu, pEff, iterations, converged
   settings           every constant marked [ASSUMED] in this document that the build uses
 }
@@ -667,7 +767,7 @@ Tier L results (windows, profile, noise scale, present state) are **derived**: a
 
 ### 11.3 Rebuild from Black Box (P8)
 
-1. Load every attempt record. Sort measurements by (attempt id, time, source id, sequence number).
+1. Load every attempt record. Use measurements in Black Box order: (attempt, array index), as `src/contracts/README.md` defines; never re-sort by value.
 2. Build arcs (§3.5) and apply adopted extensions.
 3. Tier G from the §4.5 initialization.
 4. Tier L under the new reference law.
@@ -678,6 +778,17 @@ Because every step is a deterministic function of the sorted records, the rebuil
 ### 11.4 What never changes
 
 Issued forecasts (§8.6), recorded measurements (including flagged outliers), and the history of extension tests.
+
+### 11.5 What carries to a later encounter (A4, A5)
+
+| Carried | How | Limit |
+|---|---|---|
+| Adopted rules | structure and fitted values (the exponent) apply everywhere | the tighter envelope only inside the validated spans (§7.4) |
+| Ship calibration | value of the arc that carried the ship onward becomes the prior | σ aged by ship time, use and damage since (§3.7); must be re-earned |
+| Old records | stay as evidence and as held-out attempts for new rules | they are about other bodies; they calibrate nothing here |
+| **Not carried:** body GMs and calibration profiles | — | each belongs to its body; a new body starts from its arrival prior and no profile |
+
+A new encounter therefore starts with the right law (if one was adopted), an aged ship, an unmeasured body and an empty profile: the forecast is usable at once inside the rule's validated span, wide elsewhere, and improves only with fresh tracking.
 
 ---
 
@@ -696,16 +807,18 @@ model/diagnostics  9.1 - 9.5
 
 Order of work that matches the vectors: `newton-recovers-gm` (solver) → `inv25-newton-two-distances` → `burn-only-confounded` (thrust, accelerometer, correlation) → `inv25-exponent-coverage` (extension, Tier L, profile, empirical) → `missing-body-signature` (moving bodies) → `extension-validation` → `forecast-envelope`.
 
-The reference is small enough to read alongside this document: `tools/estimator-ref/estref/core.py` (dynamics, measurements), `fit.py` (Tier G), `local.py` (Tier L, forecast).
+Revision 2 adds two vectors after those: `parameter-aging` (case 1 is arithmetic; case 3 needs summed parameters in Tier G) and `carried-rule-forecast` (the two-part hedge; build it with the forecast). A forecast built to revision 1 is the special case of no validated span and no aging.
+
+The reference is small enough to read alongside this document: `tools/estimator-ref/estref/core.py` (dynamics, measurements), `fit.py` (Tier G), `local.py` (Tier L, forecast), `aging.py` (§3.7).
 
 ---
 
 ## 13. Limits and open questions
 
-1. **Owner (P5).** This design lets the model calibrate gravity against distance by itself (numbers per sampled place) while rules stay with the player. If the owner wants a stricter model, set `g ≡ 1` in §8.2: forecasts in familiar places then stay wrong until a rule is adopted, and the envelope must carry the measured misfit. If the owner wants the model to learn rules itself, see §7.6. The hedge σ_h = 0.3 and horizon fraction 0.1 are play values to tune.
-2. **Integrator / 2A.** Do the bodies and asteroids reset with the ship at recurrence? The estimator works either way (§3.5), but if they do, body and asteroid states could be shared across arcs for more precision.
+1. **Settled (A4).** The owner approved the per-distance calibration with rules left to the player; §7.6's middle option (the model suggests, the player decides) is held in reserve. The hedge σ_h = 0.3 and horizon fraction 0.1 remain play values to tune.
+2. **Settled (P8).** The encounter world resets with the ship. Sharing body states across the arcs of an encounter is now permitted (§3.5) but not built.
 3. **Owner / 3B / 1B.** Do accelerometers feel the Inverse Well's reversed push? If yes, accelerometer against command shows the reversal at once. If no (recommended: the well acts on motion, like gravity), only tracking shows it, and discovery needs a comparison.
-4. **Scale and sensors** are placeholders until 1B and 1C merge. Regenerate, then recheck claims; thresholds that depend on scale are listed in `assumptions.json`.
+4. **Scale and sensors.** The scale is 1B's (merged; the reference propagator reproduces `tests/vectors/physics.json`). Sensor noise stays at 1G's values; the owner left 1C's values for balancing. Either can be changed in `assumptions.json` and regenerated.
 5. **Specified but not vector-tested:** unseen-body mode (§6.3), region thrust response (§6.5), powered-window fits and per-burn response (§5.2, §9.5), asteroid probes (§10), outlier flags (§2.5), sigma points (§8.5), pointing terms (§2.1).
 6. **Gross misfit.** Tier G on a badly wrong structure may stop unconverged (§4.4). By design nothing downstream depends on it, but its χ²/ν is then only a lower bound on how bad the fit is.
 7. **Two comparable bodies.** The profile is one curve per body against distance. Where two bodies pull comparably it is not well defined. `[ASSUMED]` Exclude from the profile any window in which a second body's believed pull exceeds 20% of the reference body's.
@@ -713,6 +826,9 @@ The reference is small enough to read alongside this document: `tools/estimator-
 9. **Linearization.** Envelopes are linear up to the horizon; the 5 h dive point sits at 2.1σ partly from nonlinearity.
 10. **Planar only** (P1). The mathematics generalizes; the window rule (swept angle) needs a 3D definition.
 11. **Extended bodies.** The law is a point-source law; 1B notes the shell theorem does not hold for n ≠ 2. Close to a large body the model's point-mass structure is itself wrong, and would show as a distance trend.
+12. **Owner / integrator (A5).** Which bodies a validated span applies to. This revision reads it as "every body, for a rule shared by all bodies" (§7.4), because the same-body reading leaves the earned hedge with no effect anywhere. If the owner wants a carried rule to give no tighter envelope around a new body at all, set `validatedRange.transfer` to `same-body`; the default hedge then applies everywhere outside sampled distances, in every encounter.
+13. **Aging rates** (§3.7) are play values with physical reasons, not measured ones. They set how often the player must re-calibrate; the 3E harness run with carried knowledge and no new measurements is the place to tune them.
+14. **Few windows.** The profile's inflation factor is a ratio estimated from the windows themselves; with fewer than about six it is noisy (2.7 from four windows in a development run). It errs wide, not narrow.
 
 ---
 
@@ -728,13 +844,15 @@ The reference is small enough to read alongside this document: `tools/estimator-
      truth: { structure, values, checkpoints, integrationCheck_m },        // checking only; never pass to the estimator
      fits: [ { id, description, compare, attempts, model, parameters, expected, noiseFree, ... } ],
      tierL?: { reference, windowRule, windows, noiseScale, profile },      // expected Tier L results
-     anchor?, forecasts?, plans?, forecastInputs?                          // forecast-envelope only
+     anchor?, forecasts?, plans?, forecastInputs?, carried?                // forecast vectors
+     table?, carried?, history?, agedSigma?                                // parameter-aging
   } ],
   checks: [ { id, claim, value, pass, label } ] }
 ```
 
 - `measurements`: `kind: "opnav"` has `z = [bearing]` or `[bearing, range]`; `kind: "accel"` has `z = [fx, fy]` in the body frame.
-- `fits[].model` is the structure: a number is a fixed value, `{"param": name}` an estimated parameter (`{att}` expands to the arc id). `parameters` gives initial values and priors.
+- `fits[].model` is the structure: a number is a fixed value, `{"param": name}` an estimated parameter (`{att}` expands to the arc id), `{"sum": [a, b]}` the sum of two. `parameters` gives initial values and priors.
+- `attempts[].events` (parameter-aging): `{t, kind: "damage", equipment, conditionDrop}`.
 - `fits[].expected`: `estimate`, `sigma`, `correlation`, `chi2`, `m`, `pEff`, `nu`, `chi2PerDof`, `residualSummary`. `noiseFree` is the same fit on noise-free data.
 - `compare: "numeric"`: match within the file's `tolerance`. `compare: "qualitative"`: only the listed checks and any `heldOut.pass`.
 - `checks`: the physical claims, each evaluated by the generator. A vector is only written if all pass.
@@ -746,7 +864,9 @@ The reference is small enough to read alongside this document: `tools/estimator-
 | `inv25-exponent-coverage` | Exponent extension recovers 2.5, tighter with coverage; Tier L under the wrong law | 11 |
 | `missing-body-signature` | Missing body: non-central signature; body extension | 6 |
 | `burn-only-confounded` | Engine and gravity confounded without coast data or accelerometer records | 7 |
-| `extension-validation` | Held-out test: right rules pass, base and wrong rules fail; earned hedge | 10 |
+| `extension-validation` | Held-out test: right rules pass, base and wrong rules fail; earned hedge and its validated range | 11 |
 | `forecast-envelope` | Calibrated forecast, honest envelope, hedge and horizon | 9 |
+| `carried-rule-forecast` | A carried rule in a later encounter: earned hedge inside its validated range, default beyond | 9 |
+| `parameter-aging` | Ship calibrations age; stale confidence misleads; re-earning; per-arc deviations | 10 |
 
-All 54 claims hold, and all seven files regenerate identically. `[DEMONSTRATED: python tools/estimator-ref/generate.py --check]`
+All 74 claims hold, and all nine files regenerate identically. `[DEMONSTRATED: python tools/estimator-ref/generate.py --check]`

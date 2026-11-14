@@ -85,7 +85,7 @@ What the crew knows from the spec sheets. True deviations live in truth.
 
 ### `measurements.ts`
 - `Measurement` — `kind`, `t`, `source` equipment, optional `target` / `channel` / `field`, `value[]`, `sigma[]`. See the table above.
-- `ShipEvent` — what the ship noticed: contact (with `impulse`; `with` only if it can tell), equipment fault/recovery, breaker trip, load shed, command rejected, propellant low/depleted, thermal limit, battery depleted, exposure, configuration changed, objective, recall, ship lost (`LossCause`).
+- `ShipEvent` — what the ship noticed: contact (with `impulse`; `with` only if it can tell), equipment fault/recovery, condition changed (new reported condition; drops age ship calibrations, 1G spec §3.7; emitted by the ship step, 3A), breaker trip, load shed, command rejected, propellant low/depleted, thermal limit, battery depleted, exposure, configuration changed, objective, recall, ship lost (`LossCause`).
 
 ### `belief.ts` — the believed world
 - `ShipEstimate` — navigation estimate: position, velocity, their covariances, attitude (+ sigma), angular rate.
@@ -96,8 +96,8 @@ What the crew knows from the spec sheets. True deviations live in truth.
 
 ### `model.ts` — predictive model state (A2, P5)
 - `ParameterPrior` — what the model knows on arrival (from the encounter briefing).
-- `ParameterEstimate` — value, sigma, prior, owning `extension`, `support` (0 = prior only, 1 = data-determined).
-- `ExtensionState` — `status` (`candidate`, `adopted`, `rejected`, `revoked`), fitted at version, `ValidationResult` against a held-out attempt (`statistic` T/ν against `threshold`, `rmsBefore`, `rmsAfter`, verdict).
+- `ParameterEstimate` — value, sigma, prior, owning `extension`, `support` (0 = prior only, 1 = data-determined). Ship calibrations (engine scale and misalignment, accelerometer scale, camera bias) also carry `arc` on per-attempt values and `freshness` (`CalibrationFreshness`: sigma as last measured, sigma added by aging, and the ship time, Δv, power cycles and condition lost since; 1G spec §3.7, §9.7, A5).
+- `ExtensionState` — `status` (`candidate`, `adopted`, `rejected`, `revoked`), fitted at version, `ValidationResult` against a held-out attempt (`statistic` T/ν against `threshold`, `rmsBefore`, `rmsAfter`, verdict), and `validatedSpans` (`ValidatedSpan`: body, `rMin`, `rMax`, earned `sigmaE`, held-out attempt; one per body per passing test). The earned hedge applies only inside these spans; which bodies they apply to is DECISIONS A5.
 - `DataSupport` — where evidence exists (distance spans per body, powered time spans); outside it the model is extrapolating.
 - `ResidualStats` — RMS residual split into coast and powered.
 - `CalibrationProfile` (A4, 1G spec §5.4) — per body: node `distances`, gravity `scale` relative to the reference law, node `covariance`, `inflation` diagnostic, and the `CalibrationWindow` local fits behind it (the "measured strength against distance" plot the console shows). Numbers at sampled distances only; never a rule.
@@ -106,13 +106,14 @@ What the crew knows from the spec sheets. True deviations live in truth.
 - `KNOWN_EXTENSIONS` — `distance-law`, `unmodeled-body`, `thrust-response-region`, `empirical-acceleration`.
 
 ### `forecast.ts` (P6, P10)
-- `ForecastDraft` — id, attempt, `issuedAt`, `modelVersion`, `inputs` (initial `ShipEstimate`, mass properties, plan, parameter values, extensions, the `calibration` profiles used, `noiseScale` s², `hedge` σ_h), `horizon`, `samples` (`ForecastSample`: CoM position, velocity, `positionCov`, `extrapolating`), predicted `objects` tracks, `closestApproaches`.
+- `ForecastDraft` — id, attempt, `issuedAt`, `modelVersion`, `inputs` (initial `ShipEstimate`, mass properties, plan, parameter values, extensions, the `calibration` profiles used, `noiseScale` s², `hedge` = the default σ_h0, `earnedHedge` per body with the spans where σ_e applied instead, `engine` values and aged covariance for planned burns), `horizon`, `samples` (`ForecastSample`: CoM position, velocity, `positionCov`, `extrapolating`, and `validated` where an extrapolated sample lies inside a validated span), predicted `objects` tracks, `closestApproaches`.
 - `Forecast` — an issued forecast: deep-frozen and branded. Only `issueForecast(draft)` creates one; it copies the draft first. When loading from storage, pass records through `issueForecast` again.
 
 ### `attempt.ts` — Black Box (P8)
-- `AttemptRecord` — id, index, encounter, `start` (arrival estimate, configuration, model version), committed `plans`, `executed` commands, issued `forecasts`, `measurements`, `events`, `outcome` (`AttemptOutcome`: in-progress, lost with cause, recalled, completed), `modelVersionAtEnd`. No truth.
+- `AttemptRecord` — id, index, encounter, `start` (arrival estimate, configuration, model version, and `transit` for a later encounter), committed `plans`, `executed` commands, issued `forecasts`, `measurements`, `events`, `outcome` (`AttemptOutcome`: in-progress, lost with cause, recalled, completed), `modelVersionAtEnd`. No truth.
   - **Measurement order is canonical:** Black Box appends measurements in acquisition order (time, then the order the ship step emitted them). The array index is the sequence number; the model sorts by (attempt, index), never re-sorts by value (1G spec §11.3).
   - **Thrust segments for the model** are derived belief-side from `executed` burn and cutoff commands × nominal ratings in `ShipDefinition`, with attitude from recorded attitude measurements, never from `ActuatorOutput` (truth). A `limited` burn is a segment whose commanded level is uncertain; give it a wider prior.
+- `TransitRecord` — the ship's history between encounters (ship time, commanded Δv, camera power cycles, condition changes) from the completed attempt that carried it onward. 3D writes it on arrival; the model ages ship calibrations with it (1G spec §3.7). Every attempt of an encounter repeats the same transit.
 - `Lead`, `LeadStatus` — the chart of leads.
 - `BlackBoxArchive` — everything preserved across recurrence: attempts, procedures, adopted extensions, leads.
 

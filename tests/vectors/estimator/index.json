@@ -2,7 +2,7 @@
  "schema": "recursion.estimator-vector-index/1",
  "generator": "python tools/estimator-ref/generate.py",
  "assumptions": "tools/estimator-ref/assumptions.json",
- "assumptionsHash": "23fa1c77dcd7e371",
+ "assumptionsHash": "dadbff266233f5dd",
  "spec": "docs/model/estimator-spec.md",
  "vectors": [
   {"id": "newton-recovers-gm", "file": "newton-recovers-gm.json", "title": "Newtonian truth, Newtonian model: recovers GM", "claims": 5, "cases": ["single-arc"]},
@@ -38,7 +38,7 @@
    "id": "extension-validation",
    "file": "extension-validation.json",
    "title": "Extensions validated against a held-out attempt (P5)",
-   "claims": 10,
+   "claims": 11,
    "cases": ["distance-law", "overlooked-body"]
   },
   {
@@ -47,6 +47,20 @@
    "title": "Forecast envelope: confident where sampled, honest elsewhere",
    "claims": 9,
    "cases": ["sampled-and-unsampled"]
+  },
+  {
+   "id": "carried-rule-forecast",
+   "file": "carried-rule-forecast.json",
+   "title": "A carried rule earns its tighter envelope only inside its validated range",
+   "claims": 9,
+   "cases": ["later-encounter-dive"]
+  },
+  {
+   "id": "parameter-aging",
+   "file": "parameter-aging.json",
+   "title": "Ship calibration parameters age and must be re-earned",
+   "claims": 10,
+   "cases": ["aging-arithmetic", "re-earning", "per-arc-deviation"]
   }
  ]
 }

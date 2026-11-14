@@ -12,7 +12,7 @@ import type { ExecutedCommand, Plan, Procedure } from './commands.ts';
 import type { Forecast } from './forecast.ts';
 import type { AttemptId, ConfigurationId, EncounterId, ExtensionId, LeadId } from './ids.ts';
 import type { LossCause, Measurement, ShipEvent } from './measurements.ts';
-import type { Seconds } from './units.ts';
+import type { MetersPerSecond, Seconds } from './units.ts';
 
 export type AttemptOutcome =
   | { readonly kind: 'in-progress' }
@@ -20,11 +20,30 @@ export type AttemptOutcome =
   | { readonly kind: 'recalled'; readonly t: Seconds }
   | { readonly kind: 'completed'; readonly t: Seconds; readonly objective: string };
 
+/**
+ * What happened to the ship between encounters (1G spec §3.7 item 3): the ship time, use and
+ * damage that age its calibrations from the carrying attempt's end to this arrival. Written by
+ * the expedition layer (3D). Every attempt of one encounter repeats the same transit (P8).
+ */
+export interface TransitRecord {
+  /** The completed attempt that carried the ship onward. */
+  readonly from: AttemptId;
+  readonly shipTime: Seconds;
+  /** Commanded Δv in transit, m/s. */
+  readonly deltaV: MetersPerSecond;
+  /** Camera power-on transitions in transit. */
+  readonly powerCycles: number;
+  /** Condition changes in transit, as Black Box would have recorded them. */
+  readonly conditionChanges: readonly Extract<ShipEvent, { kind: 'condition-changed' }>[];
+}
+
 export interface AttemptStart {
   /** Navigation estimate at arrival. */
   readonly estimate: ShipEstimate;
   readonly configuration: ConfigurationId;
   readonly modelVersion: number;
+  /** Absent for the first encounter of a run. */
+  readonly transit?: TransitRecord;
 }
 
 export interface AttemptRecord {
