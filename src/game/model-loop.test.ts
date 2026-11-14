@@ -139,7 +139,9 @@ describe('Gravity range with the real model', () => {
         verdict: 'better',
       });
       expect(test.fitted!['law.gravity.exponent']!.value).toBeCloseTo(2.5, 1);
-      expect(test.earnedHedge).toBeLessThan(0.05);
+      // Revision 2: the earned hedge is recorded per body with the span it was earned over.
+      expect(test.state.validatedSpans?.length).toBeGreaterThan(0);
+      for (const span of test.state.validatedSpans ?? []) expect(span.sigmaE).toBeLessThan(0.05);
       expect(model.state().extensions.some((e) => e.status === 'adopted')).toBe(false);
 
       const adopted = await model.rules.adopt('distance-law');

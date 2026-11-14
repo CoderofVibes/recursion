@@ -73,6 +73,7 @@ function recordingClient(fail?: string) {
     revoke: () => note('revoke', state(++version)),
     state: () => note('state', state(version)),
     extensions: () => note('extensions', []),
+    adopted: () => note('adopted', []),
     report: () => note('report', {} as never),
     burns: () => note('burns', []),
     empirical: () => note('empirical', null),
@@ -177,8 +178,10 @@ describe('model bridge', () => {
       'test',
       'state',
       'extensions',
+      'adopted',
       'adopt',
       'extensions',
+      'adopted',
     ]);
     expect(bridge.state().version).toBe(2);
     expect(histories).toEqual([0, 0]);
@@ -192,7 +195,7 @@ describe('model bridge', () => {
     const bridge = createModelBridge(client, {
       referenceRadius: 1e6,
       clock: () => 0,
-      restored: { attempts: [earlier], extensions: [] },
+      restored: { attempts: [earlier], extensions: [], adopted: [] },
     });
     const next = { ...start, attemptId: 'attempt-0002', index: 2 };
     bridge.beginAttempt(next, box.beginAttempt(next, 1));

@@ -42,16 +42,14 @@ export async function createGame(): Promise<Game> {
     // The P4 reference radius is the convention the believed law shares with the briefing's
     // GM values; it is not something the model has to discover.
     referenceRadius: LAW.referenceRadius,
-    restored: { attempts: archive.attempts, extensions: saved?.extensions ?? [] },
-    onExtensions: (extensions) => {
+    restored: {
+      attempts: archive.attempts,
+      extensions: saved?.archive.extensionTests ?? [],
+      adopted: saved?.archive.adoptedExtensions ?? [],
+    },
+    onExtensions: (extensionTests, adopted) => {
       void store
-        .putMeta({
-          adoptedExtensions: extensions
-            .filter((e) => e.state.status === 'adopted')
-            .map((e) => e.state.id),
-          leads: archive.leads,
-          extensions,
-        })
+        .putMeta({ adoptedExtensions: adopted, leads: archive.leads, extensionTests })
         .catch(() => undefined);
     },
   });

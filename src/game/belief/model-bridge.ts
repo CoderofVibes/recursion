@@ -22,6 +22,7 @@
 import type {
   AttemptRecord,
   ExecutedCommand,
+  ExtensionId,
   ForecastDraft,
   Measurement,
   ModelState,
@@ -57,9 +58,17 @@ export interface ModelBridgeOptions {
   readonly restored?: {
     readonly attempts: readonly AttemptRecord[];
     readonly extensions: readonly ExtensionRecord[];
+    /** Adopted rules (BlackBoxArchive.adoptedExtensions); tests are never edited (2C update 2). */
+    readonly adopted: readonly ExtensionId[];
   };
-  /** Called with the full history of rule tests after each test, adoption or revocation. */
-  readonly onExtensions?: (extensions: readonly ExtensionRecord[]) => void;
+  /**
+   * Called after each test, adoption or revocation with the full history of rule tests and the
+   * rules adopted now.
+   */
+  readonly onExtensions?: (
+    extensions: readonly ExtensionRecord[],
+    adopted: readonly ExtensionId[],
+  ) => void;
 }
 
 export interface ModelBridge extends ModelPort {
@@ -108,7 +117,8 @@ export function createModelBridge(client: ModelClient, options: ModelBridgeOptio
   };
 
   const changed = async (): Promise<void> => {
-    if (options.onExtensions) options.onExtensions(await client.extensions());
+    if (options.onExtensions)
+      options.onExtensions(await client.extensions(), await client.adopted());
   };
 
   /**
@@ -155,7 +165,11 @@ export function createModelBridge(client: ModelClient, options: ModelBridgeOptio
           take(await client.init(context));
           if (restored && restored.attempts.length > 0)
             take(
-              await client.load({ attempts: restored.attempts, extensions: restored.extensions }),
+              await client.load({
+                attempts: restored.attempts,
+                extensions: restored.extensions,
+                adopted: restored.adopted,
+              }),
             );
         }).catch(() => undefined);
       }
