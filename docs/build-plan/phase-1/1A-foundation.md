@@ -33,6 +33,7 @@ Give every Phase 2 thread a working project, stable shared types and mock data, 
 5. Lint rule: nothing under `src/model/` may import truth types or `src/sim/`.
 6. Folder skeleton with a one-line `README.md` per owned folder naming its owner section.
 7. Placeholder app screen.
+8. Exclude `.worktrees/` and `.claude/` from TypeScript, Vitest, lint and the Vite dev-server file watcher, so worker worktrees inside the project folder are never compiled, tested or watched by the main checkout.
 
 ## Done when
 Build, tests and lint pass on `main`; contracts README explains every type; fixtures load in a test; Phase 2 prompts reference real paths.

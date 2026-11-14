@@ -1,0 +1,25 @@
+# Worker-thread worktrees live inside the project folder but are never tracked.
+.worktrees/
+.claude/worktrees/
+
+# Dependencies and build output
+node_modules/
+dist/
+coverage/
+.vite/
+*.tsbuildinfo
+
+# Python tooling (physics, estimator and GMAT helper scripts)
+__pycache__/
+*.pyc
+.venv/
+
+# Local environment and logs
+.env
+.env.*
+*.log
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.idea/

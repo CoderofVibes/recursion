@@ -41,12 +41,28 @@ Why the split: GPT/Codex takes bounded derivations, specifications and well-spec
 
 The prompt files must be on the branch the thread starts from, so commit (and push, for cloud threads) before launching.
 
-- **Claude threads:** the main session can start them as separate sessions in their own worktrees, or open a new Claude Code session and send the one-liner below.
-- **GPT/Codex, local:** create a worktree so it can't collide with other threads, then run Codex there:
-  ```bash
-  git worktree add "../recursion-1b" -b p1/1b-physics
-  ```
-- **GPT/Codex, cloud:** point it at the GitHub repo; it should create the branch named in the prompt.
+The owner launches every worker thread personally. The main Tony & Claude session is the integrator and does not spawn threads.
+
+**One folder per thread.** The project root (`C:\Dev\Recursion NASA Hackathon`) belongs to the main session on `main`. Every other local thread, Claude or Codex, works in its own git worktree under `.worktrees/` (ignored by Git), on the branch named in its prompt. Two threads must never share a folder.
+
+Create a thread's worktree from the project root (works in Git Bash or PowerShell), then open that folder in the new Claude session or run Codex inside it:
+
+```bash
+git worktree add .worktrees/1b -b p1/1b-physics
+git worktree add .worktrees/1c -b p1/1c-ship-baseline
+git worktree add .worktrees/1d -b p1/1d-gmat
+git worktree add .worktrees/1e -b p1/1e-visual
+git worktree add .worktrees/1f -b p1/1f-expedition
+git worktree add .worktrees/1g -b p1/1g-model-spec
+```
+
+Phase 2 follows the same pattern (`.worktrees/2a` on `p2/2a-sim`, and so on), but only after the integrator says 1A is merged and pushed, so Phase 2 branches start from the shared contracts.
+
+- **Claude threads:** prefer the manual worktree above over the app's automatic one, so the branch name matches the prompt.
+- **GPT/Codex, local:** run Codex inside the thread's worktree folder.
+- **GPT/Codex, cloud:** point it at the GitHub repo; it creates the branch named in its prompt and needs no local worktree.
+- **After a gate merge:** the integrator removes merged worktrees, e.g. `git worktree remove .worktrees/1b`.
+- **If git reports a lock file** (`index.lock`), another thread was running git at the same instant; retry.
 
 One-liner for any thread (swap the ID and path):
 
