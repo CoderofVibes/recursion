@@ -1179,10 +1179,12 @@
         "converged": true
        }
       ],
+      "body": "A",
       "nWindowsOutside": 8,
       "delta": 0.0036059536530987576,
       "ell": 0.19481233296616857,
-      "sigmaH": 0.018510294384670802
+      "sigmaH": 0.018510294384670802,
+      "validatedRange": [597701.2925269554, 1405266.7154412481]
      }
     }
    ]
@@ -2919,6 +2921,13 @@
    "label": "[DEMONSTRATED: reference generator]"
   },
   {
+   "id": "validated-range",
+   "claim": "The earned hedge is recorded with its validated range: 0.6-1.4 r0 on body A (training plus held-out distances)",
+   "value": [597701.2925269554, 1405266.7154412481],
+   "pass": true,
+   "label": "[DEMONSTRATED: reference generator]"
+  },
+  {
    "id": "hedge-earned",
    "claim": "Validated exponent extension earns a hedge below 1/5 of the default sigma_h",
    "value": 0.018510294384670802,
@@ -2961,5 +2970,5 @@
    "label": "[DEMONSTRATED: reference generator]"
   }
  ],
- "assumptionsHash": "23fa1c77dcd7e371"
+ "assumptionsHash": "dadbff266233f5dd"
 }

@@ -1108,5 +1108,5 @@
   },
   {"id": "body-chi2", "claim": "With B modelled, chi2/nu consistent with 1", "value": 1.0128878384369153, "pass": true, "label": "[DEMONSTRATED: reference generator]"}
  ],
- "assumptionsHash": "23fa1c77dcd7e371"
+ "assumptionsHash": "dadbff266233f5dd"
 }

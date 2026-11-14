@@ -70,7 +70,14 @@ class ProfileDef:
 
     where g is piecewise-linear on `u_nodes` with node values g_nodes[b] +
     dnodes[b] (dnodes are refs: forecast perturbations, default 0), and
-    L(r) = ln(r/rmax) above the covered range, ln(r/rmin) below it, 0 inside."""
+    L(r) = ln(r/rmax) above the covered range, ln(r/rmin) below it, 0 inside.
+
+    Validated range (spec 7.4, 8.2): `validated` lists distance spans (lo, hi)
+    over which an adopted rule passed its held-out test. The part of L that
+    lies inside those spans, L_e, takes the earned exponent eta_e; the rest,
+    L_d = L - L_e, takes the default exponent eta:
+
+        g(u) * exp(-eta_e * L_e(r) - eta * L_d(r))"""
 
     body: str
     u_nodes: list
@@ -79,6 +86,8 @@ class ProfileDef:
     rmax: float
     dnodes: list | None = None
     eta: object = 0.0
+    eta_e: object = 0.0
+    validated: list | None = None
 
 
 @dataclass
@@ -133,8 +142,12 @@ class Attempt:
 
 
 def resolve(ref, X, idx, att):
+    """A ref is a number, a parameter name, or a tuple of refs (their sum: an
+    arrival value plus a per-arc deviation, spec 3.7)."""
     if isinstance(ref, (int, float)):
         return np.full(X.shape[0], float(ref))
+    if isinstance(ref, tuple):
+        return sum(resolve(r, X, idx, att) for r in ref)
     return X[:, idx[ref.format(att=att)]]
 
 
@@ -196,7 +209,8 @@ def simulate(st: Structure, att: Attempt, X, idx, dt, rec_steps):
         G = np.tile(np.asarray(pf.g_nodes, float), (B, 1))
         if pf.dnodes is not None:
             G = G + np.stack([res(d) for d in pf.dnodes], axis=1)
-        prof = (st.body_index(pf.body), np.asarray(pf.u_nodes, float), G, math.log(pf.rmin), math.log(pf.rmax), res(pf.eta))
+        spans = [(math.log(lo), math.log(hi)) for lo, hi in (pf.validated or [])]
+        prof = (st.body_index(pf.body), np.asarray(pf.u_nodes, float), G, math.log(pf.rmin), math.log(pf.rmax), res(pf.eta), res(pf.eta_e), spans)
         rows_b = np.arange(B)
 
     # Thrust direction is constant within a step (segments are step-aligned).
@@ -216,14 +230,19 @@ def simulate(st: Structure, att: Attempt, X, idx, dt, rec_steps):
                 g0, g1, u0 = gss[j]
                 a = a * (g0 + g1 * (lr - u0))[:, None]
             if prof is not None and prof[0] == j:
-                _, un, G, lmin, lmax, eta = prof
+                _, un, G, lmin, lmax, eta, eta_e, spans = prof
                 uc = np.clip(lr, lmin, lmax)
                 xq = np.clip((uc - un[0]) / (un[1] - un[0]), 0.0, len(un) - 1.0)
                 i0 = np.minimum(np.floor(xq).astype(int), len(un) - 2)
                 wq = xq - i0
                 mult = (1.0 - wq) * G[rows_b, i0] + wq * G[rows_b, i0 + 1]
                 L = np.where(lr > lmax, lr - lmax, np.where(lr < lmin, lr - lmin, 0.0))
-                a = a * (mult * np.exp(-eta * L))[:, None]
+                Le = np.zeros_like(L)
+                for vlo, vhi in spans:
+                    below = np.clip(np.minimum(vhi, lmin) - np.maximum(vlo, lr), 0.0, None) * (lr < lmin)
+                    above = np.clip(np.minimum(vhi, lr) - np.maximum(vlo, lmax), 0.0, None) * (lr > lmax)
+                    Le += above - below
+                a = a * (mult * np.exp(-eta_e * Le - eta * (L - Le)))[:, None]
             A[:, ship] += a
         if u_k[k] != 0.0:
             ang = th_k[k] + dE

@@ -287,6 +287,8 @@ def p_emp(att_id, nseg):
 def ref_json(ref):
     if isinstance(ref, (int, float)):
         return float(ref)
+    if isinstance(ref, tuple):
+        return {"sum": [ref_json(r) for r in ref]}
     return {"param": ref}
 
 
