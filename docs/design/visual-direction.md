@@ -4,7 +4,11 @@ Owner: 1E, the UI lane. Tokens: `src/theme/`. Running reference: `prototypes/vis
 
 **Status.** The owner chose Night Watch on 2026-11-14 from three running directions. Their words: they really like Night Watch *as a theme*, but the player's in-game view will not look like the prototype's panel layout; that is still to come.
 
-So this document fixes **how things look**: palette, type, materials, line language, motion and the rendering rules below. It does **not** fix screen layout or scene composition. The prototype's panel arrangement is a test bench for instruments, nothing more. Layout belongs to 2D/3F (console) and 2E/3F (view), and the owner has not decided it yet.
+So this document fixes **how things look**: palette, type, materials, line language, motion and the rendering rules below. It does **not** fix screen layout or scene composition. The prototype's panel arrangement is a test bench for instruments, nothing more. Layout belongs to 2D/3F (console) and 2E/3F (view).
+
+**Screen composition (owner's brief, 2026-11-14, not yet in `docs/DECISIONS.md`).** The owner then described the screen they want: a real 3D control room the player walks in, a panoramic window, and one central console that projects the map, the ship and the flight view as holograms and holds the main screen in its top. That brief, the requests it raises for the integrator and the console and view threads, and a walkable mock-up are in [the 1E handoff, Round 2](../handoffs/1E.md) and `prototypes/room/` (see [How to run](#how-to-run-the-prototype)). The mock-up uses this theme unchanged.
+
+![Compartment mock-up: the console, its hologram and the window](img/comp-room-console.png)
 
 ![Night Watch, flight scene](img/nw-flight.png)
 
@@ -218,7 +222,9 @@ Tokens in `src/theme/motion.ts`.
 node prototypes/visual/serve.mjs
 ```
 
-Then open http://localhost:5180/. Keys: `1`–`5` scenes (flight, wells, lattice, compare, feedback), space pause, ←/→ scrub, drag to orbit, `f` refit, `v` view only, `h` hide the prototype bar. URL parameters for screenshots: `s` scene, `t` time, `pause=1`, `chrome=0`, `view=1`, `pw` lattice power, `fx=warning,damage`. Three.js 0.170.0 loads from jsDelivr; the game itself pins 0.187.0. The flight is a toy (true world inverse-2.5, forecast Newtonian) and panel numbers are illustrative.
+**Compartment mock-up:** open http://localhost:5180/room/. Click to look around, WASD to walk, aim at a console pad and click (or `F`); `1`–`4` jump to map, ship, console and flight; Esc steps back; in flight W/S/A/D/Q/E fire thrusters, `L` cycles the Black Box scan, `U` toggles heading-up; `K` loses the ship; `H` hides the prototype bar. URL parameters for screenshots: `m` mode, `t` flight seconds, `lat` scan level, `sel`, `layer`, `cfg`, `region=1`, `page`, `arc` window degrees, `px pz yaw pitch`, `chrome=0`. Its world is a toy and its data is mock.
+
+**Night Watch test bench:** open http://localhost:5180/. Keys: `1`–`5` scenes (flight, wells, lattice, compare, feedback), space pause, ←/→ scrub, drag to orbit, `f` refit, `v` view only, `h` hide the prototype bar. URL parameters for screenshots: `s` scene, `t` time, `pause=1`, `chrome=0`, `view=1`, `pw` lattice power, `fx=warning,damage`. Three.js 0.170.0 loads from jsDelivr; the game itself pins 0.187.0. The flight is a toy (true world inverse-2.5, forecast Newtonian) and panel numbers are illustrative.
 
 ## Sources
 
