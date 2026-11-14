@@ -1,6 +1,6 @@
 # 2D — Control room: reconcile, then build
 
-**Thread:** Claude (Fable) · **Branch:** `p2/2d-control-room` (worktree `.worktrees/2d`) · **Phase:** 2 (starts now) · **Needs:** 1E rounds 1–2 and 2C merged (done); 2F joins as it lands
+**Thread:** Claude (Fable) · **Branch:** `p2/2d-control-room` (worktree `.worktrees/2d`) · **Phase:** 2 (starts now) · **Needs:** 1E rounds 1–2, 2C and 2F merged (done)
 
 Replaces the earlier 2D (console) and 2E (3D view) prompts. Both are kept as inputs and marked superseded.
 
@@ -15,19 +15,19 @@ Recursion is a browser-based spacecraft engineering roguelike for NASA Space App
 The main session is the integrator. It merges every branch, owns `src/contracts/` and `docs/DECISIONS.md`, and announces merges; you then commit, run `git merge main` and continue.
 
 Read first:
-- **Owner and decisions:** `docs/CREATIVE_BRIEF.md` (all of it, especially §2, §3, §10 and its addendum); `docs/DECISIONS.md` (all of it: A1–A10, P1–P17, D1–D7); `docs/build-plan/README.md` § Conventions and § UI lane.
+- **Owner and decisions:** `docs/CREATIVE_BRIEF.md` (all of it, especially §2, §3, §10 and its addendum); `docs/DECISIONS.md` (all of it: A1–A10, P1–P17, D1–D10); `docs/build-plan/README.md` § Conventions and § UI lane.
 - **The look and the mock-up (1E):** `docs/handoffs/1E.md` (both rounds), `docs/design/visual-direction.md`, `src/theme/`, and `prototypes/room/`. To run the mock-up: `node prototypes/visual/serve.mjs`, then open http://localhost:5180/room/. It loads Three.js 0.170 from a CDN; the app uses the `three` package (0.187) from `package.json`.
 - **What the room shows:**
   - `src/contracts/README.md` (`ViewSnapshot` in `view.ts`, the believed world, forecasts, Black Box records).
   - 2C's model and Black Box: `src/model/README.md`, `src/blackbox/README.md`, `docs/handoffs/2C.md`. These cover `report()`, `burns()`, `empirical()`, `compareAttempts()`, forecasts and `detail.sigmaMajor`.
   - The model's player-facing diagnostics: `docs/model/estimator-spec.md` §9.
   - What the ship reports: `src/ship/README.md`.
-  - The game loop: `docs/build-plan/phase-2/2F-gravity-range-integration.md`, and `docs/handoffs/2F.md` once it exists.
+  - The game loop (2F, merged): `docs/handoffs/2F.md` (especially request 11, the slingshot study and the open questions), `src/app/README.md`, and `GameControls` in `src/game/belief/controls.ts`.
 - **What the judges need to see:** `docs/submission/challenge-fit.md` (gaps first) and `docs/handoffs/5C-0.md` (its requests 2 and 3).
 - **What must be on screen:** `phase-2/2D-console-ui.md` and `phase-2/2E-sensor-view.md` (superseded, but their build lists still apply).
 
 ## Goal
-The Gravity range is playable in the control room for the Phase 2 playtest, held when the owner is ready. In that playtest the player can, without explanatory text:
+The Gravity range is playable in the control room for the Phase 2 playtest, held when the owner is ready. Its objective (owner, A6): leave the binary on a slingshot past Beta, through an asteroid belt that orbits Beta. Until the law is learned the model mispredicts the pull on the ship and the rocks' motion alike, so a first pass usually fails; failed runs feed Black Box, and the model then helps (A9). In that playtest the player can, without explanatory text:
 - plan and fly;
 - see the forecast fail;
 - compare attempts in Black Box;
@@ -72,6 +72,7 @@ You do not own:
    - **Comparison and coverage:** the two-attempt overlay; unsensed space reads as unknown.
    - **Field plugins:** the interface at `src/view3d/fields/<id>`, documented in `src/view3d/README.md`.
    - **Window:** it shows what light shows (bodies and sunlit rocks, with shadows from A3).
+   - **The slingshot pass:** make it legible at speed: the closest approach to Beta, rocks along the path with their uncertainty, which rocks are tracked and which are only seen, clearance alerts, and the trim burns. Untracked rocks are unknown to the model; never draw them as if forecast.
 2. **CONSOLE screen.** Cover everything the 2D list asks for:
    - **Plan editor:** timed burns, with directions relative to the body axis, the velocity or a chosen body; duration and throttle; attitude and sensor-pointing commands. Pointing at an asteroid to track it is how the player probes the law at distances the ship hasn't flown (A6). Commit issues a frozen forecast.
    - **Time controls:** pause, play and warp. Preparation is safe.
@@ -91,7 +92,16 @@ You do not own:
 
    Phase 3 (3F) deepens them.
 
-**Seam with 2F:** export one React component (for example `ControlRoom`) that takes a `ViewSnapshot` and typed service interfaces (model client, Black Box, commands and plans, time control). Render from `src/contracts/fixtures/` until 2F wires the real loop; don't wait for 2F.
+**Seam with 2F:** export one React component, `ControlRoom`, which `src/app/App.tsx` mounts in place of 2F's temporary bench, passing it `snapshot()` each frame plus services.
+- **What the loop offers today** (`GameControls`, `src/game/belief/controls.ts`): status, pause and warp, `advance`, `preview` and `commit` of a plan, manual `command`, `recall` / `restart`, compare and selection, `rules` (test, adopt, revoke, report), the model port (`state()`, forecasts) and Black Box (`attempt`, `archive`).
+- Say in your handoff, or through the owner, which of these `ControlRoom` wants and under what names; 2F adapts the shell. You may edit `src/app/App.tsx` only to mount `ControlRoom`.
+- **Facts from 2F:**
+  - The snapshot is in the briefing's inertial frame, so the primary drifts (tens of km over a day).
+  - An objective with a `target` has its `region.center` moved to that target's believed position every frame.
+  - The compare overlay uses each attempt's believed trail and first forecast.
+  - Time runs only when the shell calls `advance`, so walking can hold time or not, as the owner decides.
+  - `burnSteps` (`src/game/belief/maneuver.ts`) builds the turn, burn and release commands for one burn.
+- Build and test against `src/contracts/fixtures/` as well, so panels work without a running loop.
 
 ## Done when
 - `npm run check` and `npm run build` pass, with no console errors.
