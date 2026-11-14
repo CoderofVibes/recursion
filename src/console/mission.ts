@@ -173,6 +173,8 @@ function closestMeasured(record: AttemptRecord): Map<string, number> {
 }
 
 const describeCommand = (c: Command): string => {
+  // Hands-on flying arrives as its own command once 2G's seam is in (A11).
+  if ((c.kind as string) === 'fly') return 'hands on the controls';
   switch (c.kind) {
     case 'burn':
       return `burn ${name(c.thruster)} ${fixed(c.duration, 1)} s at ${Math.round(c.throttle * 100)}%`;
@@ -192,16 +194,46 @@ const describeCommand = (c: Command): string => {
       return `recorder ${c.sampleRate} Hz`;
     case 'mark':
       return 'mark';
+    default:
+      return (c as { kind: string }).kind;
   }
 };
 
-const flown = (record: AttemptRecord): { t: number; command: Command }[] =>
-  record.executed
-    .filter(
-      (e: ExecutedCommand) =>
-        e.status !== 'rejected' && e.source !== 'procedure' && e.command.kind !== 'mark',
-    )
-    .map((e) => ({ t: e.t, command: e.command }));
+/**
+ * The commands the player flew, as they turned out: a burn that was cut off is listed with the
+ * time it actually ran (a held burn is commanded long and cut off on release), and the cutoff
+ * that ended it is not listed separately. Arrival procedure and annotations are left out.
+ */
+function flown(record: AttemptRecord): { t: number; command: Command }[] {
+  const mine = record.executed.filter(
+    (e: ExecutedCommand) =>
+      e.status !== 'rejected' && e.source !== 'procedure' && e.command.kind !== 'mark',
+  );
+  const out: { t: number; command: Command }[] = [];
+  const ended = new Set<number>();
+  mine.forEach((e, i) => {
+    if (ended.has(i)) return;
+    const c = e.command;
+    if (c.kind !== 'burn') {
+      out.push({ t: e.t, command: c });
+      return;
+    }
+    let duration = c.duration;
+    for (let k = i + 1; k < mine.length; k++) {
+      const next = mine[k]!;
+      if (next.t >= e.t + c.duration) break;
+      const n = next.command;
+      const cuts = n.kind === 'cutoff' && (n.thruster === 'all' || n.thruster === c.thruster);
+      const replaces = n.kind === 'burn' && n.thruster === c.thruster;
+      if (!cuts && !replaces) continue;
+      duration = next.t - e.t;
+      if (cuts) ended.add(k);
+      break;
+    }
+    out.push({ t: e.t, command: { ...c, duration } });
+  });
+  return out;
+}
 
 /** Commands given at nearly the same moment in two attempts count as given at the same time. */
 const SAME_MOMENT = 120;

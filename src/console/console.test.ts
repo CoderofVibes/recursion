@@ -96,6 +96,23 @@ describe('debrief', () => {
       if (line.met === null) expect(line.measured).toMatch(/not recorded|nothing ranged|not yet/);
   });
 
+  it('lists a held burn by the time it ran, not the time it was commanded for', () => {
+    const base = attempts[0]!;
+    const quiet = { ...base, executed: base.executed.filter((e) => e.source === 'procedure') };
+    const held: AttemptRecord = {
+      ...quiet,
+      index: quiet.index + 1,
+      executed: [
+        ...quiet.executed,
+        executed(100, { kind: 'burn', thruster: 'main-engine', throttle: 1, duration: 3600 }),
+        executed(104, { kind: 'cutoff', thruster: 'main-engine' }),
+      ],
+    };
+    const lines = changes(held, quiet);
+    expect(lines.some((l) => l.includes('burn main engine 4.0 s'))).toBe(true);
+    expect(lines.some((l) => l.includes('cutoff'))).toBe(false);
+  });
+
   it('lists what changed from the attempt before', () => {
     const [a, b] = attempts;
     const lines = changes(b!, a!);

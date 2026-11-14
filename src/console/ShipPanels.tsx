@@ -21,7 +21,7 @@ import {
   Trend,
 } from '../theme/components/index.ts';
 import type { SchematicLink, SchematicNode } from '../theme/components/index.ts';
-import { sigmaMajor, yawInertia } from '../view3d/adapter.ts';
+import { coverageCones, sigmaMajor, yawInertia } from '../view3d/adapter.ts';
 import type { ShipHolo } from '../view3d/ship/ShipHolo.ts';
 import { Caption, Line } from './controls.tsx';
 import {
@@ -134,7 +134,7 @@ function SystemScreen({ desk, system, parts }: { readonly desk: Desk; readonly s
     }
     case 'guidance': {
       const camera = game.ship.equipment.find((e) => e.kind === 'optical-tracker');
-      const sector = snapshot.coverage.sectors[0];
+      const sector = coverageCones(snapshot.coverage)[0];
       const tracked = [...snapshot.world.bodies, ...snapshot.world.asteroids].filter((o) => o.tracked);
       return (
         <>
