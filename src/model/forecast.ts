@@ -43,6 +43,7 @@ import {
   agingBetween,
   arcCalibration,
   arrivalState,
+  contextFor,
   misalignId,
   presentState,
   referenceFor,
@@ -165,13 +166,16 @@ export function buildForecast(
   const d = snap.derived;
   const spec = d.spec;
   const s = spec.settings;
+  const model = ctx;
+  // This attempt's geometry (A10): bodies, asteroids and arrival estimate from its briefing.
+  ctx = contextFor(model, req.record);
   const present =
     (d.present && d.problem.builds.has(req.record.id) ? d.present : null) ??
-    presentState(d, ctx, req.record.id) ??
+    presentState(d, model, req.record.id) ??
     arrivalState(ctx, spec);
   const tNow = present.t;
   const arcId = d.problem.builds.get(req.record.id)?.arcs.at(-1)?.id ?? req.record.id;
-  const ref = referenceFor(d, spec.primary, arcId, ctx);
+  const ref = referenceFor(d, spec.primary, arcId, model);
   const muOf = (id: string) => d.values[`body.${id}.mu`] ?? 0;
 
   // Executed burns not finished at the present state, then the plan's burns.
@@ -483,7 +487,7 @@ export function buildForecast(
       asteroidNotes.push({ id: ast, forecast: false });
       continue;
     }
-    const aref = referenceFor(d, spec.primary, arc.id, ctx);
+    const aref = referenceFor(d, spec.primary, arc.id, model);
     const anc = anchorState(aref, primaryProfile, arc, wins, s.dt, {
       h: s.fdStep,
       gPrior: [1, s.localScalePriorSigma],

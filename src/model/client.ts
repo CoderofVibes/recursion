@@ -14,6 +14,7 @@ import {
   issueForecast,
   type AttemptId,
   type AttemptRecord,
+  type ExtensionDecision,
   type ExtensionId,
   type Forecast,
   type ForecastDraft,
@@ -43,11 +44,14 @@ export interface ModelClient {
     training: readonly AttemptId[],
     heldOut: AttemptId,
   ): Promise<ExtensionRecord>;
-  adopt(ext: ExtensionId): Promise<ModelState>;
-  revoke(ext: ExtensionId): Promise<ModelState>;
+  /** `at`: wall-clock ISO time for the decision record (default now). */
+  adopt(ext: ExtensionId, at?: string): Promise<ModelState>;
+  revoke(ext: ExtensionId, at?: string): Promise<ModelState>;
   state(): Promise<ModelState>;
   extensions(): Promise<readonly ExtensionRecord[]>;
   adopted(): Promise<readonly ExtensionId[]>;
+  /** Every adopt and revoke, in order (for BlackBoxArchive.extensionDecisions). */
+  decisions(): Promise<readonly ExtensionDecision[]>;
   report(): Promise<ModelReport>;
   burns(attempts?: readonly AttemptId[]): Promise<BurnReport[]>;
   empirical(): Promise<EmpiricalReport | null>;
@@ -125,11 +129,12 @@ export function createModelClient(opts: { worker?: boolean } = {}): ModelClient 
       return { forecast: issueForecast(r.draft), detail: r.detail };
     },
     testExtension: (ext, training, heldOut) => c('testExtension', ext, training, heldOut),
-    adopt: (ext) => c('adopt', ext),
-    revoke: (ext) => c('revoke', ext),
+    adopt: (ext, at) => c('adopt', ext, at),
+    revoke: (ext, at) => c('revoke', ext, at),
     state: () => c('state'),
     extensions: () => c('extensions'),
     adopted: () => c('adopted'),
+    decisions: () => c('decisions'),
     report: () => c('report'),
     burns: (attempts) => c('burns', attempts),
     empirical: () => c('empirical'),

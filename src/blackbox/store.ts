@@ -10,6 +10,7 @@
 import type {
   AttemptRecord,
   BlackBoxArchive,
+  ExtensionDecision,
   Lead,
   Procedure,
   ProcedureId,
@@ -22,6 +23,8 @@ export interface BlackBoxMeta {
   readonly leads: readonly Lead[];
   /** Every rule test with its numbers (spec §6.1), never edited (BlackBoxArchive.extensionTests). */
   readonly extensionTests: readonly ExtensionRecord[];
+  /** Every adopt and revoke, in order (BlackBoxArchive.extensionDecisions). */
+  readonly extensionDecisions?: readonly ExtensionDecision[];
 }
 
 export interface StoredBlackBox {
@@ -52,6 +55,7 @@ function assemble(
       adoptedExtensions: meta?.adoptedExtensions ?? [],
       leads: meta?.leads ?? [],
       extensionTests: meta?.extensionTests ?? [],
+      extensionDecisions: meta?.extensionDecisions ?? [],
     },
   };
 }
