@@ -5,7 +5,7 @@
 This is the single thread for everything on screen. It replaces the earlier 2D (console) and 2E (3D view) prompts, which are kept as inputs and marked superseded, and it takes over 1E's UI lane.
 
 ## Context
-Recursion is a browser-based spacecraft engineering roguelike for NASA Space Apps 2026. The submission deadline is **17:00 PST Sunday, November 15**.
+Recursion is a browser-based spacecraft engineering roguelike for NASA Space Apps 2026.
 
 The owner has set the screen composition and answered the questions about it (DECISIONS A8 and A11; `docs/CREATIVE_BRIEF.md` §10 and both addenda). The game has:
 - **The control room:** a walkable first-person room, 8 m wide and dressed as a working control room, with a central console and a panoramic window.

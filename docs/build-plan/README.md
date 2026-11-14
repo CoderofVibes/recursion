@@ -127,7 +127,7 @@ The owner dials in the game's look and feel throughout the build. 1E ran the lan
 
 ## Order of work
 
-Phases run in order with no clock targets; the owner's availability sets the pace, and gates happen when the owner is ready. The one fixed time is the submission deadline: **17:00 PST Sunday, November 15** (San Marino, CA local event, virtual, solo team). Leave Phase 5 enough room for a working public build, the video and the write-up; if time runs short, Phase 4 shrinks before Phase 5 does.
+Phases run in order with no clock targets and no deadlines in prompts: build fully and well. The owner's availability sets the pace, gates happen when the owner is ready, and only the owner makes scope calls.
 
 1. Phase 1
 2. Phase 2, Gravity range playtest at the gate
