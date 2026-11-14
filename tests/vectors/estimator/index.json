@@ -1,0 +1,52 @@
+{
+ "schema": "recursion.estimator-vector-index/1",
+ "generator": "python tools/estimator-ref/generate.py",
+ "assumptions": "tools/estimator-ref/assumptions.json",
+ "assumptionsHash": "23fa1c77dcd7e371",
+ "spec": "docs/model/estimator-spec.md",
+ "vectors": [
+  {"id": "newton-recovers-gm", "file": "newton-recovers-gm.json", "title": "Newtonian truth, Newtonian model: recovers GM", "claims": 5, "cases": ["single-arc"]},
+  {
+   "id": "inv25-newton-two-distances",
+   "file": "inv25-newton-two-distances.json",
+   "title": "Inverse-2.5 truth, Newtonian model, two distances",
+   "claims": 6,
+   "cases": ["two-circular-arcs"]
+  },
+  {
+   "id": "inv25-exponent-coverage",
+   "file": "inv25-exponent-coverage.json",
+   "title": "Inverse-2.5 truth with the exponent extension",
+   "claims": 11,
+   "cases": ["narrow", "wide"]
+  },
+  {
+   "id": "missing-body-signature",
+   "file": "missing-body-signature.json",
+   "title": "Missing second body: direction-dependent residual signature",
+   "claims": 6,
+   "cases": ["binary-A-only-model"]
+  },
+  {
+   "id": "burn-only-confounded",
+   "file": "burn-only-confounded.json",
+   "title": "Burn-only data: engine and gravity confounded",
+   "claims": 7,
+   "cases": ["burn-only", "burn-plus-coast", "burn-plus-accel"]
+  },
+  {
+   "id": "extension-validation",
+   "file": "extension-validation.json",
+   "title": "Extensions validated against a held-out attempt (P5)",
+   "claims": 10,
+   "cases": ["distance-law", "overlooked-body"]
+  },
+  {
+   "id": "forecast-envelope",
+   "file": "forecast-envelope.json",
+   "title": "Forecast envelope: confident where sampled, honest elsewhere",
+   "claims": 9,
+   "cases": ["sampled-and-unsampled"]
+  }
+ ]
+}
