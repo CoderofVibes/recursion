@@ -1,107 +1,172 @@
-# 2D — Control room: reconcile, then build
+# 2D — Control room and every screen
 
-**Thread:** Claude (Fable) · **Branch:** `p2/2d-control-room` (worktree `.worktrees/2d`) · **Phase:** 2 (starts now) · **Needs:** 1E rounds 1–2, 2C and 2F merged (done)
+**Thread:** Claude (Fable) · **Branch:** `p2/2d-control-room` (worktree `.worktrees/2d`) · **Phase:** 2 (starts now) · **Needs:** 1E's close-out merged (the integrator announces it), 2C and 2F merged (done)
 
-Replaces the earlier 2D (console) and 2E (3D view) prompts. Both are kept as inputs and marked superseded.
+This is the single thread for everything on screen. It replaces the earlier 2D (console) and 2E (3D view) prompts, which are kept as inputs and marked superseded, and it takes over 1E's UI lane.
 
 ## Context
-Recursion is a browser-based spacecraft engineering roguelike for NASA Space Apps 2026. The submission deadline is **17:00 PST Sunday**. The owner has set the screen composition (DECISIONS A8, `docs/CREATIVE_BRIEF.md` §10 addendum):
-- a walkable first-person control room with a central console and a panoramic window;
-- four views from the console: MAP, SHIP, CONSOLE and FLIGHT;
-- a loss sequence that brings the player back in at the door.
+Recursion is a browser-based spacecraft engineering roguelike for NASA Space Apps 2026. The submission deadline is **17:00 PST Sunday, November 15**.
 
-1E built a walkable mock-up of it and left open questions. This thread turns that direction into the game's real control room. First it makes sure the direction fits everything already decided and built.
+The owner has set the screen composition and answered the questions about it (DECISIONS A8 and A11; `docs/CREATIVE_BRIEF.md` §10 and both addenda). The game has:
+- **The control room:** a walkable first-person room, 8 m wide and dressed as a working control room, with a central console and a panoramic window.
+- **Time:** it keeps running while the player is in the room.
+- **Four views from the console:**
+  - **MAP:** a 3D hologram of what has been charted, zooming into each environment's own 3D view.
+  - **SHIP:** a detailed 3D technical drawing whose systems isolate with schematic, levels, trends and readouts.
+  - **CONSOLE:** a screen the player looks down into.
+  - **FLIGHT:** a 3D hologram above the console with the window behind it, and the ship set back so the space ahead is visible.
+- **Flying:** three-dimensional and hands-on.
+- **A loss:** the screen goes black with a short shake, and the player walks back in at the beginning (A9).
 
-The main session is the integrator. It merges every branch, owns `src/contracts/` and `docs/DECISIONS.md`, and announces merges; you then commit, run `git merge main` and continue.
+**1E's prototype.** 1E has already built most of this as a working prototype (`prototypes/room/`) that the owner has reviewed and steered. 1E also built the theme, the instrument primitives, the 3D material builders and the UI lab (`src/theme/`). This thread turns the prototype into the real game, wired to the real simulation, ship, model and Black Box. Port it; don't start over.
+
+**3D is arriving underneath you.** Thread **2G** is converting physics, ship, model and game from planar to 3D (A11).
+- Its first checkpoint, the lift, makes the contracts 3D with everything still flat (z = 0); later checkpoints make the motion truly 3D.
+- Until the lift merges, the snapshot is planar. Build every view in 3D from the start, reading positions through one small adapter so the switch is a type change.
+- 2G owns `src/contracts/` during the conversion.
+
+The main session is the integrator: it merges every branch and announces merges, after which you commit, run `git merge main` and continue.
 
 Read first:
-- **Owner and decisions:** `docs/CREATIVE_BRIEF.md` (all of it, especially §2, §3, §10 and its addendum); `docs/DECISIONS.md` (all of it: A1–A10, P1–P17, D1–D10); `docs/build-plan/README.md` § Conventions and § UI lane.
-- **The look and the mock-up (1E):** `docs/handoffs/1E.md` (both rounds), `docs/design/visual-direction.md`, `src/theme/`, and `prototypes/room/`. To run the mock-up: `node prototypes/visual/serve.mjs`, then open http://localhost:5180/room/. It loads Three.js 0.170 from a CDN; the app uses the `three` package (0.187) from `package.json`.
+- **Owner and decisions:** `docs/CREATIVE_BRIEF.md` (all of it, especially §2, §3 and §10 with both addenda); `docs/DECISIONS.md` (all of it, especially A8–A11, P6, P10–P12 and A3–A6); `docs/build-plan/README.md` § Conventions and § UI lane.
+- **What has been built for the screen (1E):**
+  - `docs/handoffs/1E.md`, all rounds, including the close-out round, which says what in the prototype is toy and what is real, and what to port first;
+  - `prototypes/room/`;
+  - `docs/design/visual-direction.md`;
+  - `src/theme/README.md`, `src/theme/`, and the UI lab (`npm run dev`, then `/src/theme/lab/index.html`).
+
+  To run the prototype: `node prototypes/visual/serve.mjs`, then open http://localhost:5180/room/. It loads Three.js 0.170 from a CDN; the app uses the `three` package (0.187).
 - **What the room shows:**
-  - `src/contracts/README.md` (`ViewSnapshot` in `view.ts`, the believed world, forecasts, Black Box records).
-  - 2C's model and Black Box: `src/model/README.md`, `src/blackbox/README.md`, `docs/handoffs/2C.md`. These cover `report()`, `burns()`, `empirical()`, `compareAttempts()`, forecasts and `detail.sigmaMajor`.
+  - `src/contracts/README.md` (`ViewSnapshot`, the believed world, forecasts, Black Box records).
+  - `src/model/README.md`, `src/blackbox/README.md` and `docs/handoffs/2C.md`: `report()`, `burns()`, `empirical()`, `compareAttempts()`, forecasts and `detail.sigmaMajor`.
   - The model's player-facing diagnostics: `docs/model/estimator-spec.md` §9.
-  - What the ship reports: `src/ship/README.md`.
-  - The game loop (2F, merged): `docs/handoffs/2F.md` (especially request 11, the slingshot study and the open questions), `src/app/README.md`, and `GameControls` in `src/game/belief/controls.ts`.
-- **What the judges need to see:** `docs/submission/challenge-fit.md` (gaps first) and `docs/handoffs/5C-0.md` (its requests 2 and 3).
-- **What must be on screen:** `phase-2/2D-console-ui.md` and `phase-2/2E-sensor-view.md` (superseded, but their build lists still apply).
+  - `src/ship/README.md` and `data/ship-baseline.json`.
+  - The game loop: `docs/handoffs/2F.md` (the slingshot study and open questions), `src/app/README.md`, and `GameControls` in `src/game/belief/controls.ts`.
+- **What the judges need to see:** `docs/submission/challenge-fit.md` (gaps first) and `docs/handoffs/5C-0.md` (requests 2 and 3).
+- **What must be on screen:** `phase-2/2D-console-ui.md` and `phase-2/2E-sensor-view.md`. They're superseded, but their build lists still apply.
+- **The 3D conversion:** `phase-2/2G-3d-flight.md`.
 
 ## Goal
-The Gravity range is playable in the control room for the Phase 2 playtest, held when the owner is ready. Its objective (owner, A6): leave the binary on a slingshot past Beta, through an asteroid belt that orbits Beta. Until the law is learned the model mispredicts the pull on the ship and the rocks' motion alike, so a first pass usually fails; failed runs feed Black Box, and the model then helps (A9). In that playtest the player can, without explanatory text:
-- plan and fly;
+The Gravity range is playable in the control room, in 3D, for the Phase 2 playtest, held when the owner is ready. Its objective (A6): leave the binary on a slingshot past Beta, through an asteroid belt that orbits Beta. Until the law is learned the model mispredicts both the pull on the ship and the rocks' motion, so a first pass usually fails; failed runs feed Black Box, and the model then helps (A9).
+
+In that playtest the player can, without explanatory text:
+- walk in;
+- prepare;
+- fly by hand;
 - see the forecast fail;
 - compare attempts in Black Box;
 - improve the model, and see the improvement hold.
 
 ## You own
-`src/console/` (except `encounters/`) and `src/view3d/` (except `fields/`), with their tests, and `docs/handoffs/2D.md`. The room scene lives in `src/view3d/room/`.
+- `src/console/` (except `encounters/`), with tests.
+- `src/view3d/` (except `fields/`), with tests. The room scene lives in `src/view3d/room/`.
+- `src/app/`, except `src/app/game.ts`, which 2G converts. Replace 2F's temporary bench with `ControlRoom`.
+- **The UI lane, from 1E:** `src/theme/`, `prototypes/`, `docs/design/visual-direction.md` and `docs/design/img/`. Keep the lab working, and keep every visual value in `src/theme/` (Convention 11 now binds you as the theme's owner).
+- `docs/handoffs/2D.md`.
 
 You do not own:
-- `src/theme/` or `prototypes/` (1E, the owner's UI lane). Take every visual value from `src/theme/`; if a primitive is missing, build it locally on tokens and list it as a request.
-- `src/app/` or `src/game/` (2F mounts your component and runs the loop).
-- `src/contracts/` or `docs/DECISIONS.md`. Ask the integrator, through the owner or in your handoff.
+- `src/game/`, `src/content/`, `src/sim/`, `src/ship/`, `src/model/` or `src/blackbox/`. 2G owns them during the conversion; afterwards 2C and 2F own theirs.
+- `src/contracts/` or `docs/DECISIONS.md`. Ask through the owner or in your handoff; contract requests are applied after 2G's lift lands.
 
 ## Step 1 — Reconcile (short; before building)
-1. **Compare.** Check the owner's composition and 1E's mock-up against the decisions and the code:
-   - P1: planar flight;
-   - P6: the model forecasts, the player plans;
-   - P8: what a loss resets;
+1. **Compare.** Check the composition and the prototype against the decisions and the code:
+   - P6: the model forecasts, the player flies and plans;
    - P10: display semantics;
    - P11: the window shows only what light shows, and the holograms show only what has been sensed;
    - P12: recording;
-   - A3: the sun, so shadows are visible through the window;
-   - A5 and A6: carried knowledge and slingshots.
-2. **Ask the owner, one decision at a time, each with a recommendation.** Go in this order:
-   1. **Flying:** live thrust keys, committed plans of timed burns, or both. The forecast, the frozen issued forecast and time warp are built for committed plans (P6, P10, 2C).
-   2. **Time:** does the world run while the player walks, or uses the map or ship views?
-   3. **Planar flight seen through a window** (P1).
-   4. Then 1E's remaining questions as they come up: map scope, room scale, window arc, hologram orientation, loss sequence.
+   - A3: the sun and its shadows through the window;
+   - A5, A6 and A9: carried knowledge, slingshots and the loss;
+   - A11: 3D.
 
-   Don't hold the build for the minor ones; use 1E's defaults until the owner answers. Whether a loss restarts the encounter or the whole expedition is decided: the whole expedition (A9). The loss sequence returns the player to the door at the beginning.
-3. **Record findings in your handoff.** List everything in the build plan, contracts or decisions that the composition contradicts, each with a proposed fix and who owns it. The integrator applies contract and decision changes.
+   Record each contradiction in your handoff, with a proposed fix and who owns it.
+2. **Ask the owner only what is still open, one decision at a time, each with a recommendation.** These are:
+   - roll;
+   - whether the other crew seats are filled;
+   - the room's palette;
+   - the window arc;
+   - heading-up versus chart-up;
+   - the loss sequence's length;
+   - whether there is a pause, given that time runs in the room.
+
+   Use 1E's defaults until the owner answers, and never hold the build for these. Everything else in A8 is decided.
 
 ## Step 2 — Build, in this order
-1. **FLIGHT view:** a hologram above the console with the window behind it. Cover everything the 2E list asks for:
-   - The view itself: take `ViewSnapshot` as input; draw the flight plane with depth cues; give the camera follow, orbit and fit modes with no motion sickness; keep 60 fps with a few hundred asteroids.
-   - **Bodies and asteroids:** draw both where the ship believes they are, with uncertainty. Tracked asteroids' forecast tracks and closest-approach alerts come from the forecast's `objects` and `closestApproaches` (2C).
-   - **Ship:** the true footprint, centre of mass, body axis, thrust ticks and velocity.
-   - **Forecasts:**
-     - The issued forecast is dotted and frozen; the measured trail is solid.
-     - The envelope widens outside sampled distances and ends at the horizon (P10).
-     - Draw stretches inside a validated span distinctly (`ForecastSample.validated`, A5).
-   - **Comparison and coverage:** the two-attempt overlay; unsensed space reads as unknown.
-   - **Field plugins:** the interface at `src/view3d/fields/<id>`, documented in `src/view3d/README.md`.
-   - **Window:** it shows what light shows (bodies and sunlit rocks, with shadows from A3).
-   - **The slingshot pass:** make it legible at speed: the closest approach to Beta, rocks along the path with their uncertainty, which rocks are tracked and which are only seen, clearance alerts, and the trim burns. Untracked rocks are unknown to the model; never draw them as if forecast.
-2. **CONSOLE screen.** Cover everything the 2D list asks for:
-   - **Plan editor:** timed burns, with directions relative to the body axis, the velocity or a chosen body; duration and throttle; attitude and sensor-pointing commands. Pointing at an asteroid to track it is how the player probes the law at distances the ship hasn't flown (A6). Commit issues a frozen forecast.
-   - **Time controls:** pause, play and warp. Preparation is safe.
-   - **Equipment and power allocation,** with visible consequences.
-   - **Model panel:** parameters with uncertainty, strength against distance, the confounding indicator, testing an extension against a chosen held-out attempt, adopt and revoke, and the model version. Show calibration freshness for ship calibrations (`ParameterEstimate.freshness`, 1G spec §9.7), and each adopted rule's validated spans against the distances the plan visits.
+1. **The room in the app.** Port the prototype's room into `src/view3d/room/` and mount it from `ControlRoom`:
+   - walking, the white-dot cursor, the four pads and switching between views;
+   - the dressing;
+   - the loss sequence back to the door;
+   - time running while the player walks.
+
+   `ControlRoom` takes `snapshot()` each frame, plus the services.
+2. **CONSOLE screen.** Build these first on `src/contracts/fixtures/`, then on the live loop. Cover everything the old 2D list asks for:
+   - **Model panel:**
+     - parameters with uncertainty;
+     - strength against distance;
+     - the confounding indicator;
+     - testing an extension against a chosen held-out attempt;
+     - adopt and revoke;
+     - the model version;
+     - calibration freshness (`ParameterEstimate.freshness`, 1G spec §9.7);
+     - each adopted rule's validated spans against the distances the flight visits.
    - **Black Box compare** (`compareAttempts()`).
+   - **Plan editor** for timed burns (directions relative to the body axis, the velocity or a chosen body; duration and throttle) and sensor pointing. Pointing at a rock to track it is how the player probes the law at distances the ship hasn't flown (A6). Committing a plan issues a frozen forecast.
+   - **Equipment and power allocation,** with visible consequences.
    - Recall and save-procedure.
-3. **Challenge fit** (5C-0 requests 2 and 3):
-   - **Mission-design step:** make the prepare phase a visible step. The player chooses an evidence goal, a reserve or clearance margin, the sensor, recorder and power setup, and an approach. The choices carry into Black Box.
-   - **Attempt debrief:** a short debrief on Recall, loss and arrival. It shows the planned constraint, the measured result, the limiting event, the cost, and what changed in the next attempt.
-   - Put propellant, power and heat margin, and recorder capacity where they can be seen changing.
-   - 2F owns the game state behind these; agree the seam through the owner or your handoff.
-4. **Room, MAP and SHIP views:** start from 1E's prototype, kept thin for the playtest:
-   - walk to the console; the four pads; the loss sequence back to the door;
-   - the ship view from `loadShipDefinition()`;
-   - the map showing what has been charted so far.
+   - **Time controls.**
 
-   Phase 3 (3F) deepens them.
+   Compose everything from the theme's primitives.
+3. **FLIGHT view, in 3D.** Build this on 2G's lift contracts as soon as they merge. Cover everything the old 2E list asks for, in three dimensions:
+   - **Bodies and rocks** where the ship believes they are, with 3D uncertainty.
+   - **Tracked rocks:** forecast tracks and closest-approach alerts, from the forecast's `objects` and `closestApproaches`.
+   - **The ship:** a large holographic symbol set back, with its true position and hull marked; centre of mass, the dotted axis, attitude, thrust at the points of application, and velocity.
+   - **Forecasts:**
+     - the issued forecast dotted and frozen, the measured trail solid;
+     - the envelope as a 3D volume that widens outside sampled distances and ends at the horizon (P10);
+     - stretches inside a validated span drawn distinctly (`ForecastSample.validated`).
+   - **Depth:** cues that work in a volume, such as a reference plane through the ship and stalks for objects off it (1E's prototype does this). The camera must not cause motion sickness.
+   - **Coverage:** sensor coverage as cones, with unsensed space reading as unknown.
+   - **The two-attempt overlay.**
+   - **The window:** it shows what light shows, meaning bodies and sunlit rocks with shadows (A3).
+   - **The slingshot pass legible at speed:**
+     - the closest approach to Beta;
+     - rocks along the path with their uncertainty;
+     - which rocks are tracked and which are only seen;
+     - clearance alerts and trims.
 
-**Seam with 2F:** export one React component, `ControlRoom`, which `src/app/App.tsx` mounts in place of 2F's temporary bench, passing it `snapshot()` each frame plus services.
-- **What the loop offers today** (`GameControls`, `src/game/belief/controls.ts`): status, pause and warp, `advance`, `preview` and `commit` of a plan, manual `command`, `recall` / `restart`, compare and selection, `rules` (test, adopt, revoke, report), the model port (`state()`, forecasts) and Black Box (`attempt`, `archive`).
-- Say in your handoff, or through the owner, which of these `ControlRoom` wants and under what names; 2F adapts the shell. You may edit `src/app/App.tsx` only to mount `ControlRoom`.
-- **Facts from 2F:**
-  - The snapshot is in the briefing's inertial frame, so the primary drifts (tens of km over a day).
-  - An objective with a `target` has its `region.center` moved to that target's believed position every frame.
-  - The compare overlay uses each attempt's believed trail and first forecast.
-  - Time runs only when the shell calls `advance`, so walking can hold time or not, as the owner decides.
-  - `burnSteps` (`src/game/belief/maneuver.ts`) builds the turn, burn and release commands for one burn.
-- Build and test against `src/contracts/fixtures/` as well, so panels work without a running loop.
+     Untracked rocks are unknown to the model; never draw them as if forecast.
+   - **Flying by hand:**
+     - thrust keys on three axes, plus yaw and pitch, using the hands-on seam 2G defines (agree names through the owner);
+     - when the keys are released, the coasting forecast appears;
+     - committed timed burns stay available for precise trims.
+   - **Performance:** 60 fps with a few hundred rocks.
+   - **Field plugins:** the interface at `src/view3d/fields/<id>`, documented in `src/view3d/README.md`.
+4. **Challenge fit** (5C-0 requests 2 and 3):
+   - **Mission-design step:** make preparation a visible step. The player chooses an evidence goal, a reserve or clearance margin, the sensor, recorder and power setup, and an approach. The choices carry into Black Box.
+   - **Attempt debrief:** shown on Recall, loss and arrival. It gives the planned constraint, the measured result, the limiting event, the cost, and what changed in the next attempt.
+   - **Margins on show:** put propellant, power and heat margin, and recorder capacity where they can be seen changing.
+   - **Game state:** this lives in `src/game/`, so put what you need in your handoff, or ask through the owner.
+5. **SHIP view.** Port 1E's 3D ship and its system screens, and wire them to the real ship state where `src/ship/` exposes it. Mark placeholders that remain.
+6. **MAP view.** Port 1E's 3D map, showing only what has been charted, kept thin for the playtest. Phase 3 (3F) deepens it.
+
+**Seam with the game:** `ControlRoom` uses `GameControls`:
+- status;
+- warp;
+- `advance`;
+- `preview` and `commit` of a plan;
+- manual `command`;
+- the hands-on input (from 2G);
+- `recall` / `restart`;
+- compare and selection;
+- `rules`;
+- the model port and Black Box.
+
+Facts from 2F:
+- The snapshot is in the briefing's inertial frame.
+- An objective's `region.center` follows its target's believed position.
+- Time runs only when the shell calls `advance`.
+- `burnSteps` builds the commands for one burn.
+
+Anything you need from the game goes in your handoff or through the owner to 2G.
 
 ## Done when
 - `npm run check` and `npm run build` pass, with no console errors.
@@ -117,4 +182,5 @@ Owner playtest (Phase 2). Results update the Phase 3 prompts (3F continues this 
 - the reconciliation findings;
 - every owner decision taken;
 - the play values you chose;
-- requests: contracts, theme primitives, and anything for 2F.
+- what of the prototype was ported and what remains toy;
+- requests: contracts, anything for 2G, 2C and 2F.

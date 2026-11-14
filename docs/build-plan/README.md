@@ -22,14 +22,15 @@ Phases 1 and 2 have one ready-to-launch prompt file per section. Phases 3–5 ar
 | 1B | Physics derivation | GPT/Codex | [phase-1/1B-physics-derivation.md](phase-1/1B-physics-derivation.md) | — |
 | 1C | Ship engineering baseline | GPT/Codex | [phase-1/1C-ship-baseline.md](phase-1/1C-ship-baseline.md) | — |
 | 1D | GMAT reference trajectories | GPT/Codex (needs GMAT installed) | [phase-1/1D-gmat-reference.md](phase-1/1D-gmat-reference.md) | — |
-| 1E | Visual direction, then the standing UI lane | Claude, live with owner, all build | [phase-1/1E-visual-direction.md](phase-1/1E-visual-direction.md) | — |
+| 1E | Visual direction, then the UI lane (closed 2026-11-14; the lane passed to 2D) | Claude, live with owner | [phase-1/1E-visual-direction.md](phase-1/1E-visual-direction.md) | — |
 | 1F | Expedition and encounter design | GPT/Codex | [phase-1/1F-expedition-design.md](phase-1/1F-expedition-design.md) | — |
 | 1G | Predictive model specification | GPT/Codex | [phase-1/1G-predictive-model-spec.md](phase-1/1G-predictive-model-spec.md) | — |
 | 2A | Simulation core | Claude | [phase-2/2A-sim-core.md](phase-2/2A-sim-core.md) | 1A, 1B (1D's vectors join later) |
 | 2B | Ship systems v1 | GPT/Codex | [phase-2/2B-ship-systems.md](phase-2/2B-ship-systems.md) | 1A, 1C |
-| 2C | Predictive model and Black Box | Claude | [phase-2/2C-model-and-blackbox.md](phase-2/2C-model-and-blackbox.md) | 1A, 1G |
-| 2D | Control room: reconcile, then build the console and views (replaces the earlier 2D console and 2E view prompts) | Claude (Fable), worktree | [phase-2/2D-control-room.md](phase-2/2D-control-room.md) | 1E, 2C (2F joins as it lands) |
-| 2F | Gravity range and game loop | Claude (Fable), worktree | [phase-2/2F-gravity-range-integration.md](phase-2/2F-gravity-range-integration.md) | 2A, 2B (2C–2E join as they land) |
+| 2C | Predictive model and Black Box (stopped while 2G converts to 3D; resumes after) | Claude | [phase-2/2C-model-and-blackbox.md](phase-2/2C-model-and-blackbox.md) | 1A, 1G |
+| 2D | Control room and every screen: the single screen thread, with the UI lane (replaces the earlier 2D console and 2E view prompts) | Claude (Fable), worktree | [phase-2/2D-control-room.md](phase-2/2D-control-room.md) | 1E close-out, 2C, 2F (2G joins as it lands) |
+| 2F | Gravity range and game loop (stopped while 2G converts to 3D; resumes after) | Claude (Fable), worktree | [phase-2/2F-gravity-range-integration.md](phase-2/2F-gravity-range-integration.md) | 2A, 2B (2C–2E join as they land) |
+| 2G | Three-dimensional flight: contracts, physics, ship, model and the Gravity range in 3D (A11) | Claude (Fable), worktree | [phase-2/2G-3d-flight.md](phase-2/2G-3d-flight.md) | 2C update 3 (merged) |
 | 3A–3F | Power/thermal depth, Inverse Wells, Chain Link Fence, expedition and recurrence, playability harness, console v2 | 3 Claude, 2 GPT/Codex, 1 Claude | [phase-3.md](phase-3.md) | Phase 2 gate |
 | 4A–4E | Power branch, sensing branch and Petal Gallery, combined encounters, homeward passage, audio | 3 Claude, 2 GPT/Codex | [phase-4.md](phase-4.md) | Phase 3 gate |
 | 5A–5D | Balance and release, first-run experience, submission package, cold playtest | 3 Claude, 1 GPT/Codex | [phase-5.md](phase-5.md) | Phase 4 gate |
@@ -72,7 +73,7 @@ You are thread 1B on the Recursion project. Read docs/build-plan/phase-1/1B-phys
 ## Conventions
 
 1. **Read first:** `docs/CREATIVE_BRIEF.md` (the owner's direction, authoritative, never edited by threads), `docs/DECISIONS.md`, this file, your prompt.
-2. **Ownership:** write only the paths your prompt says you own. Need a change elsewhere? Put it under "Requests" in your handoff. `src/contracts/` and `docs/DECISIONS.md` belong to the integrator.
+2. **Ownership:** write only the paths your prompt says you own. Need a change elsewhere? Put it under "Requests" in your handoff. `src/contracts/` and `docs/DECISIONS.md` belong to the integrator (exception: 2G owns `src/contracts/` during the 3D conversion).
 3. **Branches:** work on the branch named in your prompt. Commit there. Never push to `main`; the integrator merges at the gate.
 4. **Labels:** tag non-obvious claims `[ESTABLISHED: source ID]`, `[ASSUMED]`, `[FICTIONAL]` or `[DEMONSTRATED: test or playtest]`. A paper calculation is not proof that a route is playable.
 5. **Determinism:** randomness only from the seeded streams in `src/lib/`. Same start state and commands give the same result.
@@ -81,15 +82,15 @@ You are thread 1B on the Recursion project. Read docs/build-plan/phase-1/1B-phys
 8. **Sources:** cite bibliography IDs from `References/BIBLIOGRAPHY.md`. Local copies are gitignored research copies; don't commit them and don't paste long passages.
 9. **Software:** don't download or install anything without the owner's OK.
 10. **Communication:** one handoff note at the end (`docs/handoffs/<ID>.md` from [the template](../handoffs/TEMPLATE.md)). Contact the owner only for a real blocker or a shared-interface decision. No status chatter, no full-project reviews.
-11. **Look and feel:** UI code takes every colour, font, size, line style, material and motion timing from `src/theme/`, and composes instruments from `src/theme/components/`. Never edit `src/theme/`; see § UI lane.
+11. **Look and feel:** UI code takes every colour, font, size, line style, material and motion timing from `src/theme/`, and composes instruments from `src/theme/components/`. Only the UI lane (2D from 2026-11-14) edits `src/theme/`; see § UI lane.
 
 ## UI lane
 
-The owner dials in the game's look and feel throughout the build, working live with the 1E Claude thread in `.worktrees/1e`. It never clashes with other threads because ownership splits *how things look* from *what is on screen*:
+The owner dials in the game's look and feel throughout the build. 1E ran the lane until 2026-11-14; since then the 2D control-room thread runs it, so one thread owns both how things look and what is on screen. The split below still holds for every other thread. It never clashes with other threads because ownership splits *how things look* from *what is on screen*:
 
 | | Owns | Examples |
 |---|---|---|
-| UI lane (1E) | `src/theme/`: tokens, instrument primitives, 3D styles, the UI lab page; `prototypes/`; `docs/design/visual-direction.md` | Palette, type, line weights, dash patterns, motion; how a gauge, readout or panel frame looks; how the forecast line and envelope are drawn |
+| UI lane (1E, now 2D) | `src/theme/`: tokens, instrument primitives, 3D styles, the UI lab page; `prototypes/`; `docs/design/visual-direction.md` | Palette, type, line weights, dash patterns, motion; how a gauge, readout or panel frame looks; how the forecast line and envelope are drawn |
 | Control room (2D, then 3F; encounter sections for their own panels) | Layout, panels, behaviour, data wiring, scene composition | Which panels exist and where; what a click does; camera |
 
 - UI code never hard-codes a visual value; it uses `src/theme/` (Convention 11). Changing a token or primitive restyles every panel without touching the console or view folders.
@@ -104,16 +105,17 @@ The owner dials in the game's look and feel throughout the build, working live w
 |---|---|
 | `docs/CREATIVE_BRIEF.md` | Owner only |
 | `docs/DECISIONS.md`, `docs/build-plan/`, `src/contracts/`, root config | Integrator (main session; 1A, 5A) |
-| `src/app/`, `src/game/` (core loop), `src/content/gravity-range/` | 2F |
-| `docs/physics/`, `tests/vectors/physics.json`, `tools/physics/` | 1B |
-| `docs/engineering/`, `data/ship-baseline.json` | 1C |
-| `tools/gmat/`, `tests/vectors/gmat/`, `docs/verification/` | 1D |
-| `prototypes/`, `docs/design/visual-direction.md`, `docs/design/img/`, `src/theme/` (tokens, instrument primitives, 3D styles, UI lab) | 1E, the owner's UI lane, for the whole build |
+| `src/app/` (except `game.ts`) | 2D |
+| `src/app/game.ts`, `src/game/` (core loop), `src/content/gravity-range/` | 2F; 2G during the 3D conversion |
+| `docs/physics/`, `tests/vectors/physics.json`, `tools/physics/` | 1B; 2G for the 3D conversion |
+| `docs/engineering/`, `data/ship-baseline.json` | 1C; 2G for the 3D conversion |
+| `tools/gmat/`, `tests/vectors/gmat/`, `docs/verification/` | 1D; 2G for the 3D conversion |
+| `prototypes/`, `docs/design/visual-direction.md`, `docs/design/img/`, `src/theme/` (tokens, instrument primitives, 3D styles, UI lab) | The owner's UI lane: 1E, then 2D from 2026-11-14 |
 | `docs/design/expedition.md`, `docs/design/encounter-template.md` | 1F |
-| `docs/model/`, `tests/vectors/estimator/`, `tools/estimator-ref/` | 1G |
-| `src/sim/` (except `fields/`) | 2A |
-| `src/ship/` | 2B; in Phase 3 split between 3A (power, thermal, condition, config, massprops, propulsion) and 3C (sensors) |
-| `src/model/`, `src/blackbox/` | 2C |
+| `docs/model/`, `tests/vectors/estimator/`, `tools/estimator-ref/` | 1G; 2G for the 3D conversion |
+| `src/sim/` (except `fields/`), `src/lib/` | 2A; 2G for the 3D conversion |
+| `src/ship/` | 2B, and 2G for the 3D conversion; in Phase 3 split between 3A (power, thermal, condition, config, massprops, propulsion) and 3C (sensors) |
+| `src/model/`, `src/blackbox/` | 2C; 2G during the 3D conversion |
 | `src/console/` (except `encounters/`) | 2D (control room), then 3F |
 | `src/view3d/` (except `fields/`) | 2D (control room), then 3F |
 | `src/content/<encounter>/`, `src/sim/fields/<field>.ts`, `src/view3d/fields/<field>/`, `src/console/encounters/<encounter>/` | The section that builds that encounter |
