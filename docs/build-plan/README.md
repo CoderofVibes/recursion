@@ -30,7 +30,7 @@ Phases 1 and 2 have one ready-to-launch prompt file per section. Phases 3–5 ar
 | 2C | Predictive model and Black Box | Claude | [phase-2/2C-model-and-blackbox.md](phase-2/2C-model-and-blackbox.md) | 1A, 1G |
 | 2D | Console UI | Claude | [phase-2/2D-console-ui.md](phase-2/2D-console-ui.md) | 1A, 1E |
 | 2E | 3D sensor view | Claude | [phase-2/2E-sensor-view.md](phase-2/2E-sensor-view.md) | 1A, 1E |
-| 2F | Gravity range and game loop | Claude (main/integrator) | [phase-2/2F-gravity-range-integration.md](phase-2/2F-gravity-range-integration.md) | all of Phase 2 |
+| 2F | Gravity range and game loop | Claude (Fable), worktree | [phase-2/2F-gravity-range-integration.md](phase-2/2F-gravity-range-integration.md) | 2A, 2B (2C–2E join as they land) |
 | 3A–3F | Power/thermal depth, Inverse Wells, Chain Link Fence, expedition and recurrence, playability harness, console v2 | 3 Claude, 2 GPT/Codex, 1 Claude | [phase-3.md](phase-3.md) | Phase 2 gate |
 | 4A–4E | Power branch, sensing branch and Petal Gallery, combined encounters, homeward passage, audio | 3 Claude, 2 GPT/Codex | [phase-4.md](phase-4.md) | Phase 3 gate |
 | 5A–5D | Balance and release, first-run experience, submission package, cold playtest | 3 Claude, 1 GPT/Codex | [phase-5.md](phase-5.md) | Phase 4 gate |
@@ -104,7 +104,8 @@ The owner dials in the game's look and feel throughout the build, working live w
 | Path | Owner |
 |---|---|
 | `docs/CREATIVE_BRIEF.md` | Owner only |
-| `docs/DECISIONS.md`, `docs/build-plan/`, `src/contracts/`, `src/app/`, `src/game/` (core loop), root config | Integrator (1A, 2F, 5A) |
+| `docs/DECISIONS.md`, `docs/build-plan/`, `src/contracts/`, root config | Integrator (main session; 1A, 5A) |
+| `src/app/`, `src/game/` (core loop), `src/content/gravity-range/` | 2F |
 | `docs/physics/`, `tests/vectors/physics.json`, `tools/physics/` | 1B |
 | `docs/engineering/`, `data/ship-baseline.json` | 1C |
 | `tools/gmat/`, `tests/vectors/gmat/`, `docs/verification/` | 1D |
