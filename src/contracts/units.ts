@@ -22,6 +22,8 @@ export type Kelvin = number;
 export type Volts = number;
 export type Hertz = number;
 export type Bytes = number;
+/** Irradiance (power per unit area), W/m². */
+export type WattsPerMeter2 = number;
 /**
  * Lattice field intensity, in the fictional "lattice unit" (Chain Link Fence). Not a real
  * radiation dose: see data/ship-baseline.json radiation.exposureUnit (1C).

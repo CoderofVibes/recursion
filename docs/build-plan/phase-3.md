@@ -53,6 +53,7 @@ Every prompt below assumes the thread first reads `docs/CREATIVE_BRIEF.md`, `doc
 **Goal:** "a paper calculation is not proof a route is playable", made testable.
 - Headless runner: load an encounter, run a scripted plan, report clearance minima, propellant, power and thermal margins, damage, outcome.
 - Sweeps: e.g. success rate of random straight-line lattice traversals; sensitivity of a route to burn-timing error; feasibility of a passage under a given ship state.
+- Expert run: chain scripted routes from arrival to home, carrying ship state across encounters, and report the remaining propellant, charge and damage after each one. This is how the fuel budget gets tuned (DECISIONS P14 item 2): an expert who knows the rules should get home with a margin. Build the chaining now; the full chain runs once Phase 4 content exists, and 5A uses it for balance.
 - Markdown report output; runnable with one `npm run` script.
 
 ## 3F — Console and view, version 2

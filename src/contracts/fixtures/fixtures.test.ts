@@ -6,7 +6,7 @@ import { covEllipse, isoCov2 } from '../estimates.ts';
 import { issueForecast } from '../forecast.ts';
 import { createFieldRegistry } from '../truth/index.ts';
 import { buildFixtures, fixtures } from './index.ts';
-import { mockEncounter, mockTruthTracks, mockTruthWorld } from './truth.ts';
+import { mockEncounter, mockEnvironmentEffects, mockTruthTracks, mockTruthWorld } from './truth.ts';
 
 const signedArea = (poly: readonly Vec2[]): number =>
   poly.reduce((s, p, i) => s + v.cross(p, poly[(i + 1) % poly.length] as Vec2), 0) / 2;
@@ -135,6 +135,23 @@ describe('truth fixtures', () => {
     if (!beta) return;
     const rb = v.distance(ship, beta.position);
     expect((beta.gm / (r0 * r0)) * Math.pow(r0 / rb, n)).toBeLessThan(beta.gm / (rb * rb));
+  });
+});
+
+describe('sunlight fixtures', () => {
+  it('light the arrival ship: it is outside every body shadow', () => {
+    const sun = mockTruthWorld.sun;
+    expect(sun).toBeDefined();
+    if (!sun) return;
+    expect(v.length(sun.direction)).toBeCloseTo(1, 12);
+    const ship = mockTruthWorld.ship.kinematics.position;
+    for (const b of mockTruthWorld.bodies) {
+      const r = v.sub(ship, b.position);
+      const behind = v.dot(r, sun.direction) < 0;
+      const offAxis = Math.abs(v.cross(r, sun.direction));
+      expect(behind && offAxis < b.radius).toBe(false);
+    }
+    expect(mockEnvironmentEffects.sunlight.irradiance).toBe(sun.irradiance);
   });
 });
 

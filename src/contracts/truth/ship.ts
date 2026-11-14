@@ -38,6 +38,7 @@ import type {
   RadiansPerSecond,
   Seconds,
   Watts,
+  WattsPerMeter2,
 } from '../units.ts';
 
 /** Rigid-body state in the flight plane. Integrated by the simulation (2A). */
@@ -151,6 +152,12 @@ export interface EnvironmentEffects {
   readonly intensity: Readonly<Record<EquipmentId, LatticeIntensity>>;
   /** Raw field signals available to sensor processing modes, keyed by field. */
   readonly fieldSignals: Readonly<Record<FieldId, JsonValue>>;
+  /**
+   * Sunlight at the ship (DECISIONS A3): inertial unit direction toward the sun, and irradiance
+   * after shadowing by massive bodies (0 in full shadow, or when the encounter has no sun).
+   * Solar output and absorbed radiator heat use this; 1C's formulas are in data/ship-baseline.json.
+   */
+  readonly sunlight: { readonly direction: Vec2; readonly irradiance: WattsPerMeter2 };
 }
 
 export interface ShipStepResult {

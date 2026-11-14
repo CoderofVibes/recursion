@@ -120,8 +120,8 @@ What the crew knows from the spec sheets. True deviations live in truth.
 - `ViewSnapshot` — `t`, paused, warp, `world` (`BelievedWorld`), `ship` (`ShipView`: footprint, CoM, `ThrustTick`s), measured `trail`, issued `forecasts`, sensor `coverage` (`SensorSector`s; everything else is unknown), objectives, optional two-attempt `compare` (`AttemptOverlay`s) and `selection`.
 
 ### `truth/` — TRUTH, not for belief-side code
-- `world.ts` — `GravityLaw` (`exponent` n and one shared `referenceRadius` r0), `MassiveBody` (`gm` in m³/s², `radius` as collision envelope only, `fixed`); acceleration toward a body is (gm / r0²)(r0 / r)ⁿ (P4, clarified by 1B); `Asteroid` (massless test particle), `HiddenParameters` (true values by parameter ID), `TruthWorld`.
-- `ship.ts` — `ShipKinematics` (CoM position, velocity, attitude, rate; integrated by 2A); `ShipSystemsState` (configuration and transition, `EquipmentState`s, tank propellant, thermal node temperatures, recorder, accumulated lattice exposure, attitude target, active burns, derived `massProperties`, seeded noise `rng` states, `ext` for subsystem extras); `ShipTruth`; `ThrustOutput` and `ActuatorOutput` (body-frame forces at application points, pure torque, mass properties); `SensorTarget`; `EnvironmentEffects` (kinematics, previous step's specific force, sensor targets, lattice intensity per equipment, field signals); `ShipStepResult`; and the step signature:
+- `world.ts` — `GravityLaw` (`exponent` n and one shared `referenceRadius` r0), `MassiveBody` (`gm` in m³/s², `radius` as collision envelope only, `fixed`); acceleration toward a body is (gm / r0²)(r0 / r)ⁿ (P4, clarified by 1B); `Asteroid` (massless test particle), `HiddenParameters` (true values by parameter ID), `Sun` (one distant sun, DECISIONS A3: direction toward it and unobstructed irradiance in W/m²; light only, not in the gravity sum), `TruthWorld` (`sun` absent means no sunlight).
+- `ship.ts` — `ShipKinematics` (CoM position, velocity, attitude, rate; integrated by 2A); `ShipSystemsState` (configuration and transition, `EquipmentState`s, tank propellant, thermal node temperatures, recorder, accumulated lattice exposure, attitude target, active burns, derived `massProperties`, seeded noise `rng` states, `ext` for subsystem extras); `ShipTruth`; `ThrustOutput` and `ActuatorOutput` (body-frame forces at application points, pure torque, mass properties); `SensorTarget`; `EnvironmentEffects` (kinematics, previous step's specific force, sensor targets, lattice intensity per equipment, field signals, `sunlight` at the ship after body shadows); `ShipStepResult`; and the step signature:
 
   ```ts
   type ShipSystemsStep = (state, config: ShipDefinition, commands, envEffects, dt)
@@ -134,7 +134,7 @@ What the crew knows from the spec sheets. True deviations live in truth.
 
 ### One simulation tick (for 2A, 2B, 2F)
 
-1. Game layer builds `EnvironmentEffects` from the truth world.
+1. Game layer builds `EnvironmentEffects` from the truth world, including sunlight: the sun's direction, and its irradiance set to 0 when a massive body's disc blocks the line to the sun (parallel rays, so a body's shadow is a band behind it).
 2. Ship systems: `step(state, shipDefinition, commandsDueNow, envEffects, dt)` → new systems state, actuators, measurements, events.
 3. Simulation integrates bodies, asteroids and the ship with the actuators; fields add acceleration or modify thrust; it reports `SimEvent`s.
 4. Game layer forwards measurements and sensed events to the model and Black Box, and builds the next `ViewSnapshot`.

@@ -52,3 +52,7 @@ Public scientific references for reading and citation. Source publication dates 
 | R11 | [TU Delft Lorentz model optics text](<https://interactivetextbooks.tudelft.nl/interactive-optics/content/Chap9_Appendix/Appendix_B_2022Clean.html>) | link only; no retained local copy |
 | R12 | [MIT 6.007 Lossy Electromagnetic Waves](<https://live.ocw.mit.edu/courses/6-007-electromagnetic-energy-from-motors-to-lasers-spring-2011/ae7fcb426d7958a3dc32cf958e5dc830_MIT6_007S11_lec23.pdf>) | link only; no retained local copy |
 | R13 | [Younsi, Wu and Fuerst paper](<https://arxiv.org/pdf/1207.4234>) | link only; no retained local copy |
+| GM01 | [NASA GMAT user guide source](<https://github.com/nasa/GMAT/tree/main/doc/help/src>) (ForceModel, Propagator, ReportFile, commands) and [stop-condition implementation](<https://github.com/nasa/GMAT/blob/main/src/base/stopcond/StopCondition.cpp>) | link only; no retained local copy |
+| GM02 | [NASA GMAT constants: Earth GM and equatorial radius](<https://github.com/nasa/GMAT/blob/main/src/gmatutil/util/GmatDefaults.hpp>) | link only; no retained local copy |
+| GM03 | [NASA GMAT finite-burn example script](<https://github.com/nasa/GMAT/blob/main/application/samples/Ex_FiniteBurn.script>) | link only; no retained local copy |
+| GM04 | [NASA GMAT R2026a release files](<https://sourceforge.net/projects/gmat/files/GMAT/GMAT-R2026a/>), the distribution used for 1D | link only; no retained local copy |

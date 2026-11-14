@@ -665,6 +665,38 @@
       "url": "https://arxiv.org/pdf/1207.4234",
       "availability": "link only; no retained local copy",
       "local_files": []
+    },
+    {
+      "id": "GM01",
+      "title": "NASA GMAT user guide source and stop-condition implementation",
+      "url": "https://github.com/nasa/GMAT/tree/main/doc/help/src",
+      "retrieved_date": "2026-11-14",
+      "availability": "link only; no retained local copy",
+      "local_files": []
+    },
+    {
+      "id": "GM02",
+      "title": "NASA GMAT constants (Earth GM and equatorial radius)",
+      "url": "https://github.com/nasa/GMAT/blob/main/src/gmatutil/util/GmatDefaults.hpp",
+      "retrieved_date": "2026-11-14",
+      "availability": "link only; no retained local copy",
+      "local_files": []
+    },
+    {
+      "id": "GM03",
+      "title": "NASA GMAT finite-burn example script",
+      "url": "https://github.com/nasa/GMAT/blob/main/application/samples/Ex_FiniteBurn.script",
+      "retrieved_date": "2026-11-14",
+      "availability": "link only; no retained local copy",
+      "local_files": []
+    },
+    {
+      "id": "GM04",
+      "title": "NASA GMAT R2026a release files",
+      "url": "https://sourceforge.net/projects/gmat/files/GMAT/GMAT-R2026a/",
+      "retrieved_date": "2026-11-14",
+      "availability": "link only; no retained local copy",
+      "local_files": []
     }
   ]
 }

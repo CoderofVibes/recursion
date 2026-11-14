@@ -27,13 +27,13 @@ the spacecraft's initial epoch. No rotating Earth-fixed frame, Earth translation
 timezone conversion, or screen-coordinate sign flip is involved. The dynamics do not
 depend on the epoch (no ephemeris-dependent force), so the absolute epoch is a label.
 
-[ESTABLISHED: GM02, proposed bibliography ID] The scripts explicitly set
+[ESTABLISHED: GM02] The scripts explicitly set
 `Earth.Mu = 398600.4415` km³/s², matching NASA GMAT's published default, hence
 **mu = 398600441500000 m³/s²**. This is Earth, not a custom body. GMAT echoes the
 configured value in every report row (`398600.44150000002` at 17 digits).
 [NASA GMAT defaults](https://github.com/nasa/GMAT/blob/main/src/gmatutil/util/GmatDefaults.hpp).
 
-[ESTABLISHED: GM01, proposed bibliography ID] `PointMasses = {Earth}` uses
+[ESTABLISHED: GM01] `PointMasses = {Earth}` uses
 Earth's configured GM. `PrimaryBodies = {}` removes harmonic gravity; no other
 point masses are present. Drag is `None`; SRP and relativity are `Off`. There are
 no tides, harmonics, third bodies, atmospheric forces, or other perturbations.
@@ -49,9 +49,8 @@ usefully be tighter). Accuracy is GMAT's local error-control setting, **not a gl
 position error in meters**; the measured global error is reported below.
 [NASA Propagator documentation](https://github.com/nasa/GMAT/blob/main/doc/help/src/Resource_Propagator.xml).
 
-GM01–GM03 are **requested additions**, not existing entries in
-`References/BIBLIOGRAPHY.md`. Direct primary-source links are supplied here until
-the integrator adds them. Existing bibliography S12/S13 supplies the propulsion
+GM01–GM04 are in `References/BIBLIOGRAPHY.md` (added by the integrator on
+2026-11-14). Existing bibliography S12/S13 supplies the propulsion
 relations. This package addresses A1 and the Newtonian starting model only;
 the fictional inverse-2.5 law and encounter playability are outside its scope.
 
@@ -90,7 +89,7 @@ with no fuel tank and no thrust. C4 uses dry mass **800 kg** plus **200 kg** fue
   means the **original C1 period**, not the changed post-burn orbital period.
   These are illustrative chemical-propulsion test values, not approved game hardware.
 
-[ESTABLISHED: GM03, proposed bibliography ID] C4 uses a ChemicalThruster in
+[ESTABLISHED: GM03] C4 uses a ChemicalThruster in
 `Local` / Earth / `VNB` with direction `(1,0,0)`: its first axis tracks the
 instantaneous velocity, including any radial velocity. It is not a frozen initial
 direction or the transverse axis of an LVLH frame. `C1=1000`, `K1=320`, all other
@@ -232,7 +231,7 @@ Bitwise identity is expected only for the same build on the same platform.
 
 ## Output contract and checks
 
-[ESTABLISHED: GM01, proposed bibliography ID] Scripts disable automatic
+[ESTABLISHED: GM01] Scripts disable automatic
 `ReportFile` output (`WriteReport=false`) and issue explicit `Report` commands
 at t=0 and after each 10 s propagation; R2026a honours explicit `Report` commands
 with `WriteReport=false`. [NASA ReportFile documentation](https://github.com/nasa/GMAT/blob/main/doc/help/src/Resource_ReportFile.xml).

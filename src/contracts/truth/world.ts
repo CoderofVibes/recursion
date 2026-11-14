@@ -6,7 +6,7 @@
 
 import type { Vec2 } from '../../lib/vec2.ts';
 import type { AsteroidId, BodyId, ParameterId } from '../ids.ts';
-import type { Meters, Seconds } from '../units.ts';
+import type { Meters, Seconds, WattsPerMeter2 } from '../units.ts';
 import type { FieldInstanceSpec } from './fields.ts';
 import type { ShipTruth } from './ship.ts';
 
@@ -52,6 +52,18 @@ export interface Asteroid {
  */
 export type HiddenParameters = Readonly<Record<ParameterId, number>>;
 
+/**
+ * One distant sun (DECISIONS A3): parallel light from a fixed direction. Light only: it is so
+ * far away that its pull is the same across the whole encounter, so it is not in the gravity
+ * sum. Massive bodies cast shadows (the game layer applies them in `EnvironmentEffects`).
+ */
+export interface Sun {
+  /** Unit vector, inertial frame, pointing from the encounter toward the sun. */
+  readonly direction: Vec2;
+  /** Irradiance with nothing in the way, W/m². */
+  readonly irradiance: WattsPerMeter2;
+}
+
 export interface TruthWorld {
   readonly t: Seconds;
   readonly law: GravityLaw;
@@ -59,5 +71,7 @@ export interface TruthWorld {
   readonly asteroids: readonly Asteroid[];
   readonly ship: ShipTruth;
   readonly fields: readonly FieldInstanceSpec[];
+  /** Absent: no sunlight in this encounter. */
+  readonly sun?: Sun;
   readonly hidden: HiddenParameters;
 }

@@ -87,6 +87,8 @@ export const mockTruthWorld: TruthWorld = {
     systems: mockShipSystemsState,
   },
   fields: [],
+  // [FICTIONAL] mock sunlight; the real expedition's brightness is an owner content decision.
+  sun: { direction: v.fromAngle((3 * Math.PI) / 4), irradiance: 900 },
   hidden: {
     'thruster.main-engine.scale': TRUE_THRUST_SCALE,
     'sensor.imu.bias-x': TRUE_IMU_BIAS_X,
@@ -126,6 +128,8 @@ export const mockEnvironmentEffects: EnvironmentEffects = {
   ],
   intensity: {},
   fieldSignals: {},
+  // The ship is ~106 km off Alpha's shadow axis (Alpha's radius is 40 km), so fully lit.
+  sunlight: { direction: v.fromAngle((3 * Math.PI) / 4), irradiance: 900 },
 };
 
 /** True trajectories behind the two fixture attempts (1 s samples), for debugging and tests. */

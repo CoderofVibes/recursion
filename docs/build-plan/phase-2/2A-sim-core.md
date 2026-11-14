@@ -27,7 +27,7 @@ The truth simulation: deterministic, fast enough for forecasting, and independen
 
 ## Tests
 - Every case in `tests/vectors/physics.json` within its tolerance.
-- Every GMAT case (exponent 2) within the tolerance in `docs/verification/gmat.md`. 1D is still running: when the integrator announces it has merged, commit your work, run `git merge main`, and add these tests.
+- Every GMAT case (exponent 2) within DECISIONS P17: 0.05 m, 5e-5 m/s, 1e-6 kg at every sample, run through the game's own propagator at its play step. 1s velocity Verlet misses this by 22–525 m on these low-orbit cases; see P17 for the options. 1D has merged: commit your work, run `git merge main`, and add these tests (read `docs/handoffs/1D.md` § Notes for the next phase first).
 - Determinism: same seed and plan give an identical state hash.
 - Energy and angular momentum drift bounded over long coasts.
 
