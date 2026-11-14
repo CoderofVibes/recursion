@@ -6,6 +6,7 @@
 import { StrictMode, useEffect, useRef, useState } from 'react';
 import type { ReactElement } from 'react';
 import { createRoot } from 'react-dom/client';
+import type { Root } from 'react-dom/client';
 import {
   ComponentList,
   ComponentRow,
@@ -26,6 +27,7 @@ import {
   rangeTrend,
   residualTrend,
 } from './data.ts';
+import { FixtureExtras, MoreStates } from './more.tsx';
 import { mountScene } from './scene.ts';
 import type { LabScene } from './scene.ts';
 import './lab.css';
@@ -363,8 +365,10 @@ function Lab(): ReactElement {
       </header>
       <h2>Primitives on the fixtures</h2>
       <Fixtures />
+      <FixtureExtras />
       <h2>Every state</h2>
       <States />
+      <MoreStates />
       <h2>3D materials on the fixture snapshot</h2>
       <View3d />
       <h2>Tokens</h2>
@@ -375,7 +379,9 @@ function Lab(): ReactElement {
 
 const root = document.getElementById('root');
 if (!root) throw new Error('missing #root element');
-createRoot(root).render(
+const host = window as unknown as { rxLabRoot?: Root };
+host.rxLabRoot ??= createRoot(root);
+host.rxLabRoot.render(
   <StrictMode>
     <Lab />
   </StrictMode>,

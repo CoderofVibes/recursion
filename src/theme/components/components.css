@@ -468,3 +468,294 @@ button.rx-row:hover {
   white-space: nowrap;
   color: var(--rx-c);
 }
+
+/* ---- Mode chips, toggle, alert, Black Box mark, gauge: shared base ---------------------------- */
+:is(.rx-chips, .rx-chip, .rx-toggle, .rx-alert, .rx-alerts, .rx-bbx, .rx-gauge) {
+  box-sizing: border-box;
+  font-family: var(--rx-font);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--rx-tracking-body);
+}
+:is(.rx-chips, .rx-toggle, .rx-gauge)[data-tone='measured'] {
+  --rx-tone: var(--rx-ink);
+  --rx-c: var(--rx-ink);
+}
+:is(.rx-chips, .rx-toggle, .rx-gauge)[data-tone='forecast'] {
+  --rx-tone: var(--rx-forecast);
+  --rx-c: var(--rx-forecast);
+}
+:is(.rx-chips, .rx-toggle, .rx-gauge)[data-tone='blackbox'] {
+  --rx-tone: var(--rx-blackbox);
+  --rx-c: var(--rx-blackbox);
+}
+:is(.rx-chips, .rx-toggle, .rx-gauge)[data-status='caution'] {
+  --rx-c: var(--rx-caution);
+}
+:is(.rx-chips, .rx-toggle, .rx-gauge)[data-status='warning'] {
+  --rx-c: var(--rx-warning);
+}
+:is(.rx-chips, .rx-toggle, .rx-gauge)[data-status='off'] {
+  --rx-c: var(--rx-ink-faint);
+}
+:is(.rx-chips, .rx-toggle, .rx-gauge)[data-status='stale'] {
+  --rx-c: var(--rx-ink-dim);
+}
+:is(.rx-chip, .rx-toggle):focus-visible {
+  outline: var(--rx-line-rule) solid var(--rx-ink);
+  outline-offset: var(--rx-unit);
+}
+
+/* ---- Mode chips and toggle ------------------------------------------------------------------- */
+.rx-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--rx-unit) * 2);
+}
+.rx-chip,
+.rx-toggle {
+  padding: var(--rx-chip-pad-y) var(--rx-chip-pad-x);
+  font-size: var(--rx-size-small);
+  letter-spacing: var(--rx-tracking-label);
+  text-transform: uppercase;
+  color: var(--rx-ink-dim);
+  background: var(--rx-panel);
+  border: var(--rx-line-rule) solid var(--rx-panel-edge);
+  border-radius: var(--rx-panel-radius);
+  transition:
+    color var(--rx-t-fast) var(--rx-ease-out),
+    background var(--rx-t-fast) var(--rx-ease-out);
+}
+:is(.rx-chip, .rx-toggle):not(:disabled) {
+  cursor: pointer;
+}
+:is(.rx-chip, .rx-toggle):not(:disabled):hover {
+  background: linear-gradient(var(--rx-wash-hover), var(--rx-wash-hover)), var(--rx-panel);
+}
+.rx-chip[data-on] {
+  font-weight: var(--rx-weight-strong);
+  color: var(--rx-c);
+  background: linear-gradient(var(--rx-wash-selected), var(--rx-wash-selected)), var(--rx-panel);
+  border-color: var(--rx-c);
+}
+.rx-chip:disabled:not([data-on]) {
+  color: var(--rx-ink-faint);
+}
+.rx-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--rx-unit) * 3);
+}
+.rx-toggle[data-on] {
+  color: var(--rx-ink);
+  border-color: var(--rx-ink-dim);
+}
+.rx-toggle__pip {
+  width: var(--rx-pip);
+  height: var(--rx-pip);
+  border: var(--rx-line-rule) solid var(--rx-ink-faint);
+  border-radius: 50%;
+}
+.rx-toggle[data-on] .rx-toggle__pip {
+  background: var(--rx-c);
+  border-color: var(--rx-c);
+  box-shadow: var(--rx-pip-glow) var(--rx-c);
+}
+.rx-toggle__state {
+  font-weight: var(--rx-weight-strong);
+  color: var(--rx-ink-faint);
+}
+.rx-toggle[data-on] .rx-toggle__state {
+  color: var(--rx-c);
+}
+
+/* ---- Alert ----------------------------------------------------------------------------------- */
+.rx-alerts {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--rx-unit) * 2);
+}
+.rx-alert {
+  display: flex;
+  align-items: baseline;
+  gap: var(--rx-row-gap);
+  padding: var(--rx-alert-pad-y) var(--rx-alert-pad-x);
+  font-size: var(--rx-size-body);
+  font-weight: var(--rx-weight-strong);
+  letter-spacing: var(--rx-tracking-label);
+  color: var(--rx-a);
+  background: linear-gradient(var(--rx-a-wash), var(--rx-a-wash)), var(--rx-panel);
+  border: var(--rx-line-rule) solid var(--rx-a);
+  /* Fades in once, then holds steady. Alerts never blink. */
+  animation: rx-alert-in var(--rx-t-alert-in) var(--rx-ease-out) both;
+}
+.rx-alert[data-level='advisory'] {
+  --rx-a: var(--rx-advisory);
+  --rx-a-wash: var(--rx-wash-advisory);
+}
+.rx-alert[data-level='caution'] {
+  --rx-a: var(--rx-caution);
+  --rx-a-wash: var(--rx-wash-caution);
+}
+.rx-alert[data-level='warning'] {
+  --rx-a: var(--rx-warning);
+  --rx-a-wash: var(--rx-wash-warning);
+}
+.rx-alert .rx-glyph {
+  margin-right: 0;
+}
+.rx-alert__text {
+  text-transform: uppercase;
+}
+.rx-alert__detail {
+  margin-left: auto;
+  font-weight: var(--rx-weight-regular);
+  white-space: nowrap;
+}
+.rx-alerts__more {
+  font-size: var(--rx-size-small);
+  letter-spacing: var(--rx-tracking-label);
+  text-transform: uppercase;
+  color: var(--rx-ink-dim);
+}
+@keyframes rx-alert-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* ---- Black Box mark -------------------------------------------------------------------------- */
+.rx-bbx {
+  display: inline-flex;
+  align-items: center;
+  gap: calc(var(--rx-unit) * 3);
+  font-size: var(--rx-size-label);
+  font-weight: var(--rx-weight-strong);
+  letter-spacing: var(--rx-tracking-label);
+  color: var(--rx-blackbox);
+}
+.rx-bbx__label {
+  text-transform: uppercase;
+}
+.rx-bbx__lamp {
+  flex: none;
+  width: var(--rx-lamp);
+  height: var(--rx-lamp);
+  background: var(--rx-blackbox);
+  border-radius: 50%;
+  box-shadow: var(--rx-pip-glow) var(--rx-blackbox);
+}
+.rx-bbx[data-state='recording'] .rx-bbx__lamp {
+  /* The one ambient loop in the interface: a slow breathe while recording. */
+  animation: rx-breathe calc(var(--rx-t-breathe) / 2) var(--rx-ease-in-out) infinite alternate;
+}
+.rx-bbx[data-state='off'] {
+  color: var(--rx-ink-faint);
+}
+.rx-bbx[data-state='off'] .rx-bbx__lamp {
+  background: transparent;
+  border: var(--rx-line-rule) solid var(--rx-ink-faint);
+  box-shadow: none;
+}
+.rx-bbx__alert {
+  color: var(--rx-caution);
+}
+.rx-bbx__detail {
+  font-weight: var(--rx-weight-regular);
+  color: var(--rx-ink-dim);
+}
+@keyframes rx-breathe {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: var(--rx-lamp-dim);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rx-bbx[data-state='recording'] .rx-bbx__lamp,
+  .rx-alert {
+    animation: none;
+  }
+}
+
+/* ---- Gauge ----------------------------------------------------------------------------------- */
+.rx-gauge {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--rx-unit);
+}
+.rx-gauge__dial {
+  position: relative;
+  width: var(--rx-gauge-size);
+  height: var(--rx-gauge-size);
+}
+.rx-gauge__arc {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.rx-gauge__arc :is(path, line) {
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+.rx-gauge__track {
+  stroke: var(--rx-unknown);
+  stroke-width: var(--rx-gauge-stroke);
+}
+.rx-gauge__fill {
+  stroke: var(--rx-c);
+  stroke-width: var(--rx-gauge-stroke);
+}
+.rx-gauge:is([data-status='stale'], [data-status='off']) .rx-gauge__fill {
+  stroke-dasharray: var(--rx-dash-connector);
+  opacity: var(--rx-stale);
+}
+.rx-gauge__mark {
+  stroke: var(--rx-ink-dim);
+  stroke-width: var(--rx-line-rule);
+}
+.rx-gauge__mark[data-kind='caution'] {
+  stroke: var(--rx-caution);
+}
+.rx-gauge__mark[data-kind='warning'] {
+  stroke: var(--rx-warning);
+}
+.rx-gauge__mark[data-kind='target'] {
+  stroke: var(--rx-ink);
+}
+.rx-gauge__forecast {
+  stroke: var(--rx-forecast);
+  stroke-width: var(--rx-unit);
+}
+.rx-gauge__value {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--rx-size-readout);
+  font-weight: var(--rx-weight-strong);
+  white-space: nowrap;
+  color: var(--rx-ink);
+  text-shadow: var(--rx-number-glow);
+}
+.rx-gauge:not([data-status='nominal']) .rx-gauge__value {
+  color: var(--rx-c);
+}
+.rx-gauge__unit {
+  margin-left: 0.3em;
+  font-size: var(--rx-size-small);
+  font-weight: var(--rx-weight-regular);
+  color: var(--rx-ink-dim);
+}
+.rx-gauge__label {
+  font-size: var(--rx-size-small);
+  letter-spacing: var(--rx-tracking-label);
+  text-transform: uppercase;
+  color: var(--rx-ink-dim);
+}

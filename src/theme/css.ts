@@ -42,6 +42,10 @@ function build(): Record<string, string> {
   v['--rx-wash-hover'] = rgba(colour.ink, opacity.rowHover);
   v['--rx-wash-selected'] = rgba(colour.ink, opacity.rowSelected);
   v['--rx-wash-blackbox'] = rgba(colour.blackbox, opacity.blackboxWash);
+  v['--rx-wash-advisory'] = rgba(colour.advisory, opacity.rowHover);
+  v['--rx-wash-caution'] = rgba(colour.caution, opacity.alertWash);
+  v['--rx-wash-warning'] = rgba(colour.warning, opacity.alertWash);
+  v['--rx-lamp-dim'] = String(opacity.lampDim);
   v['--rx-forecast-band'] = rgba(colour.forecast, opacity.envelopeBody);
   v['--rx-forecast-band-extrapolated'] = rgba(colour.forecast, opacity.extrapolatedBody);
   v['--rx-stale'] = String(opacity.staleInstrument);

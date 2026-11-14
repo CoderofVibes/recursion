@@ -24,7 +24,24 @@ export type {
 } from './Schematic.tsx';
 export { ComponentRow, ComponentList } from './ComponentRow.tsx';
 export type { ComponentRowProps, ComponentListProps } from './ComponentRow.tsx';
+export { ModeChips, Toggle } from './ModeChips.tsx';
+export type { ModeChipsProps, ModeOption, ToggleProps } from './ModeChips.tsx';
+export { Alert, AlertStack, sortAlerts, ALERT_GLYPH } from './Alert.tsx';
+export type { AlertProps, AlertItem, AlertLevel, AlertStackProps } from './Alert.tsx';
+export { BlackBoxMark } from './BlackBoxMark.tsx';
+export type { BlackBoxMarkProps, BlackBoxState } from './BlackBoxMark.tsx';
+export { Gauge } from './Gauge.tsx';
+export type { GaugeProps } from './Gauge.tsx';
 export { Panel } from './Panel.tsx';
 export type { PanelProps } from './Panel.tsx';
-export { STATUS_GLYPH, fraction, percent, extent, tracePath, bandPath } from './scale.ts';
+export {
+  STATUS_GLYPH,
+  fraction,
+  percent,
+  extent,
+  tracePath,
+  bandPath,
+  arcPoint,
+  arcPath,
+} from './scale.ts';
 export type { Status, Tone, LimitKind } from './scale.ts';

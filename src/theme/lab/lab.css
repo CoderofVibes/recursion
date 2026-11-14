@@ -126,3 +126,12 @@ body {
   margin-bottom: var(--rx-row-gap);
   font-variant-numeric: tabular-nums;
 }
+.lab-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--rx-gap);
+}
+.lab-grid + .lab-grid {
+  margin-top: var(--rx-gap);
+}

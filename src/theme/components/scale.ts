@@ -103,4 +103,26 @@ export function bandPath(
   return `${d}Z`;
 }
 
+/**
+ * A point on a gauge's arc in a 100 by 100 box (y down). `f` runs 0 to 1 along the sweep, which
+ * is centred on the top of the dial and opens at the bottom.
+ */
+export function arcPoint(
+  f: number,
+  radius: number,
+  sweepDegrees: number,
+): readonly [number, number] {
+  const a = ((90 + (360 - sweepDegrees) / 2 + sweepDegrees * f) * Math.PI) / 180;
+  return [round(50 + Math.cos(a) * radius), round(50 + Math.sin(a) * radius)];
+}
+
+/** SVG path for the part of a gauge's arc from `f0` to `f1` (each 0 to 1). */
+export function arcPath(f0: number, f1: number, radius: number, sweepDegrees: number): string {
+  if (f1 <= f0) return '';
+  const [x0, y0] = arcPoint(f0, radius, sweepDegrees);
+  const [x1, y1] = arcPoint(f1, radius, sweepDegrees);
+  const large = sweepDegrees * (f1 - f0) > 180 ? 1 : 0;
+  return `M${x0} ${y0}A${radius} ${radius} 0 ${large} 1 ${x1} ${y1}`;
+}
+
 const round = (v: number): number => Math.round(v * 100) / 100;

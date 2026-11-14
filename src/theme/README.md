@@ -1,6 +1,7 @@
 # src/theme — how Recursion looks
 
-Owner: 1E, the owner's UI lane. Other threads read from here and never edit it (Convention 11).
+Owner: the control-room thread (2D), which took over the UI lane from 1E. Other threads read
+from here and never edit it (Convention 11).
 Direction and rules: [docs/design/visual-direction.md](../../docs/design/visual-direction.md).
 Belief side (P11): nothing here may import truth or the simulation.
 
@@ -9,7 +10,7 @@ Belief side (P11): nothing here may import truth or the simulation.
 | Import from | What you get | Pulls in |
 |---|---|---|
 | `src/theme/index.ts` | Tokens as plain data: `colour`, `opacity`, `type`, `space`, `surface`, `instrument`, `line`, `dash`, `hatch`, `motion`, `render`, the 3D style table, `cssVariables`, `applyTheme()`, `hex()`, `rgba()` | nothing |
-| `src/theme/components/index.ts` | Instrument primitives: `Panel`, `LevelBar`, `Trend`, `Readout`, `ReadoutGrid`, `Schematic`, `SchematicBox`, `ComponentRow`, `ComponentList` | React, the stylesheet |
+| `src/theme/components/index.ts` | Instrument primitives: `Panel`, `LevelBar`, `Gauge`, `Trend`, `Readout`, `ReadoutGrid`, `Schematic`, `SchematicBox`, `ComponentRow`, `ComponentList`, `ModeChips`, `Toggle`, `Alert`, `AlertStack`, `BlackBoxMark` | React, the stylesheet |
 | `src/theme/three/index.ts` | Material builders: `LineKit`, `lineMaterial`, `wireMaterial`, `envelopeGeometry`, `envelopeMaterial`, `planeMaterial`, `setPlaneCoverage`, `planeVeilMaterial`, `bodyMaterial`, `rockMaterial`, `setSun`, `latticeMaterial`, `wellLineMaterial`, `wellColour` | three |
 
 ## Using it
@@ -33,6 +34,8 @@ applyTheme(document.documentElement); // once, at the root: defines the --rx-* t
   always carries its shape (▲ ■) as well as its colour. Stale and off readings are hatched.
 - `tone` is what kind of information it is: `measured` (warm ink), `forecast` (teal) or
   `blackbox` (orange).
+- The stylesheet upper-cases names (labels, component names, alert text, chips). Keep units and
+  Greek letters in values and details, or "km" becomes "KM" and σ becomes Σ.
 - In CSS of your own, use the `--rx-*` custom properties, never a literal colour or size.
 - For 3D, build materials with the builders, keep a `LineKit` per view, call `setResolution` on
   resize and `setPixelsPerUnit` every frame so dashes keep their rhythm on screen.

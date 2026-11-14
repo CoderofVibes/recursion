@@ -10,7 +10,7 @@ export { space, surface } from './space.ts';
 export { line, dash, hatch } from './line.ts';
 export { motion } from './motion.ts';
 export { render } from './render.ts';
-export { instrument, trendGrid } from './instrument.ts';
+export { instrument, trendGrid, gaugeArc } from './instrument.ts';
 export { cssVariables, applyTheme } from './css.ts';
 export { lineStyles, envelopeStyle, planeStyle, objectStyle } from './three/styles.ts';
 export type { LineStyle } from './three/styles.ts';

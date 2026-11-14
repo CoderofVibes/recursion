@@ -102,6 +102,10 @@ export const opacity = {
   rowHover: 0.05,
   rowSelected: 0.11,
   blackboxWash: 0.08,
+  /** Background of an alert banner, in its level's colour. */
+  alertWash: 0.1,
+  /** Black Box lamp at the low point of its breathe. */
+  lampDim: 0.35,
   /** A stale reading: its bar or trace is dimmed to this. */
   staleInstrument: 0.45,
 } as const;

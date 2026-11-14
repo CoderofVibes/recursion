@@ -34,7 +34,10 @@ describe('instrument stylesheet', () => {
 
   it('uses only tokens that applyTheme defines', () => {
     const used = new Set([...css.matchAll(/var\((--rx-[a-z0-9-]+)/g)].map((m) => m[1]));
-    const local = new Set(['--rx-tone', '--rx-c']);
+    // Aliases the stylesheet sets for itself (a tone, a status colour, an alert level) are fine;
+    // each of them is set from a token.
+    const local = new Set([...css.matchAll(/(--rx-[a-z0-9-]+)\s*:/g)].map((m) => m[1]));
+    expect([...local].sort()).toEqual(['--rx-a', '--rx-a-wash', '--rx-c', '--rx-tone']);
     const missing = [...used].filter((v) => v && !local.has(v) && !(v in cssVariables));
     expect(missing).toEqual([]);
     expect(used.size).toBeGreaterThan(30);

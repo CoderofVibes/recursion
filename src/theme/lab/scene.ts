@@ -244,7 +244,7 @@ export function mountScene(canvas: HTMLCanvasElement): LabScene {
     const t = i / 59;
     const a = -1.95 + t * 0.75;
     return {
-      position: [-180 + Math.cos(a) * 300, 0.2, 520 + Math.sin(a) * 300] as [
+      position: [-180 + Math.cos(a) * 300, 0.2, 455 + Math.sin(a) * 300] as [
         number,
         number,
         number,
