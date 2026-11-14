@@ -1,0 +1,128 @@
+/* UI lab layout. Colours, type and spacing come from the theme tokens (--rx-*). */
+html,
+body {
+  margin: 0;
+  color: var(--rx-ink);
+  background: var(--rx-room);
+}
+.lab {
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: var(--rx-room-pad-top) var(--rx-room-pad-x);
+  font-family: var(--rx-font);
+  font-size: var(--rx-size-body);
+  letter-spacing: var(--rx-tracking-body);
+}
+.lab-head h1 {
+  margin: 0;
+  font-size: var(--rx-size-display);
+  font-weight: var(--rx-weight-strong);
+  letter-spacing: var(--rx-tracking-label);
+}
+.lab-head p {
+  margin: var(--rx-row-gap) 0 0;
+  color: var(--rx-ink-dim);
+}
+.lab h2 {
+  margin: calc(var(--rx-gap) * 3) 0 var(--rx-gap);
+  font-size: var(--rx-size-label);
+  font-weight: var(--rx-weight-regular);
+  letter-spacing: var(--rx-tracking-label);
+  text-transform: uppercase;
+  color: var(--rx-ink-dim);
+}
+.lab-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  align-items: start;
+  gap: var(--rx-gap);
+  padding: var(--rx-table-pad);
+  background: var(--rx-table);
+  border: var(--rx-line-rule) solid var(--rx-table-edge);
+  border-radius: var(--rx-table-radius);
+}
+.lab-view {
+  position: relative;
+  overflow: hidden;
+  background: var(--rx-view-background);
+  border: var(--rx-line-rule) solid var(--rx-table-edge);
+  border-radius: var(--rx-table-radius);
+}
+.lab-view__canvas {
+  display: block;
+  width: 100%;
+  height: 620px;
+}
+.lab-view__controls {
+  position: absolute;
+  top: var(--rx-gap);
+  left: var(--rx-gap);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: calc(var(--rx-gap) * 2);
+  font-size: var(--rx-size-small);
+  letter-spacing: var(--rx-tracking-label);
+  text-transform: uppercase;
+  color: var(--rx-ink-dim);
+}
+.lab-view__controls input {
+  accent-color: var(--rx-ink-dim);
+  vertical-align: middle;
+}
+.lab-legend,
+.lab-swatches,
+.lab-type {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lab-legend {
+  position: absolute;
+  right: var(--rx-gap);
+  bottom: var(--rx-gap);
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: var(--rx-unit) calc(var(--rx-gap) * 2);
+  font-size: var(--rx-size-small);
+  color: var(--rx-ink-dim);
+}
+.lab-legend li {
+  display: flex;
+  align-items: center;
+  gap: var(--rx-row-gap);
+}
+.lab-legend svg {
+  width: 40px;
+  height: 8px;
+}
+.lab-tokens {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: calc(var(--rx-gap) * 3);
+}
+.lab-swatches {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: var(--rx-row-gap) var(--rx-gap);
+  font-size: var(--rx-size-small);
+}
+.lab-swatches li {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: var(--rx-row-gap);
+}
+.lab-swatches i {
+  width: calc(var(--rx-gap) * 2);
+  height: var(--rx-gap);
+  border: var(--rx-line-rule) solid var(--rx-panel-edge);
+}
+.lab-swatches code {
+  font-family: inherit;
+  color: var(--rx-ink-dim);
+}
+.lab-type li {
+  margin-bottom: var(--rx-row-gap);
+  font-variant-numeric: tabular-nums;
+}

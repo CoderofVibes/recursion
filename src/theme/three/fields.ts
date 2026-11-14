@@ -32,7 +32,8 @@ export function latticeMaterial({
       uCell: { value: cell },
       uQuality: { value: quality },
       uTime: { value: 0 },
-      uStrand: { value: render.lattice.strandWidth },
+      // The token is the strand width for a 9-unit cell; strands scale with the mesh.
+      uStrand: { value: render.lattice.strandWidth * (cell / 9) },
       uGain: { value: render.lattice.sheetGain },
       cStrand: { value: new Color(hex(colour.lattice)) },
       cCore: { value: new Color(hex(colour.latticeCore)) },
@@ -55,8 +56,8 @@ export function latticeMaterial({
         float d = min(f.x, f.y) * uCell;
         // Low quality: strands three times as thick, with whole patches dropping out.
         float intensity = exp(-d / (uStrand * mix(3.0, 1.0, uQuality)));
-        float patch = step(0.45, hash(floor(vSheet / (uCell * 0.12)) + floor(uTime * 9.0)));
-        intensity *= mix(0.35 + 0.65 * patch, 1.0, uQuality);
+        float dropout = step(0.45, hash(floor(vSheet / (uCell * 0.12)) + floor(uTime * 9.0)));
+        intensity *= mix(0.35 + 0.65 * dropout, 1.0, uQuality);
         vec3 col = mix(cStrand, cCore, smoothstep(0.55, 1.0, intensity));
         gl_FragColor = vec4(col * intensity * uGain * mix(1.5, 3.5, uQuality), 1.0);
         #include <tonemapping_fragment>
