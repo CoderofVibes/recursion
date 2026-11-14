@@ -8,6 +8,7 @@ Recursion is a browser-based spacecraft engineering roguelike for NASA Space App
 - `docs/DECISIONS.md`: P5, P6, P8, P9, P10.
 - `docs/build-plan/README.md` § Conventions; `src/contracts/README.md`.
 - Inputs: `docs/design/visual-direction.md`, `src/theme/`, `prototypes/visual/` (1E).
+- Contracts: `ViewSnapshot` (`src/contracts/view.ts`), `BelievedShip`/`EquipmentStatus` (`belief.ts`), `ModelState` (`model.ts`), `Plan`/`Command`/`Procedure` (`commands.ts`), `AttemptRecord` (`attempt.ts`). Fixtures: `viewSnapshot`, `viewSnapshotCompare`, `archive`, `models`, `shipDefinition`, `briefing` from `src/contracts/fixtures/index.ts`. `src/console/` is lint-blocked from truth.
 
 ## Goal
 The console panels for the Gravity range, built against the fixtures in `src/contracts/fixtures/` so they work before the simulation is wired in.
@@ -26,10 +27,10 @@ The console panels for the Gravity range, built against the fixtures in `src/con
 8. **Recall** control (voluntary recurrence, P8) and save-procedure control (P9).
 
 ## Done when
-Every panel renders from fixtures with no console errors; interactions call typed service interfaces (stubbed) that 2F will connect; follows 1E's tokens.
+Every panel renders from fixtures with no console errors; interactions call typed service interfaces (stubbed) that 2F will connect; every colour, font, size, line style and motion timing comes from `src/theme/` tokens, and panels are composed from `src/theme/components/` primitives (README § UI lane).
 
 ## Out of scope
-The 3D scene (2E), real services (2C), game flow (2F).
+The 3D scene (2E), real services (2C), game flow (2F), and anything in `src/theme/` (the owner's UI lane, 1E). If you need a primitive that does not exist yet, build it inside `src/console/`, keep its styling on tokens, and list it under Requests in your handoff so the UI lane can adopt it.
 
 ## Handoff
 `docs/handoffs/2D.md` from the template, with screenshots.

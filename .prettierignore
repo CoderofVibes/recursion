@@ -1,0 +1,14 @@
+.worktrees/
+.claude/
+References/
+prototypes/
+node_modules/
+dist/
+coverage/
+package-lock.json
+*.md
+
+# Phase 1 thread outputs (owned and formatted by their sections)
+tests/vectors/
+data/
+tools/

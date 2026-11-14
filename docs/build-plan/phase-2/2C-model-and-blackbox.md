@@ -8,6 +8,7 @@ Recursion is a browser-based spacecraft engineering roguelike for NASA Space App
 - `docs/DECISIONS.md`: P5 (check whether the owner has answered), P6, P7, P8, P9, P11, P12.
 - `docs/build-plan/README.md` § Conventions; `src/contracts/README.md`.
 - Inputs: `docs/model/estimator-spec.md`, `tests/vectors/estimator/` (1G), `docs/handoffs/1G.md`.
+- Contracts: `ModelState`, `ParameterEstimate`, `ExtensionState` (`src/contracts/model.ts`); `ForecastDraft`, `issueForecast` (`forecast.ts`); `AttemptRecord`, `BlackBoxArchive` (`attempt.ts`); `Measurement` (`measurements.ts`); `Procedure` (`commands.ts`); parameter-ID convention in `src/contracts/README.md`. Fixtures: `models`, `attempts`, `archive`, `procedure` in `src/contracts/fixtures/index.ts`. Both `src/model/` and `src/blackbox/` are lint-blocked from truth.
 
 ## Goal
 The believed world: an estimator that learns from measurements, a forecast service that propagates the player's plan with honest uncertainty, and Black Box records and comparisons.

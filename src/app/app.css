@@ -1,0 +1,65 @@
+/* Placeholder styling only. Tokens and visual direction come from 1E (src/theme). */
+:root {
+  --bg: #07090c;
+  --fg: #b9c4cc;
+  --dim: #5b6670;
+  --accent: #7fd1c7;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font-family: ui-monospace, 'Cascadia Mono', 'SF Mono', Menlo, Consolas, monospace;
+}
+
+.placeholder {
+  min-height: 100%;
+  display: grid;
+  place-content: center;
+  gap: 2rem;
+  padding: 1rem;
+}
+
+.placeholder h1 {
+  margin: 0;
+  font-weight: 400;
+  letter-spacing: 0.6em;
+  font-size: clamp(1.25rem, 4vw, 2rem);
+  color: var(--accent);
+  text-align: center;
+}
+
+.placeholder dl {
+  margin: 0;
+  display: grid;
+  gap: 0.4rem;
+  font-size: 0.85rem;
+}
+
+.placeholder dl > div {
+  display: grid;
+  grid-template-columns: 9rem 1fr;
+  gap: 1rem;
+}
+
+.placeholder dt {
+  color: var(--dim);
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+}
+
+.placeholder dd {
+  margin: 0;
+}

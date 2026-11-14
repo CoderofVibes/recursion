@@ -22,7 +22,7 @@ Phases 1 and 2 have one ready-to-launch prompt file per section. Phases 3–5 ar
 | 1B | Physics derivation | GPT/Codex | [phase-1/1B-physics-derivation.md](phase-1/1B-physics-derivation.md) | — |
 | 1C | Ship engineering baseline | GPT/Codex | [phase-1/1C-ship-baseline.md](phase-1/1C-ship-baseline.md) | — |
 | 1D | GMAT reference trajectories | GPT/Codex (needs GMAT installed) | [phase-1/1D-gmat-reference.md](phase-1/1D-gmat-reference.md) | — |
-| 1E | Visual direction | Claude, live with owner | [phase-1/1E-visual-direction.md](phase-1/1E-visual-direction.md) | — |
+| 1E | Visual direction, then the standing UI lane | Claude, live with owner, all build | [phase-1/1E-visual-direction.md](phase-1/1E-visual-direction.md) | — |
 | 1F | Expedition and encounter design | GPT/Codex | [phase-1/1F-expedition-design.md](phase-1/1F-expedition-design.md) | — |
 | 1G | Predictive model specification | GPT/Codex | [phase-1/1G-predictive-model-spec.md](phase-1/1G-predictive-model-spec.md) | — |
 | 2A | Simulation core | Claude | [phase-2/2A-sim-core.md](phase-2/2A-sim-core.md) | 1A, 1B, 1D |
@@ -82,6 +82,22 @@ You are thread 1B on the Recursion project. Read docs/build-plan/phase-1/1B-phys
 8. **Sources:** cite bibliography IDs from `References/BIBLIOGRAPHY.md`. Local copies are gitignored research copies; don't commit them and don't paste long passages.
 9. **Software:** don't download or install anything without the owner's OK.
 10. **Communication:** one handoff note at the end (`docs/handoffs/<ID>.md` from [the template](../handoffs/TEMPLATE.md)). Contact the owner only for a real blocker or a shared-interface decision. No status chatter, no full-project reviews.
+11. **Look and feel:** UI code takes every colour, font, size, line style, material and motion timing from `src/theme/`, and composes instruments from `src/theme/components/`. Never edit `src/theme/`; see § UI lane.
+
+## UI lane
+
+The owner dials in the game's look and feel throughout the build, working live with the 1E Claude thread in `.worktrees/1e`. It never clashes with other threads because ownership splits *how things look* from *what is on screen*:
+
+| | Owns | Examples |
+|---|---|---|
+| UI lane (1E) | `src/theme/`: tokens, instrument primitives, 3D styles, the UI lab page; `prototypes/`; `docs/design/visual-direction.md` | Palette, type, line weights, dash patterns, motion; how a gauge, readout or panel frame looks; how the forecast line and envelope are drawn |
+| Console and view (2D, 2E, then 3F; encounter sections for their own panels) | Layout, panels, behaviour, data wiring, scene composition | Which panels exist and where; what a click does; camera |
+
+- UI code never hard-codes a visual value; it uses `src/theme/` (Convention 11). Changing a token or primitive restyles every panel without touching the console or view folders.
+- A thread that needs a primitive the theme lacks builds it locally on tokens and lists it in its handoff; the UI lane may adopt it.
+- Layout or behaviour changes the owner wants go to the owning thread (relayed by the owner, or collected by the integrator at a gate), not into `src/theme/`.
+- The UI lab (`src/theme/lab/index.html`, dev only) shows primitives on the contract fixtures, so the owner can work before the real panels exist. After 2D and 2E merge, the lane runs `git merge main` and tunes against the real console.
+- The integrator merges the UI lane's branch at every gate, and on request in between; the lane merges `main` back in after each announced merge.
 
 ## File ownership map
 
@@ -92,7 +108,7 @@ You are thread 1B on the Recursion project. Read docs/build-plan/phase-1/1B-phys
 | `docs/physics/`, `tests/vectors/physics.json`, `tools/physics/` | 1B |
 | `docs/engineering/`, `data/ship-baseline.json` | 1C |
 | `tools/gmat/`, `tests/vectors/gmat/`, `docs/verification/` | 1D |
-| `prototypes/visual/`, `docs/design/visual-direction.md`, `src/theme/` | 1E |
+| `prototypes/`, `docs/design/visual-direction.md`, `docs/design/img/`, `src/theme/` (tokens, instrument primitives, 3D styles, UI lab) | 1E, the owner's UI lane, for the whole build |
 | `docs/design/expedition.md`, `docs/design/encounter-template.md` | 1F |
 | `docs/model/`, `tests/vectors/estimator/`, `tools/estimator-ref/` | 1G |
 | `src/sim/` (except `fields/`) | 2A |

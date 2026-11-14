@@ -8,6 +8,7 @@ Recursion is a browser-based spacecraft engineering roguelike for NASA Space App
 - `docs/DECISIONS.md`: P1 (planar flight, 3D presentation), P6, P10 (display semantics), P11.
 - `docs/build-plan/README.md` § Conventions; `src/contracts/README.md`.
 - Inputs: `docs/design/visual-direction.md`, `src/theme/`, `prototypes/visual/` (1E).
+- Contracts: `ViewSnapshot` (`src/contracts/view.ts`: believed world, ship footprint and thrust ticks, trail, issued forecasts, coverage, compare overlay); `covEllipse` (`estimates.ts`) for envelopes; `BelievedField.visual` for field plugins. Fixtures: `viewSnapshot`, `viewSnapshotCompare` from `src/contracts/fixtures/index.ts`. `src/view3d/` is lint-blocked from truth.
 
 ## Goal
 A Three.js view that renders the ship and its surroundings as sensed, plus forecasts, trails and comparisons, from the contract snapshot types.
@@ -16,7 +17,7 @@ A Three.js view that renders the ship and its surroundings as sensed, plus forec
 `src/view3d/`. Leave `src/view3d/fields/` as a plugin folder for later sections.
 
 ## Build
-1. A React-mountable component taking the view snapshot, believed world and forecasts as props.
+1. A React-mountable component taking a `ViewSnapshot` (which already contains the believed world and forecasts) as props.
 2. Flight plane with depth cues; massive bodies; asteroids drawn where the ship believes they are, with uncertainty when not tracked.
 3. Ship with its true footprint for the current configuration, body-axis and thrust-direction ticks, velocity shown distinctly.
 4. Issued forecast as a dotted path (frozen), measured trail solid, uncertainty envelope widening into unsampled space (P10).
@@ -27,10 +28,10 @@ A Three.js view that renders the ship and its surroundings as sensed, plus forec
 9. 60 fps on a mid-range laptop with a few hundred asteroids.
 
 ## Done when
-Renders all fixtures correctly; plugin interface documented in `src/view3d/README.md`; follows 1E.
+Renders all fixtures correctly; plugin interface documented in `src/view3d/README.md`; every colour, material, line style and motion timing comes from `src/theme/` (tokens and `src/theme/three/`) (README § UI lane).
 
 ## Out of scope
-Console panels (2D), real data wiring (2F).
+Console panels (2D), real data wiring (2F), and anything in `src/theme/` (the owner's UI lane, 1E). Missing styles: define them locally on tokens and list them under Requests in your handoff.
 
 ## Handoff
 `docs/handoffs/2E.md` from the template, with screenshots.

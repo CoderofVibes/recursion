@@ -8,6 +8,7 @@ Recursion is a browser-based spacecraft engineering roguelike for NASA Space App
 - `docs/DECISIONS.md`: P1, P2, P7 (accelerometers sense thrust only; tracking quality depends on power, pointing, range and condition), P12 (recording costs power).
 - `docs/build-plan/README.md` § Conventions; `src/contracts/README.md`.
 - Inputs: `docs/engineering/ship-baseline.md`, `docs/engineering/gameplay-couplings.md`, `data/ship-baseline.json`, `docs/handoffs/1C.md`.
+- Contracts: `ShipSystemsStep`, `ShipSystemsState`, `EnvironmentEffects`, `ActuatorOutput` in `src/contracts/truth/ship.ts`; `ShipDefinition` in `src/contracts/ship.ts`; `Command` in `commands.ts`; `Measurement` kinds and telemetry channel naming in `src/contracts/README.md`. Fixtures: `mockShipSystemsState`, `mockEnvironmentEffects` (`fixtures/truth.ts`), `shipDefinition` (`fixtures/index.ts`, a mock; load the real one from 1C's JSON).
 
 ## Goal
 A deterministic, tested ship-systems step that turns commands into actuator outputs, measurements and events, using the 1C baseline.
@@ -16,7 +17,7 @@ A deterministic, tested ship-systems step that turns commands into actuator outp
 `src/ship/` (subfolders `power/`, `propulsion/`, `sensors/`, `thermal/`, `massprops/`, `config/`), tests under it.
 
 ## Build
-Implement the contract signature `(state, config, commands, envEffects, dt) → { state, actuators, measurements, events }`:
+Implement `ShipSystemsStep`: `(state, config, commands, envEffects, dt) → { state, actuators, measurements, events }`. Keep it pure: draw noise from the seeded stream states in `state.rng` and return the advanced states.
 1. **Power:** sources, battery state of charge and limits, buses, load priorities, allocation commands, protection trips and load shedding. Life support can't be shed.
 2. **Propulsion:** main engine and RCS with thrust, specific impulse, mass flow, minimum impulse bit and mounting misalignment. Output thrust vectors at mounting points (the sim turns them into force and torque). Propellant depletes.
 3. **Sensors:** optical tracking produces `Measurement`s whose sigma depends on allocated power, range, pointing and condition; accelerometers report non-gravitational acceleration with noise and bias; star tracker attitude; Black Box recorder load scales with sample rate.
