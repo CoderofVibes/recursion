@@ -1,0 +1,670 @@
+{
+  "description": "Public scientific and engineering source metadata. Dates describe source retrieval. No selected game parameters or implementation specifications.",
+  "sources": [
+    {
+      "id": "S01",
+      "title": "NASA Small Spacecraft Power",
+      "url": "https://www.nasa.gov/smallsat-institute/sst-soa/power-subsystems/",
+      "retrieved_date": "2026-11-10",
+      "local_files": [
+        {
+          "path": "local-copies/text/S01.txt",
+          "sha256": "192611e2f2b6befa476b0b8ba304119355bbc7c098cbb3b36249546fde592994",
+          "bytes": 93185
+        }
+      ],
+      "availability": "local research copy",
+      "archived_original_sha256": "caff271807f01b6c5864a6a05647b5178e7d23d24692537e3bfede79b9eac1a0"
+    },
+    {
+      "id": "S02",
+      "title": "NASA Small Spacecraft Thermal Control",
+      "url": "https://www.nasa.gov/smallsat-institute/sst-soa/thermal-control/",
+      "retrieved_date": "2026-11-10",
+      "local_files": [
+        {
+          "path": "local-copies/text/S02.txt",
+          "sha256": "c0f0ac18c39f04e6e08f5c78c7a25f06dc80ecbabe6bcf278d8df56f154a2294",
+          "bytes": 66331
+        }
+      ],
+      "availability": "local research copy",
+      "archived_original_sha256": "86df3607ac252a332fd5c6ff5c677ea5e5785f75d5e0a983e917c78582739386"
+    },
+    {
+      "id": "S03",
+      "title": "NASA Small Spacecraft In Space Propulsion",
+      "url": "https://www.nasa.gov/smallsat-institute/sst-soa/in-space_propulsion/",
+      "retrieved_date": "2026-11-10",
+      "local_files": [
+        {
+          "path": "local-copies/text/S03.txt",
+          "sha256": "a77463d4020d8d998b0f749c147ea37d6ee50a6a933913e8445025eae0cd4603",
+          "bytes": 252048
+        }
+      ],
+      "availability": "local research copy",
+      "archived_original_sha256": "20d718dc3b233dbe35efc1e6fc652d0765c85ca07ec295a96fd3438d88d3384f"
+    },
+    {
+      "id": "S04",
+      "title": "NASA Small Spacecraft Guidance Navigation and Control",
+      "url": "https://www.nasa.gov/smallsat-institute/sst-soa/guidance-navigation-and-control/",
+      "retrieved_date": "2026-11-10",
+      "local_files": [
+        {
+          "path": "local-copies/text/S04.txt",
+          "sha256": "2edbd2535a608a76a50f463a6e8262d8244529a38ef249db3e0fcebe34c6806c",
+          "bytes": 82552
+        }
+      ],
+      "availability": "local research copy",
+      "archived_original_sha256": "0013b37fc13279ba5614709560da7815d21fb66dfd6e9713829e78e3575ac54c"
+    },
+    {
+      "id": "S05",
+      "title": "NASA ECLSS",
+      "url": "https://www.nasa.gov/reference/environmental-control-and-life-support-systems-eclss/",
+      "retrieved_date": "2026-11-10",
+      "local_files": [
+        {
+          "path": "local-copies/text/S05.txt",
+          "sha256": "a31fd9157cbfc4256d4974af72051d4e509942c5c430f5b538f85ff8f2f68821",
+          "bytes": 12076
+        }
+      ],
+      "availability": "local research copy",
+      "archived_original_sha256": "7c87b8f35f6ac85c22e02cba875af2a32af9fbb92922d8d47d653d4c28639252"
+    },
+    {
+      "id": "S06",
+      "title": "GSFC HDBK 8004",
+      "url": "https://standards.nasa.gov/sites/default/files/standards/GSFC/Baseline/0/GSFC-HDBK-8004_Approved_1.pdf",
+      "retrieved_date": "2026-11-10",
+      "local_files": [
+        {
+          "path": "local-copies/text/S06.txt",
+          "sha256": "3440cb9693acf7951061a730da3a5d11d13e3c72d9bd1f0be621d093ed62e4fb",
+          "bytes": 148518
+        },
+        {
+          "path": "local-copies/pdf/S06.pdf",
+          "sha256": "88e2f1a7a5ff96e264ff91bbac985a7711422c6608ceab58b36dfb24ac7dc8fb",
+          "bytes": 1782375
+        }
+      ],
+      "availability": "local research copy",
+      "archived_original_sha256": "88e2f1a7a5ff96e264ff91bbac985a7711422c6608ceab58b36dfb24ac7dc8fb"
+    },
+    {
+      "id": "S07",
+      "title": "Optimizing the Galileo Space Communication Link",
+      "url": "https://ipnpr.jpl.nasa.gov/progress_report/42-116/116k.pdf",
+      "retrieved_date": "2026-11-10",
+      "local_files": [
+        {
+          "path": "local-copies/text/S07.txt",
+          "sha256": "e55965cd1557b00a414bfbc79325dad3bd306a4a80e51d2248d896f0ec2468e8",
+          "bytes": 311
+        },
+        {
+          "path": "local-copies/pdf/S07.pdf",
+          "sha256": "65ac74846da7a0192532843d6b7f7b34ca242a86fe4df0917b526211d9ac1bba",
+          "bytes": 453101
+        }
+      ],
+      "availability": "local research copy",
+      "archived_original_sha256": "65ac74846da7a0192532843d6b7f7b34ca242a86fe4df0917b526211d9ac1bba"
+    },
+    {
+      "id": "S08",
+      "title": "NEXT Ion Propulsion System Development Status and Performance",
+      "url": "https://ntrs.nasa.gov/api/citations/20080010688/downloads/20080010688.pdf",
+      "retrieved_date": "2026-11-10",
+      "local_files": [
+        {
+          "path": "local-copies/text/S08.txt",
+          "sha256": "8d5ec2c6e6401cd4efb5c4e6f3dac854e5fb7d11a934cbc084ffca8a9b1c8e37",
+          "bytes": 57638
+        },
+        {
+          "path": "local-copies/pdf/S08.pdf",
+          "sha256": "8db9e0db531d5e3c9e11135df4017a2fce09e159581c5d415d82d47abb8581a6",
+          "bytes": 426823
+        }
+      ],
+      "availability": "local research copy",
+      "archived_original_sha256": "8db9e0db531d5e3c9e11135df4017a2fce09e159581c5d415d82d47abb8581a6"
+    },
+    {
+      "id": "S09",
+      "title": "ISS Active Thermal Control Pump Performance abstract",
+      "url": "https://ntrs.nasa.gov/api/citations/20110023292/downloads/20110023292.pdf",
+      "retrieved_date": "2026-11-10",
+      "local_files": [
+        {
+          "path": "local-copies/text/S09.txt",
+          "sha256": "1f04f62f8707e537a295e97abf41754839e393146433b64e297153a9d49790d7",
+          "bytes": 1558
+        },
+        {
+          "path": "local-copies/pdf/S09.pdf",
+          "sha256": "d55990d319008036a9e03762bc32792a4fd1aeec9db7b84fac876f0d01b84121",
+          "bytes": 12846
+        }
+      ],
+      "availability": "local research copy",
+      "archived_original_sha256": "d55990d319008036a9e03762bc32792a4fd1aeec9db7b84fac876f0d01b84121"
+    },
+    {
+      "id": "S10",
+      "title": "ISS Columbus Heat Exchanger Close Call",
+      "url": "https://ntrs.nasa.gov/api/citations/20205003848/downloads/Columbus_IFHXFinal.pdf",
+      "retrieved_date": "2026-11-10",
+      "local_files": [
+        {
+          "path": "local-copies/text/S10.txt",
+          "sha256": "6e95ce25de9aa76868b437a0c6bba3555687f3023c2ed5065d8010662b55136a",
+          "bytes": 30984
+        },
+        {
+          "path": "local-copies/pdf/S10.pdf",
+          "sha256": "468ef33d3913b8bc274cc9589dce4b36857471c1a42117d2b5936d8dcecddc1e",
+          "bytes": 2183426
+        }
+      ],
+      "availability": "local research copy",
+      "archived_original_sha256": "468ef33d3913b8bc274cc9589dce4b36857471c1a42117d2b5936d8dcecddc1e"
+    },
+    {
+      "id": "S11",
+      "title": "Thermal Radiator Pointing ISS abstract",
+      "url": "https://ntrs.nasa.gov/citations/20000032541",
+      "retrieved_date": "2026-11-10",
+      "local_files": [
+        {
+          "path": "local-copies/text/S11.txt",
+          "sha256": "551fc109f38856eab9c21259d446ad181e7c281cef01ef47a6483789a261a0e3",
+          "bytes": 3231
+        }
+      ],
+      "availability": "local research copy",
+      "archived_original_sha256": "808d4a17dd4cdc059ab60d27239b04ba34d72d7bf48f82a452eef7465912a9f1"
+    },
+    {
+      "id": "S12",
+      "title": "NASA Glenn Specific Impulse",
+      "url": "https://www.grc.nasa.gov/www/BGH/specimp.html",
+      "retrieved_date": "2026-11-10",
+      "local_files": [],
+      "availability": "link only; no retained local copy"
+    },
+    {
+      "id": "S13",
+      "title": "NASA Glenn Ideal Rocket Equation",
+      "url": "https://www1.grc.nasa.gov/beginners-guide-to-aeronautics/ideal-rocket-equation/",
+      "retrieved_date": "2026-11-10",
+      "local_files": [],
+      "availability": "link only; no retained local copy"
+    },
+    {
+      "id": "S14",
+      "title": "NASA Glenn Torque Moment",
+      "url": "https://www1.grc.nasa.gov/beginners-guide-to-aeronautics/torque-moment/",
+      "retrieved_date": "2026-11-10",
+      "local_files": [],
+      "availability": "link only; no retained local copy"
+    },
+    {
+      "id": "S15",
+      "title": "Voyager 1 Team Accomplishes Tricky Thruster Swap",
+      "url": "https://science.nasa.gov/blogs/voyager/2024/09/10/voyager-1-team-accomplishes-tricky-thruster-swap/",
+      "retrieved_date": "2026-11-10",
+      "local_files": [
+        {
+          "path": "local-copies/text/S15.txt",
+          "sha256": "f7b98f6bd2909025397e38da44b3b49f8fbc08292cffad3a16be671762ed735a",
+          "bytes": 13801
+        }
+      ],
+      "availability": "local research copy",
+      "archived_original_sha256": "3b4e9ee67693becc842bd4f9d3e3edf6068629b52f94b9cc16753ce4a32eb0e8"
+    },
+    {
+      "id": "S16",
+      "title": "NASA Basics of Space Flight Onboard Systems",
+      "url": "https://science.nasa.gov/learn/basics-of-space-flight/chapter11-1/",
+      "retrieved_date": "2026-11-10",
+      "local_files": [
+        {
+          "path": "local-copies/text/S16.txt",
+          "sha256": "8b0adc4dc269ca95473d796c6614d433b7ca3dcfd9f400530f7af3f7c64ffa04",
+          "bytes": 20431
+        }
+      ],
+      "availability": "local research copy",
+      "archived_original_sha256": "183af7d31c0fa21f84b019a0832db19edd06bfe35d360e0f6e612879665bba44"
+    },
+    {
+      "id": "S17",
+      "title": "Modular Power Standard for Space Explorations Missions",
+      "url": "https://ntrs.nasa.gov/api/citations/20170001302/downloads/20170001302.pdf",
+      "retrieved_date": "2026-11-10",
+      "local_files": [
+        {
+          "path": "local-copies/text/S17.txt",
+          "sha256": "e712467689e84904aeafe7c9fee99a87834e1b554565f8c22d1ce4b5cae4c8cc",
+          "bytes": 58806
+        },
+        {
+          "path": "local-copies/pdf/S17.pdf",
+          "sha256": "9378ad029029979269cae07fdbab826d6790ab2d1339ea29f20ff01e4e26e875",
+          "bytes": 950616
+        }
+      ],
+      "availability": "local research copy",
+      "archived_original_sha256": "9378ad029029979269cae07fdbab826d6790ab2d1339ea29f20ff01e4e26e875"
+    },
+    {
+      "id": "S18",
+      "title": "JPL Horizons Manual",
+      "url": "https://ssd.jpl.nasa.gov/horizons/manual.html",
+      "retrieved_date": "2026-11-10",
+      "local_files": [
+        {
+          "path": "local-copies/text/S18.txt",
+          "sha256": "5bd0edc9fa497d3bf4447701f8c858002b8de436327a64c72831846f7dc5a038",
+          "bytes": 186687
+        }
+      ],
+      "availability": "local research copy",
+      "archived_original_sha256": "be45b0137b37068c48760bbaf306f52a72c10239c175ba91119a30eb30612a81"
+    },
+    {
+      "id": "S19",
+      "title": "NASA 3D Resources",
+      "url": "https://science.nasa.gov/3d-resources/",
+      "retrieved_date": "2026-11-10",
+      "local_files": [
+        {
+          "path": "local-copies/text/S19.txt",
+          "sha256": "e0454fac7e08c09a6596568ef579b81e41f60e7294aa356d4db1335ae7054050",
+          "bytes": 11319
+        }
+      ],
+      "availability": "local research copy",
+      "archived_original_sha256": "a233f1daf66392372f60e75da9707ccfb12fb742d0a9d0ec8588e4f06b8e4367"
+    },
+    {
+      "id": "S20",
+      "title": "NASA Small Spacecraft Avionics",
+      "url": "https://www.nasa.gov/smallsat-institute/sst-soa/small-spacecraft-avionics/",
+      "retrieved_date": "2026-11-10",
+      "local_files": [
+        {
+          "path": "local-copies/text/S20.txt",
+          "sha256": "e2aa11bc141c421c67aa09390af301ce2efc921d6366fb90877108563b2af3e6",
+          "bytes": 80850
+        }
+      ],
+      "availability": "local research copy",
+      "archived_original_sha256": "f2876b1f46beed81b117ffb9e40d7036440462cf2cfd72640b24549af5dcf32b"
+    },
+    {
+      "id": "S21",
+      "title": "NASA Small Spacecraft Structures Materials and Mechanisms",
+      "url": "https://www.nasa.gov/smallsat-institute/sst-soa/structures-materials-and-mechanisms/",
+      "retrieved_date": "2026-11-10",
+      "local_files": [
+        {
+          "path": "local-copies/text/S21.txt",
+          "sha256": "6b69a1ef8bb034a84f350dd0d894616d36c693947a29d138d4af34c2d183272b",
+          "bytes": 99560
+        }
+      ],
+      "availability": "local research copy",
+      "archived_original_sha256": "d18a7d598c5b835f4f5b25ba0f3d9c8f07fed3b360012d81b1dfd308efec248a"
+    },
+    {
+      "id": "S22",
+      "title": "NASA Small Spacecraft Communications",
+      "url": "https://www.nasa.gov/smallsat-institute/sst-soa/soa-communications/",
+      "retrieved_date": "2026-11-10",
+      "local_files": [
+        {
+          "path": "local-copies/text/S22.txt",
+          "sha256": "4833b4a02bbebabc35487d512e612d06a1f3630349729928483fefc78b54d1b2",
+          "bytes": 98535
+        }
+      ],
+      "availability": "local research copy",
+      "archived_original_sha256": "4a8b048cf3bd3f05333e15996e2fc5d63a6e1d74fa1e3c6b361dc2e7e695f01b"
+    },
+    {
+      "id": "S24",
+      "title": "NESC Mass Distribution Made Easy lecture abstract",
+      "url": "https://nescacademy.nasa.gov/video/7f310373e3e64527810f8ae319db74b91d",
+      "retrieved_date": "2026-11-10",
+      "local_files": [
+        {
+          "path": "local-copies/text/S24.txt",
+          "sha256": "ed1c7951bc905865da4afc6760b87c9c8745ea3ba2ea3544ddc193ad7248b171",
+          "bytes": 5308
+        }
+      ],
+      "availability": "local research copy",
+      "archived_original_sha256": "d7d3332b7b901b8e25dcc77bb75c75f40759fe0541570ea246801046d1a12297"
+    },
+    {
+      "id": "S05P",
+      "title": "NASA ECLSS fact sheet April 2025",
+      "url": "https://www.nasa.gov/wp-content/uploads/2025/04/eclss-508-040325.pdf",
+      "retrieved_date": "2026-11-10",
+      "local_files": [
+        {
+          "path": "local-copies/text/S05P.txt",
+          "sha256": "161d78b076cb756b6c768ef43ddd5acc8f9ed01fc2ec118c82b1f75a3f71b173",
+          "bytes": 4236
+        },
+        {
+          "path": "local-copies/pdf/S05P.pdf",
+          "sha256": "08776350098e5247d252e5d6b95d94d702b0d6dff4e07c0b72e623a989494050",
+          "bytes": 5455940
+        }
+      ],
+      "availability": "local research copy",
+      "archived_original_sha256": "08776350098e5247d252e5d6b95d94d702b0d6dff4e07c0b72e623a989494050"
+    },
+    {
+      "id": "S23",
+      "title": "NIST SP 959 2022 CODATA values May 2024",
+      "url": "https://physics.nist.gov/cuu/pdf/wallet_2022.pdf",
+      "retrieved_date": "2026-11-10",
+      "local_files": [
+        {
+          "path": "local-copies/text/S23.txt",
+          "sha256": "63c4634b17c1b550f1ef7341f07cd5614ecf234d42d15c492b73457012349b52",
+          "bytes": 2083
+        },
+        {
+          "path": "local-copies/pdf/S23.pdf",
+          "sha256": "1e7d5131229b2d189932825ce8bbfa2c6a153a990ba034b443286bfe4e420de5",
+          "bytes": 120187
+        }
+      ],
+      "availability": "local research copy",
+      "archived_original_sha256": "1e7d5131229b2d189932825ce8bbfa2c6a153a990ba034b443286bfe4e420de5"
+    },
+    {
+      "id": "DD01",
+      "title": "NASA Crew Interfaces",
+      "url": "https://www.nasa.gov/reference/10-0-crew-interfaces-vol-2/",
+      "retrieved_date": "2026-11-11",
+      "publication_date": null,
+      "local_files": [
+        {
+          "path": "local-copies/text/DD01.txt",
+          "sha256": "0fd28119637cf7e17aed71285af37523af3b5c1d34ad6cceb5ea11f94722b25a",
+          "bytes": 67784
+        }
+      ],
+      "availability": "local research copy",
+      "archived_original_sha256": "3cc9e338c655d535b7f2714b5e7c8b6d8846c00a847e1e9680cdb7adcbe0d9a5"
+    },
+    {
+      "id": "DD02",
+      "title": "Jones Design and Analysis of a Flexible Reliable Deep Space Life Support System",
+      "url": "https://ntrs.nasa.gov/api/citations/20160005782/downloads/20160005782.pdf",
+      "retrieved_date": "2026-11-11",
+      "publication_date": "2012-07-15",
+      "local_files": [
+        {
+          "path": "local-copies/text/DD02.txt",
+          "sha256": "7ae0156f348ced5df273ef8a7e41d6679390cdad7c05c551d2cebb524f49def5",
+          "bytes": 90649
+        },
+        {
+          "path": "local-copies/pdf/DD02.pdf",
+          "sha256": "be966d3f390b2e14a9bd5b6ea2029746ce4d5b31f60f50128b4001822b126287",
+          "bytes": 1010010
+        }
+      ],
+      "availability": "local research copy",
+      "archived_original_sha256": "be966d3f390b2e14a9bd5b6ea2029746ce4d5b31f60f50128b4001822b126287"
+    },
+    {
+      "id": "DD03",
+      "title": "NASA Basics of Space Flight Chapter 13 Navigation",
+      "url": "https://science.nasa.gov/learn/basics-of-space-flight/chapter13-1/",
+      "retrieved_date": "2026-11-11",
+      "publication_date": null,
+      "local_files": [
+        {
+          "path": "local-copies/text/DD03.txt",
+          "sha256": "fc0c7fcd80d00dc65a678c756a67f798fb43bc7d83637fed250a09c1f092090d",
+          "bytes": 32805
+        }
+      ],
+      "availability": "local research copy",
+      "archived_original_sha256": "917567a1e69cc3aa266b2d04dbf24366568d341a3d166e29032078f2da1f410f"
+    },
+    {
+      "id": "DD04",
+      "title": "NASA NESC Space Rendezvous",
+      "url": "https://www.nasa.gov/centers-and-facilities/nesc/space-rendezvous/",
+      "retrieved_date": "2026-11-11",
+      "publication_date": "2016-05-23",
+      "local_files": [
+        {
+          "path": "local-copies/text/DD04.txt",
+          "sha256": "17c7e8c22c02911c37e477e0482742ee89a822738eb08056cf601c052a7b12cb",
+          "bytes": 17688
+        }
+      ],
+      "availability": "local research copy",
+      "archived_original_sha256": "f473ab28f1d010f5f46d63a4862a37978ee8c145cf1b0b7960c7f0ce3a7dd8f6"
+    },
+    {
+      "id": "DD05",
+      "title": "Optical Deep space Instrument for Navigation",
+      "url": "https://ntrs.nasa.gov/api/citations/20240012072/downloads/Optical_Deep_space_Instrument_for_Navigation.pdf",
+      "retrieved_date": "2026-11-11",
+      "publication_date": "2024",
+      "local_files": [
+        {
+          "path": "local-copies/text/DD05.txt",
+          "sha256": "dcf5af2399a3ae7b19e827bb8311571501232149c6a0c9f6f8f8e6d3f931b3e9",
+          "bytes": 18872
+        },
+        {
+          "path": "local-copies/pdf/DD05.pdf",
+          "sha256": "bb4dbda46ec9a103cdb7accfa193bf6a16ef99a19ad2531168cf0acce514a0d2",
+          "bytes": 4128904
+        }
+      ],
+      "availability": "local research copy",
+      "archived_original_sha256": "bb4dbda46ec9a103cdb7accfa193bf6a16ef99a19ad2531168cf0acce514a0d2"
+    },
+    {
+      "id": "DD06",
+      "title": "Optical Navigation Demonstration Near Mars",
+      "url": "https://science.nasa.gov/photojournal/optical-navigation-demonstration-near-mars/",
+      "retrieved_date": "2026-11-11",
+      "publication_date": "2006-03-10",
+      "local_files": [
+        {
+          "path": "local-copies/text/DD06.txt",
+          "sha256": "b46f6540a7c5cdfc5f5753ed711d86b0dafa2e60b9768dec96544a0c32a692fd",
+          "bytes": 8988
+        }
+      ],
+      "availability": "local research copy",
+      "archived_original_sha256": "cce0e70f160a874dc28299c91867441b8a93c555f239a5c8bb1946d48f7c3f51"
+    },
+    {
+      "id": "DD07",
+      "title": "Demonstration of Orion Optical Navigation System on Artemis I",
+      "url": "https://ntrs.nasa.gov/api/citations/20240011714/downloads/OrionArtemisIOpNav_2024.pdf",
+      "retrieved_date": "2026-11-11",
+      "publication_date": "2024",
+      "local_files": [
+        {
+          "path": "local-copies/text/DD07.txt",
+          "sha256": "d8f96342c1e48ff7443b15a34143dcff433d1e1736a44eab87de7c7285eefda0",
+          "bytes": 10893
+        },
+        {
+          "path": "local-copies/pdf/DD07.pdf",
+          "sha256": "bc99aca080139667f4a3de544d10cd332f45f407b2d050d3e5b3676b06ccca68",
+          "bytes": 2562877
+        }
+      ],
+      "availability": "local research copy",
+      "archived_original_sha256": "bc99aca080139667f4a3de544d10cd332f45f407b2d050d3e5b3676b06ccca68"
+    },
+    {
+      "id": "DD08",
+      "title": "JPL K2 mission",
+      "url": "https://science.jpl.nasa.gov/projects/k2/",
+      "retrieved_date": "2026-11-11",
+      "publication_date": null,
+      "local_files": [
+        {
+          "path": "local-copies/text/DD08.txt",
+          "sha256": "65c8aa93c911ae4a38fc6420639d4bd20d8ced3baa34a9a7d4b82e26a48322b2",
+          "bytes": 2875
+        }
+      ],
+      "availability": "local research copy",
+      "archived_original_sha256": "5a67f519745f4ce2a7c3b3858d7181ff3291e7af23785f4a8c27fdb162363230"
+    },
+    {
+      "id": "DD09",
+      "title": "NASA Voyager 1 Revives Backup Thrusters Before Command Pause",
+      "url": "https://www.jpl.nasa.gov/news/nasas-voyager-1-revives-backup-thrusters-before-command-pause/",
+      "retrieved_date": "2026-11-11",
+      "publication_date": "2025-05-14",
+      "local_files": [
+        {
+          "path": "local-copies/text/DD09.txt",
+          "sha256": "dcfd5274db91926cdb46e5c217f0fac49ad7d6a9ef180119ca5e4fb93ea00420",
+          "bytes": 9559
+        }
+      ],
+      "availability": "local research copy",
+      "archived_original_sha256": "87d24dd3071d24a08fdf56905c69f948b888863594f2f8bfb07f3c1264ad41dd"
+    },
+    {
+      "id": "DD10",
+      "title": "NASA CR 178363",
+      "url": "https://ntrs.nasa.gov/api/citations/19870020663/downloads/19870020663.pdf",
+      "retrieved_date": "2026-11-11",
+      "publication_date": "1987-09",
+      "local_files": [
+        {
+          "path": "local-copies/text/DD10.txt",
+          "sha256": "eee9ba2fb07b0761ebb7c74665f64bb1c41a74afe953fd83465bd0ad7d8f5212",
+          "bytes": 296376
+        },
+        {
+          "path": "local-copies/pdf/DD10.pdf",
+          "sha256": "c881601b3e8fb0cd40757ee20bb64a7dca5160f074da75ef268cdf197df66170",
+          "bytes": 7172183
+        }
+      ],
+      "availability": "local research copy",
+      "archived_original_sha256": "c881601b3e8fb0cd40757ee20bb64a7dca5160f074da75ef268cdf197df66170"
+    },
+    {
+      "id": "R01",
+      "title": "NIST SI units and defining constants",
+      "url": "https://www.nist.gov/pml/special-publication-330/sp-330-section-2",
+      "availability": "link only; no retained local copy",
+      "local_files": []
+    },
+    {
+      "id": "R02",
+      "title": "NIST 2022 CODATA wall chart",
+      "url": "https://physics.nist.gov/cuu/pdf/wall_2022.pdf",
+      "availability": "link only; no retained local copy",
+      "local_files": []
+    },
+    {
+      "id": "R03",
+      "title": "Motion in a Nearly Circular Orbit, University of Texas",
+      "url": "https://farside.ph.utexas.edu/teaching/336k/lectures/node45.html",
+      "availability": "link only; no retained local copy",
+      "local_files": []
+    },
+    {
+      "id": "R04",
+      "title": "NASA NESC Technical Bulletin 19-01-1 radiation guidance",
+      "url": "https://ntrs.nasa.gov/citations/20210024100",
+      "availability": "link only; no retained local copy",
+      "local_files": []
+    },
+    {
+      "id": "R05",
+      "title": "JPL Space Radiation Effects on Integrated Circuits",
+      "url": "https://parts.jpl.nasa.gov/asic/Appendix.3.html",
+      "availability": "link only; no retained local copy",
+      "local_files": []
+    },
+    {
+      "id": "R06",
+      "title": "NASA Glenn Drag Equation",
+      "url": "https://www1.grc.nasa.gov/beginners-guide-to-aeronautics/drag-equation/",
+      "availability": "link only; no retained local copy",
+      "local_files": []
+    },
+    {
+      "id": "R07",
+      "title": "NASA Glenn Drag Coefficient",
+      "url": "https://www1.grc.nasa.gov/beginners-guide-to-aeronautics/drag-coefficient/",
+      "availability": "link only; no retained local copy",
+      "local_files": []
+    },
+    {
+      "id": "R08",
+      "title": "NASA Mars Odyssey aerodynamics paper",
+      "url": "https://ntrs.nasa.gov/citations/20030010282",
+      "availability": "link only; no retained local copy",
+      "local_files": []
+    },
+    {
+      "id": "R09",
+      "title": "NASA Isentropic Flow Derivation",
+      "url": "https://www.grc.nasa.gov/www/k-12/airplane/isndrv.html",
+      "availability": "link only; no retained local copy",
+      "local_files": []
+    },
+    {
+      "id": "R10",
+      "title": "NASA Mass Flow Rate Equations",
+      "url": "https://www1.grc.nasa.gov/beginners-guide-to-aeronautics/mass-flow-rate-equations/",
+      "availability": "link only; no retained local copy",
+      "local_files": []
+    },
+    {
+      "id": "R11",
+      "title": "TU Delft Lorentz model optics text",
+      "url": "https://interactivetextbooks.tudelft.nl/interactive-optics/content/Chap9_Appendix/Appendix_B_2022Clean.html",
+      "availability": "link only; no retained local copy",
+      "local_files": []
+    },
+    {
+      "id": "R12",
+      "title": "MIT 6.007 Lossy Electromagnetic Waves",
+      "url": "https://live.ocw.mit.edu/courses/6-007-electromagnetic-energy-from-motors-to-lasers-spring-2011/ae7fcb426d7958a3dc32cf958e5dc830_MIT6_007S11_lec23.pdf",
+      "availability": "link only; no retained local copy",
+      "local_files": []
+    },
+    {
+      "id": "R13",
+      "title": "Younsi, Wu and Fuerst paper",
+      "url": "https://arxiv.org/pdf/1207.4234",
+      "availability": "link only; no retained local copy",
+      "local_files": []
+    }
+  ]
+}
