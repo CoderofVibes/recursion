@@ -1,0 +1,6257 @@
+{
+  "version": 1,
+  "units": "SI",
+  "status": "Offline reference values for three-dimensional flight (DECISIONS A11); requires independent implementation checks. The planar file physics.json is unchanged and remains the planar regression.",
+  "generator": "python tools/physics/generate_vectors.py --3d",
+  "reference_method": {
+    "name": "adaptive Dormand-Prince embedded 5(4), the planar file's stepper",
+    "trajectories_20000_s": {
+      "rtol": 2e-12,
+      "position_atol_m": 1e-07,
+      "velocity_atol_m_per_s": 1e-11,
+      "max_step_s": 100.0,
+      "refinement": "rtol 2e-14, atol / 100, max step 50 s",
+      "independent_audit": "separately coded pair-loop force and classical RK4, fixed 5 s step",
+      "limit_m": 0.0001,
+      "limit_m_per_s": 1e-08
+    },
+    "trajectories_2000000_s": {
+      "rtol": 2e-14,
+      "position_atol_m": 1e-09,
+      "velocity_atol_m_per_s": 1e-13,
+      "max_step_s": 50.0,
+      "refinement": "same tolerances, max step 25 s",
+      "independent_audit": "separately coded pair-loop force and classical RK4, fixed 10 s step",
+      "limit_m": 0.001,
+      "limit_m_per_s": 1e-07
+    },
+    "rigid_body": {
+      "state": "attitude quaternion and body rates; Euler's equations with qdot = q (0, omega)/2; quaternion normalised on output only",
+      "rtol": 1e-13,
+      "attitude_atol": 1e-14,
+      "rate_atol_rad_per_s": 1e-17,
+      "max_step_s": 1.0,
+      "refinement": "rtol 1e-14, atol / 10, max step 0.5 s",
+      "independent_audit": "rotation matrix and inertial angular momentum (no quaternion, no Euler equation), classical RK4, fixed 0.05 s step",
+      "limit_attitude": 1e-10,
+      "limit_rad_per_s": 1e-12
+    }
+  },
+  "reference_audit": {
+    "refinement_short": {
+      "position_m": 6.53e-06,
+      "velocity_m_per_s": 1.39e-09
+    },
+    "independent_rk4_short": {
+      "position_m": 9.63e-06,
+      "velocity_m_per_s": 1.95e-09
+    },
+    "refinement_long": {
+      "position_m": 6.91e-05,
+      "velocity_m_per_s": 8.03e-09
+    },
+    "independent_rk4_long": {
+      "position_m": 8.4e-05,
+      "velocity_m_per_s": 9.62e-09
+    },
+    "rotation_invariance": {
+      "position_m": 2.63e-06,
+      "velocity_m_per_s": 4.35e-10
+    },
+    "rotated_kepler_p2": {
+      "position_m": 5.53e-07,
+      "velocity_m_per_s": 4.14e-11
+    },
+    "binary_exact_circles": {
+      "position_m": 7.09e-07,
+      "velocity_m_per_s": 1e-11
+    },
+    "ship_jacobi_drift_m2_per_s2": {
+      "20000_s": 8.8e-08,
+      "2000000_s": 3.1e-09
+    },
+    "rigid_body_closed_forms": {
+      "attitude": 3.24e-13,
+      "rate_rad_per_s": 2.62e-15
+    },
+    "rigid_body_refinement": {
+      "attitude": 3.04e-13,
+      "rate_rad_per_s": 3.4e-15
+    },
+    "rigid_body_independent_rk4": {
+      "attitude": 1.48e-12,
+      "rate_rad_per_s": 3e-14
+    },
+    "triaxial_jacobi_elliptic_rate_rad_per_s": 3.49e-15,
+    "principal_axis_stability": {
+      "roll": {
+        "kind": "stable",
+        "rate_rad_per_s": 0.0343
+      },
+      "pitch": {
+        "kind": "stable",
+        "rate_rad_per_s": 0.0494
+      },
+      "yaw": {
+        "kind": "unstable",
+        "rate_rad_per_s": 0.0397
+      }
+    }
+  },
+  "conventions": {
+    "coordinates": "right-handed Cartesian inertial x, y, z; one frame per case; vectors are [x, y, z]",
+    "reference_length": "One universal r0 for every interacting pair; not reset at a new encounter or for a new body.",
+    "force": "a_i = -sum_j GM_j*r0^(p-2)*(r_i-r_j)/|r_i-r_j|^(p+1), with |.| the three-dimensional distance",
+    "potential_zero": "infinity; p>1",
+    "test_particle": "ship has zero gravitational source mass; no thrust, drag, collisions or softening in these vectors",
+    "tolerance": "absolute SI error; arrays compared component by component; scalar tolerance applies to every component; attitude compared after the sign alignment below",
+    "rotation": "a case's rotation object gives the angles (rad) and matrix rows of R = Rz(node)*Rx(inclination)*Rz(argument) that turned the named planar case into this one",
+    "specific_angular_momentum": "the vector r x v about the fixed source, m^2 s^-1",
+    "orbit_normal": "unit vector along r x v about the fixed source",
+    "binary_specific_invariants": "binary energy and angular momentum (a vector) divided by total binary mass; mass weights GM_i/sum(GM_i); no ship contribution",
+    "binary_angular_velocity": "the circular binary's constant angular velocity vector, rad s^-1; binary_angular_frequency is its magnitude",
+    "ship_jacobi_constant": "C = -2*Phi - |v|^2 + 2*omega_vec . (r x v) with r, v inertial barycentric and omega_vec the binary_angular_velocity; equal to 2*W - |v_rotating|^2 with W including z; valid only for a circular binary",
+    "about_primary": "rho = r_ship - r_primary, u = v_ship - v_primary, n = (rho x u)/|rho x u|; ship_orbit_normal_about_primary = n; ship_node_longitude_about_primary = atan2(n_x, -n_y) in (-pi, pi]; ship_inclination_about_primary = acos(n_z); all osculating, measured against the inertial x-y plane, which is the binary's plane in those cases",
+    "ship_mean_nodal_rate_about_primary": "(node_longitude(at_t) - node_longitude(0))/at_t with the difference wrapped into (-pi, pi]",
+    "plane_crossings": "information only: reference times at which the ship's z changes sign",
+    "body_frame": "right-handed; +x forward (roll axis), +y left (pitch axis), +z up (yaw axis)",
+    "attitude": "unit quaternion [w, x, y, z], scalar first, Hamilton product, body to inertial: v_inertial = q * v_body * conj(q); (a * b) applies b first. q and -q are the same attitude: compare the rotation, not the sign (flip your q when its four-component dot product with the reference is negative, then compare components)",
+    "angular_velocity": "body frame, rad s^-1; kinematics qdot = q * (0, omega_body) / 2",
+    "inertia": "moments are the principal moments about principal x', y', z' through the centre of mass, kg m^2; axes is the unit quaternion turning principal-frame vectors into the body frame (identity: body axes are principal); inertia_tensor_body is the same tensor in body axes, rows",
+    "torque_body": "constant torque about the centre of mass in body axes, N m",
+    "rotational_energy": "omega . (J omega) / 2 with J the inertia tensor in body axes, J",
+    "angular_momentum_inertial": "R(q) (J omega): the angular momentum about the centre of mass in inertial axes, kg m^2 s^-1",
+    "invariant_expectations": "the analytic initial invariant repeated at each checkpoint, not the reference integrator's slightly drifted value",
+    "law_null": "rigid_body cases have law: null; no gravity or gravity-gradient torque acts"
+  },
+  "cases": [
+    {
+      "id": "inclined-single-p2",
+      "description": "The planar single-source eccentric start rotated to 50 deg inclination with node 35 deg and in-plane turn 25 deg, so no component is zero; fixed point source at the origin. The orbit stays in its plane.",
+      "kind": "trajectory",
+      "claim_status": "offline numerical reference; not a game demonstration",
+      "law": {
+        "exponent": 2.0,
+        "normalization": "P4",
+        "GM": 10000000000.0,
+        "r0": 1000000.0
+      },
+      "initial": {
+        "r": [
+          586589.6681479944,
+          742362.5418144193,
+          323744.3709670646
+        ],
+        "v": [
+          -61.22999350767948,
+          21.13237230257478,
+          62.48448396133955
+        ]
+      },
+      "source_dynamics": "fixed_origin",
+      "rotation": {
+        "sequence": "R = Rz(node) * Rx(inclination) * Rz(argument); active; every position and velocity of the planar start (z = 0) is multiplied by R",
+        "node_rad": 0.6108652381980153,
+        "inclination_rad": 0.8726646259971648,
+        "argument_rad": 0.4363323129985824,
+        "matrix": [
+          [
+            0.5865896681479944,
+            -0.6803332611964387,
+            0.43938504177070503
+          ],
+          [
+            0.7423625418144193,
+            0.23480413669527533,
+            -0.6275068715971331
+          ],
+          [
+            0.3237443709670646,
+            0.6942720440148838,
+            0.6427876096865394
+          ]
+        ],
+        "planar_case": "single-p2"
+      },
+      "expect": [
+        {
+          "quantity": "position",
+          "at_t": 0.0,
+          "value": [
+            586589.6681479944,
+            742362.5418144193,
+            323744.3709670646
+          ],
+          "tolerance": 0.1,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 0.0,
+          "value": [
+            -61.22999350767948,
+            21.13237230257478,
+            62.48448396133955
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "specific_energy",
+          "at_t": 0.0,
+          "value": -5950.0,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "specific_angular_momentum",
+          "at_t": 0.0,
+          "value": [
+            39544653.75936345,
+            -56475618.443741985,
+            57850884.87178854
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "orbit_normal",
+          "at_t": 0.0,
+          "value": [
+            0.43938504177070503,
+            -0.6275068715971331,
+            0.6427876096865394
+          ],
+          "tolerance": 1e-10,
+          "unit": "1"
+        },
+        {
+          "quantity": "position",
+          "at_t": 1000.0,
+          "value": [
+            522529.86505380424,
+            759749.2003521723,
+            384506.536224051
+          ],
+          "tolerance": 0.1,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 1000.0,
+          "value": [
+            -66.78534581700247,
+            13.60835479010487,
+            58.93675847590083
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "specific_energy",
+          "at_t": 1000.0,
+          "value": -5950.0,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "specific_angular_momentum",
+          "at_t": 1000.0,
+          "value": [
+            39544653.75936345,
+            -56475618.443741985,
+            57850884.87178854
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "orbit_normal",
+          "at_t": 1000.0,
+          "value": [
+            0.43938504177070503,
+            -0.6275068715971331,
+            0.6427876096865394
+          ],
+          "tolerance": 1e-10,
+          "unit": "1"
+        },
+        {
+          "quantity": "position",
+          "at_t": 5000.0,
+          "value": [
+            220666.2248743199,
+            751650.8850001355,
+            582943.1857415463
+          ],
+          "tolerance": 0.1,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 5000.0,
+          "value": [
+            -82.2384263323078,
+            -17.96242748144061,
+            38.67963124885605
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "specific_energy",
+          "at_t": 5000.0,
+          "value": -5950.0,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "specific_angular_momentum",
+          "at_t": 5000.0,
+          "value": [
+            39544653.75936345,
+            -56475618.443741985,
+            57850884.87178854
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "orbit_normal",
+          "at_t": 5000.0,
+          "value": [
+            0.43938504177070503,
+            -0.6275068715971331,
+            0.6427876096865394
+          ],
+          "tolerance": 1e-10,
+          "unit": "1"
+        },
+        {
+          "quantity": "position",
+          "at_t": 10000.0,
+          "value": [
+            -201322.31035861291,
+            561542.0469935948,
+            685808.9643956725
+          ],
+          "tolerance": 0.1,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 10000.0,
+          "value": [
+            -82.36687133581827,
+            -57.61121714109555,
+            0.0611968319021996
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "specific_energy",
+          "at_t": 10000.0,
+          "value": -5950.0,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "specific_angular_momentum",
+          "at_t": 10000.0,
+          "value": [
+            39544653.75936345,
+            -56475618.443741985,
+            57850884.87178854
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "orbit_normal",
+          "at_t": 10000.0,
+          "value": [
+            0.43938504177070503,
+            -0.6275068715971331,
+            0.6427876096865394
+          ],
+          "tolerance": 1e-10,
+          "unit": "1"
+        },
+        {
+          "quantity": "position",
+          "at_t": 20000.0,
+          "value": [
+            -640193.9524360065,
+            -254380.49078901875,
+            189278.91379458687
+          ],
+          "tolerance": 0.1,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 20000.0,
+          "value": [
+            21.320732917431716,
+            -81.89284851690164,
+            -94.52008001858505
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "specific_energy",
+          "at_t": 20000.0,
+          "value": -5950.0,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "specific_angular_momentum",
+          "at_t": 20000.0,
+          "value": [
+            39544653.75936345,
+            -56475618.443741985,
+            57850884.87178854
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "orbit_normal",
+          "at_t": 20000.0,
+          "value": [
+            0.43938504177070503,
+            -0.6275068715971331,
+            0.6427876096865394
+          ],
+          "tolerance": 1e-10,
+          "unit": "1"
+        }
+      ]
+    },
+    {
+      "id": "inclined-single-p2p5",
+      "description": "The planar single-source eccentric start rotated to 50 deg inclination with node 35 deg and in-plane turn 25 deg, so no component is zero; fixed point source at the origin. The orbit stays in its plane.",
+      "kind": "trajectory",
+      "claim_status": "offline numerical reference; not a game demonstration",
+      "law": {
+        "exponent": 2.5,
+        "normalization": "P4",
+        "GM": 10000000000.0,
+        "r0": 1000000.0
+      },
+      "initial": {
+        "r": [
+          586589.6681479944,
+          742362.5418144193,
+          323744.3709670646
+        ],
+        "v": [
+          -61.22999350767948,
+          21.13237230257478,
+          62.48448396133955
+        ]
+      },
+      "source_dynamics": "fixed_origin",
+      "rotation": {
+        "sequence": "R = Rz(node) * Rx(inclination) * Rz(argument); active; every position and velocity of the planar start (z = 0) is multiplied by R",
+        "node_rad": 0.6108652381980153,
+        "inclination_rad": 0.8726646259971648,
+        "argument_rad": 0.4363323129985824,
+        "matrix": [
+          [
+            0.5865896681479944,
+            -0.6803332611964387,
+            0.43938504177070503
+          ],
+          [
+            0.7423625418144193,
+            0.23480413669527533,
+            -0.6275068715971331
+          ],
+          [
+            0.3237443709670646,
+            0.6942720440148838,
+            0.6427876096865394
+          ]
+        ],
+        "planar_case": "single-p2p5"
+      },
+      "expect": [
+        {
+          "quantity": "position",
+          "at_t": 0.0,
+          "value": [
+            586589.6681479944,
+            742362.5418144193,
+            323744.3709670646
+          ],
+          "tolerance": 0.1,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 0.0,
+          "value": [
+            -61.22999350767948,
+            21.13237230257478,
+            62.48448396133955
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "specific_energy",
+          "at_t": 0.0,
+          "value": -2616.666666666667,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "specific_angular_momentum",
+          "at_t": 0.0,
+          "value": [
+            39544653.75936345,
+            -56475618.443741985,
+            57850884.87178854
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "orbit_normal",
+          "at_t": 0.0,
+          "value": [
+            0.43938504177070503,
+            -0.6275068715971331,
+            0.6427876096865394
+          ],
+          "tolerance": 1e-10,
+          "unit": "1"
+        },
+        {
+          "quantity": "position",
+          "at_t": 1000.0,
+          "value": [
+            522529.64740546595,
+            759748.9014388694,
+            384506.3931927823
+          ],
+          "tolerance": 0.1,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 1000.0,
+          "value": [
+            -66.78620183702715,
+            13.60715402491904,
+            58.93617139860609
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "specific_energy",
+          "at_t": 1000.0,
+          "value": -2616.666666666667,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "specific_angular_momentum",
+          "at_t": 1000.0,
+          "value": [
+            39544653.75936345,
+            -56475618.443741985,
+            57850884.87178854
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "orbit_normal",
+          "at_t": 1000.0,
+          "value": [
+            0.43938504177070503,
+            -0.6275068715971331,
+            0.6427876096865394
+          ],
+          "tolerance": 1e-10,
+          "unit": "1"
+        },
+        {
+          "quantity": "position",
+          "at_t": 5000.0,
+          "value": [
+            220568.5636461321,
+            751450.5622090983,
+            582814.3826286063
+          ],
+          "tolerance": 0.1,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 5000.0,
+          "value": [
+            -82.30609936641085,
+            -18.12624475694569,
+            38.565967036838565
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "specific_energy",
+          "at_t": 5000.0,
+          "value": -2616.666666666667,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "specific_angular_momentum",
+          "at_t": 5000.0,
+          "value": [
+            39544653.75936345,
+            -56475618.443741985,
+            57850884.87178854
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "orbit_normal",
+          "at_t": 5000.0,
+          "value": [
+            0.43938504177070503,
+            -0.6275068715971331,
+            0.6427876096865394
+          ],
+          "tolerance": 1e-10,
+          "unit": "1"
+        },
+        {
+          "quantity": "position",
+          "at_t": 10000.0,
+          "value": [
+            -201842.2377030104,
+            558057.9317677568,
+            682763.0781368056
+          ],
+          "tolerance": 0.1,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 10000.0,
+          "value": [
+            -82.30618061710308,
+            -59.052396963836635,
+            -1.387208243001016
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "specific_energy",
+          "at_t": 10000.0,
+          "value": -2616.666666666667,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "specific_angular_momentum",
+          "at_t": 10000.0,
+          "value": [
+            39544653.75936345,
+            -56475618.443741985,
+            57850884.87178854
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "orbit_normal",
+          "at_t": 10000.0,
+          "value": [
+            0.43938504177070503,
+            -0.6275068715971331,
+            0.6427876096865394
+          ],
+          "tolerance": 1e-10,
+          "unit": "1"
+        },
+        {
+          "quantity": "position",
+          "at_t": 20000.0,
+          "value": [
+            -554610.4713041809,
+            -283744.5892830817,
+            102111.27992779191
+          ],
+          "tolerance": 0.1,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 20000.0,
+          "value": [
+            54.835467599861424,
+            -76.25463244514971,
+            -111.92529069969237
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "specific_energy",
+          "at_t": 20000.0,
+          "value": -2616.666666666667,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "specific_angular_momentum",
+          "at_t": 20000.0,
+          "value": [
+            39544653.75936345,
+            -56475618.443741985,
+            57850884.87178854
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "orbit_normal",
+          "at_t": 20000.0,
+          "value": [
+            0.43938504177070503,
+            -0.6275068715971331,
+            0.6427876096865394
+          ],
+          "tolerance": 1e-10,
+          "unit": "1"
+        }
+      ]
+    },
+    {
+      "id": "binary-crossing-p2",
+      "description": "The planar cases' mutually orbiting binary in the x-y plane (barycentric) with a massless ship that starts 160 km above the plane moving down and crosses the plane at least twice in the run.",
+      "kind": "trajectory",
+      "claim_status": "offline numerical reference; not a game demonstration",
+      "law": {
+        "exponent": 2.0,
+        "normalization": "P4",
+        "GM": 10000000000.0,
+        "r0": 1000000.0
+      },
+      "initial": {
+        "bodies": [
+          {
+            "id": "primary",
+            "GM": 10000000000.0,
+            "r": [
+              -800000.0,
+              0.0,
+              0.0
+            ],
+            "v": [
+              0.0,
+              -11.180339887498949,
+              0.0
+            ]
+          },
+          {
+            "id": "secondary",
+            "GM": 2500000000.0,
+            "r": [
+              3200000.0,
+              0.0,
+              0.0
+            ],
+            "v": [
+              0.0,
+              44.721359549995796,
+              0.0
+            ]
+          }
+        ],
+        "r": [
+          -300000.0,
+          450000.0,
+          160000.0
+        ],
+        "v": [
+          -70.0,
+          50.0,
+          -90.0
+        ]
+      },
+      "source_dynamics": "mutual_binary_massless_ship",
+      "binary_angular_frequency": 1.3975424859373686e-05,
+      "binary_angular_velocity": [
+        0.0,
+        0.0,
+        1.3975424859373686e-05
+      ],
+      "plane_crossings": [
+        {
+          "t": 1720.9503680775704,
+          "direction": "descending"
+        },
+        {
+          "t": 18153.87747396988,
+          "direction": "ascending"
+        }
+      ],
+      "expect": [
+        {
+          "quantity": "position",
+          "at_t": 0.0,
+          "value": [
+            -300000.0,
+            450000.0,
+            160000.0
+          ],
+          "tolerance": 1.0,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 0.0,
+          "value": [
+            -70.0,
+            50.0,
+            -90.0
+          ],
+          "tolerance": 0.0002,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 0.0,
+          "value": [
+            -800000.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 0.0,
+          "value": [
+            0.0,
+            -11.180339887498949,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 0.0,
+          "value": [
+            3200000.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "secondary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 0.0,
+          "value": [
+            0.0,
+            44.721359549995796,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "secondary"
+        },
+        {
+          "quantity": "binary_specific_energy",
+          "at_t": 0.0,
+          "value": -249.99999999999997,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "binary_specific_angular_momentum",
+          "at_t": 0.0,
+          "value": [
+            0.0,
+            0.0,
+            35777087.63999664
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "binary_barycenter",
+          "at_t": 0.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m"
+        },
+        {
+          "quantity": "binary_barycentric_velocity",
+          "at_t": 0.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-10,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "ship_jacobi_constant",
+          "at_t": 0.0,
+          "value": 15301.460320789192,
+          "tolerance": 0.02,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "position",
+          "at_t": 1000.0,
+          "value": [
+            -377421.90808831423,
+            492550.1862485102,
+            67954.46246629207
+          ],
+          "tolerance": 1.0,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 1000.0,
+          "value": [
+            -84.7639881693219,
+            34.46087686049017,
+            -93.67604111679172
+          ],
+          "tolerance": 0.0002,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 1000.0,
+          "value": [
+            -799921.8762715573,
+            -11179.975947697354,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 1000.0,
+          "value": [
+            0.1562449137866495,
+            -11.179248075202365,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 1000.0,
+          "value": [
+            3199687.505086229,
+            44719.903790789416,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "secondary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 1000.0,
+          "value": [
+            -0.624979655146598,
+            44.71699230080946,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "secondary"
+        },
+        {
+          "quantity": "binary_specific_energy",
+          "at_t": 1000.0,
+          "value": -249.99999999999997,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "binary_specific_angular_momentum",
+          "at_t": 1000.0,
+          "value": [
+            0.0,
+            0.0,
+            35777087.63999664
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "binary_barycenter",
+          "at_t": 1000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m"
+        },
+        {
+          "quantity": "binary_barycentric_velocity",
+          "at_t": 1000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-10,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "ship_jacobi_constant",
+          "at_t": 1000.0,
+          "value": 15301.460320789192,
+          "tolerance": 0.02,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "position",
+          "at_t": 5000.0,
+          "value": [
+            -806761.3710315989,
+            455040.7794523515,
+            -285594.5091672976
+          ],
+          "tolerance": 1.0,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 5000.0,
+          "value": [
+            -119.76148719360911,
+            -59.07825141607418,
+            -71.6415175296359
+          ],
+          "tolerance": 0.0002,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 5000.0,
+          "value": [
+            -798047.6695992579,
+            -55856.21762340931,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 5000.0,
+          "value": [
+            0.780614372324781,
+            -11.15305524068271,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 5000.0,
+          "value": [
+            3192190.6783970315,
+            223424.87049363725,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "secondary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 5000.0,
+          "value": [
+            -3.122457489299124,
+            44.61222096273084,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "secondary"
+        },
+        {
+          "quantity": "binary_specific_energy",
+          "at_t": 5000.0,
+          "value": -249.99999999999997,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "binary_specific_angular_momentum",
+          "at_t": 5000.0,
+          "value": [
+            0.0,
+            0.0,
+            35777087.63999664
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "binary_barycenter",
+          "at_t": 5000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m"
+        },
+        {
+          "quantity": "binary_barycentric_velocity",
+          "at_t": 5000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-10,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "ship_jacobi_constant",
+          "at_t": 5000.0,
+          "value": 15301.460320789192,
+          "tolerance": 0.02,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "position",
+          "at_t": 10000.0,
+          "value": [
+            -1290298.3501966137,
+            -74991.84910866912,
+            -423685.84071325447
+          ],
+          "tolerance": 1.0,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 10000.0,
+          "value": [
+            -58.83964414064359,
+            -131.20844668466071,
+            16.60292564495927
+          ],
+          "tolerance": 0.0002,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 10000.0,
+          "value": [
+            -792200.2073820157,
+            -111439.810767477,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 10000.0,
+          "value": [
+            1.5574187017236987,
+            -11.07133447184762,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 10000.0,
+          "value": [
+            3168800.8295280626,
+            445759.243069908,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "secondary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 10000.0,
+          "value": [
+            -6.229674806894795,
+            44.28533788739048,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "secondary"
+        },
+        {
+          "quantity": "binary_specific_energy",
+          "at_t": 10000.0,
+          "value": -249.99999999999997,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "binary_specific_angular_momentum",
+          "at_t": 10000.0,
+          "value": [
+            0.0,
+            0.0,
+            35777087.63999664
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "binary_barycenter",
+          "at_t": 10000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m"
+        },
+        {
+          "quantity": "binary_barycentric_velocity",
+          "at_t": 10000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-10,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "ship_jacobi_constant",
+          "at_t": 10000.0,
+          "value": 15301.460320789192,
+          "tolerance": 0.02,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "position",
+          "at_t": 20000.0,
+          "value": [
+            -1191815.3591534959,
+            -1069722.7497473836,
+            122254.55474717422
+          ],
+          "tolerance": 1.0,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 20000.0,
+          "value": [
+            54.926448322325,
+            -52.87448362544096,
+            65.32726574097187
+          ],
+          "tolerance": 0.0002,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 20000.0,
+          "value": [
+            -768952.921440272,
+            -220706.60300151972,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 20000.0,
+          "value": [
+            3.0844685462153563,
+            -10.746443773984412,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 20000.0,
+          "value": [
+            3075811.685761088,
+            882826.4120060789,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "secondary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 20000.0,
+          "value": [
+            -12.337874184861425,
+            42.98577509593765,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "secondary"
+        },
+        {
+          "quantity": "binary_specific_energy",
+          "at_t": 20000.0,
+          "value": -249.99999999999997,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "binary_specific_angular_momentum",
+          "at_t": 20000.0,
+          "value": [
+            0.0,
+            0.0,
+            35777087.63999664
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "binary_barycenter",
+          "at_t": 20000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m"
+        },
+        {
+          "quantity": "binary_barycentric_velocity",
+          "at_t": 20000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-10,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "ship_jacobi_constant",
+          "at_t": 20000.0,
+          "value": 15301.460320789192,
+          "tolerance": 0.02,
+          "unit": "m^2 s^-2"
+        }
+      ]
+    },
+    {
+      "id": "binary-crossing-p2p5",
+      "description": "The planar cases' mutually orbiting binary in the x-y plane (barycentric) with a massless ship that starts 160 km above the plane moving down and crosses the plane at least twice in the run.",
+      "kind": "trajectory",
+      "claim_status": "offline numerical reference; not a game demonstration",
+      "law": {
+        "exponent": 2.5,
+        "normalization": "P4",
+        "GM": 10000000000.0,
+        "r0": 1000000.0
+      },
+      "initial": {
+        "bodies": [
+          {
+            "id": "primary",
+            "GM": 10000000000.0,
+            "r": [
+              -800000.0,
+              0.0,
+              0.0
+            ],
+            "v": [
+              0.0,
+              -7.905694150420948,
+              0.0
+            ]
+          },
+          {
+            "id": "secondary",
+            "GM": 2500000000.0,
+            "r": [
+              3200000.0,
+              0.0,
+              0.0
+            ],
+            "v": [
+              0.0,
+              31.622776601683793,
+              0.0
+            ]
+          }
+        ],
+        "r": [
+          -300000.0,
+          450000.0,
+          160000.0
+        ],
+        "v": [
+          -70.0,
+          50.0,
+          -90.0
+        ]
+      },
+      "source_dynamics": "mutual_binary_massless_ship",
+      "binary_angular_frequency": 9.882117688026186e-06,
+      "binary_angular_velocity": [
+        0.0,
+        0.0,
+        9.882117688026186e-06
+      ],
+      "plane_crossings": [
+        {
+          "t": 1709.041708554194,
+          "direction": "descending"
+        },
+        {
+          "t": 9563.306699348423,
+          "direction": "ascending"
+        }
+      ],
+      "expect": [
+        {
+          "quantity": "position",
+          "at_t": 0.0,
+          "value": [
+            -300000.0,
+            450000.0,
+            160000.0
+          ],
+          "tolerance": 1.0,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 0.0,
+          "value": [
+            -70.0,
+            50.0,
+            -90.0
+          ],
+          "tolerance": 0.0002,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 0.0,
+          "value": [
+            -800000.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 0.0,
+          "value": [
+            0.0,
+            -7.905694150420948,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 0.0,
+          "value": [
+            3200000.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "secondary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 0.0,
+          "value": [
+            0.0,
+            31.622776601683793,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "secondary"
+        },
+        {
+          "quantity": "binary_specific_energy",
+          "at_t": 0.0,
+          "value": -41.666666666666686,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "binary_specific_angular_momentum",
+          "at_t": 0.0,
+          "value": [
+            0.0,
+            0.0,
+            25298221.281347033
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "binary_barycenter",
+          "at_t": 0.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m"
+        },
+        {
+          "quantity": "binary_barycentric_velocity",
+          "at_t": 0.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-10,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "ship_jacobi_constant",
+          "at_t": 0.0,
+          "value": 8518.126374698588,
+          "tolerance": 0.02,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "position",
+          "at_t": 1000.0,
+          "value": [
+            -379109.1911028356,
+            490947.8449964404,
+            67514.11201816522
+          ],
+          "tolerance": 1.0,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 1000.0,
+          "value": [
+            -88.25461156434055,
+            30.991136884623867,
+            -94.4944333057393
+          ],
+          "tolerance": 0.0002,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 1000.0,
+          "value": [
+            -799960.9378178904,
+            -7905.56547764184,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 1000.0,
+          "value": [
+            0.07812372844045354,
+            -7.905308133340192,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 1000.0,
+          "value": [
+            3199843.7512715617,
+            31622.26191056736,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "secondary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 1000.0,
+          "value": [
+            -0.31249491376181415,
+            31.621232533360768,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "secondary"
+        },
+        {
+          "quantity": "binary_specific_energy",
+          "at_t": 1000.0,
+          "value": -41.666666666666686,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "binary_specific_angular_momentum",
+          "at_t": 1000.0,
+          "value": [
+            0.0,
+            0.0,
+            25298221.281347033
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "binary_barycenter",
+          "at_t": 1000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m"
+        },
+        {
+          "quantity": "binary_barycentric_velocity",
+          "at_t": 1000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-10,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "ship_jacobi_constant",
+          "at_t": 1000.0,
+          "value": 8518.126374698588,
+          "tolerance": 0.02,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "position",
+          "at_t": 5000.0,
+          "value": [
+            -854096.6947949416,
+            366666.5970387512,
+            -272667.14589898795
+          ],
+          "tolerance": 1.0,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 5000.0,
+          "value": [
+            -134.17568900179432,
+            -112.25123030260966,
+            -52.4660940231899
+          ],
+          "tolerance": 0.0002,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 5000.0,
+          "value": [
+            -799023.6361659811,
+            -39512.3885394665,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 5000.0,
+          "value": [
+            0.39046607368202507,
+            -7.896045608106844,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 5000.0,
+          "value": [
+            3196094.5446639243,
+            158049.554157866,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "secondary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 5000.0,
+          "value": [
+            -1.5618642947281003,
+            31.584182432427376,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "secondary"
+        },
+        {
+          "quantity": "binary_specific_energy",
+          "at_t": 5000.0,
+          "value": -41.666666666666686,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "binary_specific_angular_momentum",
+          "at_t": 5000.0,
+          "value": [
+            0.0,
+            0.0,
+            25298221.281347033
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "binary_barycenter",
+          "at_t": 5000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m"
+        },
+        {
+          "quantity": "binary_barycentric_velocity",
+          "at_t": 5000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-10,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "ship_jacobi_constant",
+          "at_t": 5000.0,
+          "value": 8518.126374698588,
+          "tolerance": 0.02,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "position",
+          "at_t": 10000.0,
+          "value": [
+            -957606.9485057279,
+            -435745.6751582451,
+            66695.9717018121
+          ],
+          "tolerance": 1.0,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 10000.0,
+          "value": [
+            144.02862417426465,
+            -65.3898708444323,
+            150.22364812282714
+          ],
+          "tolerance": 0.0002,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 10000.0,
+          "value": [
+            -796096.9278797648,
+            -78928.33091101889,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 10000.0,
+          "value": [
+            0.7799790549821637,
+            -7.867123532383939,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 10000.0,
+          "value": [
+            3184387.7115190593,
+            315713.32364407554,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "secondary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 10000.0,
+          "value": [
+            -3.1199162199286548,
+            31.468494129535756,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "secondary"
+        },
+        {
+          "quantity": "binary_specific_energy",
+          "at_t": 10000.0,
+          "value": -41.666666666666686,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "binary_specific_angular_momentum",
+          "at_t": 10000.0,
+          "value": [
+            0.0,
+            0.0,
+            25298221.281347033
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "binary_barycenter",
+          "at_t": 10000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m"
+        },
+        {
+          "quantity": "binary_barycentric_velocity",
+          "at_t": 10000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-10,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "ship_jacobi_constant",
+          "at_t": 10000.0,
+          "value": 8518.126374698588,
+          "tolerance": 0.02,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "position",
+          "at_t": 20000.0,
+          "value": [
+            -337625.73145145644,
+            454277.1475839946,
+            25195.996523911745
+          ],
+          "tolerance": 1.0,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 20000.0,
+          "value": [
+            -45.38658942563311,
+            63.0669720600904,
+            -78.50239477269403
+          ],
+          "tolerance": 0.0002,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 20000.0,
+          "value": [
+            -784425.7964490007,
+            -157086.50440234938,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 20000.0,
+          "value": [
+            1.5523473237046599,
+            -7.751788038032711,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 20000.0,
+          "value": [
+            3137703.185796003,
+            628346.0176093975,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "secondary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 20000.0,
+          "value": [
+            -6.2093892948186395,
+            31.007152152130843,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "secondary"
+        },
+        {
+          "quantity": "binary_specific_energy",
+          "at_t": 20000.0,
+          "value": -41.666666666666686,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "binary_specific_angular_momentum",
+          "at_t": 20000.0,
+          "value": [
+            0.0,
+            0.0,
+            25298221.281347033
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "binary_barycenter",
+          "at_t": 20000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m"
+        },
+        {
+          "quantity": "binary_barycentric_velocity",
+          "at_t": 20000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-10,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "ship_jacobi_constant",
+          "at_t": 20000.0,
+          "value": 8518.126374698588,
+          "tolerance": 0.02,
+          "unit": "m^2 s^-2"
+        }
+      ]
+    },
+    {
+      "id": "binary-inclined-p2",
+      "description": "The planar binary case (both bodies and the ship) rotated as one, so the binary's orbit plane is inclined 40 deg to the x-y plane with node 110 deg and every body moves in z. The ship stays in the binary's plane.",
+      "kind": "trajectory",
+      "claim_status": "offline numerical reference; not a game demonstration",
+      "law": {
+        "exponent": 2.0,
+        "normalization": "P4",
+        "GM": 10000000000.0,
+        "r0": 1000000.0
+      },
+      "initial": {
+        "bodies": [
+          {
+            "id": "primary",
+            "GM": 10000000000.0,
+            "r": [
+              -106176.30547392336,
+              -736023.733025303,
+              294950.26119568985
+            ],
+            "v": [
+              8.785938974225143,
+              -3.626517147490133,
+              -5.886904935545645
+            ]
+          },
+          {
+            "id": "secondary",
+            "GM": 2500000000.0,
+            "r": [
+              424705.22189569345,
+              2944094.932101212,
+              -1179801.0447827594
+            ],
+            "v": [
+              -35.14375589690057,
+              14.506068589960533,
+              23.54761974218258
+            ]
+          }
+        ],
+        "r": [
+          -1571676.5434025752,
+          648731.1090685255,
+          1053081.5690367264
+        ],
+        "v": [
+          5.972417182908189,
+          41.40133498267329,
+          -16.590952192257554
+        ]
+      },
+      "source_dynamics": "mutual_binary_massless_ship",
+      "binary_angular_frequency": 1.3975424859373686e-05,
+      "binary_angular_velocity": [
+        8.44147488516914e-06,
+        3.0724455915072752e-06,
+        1.0705796553750036e-05
+      ],
+      "rotation": {
+        "sequence": "R = Rz(node) * Rx(inclination) * Rz(argument); active; every position and velocity of the planar start (z = 0) is multiplied by R",
+        "node_rad": 1.9198621771937625,
+        "inclination_rad": 0.6981317007977318,
+        "argument_rad": -0.6108652381980153,
+        "matrix": [
+          [
+            0.1327203818424042,
+            -0.7858382717012876,
+            0.6040227735550536
+          ],
+          [
+            0.9200296662816287,
+            0.32436555453426275,
+            0.21984631039295416
+          ],
+          [
+            -0.3686878264946123,
+            0.5265407845183632,
+            0.766044443118978
+          ]
+        ],
+        "planar_case": "binary-p2"
+      },
+      "expect": [
+        {
+          "quantity": "position",
+          "at_t": 0.0,
+          "value": [
+            -1571676.5434025752,
+            648731.1090685255,
+            1053081.5690367264
+          ],
+          "tolerance": 0.1,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 0.0,
+          "value": [
+            5.972417182908189,
+            41.40133498267329,
+            -16.590952192257554
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 0.0,
+          "value": [
+            -106176.30547392336,
+            -736023.733025303,
+            294950.26119568985
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 0.0,
+          "value": [
+            8.785938974225143,
+            -3.626517147490133,
+            -5.886904935545645
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 0.0,
+          "value": [
+            424705.22189569345,
+            2944094.932101212,
+            -1179801.0447827594
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "secondary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 0.0,
+          "value": [
+            -35.14375589690057,
+            14.506068589960533,
+            23.54761974218258
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "secondary"
+        },
+        {
+          "quantity": "binary_specific_energy",
+          "at_t": 0.0,
+          "value": -249.99999999999994,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "binary_specific_angular_momentum",
+          "at_t": 0.0,
+          "value": [
+            21610175.706032995,
+            7865460.714258622,
+            27406839.1776001
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "binary_barycenter",
+          "at_t": 0.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m"
+        },
+        {
+          "quantity": "binary_barycentric_velocity",
+          "at_t": 0.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-10,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "ship_jacobi_constant",
+          "at_t": 0.0,
+          "value": 6069.187784173282,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "position",
+          "at_t": 1000.0,
+          "value": [
+            -1564932.6906065193,
+            689494.9546840035,
+            1036065.2955771367
+          ],
+          "tolerance": 0.1,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 1000.0,
+          "value": [
+            7.507333104675188,
+            40.128183285040784,
+            -17.435846342666466
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 1000.0,
+          "value": [
+            -97380.28388645306,
+            -739578.2559754498,
+            289034.74462165573
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 1000.0,
+          "value": [
+            8.805817870955673,
+            -3.4824130452997717,
+            -5.943935649507293
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 1000.0,
+          "value": [
+            389521.13554581226,
+            2958313.023901799,
+            -1156138.978486623
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "secondary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 1000.0,
+          "value": [
+            -35.22327148382269,
+            13.929652181199087,
+            23.775742598029172
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "secondary"
+        },
+        {
+          "quantity": "binary_specific_energy",
+          "at_t": 1000.0,
+          "value": -249.99999999999994,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "binary_specific_angular_momentum",
+          "at_t": 1000.0,
+          "value": [
+            21610175.706032995,
+            7865460.714258622,
+            27406839.1776001
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "binary_barycenter",
+          "at_t": 1000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m"
+        },
+        {
+          "quantity": "binary_barycentric_velocity",
+          "at_t": 1000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-10,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "ship_jacobi_constant",
+          "at_t": 1000.0,
+          "value": 6069.187784173282,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "position",
+          "at_t": 5000.0,
+          "value": [
+            -1523260.637612399,
+            839974.4006935828,
+            960021.1175301768
+          ],
+          "tolerance": 0.1,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 5000.0,
+          "value": [
+            13.225599265544593,
+            35.13726717172065,
+            -20.51233689695424
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 5000.0,
+          "value": [
+            -62023.2379167034,
+            -752345.3641418403,
+            264819.8840959826
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 5000.0,
+          "value": [
+            8.868101092093703,
+            -2.8994785674307,
+            -6.160341472468594
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 5000.0,
+          "value": [
+            248092.9516668136,
+            3009381.456567361,
+            -1059279.5363839304
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "secondary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 5000.0,
+          "value": [
+            -35.47240436837481,
+            11.5979142697228,
+            24.641365889874375
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "secondary"
+        },
+        {
+          "quantity": "binary_specific_energy",
+          "at_t": 5000.0,
+          "value": -249.99999999999994,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "binary_specific_angular_momentum",
+          "at_t": 5000.0,
+          "value": [
+            21610175.706032995,
+            7865460.714258622,
+            27406839.1776001
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "binary_barycenter",
+          "at_t": 5000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m"
+        },
+        {
+          "quantity": "binary_barycentric_velocity",
+          "at_t": 5000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-10,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "ship_jacobi_constant",
+          "at_t": 5000.0,
+          "value": 6069.187784173282,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "position",
+          "at_t": 10000.0,
+          "value": [
+            -1440793.8040804325,
+            1000466.9257442144,
+            848936.7858589721
+          ],
+          "tolerance": 0.1,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 10000.0,
+          "value": [
+            19.649477677593904,
+            29.091871007945425,
+            -23.842575549387785
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 10000.0,
+          "value": [
+            -17567.445727140344,
+            -764994.9284426983,
+            233396.9672201713
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 10000.0,
+          "value": [
+            8.90697955156488,
+            -2.1582881369875286,
+            -6.403710454552412
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 10000.0,
+          "value": [
+            70269.78290856138,
+            3059979.7137707933,
+            -933587.8688806852
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "secondary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 10000.0,
+          "value": [
+            -35.62791820625952,
+            8.633152547950115,
+            25.614841818209648
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "secondary"
+        },
+        {
+          "quantity": "binary_specific_energy",
+          "at_t": 10000.0,
+          "value": -249.99999999999994,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "binary_specific_angular_momentum",
+          "at_t": 10000.0,
+          "value": [
+            21610175.706032995,
+            7865460.714258622,
+            27406839.1776001
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "binary_barycenter",
+          "at_t": 10000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m"
+        },
+        {
+          "quantity": "binary_barycentric_velocity",
+          "at_t": 10000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-10,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "ship_jacobi_constant",
+          "at_t": 10000.0,
+          "value": 6069.187784173282,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "position",
+          "at_t": 20000.0,
+          "value": [
+            -1186309.2655974524,
+            1233038.5354288914,
+            581531.3253890007
+          ],
+          "tolerance": 0.1,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 20000.0,
+          "value": [
+            30.976531522085974,
+            17.548339030012222,
+            -29.46104273333074
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 20000.0,
+          "value": [
+            71383.97010339116,
+            -779049.1193709379,
+            167292.55338969338
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 20000.0,
+          "value": [
+            8.85433864551755,
+            -0.6479736267890271,
+            -6.79564693973136
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 20000.0,
+          "value": [
+            -285535.8804135646,
+            3116196.4774837517,
+            -669170.2135587735
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "secondary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 20000.0,
+          "value": [
+            -35.4173545820702,
+            2.5918945071561086,
+            27.18258775892544
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "secondary"
+        },
+        {
+          "quantity": "binary_specific_energy",
+          "at_t": 20000.0,
+          "value": -249.99999999999994,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "binary_specific_angular_momentum",
+          "at_t": 20000.0,
+          "value": [
+            21610175.706032995,
+            7865460.714258622,
+            27406839.1776001
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "binary_barycenter",
+          "at_t": 20000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m"
+        },
+        {
+          "quantity": "binary_barycentric_velocity",
+          "at_t": 20000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-10,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "ship_jacobi_constant",
+          "at_t": 20000.0,
+          "value": 6069.187784173282,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        }
+      ]
+    },
+    {
+      "id": "binary-inclined-p2p5",
+      "description": "The planar binary case (both bodies and the ship) rotated as one, so the binary's orbit plane is inclined 40 deg to the x-y plane with node 110 deg and every body moves in z. The ship stays in the binary's plane.",
+      "kind": "trajectory",
+      "claim_status": "offline numerical reference; not a game demonstration",
+      "law": {
+        "exponent": 2.5,
+        "normalization": "P4",
+        "GM": 10000000000.0,
+        "r0": 1000000.0
+      },
+      "initial": {
+        "bodies": [
+          {
+            "id": "primary",
+            "GM": 10000000000.0,
+            "r": [
+              -106176.30547392336,
+              -736023.733025303,
+              294950.26119568985
+            ],
+            "v": [
+              6.212597027765777,
+              -2.5643348670795683,
+              -4.16267040012488
+            ]
+          },
+          {
+            "id": "secondary",
+            "GM": 2500000000.0,
+            "r": [
+              424705.22189569345,
+              2944094.932101212,
+              -1179801.0447827594
+            ],
+            "v": [
+              -24.850388111063108,
+              10.257339468318273,
+              16.65068160049952
+            ]
+          }
+        ],
+        "r": [
+          -1571676.5434025752,
+          648731.1090685255,
+          1053081.5690367264
+        ],
+        "v": [
+          5.972417182908189,
+          41.40133498267329,
+          -16.590952192257554
+        ]
+      },
+      "source_dynamics": "mutual_binary_massless_ship",
+      "binary_angular_frequency": 9.882117688026186e-06,
+      "binary_angular_velocity": [
+        5.969024134519031e-06,
+        2.1725471125815073e-06,
+        7.570141341160222e-06
+      ],
+      "rotation": {
+        "sequence": "R = Rz(node) * Rx(inclination) * Rz(argument); active; every position and velocity of the planar start (z = 0) is multiplied by R",
+        "node_rad": 1.9198621771937625,
+        "inclination_rad": 0.6981317007977318,
+        "argument_rad": -0.6108652381980153,
+        "matrix": [
+          [
+            0.1327203818424042,
+            -0.7858382717012876,
+            0.6040227735550536
+          ],
+          [
+            0.9200296662816287,
+            0.32436555453426275,
+            0.21984631039295416
+          ],
+          [
+            -0.3686878264946123,
+            0.5265407845183632,
+            0.766044443118978
+          ]
+        ],
+        "planar_case": "binary-p2p5"
+      },
+      "expect": [
+        {
+          "quantity": "position",
+          "at_t": 0.0,
+          "value": [
+            -1571676.5434025752,
+            648731.1090685255,
+            1053081.5690367264
+          ],
+          "tolerance": 0.1,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 0.0,
+          "value": [
+            5.972417182908189,
+            41.40133498267329,
+            -16.590952192257554
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 0.0,
+          "value": [
+            -106176.30547392336,
+            -736023.733025303,
+            294950.26119568985
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 0.0,
+          "value": [
+            6.212597027765777,
+            -2.5643348670795683,
+            -4.16267040012488
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 0.0,
+          "value": [
+            424705.22189569345,
+            2944094.932101212,
+            -1179801.0447827594
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "secondary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 0.0,
+          "value": [
+            -24.850388111063108,
+            10.257339468318273,
+            16.65068160049952
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "secondary"
+        },
+        {
+          "quantity": "binary_specific_energy",
+          "at_t": 0.0,
+          "value": -41.666666666666686,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "binary_specific_angular_momentum",
+          "at_t": 0.0,
+          "value": [
+            15280701.784368716,
+            5561720.608208656,
+            19379561.83337017
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "binary_barycenter",
+          "at_t": 0.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m"
+        },
+        {
+          "quantity": "binary_barycentric_velocity",
+          "at_t": 0.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-10,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "ship_jacobi_constant",
+          "at_t": 0.0,
+          "value": 868.3941141622154,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "position",
+          "at_t": 1000.0,
+          "value": [
+            -1565186.79271545,
+            689689.4343242538,
+            1036209.8404925674
+          ],
+          "tolerance": 0.1,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 1000.0,
+          "value": [
+            7.001101973760102,
+            40.51681478471309,
+            -17.14821821295549
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 1000.0,
+          "value": [
+            -99958.62521442675,
+            -738552.0877889948,
+            290773.256796011
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 1000.0,
+          "value": [
+            6.2226622918397565,
+            -2.4923335086293608,
+            -4.191270414024706
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 1000.0,
+          "value": [
+            399834.500857707,
+            2954208.351155979,
+            -1163093.027184044
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "secondary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 1000.0,
+          "value": [
+            -24.890649167359026,
+            9.969334034517443,
+            16.765081656098825
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "secondary"
+        },
+        {
+          "quantity": "binary_specific_energy",
+          "at_t": 1000.0,
+          "value": -41.666666666666686,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "binary_specific_angular_momentum",
+          "at_t": 1000.0,
+          "value": [
+            15280701.784368716,
+            5561720.608208656,
+            19379561.83337017
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "binary_barycenter",
+          "at_t": 1000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m"
+        },
+        {
+          "quantity": "binary_barycentric_velocity",
+          "at_t": 1000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-10,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "ship_jacobi_constant",
+          "at_t": 1000.0,
+          "value": 868.3941141622154,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "position",
+          "at_t": 5000.0,
+          "value": [
+            -1529440.1283902663,
+            844812.6565827007,
+            963505.0935276783
+          ],
+          "tolerance": 0.1,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 5000.0,
+          "value": [
+            10.791579849090228,
+            37.0688041573192,
+            -19.147452798474006
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 5000.0,
+          "value": [
+            -74996.37497241114,
+            -747941.9071524986,
+            273785.40367609245
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 5000.0,
+          "value": [
+            6.256837640344805,
+            -2.201964840837434,
+            -4.301550137111064
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 5000.0,
+          "value": [
+            299985.49988964456,
+            2991767.6286099944,
+            -1095141.6147043698
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "secondary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 5000.0,
+          "value": [
+            -25.02735056137922,
+            8.807859363349737,
+            17.206200548444254
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "secondary"
+        },
+        {
+          "quantity": "binary_specific_energy",
+          "at_t": 5000.0,
+          "value": -41.666666666666686,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "binary_specific_angular_momentum",
+          "at_t": 5000.0,
+          "value": [
+            15280701.784368716,
+            5561720.608208656,
+            19379561.83337017
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "binary_barycenter",
+          "at_t": 5000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m"
+        },
+        {
+          "quantity": "binary_barycentric_velocity",
+          "at_t": 5000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-10,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "ship_jacobi_constant",
+          "at_t": 5000.0,
+          "value": 868.3941141622154,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "position",
+          "at_t": 10000.0,
+          "value": [
+            -1464866.6163162289,
+            1019793.1946727487,
+            862371.6694206008
+          ],
+          "tolerance": 0.1,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 10000.0,
+          "value": [
+            14.944397623974476,
+            32.96081270362798,
+            -21.24298362655311
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 10000.0,
+          "value": [
+            -43633.385100384985,
+            -758034.4227094674,
+            251952.26074041598
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 10000.0,
+          "value": [
+            6.285805877955434,
+            -1.8342200175093624,
+            -4.429930179137013
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 10000.0,
+          "value": [
+            174533.54040153994,
+            3032137.6908378694,
+            -1007809.0429616639
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "secondary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 10000.0,
+          "value": [
+            -25.143223511821738,
+            7.3368800700374495,
+            17.719720716548053
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "secondary"
+        },
+        {
+          "quantity": "binary_specific_energy",
+          "at_t": 10000.0,
+          "value": -41.666666666666686,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "binary_specific_angular_momentum",
+          "at_t": 10000.0,
+          "value": [
+            15280701.784368716,
+            5561720.608208656,
+            19379561.83337017
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "binary_barycenter",
+          "at_t": 10000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m"
+        },
+        {
+          "quantity": "binary_barycentric_velocity",
+          "at_t": 10000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-10,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "ship_jacobi_constant",
+          "at_t": 10000.0,
+          "value": 868.3941141622154,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "position",
+          "at_t": 20000.0,
+          "value": [
+            -1279257.735274421,
+            1311035.7540715467,
+            632436.4550622967
+          ],
+          "tolerance": 0.1,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 20000.0,
+          "value": [
+            21.9469698454377,
+            25.45886340325034,
+            -24.611505184229845
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 20000.0,
+          "value": [
+            19335.295895395244,
+            -772648.4548399934,
+            206495.7906738273
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 20000.0,
+          "value": [
+            6.297679843956452,
+            -1.0862074354073679,
+            -4.653964115707207
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 20000.0,
+          "value": [
+            -77341.18358158098,
+            3090593.8193599735,
+            -825983.1626953091
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "secondary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 20000.0,
+          "value": [
+            -25.190719375825807,
+            4.344829741629471,
+            18.615856462828827
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "secondary"
+        },
+        {
+          "quantity": "binary_specific_energy",
+          "at_t": 20000.0,
+          "value": -41.666666666666686,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "binary_specific_angular_momentum",
+          "at_t": 20000.0,
+          "value": [
+            15280701.784368716,
+            5561720.608208656,
+            19379561.83337017
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "binary_barycenter",
+          "at_t": 20000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m"
+        },
+        {
+          "quantity": "binary_barycentric_velocity",
+          "at_t": 20000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-10,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "ship_jacobi_constant",
+          "at_t": 20000.0,
+          "value": 868.3941141622154,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        }
+      ]
+    },
+    {
+      "id": "nodal-precession-p2",
+      "description": "The binary in the x-y plane with a massless ship started on the unperturbed circular orbit of radius r0 about the primary, inclined 30 deg to the binary plane, node 40 deg. Long enough (2e6 s, about 32 ship orbits) for the secondary to turn the orbit's node by a measurable angle.",
+      "kind": "trajectory",
+      "claim_status": "offline numerical reference; not a game demonstration",
+      "law": {
+        "exponent": 2.0,
+        "normalization": "P4",
+        "GM": 10000000000.0,
+        "r0": 1000000.0
+      },
+      "initial": {
+        "bodies": [
+          {
+            "id": "primary",
+            "GM": 10000000000.0,
+            "r": [
+              -800000.0,
+              0.0,
+              0.0
+            ],
+            "v": [
+              0.0,
+              -11.180339887498949,
+              0.0
+            ]
+          },
+          {
+            "id": "secondary",
+            "GM": 2500000000.0,
+            "r": [
+              3200000.0,
+              0.0,
+              0.0
+            ],
+            "v": [
+              0.0,
+              44.721359549995796,
+              0.0
+            ]
+          }
+        ],
+        "r": [
+          -340987.0324686867,
+          862934.2656592764,
+          211309.1308703497
+        ],
+        "v": [
+          -82.8259088598769,
+          21.78000461050635,
+          45.31538935183249
+        ]
+      },
+      "source_dynamics": "mutual_binary_massless_ship",
+      "binary_angular_frequency": 1.3975424859373686e-05,
+      "binary_angular_velocity": [
+        0.0,
+        0.0,
+        1.3975424859373686e-05
+      ],
+      "orbit_about_primary": {
+        "radius": 1000000.0,
+        "node_rad": 0.6981317007977318,
+        "inclination_rad": 0.5235987755982988,
+        "argument_rad": 0.4363323129985824,
+        "relative_speed": 100.0
+      },
+      "nodal_precession": {
+        "first_order_rate": -2.537183800149723e-07,
+        "second_order_rate": -2.704429802600999e-07,
+        "reference_end_to_end_rate": -2.664337970376348e-07,
+        "reference_least_squares_rate": -2.688388472979516e-07,
+        "end_to_end_over_first_order": 1.0501,
+        "least_squares_over_first_order": 1.0596,
+        "least_squares_over_second_order": 0.9941,
+        "least_squares_sampling_s": 2000.0,
+        "inclination_range_rad": [
+          0.5138345390993843,
+          0.5262933083501314
+        ],
+        "distance_range_m": [
+          982817.372226748,
+          1026990.9972491213
+        ],
+        "unit": "rad s^-1; negative is regression (the node moves against the orbit)",
+        "note": "The osculating node also oscillates at twice the binary's rate relative to the node, so the end-to-end value depends on where the run stops; the least-squares slope over the samples is the steadier measure. The expectation compares the end-to-end value because a consumer can form it from two states."
+      },
+      "expect": [
+        {
+          "quantity": "position",
+          "at_t": 0.0,
+          "value": [
+            -340987.0324686867,
+            862934.2656592764,
+            211309.1308703497
+          ],
+          "tolerance": 5.0,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 0.0,
+          "value": [
+            -82.8259088598769,
+            21.78000461050635,
+            45.31538935183249
+          ],
+          "tolerance": 0.0005,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 0.0,
+          "value": [
+            -800000.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 0.0,
+          "value": [
+            0.0,
+            -11.180339887498949,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 0.0,
+          "value": [
+            3200000.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "secondary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 0.0,
+          "value": [
+            0.0,
+            44.721359549995796,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "secondary"
+        },
+        {
+          "quantity": "binary_specific_energy",
+          "at_t": 0.0,
+          "value": -249.99999999999997,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "binary_specific_angular_momentum",
+          "at_t": 0.0,
+          "value": [
+            0.0,
+            0.0,
+            35777087.63999664
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "binary_barycenter",
+          "at_t": 0.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m"
+        },
+        {
+          "quantity": "binary_barycentric_velocity",
+          "at_t": 0.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-10,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "ship_jacobi_constant",
+          "at_t": 0.0,
+          "value": 13771.758706439503,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "ship_orbit_normal_about_primary",
+          "at_t": 0.0,
+          "value": [
+            0.3213938048432696,
+            -0.38302222155948906,
+            0.8660254037844386
+          ],
+          "tolerance": 1e-07,
+          "unit": "1"
+        },
+        {
+          "quantity": "ship_node_longitude_about_primary",
+          "at_t": 0.0,
+          "value": 0.6981317007977317,
+          "tolerance": 1e-07,
+          "unit": "rad"
+        },
+        {
+          "quantity": "ship_inclination_about_primary",
+          "at_t": 0.0,
+          "value": 0.5235987755982989,
+          "tolerance": 1e-07,
+          "unit": "rad"
+        },
+        {
+          "quantity": "position",
+          "at_t": 20000.0,
+          "value": [
+            -1712016.8181273227,
+            -288263.5196997196,
+            319343.7978634539
+          ],
+          "tolerance": 5.0,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 20000.0,
+          "value": [
+            -3.980252409151791,
+            -103.43144401653097,
+            -38.53537720349343
+          ],
+          "tolerance": 0.0005,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 20000.0,
+          "value": [
+            -768952.9214402714,
+            -220706.6030015196,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 20000.0,
+          "value": [
+            3.0844685462153585,
+            -10.746443773984401,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 20000.0,
+          "value": [
+            3075811.6857610857,
+            882826.4120060784,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "secondary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 20000.0,
+          "value": [
+            -12.337874184861434,
+            42.985775095937605,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "secondary"
+        },
+        {
+          "quantity": "binary_specific_energy",
+          "at_t": 20000.0,
+          "value": -249.99999999999997,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "binary_specific_angular_momentum",
+          "at_t": 20000.0,
+          "value": [
+            0.0,
+            0.0,
+            35777087.63999664
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "binary_barycenter",
+          "at_t": 20000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m"
+        },
+        {
+          "quantity": "binary_barycentric_velocity",
+          "at_t": 20000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-10,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "ship_jacobi_constant",
+          "at_t": 20000.0,
+          "value": 13771.758706439503,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "ship_orbit_normal_about_primary",
+          "at_t": 20000.0,
+          "value": [
+            0.3206788307751544,
+            -0.3843698958555841,
+            0.8656932890190655
+          ],
+          "tolerance": 1e-07,
+          "unit": "1"
+        },
+        {
+          "quantity": "ship_node_longitude_about_primary",
+          "at_t": 20000.0,
+          "value": 0.6953070038002823,
+          "tolerance": 1e-07,
+          "unit": "rad"
+        },
+        {
+          "quantity": "ship_inclination_about_primary",
+          "at_t": 20000.0,
+          "value": 0.5242626235255577,
+          "tolerance": 1e-07,
+          "unit": "rad"
+        },
+        {
+          "quantity": "position",
+          "at_t": 200000.0,
+          "value": [
+            321853.30225684313,
+            485212.98682348337,
+            490532.4914050965
+          ],
+          "tolerance": 5.0,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 200000.0,
+          "value": [
+            -81.28388579125215,
+            -42.252960213793735,
+            5.506798189382363
+          ],
+          "tolerance": 0.0005,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 200000.0,
+          "value": [
+            752451.5922178001,
+            -271692.10766765836,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 200000.0,
+          "value": [
+            3.7970126355942586,
+            10.515830687356015,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 200000.0,
+          "value": [
+            -3009806.3688712004,
+            1086768.4306706334,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "secondary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 200000.0,
+          "value": [
+            -15.188050542377034,
+            -42.06332274942406,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "secondary"
+        },
+        {
+          "quantity": "binary_specific_energy",
+          "at_t": 200000.0,
+          "value": -249.99999999999997,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "binary_specific_angular_momentum",
+          "at_t": 200000.0,
+          "value": [
+            0.0,
+            0.0,
+            35777087.63999664
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "binary_barycenter",
+          "at_t": 200000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m"
+        },
+        {
+          "quantity": "binary_barycentric_velocity",
+          "at_t": 200000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-10,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "ship_jacobi_constant",
+          "at_t": 200000.0,
+          "value": 13771.758706439503,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "ship_orbit_normal_about_primary",
+          "at_t": 200000.0,
+          "value": [
+            0.29989074564343665,
+            -0.3928008839889188,
+            0.8693520611437852
+          ],
+          "tolerance": 1e-07,
+          "unit": "1"
+        },
+        {
+          "quantity": "ship_node_longitude_about_primary",
+          "at_t": 200000.0,
+          "value": 0.652064798461464,
+          "tolerance": 1e-07,
+          "unit": "rad"
+        },
+        {
+          "quantity": "ship_inclination_about_primary",
+          "at_t": 200000.0,
+          "value": 0.516906626244257,
+          "tolerance": 1e-07,
+          "unit": "rad"
+        },
+        {
+          "quantity": "position",
+          "at_t": 1000000.0,
+          "value": [
+            778509.9793837803,
+            -1057113.8480011027,
+            -363743.1264200008
+          ],
+          "tolerance": 5.0,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 1000000.0,
+          "value": [
+            49.051633197549144,
+            82.58756689771634,
+            34.07621753784766
+          ],
+          "tolerance": 0.0005,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 1000000.0,
+          "value": [
+            -128830.23572366382,
+            -789558.5921028293,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 1000000.0,
+          "value": [
+            11.034416776005756,
+            -1.800457278971549,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 1000000.0,
+          "value": [
+            515320.9428946553,
+            3158234.368411317,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "secondary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 1000000.0,
+          "value": [
+            -44.13766710402302,
+            7.201829115886196,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "secondary"
+        },
+        {
+          "quantity": "binary_specific_energy",
+          "at_t": 1000000.0,
+          "value": -249.99999999999997,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "binary_specific_angular_momentum",
+          "at_t": 1000000.0,
+          "value": [
+            0.0,
+            0.0,
+            35777087.63999664
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "binary_barycenter",
+          "at_t": 1000000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m"
+        },
+        {
+          "quantity": "binary_barycentric_velocity",
+          "at_t": 1000000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-10,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "ship_jacobi_constant",
+          "at_t": 1000000.0,
+          "value": 13771.758706439503,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "ship_orbit_normal_about_primary",
+          "at_t": 1000000.0,
+          "value": [
+            0.2158711735147049,
+            -0.4476552363780089,
+            0.8677582761280547
+          ],
+          "tolerance": 1e-07,
+          "unit": "1"
+        },
+        {
+          "quantity": "ship_node_longitude_about_primary",
+          "at_t": 1000000.0,
+          "value": 0.44932789654060373,
+          "tolerance": 1e-07,
+          "unit": "rad"
+        },
+        {
+          "quantity": "ship_inclination_about_primary",
+          "at_t": 1000000.0,
+          "value": 0.5201225587973873,
+          "tolerance": 1e-07,
+          "unit": "rad"
+        },
+        {
+          "quantity": "position",
+          "at_t": 2000000.0,
+          "value": [
+            496320.75520222797,
+            -1120754.4394819308,
+            -469920.91049627383
+          ],
+          "tolerance": 5.0,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 2000000.0,
+          "value": [
+            97.77689088021715,
+            -7.692786510925412,
+            -19.42462918863356
+          ],
+          "tolerance": 0.0005,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 2000000.0,
+          "value": [
+            758506.925908449,
+            -254297.54884571908,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 2000000.0,
+          "value": [
+            3.5539162858162907,
+            10.6004565483476,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 2000000.0,
+          "value": [
+            -3034027.703633796,
+            1017190.1953828763,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "secondary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 2000000.0,
+          "value": [
+            -14.215665143265163,
+            -42.4018261933904,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "secondary"
+        },
+        {
+          "quantity": "binary_specific_energy",
+          "at_t": 2000000.0,
+          "value": -249.99999999999997,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "binary_specific_angular_momentum",
+          "at_t": 2000000.0,
+          "value": [
+            0.0,
+            0.0,
+            35777087.63999664
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "binary_barycenter",
+          "at_t": 2000000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m"
+        },
+        {
+          "quantity": "binary_barycentric_velocity",
+          "at_t": 2000000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-10,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "ship_jacobi_constant",
+          "at_t": 2000000.0,
+          "value": 13771.758706439503,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "ship_orbit_normal_about_primary",
+          "at_t": 2000000.0,
+          "value": [
+            0.08243931658508831,
+            -0.4942840543980761,
+            0.8653825932203533
+          ],
+          "tolerance": 1e-07,
+          "unit": "1"
+        },
+        {
+          "quantity": "ship_node_longitude_about_primary",
+          "at_t": 2000000.0,
+          "value": 0.16526410672246217,
+          "tolerance": 1e-07,
+          "unit": "rad"
+        },
+        {
+          "quantity": "ship_inclination_about_primary",
+          "at_t": 2000000.0,
+          "value": 0.524882968871796,
+          "tolerance": 1e-07,
+          "unit": "rad"
+        },
+        {
+          "quantity": "ship_mean_nodal_rate_about_primary",
+          "at_t": 2000000.0,
+          "value": -2.537183800149723e-07,
+          "tolerance": 2.537183800149723e-08,
+          "unit": "rad s^-1",
+          "basis": "first-order secular formula -(p+1)*K2*cos(i)/(4*Omega*D^(p+1)); the tolerance is 10 % of it, see nodal_precession"
+        }
+      ]
+    },
+    {
+      "id": "nodal-precession-p2p5",
+      "description": "The binary in the x-y plane with a massless ship started on the unperturbed circular orbit of radius r0 about the primary, inclined 30 deg to the binary plane, node 40 deg. Long enough (2e6 s, about 32 ship orbits) for the secondary to turn the orbit's node by a measurable angle.",
+      "kind": "trajectory",
+      "claim_status": "offline numerical reference; not a game demonstration",
+      "law": {
+        "exponent": 2.5,
+        "normalization": "P4",
+        "GM": 10000000000.0,
+        "r0": 1000000.0
+      },
+      "initial": {
+        "bodies": [
+          {
+            "id": "primary",
+            "GM": 10000000000.0,
+            "r": [
+              -800000.0,
+              0.0,
+              0.0
+            ],
+            "v": [
+              0.0,
+              -7.905694150420948,
+              0.0
+            ]
+          },
+          {
+            "id": "secondary",
+            "GM": 2500000000.0,
+            "r": [
+              3200000.0,
+              0.0,
+              0.0
+            ],
+            "v": [
+              0.0,
+              31.622776601683793,
+              0.0
+            ]
+          }
+        ],
+        "r": [
+          -340987.0324686867,
+          862934.2656592764,
+          211309.1308703497
+        ],
+        "v": [
+          -82.8259088598769,
+          25.05465034758435,
+          45.31538935183249
+        ]
+      },
+      "source_dynamics": "mutual_binary_massless_ship",
+      "binary_angular_frequency": 9.882117688026186e-06,
+      "binary_angular_velocity": [
+        0.0,
+        0.0,
+        9.882117688026186e-06
+      ],
+      "orbit_about_primary": {
+        "radius": 1000000.0,
+        "node_rad": 0.6981317007977318,
+        "inclination_rad": 0.5235987755982988,
+        "argument_rad": 0.4363323129985824,
+        "relative_speed": 100.0
+      },
+      "nodal_precession": {
+        "first_order_rate": -1.4800238834206717e-07,
+        "second_order_rate": -1.6131754461747042e-07,
+        "reference_end_to_end_rate": -1.5043432153320452e-07,
+        "reference_least_squares_rate": -1.586604339540165e-07,
+        "end_to_end_over_first_order": 1.0164,
+        "least_squares_over_first_order": 1.072,
+        "least_squares_over_second_order": 0.9835,
+        "least_squares_sampling_s": 2000.0,
+        "inclination_range_rad": [
+          0.5162445172605854,
+          0.5301220671561776
+        ],
+        "distance_range_m": [
+          955856.0975343214,
+          1061868.111935112
+        ],
+        "unit": "rad s^-1; negative is regression (the node moves against the orbit)",
+        "note": "The osculating node also oscillates at twice the binary's rate relative to the node, so the end-to-end value depends on where the run stops; the least-squares slope over the samples is the steadier measure. The expectation compares the end-to-end value because a consumer can form it from two states."
+      },
+      "expect": [
+        {
+          "quantity": "position",
+          "at_t": 0.0,
+          "value": [
+            -340987.0324686867,
+            862934.2656592764,
+            211309.1308703497
+          ],
+          "tolerance": 5.0,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 0.0,
+          "value": [
+            -82.8259088598769,
+            25.05465034758435,
+            45.31538935183249
+          ],
+          "tolerance": 0.0005,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 0.0,
+          "value": [
+            -800000.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 0.0,
+          "value": [
+            0.0,
+            -7.905694150420948,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 0.0,
+          "value": [
+            3200000.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "secondary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 0.0,
+          "value": [
+            0.0,
+            31.622776601683793,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "secondary"
+        },
+        {
+          "quantity": "binary_specific_energy",
+          "at_t": 0.0,
+          "value": -41.666666666666686,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "binary_specific_angular_momentum",
+          "at_t": 0.0,
+          "value": [
+            0.0,
+            0.0,
+            25298221.281347033
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "binary_barycenter",
+          "at_t": 0.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m"
+        },
+        {
+          "quantity": "binary_barycentric_velocity",
+          "at_t": 0.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-10,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "ship_jacobi_constant",
+          "at_t": 0.0,
+          "value": 5513.613101722054,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "ship_orbit_normal_about_primary",
+          "at_t": 0.0,
+          "value": [
+            0.3213938048432696,
+            -0.38302222155948906,
+            0.8660254037844386
+          ],
+          "tolerance": 1e-07,
+          "unit": "1"
+        },
+        {
+          "quantity": "ship_node_longitude_about_primary",
+          "at_t": 0.0,
+          "value": 0.6981317007977317,
+          "tolerance": 1e-07,
+          "unit": "rad"
+        },
+        {
+          "quantity": "ship_inclination_about_primary",
+          "at_t": 0.0,
+          "value": 0.5235987755982989,
+          "tolerance": 1e-07,
+          "unit": "rad"
+        },
+        {
+          "quantity": "position",
+          "at_t": 20000.0,
+          "value": [
+            -1728009.3492943877,
+            -220893.21164489994,
+            321437.4833375972
+          ],
+          "tolerance": 5.0,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 20000.0,
+          "value": [
+            -5.5963427308079305,
+            -100.2068479682454,
+            -38.34329446730899
+          ],
+          "tolerance": 0.0005,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 20000.0,
+          "value": [
+            -784425.7964490007,
+            -157086.5044023491,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 20000.0,
+          "value": [
+            1.5523473237046597,
+            -7.751788038032704,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 20000.0,
+          "value": [
+            3137703.185796003,
+            628346.0176093964,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "secondary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 20000.0,
+          "value": [
+            -6.209389294818639,
+            31.007152152130818,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "secondary"
+        },
+        {
+          "quantity": "binary_specific_energy",
+          "at_t": 20000.0,
+          "value": -41.666666666666686,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "binary_specific_angular_momentum",
+          "at_t": 20000.0,
+          "value": [
+            0.0,
+            0.0,
+            25298221.281347033
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "binary_barycenter",
+          "at_t": 20000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m"
+        },
+        {
+          "quantity": "binary_barycentric_velocity",
+          "at_t": 20000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-10,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "ship_jacobi_constant",
+          "at_t": 20000.0,
+          "value": 5513.613101722054,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "ship_orbit_normal_about_primary",
+          "at_t": 20000.0,
+          "value": [
+            0.32090677930127437,
+            -0.38388952997281584,
+            0.8658219607839326
+          ],
+          "tolerance": 1e-07,
+          "unit": "1"
+        },
+        {
+          "quantity": "ship_node_longitude_about_primary",
+          "at_t": 20000.0,
+          "value": 0.6962718532078784,
+          "tolerance": 1e-07,
+          "unit": "rad"
+        },
+        {
+          "quantity": "ship_inclination_about_primary",
+          "at_t": 20000.0,
+          "value": 0.5240055183355847,
+          "tolerance": 1e-07,
+          "unit": "rad"
+        },
+        {
+          "quantity": "position",
+          "at_t": 200000.0,
+          "value": [
+            -33917.851646748844,
+            57708.01231737708,
+            475450.89286155754
+          ],
+          "tolerance": 5.0,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 200000.0,
+          "value": [
+            -82.30449123455229,
+            -43.17775020976191,
+            11.483183449614163
+          ],
+          "tolerance": 0.0005,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 200000.0,
+          "value": [
+            315676.1230320905,
+            -735084.0668572673,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 200000.0,
+          "value": [
+            7.264187259276491,
+            3.119548599103003,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 200000.0,
+          "value": [
+            -1262704.492128362,
+            2940336.267429069,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "secondary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 200000.0,
+          "value": [
+            -29.056749037105963,
+            -12.478194396412013,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "secondary"
+        },
+        {
+          "quantity": "binary_specific_energy",
+          "at_t": 200000.0,
+          "value": -41.666666666666686,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "binary_specific_angular_momentum",
+          "at_t": 200000.0,
+          "value": [
+            0.0,
+            0.0,
+            25298221.281347033
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "binary_barycenter",
+          "at_t": 200000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m"
+        },
+        {
+          "quantity": "binary_barycentric_velocity",
+          "at_t": 200000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-10,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "ship_jacobi_constant",
+          "at_t": 200000.0,
+          "value": 5513.613101722054,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "ship_orbit_normal_about_primary",
+          "at_t": 200000.0,
+          "value": [
+            0.310247570714771,
+            -0.3845811465966889,
+            0.8693927688610937
+          ],
+          "tolerance": 1e-07,
+          "unit": "1"
+        },
+        {
+          "quantity": "ship_node_longitude_about_primary",
+          "at_t": 200000.0,
+          "value": 0.6788223644382083,
+          "tolerance": 1e-07,
+          "unit": "rad"
+        },
+        {
+          "quantity": "ship_inclination_about_primary",
+          "at_t": 200000.0,
+          "value": 0.5168242482170249,
+          "tolerance": 1e-07,
+          "unit": "rad"
+        },
+        {
+          "quantity": "position",
+          "at_t": 1000000.0,
+          "value": [
+            1364845.1109964151,
+            -256234.59156970732,
+            -499516.69060338906
+          ],
+          "tolerance": 5.0,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 1000000.0,
+          "value": [
+            66.49216631119546,
+            74.62074598376496,
+            12.458163735875765
+          ],
+          "tolerance": 0.0005,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 1000000.0,
+          "value": [
+            717784.2787825335,
+            353250.23585648806,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 1000000.0,
+          "value": [
+            -3.490860404056846,
+            7.09322871754363,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 1000000.0,
+          "value": [
+            -2871137.115130134,
+            -1413000.9434259522,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "secondary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 1000000.0,
+          "value": [
+            13.963441616227383,
+            -28.37291487017452,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "secondary"
+        },
+        {
+          "quantity": "binary_specific_energy",
+          "at_t": 1000000.0,
+          "value": -41.666666666666686,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "binary_specific_angular_momentum",
+          "at_t": 1000000.0,
+          "value": [
+            0.0,
+            0.0,
+            25298221.281347033
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "binary_barycenter",
+          "at_t": 1000000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m"
+        },
+        {
+          "quantity": "binary_barycentric_velocity",
+          "at_t": 1000000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-10,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "ship_jacobi_constant",
+          "at_t": 1000000.0,
+          "value": 5513.613101722054,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "ship_orbit_normal_about_primary",
+          "at_t": 1000000.0,
+          "value": [
+            0.26151400690119503,
+            -0.4304083595705377,
+            0.8639207534295495
+          ],
+          "tolerance": 1e-07,
+          "unit": "1"
+        },
+        {
+          "quantity": "ship_node_longitude_about_primary",
+          "at_t": 1000000.0,
+          "value": 0.5459854190449122,
+          "tolerance": 1e-07,
+          "unit": "rad"
+        },
+        {
+          "quantity": "ship_inclination_about_primary",
+          "at_t": 1000000.0,
+          "value": 0.5277928549779939,
+          "tolerance": 1e-07,
+          "unit": "rad"
+        },
+        {
+          "quantity": "position",
+          "at_t": 2000000.0,
+          "value": [
+            -1385511.9561692802,
+            -1128210.9102763673,
+            -63248.833535402606
+          ],
+          "tolerance": 5.0,
+          "unit": "m"
+        },
+        {
+          "quantity": "velocity",
+          "at_t": 2000000.0,
+          "value": [
+            52.75011455013447,
+            -75.62908848764363,
+            -48.504654998427824
+          ],
+          "tolerance": 0.0005,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 2000000.0,
+          "value": [
+            -488035.67716820305,
+            -633893.6644350996,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 2000000.0,
+          "value": [
+            6.2642117936420645,
+            -4.822825997731711,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "primary"
+        },
+        {
+          "quantity": "body_position",
+          "at_t": 2000000.0,
+          "value": [
+            1952142.7086728122,
+            2535574.6577403983,
+            0.0
+          ],
+          "tolerance": 0.1,
+          "unit": "m",
+          "body": "secondary"
+        },
+        {
+          "quantity": "body_velocity",
+          "at_t": 2000000.0,
+          "value": [
+            -25.056847174568258,
+            19.291303990926846,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m s^-1",
+          "body": "secondary"
+        },
+        {
+          "quantity": "binary_specific_energy",
+          "at_t": 2000000.0,
+          "value": -41.666666666666686,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "binary_specific_angular_momentum",
+          "at_t": 2000000.0,
+          "value": [
+            0.0,
+            0.0,
+            25298221.281347033
+          ],
+          "tolerance": 0.001,
+          "unit": "m^2 s^-1"
+        },
+        {
+          "quantity": "binary_barycenter",
+          "at_t": 2000000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-05,
+          "unit": "m"
+        },
+        {
+          "quantity": "binary_barycentric_velocity",
+          "at_t": 2000000.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-10,
+          "unit": "m s^-1"
+        },
+        {
+          "quantity": "ship_jacobi_constant",
+          "at_t": 2000000.0,
+          "value": 5513.613101722054,
+          "tolerance": 0.002,
+          "unit": "m^2 s^-2"
+        },
+        {
+          "quantity": "ship_orbit_normal_about_primary",
+          "at_t": 2000000.0,
+          "value": [
+            0.1947246434110519,
+            -0.46410442066289787,
+            0.8641119140305812
+          ],
+          "tolerance": 1e-07,
+          "unit": "1"
+        },
+        {
+          "quantity": "ship_node_longitude_about_primary",
+          "at_t": 2000000.0,
+          "value": 0.39726305773132264,
+          "tolerance": 1e-07,
+          "unit": "rad"
+        },
+        {
+          "quantity": "ship_inclination_about_primary",
+          "at_t": 2000000.0,
+          "value": 0.5274131640827467,
+          "tolerance": 1e-07,
+          "unit": "rad"
+        },
+        {
+          "quantity": "ship_mean_nodal_rate_about_primary",
+          "at_t": 2000000.0,
+          "value": -1.4800238834206717e-07,
+          "tolerance": 1.4800238834206718e-08,
+          "unit": "rad s^-1",
+          "basis": "first-order secular formula -(p+1)*K2*cos(i)/(4*Omega*D^(p+1)); the tolerance is 10 % of it, see nodal_precession"
+        }
+      ]
+    },
+    {
+      "id": "spin-axisymmetric",
+      "description": "Torque-free body symmetric about body x (roll 6e4, pitch = yaw 5e5 kg m^2): steady precession. Values are the closed form.",
+      "kind": "rigid_body",
+      "claim_status": "offline reference for torque and attitude kinematics; not a game demonstration",
+      "law": null,
+      "inertia": {
+        "moments": [
+          60000.0,
+          500000.0,
+          500000.0
+        ],
+        "axes": [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "inertia_tensor_body": [
+        [
+          60000.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          500000.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          500000.0
+        ]
+      ],
+      "torque_body": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "initial": {
+        "attitude": [
+          0.8525245220595057,
+          0.18816740241503732,
+          -0.2508898698867164,
+          0.4181497831445274
+        ],
+        "angular_velocity": [
+          0.04,
+          0.012,
+          -0.009
+        ]
+      },
+      "expect": [
+        {
+          "quantity": "attitude",
+          "at_t": 0.0,
+          "value": [
+            0.8525245220595057,
+            0.18816740241503732,
+            -0.2508898698867164,
+            0.4181497831445274
+          ],
+          "tolerance": 1e-05,
+          "unit": "1"
+        },
+        {
+          "quantity": "angular_velocity",
+          "at_t": 0.0,
+          "value": [
+            0.04,
+            0.012,
+            -0.009
+          ],
+          "tolerance": 1e-07,
+          "unit": "rad s^-1"
+        },
+        {
+          "quantity": "rotational_energy",
+          "at_t": 0.0,
+          "value": 104.25,
+          "tolerance": 0.0001,
+          "unit": "J"
+        },
+        {
+          "quantity": "angular_momentum_inertial",
+          "at_t": 0.0,
+          "value": [
+            -2368.854244687429,
+            7349.380790566444,
+            -1544.3871155507904
+          ],
+          "tolerance": 0.01,
+          "unit": "kg m^2 s^-1"
+        },
+        {
+          "quantity": "attitude",
+          "at_t": 10.0,
+          "value": [
+            0.8316145318457459,
+            0.345181130874024,
+            -0.10843507881071236,
+            0.42131827754659
+          ],
+          "tolerance": 1e-05,
+          "unit": "1"
+        },
+        {
+          "quantity": "angular_velocity",
+          "at_t": 10.0,
+          "value": [
+            0.04,
+            0.00816123767483902,
+            -0.012585475740502948
+          ],
+          "tolerance": 1e-07,
+          "unit": "rad s^-1"
+        },
+        {
+          "quantity": "rotational_energy",
+          "at_t": 10.0,
+          "value": 104.25,
+          "tolerance": 0.0001,
+          "unit": "J"
+        },
+        {
+          "quantity": "angular_momentum_inertial",
+          "at_t": 10.0,
+          "value": [
+            -2368.854244687429,
+            7349.380790566444,
+            -1544.3871155507904
+          ],
+          "tolerance": 0.01,
+          "unit": "kg m^2 s^-1"
+        },
+        {
+          "quantity": "attitude",
+          "at_t": 50.0,
+          "value": [
+            0.4337971205796199,
+            0.8484142489141848,
+            0.2871656517081176,
+            0.09772005370067273
+          ],
+          "tolerance": 1e-05,
+          "unit": "1"
+        },
+        {
+          "quantity": "angular_velocity",
+          "at_t": 50.0,
+          "value": [
+            0.04,
+            -0.011096310920953126,
+            -0.010093160255615501
+          ],
+          "tolerance": 1e-07,
+          "unit": "rad s^-1"
+        },
+        {
+          "quantity": "rotational_energy",
+          "at_t": 50.0,
+          "value": 104.25,
+          "tolerance": 0.0001,
+          "unit": "J"
+        },
+        {
+          "quantity": "angular_momentum_inertial",
+          "at_t": 50.0,
+          "value": [
+            -2368.854244687429,
+            7349.380790566444,
+            -1544.3871155507904
+          ],
+          "tolerance": 0.01,
+          "unit": "kg m^2 s^-1"
+        },
+        {
+          "quantity": "attitude",
+          "at_t": 100.0,
+          "value": [
+            -0.35210192140173635,
+            0.814014007950772,
+            0.019168991267308838,
+            -0.46156037695941765
+          ],
+          "tolerance": 1e-05,
+          "unit": "1"
+        },
+        {
+          "quantity": "angular_velocity",
+          "at_t": 100.0,
+          "value": [
+            0.04,
+            -0.007826081837229186,
+            0.012796579350630834
+          ],
+          "tolerance": 1e-07,
+          "unit": "rad s^-1"
+        },
+        {
+          "quantity": "rotational_energy",
+          "at_t": 100.0,
+          "value": 104.25,
+          "tolerance": 0.0001,
+          "unit": "J"
+        },
+        {
+          "quantity": "angular_momentum_inertial",
+          "at_t": 100.0,
+          "value": [
+            -2368.854244687429,
+            7349.380790566444,
+            -1544.3871155507904
+          ],
+          "tolerance": 0.01,
+          "unit": "kg m^2 s^-1"
+        },
+        {
+          "quantity": "attitude",
+          "at_t": 300.0,
+          "value": [
+            -0.248023766947966,
+            0.2505501760345109,
+            0.8393939580370287,
+            0.4136745139949373
+          ],
+          "tolerance": 1e-05,
+          "unit": "1"
+        },
+        {
+          "quantity": "angular_velocity",
+          "at_t": 300.0,
+          "value": [
+            0.04,
+            0.003096477305719823,
+            0.014676914808472594
+          ],
+          "tolerance": 1e-07,
+          "unit": "rad s^-1"
+        },
+        {
+          "quantity": "rotational_energy",
+          "at_t": 300.0,
+          "value": 104.25,
+          "tolerance": 0.0001,
+          "unit": "J"
+        },
+        {
+          "quantity": "angular_momentum_inertial",
+          "at_t": 300.0,
+          "value": [
+            -2368.854244687429,
+            7349.380790566444,
+            -1544.3871155507904
+          ],
+          "tolerance": 0.01,
+          "unit": "kg m^2 s^-1"
+        },
+        {
+          "quantity": "attitude",
+          "at_t": 600.0,
+          "value": [
+            0.07823454140702235,
+            0.3630608540436422,
+            0.12743944855492476,
+            -0.919687642487356
+          ],
+          "tolerance": 1e-05,
+          "unit": "1"
+        },
+        {
+          "quantity": "angular_velocity",
+          "at_t": 600.0,
+          "value": [
+            0.04,
+            -0.014613000374610777,
+            -0.0033852946772216508
+          ],
+          "tolerance": 1e-07,
+          "unit": "rad s^-1"
+        },
+        {
+          "quantity": "rotational_energy",
+          "at_t": 600.0,
+          "value": 104.25,
+          "tolerance": 0.0001,
+          "unit": "J"
+        },
+        {
+          "quantity": "angular_momentum_inertial",
+          "at_t": 600.0,
+          "value": [
+            -2368.854244687429,
+            7349.380790566444,
+            -1544.3871155507904
+          ],
+          "tolerance": 0.01,
+          "unit": "kg m^2 s^-1"
+        }
+      ],
+      "closed_form": {
+        "attitude": "q(t) = q(L_hat, precession_rate*t) * q(0) * q(body x, relative_spin_rate*t), with q(axis, angle) = [cos(angle/2), sin(angle/2)*axis]",
+        "precession_rate": 0.015749285698088023,
+        "relative_spin_rate": 0.0352,
+        "angular_momentum_direction_inertial": [
+          -0.3008205311781232,
+          0.9332970309197788,
+          -0.19612154419654476
+        ],
+        "unit": "rad s^-1"
+      }
+    },
+    {
+      "id": "spin-triaxial",
+      "description": "Torque-free triaxial body (roll 7e4, pitch 5.5e5, yaw 4.5e5 kg m^2) tumbling near the unstable intermediate (yaw) axis; body axes are principal. High-accuracy numerical reference.",
+      "kind": "rigid_body",
+      "claim_status": "offline reference for torque and attitude kinematics; not a game demonstration",
+      "law": null,
+      "inertia": {
+        "moments": [
+          70000.0,
+          550000.0,
+          450000.0
+        ],
+        "axes": [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "inertia_tensor_body": [
+        [
+          70000.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          550000.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          450000.0
+        ]
+      ],
+      "torque_body": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "initial": {
+        "attitude": [
+          0.8525245220595057,
+          0.18816740241503732,
+          -0.2508898698867164,
+          0.4181497831445274
+        ],
+        "angular_velocity": [
+          0.019879718280819525,
+          0.012484466778869543,
+          -0.019414297432635914
+        ]
+      },
+      "expect": [
+        {
+          "quantity": "attitude",
+          "at_t": 0.0,
+          "value": [
+            0.8525245220595057,
+            0.18816740241503732,
+            -0.2508898698867164,
+            0.4181497831445274
+          ],
+          "tolerance": 1e-05,
+          "unit": "1"
+        },
+        {
+          "quantity": "angular_velocity",
+          "at_t": 0.0,
+          "value": [
+            0.019879718280819525,
+            0.012484466778869543,
+            -0.019414297432635914
+          ],
+          "tolerance": 1e-07,
+          "unit": "rad s^-1"
+        },
+        {
+          "quantity": "rotational_energy",
+          "at_t": 0.0,
+          "value": 141.50000000000003,
+          "tolerance": 0.0001,
+          "unit": "J"
+        },
+        {
+          "quantity": "angular_momentum_inertial",
+          "at_t": 0.0,
+          "value": [
+            -2451.647236109714,
+            9475.805865567816,
+            -5441.371980277236
+          ],
+          "tolerance": 0.01,
+          "unit": "kg m^2 s^-1"
+        },
+        {
+          "quantity": "attitude",
+          "at_t": 10.0,
+          "value": [
+            0.883124283769386,
+            0.265409841099165,
+            -0.14320350511199176,
+            0.35936314750981996
+          ],
+          "tolerance": 1e-05,
+          "unit": "1"
+        },
+        {
+          "quantity": "angular_velocity",
+          "at_t": 10.0,
+          "value": [
+            0.016600941106366954,
+            0.009900162655609532,
+            -0.021592248684946906
+          ],
+          "tolerance": 1e-07,
+          "unit": "rad s^-1"
+        },
+        {
+          "quantity": "rotational_energy",
+          "at_t": 10.0,
+          "value": 141.50000000000003,
+          "tolerance": 0.0001,
+          "unit": "J"
+        },
+        {
+          "quantity": "angular_momentum_inertial",
+          "at_t": 10.0,
+          "value": [
+            -2451.647236109714,
+            9475.805865567816,
+            -5441.371980277236
+          ],
+          "tolerance": 0.01,
+          "unit": "kg m^2 s^-1"
+        },
+        {
+          "quantity": "attitude",
+          "at_t": 50.0,
+          "value": [
+            0.8792750203843247,
+            0.4389705480848352,
+            0.1825482894109404,
+            -0.029264628399901106
+          ],
+          "tolerance": 1e-05,
+          "unit": "1"
+        },
+        {
+          "quantity": "angular_velocity",
+          "at_t": 50.0,
+          "value": [
+            0.009050600714727335,
+            0.0020841206111993095,
+            -0.024715137357591052
+          ],
+          "tolerance": 1e-07,
+          "unit": "rad s^-1"
+        },
+        {
+          "quantity": "rotational_energy",
+          "at_t": 50.0,
+          "value": 141.50000000000003,
+          "tolerance": 0.0001,
+          "unit": "J"
+        },
+        {
+          "quantity": "angular_momentum_inertial",
+          "at_t": 50.0,
+          "value": [
+            -2451.647236109714,
+            9475.805865567816,
+            -5441.371980277236
+          ],
+          "tolerance": 0.01,
+          "unit": "kg m^2 s^-1"
+        },
+        {
+          "quantity": "attitude",
+          "at_t": 100.0,
+          "value": [
+            0.5996210817417216,
+            0.4144985464553571,
+            0.34975491481535104,
+            -0.5884870541310068
+          ],
+          "tolerance": 1e-05,
+          "unit": "1"
+        },
+        {
+          "quantity": "angular_velocity",
+          "at_t": 100.0,
+          "value": [
+            0.01204597191666044,
+            -0.0059080910445551,
+            -0.023741411188792732
+          ],
+          "tolerance": 1e-07,
+          "unit": "rad s^-1"
+        },
+        {
+          "quantity": "rotational_energy",
+          "at_t": 100.0,
+          "value": 141.50000000000003,
+          "tolerance": 0.0001,
+          "unit": "J"
+        },
+        {
+          "quantity": "angular_momentum_inertial",
+          "at_t": 100.0,
+          "value": [
+            -2451.647236109714,
+            9475.805865567816,
+            -5441.371980277236
+          ],
+          "tolerance": 0.01,
+          "unit": "kg m^2 s^-1"
+        },
+        {
+          "quantity": "attitude",
+          "at_t": 300.0,
+          "value": [
+            0.5895794275842238,
+            -0.7917312238018162,
+            -0.12337293940882342,
+            0.10167047579491517
+          ],
+          "tolerance": 1e-05,
+          "unit": "1"
+        },
+        {
+          "quantity": "angular_velocity",
+          "at_t": 300.0,
+          "value": [
+            0.01064665612620231,
+            0.00442132071056356,
+            0.02423560134636704
+          ],
+          "tolerance": 1e-07,
+          "unit": "rad s^-1"
+        },
+        {
+          "quantity": "rotational_energy",
+          "at_t": 300.0,
+          "value": 141.50000000000003,
+          "tolerance": 0.0001,
+          "unit": "J"
+        },
+        {
+          "quantity": "angular_momentum_inertial",
+          "at_t": 300.0,
+          "value": [
+            -2451.647236109714,
+            9475.805865567816,
+            -5441.371980277236
+          ],
+          "tolerance": 0.01,
+          "unit": "kg m^2 s^-1"
+        },
+        {
+          "quantity": "attitude",
+          "at_t": 600.0,
+          "value": [
+            -0.05689988062061984,
+            -0.9512427535192101,
+            -0.06414568887740328,
+            0.2962852646707123
+          ],
+          "tolerance": 1e-05,
+          "unit": "1"
+        },
+        {
+          "quantity": "angular_velocity",
+          "at_t": 600.0,
+          "value": [
+            0.027753751202856475,
+            -0.018364590817944473,
+            0.009841978441699225
+          ],
+          "tolerance": 1e-07,
+          "unit": "rad s^-1"
+        },
+        {
+          "quantity": "rotational_energy",
+          "at_t": 600.0,
+          "value": 141.50000000000003,
+          "tolerance": 0.0001,
+          "unit": "J"
+        },
+        {
+          "quantity": "angular_momentum_inertial",
+          "at_t": 600.0,
+          "value": [
+            -2451.647236109714,
+            9475.805865567816,
+            -5441.371980277236
+          ],
+          "tolerance": 0.01,
+          "unit": "kg m^2 s^-1"
+        }
+      ],
+      "body_rate_closed_form": {
+        "note": "The initial rates are the Jacobi-elliptic solution at seed_time after a start with zero rate about the intermediate (yaw) axis, so the body rates at t are that solution at t + seed_time. The attitude has no elementary closed form and is numerical.",
+        "seed_angular_velocity": [
+          0.03,
+          0.02,
+          0.0
+        ],
+        "seed_time": 40.0,
+        "modulus_squared": 0.9189640768588136,
+        "argument_rate": 0.02575408175945567
+      }
+    },
+    {
+      "id": "spin-triaxial-tilted-axes",
+      "description": "The motion of spin-triaxial for a body whose principal frame is turned 0.35 rad from the body frame about (2/3, -1/3, 2/3): the inertia tensor in body axes is not diagonal. Values are spin-triaxial re-expressed: attitude = q_principal * conj(axes), rates = R(axes) rates_principal.",
+      "kind": "rigid_body",
+      "claim_status": "offline reference for torque and attitude kinematics; not a game demonstration",
+      "law": null,
+      "inertia": {
+        "moments": [
+          70000.0,
+          550000.0,
+          450000.0
+        ],
+        "axes": [
+          0.9847265389049334,
+          0.11607209172906396,
+          -0.05803604586453198,
+          0.11607209172906396
+        ]
+      },
+      "inertia_tensor_body": [
+        [
+          101026.94096781839,
+          -101896.97404108077,
+          -57072.77059481683
+        ],
+        [
+          -101896.97404108077,
+          521926.1757506387,
+          8806.80103846809
+        ],
+        [
+          -57072.77059481683,
+          8806.80103846809,
+          447046.88328154286
+        ]
+      ],
+      "torque_body": [
+        0.0,
+        0.0,
+        0.0
+      ],
+      "initial": {
+        "attitude": [
+          0.9244406819141092,
+          0.09119268238768813,
+          -0.22427529694907355,
+          0.2946080641793766
+        ],
+        "angular_velocity": [
+          0.017883915165806917,
+          0.0207879514210879,
+          -0.01326675199651413
+        ]
+      },
+      "expect": [
+        {
+          "quantity": "attitude",
+          "at_t": 0.0,
+          "value": [
+            0.9244406819141092,
+            0.09119268238768813,
+            -0.22427529694907355,
+            0.2946080641793766
+          ],
+          "tolerance": 1e-05,
+          "unit": "1"
+        },
+        {
+          "quantity": "angular_velocity",
+          "at_t": 0.0,
+          "value": [
+            0.017883915165806917,
+            0.0207879514210879,
+            -0.01326675199651413
+          ],
+          "tolerance": 1e-07,
+          "unit": "rad s^-1"
+        },
+        {
+          "quantity": "rotational_energy",
+          "at_t": 0.0,
+          "value": 141.50000000000006,
+          "tolerance": 0.0001,
+          "unit": "J"
+        },
+        {
+          "quantity": "angular_momentum_inertial",
+          "at_t": 0.0,
+          "value": [
+            -2451.6472361097153,
+            9475.805865567818,
+            -5441.371980277236
+          ],
+          "tolerance": 0.01,
+          "unit": "kg m^2 s^-1"
+        },
+        {
+          "quantity": "attitude",
+          "at_t": 10.0,
+          "value": [
+            0.9504655922134306,
+            0.1546159456134251,
+            -0.10066860731101093,
+            0.2501497529131307
+          ],
+          "tolerance": 1e-05,
+          "unit": "1"
+        },
+        {
+          "quantity": "angular_velocity",
+          "at_t": 10.0,
+          "value": [
+            0.015531411308268081,
+            0.018164787664194153,
+            -0.01639040638255572
+          ],
+          "tolerance": 1e-07,
+          "unit": "rad s^-1"
+        },
+        {
+          "quantity": "rotational_energy",
+          "at_t": 10.0,
+          "value": 141.50000000000006,
+          "tolerance": 0.0001,
+          "unit": "J"
+        },
+        {
+          "quantity": "angular_momentum_inertial",
+          "at_t": 10.0,
+          "value": [
+            -2451.6472361097153,
+            9475.805865567818,
+            -5441.371980277236
+          ],
+          "tolerance": 0.01,
+          "unit": "kg m^2 s^-1"
+        },
+        {
+          "quantity": "attitude",
+          "at_t": 50.0,
+          "value": [
+            0.9028064897634858,
+            0.3107162991981923,
+            0.28513882698092413,
+            -0.08421207040237694
+          ],
+          "tolerance": 1e-05,
+          "unit": "1"
+        },
+        {
+          "quantity": "angular_velocity",
+          "at_t": 50.0,
+          "value": [
+            0.01040021560208815,
+            0.00990164787841603,
+            -0.022155988611343505
+          ],
+          "tolerance": 1e-07,
+          "unit": "rad s^-1"
+        },
+        {
+          "quantity": "rotational_energy",
+          "at_t": 50.0,
+          "value": 141.50000000000006,
+          "tolerance": 0.0001,
+          "unit": "J"
+        },
+        {
+          "quantity": "angular_momentum_inertial",
+          "at_t": 50.0,
+          "value": [
+            -2451.6472361097153,
+            9475.805865567818,
+            -5441.371980277236
+          ],
+          "tolerance": 0.01,
+          "unit": "kg m^2 s^-1"
+        },
+        {
+          "quantity": "attitude",
+          "at_t": 100.0,
+          "value": [
+            0.5499691901776574,
+            0.332125122938596,
+            0.49563121996660403,
+            -0.5844454519993888
+          ],
+          "tolerance": 1e-05,
+          "unit": "1"
+        },
+        {
+          "quantity": "angular_velocity",
+          "at_t": 100.0,
+          "value": [
+            0.015144323358704496,
+            0.0027488143973427555,
+            -0.02251130990988786
+          ],
+          "tolerance": 1e-07,
+          "unit": "rad s^-1"
+        },
+        {
+          "quantity": "rotational_energy",
+          "at_t": 100.0,
+          "value": 141.50000000000006,
+          "tolerance": 0.0001,
+          "unit": "J"
+        },
+        {
+          "quantity": "angular_momentum_inertial",
+          "at_t": 100.0,
+          "value": [
+            -2451.6472361097153,
+            9475.805865567818,
+            -5441.371980277236
+          ],
+          "tolerance": 0.01,
+          "unit": "kg m^2 s^-1"
+        },
+        {
+          "quantity": "attitude",
+          "at_t": 300.0,
+          "value": [
+            0.5076377922632537,
+            -0.839652862413812,
+            -0.19097075294500968,
+            -0.02858520641866985
+          ],
+          "tolerance": 1e-05,
+          "unit": "1"
+        },
+        {
+          "quantity": "angular_velocity",
+          "at_t": 300.0,
+          "value": [
+            0.007100710519390442,
+            0.0006066793935737913,
+            0.025874226294684027
+          ],
+          "tolerance": 1e-07,
+          "unit": "rad s^-1"
+        },
+        {
+          "quantity": "rotational_energy",
+          "at_t": 300.0,
+          "value": 141.50000000000006,
+          "tolerance": 0.0001,
+          "unit": "J"
+        },
+        {
+          "quantity": "angular_momentum_inertial",
+          "at_t": 300.0,
+          "value": [
+            -2451.6472361097153,
+            9475.805865567818,
+            -5441.371980277236
+          ],
+          "tolerance": 0.01,
+          "unit": "kg m^2 s^-1"
+        },
+        {
+          "quantity": "attitude",
+          "at_t": 600.0,
+          "value": [
+            -0.12833034609020613,
+            -0.9398591970946135,
+            -0.21127139283722074,
+            0.23571255901554555
+          ],
+          "tolerance": 1e-05,
+          "unit": "1"
+        },
+        {
+          "quantity": "angular_velocity",
+          "at_t": 600.0,
+          "value": [
+            0.030404759681463105,
+            -0.013786818149213332,
+            0.00947985629745816
+          ],
+          "tolerance": 1e-07,
+          "unit": "rad s^-1"
+        },
+        {
+          "quantity": "rotational_energy",
+          "at_t": 600.0,
+          "value": 141.50000000000006,
+          "tolerance": 0.0001,
+          "unit": "J"
+        },
+        {
+          "quantity": "angular_momentum_inertial",
+          "at_t": 600.0,
+          "value": [
+            -2451.6472361097153,
+            9475.805865567818,
+            -5441.371980277236
+          ],
+          "tolerance": 0.01,
+          "unit": "kg m^2 s^-1"
+        }
+      ]
+    },
+    {
+      "id": "spin-constant-torque",
+      "description": "From rest, a constant 40 N m body-frame torque about the pitch principal axis (5.5e5 kg m^2) of the triaxial body. Values are the closed form.",
+      "kind": "rigid_body",
+      "claim_status": "offline reference for torque and attitude kinematics; not a game demonstration",
+      "law": null,
+      "inertia": {
+        "moments": [
+          70000.0,
+          550000.0,
+          450000.0
+        ],
+        "axes": [
+          1.0,
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "inertia_tensor_body": [
+        [
+          70000.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          550000.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          450000.0
+        ]
+      ],
+      "torque_body": [
+        0.0,
+        40.0,
+        0.0
+      ],
+      "initial": {
+        "attitude": [
+          0.8525245220595057,
+          0.18816740241503732,
+          -0.2508898698867164,
+          0.4181497831445274
+        ],
+        "angular_velocity": [
+          0.0,
+          0.0,
+          0.0
+        ]
+      },
+      "expect": [
+        {
+          "quantity": "attitude",
+          "at_t": 0.0,
+          "value": [
+            0.8525245220595057,
+            0.18816740241503732,
+            -0.2508898698867164,
+            0.4181497831445274
+          ],
+          "tolerance": 1e-05,
+          "unit": "1"
+        },
+        {
+          "quantity": "angular_velocity",
+          "at_t": 0.0,
+          "value": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 1e-07,
+          "unit": "rad s^-1"
+        },
+        {
+          "quantity": "rotational_energy",
+          "at_t": 0.0,
+          "value": 0.0,
+          "tolerance": 0.0001,
+          "unit": "J"
+        },
+        {
+          "quantity": "angular_momentum_inertial",
+          "at_t": 0.0,
+          "value": [
+            -0.0,
+            0.0,
+            0.0
+          ],
+          "tolerance": 0.01,
+          "unit": "kg m^2 s^-1"
+        },
+        {
+          "quantity": "attitude",
+          "at_t": 10.0,
+          "value": [
+            0.8529792760769169,
+            0.18740681948051585,
+            -0.24933941146128702,
+            0.41849121434939973
+          ],
+          "tolerance": 1e-05,
+          "unit": "1"
+        },
+        {
+          "quantity": "angular_velocity",
+          "at_t": 10.0,
+          "value": [
+            0.0,
+            0.0007272727272727272,
+            0.0
+          ],
+          "tolerance": 1e-07,
+          "unit": "rad s^-1"
+        },
+        {
+          "quantity": "rotational_energy",
+          "at_t": 10.0,
+          "value": 0.14545454545454542,
+          "tolerance": 0.0001,
+          "unit": "J"
+        },
+        {
+          "quantity": "angular_momentum_inertial",
+          "at_t": 10.0,
+          "value": [
+            -322.9537913067234,
+            231.7950300196497,
+            44.40622409981536
+          ],
+          "tolerance": 0.01,
+          "unit": "kg m^2 s^-1"
+        },
+        {
+          "quantity": "attitude",
+          "at_t": 50.0,
+          "value": [
+            0.8630441249090829,
+            0.16897278411262615,
+            -0.2118929587892842,
+            0.4262680033789373
+          ],
+          "tolerance": 1e-05,
+          "unit": "1"
+        },
+        {
+          "quantity": "angular_velocity",
+          "at_t": 50.0,
+          "value": [
+            0.0,
+            0.0036363636363636364,
+            0.0
+          ],
+          "tolerance": 1e-07,
+          "unit": "rad s^-1"
+        },
+        {
+          "quantity": "rotational_energy",
+          "at_t": 50.0,
+          "value": 3.6363636363636362,
+          "tolerance": 0.0001,
+          "unit": "J"
+        },
+        {
+          "quantity": "angular_momentum_inertial",
+          "at_t": 50.0,
+          "value": [
+            -1614.768956533617,
+            1158.9751500982484,
+            222.0311204990768
+          ],
+          "tolerance": 0.01,
+          "unit": "kg m^2 s^-1"
+        },
+        {
+          "quantity": "attitude",
+          "at_t": 100.0,
+          "value": [
+            0.8838374093194126,
+            0.10945671374395938,
+            -0.09260249139257071,
+            0.44528130467358584
+          ],
+          "tolerance": 1e-05,
+          "unit": "1"
+        },
+        {
+          "quantity": "angular_velocity",
+          "at_t": 100.0,
+          "value": [
+            0.0,
+            0.007272727272727273,
+            0.0
+          ],
+          "tolerance": 1e-07,
+          "unit": "rad s^-1"
+        },
+        {
+          "quantity": "rotational_energy",
+          "at_t": 100.0,
+          "value": 14.545454545454545,
+          "tolerance": 0.0001,
+          "unit": "J"
+        },
+        {
+          "quantity": "angular_momentum_inertial",
+          "at_t": 100.0,
+          "value": [
+            -3229.537913067234,
+            2317.9503001964968,
+            444.0622409981536
+          ],
+          "tolerance": 0.01,
+          "unit": "kg m^2 s^-1"
+        },
+        {
+          "quantity": "attitude",
+          "at_t": 300.0,
+          "value": [
+            0.19449306978805286,
+            -0.4295800692436345,
+            0.8671310358469368,
+            0.16036575876436981
+          ],
+          "tolerance": 1e-05,
+          "unit": "1"
+        },
+        {
+          "quantity": "angular_velocity",
+          "at_t": 300.0,
+          "value": [
+            0.0,
+            0.02181818181818182,
+            0.0
+          ],
+          "tolerance": 1e-07,
+          "unit": "rad s^-1"
+        },
+        {
+          "quantity": "rotational_energy",
+          "at_t": 300.0,
+          "value": 130.90909090909093,
+          "tolerance": 0.0001,
+          "unit": "J"
+        },
+        {
+          "quantity": "angular_momentum_inertial",
+          "at_t": 300.0,
+          "value": [
+            -9688.613739201703,
+            6953.85090058949,
+            1332.1867229944608
+          ],
+          "tolerance": 0.01,
+          "unit": "kg m^2 s^-1"
+        },
+        {
+          "quantity": "attitude",
+          "at_t": 600.0,
+          "value": [
+            0.8884206236141239,
+            0.07331796224010939,
+            -0.021273999662811544,
+            0.45263748064913467
+          ],
+          "tolerance": 1e-05,
+          "unit": "1"
+        },
+        {
+          "quantity": "angular_velocity",
+          "at_t": 600.0,
+          "value": [
+            0.0,
+            0.04363636363636364,
+            0.0
+          ],
+          "tolerance": 1e-07,
+          "unit": "rad s^-1"
+        },
+        {
+          "quantity": "rotational_energy",
+          "at_t": 600.0,
+          "value": 523.6363636363637,
+          "tolerance": 0.0001,
+          "unit": "J"
+        },
+        {
+          "quantity": "angular_momentum_inertial",
+          "at_t": 600.0,
+          "value": [
+            -19377.227478403405,
+            13907.70180117898,
+            2664.3734459889215
+          ],
+          "tolerance": 0.01,
+          "unit": "kg m^2 s^-1"
+        }
+      ],
+      "closed_form": {
+        "attitude": "q(t) = q(0) * q(body y, angular_acceleration*t^2/2); angular_velocity = angular_acceleration*t about body y",
+        "angular_acceleration": 7.272727272727273e-05,
+        "unit": "rad s^-2",
+        "note": "Energy and angular momentum are not invariants here: the torque does work. Their expected values are the closed forms I*(alpha*t)^2/2 and I*alpha*t along the inertial direction of the torque axis, which stays fixed."
+      }
+    }
+  ]
+}
