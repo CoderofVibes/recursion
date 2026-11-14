@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Recursion · Compartment</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body data-mode="room">
+  <canvas id="gl"></canvas>
+  <div id="labels"></div>
+
+  <!-- The only thing on screen while walking: a small dot that opens when it finds something. -->
+  <div id="reticle"><i></i><span></span></div>
+
+  <!-- In-game overlays, one set per view. -->
+  <div id="hud">
+    <div id="hud-title"></div>
+    <div class="hud-back">ESC ▸ STEP BACK</div>
+    <div class="hud-hint">CLICK TO LOOK · WASD TO WALK · AIM AT THE CONSOLE</div>
+
+    <div class="chips hud-map" id="map-layers"></div>
+    <aside class="plate hud-map" id="map-plate" hidden></aside>
+
+    <aside class="col hud-ship" id="ship-left"></aside>
+    <aside class="col hud-ship" id="ship-right"></aside>
+
+    <div class="hud-flight" id="flight-keys">
+      <i data-k="q">Q<b>YAW ⟲</b></i><i data-k="w">W<b>MAIN</b></i><i data-k="e">E<b>YAW ⟳</b></i><i data-k="r">R<b>UP</b></i><i data-k="arrowup">↑<b>NOSE UP</b></i>
+      <i data-k="a">A<b>LEFT</b></i><i data-k="s">S<b>RETRO</b></i><i data-k="d">D<b>RIGHT</b></i><i data-k="f">F<b>DOWN</b></i><i data-k="arrowdown">↓<b>NOSE DN</b></i>
+    </div>
+    <dl class="hud-flight" id="flight-readouts">
+      <dt>SPEED</dt><dd><span id="ro-speed">6.0</span> km/s</dd>
+      <dt>HEADING</dt><dd><span id="ro-head">000</span>°</dd>
+      <dt>PITCH</dt><dd><span id="ro-pitch">+0</span>°</dd>
+      <dt>YAW RATE</dt><dd><span id="ro-rate">0.0</span> °/s</dd>
+      <dt>PROPELLANT</dt><dd><span id="ro-prop">100</span> %</dd>
+    </dl>
+    <div class="hud-flight" id="flight-scan">
+      <span class="bbx">BLACK BOX SCAN</span>
+      <button data-lat="0">OFF</button><button data-lat="1">180 W</button><button data-lat="2">610 W</button>
+    </div>
+    <div class="hud-flight" id="flight-met"><span id="ro-met">T+000 s</span></div>
+    <div class="hud-flight" id="flight-alert"></div>
+  </div>
+
+  <!-- Looking down into the console: its screen takes over the view. -->
+  <div id="console-screen"></div>
+
+  <!-- Loss of the ship. -->
+  <div id="black"><i></i><span id="black-n"></span></div>
+  <div id="hit"></div>
+
+  <!-- Prototype chrome: not part of the game. -->
+  <nav class="proto-bar" aria-label="Prototype controls">
+    <span class="proto-title">COMPARTMENT</span>
+    <button data-go="room"><b>0</b>Room</button>
+    <button data-go="map"><b>1</b>Map</button>
+    <button data-go="ship"><b>2</b>Ship</button>
+    <button data-go="console"><b>3</b>Console</button>
+    <button data-go="flight"><b>4</b>Flight</button>
+    <label class="scene-range">Window <input id="arc" type="range" min="90" max="180" step="5"><span id="arc-v" class="scene-val"></span></label>
+    <button id="btn-up"><b>U</b>Heading-up</button>
+    <button id="btn-die"><b>K</b>Lose ship</button>
+    <span class="proto-hint">layout study · toy world, mock data · H hides this bar</span>
+  </nav>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>
