@@ -17,6 +17,7 @@ import type {
   AttemptId,
   AttemptRecord,
   ExecutedCommand,
+  ExtensionDecision,
   ExtensionId,
   Forecast,
   Measurement,
@@ -32,9 +33,10 @@ import {
   type TierLCache,
 } from './engine.ts';
 import {
-  adoptExtension,
+  adoptedFrom,
+  decide,
+  decisionsFromAdopted,
   extensionStates,
-  revokeExtension,
   testExtension,
   validatedHedges,
   type ExtensionRecord,
@@ -61,7 +63,9 @@ export interface LoadInput {
   readonly attempts: readonly AttemptRecord[];
   /** Every rule test (BlackBoxArchive.extensionTests). */
   readonly extensions?: readonly ExtensionRecord[];
-  /** Adopted rules (BlackBoxArchive.adoptedExtensions). */
+  /** Every adopt and revoke, in order (BlackBoxArchive.extensionDecisions). */
+  readonly decisions?: readonly ExtensionDecision[];
+  /** Adopted rules of a save without decisions (BlackBoxArchive.adoptedExtensions). */
   readonly adopted?: readonly ExtensionId[];
   /** Version of the model before this load (0 for a fresh save). */
   readonly version?: number;
@@ -73,9 +77,7 @@ export class ModelService {
   private readonly ctx: ModelContext;
   private attempts: AttemptRecord[] = [];
   private tests: ExtensionRecord[] = [];
-  private adoptedRules: ExtensionId[] = [];
-  /** Revoked in this session (BlackBoxArchive keeps only the adopted list). */
-  private revokedRules: ExtensionId[] = [];
+  private decisionLog: ExtensionDecision[] = [];
   private current: Mutable<AttemptRecord> | null = null;
   private snap: ModelSnapshot;
   private version = 0;
@@ -99,9 +101,14 @@ export class ModelService {
     return this.tests;
   }
 
-  /** Adopted rules (for BlackBoxArchive.adoptedExtensions). */
+  /** Adopted rules (for BlackBoxArchive.adoptedExtensions): the decisions' current result. */
   get adopted(): readonly ExtensionId[] {
-    return this.adoptedRules;
+    return adoptedFrom(this.decisionLog);
+  }
+
+  /** Every adopt and revoke, in order (for BlackBoxArchive.extensionDecisions). */
+  get decisions(): readonly ExtensionDecision[] {
+    return this.decisionLog;
   }
 
   private allAttempts(): AttemptRecord[] {
@@ -109,10 +116,11 @@ export class ModelService {
   }
 
   private build(version: number, parent?: number, reuse?: ModelSnapshot): ModelSnapshot {
-    const spec = modelSpec(this.ctx, this.adoptedRules);
+    const adopted = adoptedFrom(this.decisionLog);
+    const spec = modelSpec(this.ctx, adopted);
     const validated = validatedHedges(
       this.tests,
-      this.adoptedRules,
+      adopted,
       spec.bodies,
       spec.settings.validatedRangeSharedLaw === 1,
     );
@@ -120,8 +128,8 @@ export class ModelService {
       {
         context: this.ctx,
         attempts: this.allAttempts(),
-        adopted: this.adoptedRules,
-        extensions: extensionStates(this.tests, this.adoptedRules, this.revokedRules),
+        adopted,
+        extensions: extensionStates(this.tests, this.decisionLog),
         validated,
         version,
         ...(parent !== undefined ? { parent } : {}),
@@ -144,8 +152,9 @@ export class ModelService {
       .filter((a) => a.encounterId === this.ctx.encounterId)
       .map((a) => ({ ...a }));
     this.tests = [...(input.extensions ?? [])];
-    this.adoptedRules = [...(input.adopted ?? [])];
-    this.revokedRules = [];
+    this.decisionLog = input.decisions
+      ? [...input.decisions]
+      : decisionsFromAdopted(input.adopted ?? [], input.version ?? 0);
     this.current = null;
     this.version = input.version ?? 0;
     return this.bump();
@@ -216,11 +225,12 @@ export class ModelService {
     const rec = testExtension(
       this.ctx,
       this.attempts,
-      this.adoptedRules,
+      adoptedFrom(this.decisionLog),
       ext,
       training,
       heldOut,
       this.version,
+      this.snap.derived.probes,
     );
     this.tests = [...this.tests, rec];
     this.snap = this.build(this.version, this.snap.state.parent, this.snap);
@@ -228,16 +238,14 @@ export class ModelService {
   }
 
   /** The player adopts a rule that passed its held-out test. New version. */
-  adopt(ext: ExtensionId): ModelState {
-    this.adoptedRules = adoptExtension(this.tests, this.adoptedRules, ext);
-    this.revokedRules = this.revokedRules.filter((e) => e !== ext);
+  adopt(ext: ExtensionId, at: string = new Date().toISOString()): ModelState {
+    this.decisionLog = decide(this.tests, this.decisionLog, ext, 'adopted', this.version + 1, at);
     return this.bump();
   }
 
   /** The player revokes an adopted rule. New version. */
-  revoke(ext: ExtensionId): ModelState {
-    this.adoptedRules = revokeExtension(this.adoptedRules, ext);
-    this.revokedRules = [...this.revokedRules, ext];
+  revoke(ext: ExtensionId, at: string = new Date().toISOString()): ModelState {
+    this.decisionLog = decide(this.tests, this.decisionLog, ext, 'revoked', this.version + 1, at);
     return this.bump();
   }
 

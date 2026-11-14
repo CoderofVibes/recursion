@@ -8,6 +8,7 @@ import {
   type AttemptRecord,
   type BlackBoxArchive,
   type EncounterId,
+  type ExtensionDecision,
   type ExtensionId,
   type ExtensionTestRecord,
   type Forecast,
@@ -17,7 +18,14 @@ import {
 } from '../contracts/index.ts';
 
 export function emptyArchive(): BlackBoxArchive {
-  return { attempts: [], procedures: [], adoptedExtensions: [], leads: [], extensionTests: [] };
+  return {
+    attempts: [],
+    procedures: [],
+    adoptedExtensions: [],
+    leads: [],
+    extensionTests: [],
+    extensionDecisions: [],
+  };
 }
 
 /** Add or replace an attempt (by id), keeping attempts ordered by index. */
@@ -54,6 +62,21 @@ export function withAdoptedExtensions(
 /** Append a rule test (spec §6.1: every test is kept and never edited). */
 export function withExtensionTest(a: BlackBoxArchive, t: ExtensionTestRecord): BlackBoxArchive {
   return { ...a, extensionTests: [...(a.extensionTests ?? []), t] };
+}
+
+/**
+ * Append the player's adopt or revoke (kept in order, never edited); `adoptedExtensions` is
+ * kept as its current result.
+ */
+export function withExtensionDecision(a: BlackBoxArchive, d: ExtensionDecision): BlackBoxArchive {
+  const decisions = [...(a.extensionDecisions ?? []), d];
+  const adopted: ExtensionId[] = [];
+  for (const q of decisions) {
+    const i = adopted.indexOf(q.extension);
+    if (q.action === 'adopted' && i < 0) adopted.push(q.extension);
+    if (q.action === 'revoked' && i >= 0) adopted.splice(i, 1);
+  }
+  return { ...a, extensionDecisions: decisions, adoptedExtensions: adopted };
 }
 
 export function withLead(a: BlackBoxArchive, lead: Lead): BlackBoxArchive {

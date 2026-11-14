@@ -144,6 +144,8 @@ export function probeArcs(input: {
   readonly record: AttemptRecord;
   readonly shipArcs: readonly Arc[];
   readonly bodies: readonly string[];
+  /** Every briefed massive body, modelled or not: never an asteroid. */
+  readonly knownBodies?: readonly string[];
   readonly pathFor: (body: string, t: number) => ArcSolution | null;
   /** Believed camera bias (rad): removed from asteroid bearings, kept on the derived fixes. */
   readonly cameraBias: number;
@@ -151,7 +153,7 @@ export function probeArcs(input: {
   readonly h: number;
   readonly normalPointInterval: number;
 }): Arc[] {
-  const bodySet = new Set(input.bodies);
+  const bodySet = new Set([...input.bodies, ...(input.knownBodies ?? [])]);
   const fixes = targetFixes(input.record.measurements, (t) => !bodySet.has(t));
   if (fixes.length === 0) return [];
   // Ship positions, batched per path.

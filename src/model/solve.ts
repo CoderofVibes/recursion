@@ -531,7 +531,8 @@ export function heldOutConsistency(
   st: Structure,
   trainFit: FitResult,
   trainParams: readonly Param[],
-  heldOut: Arc,
+  /** The held-out arc, or several (a held-out attempt's ship arc and its asteroid probes). */
+  heldOut: Arc | readonly Arc[],
   localParams: readonly Param[],
   opts: SolverOptions,
   k = 3,
@@ -553,7 +554,8 @@ export function heldOutConsistency(
   }));
   const params = [...localParams, ...gparams];
   const fp: FullPrior = { names: gl.map((p) => p.name), mean, info };
-  const res = stagedFit(st, [heldOut], params, { ...opts, fullPriors: [fp] });
+  const heldArcs: readonly Arc[] = Array.isArray(heldOut) ? heldOut : [heldOut as Arc];
+  const res = stagedFit(st, heldArcs, params, { ...opts, fullPriors: [fp] });
   const nu = res.m - localParams.length;
   const T = res.chi2 + res.priorCost;
   const threshold = 1 + k * Math.sqrt(2 / nu);

@@ -14,7 +14,7 @@ await model.init(contextFromBriefing(briefing, shipDefinition, { arrivalMass }))
 await model.load({
   attempts: archive.attempts, // rebuild from Black Box (P8)
   extensions: archive.extensionTests, // every rule test
-  adopted: archive.adoptedExtensions,
+  decisions: archive.extensionDecisions, // every adopt and revoke (older saves: `adopted`)
 });
 
 // Each attempt
@@ -34,9 +34,10 @@ const next = await model.endAttempt(recorder.end(outcome, state.version)); // Ti
 // Rules come only from the player
 const test = await model.testExtension('distance-law', ['attempt-0001', 'attempt-0002'], 'attempt-0003');
 archive = withExtensionTest(archive, test); // Black Box keeps every test, never edited
-if (test.adoptable && playerAgrees) await model.adopt('distance-law'); // version + 1
-await model.revoke('distance-law');
-archive = withAdoptedExtensions(archive, await model.adopted());
+if (test.adoptable && playerAgrees) await model.adopt('distance-law'); // version + 1, recorded
+await model.revoke('distance-law'); // recorded too
+for (const d of (await model.decisions()).slice(archive.extensionDecisions?.length ?? 0))
+  archive = withExtensionDecision(archive, d); // keeps adoptedExtensions as the current result
 
 // Console diagnostics (JSON)
 const report = await model.report(); // strength vs distance (ship and asteroid windows), residuals, confounding, coverage
@@ -51,15 +52,15 @@ Every call returns plain JSON. `ModelState` (contract) is the summary the consol
 | Method | Does | Version |
 |---|---|---|
 | `init(context)` | Briefing priors, believed bodies and asteroids at arrival, nominal ship, settings | 0 |
-| `load({ attempts, extensions?, adopted?, version? })` | Full rebuild from records: Tier G over every arc, then Tier L | +1 |
+| `load({ attempts, extensions?, decisions?, adopted?, version? })` | Full rebuild from records: Tier G over every arc, then Tier L. Each attempt's own briefing (`AttemptStart.briefing`) sets its arrival geometry (A10) | +1 |
 | `beginAttempt(record)`, `append(id, delta)` | The attempt in progress, appended in record order | — |
 | `refresh()` | Tier L (ship and asteroid windows, local fits, profiles, noise scale) and present state, Tier G values kept; arcs Tier G has not seen get a fit of their own with the globals frozen | same |
 | `refit()` | Tier G now (spec §11.2: in flight at most every so often) | +1 |
 | `endAttempt(finalRecord)` | Final record replaces the live copy; Tier G | +1 |
 | `forecast({ id, issuedAt, plan, massProperties, duration?, step?, attemptId? })` | `{ forecast, detail }`; `detail.sigmaMajor` splits the envelope by source, `detail.asteroids` says which tracked asteroids were forecast | — |
 | `testExtension(ext, training, heldOut)` | Fit on training attempts, held-out test, evidence, identifiability, earned hedge and the validated spans it covered. Never adopts | — |
-| `adopt(ext)` / `revoke(ext)` | Only a rule whose latest test passed (`adoptable`) can be adopted. Test records are never edited | +1 |
-| `state()`, `extensions()`, `adopted()` | Current `ModelState`; every rule test (for `BlackBoxArchive.extensionTests`); adopted rules (for `adoptedExtensions`) | — |
+| `adopt(ext, at?)` / `revoke(ext, at?)` | The player's decision, appended to the decision record (`at`: wall-clock ISO time). Only a rule whose latest test passed (`adoptable`) can be adopted; only an adopted one revoked. Test records are never edited | +1 |
+| `state()`, `extensions()`, `decisions()`, `adopted()` | Current `ModelState`; every rule test (`BlackBoxArchive.extensionTests`); every adopt and revoke (`extensionDecisions`); the adopted rules they leave (`adoptedExtensions`). A rule's status in `ModelState.extensions` comes from its last decision, so a revoked rule stays revoked after a reload | — |
 | `report()`, `burns(attempts?)`, `empirical()` | Diagnostics (`report.ts`) | — |
 
 `ModelService` (in-thread, synchronous) has the same methods for code that already runs in a worker; `buildModel(input)` is the pure function underneath.
@@ -67,13 +68,14 @@ Every call returns plain JSON. `ModelState` (contract) is the summary the consol
 ## Context (`ModelContext`, from the briefing)
 
 - `priors`: `body.<id>.mu` priors define the modelled bodies (the one with the largest μ is the primary). Optional `thruster.<id>.scale`, `thruster.<id>.misalignment`, `sensor.<id>.bias`, `sensor.<id>.scale`, `law.gravity.exponent`. Missing ones use the defaults in `settings.ts`.
-- `bodies`: `briefing.knownBodies` (believed positions and velocities at t = 0 set the output frame and the priors on a second body's state). `asteroids`: `briefing.knownAsteroids` (radii for clearances).
+- `bodies`: `briefing.knownBodies` (believed positions and velocities at t = 0 set the output frame and the priors on a second body's state). `asteroids`: `briefing.knownAsteroids` (radii for clearances). `arrival`: the arrival estimate.
+- **Each run starts from different geometry (A10).** When an attempt records the briefing it was given (`AttemptStart.briefing`), its bodies, asteroids and arrival estimate replace the context's for that attempt: the priors on its second body's state, the arrival present state, and the frame and clearances of its forecasts (`contextFor(ctx, record)`). Priors, masses and the ship come from the context. The estimator works relative to the primary, so attempts from different runs fit together.
 - `ship`: the `ShipDefinition` (thrust, Isp, mount direction of each thruster; first `optical-tracker` names the camera bias).
 - `arrival`, `arrivalMass?`, `fixedBodies?` (mock worlds only), `settings?` (overrides of any `[ASSUMED]` constant).
 
 ## What carries to a later encounter (A4, A5; spec §11.5)
 
-- **Adopted rules**: pass the old `extensionTests` and `adoptedExtensions` to `load()`. The rule's fitted value goes in the new briefing's priors (`law.gravity.exponent` with its σ). Its validated spans apply around every body (A5 "every body", setting `validatedRangeSharedLaw = 1`); a rule about one body applies only there.
+- **Adopted rules**: pass the old `extensionTests` and `extensionDecisions` to `load()`. The rule's fitted value goes in the new briefing's priors (`law.gravity.exponent` with its σ). Its validated spans apply around every body (A5 "every body", setting `validatedRangeSharedLaw = 1`); a rule about one body applies only there.
 - **Ship calibration**: `carriedCalibration(state, transit, { carrying })` gives the thruster and sensor values of the arc that carried the ship onward as priors, with σ² grown by the rest of that attempt and the transit (`AttemptStart.transit`: ship time, Δv, camera power cycles, condition changes counted from the condition `carrying` ended with). 3D puts them in the next briefing.
 - **Not carried**: body GMs and calibration profiles.
 
@@ -108,7 +110,7 @@ Extensions: `distance-law` (adds the exponent; a law shared by every body) and `
 
 **Envelope and horizon (P10, A5).** Sources: present state (× s²), every profile node, the hedge outside sampled distances, engine scale and misalignment per thruster, masses of bodies without a profile. The hedge has two parts (§8.2): inside an adopted rule's validated spans the earned σ_e, elsewhere the default σ_h0 = 0.3. `ForecastInputs.hedge` is σ_h0; `earnedHedge` lists, per body, σ_e and the spans where it applied. Planned burns use the current attempt's engine values with σ aged from the last measurement to the time of issue (`ForecastInputs.engine`). The line stops at the first sample whose 1σ major axis exceeds 10% of the distance to the nearest body. `extrapolating` marks samples outside the covered distances of the body that pulls hardest there; `validated` marks those that are inside a validated span.
 
-**Tracked asteroids (§10, A6).** An asteroid fixed with bearing and range (2B gives a range for declared known-size targets) becomes a probe: its fixes, combined with the ship's path from its own window fits, are fixes of each body as seen from the asteroid. Its windows join Tier L at its distances, so the calibration profile covers distances the ship never flew: the safe way to check the law at flyby distances. Forecasts carry each tracked asteroid's track and its closest approach to the ship. Asteroids seen with bearings only are not used.
+**Tracked asteroids (§10, A6).** An asteroid fixed with bearing and range (2B gives a range for declared known-size targets) becomes a probe: its fixes, combined with the ship's path from its own window fits, are fixes of each body as seen from the asteroid. Its windows join Tier L at its distances, so the calibration profile covers distances the ship never flew: the safe way to check the law at flyby distances. Forecasts carry each tracked asteroid's track and its closest approach to the ship. A rule test fits the tracked asteroids of its training and held-out attempts with them, so a passing test's validated span also covers the asteroids' distances, around the body they were measured from (A5); σ_e still comes from the ship's held-out windows. Asteroids seen with bearings only are not used; briefed bodies are never treated as asteroids, modelled or not.
 
 **Missing data.** `report().coverage[i].missing` names what an attempt lacks ("no coasting fixes", "no accelerometer record during burns", "burns without an attitude record", …). No windows means no strength points; `strength[].points[].probe` marks points from an asteroid.
 
@@ -121,4 +123,5 @@ Rebuild with two attempts (12 h and 16 h, 482 records each): 348 ms. In-flight r
 - `vectors.test.ts`: every fit of 1G's nine vectors (revision 2) rebuilt from their inputs, numeric fits within the vectors' tolerances, all **74 claims** re-evaluated from this implementation. The `truth` blocks are read only to judge claims.
 - `service.test.ts`: the vectors as Black Box records through the game layer (GM, thrust and accelerometer calibration, confounding, forecast honesty and horizon, rebuild = live, extension lifecycle with validated spans, forecast immutability, fixtures, P11 lint on every real file).
 - `probes.test.ts`: a tracked asteroid at 0.55–0.7 r₀ while the ship flies 1.0–1.3 r₀ in the inverse-2.5 world: its windows follow the true law, its forecast is honest, the clearance is right, and a dive to 0.6 r₀ is forecast without the hedge.
+- `runs.test.ts`: attempts from different runs at different binary phases fit together only with their own briefings (A10), and a forecast follows its attempt's geometry; adopt and revoke survive a reload as decisions; asteroids tracked in a rule test widen its validated span (0.6–1.4 r₀ to 0.45–1.79 r₀).
 - `revision2.test.ts`: aging and per-attempt engine values through records (a damaged engine in the second attempt), aged engine terms in forecasts, transit aging, and a carried rule in a later encounter (earned hedge inside its span around a new body, default beyond; none with the same-body reading).

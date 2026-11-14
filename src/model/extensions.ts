@@ -9,6 +9,7 @@
  */
 
 import type {
+  ExtensionDecision,
   ExtensionTestRecord,
   ValidatedSpan,
   AttemptId,
@@ -37,6 +38,8 @@ import {
   type ArcSolution,
   type ModelContext,
 } from './engine.ts';
+import type { Arc } from './dynamics.ts';
+import { attemptOfArc, isProbeArc } from './probes.ts';
 import { earnedHedge, localFit, makeWindows, mergeSpans, rangeFixes } from './tierL.ts';
 
 /** Extensions the model can fit (unseen-body and region thrust response are specified only). */
@@ -66,15 +69,19 @@ function trainAndHoldOut(
   adopted: readonly ExtensionId[],
   train: readonly AttemptRecord[],
   held: AttemptRecord,
+  probes?: ReadonlyMap<AttemptId, readonly Arc[]>,
 ): Trained {
   const spec = modelSpec(ctx, adopted);
   const s = spec.settings;
-  const problem = tierGProblem(ctx, spec, [...train, held]);
+  const problem = tierGProblem(ctx, spec, [...train, held], probes ? { probes } : {});
   const heldArcs = problem.builds.get(held.id)?.arcs ?? [];
   if (heldArcs.length === 0) throw new Error(`held-out attempt ${held.id} has no fittable arc`);
   const heldArc = heldArcs.reduce((a, b) => (b.meas.length > a.meas.length ? b : a));
+  // Tracked asteroids are fitted with their attempts: the test checks the law at their distances.
+  const heldProbes = problem.arcs.filter((a) => isProbeArc(a.id) && attemptOfArc(a.id) === held.id);
+  const trainIds = new Set(train.map((r) => r.id));
   const trainArcIds = new Set(
-    train.flatMap((r) => problem.builds.get(r.id)?.arcs.map((a) => a.id) ?? []),
+    problem.arcs.filter((a) => trainIds.has(attemptOfArc(a.id))).map((a) => a.id),
   );
   const trainArcs = problem.arcs.filter((a) => trainArcIds.has(a.id));
   if (trainArcs.length === 0) throw new Error('no training attempt has a fittable arc');
@@ -83,12 +90,13 @@ function trainAndHoldOut(
   );
   const opts = { dt: s.dt, h: s.fdStep };
   const fit = stagedFit(problem.structure, trainArcs, trainParams, opts);
-  const local = problem.params.filter((p) => p.group === heldArc.id);
+  const heldIds = new Set([heldArc.id, ...heldProbes.map((a) => a.id)]);
+  const local = problem.params.filter((p) => heldIds.has(p.group));
   const heldOut = heldOutConsistency(
     problem.structure,
     fit,
     trainParams,
-    heldArc,
+    [heldArc, ...heldProbes],
     local,
     opts,
     s.heldOutSigmaK,
@@ -117,6 +125,8 @@ export function testExtension(
   training: readonly AttemptId[],
   heldOutId: AttemptId,
   modelVersion: number,
+  /** Tracked asteroids' probe arcs per attempt (the model's Tier L builds them). */
+  probes?: ReadonlyMap<AttemptId, readonly Arc[]>,
 ): ExtensionRecord {
   if (!isTestableExtension(ext)) throw new Error(`extension ${ext} cannot be fitted by this model`);
   if (training.includes(heldOutId))
@@ -131,8 +141,8 @@ export function testExtension(
   if (!held) throw new Error(`unknown attempt ${heldOutId}`);
   const baseAdopted = adopted.filter((e) => e !== ext);
   const withExt = [...baseAdopted, ext];
-  const base = trainAndHoldOut(ctx, baseAdopted, train, held);
-  const extd = trainAndHoldOut(ctx, withExt, train, held);
+  const base = trainAndHoldOut(ctx, baseAdopted, train, held, probes);
+  const extd = trainAndHoldOut(ctx, withExt, train, held, probes);
   const added = extd.problem.globals.filter((g) => !base.problem.globals.includes(g));
   const ev = evidence(base.fit, extd.fit, added.length);
   const priorSigma: Record<string, number> = {};
@@ -182,13 +192,37 @@ export function testExtension(
       ]),
     );
     const heldArc = extd.problem.arcs.find((a) => a.id === extd.heldArcId)!;
-    const ref = referenceFor({ spec, values, solutions }, spec.primary, heldArc.id, ctx);
+    const ref = referenceFor(
+      { spec, values, solutions, problem: extd.problem },
+      spec.primary,
+      heldArc.id,
+      ctx,
+    );
     const rows = makeWindows(heldArc, spec.primary, windowRule(s))
       .filter((w) => !w.powered && w.fixes.length >= s.windowKeepFixes)
       .map((w) => localFit(ref, heldArc, w, s.dt, [1, s.localScalePriorSigma]));
+    // σ_e from how the trained law extrapolated beyond the training ship's distances (§7.4).
+    // Arcs the test fitted: training arcs (ship and probes), the held-out ship arc and the
+    // held-out attempt's probes.
+    const inTraining = (a: Arc) => train.some((r) => attemptOfArc(a.id) === r.id);
+    const inTest = (a: Arc) =>
+      inTraining(a) ||
+      a.id === extd.heldArcId ||
+      (isProbeArc(a.id) && attemptOfArc(a.id) === heldOutId);
     const ranges = extd.problem.arcs
-      .filter((a) => a.id !== extd.heldArcId && train.some((r) => a.id.split('~')[0] === r.id))
+      .filter(
+        (a) =>
+          !isProbeArc(a.id) &&
+          a.id !== extd.heldArcId &&
+          train.some((r) => attemptOfArc(a.id) === r.id),
+      )
       .flatMap((a) => rangeFixes(a, spec.primary).map((m) => m.z[1]!));
+    // Every fit of the test counts toward the span: the ship's fixes and, around the body
+    // they were measured from, the tracked asteroids' (A5).
+    const probeRanges = (body: string) =>
+      extd.problem.arcs
+        .filter((a) => isProbeArc(a.id) && inTest(a))
+        .flatMap((a) => rangeFixes(a, body).map((m) => m.z[1]!));
     if (ranges.length > 0) {
       const sigmaN = extd.fit.names.includes(EXPONENT_ID) ? fitGet(extd.fit, EXPONENT_ID)[1] : 0;
       const eh = earnedHedge(
@@ -200,16 +234,15 @@ export function testExtension(
         s.sigmaHFloor,
       );
       if (eh.nWindowsOutside > 0 && eh.validatedRange) {
+        const pr = probeRanges(spec.primary);
         spans.push({
           body: spec.primary,
-          rMin: eh.validatedRange[0],
-          rMax: eh.validatedRange[1],
+          rMin: Math.min(eh.validatedRange[0], ...pr),
+          rMax: Math.max(eh.validatedRange[1], ...pr),
           sigmaE: eh.sigmaH,
           heldOutAttempt: heldOutId,
         });
-        const testArcs = extd.problem.arcs.filter(
-          (a) => a.id === extd.heldArcId || train.some((r) => a.id.split('~')[0] === r.id),
-        );
+        const testArcs = extd.problem.arcs.filter(inTest);
         for (const body of spec.bodies.slice(1)) {
           const r = testArcs.flatMap((a) => rangeFixes(a, body).map((m) => m.z[1]!));
           if (r.length > 0)
@@ -244,25 +277,45 @@ export function testExtension(
   };
 }
 
-/**
- * The player adopts a rule (adoption is the player's act, kept in BlackBoxArchive
- * .adoptedExtensions; test records are never edited). Refused unless the rule's latest test
- * made it adoptable (§7.5).
- */
-export function adoptExtension(
-  tests: readonly ExtensionRecord[],
-  adopted: readonly ExtensionId[],
-  ext: ExtensionId,
-): ExtensionId[] {
-  const rec = latest(tests, ext);
-  if (!rec || !rec.adoptable) throw new Error(`extension ${ext} has not passed a held-out test`);
-  return adopted.includes(ext) ? [...adopted] : [...adopted, ext];
+/** Adopted rules after replaying the decisions in order. */
+export function adoptedFrom(decisions: readonly ExtensionDecision[]): ExtensionId[] {
+  const out: ExtensionId[] = [];
+  for (const d of decisions) {
+    const i = out.indexOf(d.extension);
+    if (d.action === 'adopted' && i < 0) out.push(d.extension);
+    if (d.action === 'revoked' && i >= 0) out.splice(i, 1);
+  }
+  return out;
 }
 
-/** The player withdraws an adopted rule. */
-export function revokeExtension(adopted: readonly ExtensionId[], ext: ExtensionId): ExtensionId[] {
-  if (!adopted.includes(ext)) throw new Error(`extension ${ext} is not adopted`);
-  return adopted.filter((e) => e !== ext);
+/**
+ * The player adopts or revokes a rule (1G spec §6.1): a new decision appended to the record,
+ * which Black Box keeps in order and never edits. Adopting is refused unless the rule's latest
+ * test made it adoptable (§7.5); revoking, unless it is adopted.
+ */
+export function decide(
+  tests: readonly ExtensionRecord[],
+  decisions: readonly ExtensionDecision[],
+  ext: ExtensionId,
+  action: ExtensionDecision['action'],
+  modelVersion: number,
+  at: string,
+): ExtensionDecision[] {
+  const adopted = adoptedFrom(decisions);
+  if (action === 'adopted') {
+    const rec = latest(tests, ext);
+    if (!rec || !rec.adoptable) throw new Error(`extension ${ext} has not passed a held-out test`);
+    if (adopted.includes(ext)) throw new Error(`extension ${ext} is already adopted`);
+  } else if (!adopted.includes(ext)) throw new Error(`extension ${ext} is not adopted`);
+  return [...decisions, { extension: ext, action, modelVersion, at }];
+}
+
+/** Decisions for a list of adopted rules with no history (older saves). */
+export function decisionsFromAdopted(
+  adopted: readonly ExtensionId[],
+  modelVersion: number,
+): ExtensionDecision[] {
+  return adopted.map((extension) => ({ extension, action: 'adopted', modelVersion, at: '' }));
 }
 
 function latest(tests: readonly ExtensionRecord[], ext: ExtensionId): ExtensionRecord | undefined {
@@ -318,22 +371,19 @@ export function validatedHedges(
   return out;
 }
 
-/** ExtensionState per rule for ModelState: latest test, status from adoption, all its spans. */
+/** ExtensionState per rule for ModelState: latest test, status from the decisions, all its spans. */
 export function extensionStates(
   tests: readonly ExtensionRecord[],
-  adopted: readonly ExtensionId[],
-  revoked: readonly ExtensionId[] = [],
+  decisions: readonly ExtensionDecision[],
 ): ExtensionState[] {
   const ids: ExtensionId[] = [];
   for (const t of tests) if (!ids.includes(t.state.id)) ids.push(t.state.id);
-  for (const a of adopted) if (!ids.includes(a)) ids.push(a);
+  for (const d of decisions) if (!ids.includes(d.extension)) ids.push(d.extension);
   return ids.map((id) => {
     const t = latest(tests, id);
-    const status = adopted.includes(id)
-      ? 'adopted'
-      : revoked.includes(id)
-        ? 'revoked'
-        : (t?.state.status ?? 'candidate');
+    let last: ExtensionDecision | undefined;
+    for (const d of decisions) if (d.extension === id) last = d;
+    const status = last ? last.action : (t?.state.status ?? 'candidate');
     return { ...(t?.state ?? { id }), status, validatedSpans: spansOf(tests, id) };
   });
 }

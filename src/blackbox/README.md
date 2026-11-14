@@ -29,11 +29,12 @@ const final = recorder.end({ kind: 'lost', t, cause: 'collision' }, state.versio
 
 ## Archive and storage (`archive.ts`, `store.ts`)
 
-- `emptyArchive`, `withAttempt` (add or replace by id, ordered by index), `nextAttemptIndex`, `attemptsFor(encounterId)`, `withProcedure`, `withoutProcedure`, `withAdoptedExtensions`, `withExtensionTest` (append; tests are never edited, spec §11.4), `withLead`, `reissue`.
+- `emptyArchive`, `withAttempt` (add or replace by id, ordered by index), `nextAttemptIndex`, `attemptsFor(encounterId)`, `withProcedure`, `withoutProcedure`, `withAdoptedExtensions`, `withExtensionTest` (append; tests are never edited, spec §11.4), `withExtensionDecision` (append an adopt or revoke; `adoptedExtensions` follows as its current result), `withLead`, `reissue`.
 - `createBlackBoxStore(name?)`: IndexedDB in the browser (`IndexedDbBlackBoxStore`, one database per save slot, stores `attempts`, `procedures`, `meta`), memory elsewhere (`MemoryBlackBoxStore`, JSON-serialising like real storage).
 - `load()` returns `{ archive }` with `archive.extensionTests`; every forecast is passed through `issueForecast` again, so it comes back frozen.
-- `putMeta({ adoptedExtensions, leads, extensionTests })` stores the adopted rules, the chart of leads and every rule test (the model's `ExtensionRecord`, a superset of the contract's `ExtensionTestRecord`: each test's state carries its validated spans).
-- Pass `archive.extensionTests` and `archive.adoptedExtensions` to the model's `load()`; they carry to later encounters (A4, A5).
+- `putMeta({ adoptedExtensions, leads, extensionTests, extensionDecisions })` stores the adopted rules, the chart of leads, every rule test and every adopt and revoke (the model's `ExtensionRecord`, a superset of the contract's `ExtensionTestRecord`: each test's state carries its validated spans).
+- Pass `archive.extensionTests` and `archive.extensionDecisions` to the model's `load()`; they carry to later encounters (A4, A5).
+- Record each attempt's briefing in `AttemptStart.briefing` (A10): the model takes that attempt's arrival geometry from it.
 
 ## Comparing two attempts (`compare.ts`)
 

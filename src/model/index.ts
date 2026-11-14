@@ -23,11 +23,12 @@ export {
   type PresentState,
 } from './engine.ts';
 export {
-  adoptExtension,
+  adoptedFrom,
+  decide,
+  decisionsFromAdopted,
   extensionStates,
   isSharedLaw,
   isTestableExtension,
-  revokeExtension,
   spansOf,
   testExtension,
   validatedHedges,

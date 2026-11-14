@@ -55,7 +55,7 @@ import {
 } from './dynamics.ts';
 import type { ValidatedHedge } from './extensions.ts';
 import { zeros, type Matrix } from './linalg.ts';
-import { probeArcs, shipArcOf } from './probes.ts';
+import { attemptOfArc, probeArcs, shipArcOf } from './probes.ts';
 import { resolveSettings, settingsRecord, type ModelSettings } from './settings.ts';
 import { fitGet, fitNu, stagedFit, type FitResult, type Param } from './solve.ts';
 import {
@@ -116,6 +116,18 @@ export function contextFromBriefing(
     arrival: briefing.arrivalEstimate,
     ...opts,
   };
+}
+
+/**
+ * The geometry an attempt was given (DECISIONS A10: each run starts from different geometry):
+ * the bodies' and asteroids' arrival states and the arrival estimate from the attempt's own
+ * briefing when recorded (`AttemptStart.briefing`), else the encounter's. Priors, masses and
+ * the ship never vary with it.
+ */
+export function contextFor(ctx: ModelContext, rec?: Pick<AttemptRecord, 'start'>): ModelContext {
+  const b = rec?.start.briefing;
+  if (!b) return ctx;
+  return { ...ctx, bodies: b.knownBodies, asteroids: b.knownAsteroids, arrival: b.arrivalEstimate };
 }
 
 export const muId = (body: string) => `body.${body}.mu`;
@@ -238,6 +250,7 @@ export interface TierGProblem {
   readonly params: Param[];
   readonly arcs: Arc[];
   readonly builds: ReadonlyMap<AttemptId, ArcBuild>;
+  readonly records: ReadonlyMap<AttemptId, AttemptRecord>;
   /** Global parameter ids, in order. */
   readonly globals: readonly string[];
   readonly accelSource?: string;
@@ -254,9 +267,15 @@ export function tierGProblem(
   ctx: ModelContext,
   spec: ModelSpec,
   attempts: readonly AttemptRecord[],
+  opts: {
+    /** Tracked asteroids' probe arcs to fit as well (rule tests, §10 and A5). */
+    readonly probes?: ReadonlyMap<AttemptId, readonly Arc[]>;
+  } = {},
 ): TierGProblem {
   const s = spec.settings;
   const builds = new Map<AttemptId, ArcBuild>();
+  const records = new Map(attempts.map((r) => [r.id, r] as const));
+  const arcCtx = (a: Arc) => contextFor(ctx, records.get(attemptOfArc(a.id)));
   const arcs: Arc[] = [];
   const levels: string[] = [];
   for (const rec of attempts) {
@@ -271,6 +290,9 @@ export function tierGProblem(
     arcs.push(...b.arcs);
     levels.push(...b.limitedLevels);
   }
+  for (const rec of attempts)
+    for (const p of opts.probes?.get(rec.id) ?? [])
+      if (rangeFixes(p, spec.primary).length >= 3) arcs.push(p);
   const thrusters = thrustersOf(arcs);
   const accelSource = attempts
     .flatMap((r) => r.measurements)
@@ -288,7 +310,7 @@ export function tierGProblem(
     if (!spec.dynamic) {
       const byArc: Record<string, readonly [number, number, number, number]> = {};
       for (const a of arcs) {
-        const r = briefingBodiesAt(ctx, spec, a.epoch)[j - 1]!;
+        const r = briefingBodiesAt(arcCtx(a), spec, a.epoch)[j - 1]!;
         byArc[a.id] = [r[0]!, r[1]!, 0, 0];
       }
       return { id, mu: muId(id), state: [0, 0, 0, 0], stateByArc: byArc };
@@ -382,10 +404,11 @@ export function tierGProblem(
   for (const a of arcs) {
     locals.push(...shipParams(a.id, guessShip(a, spec.primary, a.epoch)));
     if (spec.dynamic && others.length > 0) {
-      const prior = briefingBodiesAt(ctx, spec, a.epoch);
-      const pBody = briefingBody(ctx, spec.primary);
+      const actx = arcCtx(a);
+      const prior = briefingBodiesAt(actx, spec, a.epoch);
+      const pBody = briefingBody(actx, spec.primary);
       others.forEach((id, k) => {
-        const b = briefingBody(ctx, id);
+        const b = briefingBody(actx, id);
         const posSigma = Math.sqrt(
           Math.max(b?.positionCov[0] ?? 0, b?.positionCov[2] ?? 0) +
             Math.max(pBody?.positionCov[0] ?? 0, pBody?.positionCov[2] ?? 0),
@@ -420,7 +443,7 @@ export function tierGProblem(
     );
   }
   for (const a of arcs) {
-    const rec = recOf.get(a.id)!;
+    const rec = recOf.get(a.id) ?? records.get(attemptOfArc(a.id))!;
     const tLast = a.meas[a.meas.length - 1]!.t;
     for (const g of globals) {
       const ag = agingOf(g.name, spec.cameraId);
@@ -453,6 +476,7 @@ export function tierGProblem(
     params: [...locals, ...globals],
     arcs,
     builds,
+    records,
     globals: globals.map((p) => p.name),
     ...(accelSource ? { accelSource } : {}),
   };
@@ -570,7 +594,9 @@ export interface ModelSnapshot {
 
 /** Reference law for Tier L around `body` within one arc (§5.2), others frozen from Tier G. */
 export function referenceFor(
-  d: Pick<ModelDerived, 'spec' | 'values' | 'solutions'>,
+  d: Pick<ModelDerived, 'spec' | 'values' | 'solutions'> & {
+    readonly problem?: Pick<TierGProblem, 'records'>;
+  },
   body: string,
   arcId: string,
   ctx: ModelContext,
@@ -607,10 +633,10 @@ export function referenceFor(
 
 /** State of body `id` relative to body `ref` (ref at rest) at t, from an arc solution. */
 function relativeState(
-  d: Pick<ModelDerived, 'spec'>,
+  d: Pick<ModelDerived, 'spec'> & { readonly problem?: Pick<TierGProblem, 'records'> },
   ctx: ModelContext,
   sol: ArcSolution | undefined,
-  _arcId: string,
+  arcId: string,
   id: string,
   ref: string,
   t: number,
@@ -624,7 +650,11 @@ function relativeState(
     P = tr.pos[0]!;
     V = tr.vel[0]!;
   } else {
-    const rel = briefingBodiesAt(ctx, d.spec, t);
+    const rel = briefingBodiesAt(
+      contextFor(ctx, d.problem?.records.get(attemptOfArc(arcId))),
+      d.spec,
+      t,
+    );
     P = new Float64Array(2 * bodies.length);
     V = new Float64Array(2 * bodies.length);
     rel.forEach((r, k) => {
@@ -707,7 +737,7 @@ export function buildModel(input: ModelInput, opts: BuildOptions = {}): ModelSna
 
   // Tier L per body with range fixes (§5): first the ship's arcs, then the tracked asteroids'
   // probe arcs (§10), whose fixes use the ship's path from its own window fits.
-  const partial = { spec, values, solutions };
+  const partial = { spec, values, solutions, problem };
   const rule = windowRule(s);
   const n = spec.exponent ? (values[EXPONENT_ID] ?? 2) : 2;
   const fitWindows = (arcs: readonly Arc[], body: string): LocalFitResult[] => {
@@ -751,27 +781,27 @@ export function buildModel(input: ModelInput, opts: BuildOptions = {}): ModelSna
   const shipFits = new Map(spec.bodies.map((body) => [body, fitWindows(problem.arcs, body)]));
 
   // The ship's path relative to each body: the window fit covering t (to the next window).
-  const paths = new Map(
-    spec.bodies.map((body) => {
-      const list = shipFits
-        .get(body)!
-        .map((r) => r.solution)
-        .sort((a, b) => a.arc.epoch - b.arc.epoch);
-      return [body, list] as const;
-    }),
-  );
-  const pathFor = (body: string, t: number): ArcSolution | null => {
-    const list = paths.get(body)!;
-    let best: ArcSolution | null = null;
-    for (const sol of list) if (sol.arc.epoch <= t) best = sol;
-    if (!best) return null;
-    const last = best.arc.meas[best.arc.meas.length - 1]!.t;
-    const next = list.find(
-      (q) =>
-        q.arc.epoch > best!.arc.epoch &&
-        shipArcOf(q.arc.id.split('.w')[0]!) === shipArcOf(best!.arc.id.split('.w')[0]!),
-    );
-    const until = next ? next.arc.epoch : last + s.normalPointInterval;
+  // The ship's path relative to each body: per ship arc, its window fits in time order; the
+  // window covering t (from its first fix to the next window's) holds the path at t.
+  const paths = new Map<string, ArcSolution[]>(); // `${body}|${shipArc}`
+  for (const body of spec.bodies)
+    for (const r of shipFits.get(body)!) {
+      const key = `${body}|${r.row.arc}`;
+      const list = paths.get(key) ?? [];
+      list.push(r.solution);
+      paths.set(key, list);
+    }
+  for (const list of paths.values()) list.sort((a, b) => a.arc.epoch - b.arc.epoch);
+  const pathFor = (shipArc: string, body: string, t: number): ArcSolution | null => {
+    const list = paths.get(`${body}|${shipArc}`) ?? [];
+    let k = -1;
+    for (let i = 0; i < list.length; i++) if (list[i]!.arc.epoch <= t) k = i;
+    if (k < 0) return null;
+    const best = list[k]!;
+    const next = list[k + 1];
+    const until = next
+      ? next.arc.epoch
+      : best.arc.meas[best.arc.meas.length - 1]!.t + s.normalPointInterval;
     return t <= until ? best : null;
   };
   const probes = new Map<AttemptId, Arc[]>();
@@ -782,7 +812,14 @@ export function buildModel(input: ModelInput, opts: BuildOptions = {}): ModelSna
       record: rec,
       shipArcs,
       bodies: spec.bodies,
-      pathFor,
+      knownBodies: contextFor(ctx, rec).bodies.map((b) => b.id),
+      pathFor: (body, t) => {
+        // The ship arc of this attempt that holds t (arcs break at contacts): the last one
+        // starting at or before t, else the first.
+        let arc = shipArcs[0]!;
+        for (const a of shipArcs) if (a.epoch <= t && a.epoch >= arc.epoch) arc = a;
+        return pathFor(arc.id, body, t);
+      },
       cameraBias: values[`sensor.${spec.cameraId}.bias`] ?? 0,
       dt: s.dt,
       h: s.fdStep,
@@ -921,13 +958,14 @@ export function presentState(
 ): PresentState | null {
   const s = d.spec.settings;
   const build = d.problem.builds.get(attemptId);
+  const actx = contextFor(ctx, d.problem.records.get(attemptId));
   const arc = build?.arcs[build.arcs.length - 1];
   const nFix = arc ? rangeFixes(arc, d.spec.primary).length : 0;
-  if (!arc || nFix < s.windowMinFixes) return arrivalState(ctx, d.spec);
+  if (!arc || nFix < s.windowMinFixes) return arrivalState(actx, d.spec);
   const wins = makeWindows(arc, d.spec.primary, windowRule(s))
     .filter((w) => !w.powered && w.fixes.length >= s.windowKeepFixes)
     .slice(-s.anchorWindows);
-  if (wins.length === 0) return arrivalState(ctx, d.spec);
+  if (wins.length === 0) return arrivalState(actx, d.spec);
   const prof = d.profiles.find((p) => p.body === d.spec.primary) ?? null;
   const extra = d.profiles.filter((p) => p.body !== d.spec.primary);
   const ref = referenceFor(d, d.spec.primary, arc.id, ctx);
