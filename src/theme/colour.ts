@@ -89,7 +89,19 @@ export const opacity = {
   shipFootprint: 0.55,
   hullEdges: 0.8,
   connector: 0.6,
+  /** Instrument washes: a hovered row, a selected row, a Black Box highlight. */
+  rowHover: 0.05,
+  rowSelected: 0.11,
+  blackboxWash: 0.08,
+  /** A stale reading: its bar or trace is dimmed to this. */
+  staleInstrument: 0.45,
 } as const;
+
+/** '#rrggbb' and an alpha → 'rgba(r, g, b, a)', for CSS. */
+export function rgba(c: string, a: number): string {
+  const n = Number.parseInt(c.slice(1, 7), 16);
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
+}
 
 /** '#rrggbb' → 0xrrggbb, for Three.js. */
 export function hex(c: string): number {
