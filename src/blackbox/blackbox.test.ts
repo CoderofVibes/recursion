@@ -12,8 +12,9 @@ import type {
   ModelState,
   Plan,
 } from '../contracts/index.ts';
-import { issueForecast } from '../contracts/index.ts';
+import { cov3FromPlanar, isotropicInertia, issueForecast, prismHull } from '../contracts/index.ts';
 import { hashState } from '../lib/hash.ts';
+import * as quat from '../lib/quat.ts';
 import type { ModelContext } from '../model/engine.ts';
 import { ModelService } from '../model/service.ts';
 import { recordFromAttempt, testShip, type VectorJson } from '../model/vector-harness.ts';
@@ -41,9 +42,9 @@ const ctx: ModelContext = {
     {
       id: 'A',
       name: 'A',
-      position: { x: 0, y: 0 },
-      velocity: { x: 0, y: 0 },
-      positionCov: [1e6, 0, 1e6],
+      position: { x: 0, y: 0, z: 0 },
+      velocity: { x: 0, y: 0, z: 0 },
+      positionCov: cov3FromPlanar([1e6, 0, 1e6]),
       radius: 2.5e5,
       tracked: true,
     },
@@ -53,16 +54,21 @@ const ctx: ModelContext = {
   settings: { dt: 60 },
 };
 
+// LIFT(2G): the scenarios in this file are planar (z = 0, yaw-only attitude, flat hull).
 const massProperties: MassProperties = {
   mass: MASS,
-  centerOfMass: { x: 0, y: 0 },
-  inertia: 1e5,
-  footprint: [
-    { x: -5, y: -2 },
-    { x: 5, y: -2 },
-    { x: 5, y: 2 },
-    { x: -5, y: 2 },
-  ],
+  centerOfMass: { x: 0, y: 0, z: 0 },
+  inertia: isotropicInertia(1e5),
+  hull: prismHull(
+    [
+      { x: -5, y: -2 },
+      { x: 5, y: -2 },
+      { x: 5, y: 2 },
+      { x: -5, y: 2 },
+    ],
+    0,
+    0,
+  ),
 };
 
 const content = (s: ModelState) => {
@@ -94,8 +100,8 @@ describe('recorder', () => {
       t,
       source: 'cam',
       target: 'A',
-      value: [0],
-      sigma: [1e-4],
+      value: [0, 0],
+      sigma: [1e-4, 1e-4],
     });
     r.recordMeasurements([m(0), m(1), m(1)]);
     expect(() => r.recordMeasurements([m(0.5)])).toThrow(/acquisition order/);
@@ -286,7 +292,7 @@ describe('procedures (P9)', () => {
     executed: [
       {
         t: 50,
-        command: { kind: 'attitude', target: { reference: 'inertial', angle: 1 } },
+        command: { kind: 'attitude', target: { reference: 'inertial', attitude: quat.fromYaw(1) } },
         source: 'manual',
         status: 'executed',
       },
@@ -352,8 +358,8 @@ describe('procedures (P9)', () => {
       ...here,
       estimate: {
         ...rec.start.estimate,
-        position: { x: rec.start.estimate.position.x + 1e4, y: 0 },
-        velocity: { x: 0, y: 3 },
+        position: { x: rec.start.estimate.position.x + 1e4, y: 0, z: 0 },
+        velocity: { x: 0, y: 3, z: 0 },
       },
     };
     const m = matchProcedure(p, moved);

@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import baseline from '../../../data/ship-baseline.json';
+import { isotropicInertia } from '../../contracts/ship.ts';
 import type {
   EquipmentState,
   EnvironmentEffects,
   ShipSystemsState,
 } from '../../contracts/truth/ship.ts';
+import { fromYaw } from '../../lib/quat.ts';
 import { createRng } from '../../lib/rng.ts';
 import { loadShipDefinition } from '../definition.ts';
 import {
@@ -43,7 +45,12 @@ function initial(): ShipSystemsState {
     exposure: {},
     attitudeTarget: { reference: 'free' },
     burns: [],
-    massProperties: { mass: 30374, centerOfMass: { x: 0, y: 0 }, inertia: 1, footprint: [] },
+    massProperties: {
+      mass: 30374,
+      centerOfMass: { x: 0, y: 0, z: 0 },
+      inertia: isotropicInertia(1),
+      hull: [],
+    },
     rng: Object.fromEntries(
       sensorStreamNames(definition).map((name) => [
         name,
@@ -55,24 +62,24 @@ function initial(): ShipSystemsState {
 const environment = (t = 100): EnvironmentEffects => ({
   t,
   kinematics: {
-    position: { x: 10000, y: 10000 },
-    velocity: { x: 30, y: 40 },
-    attitude: 0,
-    angularRate: 0,
+    position: { x: 10000, y: 10000, z: 0 },
+    velocity: { x: 30, y: 40, z: 0 },
+    attitude: fromYaw(0),
+    angularVelocity: { x: 0, y: 0, z: 0 },
   },
-  specificForce: { x: 0, y: 0 },
+  specificForce: { x: 0, y: 0, z: 0 },
   targets: [
     {
       id: 'known-body',
       kind: 'body',
-      relativePosition: { x: 10000, y: 0 },
-      relativeVelocity: { x: 0, y: 0 },
+      relativePosition: { x: 10000, y: 0, z: 0 },
+      relativeVelocity: { x: 0, y: 0, z: 0 },
       radius: 50,
     },
   ],
   intensity: {},
   fieldSignals: {},
-  sunlight: { direction: { x: 1, y: 0 }, irradiance: 0 },
+  sunlight: { direction: { x: 1, y: 0, z: 0 }, irradiance: 0 },
 });
 function changeEquipment(
   state: ShipSystemsState,
@@ -134,7 +141,7 @@ describe('sensor quality and semantics (C01, C05, C12, C14)', () => {
         stepSensors(
           state,
           definition,
-          { ...env, kinematics: { ...env.kinematics, attitude: Math.PI } },
+          { ...env, kinematics: { ...env.kinematics, attitude: fromYaw(Math.PI) } },
           0.02,
         ),
         'bearing',
@@ -155,7 +162,7 @@ describe('sensor quality and semantics (C01, C05, C12, C14)', () => {
         stepSensors(
           state,
           definition,
-          { ...env, kinematics: { ...env.kinematics, angularRate: 0.1 } },
+          { ...env, kinematics: { ...env.kinematics, angularVelocity: { x: 0, y: 0, z: 0.1 } } },
           0.02,
         ),
         'bearing',
@@ -179,7 +186,10 @@ describe('sensor quality and semantics (C01, C05, C12, C14)', () => {
     const env = environment();
     const fast = {
       ...env,
-      targets: env.targets.map((target) => ({ ...target, relativeVelocity: { x: 0, y: 1000 } })),
+      targets: env.targets.map((target) => ({
+        ...target,
+        relativeVelocity: { x: 0, y: 1000, z: 0 },
+      })),
     };
     expect(instrument(stepSensors(initial(), definition, fast, 0.02), 'bearing')).toHaveLength(0);
   });
@@ -195,8 +205,8 @@ describe('sensor quality and semantics (C01, C05, C12, C14)', () => {
         targets: [],
         kinematics: {
           ...env.kinematics,
-          position: { x: 1e8, y: 0 },
-          velocity: { x: 10000, y: 10000 },
+          position: { x: 1e8, y: 0, z: 0 },
+          velocity: { x: 10000, y: 10000, z: 0 },
         },
       },
       0.02,
@@ -205,7 +215,7 @@ describe('sensor quality and semantics (C01, C05, C12, C14)', () => {
     const powered = stepSensors(
       initial(),
       definition,
-      { ...env, specificForce: { x: 2, y: -3 } },
+      { ...env, specificForce: { x: 2, y: -3, z: 0 } },
       0.02,
     );
     const base = instrument(coast, 'accel')[0]!;
@@ -233,7 +243,7 @@ describe('sensor quality and semantics (C01, C05, C12, C14)', () => {
         stepSensors(
           initial(),
           definition,
-          { ...env, kinematics: { ...env.kinematics, angularRate: 0.02 } },
+          { ...env, kinematics: { ...env.kinematics, angularVelocity: { x: 0, y: 0, z: 0.02 } } },
           0.02,
         ),
         'attitude',

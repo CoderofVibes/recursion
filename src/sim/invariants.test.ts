@@ -89,6 +89,6 @@ describe('long coasts', () => {
   it('a torque-free ship keeps its spin rate exactly', () => {
     const sim = createSimulation(makeWorld({ angularRate: 0.0123 }), { dt: 1 });
     const r = sim.run(sim.initial, 100_000);
-    expect(r.state.world.ship.kinematics.angularRate).toBe(0.0123);
+    expect(r.state.world.ship.kinematics.angularVelocity.z).toBe(0.0123);
   });
 });

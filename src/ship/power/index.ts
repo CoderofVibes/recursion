@@ -6,6 +6,7 @@ import type {
 } from '../../contracts/truth/ship.ts';
 import type { ShipEvent } from '../../contracts/measurements.ts';
 import type { JsonValue } from '../../contracts/units.ts';
+import { yawOf } from '../../lib/quat.ts';
 import { getGeometry } from '../config/configuration.ts';
 import { requestedRecorderPower } from '../sensors/index.ts';
 import { bounded, modeOf, systems } from './baseline.ts';
@@ -134,8 +135,10 @@ function dispatchPower(
   const geometry = getGeometry(state, definition);
   // Sunlight arrives with body shadows already applied (irradiance 0 in shadow; DECISIONS A3).
   const irradiance = Math.max(0, env.sunlight.irradiance);
+  // LIFT(2G): planar sun incidence, from the sun's azimuth against the yaw of the body axis.
   const sunAngle = Math.atan2(env.sunlight.direction.y, env.sunlight.direction.x);
-  const incidence = irradiance > 0 ? Math.max(0, Math.cos(sunAngle - env.kinematics.attitude)) : 0;
+  const incidence =
+    irradiance > 0 ? Math.max(0, Math.cos(sunAngle - yawOf(env.kinematics.attitude))) : 0;
   const sources: Record<
     Side,
     { solar: number; fuel: number; discharge: number; optionalDischarge: number }

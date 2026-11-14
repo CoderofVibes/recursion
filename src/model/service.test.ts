@@ -11,20 +11,27 @@ import rawValidation from '../../tests/vectors/estimator/extension-validation.js
 import rawForecast from '../../tests/vectors/estimator/forecast-envelope.json?raw';
 import rawNewton from '../../tests/vectors/estimator/newton-recovers-gm.json?raw';
 import { fixtures } from '../contracts/fixtures/index.ts';
-import type {
-  AttemptRecord,
-  BelievedBody,
-  MassProperties,
-  ModelState,
-  ParameterPrior,
-  Plan,
+import {
+  HANDS_ON_NEUTRAL,
+  cov3FromPlanar,
+  isotropicInertia,
+  prismHull,
+  type AttemptRecord,
+  type BelievedBody,
+  type ExecutedCommand,
+  type MassProperties,
+  type ModelState,
+  type ParameterPrior,
+  type Plan,
 } from '../contracts/index.ts';
 import { hashState } from '../lib/hash.ts';
+import * as quat from '../lib/quat.ts';
+import { arcsFromRecord, burnsFromExecuted, handsOnThrust, mainEngineOf } from './adapt.ts';
 import { createModelClient } from './client.ts';
 import { contextFromBriefing, type ModelContext } from './engine.ts';
 import { fromRows } from './linalg.ts';
 import { ModelService } from './service.ts';
-import type { ModelSettings } from './settings.ts';
+import { resolveSettings, type ModelSettings } from './settings.ts';
 import { mahalanobis } from './tierL.ts';
 import { recordFromAttempt, testShip, type VectorJson } from './vector-harness.ts';
 
@@ -35,9 +42,9 @@ function body(id: string, x = 0, y = 0, posSigma = 1e3): BelievedBody {
   return {
     id,
     name: id,
-    position: { x, y },
-    velocity: { x: 0, y: 0 },
-    positionCov: [posSigma ** 2, 0, posSigma ** 2],
+    position: { x, y, z: 0 },
+    velocity: { x: 0, y: 0, z: 0 },
+    positionCov: cov3FromPlanar([posSigma ** 2, 0, posSigma ** 2]),
     radius: id === 'A' ? 2.5e5 : 1.6e5,
     tracked: true,
   };
@@ -64,13 +71,13 @@ function context(opts: {
     ship: testShip(MASS, opts.thrust ?? 150),
     arrival: {
       t: 0,
-      position: { x: 1e6, y: 0 },
-      velocity: { x: 0, y: 100 },
-      positionCov: [1e8, 0, 1e8],
-      velocityCov: [100, 0, 100],
-      attitude: 0,
+      position: { x: 1e6, y: 0, z: 0 },
+      velocity: { x: 0, y: 100, z: 0 },
+      positionCov: cov3FromPlanar([1e8, 0, 1e8]),
+      velocityCov: cov3FromPlanar([100, 0, 100]),
+      attitude: quat.fromYaw(0),
       attitudeSigma: 1e-3,
-      angularRate: 0,
+      angularVelocity: { x: 0, y: 0, z: 0 },
     },
     settings: { dt: 60, ...(opts.settings ?? {}) },
   };
@@ -90,16 +97,21 @@ const param = (s: ModelState, id: string) => {
   return p;
 };
 
+// LIFT(2G): the scenarios in this file are planar (z = 0, yaw-only attitude, flat hull).
 const massProperties: MassProperties = {
   mass: MASS,
-  centerOfMass: { x: 0, y: 0 },
-  inertia: 1e5,
-  footprint: [
-    { x: -5, y: -2 },
-    { x: 5, y: -2 },
-    { x: 5, y: 2 },
-    { x: -5, y: 2 },
-  ],
+  centerOfMass: { x: 0, y: 0, z: 0 },
+  inertia: isotropicInertia(1e5),
+  hull: prismHull(
+    [
+      { x: -5, y: -2 },
+      { x: 5, y: -2 },
+      { x: 5, y: 2 },
+      { x: -5, y: 2 },
+    ],
+    0,
+    0,
+  ),
 };
 
 /** Everything in a ModelState except its version bookkeeping. */
@@ -144,6 +156,63 @@ describe('game layer against the vectors', () => {
     expect(svc.report().confounding!.confounded).toBe(false);
   });
 
+  it('turns executed hands-on throttle (fly) into main-engine burns', () => {
+    const ship = testShip(MASS, 150);
+    const fly = (
+      t: number,
+      throttle: number,
+      status: ExecutedCommand['status'] = 'executed',
+    ): ExecutedCommand => ({
+      t,
+      command: { kind: 'fly', input: { ...HANDS_ON_NEUTRAL, yaw: t === 20 ? 0.5 : 0, throttle } },
+      source: 'manual',
+      status,
+    });
+    const cutoff = (t: number, thruster: string): ExecutedCommand => ({
+      t,
+      command: { kind: 'cutoff', thruster },
+      source: 'manual',
+      status: 'executed',
+    });
+    const executed = [
+      fly(10, 0.6), // throttle up
+      fly(20, 0.6), // the controls change (yaw): the burn ends and a new one starts
+      fly(30, 0), // throttle closed
+      fly(35, 0.9, 'rejected'), // never reached the ship
+      fly(40, 1),
+      cutoff(50, 'all'),
+      fly(60, 0.5, 'limited'),
+      cutoff(70, 'main'),
+      fly(80, 0.2), // still open: runs to the end of the record
+    ];
+    expect(mainEngineOf(ship)).toBe('main');
+    const burns = burnsFromExecuted(executed, Infinity, handsOnThrust(ship, 100));
+    expect(burns.map((b) => [b.thruster, b.t0, b.t1, b.throttle, b.limited])).toEqual([
+      ['main', 10, 20, 0.6, false],
+      ['main', 20, 30, 0.6, false],
+      ['main', 40, 50, 1, false],
+      ['main', 60, 70, 0.5, true],
+      ['main', 80, 100, 0.2, false],
+    ]);
+    // Without a main engine to drive, hands-on input is no burn.
+    expect(burnsFromExecuted(executed)).toEqual([]);
+    // In a record, an open hands-on burn stops at the last thing recorded.
+    const rec: AttemptRecord = {
+      ...records(V(rawNewton), 0)[0]!,
+      executed: [fly(80, 0.2)],
+      measurements: [],
+      events: [{ kind: 'recall', t: 95 }],
+      outcome: { kind: 'in-progress' },
+    };
+    const built = arcsFromRecord(rec, {
+      ship,
+      settings: resolveSettings(),
+      bodies: ['A'],
+      primary: 'A',
+    });
+    expect(built.burns.map((b) => [b.t0, b.t1])).toEqual([[80, 95]]);
+  });
+
   it('flags confounding when only burn data exist (burn-only)', () => {
     const v = V(rawBurn);
     const svc = new ModelService(context({}));
@@ -185,7 +254,7 @@ describe('forecast service (forecast-envelope through the game layer)', () => {
           thruster: 'main',
           throttle: 1,
           duration: q.t1 - q.t0,
-          attitude: { reference: 'inertial', angle: q.theta },
+          attitude: { reference: 'inertial', attitude: quat.fromYaw(q.theta) },
         },
       })),
     };
@@ -220,7 +289,7 @@ describe('forecast service (forecast-envelope through the game layer)', () => {
       expect(s, `sample at ${p.t}`).toBeDefined();
       const cov = fromRows([
         [s!.positionCov[0], s!.positionCov[1]],
-        [s!.positionCov[1], s!.positionCov[2]],
+        [s!.positionCov[1], s!.positionCov[3]],
       ]);
       expect(
         mahalanobis([p.truth[0] - s!.position.x, p.truth[1] - s!.position.y], cov),
@@ -243,7 +312,7 @@ describe('forecast service (forecast-envelope through the game layer)', () => {
       kept++;
       const cov = fromRows([
         [s.positionCov[0], s.positionCov[1]],
-        [s.positionCov[1], s.positionCov[2]],
+        [s.positionCov[1], s.positionCov[3]],
       ]);
       expect(mahalanobis([p.truth[0] - s.position.x, p.truth[1] - s.position.y], cov)).toBeLessThan(
         3,

@@ -33,6 +33,8 @@ Prepare (safe, paused) → commit plan (forecast issued and frozen) → operate 
 | `rules` | `test(extension, training, heldOut)`, `adopt`, `revoke`, `report()`: rules come only from the player (A4) |
 | `model`, `blackBox` | The two belief-side services (below) |
 
+`fly(input)` is hands-on flying (A8, A11). Pass the state of the player's controls (`HandsOnInput`: translation along the body axes, yaw, pitch, throttle) whenever it changes; calling it every frame is fine, because an input equal to the last one sent this attempt is ignored, and an attempt starts with the controls released. A changed input goes to the ship as a manual `fly` command on the next tick and stays in force until the next one. Releasing the controls (a neutral input) also issues a coasting forecast: an empty plan from the present state, frozen and recorded like a committed plan's forecast (Black Box and the snapshot's `forecasts`), but it schedules nothing, leaves a scheduled plan alone and does not hold time.
+
 `GameSession` adds `stepTicks(n)` (headless), `truth()` and `lastTick()` (tests and tuning only).
 
 ## One tick (`truth-step.ts`)

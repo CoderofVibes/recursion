@@ -6,9 +6,8 @@
  * turn rate, the ship's outline is a footprint polygon and a sensor covers a planar sector.
  * Afterwards they are `{ x, y, z }`, six terms, a quaternion with an angular-velocity vector,
  * a hull of prisms and a cone. Everything on screen is drawn in 3D from the start and reads
- * through these functions, which accept either shape, so the switch is a change here and
- * nowhere else. The two places that build planar commands are marked `PLANAR` below; the
- * switch itself is proved on the local branch `scratch/2d-on-2g-lift` (docs/handoffs/2D.md).
+ * through these functions, which accept either shape, so the switch was a change here and
+ * in the hands-on controller (src/app/hands.ts), nowhere else.
  *
  * Scene axes: game (x, y, z) maps to scene (x, z, -y). Game z (out of the old flight plane) is
  * scene "up", and the plane seen from above is not mirrored (visual-direction.md § 9).
@@ -232,19 +231,18 @@ export function hullOutline(source: {
 }
 
 /**
- * PLANAR. Hold the nose `offset` radians counter-clockwise from where it points now.
- * After the lift this becomes `{ reference: 'direction', direction }`.
+ * Hold the nose `offset` radians to the left of where it points now: the body axis turned about
+ * the body's own up axis, as an inertial direction. Roll is held by the game (A11).
  */
 export function holdFromNose(attitude: unknown, offset: number): AttitudeTarget {
-  return { reference: 'inertial', angle: heading(attitude) + offset };
-}
-
-/**
- * PLANAR. Command a yaw rate, rad/s. After the lift, hands-on flying goes through
- * `GameControls.fly` and this is no longer used.
- */
-export function yawRateTarget(rate: number): AttitudeTarget {
-  return { reference: 'rate', rate };
+  if (isQuaternion(attitude)) {
+    const d = new Vector3(Math.cos(offset), Math.sin(offset), 0).applyQuaternion(
+      new Quaternion(attitude.x, attitude.y, attitude.z, attitude.w),
+    );
+    return { reference: 'direction', direction: { x: d.x, y: d.y, z: d.z } };
+  }
+  const a = heading(attitude) + offset;
+  return { reference: 'direction', direction: { x: Math.cos(a), y: Math.sin(a), z: 0 } };
 }
 
 /** A body-frame point (x forward, y left, z up) → the ship drawing's frame (metres). */

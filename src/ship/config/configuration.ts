@@ -1,11 +1,18 @@
 import baseline from '../../../data/ship-baseline.json';
-import type { ShipDefinition } from '../../contracts/ship.ts';
+import { prismHull, type Hull, type ShipDefinition } from '../../contracts/ship.ts';
 import type { ShipEvent } from '../../contracts/measurements.ts';
 import type { ShipSystemsState } from '../../contracts/truth/ship.ts';
 import { cross, lerp, sub, type Vec2 } from '../../lib/vec2.ts';
+import { lerp as lerp3, type Vec3 } from '../../lib/vec3.ts';
+
+// LIFT(2G): one prism over the planar footprint; the real heights come with the 3D ship.
+/** [ASSUMED] Half-height of that prism, m: equal to the hull's 2.5 m half-width. */
+export const HULL_HALF_HEIGHT = 2.5;
 
 const clamp = (n: number) => Math.max(0, Math.min(1, n));
 const vector = (p: readonly number[]): Vec2 => ({ x: p[0] ?? 0, y: p[1] ?? 0 });
+// LIFT(2G): baseline positions are planar; lifted with z = 0.
+const vector3 = (p: readonly number[]): Vec3 => ({ x: p[0] ?? 0, y: p[1] ?? 0, z: 0 });
 const dataFor = (definition: ShipDefinition) =>
   (definition.systems ?? baseline) as unknown as typeof baseline;
 
@@ -56,10 +63,18 @@ export function configurationDeployment(
     : 0;
 }
 
-export function getGeometry(state: ShipSystemsState, definition: ShipDefinition) {
+export function getGeometry(
+  state: ShipSystemsState,
+  definition: ShipDefinition,
+): {
+  positions: Record<string, Vec3>;
+  intrinsicInertia: Record<string, number>;
+  deployment: Record<string, number>;
+  hull: Hull;
+} {
   const data = dataFor(definition);
   const configuration = definition.configurations.find((c) => c.id === state.configuration);
-  const positions: Record<string, Vec2> = {};
+  const positions: Record<string, Vec3> = {};
   const intrinsicInertia: Record<string, number> = {};
   const deployment: Record<string, number> = {};
   for (const equipment of definition.equipment) {
@@ -75,9 +90,9 @@ export function getGeometry(state: ShipSystemsState, definition: ShipDefinition)
         configurationDeployment(definition, state.configuration, appendage.id),
     );
     deployment[appendage.id] = fraction;
-    positions[appendage.id] = lerp(
-      vector(appendage.stowedPosition),
-      vector(appendage.deployedPosition),
+    positions[appendage.id] = lerp3(
+      vector3(appendage.stowedPosition),
+      vector3(appendage.deployedPosition),
       fraction,
     );
     intrinsicInertia[appendage.id] =
@@ -88,7 +103,13 @@ export function getGeometry(state: ShipSystemsState, definition: ShipDefinition)
       ),
     );
   }
-  return { positions, intrinsicInertia, deployment, footprint: convexHull(points) };
+  // LIFT(2G): the occupied envelope is still the planar convex hull, extruded as one prism.
+  return {
+    positions,
+    intrinsicInertia,
+    deployment,
+    hull: prismHull(convexHull(points), -HULL_HALF_HEIGHT, HULL_HALF_HEIGHT),
+  };
 }
 
 /** Run before dispatch so motion consumes its declared motor power. */

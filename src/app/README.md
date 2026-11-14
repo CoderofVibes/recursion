@@ -17,7 +17,7 @@ Run it with `npm run dev`.
 
 1. Walk to the console (WASD; click to look) and aim at a pad, or press `1` MAP, `2` SHIP, `3` CONSOLE, `4` FLIGHT. `Esc` steps back.
 2. **CONSOLE › MISSION:** choose what the attempt is for and its margins, then RECORD DESIGN AND SET UP.
-3. **FLIGHT:** hold `W` for the main engine, `Q` / `E` to yaw. When the hands come off, a coasting forecast is issued: dotted, frozen. Or plan a timed burn in **CONSOLE › PLAN** and COMMIT. Choose a warp and watch the solid trail against the dotted forecast.
+3. **FLIGHT:** hold `W` for the main engine, `Q` / `E` to yaw, `↑` / `↓` to pitch, `A` `D` `R` `F` `S` to translate. When the hands come off, a coasting forecast is issued: dotted, frozen. Or plan a timed burn in **CONSOLE › PLAN** and COMMIT. Choose a warp and watch the solid trail against the dotted forecast.
 4. **CONSOLE › BLACK BOX:** RECALL ends the attempt. Its debrief is there when you walk back in. Fly a different dive, then choose two attempts to compare, and OVERLAY IN FLIGHT.
 5. **CONSOLE › MODEL:** strength against distance shows the pull departing from the model's law. Hold out an attempt, TEST the distance law, ADOPT it if it holds. The next forecast reaches further.
 
@@ -25,7 +25,7 @@ Time runs while you are in the room (owner, A8). HOLD on the console stops it.
 
 ## Hands-on flying
 
-`hands.ts` maps the flight keys to the `HandsOnInput` shape 2G's seam uses (translation on three axes, yaw and pitch, throttle). Until `GameControls.fly` is on main it flies with `command`: the main engine as a held burn (`W`; `Shift` for a quarter throttle) and yaw as a commanded rate (`Q`, `E`). Lateral, vertical, retro and pitch are read and shown but not yet sent. When the lift merges, `HandsOn.update` forwards the input to `fly` and the adapter's `PLANAR` functions go.
+`hands.ts` turns the flight keys into `HandsOnInput` and sends it through `GameControls.fly` (2G): `W` main engine (`Shift` for a quarter throttle), `S` retro, `A` / `D` lateral, `R` / `F` vertical, `Q` / `E` yaw, `↑` / `↓` pitch, `X` cut. The game flies the input until the next one and issues the coasting forecast when the controls are released.
 
 ## Development handle
 

@@ -13,7 +13,7 @@ import type {
   TruthWorld,
 } from '../contracts/truth/index.ts';
 import type { Meters, MetersPerSecond, NewtonSeconds, Seconds } from '../contracts/units.ts';
-import type { Vec2 } from '../lib/vec2.ts';
+import type { Vec3 } from '../lib/vec3.ts';
 
 export interface SimOptions {
   /** Fixed step, s (the encounter's `dt`). Warp changes how many steps run, never this. */
@@ -57,7 +57,8 @@ export interface SimState {
    * thrust after any field modified it, plus contact impulses. Feeds
    * EnvironmentEffects.specificForce for the next ship-systems step (what accelerometers sense).
    */
-  readonly specificForce: Vec2;
+  // LIFT(2G): specificForce is planar; z is always 0.
+  readonly specificForce: Vec3;
   /** Objects the hull is touching. */
   readonly contacts: readonly ObjectId[];
   /** Clearance minima still forming, by object. */
@@ -70,10 +71,11 @@ export interface ContactDetail {
   readonly with: ObjectId;
   /** Impulse magnitude on the ship, N·s (0 if it was already separating). */
   readonly impulse: NewtonSeconds;
+  // LIFT(2G): contact point and normal are planar (hull outline against a circle); z is always 0.
   /** Contact point on the hull, body frame. */
-  readonly point: Vec2;
+  readonly point: Vec3;
   /** Unit normal from the hull toward the object, body frame. */
-  readonly normal: Vec2;
+  readonly normal: Vec3;
   /** Speed of the hull point relative to the object at contact, m/s. */
   readonly relativeSpeed: MetersPerSecond;
   /** True for a new impact (also reported as a SimEvent), false for continued pushing. */

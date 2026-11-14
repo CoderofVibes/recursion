@@ -186,6 +186,7 @@ function fixes(ms: readonly Measurement[]): Fix[] {
   for (const m of ms) {
     if (m.kind !== 'bearing' || !m.target) continue;
     const r = ranges.get(`${m.t}|${m.source}|${m.target}`);
+    // LIFT(2G): a bearing enters as its azimuth ([0]); elevation ([1]) is ignored.
     if (r)
       out.push({
         t: m.t,
@@ -236,7 +237,15 @@ export function forecastDivergence(
   for (const q of fx) {
     const track = f.objects.find((o) => o.id === q.body);
     if (!track) continue;
-    const s = interp(samples, q.t, (p) => [p.position.x, p.position.y, ...p.positionCov]);
+    // LIFT(2G): divergence is measured in the x–y plane: positions' x and y and the
+    // envelope's x–y block [xx, xy, yy] = Cov3 [0], [1], [3].
+    const s = interp(samples, q.t, (p) => [
+      p.position.x,
+      p.position.y,
+      p.positionCov[0],
+      p.positionCov[1],
+      p.positionCov[3],
+    ]);
     const b = interp(track.samples, q.t, (p) => [p.position.x, p.position.y]);
     if (!s || !b) continue;
     const px = s[0]! - b[0]!;

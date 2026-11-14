@@ -6,19 +6,12 @@
  * Use issueForecast() to turn a draft into a frozen Forecast.
  */
 
-import type { Vec2 } from '../lib/vec2.ts';
+import type { Vec3 } from '../lib/vec3.ts';
 import { deepFreeze, type DeepReadonly } from '../lib/freeze.ts';
 import type { Plan } from './commands.ts';
-import type { Cov2, CovarianceMatrix } from './estimates.ts';
+import type { Cov3, CovarianceMatrix } from './estimates.ts';
 import type { ShipEstimate } from './belief.ts';
-import type {
-  AttemptId,
-  BodyId,
-  ExtensionId,
-  ForecastId,
-  ObjectId,
-  ParameterId,
-} from './ids.ts';
+import type { AttemptId, BodyId, ExtensionId, ForecastId, ObjectId, ParameterId } from './ids.ts';
 import type { CalibrationProfile } from './model.ts';
 import type { MassProperties } from './ship.ts';
 import type { Meters, Seconds } from './units.ts';
@@ -26,9 +19,10 @@ import type { Meters, Seconds } from './units.ts';
 export interface ForecastSample {
   readonly t: Seconds;
   /** Centre of mass, inertial. */
-  readonly position: Vec2;
-  readonly velocity: Vec2;
-  readonly positionCov: Cov2;
+  readonly position: Vec3;
+  readonly velocity: Vec3;
+  /** 3D position uncertainty (the envelope is an ellipsoid; `covEllipsoid`). */
+  readonly positionCov: Cov3;
   /** True where the model has no supporting data (envelope drawn as extrapolation). */
   readonly extrapolating: boolean;
   /**
@@ -51,8 +45,8 @@ export interface ForecastObjectTrack {
   readonly id: ObjectId;
   readonly samples: readonly {
     readonly t: Seconds;
-    readonly position: Vec2;
-    readonly positionCov: Cov2;
+    readonly position: Vec3;
+    readonly positionCov: Cov3;
   }[];
 }
 

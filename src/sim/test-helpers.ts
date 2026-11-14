@@ -1,9 +1,10 @@
 /**
  * Small builders for sim tests (not exported from index.ts).
  */
+// LIFT(2G): the builders take planar inputs ({x, y}, a yaw angle, a yaw rate, a z torque) and lift them (z = 0, rotation about +z).
 
 import { mockShipSystemsState } from '../contracts/fixtures/truth.ts';
-import type { MassProperties } from '../contracts/ship.ts';
+import { isotropicInertia, prismHull, type MassProperties } from '../contracts/ship.ts';
 import type {
   ActuatorOutput,
   Asteroid,
@@ -13,8 +14,10 @@ import type {
   ThrustOutput,
   TruthWorld,
 } from '../contracts/truth/index.ts';
+import * as quat from '../lib/quat.ts';
 import { createRng } from '../lib/rng.ts';
 import type { Vec2 } from '../lib/vec2.ts';
+import type { Vec3 } from '../lib/vec3.ts';
 import { circularBinary, circularSpeed } from './analytic.ts';
 import { coupling } from './gravity.ts';
 
@@ -26,13 +29,22 @@ export const BOX_HULL: readonly Vec2[] = [
   { x: -7, y: 2 },
 ];
 
-export function massProps(over: Partial<MassProperties> = {}): MassProperties {
+/** A planar vector in the x–y plane of the 3D frame (z = 0). */
+const lift = (p: Vec2): Vec3 => ({ x: p.x, y: p.y, z: 0 });
+
+/** Mass properties with the centre of mass given in the body x–y plane. */
+export type MassPropsSpec = Partial<Omit<MassProperties, 'centerOfMass'>> & {
+  readonly centerOfMass?: Vec2;
+};
+
+export function massProps(over: MassPropsSpec = {}): MassProperties {
+  const { centerOfMass = { x: 0, y: 0 }, ...rest } = over;
   return {
     mass: 10_000,
-    centerOfMass: { x: 0, y: 0 },
-    inertia: 2.0e5,
-    footprint: BOX_HULL,
-    ...over,
+    centerOfMass: lift(centerOfMass),
+    inertia: isotropicInertia(2.0e5),
+    hull: prismHull(BOX_HULL, -2, 2),
+    ...rest,
   };
 }
 
@@ -44,9 +56,13 @@ export interface WorldSpec {
   law?: GravityLaw;
   bodies?: MassiveBody[];
   asteroids?: Asteroid[];
+  /** In the x–y plane. */
   position?: Vec2;
+  /** In the x–y plane. */
   velocity?: Vec2;
+  /** Yaw about +z, rad. */
   attitude?: number;
+  /** Yaw rate (about body z), rad/s. */
   angularRate?: number;
   mp?: MassProperties;
   t?: number;
@@ -60,10 +76,10 @@ export function makeWorld(spec: WorldSpec = {}): TruthWorld {
     asteroids: spec.asteroids ?? [],
     ship: {
       kinematics: {
-        position: spec.position ?? { x: 0, y: 0 },
-        velocity: spec.velocity ?? { x: 0, y: 0 },
-        attitude: spec.attitude ?? 0,
-        angularRate: spec.angularRate ?? 0,
+        position: lift(spec.position ?? { x: 0, y: 0 }),
+        velocity: lift(spec.velocity ?? { x: 0, y: 0 }),
+        attitude: quat.fromYaw(spec.attitude ?? 0),
+        angularVelocity: { x: 0, y: 0, z: spec.angularRate ?? 0 },
       },
       systems: systemsWith(spec.mp ?? massProps()),
     },
@@ -80,25 +96,26 @@ export function body(
   velocity: Vec2 = { x: 0, y: 0 },
   fixed = true,
 ): MassiveBody {
-  return { id, name: id, gm, radius, position, velocity, fixed };
+  return { id, name: id, gm, radius, position: lift(position), velocity: lift(velocity), fixed };
 }
 
 export function asteroid(id: string, position: Vec2, velocity: Vec2, radius: number): Asteroid {
-  return { id, position, velocity, radius };
+  return { id, position: lift(position), velocity: lift(velocity), radius };
 }
 
+/** `torque` is the pure torque about body z, N·m. */
 export function actuators(
   thrusts: ThrustOutput[],
   mp: MassProperties = massProps(),
   torque = 0,
 ): ActuatorOutput {
-  return { thrusts, torque, massProperties: mp };
+  return { thrusts, torque: { x: 0, y: 0, z: torque }, massProperties: mp };
 }
 
 export const thrust = (point: Vec2, force: Vec2, source = 'main-engine'): ThrustOutput => ({
   source,
-  point,
-  force,
+  point: lift(point),
+  force: lift(force),
 });
 
 /**
@@ -127,10 +144,12 @@ export function gravityRangeWorld(asteroidCount = 0, seed = 'gravity-range-test'
       position: {
         x: primary.position.x + r * Math.cos(phase),
         y: primary.position.y + r * Math.sin(phase),
+        z: 0,
       },
       velocity: {
         x: primary.velocity.x - v * Math.sin(phase),
         y: primary.velocity.y + v * Math.cos(phase),
+        z: 0,
       },
       radius: rng.range(20, 400),
     });

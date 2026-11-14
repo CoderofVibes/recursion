@@ -18,6 +18,9 @@
  * - Planned burns start at their commanded attitude at once (no slew).
  */
 
+// LIFT(2G): the navigator is planar: it filters in the x–y plane with a yaw attitude and converts
+// at its edges (z = 0, no out-of-plane covariance, rotations about +z, elevation ignored).
+
 import type {
   BelievedAsteroid,
   BelievedBody,
@@ -38,8 +41,11 @@ import type {
   ShipEstimate,
   TelemetryReading,
 } from '../../contracts/index.ts';
-import { covEllipse } from '../../contracts/index.ts';
+import { cov3FromPlanar, covEllipse, isotropicInertia } from '../../contracts/index.ts';
+import { fromYaw, yawOf } from '../../lib/quat.ts';
+import { fromPrincipal } from '../../lib/sym3.ts';
 import { wrapAngle, type Vec2 } from '../../lib/vec2.ts';
+import type { Vec3 } from '../../lib/vec3.ts';
 import type { AttemptStartInfo, ForecastRequest, ModelPort, RecordBatch } from './ports.ts';
 import { resolveAttitude } from './resolve.ts';
 
@@ -75,6 +81,13 @@ interface Particle {
   position: Vec2;
   velocity: Vec2;
 }
+
+// LIFT(2G): everything the navigator reports lies in the x–y plane.
+/** A planar state as the contracts want it: z = 0. */
+const lift = (q: Particle): { position: Vec3; velocity: Vec3 } => ({
+  position: { x: q.position.x, y: q.position.y, z: 0 },
+  velocity: { x: q.velocity.x, y: q.velocity.y, z: 0 },
+});
 
 interface Burn {
   readonly thruster: string;
@@ -181,14 +194,15 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
     const mass = items.reduce((total, i) => total + i.m, 0);
     const cx = items.reduce((total, i) => total + i.m * i.p.x, 0) / mass;
     const cy = items.reduce((total, i) => total + i.m * i.p.y, 0) / mass;
+    // LIFT(2G): centre of mass and inertia are planar; the yaw inertia stands for every axis.
     const inertia =
-      def.structureInertia +
+      fromPrincipal(def.structureInertia.moments, def.structureInertia.axes)[5] +
       items.reduce((total, i) => total + i.m * ((i.p.x - cx) ** 2 + (i.p.y - cy) ** 2), 0);
     return {
       mass: ungauged() ? arrivalMass! : mass,
-      centerOfMass: { x: cx, y: cy },
-      inertia,
-      footprint: config.footprint,
+      centerOfMass: { x: cx, y: cy, z: 0 },
+      inertia: isotropicInertia(inertia),
+      hull: config.hull,
     };
   };
   const believedMass = (): number =>
@@ -403,12 +417,12 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
 
   const estimate = (n: Nav, origin: Particle): ShipEstimate => ({
     t: n.t,
-    ...offset(origin, shipOf(n)),
-    positionCov: cov2(n.p, 0),
-    velocityCov: cov2(n.p, 2),
-    attitude: attitude.value,
+    ...lift(offset(origin, shipOf(n))),
+    positionCov: cov3FromPlanar(cov2(n.p, 0)),
+    velocityCov: cov3FromPlanar(cov2(n.p, 2)),
+    attitude: fromYaw(attitude.value),
     attitudeSigma: attitude.sigma,
-    angularRate: attitude.rate,
+    angularVelocity: { x: 0, y: 0, z: attitude.rate },
   });
 
   const equipmentStatus = (): Record<string, EquipmentStatus> =>
@@ -437,13 +451,13 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
       i === 0 || !secondary || b.id !== secondary.id
         ? {
             ...b,
-            ...(i === 0 ? origin : {}),
+            ...(i === 0 ? lift(origin) : {}),
             tracked: i === 0 && primaryFixT !== undefined && t - primaryFixT < 120,
             lastFix: primaryFixT ?? b.lastFix,
           }
         : {
             ...b,
-            ...offset(origin, secondary),
+            ...lift(offset(origin, secondary)),
             tracked: secondary.tracked && t - secondary.fixT < 120,
             lastFix: secondary.fixT,
           },
@@ -487,9 +501,9 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
         x: [arrival.position.x, arrival.position.y, arrival.velocity.x, arrival.velocity.y, 1],
         p: diagonal([
           a.positionCov[0],
-          a.positionCov[2],
+          a.positionCov[3],
           a.velocityCov[0],
-          a.velocityCov[2],
+          a.velocityCov[3],
           ARRIVAL_SCALE_SIGMA ** 2,
         ]),
       };
@@ -502,7 +516,11 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
         ...relative(known),
         t: a.t,
       }));
-      attitude = { value: a.attitude, sigma: a.attitudeSigma, rate: a.angularRate };
+      attitude = {
+        value: yawOf(a.attitude),
+        sigma: a.attitudeSigma,
+        rate: a.angularVelocity.z,
+      };
       configuration = briefing.arrivalConfiguration;
       telemetry = {};
       modes = {};
@@ -521,7 +539,7 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
             start: done.t,
             end: done.t + c.duration,
             throttle: c.throttle,
-            ...(c.attitude?.reference === 'inertial' ? { angle: c.attitude.angle } : {}),
+            ...(c.attitude?.reference === 'inertial' ? { angle: yawOf(c.attitude.attitude) } : {}),
           });
         } else if (c.kind === 'cutoff') {
           burns = burns.map((b) =>
@@ -537,14 +555,17 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
       const p = primary();
       for (const m of batch.measurements) {
         measurementCount += 1;
+        // LIFT(2G): a bearing is read as its azimuth alone, attitude and rate as a yaw about +z.
+        // First component: a telemetry value, a range, or a bearing's azimuth.
         const value = m.value[0] ?? 0;
         const sigma = m.sigma[0] ?? 0;
         if (m.kind === 'telemetry' && m.channel) {
           telemetry[m.channel] = { t: m.t, value, sigma };
         } else if (m.kind === 'attitude') {
-          attitude = { ...attitude, value, sigma };
+          // The yaw is the z component of the rotation vector; likewise the yaw rate below.
+          attitude = { ...attitude, value: m.value[2] ?? 0, sigma: m.sigma[2] ?? 0 };
         } else if (m.kind === 'rate') {
-          attitude = { ...attitude, rate: value };
+          attitude = { ...attitude, rate: m.value[2] ?? 0 };
         } else if ((m.kind === 'bearing' || m.kind === 'range') && m.target === p.id) {
           advanceTo(m.t);
           const [px, py] = nav.x;
@@ -613,7 +634,7 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
         modelVersion: version,
         ship: believed,
         bodies: believedBodies(t, origin),
-        asteroids: asteroids.map((a) => ({ ...a.known, ...offset(origin, a) })),
+        asteroids: asteroids.map((a) => ({ ...a.known, ...lift(offset(origin, a)) })),
         fields: [],
       };
     },
@@ -707,7 +728,11 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
           const distance = Math.hypot(px - at.x, py - at.y);
           nearest = Math.min(nearest, distance);
           if (distance <= b.radius) surface = true;
-          trackSamples[i]!.push({ t: state.t, position: at, positionCov: b.positionCov });
+          trackSamples[i]!.push({
+            t: state.t,
+            position: { x: at.x, y: at.y, z: 0 },
+            positionCov: b.positionCov,
+          });
           const best = approach.get(b.id);
           if (!best || distance - b.radius < best.distance)
             approach.set(b.id, { id: b.id, t: state.t, distance: distance - b.radius, sigma });
@@ -717,9 +742,8 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
         const r = Math.hypot(state.x[0], state.x[1]);
         samples.push({
           t: state.t,
-          position: here.position,
-          velocity: here.velocity,
-          positionCov,
+          ...lift(here),
+          positionCov: cov3FromPlanar(positionCov),
           extrapolating: !(r >= support.min && r <= support.max),
         });
         return !surface;
@@ -732,8 +756,11 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
             if (command.kind !== 'burn') continue;
             const resolved = command.attitude
               ? resolveAttitude(command.attitude, {
-                  ship: offset(bodyAt(0), shipOf(state)),
-                  bodies: known.map((b, i) => ({ id: b.id, ...bodyAt(i) })),
+                  ship: {
+                    ...lift(offset(bodyAt(0), shipOf(state))),
+                    attitude: fromYaw(attitude.value),
+                  },
+                  bodies: known.map((b, i) => ({ id: b.id, ...lift(bodyAt(i)) })),
                   asteroids: [],
                 })
               : undefined;
@@ -743,7 +770,7 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
               start: at,
               end: at + command.duration,
               throttle: command.throttle,
-              ...(resolved?.reference === 'inertial' ? { angle: resolved.angle } : {}),
+              ...(resolved?.reference === 'inertial' ? { angle: yawOf(resolved.attitude) } : {}),
             });
           }
           if (state.t >= nextSample - 1e-9) {

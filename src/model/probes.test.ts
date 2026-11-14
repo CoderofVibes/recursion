@@ -10,7 +10,16 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import type { AttemptRecord, MassProperties, Measurement, Plan } from '../contracts/index.ts';
+import {
+  cov3FromPlanar,
+  isotropicInertia,
+  prismHull,
+  type AttemptRecord,
+  type MassProperties,
+  type Measurement,
+  type Plan,
+} from '../contracts/index.ts';
+import * as quat from '../lib/quat.ts';
 import { createRng } from '../lib/rng.ts';
 import { compileArc, simulate, type Structure, type ThrustSegment } from './dynamics.ts';
 import type { ModelContext } from './engine.ts';
@@ -85,8 +94,8 @@ function record(withAsteroid: boolean): AttemptRecord {
         t,
         source: 'cam',
         target: id,
-        value: [Math.atan2(dy, dx) + rng.normal(0, sb)],
-        sigma: [sb],
+        value: [Math.atan2(dy, dx) + rng.normal(0, sb), 0],
+        sigma: [sb, sb],
       });
       ms.push({
         kind: 'range',
@@ -109,13 +118,13 @@ function record(withAsteroid: boolean): AttemptRecord {
     start: {
       estimate: {
         t: 0,
-        position: { x: R0, y: 0 },
-        velocity: { x: 0, y: SHIP0[3]! },
-        positionCov: [1e8, 0, 1e8],
-        velocityCov: [1, 0, 1],
-        attitude: 0,
+        position: { x: R0, y: 0, z: 0 },
+        velocity: { x: 0, y: SHIP0[3]!, z: 0 },
+        positionCov: cov3FromPlanar([1e8, 0, 1e8]),
+        velocityCov: cov3FromPlanar([1, 0, 1]),
+        attitude: quat.fromYaw(0),
         attitudeSigma: 1e-3,
-        angularRate: 0,
+        angularVelocity: { x: 0, y: 0, z: 0 },
       },
       configuration: 'stowed',
       modelVersion: 0,
@@ -141,9 +150,9 @@ const ctx: ModelContext = {
     {
       id: 'A',
       name: 'A',
-      position: { x: 0, y: 0 },
-      velocity: { x: 0, y: 0 },
-      positionCov: [1e6, 0, 1e6],
+      position: { x: 0, y: 0, z: 0 },
+      velocity: { x: 0, y: 0, z: 0 },
+      positionCov: cov3FromPlanar([1e6, 0, 1e6]),
       radius: 2.5e5,
       tracked: true,
     },
@@ -151,9 +160,9 @@ const ctx: ModelContext = {
   asteroids: [
     {
       id: 'ast-1',
-      position: { x: 0, y: 0 },
-      velocity: { x: 0, y: 0 },
-      positionCov: [1e10, 0, 1e10],
+      position: { x: 0, y: 0, z: 0 },
+      velocity: { x: 0, y: 0, z: 0 },
+      positionCov: cov3FromPlanar([1e10, 0, 1e10]),
       radius: 5e3,
       tracked: true,
     },
@@ -163,16 +172,21 @@ const ctx: ModelContext = {
   settings: { dt: 60 },
 };
 
+// LIFT(2G): the scenarios in this file are planar (z = 0, yaw-only attitude, flat hull).
 const massProperties: MassProperties = {
   mass: MASS,
-  centerOfMass: { x: 0, y: 0 },
-  inertia: 1e5,
-  footprint: [
-    { x: -5, y: -2 },
-    { x: 5, y: -2 },
-    { x: 5, y: 2 },
-    { x: -5, y: 2 },
-  ],
+  centerOfMass: { x: 0, y: 0, z: 0 },
+  inertia: isotropicInertia(1e5),
+  hull: prismHull(
+    [
+      { x: -5, y: -2 },
+      { x: 5, y: -2 },
+      { x: 5, y: 2 },
+      { x: -5, y: 2 },
+    ],
+    0,
+    0,
+  ),
 };
 
 // A retrograde burn at apocentre that drops pericentre to 0.6 r0: below every distance the ship flew.
@@ -194,7 +208,7 @@ const dive: Plan = {
         thruster: 'main',
         throttle: 1,
         duration: burnTime,
-        attitude: { reference: 'inertial', angle: theta },
+        attitude: { reference: 'inertial', attitude: quat.fromYaw(theta) },
       },
     },
   ],
@@ -269,7 +283,7 @@ describe('tracked asteroids probe the law where the ship has not flown (spec §1
       const truth = truthAst[k]!;
       const cov = fromRows([
         [s.positionCov[0], s.positionCov[1]],
-        [s.positionCov[1], s.positionCov[2]],
+        [s.positionCov[1], s.positionCov[3]],
       ]);
       expect(
         mahalanobis([truth[0] - s.position.x, truth[1] - s.position.y], cov),
@@ -331,7 +345,7 @@ describe('tracked asteroids probe the law where the ship has not flown (spec §1
       const truth = truthDive[truthDiveTimes.indexOf(q.t)]!;
       const cov = fromRows([
         [q.positionCov[0], q.positionCov[1]],
-        [q.positionCov[1], q.positionCov[2]],
+        [q.positionCov[1], q.positionCov[3]],
       ]);
       expect(
         mahalanobis([truth[0] - q.position.x, truth[1] - q.position.y], cov),

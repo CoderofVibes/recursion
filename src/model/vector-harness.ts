@@ -6,12 +6,16 @@
  * and is never passed to estimator code (1G, P11).
  */
 
-import type {
-  AttemptRecord,
-  Measurement,
-  ShipDefinition,
-  ExecutedCommand,
+import {
+  cov3FromPlanar,
+  isotropicInertia,
+  prismHull,
+  type AttemptRecord,
+  type Measurement,
+  type ShipDefinition,
+  type ExecutedCommand,
 } from '../contracts/index.ts';
+import * as quat from '../lib/quat.ts';
 import type { Arc, BodyDef, EstMeasurement, Ref, Structure, ThrustSegment } from './dynamics.ts';
 import type { Param } from './solve.ts';
 
@@ -273,10 +277,11 @@ export function toParams(fit: FitJson, init?: Readonly<Record<string, number>>):
 // ---------------------------------------------------------------------------------------------
 
 /** Test ship: one camera, one accelerometer, one thruster along +x; constant mass (no flow). */
+// LIFT(2G): a planar test ship (every position at z = 0, a flat hull); the vectors are planar.
 export function testShip(mass: number, thrust: number): ShipDefinition {
   const base = {
     mass: 0,
-    position: { x: 0, y: 0 },
+    position: { x: 0, y: 0, z: 0 },
     ratedPower: 0,
     modes: ['on'],
     defaultMode: 'on',
@@ -286,8 +291,8 @@ export function testShip(mass: number, thrust: number): ShipDefinition {
     id: 'test-ship',
     name: 'Test ship',
     structureMass: mass,
-    structureCenterOfMass: { x: 0, y: 0 },
-    structureInertia: 1e5,
+    structureCenterOfMass: { x: 0, y: 0, z: 0 },
+    structureInertia: isotropicInertia(1e5),
     equipment: [
       { ...base, id: 'cam', kind: 'optical-tracker', name: 'Nav camera', params: {} },
       { ...base, id: 'imu', kind: 'accelerometer', name: 'IMU', params: {} },
@@ -297,7 +302,7 @@ export function testShip(mass: number, thrust: number): ShipDefinition {
         id: 'main',
         kind: 'main-engine',
         name: 'Engine',
-        mount: { position: { x: -5, y: 0 }, direction: { x: 1, y: 0 } },
+        mount: { position: { x: -5, y: 0, z: 0 }, direction: { x: 1, y: 0, z: 0 } },
         params: { thrust, isp: 0 },
       },
     ],
@@ -308,12 +313,16 @@ export function testShip(mass: number, thrust: number): ShipDefinition {
       {
         id: 'stowed',
         name: 'Stowed',
-        footprint: [
-          { x: -5, y: -2 },
-          { x: 5, y: -2 },
-          { x: 5, y: 2 },
-          { x: -5, y: 2 },
-        ],
+        hull: prismHull(
+          [
+            { x: -5, y: -2 },
+            { x: 5, y: -2 },
+            { x: 5, y: 2 },
+            { x: -5, y: 2 },
+          ],
+          0,
+          0,
+        ),
         transitionTime: 0,
       },
     ],
@@ -326,6 +335,8 @@ export function testShip(mass: number, thrust: number): ShipDefinition {
  * measurements (as 2B emits them), thrust segments become executed burn commands of `thruster`
  * at throttle u·mass/thrust with a star-tracker attitude measurement at each segment start.
  */
+// LIFT(2G): the vectors are planar, so their records have nothing out of plane: elevation 0,
+// az 0, attitude a rotation about +z, every z = 0.
 export function recordFromAttempt(
   a: AttemptJson,
   index: number,
@@ -347,7 +358,13 @@ export function recordFromAttempt(
   const flushAtt = (t: number) => {
     while (ai < pendingAtt.length && pendingAtt[ai]![0] <= t) {
       const [ta, v] = pendingAtt[ai++]!;
-      measurements.push({ kind: 'attitude', t: ta, source: 'st', value: [v], sigma: [3.88e-5] });
+      measurements.push({
+        kind: 'attitude',
+        t: ta,
+        source: 'st',
+        value: [0, 0, v],
+        sigma: [3.88e-5, 3.88e-5, 3.88e-5],
+      });
     }
   };
   for (const m of a.measurements) {
@@ -358,8 +375,8 @@ export function recordFromAttempt(
         t: m.t,
         source: 'cam',
         target: tgt(m.target!),
-        value: [m.z[0]!],
-        sigma: [m.sigma[0]!],
+        value: [m.z[0]!, 0],
+        sigma: [m.sigma[0]!, m.sigma[0]!],
       });
       if (m.z.length > 1)
         measurements.push({
@@ -375,8 +392,8 @@ export function recordFromAttempt(
         kind: 'accel',
         t: m.t,
         source: 'imu',
-        value: [...m.z],
-        sigma: [...m.sigma],
+        value: [m.z[0]!, m.z[1]!, 0],
+        sigma: [m.sigma[0]!, m.sigma[1]!, m.sigma[0]!],
       });
   }
   flushAtt(Infinity);
@@ -401,13 +418,13 @@ export function recordFromAttempt(
     start: {
       estimate: {
         t: 0,
-        position: { x: 0, y: 0 },
-        velocity: { x: 0, y: 0 },
-        positionCov: [1e8, 0, 1e8],
-        velocityCov: [100, 0, 100],
-        attitude: 0,
+        position: { x: 0, y: 0, z: 0 },
+        velocity: { x: 0, y: 0, z: 0 },
+        positionCov: cov3FromPlanar([1e8, 0, 1e8]),
+        velocityCov: cov3FromPlanar([100, 0, 100]),
+        attitude: quat.fromYaw(0),
         attitudeSigma: 1e-3,
-        angularRate: 0,
+        angularVelocity: { x: 0, y: 0, z: 0 },
       },
       configuration: 'stowed',
       modelVersion: 0,

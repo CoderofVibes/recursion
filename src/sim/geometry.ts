@@ -6,6 +6,7 @@
  * zero length behave as points. Results go into a caller-owned scratch object so hot loops
  * allocate nothing.
  */
+// LIFT(2G): everything in this file is two-dimensional: the hull prism's outline against a circle.
 
 export interface GeometryResult {
   /** Distance (≥ 0, or signed where documented), m. */

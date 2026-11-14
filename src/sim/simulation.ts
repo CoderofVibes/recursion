@@ -15,7 +15,13 @@
  * Internally the state lives in typed arrays (`Work`); `step` unpacks, advances one step and
  * packs a new SimState; `run` stays packed for many steps. Both call the same `advance`, so
  * they agree bit for bit.
+ *
+ * The contracts are three-dimensional (A11) but this integrator is still planar: it moves x, y,
+ * yaw θ and yaw rate ω. z components are carried through untouched, and the attitude quaternion
+ * is turned into θ at the start of every step and back at its end, so `step` and `run` see the
+ * same numbers. Every planar shortcut is marked with a `LIFT(2G)` comment.
  */
+// LIFT(2G): the whole integrator is planar (x, y, yaw, yaw rate); see the markers below.
 
 import type { ObjectId } from '../contracts/ids.ts';
 import type {
@@ -28,7 +34,11 @@ import type {
   TruthWorld,
 } from '../contracts/truth/index.ts';
 import type { MassProperties } from '../contracts/ship.ts';
-import { wrapAngle, type Vec2 } from '../lib/vec2.ts';
+import * as quat from '../lib/quat.ts';
+import type { Quat } from '../lib/quat.ts';
+import * as sym3 from '../lib/sym3.ts';
+import { wrapAngle } from '../lib/vec2.ts';
+import type { Vec3 } from '../lib/vec3.ts';
 import {
   createGeometryResult,
   pointPolygon,
@@ -67,7 +77,7 @@ interface Ctx {
 }
 
 const finite = (v: number): boolean => Number.isFinite(v);
-const finiteVec = (v: Vec2): boolean => finite(v.x) && finite(v.y);
+const finiteVec = (v: Vec3): boolean => finite(v.x) && finite(v.y) && finite(v.z);
 
 /** Problems that make a world unsimulatable. Empty when the world is fine. */
 export function validateWorld(world: TruthWorld): string[] {
@@ -98,6 +108,7 @@ export function validateWorld(world: TruthWorld): string[] {
     for (let j = i + 1; j < world.bodies.length; j++) {
       const a = world.bodies[i]!;
       const b = world.bodies[j]!;
+      // LIFT(2G): body overlap is checked in the x–y plane only.
       const d = Math.hypot(a.position.x - b.position.x, a.position.y - b.position.y);
       if (d <= a.radius + b.radius) problems.push(`bodies ${a.id} and ${b.id} overlap`);
     }
@@ -106,11 +117,12 @@ export function validateWorld(world: TruthWorld): string[] {
   if (
     !finiteVec(k.position) ||
     !finiteVec(k.velocity) ||
-    !finite(k.attitude) ||
-    !finite(k.angularRate)
+    !quat.isFiniteQuat(k.attitude) ||
+    !finiteVec(k.angularVelocity)
   )
     problems.push('ship: non-finite kinematics');
   for (const b of world.bodies) {
+    // LIFT(2G): "ship inside a body" is checked in the x–y plane only.
     const d = Math.hypot(k.position.x - b.position.x, k.position.y - b.position.y);
     if (d <= b.radius) problems.push(`ship starts inside body ${b.id}`);
   }
@@ -124,9 +136,9 @@ export function validateWorld(world: TruthWorld): string[] {
 interface Prepared {
   readonly fx: number; // total thrust, body frame, N
   readonly fy: number;
-  readonly torque: number; // about the CoM, N·m
+  readonly torque: number; // about the CoM, body z, N·m
   readonly mass: number;
-  readonly inertia: number;
+  readonly inertia: number; // about body z through the CoM, kg·m²
   readonly comx: number;
   readonly comy: number;
   readonly hull: Float64Array;
@@ -138,22 +150,31 @@ interface Prepared {
 function prepare(actuators: ActuatorOutput | undefined, mp: MassProperties): Prepared {
   const comx = mp.centerOfMass.x;
   const comy = mp.centerOfMass.y;
-  if (!(mp.mass > 0) || !(mp.inertia > 0) || !finite(mp.mass) || !finite(mp.inertia))
+  // LIFT(2G): the ship only yaws, so of the inertia tensor only the body-frame zz term is used.
+  const inertia = sym3.fromPrincipal(mp.inertia.moments, mp.inertia.axes)[5];
+  if (!(mp.mass > 0) || !(inertia > 0) || !finite(mp.mass) || !finite(inertia))
     throw new Error(
-      `ship mass properties must be positive (mass ${mp.mass}, inertia ${mp.inertia})`,
+      `ship mass properties must be positive (mass ${mp.mass}, yaw inertia ${inertia})`,
+    );
+  // LIFT(2G): the hull is one prism, used as its planar outline (zMin and zMax are ignored).
+  if (mp.hull.length > 1)
+    throw new Error(
+      `the simulation is still planar and takes a hull of one prism, got ${mp.hull.length}`,
     );
   let fx = 0;
   let fy = 0;
   let torque = 0;
   if (actuators) {
+    // LIFT(2G): force z, and the x and y components of torque, are ignored; the torque used is
+    // the z component of Σ (point − com) × force plus torque.z.
     for (const th of actuators.thrusts) {
       fx += th.force.x;
       fy += th.force.y;
       torque += (th.point.x - comx) * th.force.y - (th.point.y - comy) * th.force.x;
     }
-    torque += actuators.torque;
+    torque += actuators.torque.z;
   }
-  const fp = mp.footprint;
+  const fp = mp.hull[0]?.outline ?? [];
   const nh = fp.length > 0 ? fp.length : 1;
   const hull = new Float64Array(2 * nh);
   let hullRadius = 0;
@@ -168,7 +189,7 @@ function prepare(actuators: ActuatorOutput | undefined, mp: MassProperties): Pre
       hullRadius = Math.max(hullRadius, Math.hypot(p.x - comx, p.y - comy));
     }
   }
-  return { fx, fy, torque, mass: mp.mass, inertia: mp.inertia, comx, comy, hull, nh, hullRadius };
+  return { fx, fy, torque, mass: mp.mass, inertia, comx, comy, hull, nh, hullRadius };
 }
 
 /** Caches the last prepared input by identity, so a constant input costs nothing per step. */
@@ -225,6 +246,15 @@ class Work {
   sy = 0;
   svx = 0;
   svy = 0;
+  // LIFT(2G): z of the ship's position and velocity is carried through, never integrated.
+  sz = 0;
+  svz = 0;
+  /**
+   * The attitude carried from step to step. `th` is only the current step's yaw, derived from
+   * `att` at the start of `advance` and written back at its end (never kept between steps, so
+   * `step`, which reloads `att` every call, and `run` agree bit for bit).
+   */
+  att: Quat = quat.IDENTITY;
   th = 0;
   om = 0;
   sgx = 0; // gravity + field acceleration at the current state
@@ -232,7 +262,8 @@ class Work {
   sfx = 0; // specific force of the last step, body frame
   sfy = 0;
   tick = 0;
-  // cos/sin of the attitude they were computed for (the end of one step is the next's start).
+  // cos/sin of the attitude they were computed for (the end of one step is the next's start,
+  // whenever the yaw read back from the quaternion is the same number).
   trigTh = NaN;
   trigC = 1;
   trigS = 0;
@@ -313,10 +344,13 @@ class Work {
     const k = w.ship.kinematics;
     this.sx = k.position.x;
     this.sy = k.position.y;
+    this.sz = k.position.z;
     this.svx = k.velocity.x;
     this.svy = k.velocity.y;
-    this.th = k.attitude;
-    this.om = k.angularRate;
+    this.svz = k.velocity.z;
+    this.att = k.attitude;
+    // LIFT(2G): only the yaw rate (body z) is integrated; the x and y rates are dropped.
+    this.om = k.angularVelocity.z;
     this.sfx = state.specificForce.x;
     this.sfy = state.specificForce.y;
     this.tick = state.tick;
@@ -332,6 +366,7 @@ class Work {
   }
 
   /** Recompute every closing flag from the current state (same formula as each step's end). */
+  // LIFT(2G): closing rates use x and y only.
   updateClosing(): void {
     for (let o = 0; o < this.nb + this.na; o++) {
       let rx: number, ry: number, vx: number, vy: number;
@@ -356,6 +391,7 @@ class Work {
     return o < this.nb ? this.bodiesSrc[o]!.id : this.asteroidsSrc[o - this.nb]!.id;
   }
 
+  // LIFT(2G): z of every position and velocity is copied from the loaded state unchanged.
   store(ctx: Ctx, prev: TruthWorld, systems: ShipSystemsState): SimState {
     const bodies: MassiveBody[] = [];
     for (let i = 0; i < this.nb; i++) {
@@ -369,8 +405,8 @@ class Work {
         name: b.name,
         gm: b.gm,
         radius: b.radius,
-        position: { x: this.bx[i]!, y: this.by[i]! },
-        velocity: { x: this.bvx[i]!, y: this.bvy[i]! },
+        position: { x: this.bx[i]!, y: this.by[i]!, z: b.position.z },
+        velocity: { x: this.bvx[i]!, y: this.bvy[i]!, z: b.velocity.z },
         fixed: b.fixed,
       });
     }
@@ -380,8 +416,8 @@ class Work {
       const a = this.asteroidsSrc[i]!;
       asteroids.push({
         id: a.id,
-        position: { x: this.ax[i]!, y: this.ay[i]! },
-        velocity: { x: this.avx[i]!, y: this.avy[i]! },
+        position: { x: this.ax[i]!, y: this.ay[i]!, z: a.position.z },
+        velocity: { x: this.avx[i]!, y: this.avy[i]!, z: a.velocity.z },
         radius: a.radius,
       });
     }
@@ -401,10 +437,10 @@ class Work {
       asteroids,
       ship: {
         kinematics: {
-          position: { x: this.sx, y: this.sy },
-          velocity: { x: this.svx, y: this.svy },
-          attitude: this.th,
-          angularRate: this.om,
+          position: { x: this.sx, y: this.sy, z: this.sz },
+          velocity: { x: this.svx, y: this.svy, z: this.svz },
+          attitude: this.att,
+          angularVelocity: { x: 0, y: 0, z: this.om },
         },
         systems,
       },
@@ -416,7 +452,7 @@ class Work {
     return {
       world,
       tick: this.tick,
-      specificForce: { x: this.sfx, y: this.sfy },
+      specificForce: { x: this.sfx, y: this.sfy, z: 0 },
       contacts,
       closing,
     };
@@ -431,16 +467,18 @@ class Work {
 let fax = 0;
 let fay = 0;
 
+// LIFT(2G): fields are asked at z = 0 and the z of their answer is ignored.
 function fieldAcceleration(ctx: Ctx, x: number, y: number, t: number): void {
   fax = 0;
   fay = 0;
   for (const f of ctx.accelFields) {
-    const a = f.acceleration!({ x, y }, t);
+    const a = f.acceleration!({ x, y, z: 0 }, t);
     fax += a.x;
     fay += a.y;
   }
 }
 
+// LIFT(2G): gravity on the ship uses x and y only (distance and direction in the plane).
 function shipGravity(w: Work, ctx: Ctx, t: number): void {
   const n = w.exponent;
   let gx = 0;
@@ -461,6 +499,7 @@ function shipGravity(w: Work, ctx: Ctx, t: number): void {
   w.sgy = gy;
 }
 
+// LIFT(2G): gravity on bodies and asteroids uses x and y only.
 function computeAccelerations(w: Work, ctx: Ctx, t: number): void {
   const n = w.exponent;
   const nb = w.nb;
@@ -531,9 +570,10 @@ function thrustForce(
     tfy = fy;
     return;
   }
-  let f: Vec2 = { x: fx, y: fy };
-  const p = { x, y };
-  const v = { x: vx, y: vy };
+  // LIFT(2G): fields see planar thrust, position and velocity (z = 0); the z they return is ignored.
+  let f: Vec3 = { x: fx, y: fy, z: 0 };
+  const p = { x, y, z: 0 };
+  const v = { x: vx, y: vy, z: 0 };
   for (const field of ctx.thrustFields) f = field.modifyThrust!(f, p, v, t);
   tfx = f.x;
   tfy = f.y;
@@ -563,6 +603,9 @@ function advance(w: Work, ctx: Ctx, inp: Prepared, sinks: Sinks, cached: boolean
 
   const m = inp.mass;
   const alpha = inp.torque / inp.inertia;
+
+  // LIFT(2G): attitude is integrated as a yaw angle, read from the quaternion at each step's start.
+  w.th = quat.yawOf(w.att);
 
   // Thrust at the start of the step.
   w.trig();
@@ -620,8 +663,11 @@ function advance(w: Work, ctx: Ctx, inp: Prepared, sinks: Sinks, cached: boolean
   w.sy += dt * w.svy;
   const th = w.th + dt * w.om;
   w.th = th > Math.PI || th <= -Math.PI ? wrapAngle(th) : th; // same result, skips the fmod
+  // LIFT(2G): the end-of-step attitude is a pure yaw quaternion (any roll or pitch is lost).
+  w.att = quat.fromYaw(w.th);
 
   // Asteroids reaching a body's surface leave the world.
+  // LIFT(2G): "reaching the surface" is tested in the x–y plane.
   for (let i = 0; i < na; i++) {
     if (!alive[i]) continue;
     const x = ax[i]!;
@@ -689,6 +735,7 @@ function advance(w: Work, ctx: Ctx, inp: Prepared, sinks: Sinks, cached: boolean
  * Hull clearance to every object over the step just taken: minima events, swept contact
  * detection and a simple impulse response (objects are far heavier than the ship).
  */
+// LIFT(2G): clearance and contact are planar: the hull outline against each object's circle.
 function clearanceAndContact(
   w: Work,
   ctx: Ctx,
@@ -864,6 +911,7 @@ function clearanceAndContact(
 }
 
 /** Closing rate sign test: (object − ship)·(v_object − v_ship); negative while closing. */
+// LIFT(2G): planar dot product.
 function closingRate(rx: number, ry: number, rvx: number, rvy: number): number {
   return rx * rvx + ry * rvy;
 }
@@ -946,7 +994,9 @@ function resolveContact(
   }
   const relativeSpeed = Math.hypot(ux, uy);
   const id = w.objectId(o);
-  const point = { x: qx, y: qy };
+  // LIFT(2G): contact point and normal lie in the body x–y plane (z = 0), and the impulse only
+  // changes the planar velocity and the yaw rate.
+  const point = { x: qx, y: qy, z: 0 };
   if (impact) {
     sinks.impact = true;
     sinks.events.push({ kind: 'impact', t, with: id, relativeSpeed, point });
@@ -957,7 +1007,7 @@ function resolveContact(
       with: id,
       impulse: j,
       point,
-      normal: { x: nbx, y: nby },
+      normal: { x: nbx, y: nby, z: 0 },
       relativeSpeed,
       impact,
     });
@@ -1002,7 +1052,7 @@ export function createSimulation(world: TruthWorld, options: SimOptions): Simula
   const initial: SimState = {
     world,
     tick: 0,
-    specificForce: { x: 0, y: 0 },
+    specificForce: { x: 0, y: 0, z: 0 },
     contacts: [],
     closing: {},
   };

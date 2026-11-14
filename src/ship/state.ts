@@ -1,5 +1,5 @@
 import baseline from '../../data/ship-baseline.json';
-import type { ShipDefinition } from '../contracts/ship.ts';
+import { isotropicInertia, type ShipDefinition } from '../contracts/ship.ts';
 import type { EquipmentState, ShipSystemsState } from '../contracts/truth/ship.ts';
 import { createRng } from '../lib/rng.ts';
 import { loadShipDefinition } from './definition.ts';
@@ -68,7 +68,12 @@ export function createShipSystemsState(
     exposure: {},
     attitudeTarget: { reference: 'free' },
     burns: [],
-    massProperties: { mass: 0, centerOfMass: { x: 0, y: 0 }, inertia: 0, footprint: [] },
+    massProperties: {
+      mass: 0,
+      centerOfMass: { x: 0, y: 0, z: 0 },
+      inertia: isotropicInertia(0),
+      hull: [],
+    },
     rng: Object.fromEntries(streams.map((name) => [name, root.stream(name).getState()])),
     ext: {},
   };

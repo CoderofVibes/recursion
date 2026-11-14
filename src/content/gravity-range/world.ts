@@ -17,8 +17,11 @@ import type {
   TruthWorld,
 } from '../../contracts/truth/index.ts';
 import { createArrivalSystems } from '../../game/arrival.ts';
+import { fromYaw } from '../../lib/quat.ts';
 import { createRng } from '../../lib/rng.ts';
 import { analytic, circularBinary, coupling } from '../../sim/index.ts';
+
+// LIFT(2G): the encounter is authored in the x–y plane: every z is 0, every attitude a yaw.
 
 /** [FICTIONAL] Brief §5: attraction falls with distance to the power 2.5. P4: one shared r0. */
 export const LAW: GravityLaw = { exponent: 2.5, referenceRadius: 1_000_000 };
@@ -35,7 +38,7 @@ export const SEPARATION = 4_000_000;
  * (P14 item 3).
  */
 export const SUN: Sun = {
-  direction: { x: Math.cos((200 * Math.PI) / 180), y: Math.sin((200 * Math.PI) / 180) },
+  direction: { x: Math.cos((200 * Math.PI) / 180), y: Math.sin((200 * Math.PI) / 180), z: 0 },
   irradiance: 600,
 };
 
@@ -81,10 +84,11 @@ function orbiting(
   return {
     id,
     radius,
-    position: { x: host.position.x + r * ux, y: host.position.y + r * uy },
+    position: { x: host.position.x + r * ux, y: host.position.y + r * uy, z: 0 },
     velocity: {
       x: host.velocity.x + vr * ux - vt * uy,
       y: host.velocity.y + vr * uy + vt * ux,
+      z: 0,
     },
   };
 }
@@ -141,6 +145,7 @@ export function asteroids(seed: string, host: readonly [MassiveBody, MassiveBody
   }
 
   // Keep the arrival point clear: nothing within 60 km of where the ship appears.
+  // LIFT(2G): distance in the x–y plane (the field has no z yet).
   const ship = arrivalKinematics(alpha).position;
   return field.filter(
     (a) => Math.hypot(a.position.x - ship.x, a.position.y - ship.y) > 60_000 + a.radius,
@@ -153,12 +158,12 @@ export function arrivalKinematics(alpha: MassiveBody): TruthWorld['ship']['kinem
   const ux = Math.cos(ARRIVAL_ANGLE);
   const uy = Math.sin(ARRIVAL_ANGLE);
   const v = circularSpeedAbout(alpha.gm, r);
-  const velocity = { x: alpha.velocity.x - v * uy, y: alpha.velocity.y + v * ux };
+  const velocity = { x: alpha.velocity.x - v * uy, y: alpha.velocity.y + v * ux, z: 0 };
   return {
-    position: { x: alpha.position.x + r * ux, y: alpha.position.y + r * uy },
+    position: { x: alpha.position.x + r * ux, y: alpha.position.y + r * uy, z: 0 },
     velocity,
-    attitude: Math.atan2(v * ux, -v * uy),
-    angularRate: 0,
+    attitude: fromYaw(Math.atan2(v * ux, -v * uy)),
+    angularVelocity: { x: 0, y: 0, z: 0 },
   };
 }
 

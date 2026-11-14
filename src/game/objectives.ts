@@ -51,6 +51,7 @@ export function evaluateObjectives(
     if (rule.kind !== 'orbit-band') continue;
     const body = world.bodies.find((b) => b.id === rule.body);
     if (!body) continue;
+    // LIFT(2G): the band distance and the swept angle are measured in the x–y plane (z ignored).
     const dx = world.ship.kinematics.position.x - body.position.x;
     const dy = world.ship.kinematics.position.y - body.position.y;
     const r = Math.hypot(dx, dy);

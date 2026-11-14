@@ -4,7 +4,7 @@
  *
  * - Time runs while the player is in the room (owner, A8): a new attempt is set running at 1×
  *   as the player walks in. The console's HOLD stops it.
- * - Hands off the flight controls: a coasting forecast is issued, frozen (P10).
+ * - Hands off the flight controls: the game issues a coasting forecast, frozen (P10).
  * - When an attempt ends, the room plays the way back to the door (A9), and Black Box has the
  *   debrief ready on the console.
  *
@@ -77,29 +77,6 @@ export function startControlRoom(
   let chart: Chart = buildChart(game, game.blackBox.archive());
   let attemptSeen = '';
   let endHandled = '';
-  let coasting = false;
-
-  /** Hands off the controls: issue the coasting forecast, frozen (P10). */
-  const coast = (): void => {
-    const status = game.status();
-    if (status.committing || coasting || status.phase === 'ended') return;
-    if (status.pending > 0) {
-      // A plan is still scheduled and committing would cancel it: show a draft instead.
-      void game.preview({ name: 'coast', items: [] }).then(
-        (draft) => {
-          desk.preview = draft;
-        },
-        () => undefined,
-      );
-      return;
-    }
-    coasting = true;
-    desk.preview = undefined;
-    const done = (): void => {
-      coasting = false;
-    };
-    game.commit({ name: 'coast', items: [] }).then(done, done);
-  };
 
   const frame = (now: number): void => {
     const dt = Math.min(0.1, Math.max(0, (now - last) / 1000));
@@ -128,7 +105,6 @@ export function startControlRoom(
 
     const flying = view.mode() === 'flight' && !view.dying() && status.phase !== 'ended';
     const hand = hands.update(view.keys, flying, dt);
-    if (hand.coast && flying) coast();
 
     if (status.phase === 'ended' && endHandled !== status.attemptId) {
       endHandled = status.attemptId;

@@ -10,11 +10,13 @@
  * Belief side: everything here is computed from Black Box records (P11). What was not measured
  * is reported as not measured.
  */
+import { isHandsOnNeutral } from '../contracts/index.ts';
 import type {
   AttemptRecord,
   BlackBoxArchive,
   Command,
   ExecutedCommand,
+  HandsOnInput,
   ShipDefinition,
 } from '../contracts/index.ts';
 import { diffCommands, forecastDivergence } from '../blackbox/index.ts';
@@ -172,10 +174,60 @@ function closestMeasured(record: AttemptRecord): Map<string, number> {
   return out;
 }
 
+/**
+ * A stretch of hands-on flying, from the first touch of the controls to their release, as one
+ * entry: how long the hands were on, and which controls they held. `fly` commands arrive one per
+ * change of the keys, so a single manoeuvre is many of them.
+ */
+interface HandsOnStretch {
+  readonly kind: 'fly';
+  readonly input: HandsOnInput;
+  /** Seconds from the first touch to the release. */
+  readonly held: number;
+  /** The controls used, in instrument words, in a fixed order. */
+  readonly controls: readonly string[];
+}
+
+const CONTROL_ORDER = [
+  'main engine',
+  'forward',
+  'retro',
+  'left',
+  'right',
+  'up',
+  'down',
+  'yaw left',
+  'yaw right',
+  'pitch up',
+  'pitch down',
+];
+
+/** The controls an input holds, in instrument words. */
+function controlsOf(input: HandsOnInput): string[] {
+  const out: string[] = [];
+  const t = input.translate;
+  if (input.throttle > 0) out.push('main engine');
+  if (t.x > 0) out.push('forward');
+  if (t.x < 0) out.push('retro');
+  if (t.y > 0) out.push('left');
+  if (t.y < 0) out.push('right');
+  if (t.z > 0) out.push('up');
+  if (t.z < 0) out.push('down');
+  if (input.yaw > 0) out.push('yaw left');
+  if (input.yaw < 0) out.push('yaw right');
+  if (input.pitch > 0) out.push('pitch up');
+  if (input.pitch < 0) out.push('pitch down');
+  return out;
+}
+
 const describeCommand = (c: Command): string => {
-  // Hands-on flying arrives as its own command once 2G's seam is in (A11).
-  if ((c.kind as string) === 'fly') return 'hands on the controls';
   switch (c.kind) {
+    case 'fly': {
+      const stretch = c as Command & Partial<HandsOnStretch>;
+      const controls = stretch.controls ?? controlsOf(c.input);
+      const held = stretch.held !== undefined ? ` ${fixed(stretch.held, 1)} s` : '';
+      return `by hand${held}: ${controls.join(', ') || 'released'}`;
+    }
     case 'burn':
       return `burn ${name(c.thruster)} ${fixed(c.duration, 1)} s at ${Math.round(c.throttle * 100)}%`;
     case 'cutoff':
@@ -201,8 +253,8 @@ const describeCommand = (c: Command): string => {
 
 /**
  * The commands the player flew, as they turned out: a burn that was cut off is listed with the
- * time it actually ran (a held burn is commanded long and cut off on release), and the cutoff
- * that ended it is not listed separately. Arrival procedure and annotations are left out.
+ * time it actually ran, and the cutoff that ended it is not listed separately. Each stretch of
+ * hands-on flying is one entry. Arrival procedure and annotations are left out.
  */
 function flown(record: AttemptRecord): { t: number; command: Command }[] {
   const mine = record.executed.filter(
@@ -211,9 +263,29 @@ function flown(record: AttemptRecord): { t: number; command: Command }[] {
   );
   const out: { t: number; command: Command }[] = [];
   const ended = new Set<number>();
+  let stretch: { t: number; input: HandsOnInput; used: Set<string> } | undefined;
+  const closeStretch = (t: number): void => {
+    if (!stretch) return;
+    const entry: HandsOnStretch = {
+      kind: 'fly',
+      input: stretch.input,
+      held: t - stretch.t,
+      controls: CONTROL_ORDER.filter((c) => stretch!.used.has(c)),
+    };
+    out.push({ t: stretch.t, command: entry as unknown as Command });
+    stretch = undefined;
+  };
   mine.forEach((e, i) => {
     if (ended.has(i)) return;
     const c = e.command;
+    if (c.kind === 'fly') {
+      if (isHandsOnNeutral(c.input)) closeStretch(e.t);
+      else {
+        stretch ??= { t: e.t, input: c.input, used: new Set() };
+        for (const control of controlsOf(c.input)) stretch.used.add(control);
+      }
+      return;
+    }
     if (c.kind !== 'burn') {
       out.push({ t: e.t, command: c });
       return;
@@ -232,7 +304,9 @@ function flown(record: AttemptRecord): { t: number; command: Command }[] {
     }
     out.push({ t: e.t, command: { ...c, duration } });
   });
-  return out;
+  // Hands still on the controls when the record ends.
+  closeStretch(mine.at(-1)?.t ?? record.start.estimate.t);
+  return out.sort((a, b) => a.t - b.t);
 }
 
 /** Commands given at nearly the same moment in two attempts count as given at the same time. */

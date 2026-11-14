@@ -39,6 +39,7 @@ export function inverseDistancePower(r2: number, n: number): number {
 }
 
 /** Gravitational acceleration at `(x, y)` from one point source, m/s². */
+// LIFT(2G): planar signature and result (x and y only).
 export function accelerationFrom(
   k: number,
   n: number,

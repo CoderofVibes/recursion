@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import baseline from '../../../data/ship-baseline.json';
 import type { EnvironmentEffects, ShipSystemsState } from '../../contracts/truth/ship.ts';
+import { fromYaw } from '../../lib/quat.ts';
 import { loadShipDefinition } from '../definition.ts';
 import { createShipSystemsState } from '../state.ts';
 import { computeMassProperties } from '../massprops/massprops.ts';
@@ -8,12 +9,17 @@ import { preparePropulsion, stepPropulsion } from './propulsion.ts';
 
 const env: EnvironmentEffects = {
   t: 0,
-  kinematics: { position: { x: 0, y: 0 }, velocity: { x: 0, y: 0 }, attitude: 0, angularRate: 0 },
-  specificForce: { x: 0, y: 0 },
+  kinematics: {
+    position: { x: 0, y: 0, z: 0 },
+    velocity: { x: 0, y: 0, z: 0 },
+    attitude: fromYaw(0),
+    angularVelocity: { x: 0, y: 0, z: 0 },
+  },
+  specificForce: { x: 0, y: 0, z: 0 },
   targets: [],
   intensity: {},
   fieldSignals: {},
-  sunlight: { direction: { x: 1, y: 0 }, irradiance: 0 },
+  sunlight: { direction: { x: 1, y: 0, z: 0 }, irradiance: 0 },
 };
 const definition = loadShipDefinition();
 function burning(id = 'main-engine', throttle = 1): ShipSystemsState {
@@ -40,7 +46,7 @@ describe('propulsion (C02, C10)', () => {
     const state = preparePropulsion(
       {
         ...initial,
-        attitudeTarget: { reference: 'inertial', angle: 0.3 },
+        attitudeTarget: { reference: 'inertial', attitude: fromYaw(0.3) },
         equipment: {
           ...initial.equipment,
           [pod.id]: { ...pod, powerDraw: 40, values: { ...pod.values, controlInhibited: 1 } },
@@ -134,8 +140,8 @@ describe('propulsion (C02, C10)', () => {
       },
     };
     const result = stepPropulsion(tilted, definition, env, 1);
-    expect(result.torque).toBe(0);
-    expect(result.thrusts[0]!.point).toEqual({ x: -7, y: 0.08 });
+    expect(result.torque).toEqual({ x: 0, y: 0, z: 0 });
+    expect(result.thrusts[0]!.point).toEqual({ x: -7, y: 0.08, z: 0 });
     expect(Math.atan2(result.thrusts[0]!.force.y, result.thrusts[0]!.force.x)).toBeCloseTo(
       0.18,
       12,
@@ -145,7 +151,7 @@ describe('propulsion (C02, C10)', () => {
   it('uses finite RCS force and propellant for attitude hold and is deterministic', () => {
     const initial = createShipSystemsState(definition);
     let state = preparePropulsion(
-      { ...initial, attitudeTarget: { reference: 'inertial', angle: 0.3 } },
+      { ...initial, attitudeTarget: { reference: 'inertial', attitude: fromYaw(0.3) } },
       definition,
       env,
     );
@@ -162,7 +168,7 @@ describe('propulsion (C02, C10)', () => {
     expect(result).toEqual(stepPropulsion(state, definition, env, 1));
     expect(state).toEqual(before);
     expect(result.thrusts).toHaveLength(4);
-    expect(result.torque).toBe(0);
+    expect(result.torque).toEqual({ x: 0, y: 0, z: 0 });
     expect(result.state.tanks['rcs-left']).toBeLessThan(150);
     const sum = result.thrusts.reduce(
       (v, force) => ({ x: v.x + force.force.x, y: v.y + force.force.y }),

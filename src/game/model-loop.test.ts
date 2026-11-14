@@ -53,7 +53,7 @@ describe('Gravity range with the real model', () => {
       const lowest = (f: Forecast | ForecastDraft) => {
         const alpha = f.closestApproaches.find((c) => c.id === 'alpha')!;
         const hull = Math.max(
-          ...f.inputs.massProperties.footprint.map((p) =>
+          ...f.inputs.massProperties.hull[0]!.outline.map((p) =>
             Math.hypot(
               p.x - f.inputs.massProperties.centerOfMass.x,
               p.y - f.inputs.massProperties.centerOfMass.y,
@@ -170,7 +170,7 @@ describe('Gravity range with the real model', () => {
           const sample = withRule.samples.find((s) => s.t >= session.status().t)!;
           const here = session.snapshot().world.ship.position;
           const miss = Math.hypot(sample.position.x - here.x, sample.position.y - here.y);
-          const sigma = Math.sqrt(Math.max(sample.positionCov[0] ?? 0, sample.positionCov[2] ?? 0));
+          const sigma = Math.sqrt(Math.max(sample.positionCov[0] ?? 0, sample.positionCov[3] ?? 0));
           expect(miss).toBeLessThan(3 * sigma);
           expect(miss).toBeLessThan(40_000);
         }

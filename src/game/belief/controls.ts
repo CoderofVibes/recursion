@@ -14,6 +14,7 @@ import type {
   EncounterBriefing,
   Forecast,
   ForecastDraft,
+  HandsOnInput,
   PlanId,
   Seconds,
   Selection,
@@ -83,6 +84,12 @@ export interface GameControls {
   commit(plan: PlanDraft): Promise<Forecast>;
   /** A manual command, executed on the next tick. */
   command(command: Command): void;
+  /**
+   * Hands-on flying (A8, A11): the state of the player's controls. Call it whenever they change
+   * (calling it every frame is fine). The ship flies it until the next call. Releasing the
+   * controls (a neutral input) issues a coasting forecast from the present state.
+   */
+  fly(input: HandsOnInput): void;
 
   /** Voluntary Recall (P8): end this attempt and begin the next at arrival. */
   recall(): void;

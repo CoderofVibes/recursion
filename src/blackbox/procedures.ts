@@ -17,7 +17,8 @@ import type {
   ProcedureId,
   ShipEstimate,
 } from '../contracts/index.ts';
-import { wrapAngle } from '../lib/vec2.ts';
+import { angleBetween } from '../lib/quat.ts';
+import { distance } from '../lib/vec3.ts';
 import { configurationTimeline } from './compare.ts';
 
 /** Configuration in force at time t of an attempt (start, then recorded changes). */
@@ -101,15 +102,9 @@ export function matchProcedure(
 ): ProcedureMatch {
   const c = p.condition;
   const tol = c.tolerance;
-  const dp = Math.hypot(
-    now.estimate.position.x - c.position.x,
-    now.estimate.position.y - c.position.y,
-  );
-  const dv = Math.hypot(
-    now.estimate.velocity.x - c.velocity.x,
-    now.estimate.velocity.y - c.velocity.y,
-  );
-  const da = Math.abs(wrapAngle(now.estimate.attitude - c.attitude));
+  const dp = distance(now.estimate.position, c.position);
+  const dv = distance(now.estimate.velocity, c.velocity);
+  const da = angleBetween(now.estimate.attitude, c.attitude);
   const checks: ConditionCheck[] = [
     {
       name: 'encounter',

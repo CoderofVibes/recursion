@@ -6,14 +6,17 @@ import type {
   EnvironmentEffects,
   ShipSystemsState,
 } from '../../contracts/truth/ship.ts';
+import { yawOf } from '../../lib/quat.ts';
 import { createRng, type RngState } from '../../lib/rng.ts';
 import { wrapAngle } from '../../lib/vec2.ts';
+import type { Vec3 } from '../../lib/vec3.ts';
 
 type Sensing = typeof baseline.sensing;
 type Recorder = typeof baseline.recorder;
 interface Pointing {
   readonly target: string | null;
-  readonly angle?: number;
+  /** Inertial direction to look along when no target is locked (need not be unit length). */
+  readonly direction?: Vec3;
   readonly settleUntil?: number;
 }
 interface Scene {
@@ -176,6 +179,11 @@ export function stepSensors(
     }
   }
   const due = rate > 0 && capacityAvailable && env.t + 1e-10 >= (memory.nextRecorderAt ?? env.t);
+  // LIFT(2G): sensing geometry is planar. Attitude is the yaw of the body axis, the rate is the
+  // body z rate, and bearings and boresights are azimuths in the inertial x–y plane. The new
+  // out-of-plane components are emitted as exact zeros with no extra random draws.
+  const yaw = yawOf(env.kinematics.attitude);
+  const yawRate = env.kinematics.angularVelocity.z;
 
   if (due) {
     for (const spec of definition.equipment) {
@@ -231,9 +239,9 @@ export function stepSensors(
             : undefined;
           const boresight = locked
             ? Math.atan2(locked.relativePosition.y, locked.relativePosition.x)
-            : (aim?.angle ??
-              env.kinematics.attitude +
-                Math.atan2(spec.mount?.direction.y ?? 0, spec.mount?.direction.x ?? 1));
+            : aim?.direction
+              ? Math.atan2(aim.direction.y, aim.direction.x)
+              : yaw + Math.atan2(spec.mount?.direction.y ?? 0, spec.mount?.direction.x ?? 1);
           for (const target of env.targets) {
             if (
               (aim?.target && target.id !== aim.target) ||
@@ -249,7 +257,7 @@ export function stepSensors(
                 ? (target.relativePosition.x * target.relativeVelocity.y -
                     target.relativePosition.y * target.relativeVelocity.x) /
                     (range * range) -
-                  env.kinematics.angularRate
+                  yawRate
                 : 0;
             if (Math.abs(apparentRate) * exposure > c.maxSmearAngle) continue;
             const quality = opticalQuality(
@@ -262,10 +270,11 @@ export function stepSensors(
               definition,
             );
             if (!quality) continue;
+            // LIFT(2G): [azimuth, elevation] with elevation exactly 0.
             emit(
               'bearing',
-              [wrapAngle(noise.normal(bearing, quality.angularSigma))],
-              [quality.angularSigma],
+              [wrapAngle(noise.normal(bearing, quality.angularSigma)), 0],
+              [quality.angularSigma, quality.angularSigma],
               target.id,
             );
             if (scene.knownSizeTargets?.includes(target.id)) {
@@ -283,26 +292,30 @@ export function stepSensors(
           if (spec.kind === 'accelerometer') {
             const sigma = sensing.imu.accelerationSigma / condition;
             // EnvironmentEffects already supplies COM specific force; no gravity or position read.
+            // LIFT(2G): [ax, ay, az] with az exactly 0 (no z bias, no z noise draw).
             emit(
               'accel',
               [
                 noise.normal(env.specificForce.x + biasX, sigma),
                 noise.normal(env.specificForce.y + biasY, sigma),
+                0,
               ],
-              [sigma, sigma],
+              [sigma, sigma, sigma],
             );
           }
           const sigma = sensing.imu.gyroSigma / condition;
-          emit('rate', [noise.normal(env.kinematics.angularRate + gyroBias, sigma)], [sigma]);
+          // LIFT(2G): [ωx, ωy, ωz] with only the body z rate sensed.
+          emit('rate', [0, 0, noise.normal(yawRate + gyroBias, sigma)], [sigma, sigma, sigma]);
         }
       } else if (
         spec.kind === 'star-tracker' &&
         scene.starsVisible !== false &&
-        Math.abs(env.kinematics.angularRate) <= sensing.starTracker.maxAngularRate &&
+        Math.abs(yawRate) <= sensing.starTracker.maxAngularRate &&
         e.powerDraw + 1e-9 >= modePower(spec, e, definition)
       ) {
         const sigma = sensing.starTracker.angularSigma / condition;
-        emit('attitude', [wrapAngle(noise.normal(env.kinematics.attitude, sigma))], [sigma]);
+        // LIFT(2G): rotation vector [0, 0, ψ]: a yaw about inertial +z.
+        emit('attitude', [0, 0, wrapAngle(noise.normal(yaw, sigma))], [sigma, sigma, sigma]);
       }
       rng[streamName] = noise.getState();
     }

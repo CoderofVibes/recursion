@@ -27,6 +27,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { yawOf } from '../../lib/quat.ts';
 import { colour, hex, motion, render } from '../index.ts';
 import {
   bodyMaterial,
@@ -119,7 +120,13 @@ export function mountScene(canvas: HTMLCanvasElement): LabScene {
   setPlaneCoverage(
     planeMat,
     [ship.position.x * S, ship.position.y * S],
-    snapshot.coverage.sectors.map((s) => ({ ...s, range: s.range * S })),
+    // LIFT(2G): each cone is drawn as its x–y sector about the axis's azimuth.
+    snapshot.coverage.cones.map((s) => ({
+      center: Math.atan2(s.axis.y, s.axis.x),
+      halfWidth: s.halfAngle,
+      range: s.range * S,
+      quality: s.quality,
+    })),
   );
   const plane = new Mesh(ground, planeMat);
   plane.renderOrder = order.plane;
@@ -191,13 +198,15 @@ export function mountScene(canvas: HTMLCanvasElement): LabScene {
 
   // The ship: an enlarged symbol (true size is 14 m), body axis, and velocity.
   const symbol = 1.3; // km per metre of hull
-  const cosA = Math.cos(ship.attitude);
-  const sinA = Math.sin(ship.attitude);
+  // LIFT(2G): the ship symbol is the first hull prism's outline, turned by the attitude's yaw.
+  const yaw = yawOf(ship.attitude);
+  const cosA = Math.cos(yaw);
+  const sinA = Math.sin(yaw);
   const body = (p: P): P => ({
     x: ship.position.x + (p.x * cosA - p.y * sinA) * symbol * 1000,
     y: ship.position.y + (p.x * sinA + p.y * cosA) * symbol * 1000,
   });
-  const hull = snapshot.ship.footprint;
+  const hull = snapshot.ship.hull[0]?.outline ?? [];
   const first = hull[0];
   if (first) line(flat([...hull, first].map(body), 0.3), 'shipFootprint', order.shipMarks);
   line(

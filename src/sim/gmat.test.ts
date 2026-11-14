@@ -14,8 +14,9 @@ import c1 from '../../tests/vectors/gmat/c1-circular.csv?raw';
 import c2 from '../../tests/vectors/gmat/c2-eccentric.csv?raw';
 import c3 from '../../tests/vectors/gmat/c3-hyperbolic.csv?raw';
 import c4 from '../../tests/vectors/gmat/c4-finite_burn.csv?raw';
-import type { MassProperties } from '../contracts/ship.ts';
+import { isotropicInertia, type MassProperties } from '../contracts/ship.ts';
 import type { TruthWorld } from '../contracts/truth/index.ts';
+import * as quat from '../lib/quat.ts';
 import { accelerationFrom } from './gravity.ts';
 import { createSimulation } from './simulation.ts';
 import { systemsWith } from './test-helpers.ts';
@@ -49,9 +50,9 @@ function parse(csv: string): Vector {
 
 const point = (mass: number): MassProperties => ({
   mass,
-  centerOfMass: { x: 0, y: 0 },
-  inertia: 1,
-  footprint: [],
+  centerOfMass: { x: 0, y: 0, z: 0 },
+  inertia: isotropicInertia(1),
+  hull: [],
 });
 
 function earthWorld(v: Vector): TruthWorld {
@@ -65,18 +66,19 @@ function earthWorld(v: Vector): TruthWorld {
         name: 'Earth',
         gm: v.header.mu_m3_s2,
         radius: 6_378_136.3,
-        position: { x: 0, y: 0 },
-        velocity: { x: 0, y: 0 },
+        position: { x: 0, y: 0, z: 0 },
+        velocity: { x: 0, y: 0, z: 0 },
         fixed: true,
       },
     ],
     asteroids: [],
     ship: {
       kinematics: {
-        position: { x: r[1]!, y: r[2]! },
-        velocity: { x: r[3]!, y: r[4]! },
-        attitude: 0,
-        angularRate: 0,
+        // The GMAT vectors are planar: lifted into the x–y plane.
+        position: { x: r[1]!, y: r[2]!, z: 0 },
+        velocity: { x: r[3]!, y: r[4]!, z: 0 },
+        attitude: quat.fromYaw(0),
+        angularVelocity: { x: 0, y: 0, z: 0 },
       },
       systems: systemsWith(point(r[5]!)),
     },
@@ -144,14 +146,24 @@ function burn(v: Vector, dt: number) {
           ...s.world,
           ship: {
             ...s.world.ship,
-            kinematics: { ...kin, attitude: Math.atan2(vel.y, vel.x), angularRate: turn },
+            kinematics: {
+              ...kin,
+              attitude: quat.fromYaw(Math.atan2(vel.y, vel.x)),
+              angularVelocity: { x: 0, y: 0, z: turn },
+            },
           },
         },
       };
       input = {
         actuators: {
-          thrusts: [{ source: 'engine', point: { x: 0, y: 0 }, force: { x: b.thrust_N, y: 0 } }],
-          torque: 0,
+          thrusts: [
+            {
+              source: 'engine',
+              point: { x: 0, y: 0, z: 0 },
+              force: { x: b.thrust_N, y: 0, z: 0 },
+            },
+          ],
+          torque: { x: 0, y: 0, z: 0 },
           massProperties: point(massAt((k + 0.5) * dt)),
         },
       };

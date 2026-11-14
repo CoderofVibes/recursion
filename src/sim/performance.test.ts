@@ -13,8 +13,10 @@ describe('performance', () => {
     const world = gravityRangeWorld(0);
     const sim = createSimulation(world, { dt: 1 });
     const act: ActuatorOutput = {
-      thrusts: [{ source: 'main-engine', point: { x: -6, y: 0 }, force: { x: 50, y: 0 } }],
-      torque: 0,
+      thrusts: [
+        { source: 'main-engine', point: { x: -6, y: 0, z: 0 }, force: { x: 50, y: 0, z: 0 } },
+      ],
+      torque: { x: 0, y: 0, z: 0 },
       massProperties: world.ship.systems.massProperties,
     };
     let best = Infinity;

@@ -113,6 +113,31 @@ describe('debrief', () => {
     expect(lines.some((l) => l.includes('cutoff'))).toBe(false);
   });
 
+  it('lists a stretch of hands-on flying as one entry: how long, and which controls', () => {
+    const base = attempts[0]!;
+    const quiet = { ...base, executed: base.executed.filter((e) => e.source === 'procedure') };
+    const input = (throttle: number, yaw = 0) => ({
+      translate: { x: 0, y: 0, z: 0 },
+      yaw,
+      pitch: 0,
+      throttle,
+    });
+    const handFlown: AttemptRecord = {
+      ...quiet,
+      index: quiet.index + 1,
+      executed: [
+        ...quiet.executed,
+        executed(100, { kind: 'fly', input: input(1) }),
+        executed(102, { kind: 'fly', input: input(1, 1) }),
+        executed(104.5, { kind: 'fly', input: input(0) }),
+      ],
+    };
+    const lines = changes(handFlown, quiet);
+    const flying = lines.filter((l) => l.includes('by hand'));
+    expect(flying).toHaveLength(1);
+    expect(flying[0]).toContain('by hand 4.5 s: main engine, yaw left');
+  });
+
   it('lists what changed from the attempt before', () => {
     const [a, b] = attempts;
     const lines = changes(b!, a!);

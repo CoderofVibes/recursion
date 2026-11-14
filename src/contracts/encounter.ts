@@ -3,7 +3,7 @@
  * The full definition, including truth, is truth/encounter.ts.
  */
 
-import type { Vec2 } from '../lib/vec2.ts';
+import type { Vec3 } from '../lib/vec3.ts';
 import type { BelievedAsteroid, BelievedBody, ShipEstimate } from './belief.ts';
 import type { ConfigurationId, EncounterId, ObjectId, ObjectiveId } from './ids.ts';
 import type { ParameterPrior } from './model.ts';
@@ -17,16 +17,20 @@ export interface Objective {
   readonly kind: ObjectiveKind;
   /** Short instrument label, not prose. */
   readonly label: string;
-  readonly region?: { readonly center: Vec2; readonly radius: Meters };
+  /** A sphere in the inertial frame. */
+  readonly region?: { readonly center: Vec3; readonly radius: Meters };
   /** For moving targets (a gap, a rendezvous). */
   readonly target?: ObjectId;
   /** Sim-time window in which it counts. */
   readonly window?: { readonly from: Seconds; readonly to: Seconds };
-  /** A distance band about `target` (or `region.center`), e.g. an orbit between two radii. */
+  /**
+   * A distance band (a spherical shell) about `target` (or `region.center`), e.g. an orbit
+   * between two radii.
+   */
   readonly band?: { readonly inner: Meters; readonly outer: Meters };
   /**
    * `depart`: leave the encounter, measured as speed relative to its centre of mass once the
-   * ship is `beyond` that distance from it (for example a slingshot exit, A6).
+   * ship is `beyond` that distance from it in any direction (for example a slingshot exit, A6).
    */
   readonly depart?: { readonly beyond: Meters; readonly minSpeed: MetersPerSecond };
   /** Most propellant the objective allows, as commanded Δv. */

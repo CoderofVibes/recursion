@@ -6,7 +6,8 @@
  *
  * Loop: prepare (safe, paused) → commit plan (forecast issued and frozen) → operate (time
  * warp) → observe → compare → revise → try again. Warp changes how many ticks run per frame,
- * never the step size.
+ * never the step size. Hands-on flying (`fly`, A8, A11) sends the controls as manual commands
+ * and issues a coasting forecast when they are released.
  *
  * Recurrence v0 (P8): loss, completion or a voluntary Recall ends the attempt; the next one
  * starts from exactly `EncounterDefinition.world` (ship, bodies, asteroids, noise streams),
@@ -22,6 +23,7 @@ import type {
   ExecutedCommand,
   Forecast,
   ForecastDraft,
+  HandsOnInput,
   Plan,
   PlanId,
   PlanItemId,
@@ -30,7 +32,7 @@ import type {
   TrailPoint,
   ViewSnapshot,
 } from '../contracts/index.ts';
-import { issueForecast } from '../contracts/index.ts';
+import { HANDS_ON_NEUTRAL, isHandsOnNeutral, issueForecast } from '../contracts/index.ts';
 import type { GameControls, Phase, PlanDraft, SessionStatus } from './belief/controls.ts';
 import type {
   AttemptStartInfo,
@@ -88,6 +90,14 @@ interface Scheduled {
 const UNRESOLVED = 'Attitude reference cannot be resolved from the navigation solution.';
 const pad = (n: number): string => String(n).padStart(4, '0');
 
+const sameControls = (a: HandsOnInput, b: HandsOnInput): boolean =>
+  a.translate.x === b.translate.x &&
+  a.translate.y === b.translate.y &&
+  a.translate.z === b.translate.z &&
+  a.yaw === b.yaw &&
+  a.pitch === b.pitch &&
+  a.throttle === b.throttle;
+
 export function createGameSession(setup: EncounterSetup, options: SessionOptions): GameSession {
   const { definition, play } = setup;
   const { model, blackBox } = options;
@@ -115,6 +125,8 @@ export function createGameSession(setup: EncounterSetup, options: SessionOptions
   let planId: PlanId | undefined;
   let plans = 0;
   let forecastCount = 0;
+  /** The hands-on input last sent to the ship this attempt; the controls start released. */
+  let flown: HandsOnInput = HANDS_ON_NEUTRAL;
   let commanded: CommandedState = initialCommandedState;
   let trail: TrailPoint[] = [];
   let forecasts: Forecast[] = [];
@@ -137,6 +149,7 @@ export function createGameSession(setup: EncounterSetup, options: SessionOptions
     outcome = { kind: 'in-progress' };
     queue = setup.arrivalCommands.map((command) => ({ time: 0, command, source: 'procedure' }));
     planId = undefined;
+    flown = HANDS_ON_NEUTRAL;
     commanded = initialCommandedState;
     trail = [];
     forecasts = [];
@@ -177,7 +190,7 @@ export function createGameSession(setup: EncounterSetup, options: SessionOptions
     while (queue.length > 0 && queue[0]!.time <= t + 1e-9) due.push(queue.shift()!);
     if (planId && !queue.some((item) => item.source === 'plan')) planId = undefined;
 
-    // Belief-relative references become inertial angles from the believed navigation solution.
+    // Belief-relative references become inertial attitudes from the believed navigation solution.
     const resolved: DueCommand[] = [];
     const refused: ExecutedCommand[] = [];
     const refusals: ShipEvent[] = [];
@@ -236,6 +249,39 @@ export function createGameSession(setup: EncounterSetup, options: SessionOptions
       .sort((a, b) => a.at - b.at)
       .map((item, i) => ({ id: `${id}-${i + 1}`, at: item.at, command: item.command }));
     return { id, ...(draft.name ? { name: draft.name } : {}), epoch, items };
+  }
+
+  /**
+   * Ask the model for the plan's forecast from its epoch, freeze it, record it and add it to
+   * the view. A committed plan is recorded with it. Returns undefined, with nothing recorded,
+   * when the attempt ended before the forecast arrived.
+   */
+  async function issue(plan: Plan, committed: boolean): Promise<Forecast | undefined> {
+    const attempt = attemptId;
+    forecastCount += 1;
+    const forecast = issueForecast(
+      await model.forecast({
+        id: `forecast-${pad(forecastCount)}`,
+        attemptId: attempt,
+        issuedAt: plan.epoch,
+        plan,
+        span: play.forecastSpan,
+      }),
+    );
+    if (attempt !== attemptId || !running()) return undefined;
+    if (committed) blackBox.recordPlan(attempt, plan);
+    blackBox.recordForecast(attempt, forecast);
+    forecasts.push(forecast);
+    return forecast;
+  }
+
+  /** A manual command: ahead of anything scheduled later, behind anything already due. */
+  function manual(command: Command): void {
+    const at = time();
+    const index = queue.findIndex((item) => item.time > at + 1e-9);
+    const entry: Scheduled = { time: at, command, source: 'manual' };
+    if (index < 0) queue.push(entry);
+    else queue.splice(index, 0, entry);
   }
 
   function overlay(id: AttemptId): AttemptOverlay | undefined {
@@ -351,25 +397,11 @@ export function createGameSession(setup: EncounterSetup, options: SessionOptions
       if (!running()) throw new Error('the attempt has ended; restart before committing a plan');
       if (committing) throw new Error('a plan is already being committed');
       const epoch = time();
-      const attempt = attemptId;
       const plan = toPlan(draft, epoch);
       committing = true;
       try {
-        forecastCount += 1;
-        const forecast = issueForecast(
-          await model.forecast({
-            id: `forecast-${pad(forecastCount)}`,
-            attemptId: attempt,
-            issuedAt: epoch,
-            plan,
-            span: play.forecastSpan,
-          }),
-        );
-        if (attempt !== attemptId || !running())
-          throw new Error('the attempt ended before the plan was committed');
-        blackBox.recordPlan(attempt, plan);
-        blackBox.recordForecast(attempt, forecast);
-        forecasts.push(forecast);
+        const forecast = await issue(plan, true);
+        if (!forecast) throw new Error('the attempt ended before the plan was committed');
         // The new plan replaces whatever was still scheduled from an earlier one.
         queue = [
           ...queue.filter((item) => item.source !== 'plan'),
@@ -390,12 +422,33 @@ export function createGameSession(setup: EncounterSetup, options: SessionOptions
 
     command(command) {
       if (!running()) return;
-      // Ahead of anything scheduled later, behind anything already due.
-      const at = time();
-      const index = queue.findIndex((item) => item.time > at + 1e-9);
-      const entry: Scheduled = { time: at, command, source: 'manual' };
-      if (index < 0) queue.push(entry);
-      else queue.splice(index, 0, entry);
+      manual(command);
+    },
+
+    fly(input) {
+      if (!running() || sameControls(input, flown)) return;
+      // The input differs from the last one sent, so a neutral one is a release.
+      const released = isHandsOnNeutral(input);
+      // A copy, so the record does not follow an object the caller goes on changing.
+      flown = {
+        translate: { x: input.translate.x, y: input.translate.y, z: input.translate.z },
+        yaw: input.yaw,
+        pitch: input.pitch,
+        throttle: input.throttle,
+      };
+      manual({ kind: 'fly', input: flown });
+      if (!released) return;
+      // Controls released: a coasting forecast, which is an empty plan from the present state.
+      // It is issued and recorded like a committed plan's, but schedules nothing, leaves a
+      // scheduled plan alone and does not hold time. A failed model call is the model's to
+      // report; the loop goes on.
+      const coast: Plan = {
+        id: `coast-${pad(forecastCount + 1)}`,
+        name: 'Coast',
+        epoch: time(),
+        items: [],
+      };
+      void issue(coast, false).catch(() => undefined);
     },
 
     recall() {

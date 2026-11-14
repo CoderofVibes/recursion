@@ -62,16 +62,26 @@ export interface TruthStepper {
   step(state: GameTruthState, commands?: readonly DueCommand[]): TickResult;
 }
 
-/** Mean of two mass-property sets; the footprint is the newer one. */
+/** Mean of two mass-property sets; the hull is the newer one. */
 function midStepMassProperties(before: MassProperties, after: MassProperties): MassProperties {
   return {
     mass: 0.5 * (before.mass + after.mass),
     centerOfMass: {
       x: 0.5 * (before.centerOfMass.x + after.centerOfMass.x),
       y: 0.5 * (before.centerOfMass.y + after.centerOfMass.y),
+      z: 0.5 * (before.centerOfMass.z + after.centerOfMass.z),
     },
-    inertia: 0.5 * (before.inertia + after.inertia),
-    footprint: after.footprint,
+    // LIFT(2G): the principal moments are averaged on the newer axes, which is the mean inertia
+    // only while the principal axes do not turn within a step.
+    inertia: {
+      moments: {
+        x: 0.5 * (before.inertia.moments.x + after.inertia.moments.x),
+        y: 0.5 * (before.inertia.moments.y + after.inertia.moments.y),
+        z: 0.5 * (before.inertia.moments.z + after.inertia.moments.z),
+      },
+      axes: after.inertia.axes,
+    },
+    hull: after.hull,
   };
 }
 
