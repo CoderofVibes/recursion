@@ -1,7 +1,7 @@
 /**
  * 1G estimator vectors (tests/vectors/estimator/): every fit is rebuilt from the vector's
  * inputs by this implementation, numeric fits are compared within the vectors' tolerances, and
- * all 54 physical claims are re-evaluated from this implementation's results.
+ * all 74 physical claims (revision 2) are re-evaluated from this implementation's results.
  *
  * Truth (the `truth` blocks and the truth columns of forecast points) is read here only to
  * evaluate claims. It never reaches estimator code (P11).
@@ -9,12 +9,16 @@
 
 import { describe, expect, it } from 'vitest';
 import rawBurn from '../../tests/vectors/estimator/burn-only-confounded.json?raw';
+import rawCarried from '../../tests/vectors/estimator/carried-rule-forecast.json?raw';
 import rawValidation from '../../tests/vectors/estimator/extension-validation.json?raw';
 import rawForecast from '../../tests/vectors/estimator/forecast-envelope.json?raw';
 import rawCoverage from '../../tests/vectors/estimator/inv25-exponent-coverage.json?raw';
 import rawTwo from '../../tests/vectors/estimator/inv25-newton-two-distances.json?raw';
 import rawBody from '../../tests/vectors/estimator/missing-body-signature.json?raw';
 import rawNewton from '../../tests/vectors/estimator/newton-recovers-gm.json?raw';
+import rawAging from '../../tests/vectors/estimator/parameter-aging.json?raw';
+import { accruedVariance, agingClass, type AgingClassId } from './aging.ts';
+import { DEFAULT_SETTINGS } from './settings.ts';
 import { empiricalFit, gmSlope } from './diagnostics.ts';
 import type { Arc } from './dynamics.ts';
 import { fromRows } from './linalg.ts';
@@ -516,6 +520,8 @@ describe('extension-validation', () => {
     expect([trainMin, trainMax]).toEqual(e.trainingCoverage);
     expect(eh.nWindowsOutside).toBe(e.nWindowsOutside);
     expect(Math.abs(eh.sigmaH / e.sigmaH - 1)).toBeLessThan(0.05);
+    const vr = (e as unknown as { validatedRange: [number, number] }).validatedRange;
+    expect(eh.validatedRange).toEqual(vr);
   });
 
   it('claims', () => {
@@ -525,6 +531,12 @@ describe('extension-validation', () => {
     claim(v.id, 'exponent-adoptable', evX.evidence && X.ho.pass);
     claim(v.id, 'exponent-from-training', Math.abs(nX - law.truth.values['truth.n']!) <= 3 * snX);
     claim(v.id, 'hedge-earned', eh.sigmaH < 0.2 * 0.3);
+    const vr = eh.validatedRange;
+    claim(
+      v.id,
+      'validated-range',
+      vr !== undefined && 0.58e6 < vr[0] && vr[0] < 0.62e6 && 1.38e6 < vr[1] && vr[1] < 1.42e6,
+    );
     claim(v.id, 'A-only-fails-heldout', !A.ho.pass);
     const evW = evidence(A.r.res, W.r.res, 1);
     claim(v.id, 'wrong-extension-fails', !W.ho.pass && !(evW.evidence && W.ho.pass));
@@ -681,20 +693,301 @@ describe('forecast-envelope', () => {
 });
 
 // ---------------------------------------------------------------------------------------------
+// 8. carried-rule-forecast (revision 2, A5): earned hedge only inside the validated range
+// ---------------------------------------------------------------------------------------------
+
+type SigmaParts = Record<
+  'state' | 'profile' | 'hedgeEarned' | 'hedgeDefault' | 'engine' | 'total',
+  number
+>;
+
+interface CarriedForecastJson {
+  model: string;
+  reference: TierLJson['reference'];
+  validated: [number, number][];
+  sigmaEarned: number | null;
+  sigmaDefault: number;
+  anchor: NonNullable<CaseJson['anchor']>;
+  points: {
+    t: number;
+    mean: [number, number];
+    withinHorizon: boolean;
+    insideValidated: boolean;
+    truth: [number, number];
+    sigmaMajor: SigmaParts;
+  }[];
+}
+
+describe('carried-rule-forecast', () => {
+  const v = V(rawCarried);
+  const c = v.cases[0]! as unknown as Omit<CaseJson, 'forecasts'> & {
+    plan: {
+      commands: { t0: number; t1: number; u: number; theta: number }[];
+      checkpoints: number[];
+    };
+    tierL: Record<string, TierLJson>;
+    forecasts: CarriedForecastJson[];
+  };
+  const fi = c.forecastInputs!;
+  const a1 = toArc(c.attempts[0]!);
+  const wins = makeWindows(a1, 'A')
+    .filter((w) => !w.powered)
+    .slice(-fi.anchorWindows);
+  const byN = new Map<
+    number,
+    { tl: ReturnType<typeof tierL>; anc: ReturnType<typeof anchorState> }
+  >();
+  const results = c.forecasts.map((f) => {
+    const ref = refLaw(f.reference);
+    if (!byN.has(ref.n)) {
+      const tl = tierL(ref, [a1]);
+      const anc = anchorState(ref, tl.profile, a1, wins, DT, { gPrior: [1, 0.5], slopeSigma: 0.2 });
+      byN.set(ref.n, { tl, anc });
+    }
+    const { tl, anc } = byN.get(ref.n)!;
+    const fc = forecastCore({
+      ref,
+      profiles: [tl.profile],
+      commands: c.plan.commands.map((q) => ({ t0: q.t0, t1: q.t1, u: q.u, theta: q.theta })),
+      tNow: anc.tNow,
+      xNow: anc.state,
+      PNow: anc.covariance,
+      times: c.plan.checkpoints,
+      dt: DT,
+      s2: tl.s2,
+      sigmaH: f.sigmaDefault,
+      engineSigma: [fi.engineSigma.kE, fi.engineSigma.dE],
+      ...(f.validated.length > 0
+        ? { validated: { A: { spans: f.validated, sigmaE: f.sigmaEarned! } } }
+        : {}),
+    });
+    let within = true;
+    const points = c.plan.checkpoints.map((t, i) => {
+      const mean = fc.mean[i]!;
+      const cv = fc.cov[i]!;
+      const r = Math.hypot(mean[0]!, mean[1]!);
+      const sig: SigmaParts = {
+        state: majorSigma(cv.state),
+        profile: majorSigma(cv.profile),
+        hedgeEarned: majorSigma(cv.hedgeEarned),
+        hedgeDefault: majorSigma(cv.hedgeDefault),
+        engine: majorSigma(cv.engine),
+        total: majorSigma(cv.total),
+      };
+      within = within && sig.total <= fi.horizonFraction * r;
+      const truth = f.points[i]!.truth;
+      const dev: [number, number] = [truth[0] - mean[0]!, truth[1] - mean[1]!];
+      return {
+        t,
+        mean,
+        r,
+        sig,
+        within,
+        inside: tl.profile.rMin <= r && r <= tl.profile.rMax,
+        insideValidated: f.validated.some(([lo, hi]) => lo <= r && r <= hi),
+        deviation: Math.hypot(...dev),
+        maha: mahalanobis(dev, cv.total),
+      };
+    });
+    return { f, points, tl, anc };
+  });
+  const R = results.find((q) => q.f.model === 'carried-rule')!;
+  const E = results.find((q) => q.f.model === 'earned-everywhere')!;
+  const Nr = results.find((q) => q.f.model === 'no-rule')!;
+
+  it('Tier L and the present state match the reference', () => {
+    expect(compareTierL(R.tl.rows, R.tl.profile, R.tl.s2, c.tierL['power-law-2.5']!)).toEqual([]);
+    const ra = R.f.anchor;
+    const C = fromRows(ra.covariance);
+    for (let i = 0; i < 4; i++) {
+      const sg = Math.sqrt(C.data[i * 4 + i]!);
+      expect(Math.abs(R.anc.state[i]! - ra.state[i]!)).toBeLessThan(0.05 * sg);
+      expect(Math.abs(Math.sqrt(R.anc.covariance.data[i * 4 + i]!) / sg - 1)).toBeLessThan(0.05);
+    }
+  });
+
+  it('the carried-rule forecast matches the reference inside its horizon', () => {
+    R.points.forEach((p, i) => {
+      const rp = R.f.points[i]!;
+      expect(p.within).toBe(rp.withinHorizon);
+      expect(p.insideValidated).toBe(rp.insideValidated);
+      if (!rp.withinHorizon) return;
+      expect(Math.hypot(p.mean[0]! - rp.mean[0], p.mean[1]! - rp.mean[1])).toBeLessThan(
+        0.05 * rp.sigmaMajor.total,
+      );
+      for (const k of [
+        'state',
+        'profile',
+        'hedgeEarned',
+        'hedgeDefault',
+        'engine',
+        'total',
+      ] as const)
+        expect(
+          Math.abs(p.sig[k] - rp.sigmaMajor[k]) <= Math.max(0.05 * rp.sigmaMajor[k], 1),
+          `${k} at ${p.t}`,
+        ).toBe(true);
+    });
+  });
+
+  it('claims', () => {
+    const comps = ['state', 'profile', 'hedgeEarned', 'hedgeDefault', 'engine'] as const;
+    const inh = R.points.filter((p) => p.within);
+    claim(v.id, 'honest', Math.max(...inh.map((p) => p.maha)) < 3 && inh.length >= 4);
+    const zone = R.points.flatMap((p, i) =>
+      p.within && !p.inside && p.insideValidated ? [i] : [],
+    );
+    claim(v.id, 'earned-zone-exists', zone.length >= 3);
+    const ez = zone[zone.length - 1]!;
+    claim(
+      v.id,
+      'earned-inside-validated',
+      R.points[ez]!.sig.hedgeDefault < 1 &&
+        Math.abs(R.points[ez]!.sig.total / E.points[ez]!.sig.total - 1) < 1e-6,
+    );
+    claim(
+      v.id,
+      'carried-rule-helps',
+      Nr.points[ez]!.sig.hedgeDefault > 5 * R.points[ez]!.sig.hedgeEarned &&
+        Nr.points[ez]!.deviation > 5 * R.points[ez]!.deviation,
+    );
+    const count = (q: typeof R) => q.points.filter((p) => p.within).length;
+    const [nN, nR, nE] = [count(Nr), count(R), count(E)];
+    claim(v.id, 'horizon-order', nN < nR && nR <= nE);
+    claim(v.id, 'no-rule-ends-early', Nr.points[nN - 1]!.r > 0.6e6);
+    claim(v.id, 'carried-rule-reaches-below', nR < R.points.length && R.points[nR - 1]!.r < 0.6e6);
+    const first = (nR < R.points.length ? R.points[nR] : R.points[R.points.length - 1])!.sig;
+    claim(
+      v.id,
+      'default-hedge-ends-it',
+      first.hedgeDefault === Math.max(...comps.map((k) => first[k])) &&
+        first.hedgeDefault > 2 * first.hedgeEarned,
+    );
+    const eSame = E.points[Math.min(nR, E.points.length - 1)]!.sig.total;
+    claim(v.id, 'not-easy', first.total > 1.5 * eSame);
+    for (const [, ok] of claims.get(v.id)!) expect(ok).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------------------------
+// 9. parameter-aging (revision 2, A5): ship calibrations age and must be re-earned
+// ---------------------------------------------------------------------------------------------
+
+interface AgingRow {
+  parameter: string;
+  sigmaBefore: number;
+  shipDays: number;
+  use: number;
+  conditionDrops: number[];
+  sigmaAfter: number;
+}
+
+describe('parameter-aging', () => {
+  const v = V(rawAging);
+  const [c1, c2, c3] = v.cases as unknown as (CaseJson & Record<string, unknown>)[];
+  const classOf: Record<string, AgingClassId> = {
+    'engine.kE': 'engineScale',
+    'engine.dE': 'engineMisalignment',
+    'accel.kA': 'accelScale',
+    'camera.bias': 'cameraBias',
+  };
+  const table = c1!['table'] as AgingRow[];
+  const mine = table.map((r) =>
+    Math.sqrt(
+      r.sigmaBefore ** 2 +
+        accruedVariance(
+          agingClass(DEFAULT_SETTINGS, classOf[r.parameter]!),
+          r.shipDays * 86400,
+          r.use,
+          r.conditionDrops,
+        ),
+    ),
+  );
+
+  it('aging arithmetic matches the table', () => {
+    table.forEach((r, i) => expect(Math.abs(mine[i]! / r.sigmaAfter - 1)).toBeLessThan(1e-9));
+  });
+
+  // Case 2: fits on the full arc and on the quick-look subset (second attempt entry).
+  const full = toArc(c2!.attempts[0]!);
+  const quick = toArc(c2!.attempts[1]!);
+  const fits2 = c2!.fits.map((j) => {
+    const subset = (j as unknown as { dataSubset: string }).dataSubset;
+    const arc = subset.startsWith('quick') ? quick : full;
+    const init: Record<string, number> = {};
+    const g = guessShip(arc, 'A', arc.epoch);
+    ['x', 'y', 'vx', 'vy'].forEach((k, i) => (init[`att1.ship.${k}`] = g[i]!));
+    const res = stagedFit(toStructure(j.model), [arc], toParams(j, init), OPTS);
+    return { j, res, init };
+  });
+  const f3 = Object.fromEntries(c3!.fits.map((j) => [j.id, { j, r: runFit(j, arcsOf(c3!)) }]));
+
+  it('initial guesses and fits match the reference', () => {
+    for (const { j, init } of fits2)
+      for (const [name, val] of Object.entries(init)) {
+        const ref = j.parameters.find((p) => p.name === name)!.init;
+        expect(Math.abs(val - ref), name).toBeLessThan(1e-6 * Math.max(1, Math.abs(ref)));
+      }
+    for (const { j, res } of fits2) expect(compareFit(res, j.expected), j.id).toEqual([]);
+    for (const { j, r } of Object.values(f3))
+      expect(compareFit(r.res, j.expected), j.id).toEqual([]);
+  });
+
+  it('claims', () => {
+    const truthKE = 0.945;
+    claim(v.id, 'aged-engine-scale', 0.015 < mine[0]! && mine[0]! < 0.022);
+    claim(v.id, 'aging-within-attempt', mine[4]! < 0.004);
+    const z = fits2.map(({ res }) => {
+      const [k, sk] = fitGet(res, 'engine.kE');
+      return { z: (k - truthKE) / sk, sk };
+    });
+    const aged = (c2!['agedSigma'] as Record<string, number>)['engine.kE']!;
+    claim(v.id, 'stale-is-wrong', Math.abs(z[0]!.z) > 3);
+    claim(v.id, 'aged-is-honest', Math.abs(z[1]!.z) <= 3);
+    claim(v.id, 're-earned', Math.abs(z[2]!.z) <= 3 && z[2]!.sk < 0.003);
+    claim(v.id, 'quick-look-partly-earns', z[1]!.sk < 0.5 * aged);
+    const constant = f3['constant']!.r.res;
+    const dev = f3['per-arc-deviation']!.r.res;
+    claim(v.id, 'constant-misfits', fitChi2Nu(constant) > 3);
+    claim(v.id, 'deviation-fits', inBand(dev));
+    const sum = (a: string, b: string) => {
+      const i = dev.names.indexOf(a);
+      const k = dev.names.indexOf(b);
+      const n = dev.P.cols;
+      return [
+        dev.x[i]! + dev.x[k]!,
+        Math.sqrt(dev.P.data[i * n + i]! + dev.P.data[k * n + k]! + 2 * dev.P.data[i * n + k]!),
+      ] as const;
+    };
+    const [k1, s1] = sum('engine.kE', 'att1.engine.dkE');
+    const [k2, s2] = sum('engine.kE', 'att2.engine.dkE');
+    type PerArc = Record<
+      string,
+      { kE: number; sigma: number; deviationPriorSigma: Record<string, number> }
+    >;
+    const perArc = (f3['per-arc-deviation']!.j as unknown as { perArc: PerArc }).perArc;
+    expect(Math.abs(k1 - perArc['att1']!.kE)).toBeLessThan(0.05 * perArc['att1']!.sigma);
+    expect(Math.abs(k2 - perArc['att2']!.kE)).toBeLessThan(0.05 * perArc['att2']!.sigma);
+    claim(
+      v.id,
+      'both-values-recovered',
+      Math.abs(k1 - 0.97) <= 3 * s1 && Math.abs(k2 - 0.94) <= 3 * s2,
+    );
+    claim(
+      v.id,
+      'damaged-value-re-earned',
+      s2 < 0.2 * perArc['att2']!.deviationPriorSigma['engine.kE']!,
+    );
+    for (const [, ok] of claims.get(v.id)!) expect(ok).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------------------------
 // All claims
 // ---------------------------------------------------------------------------------------------
 
-/**
- * Revision 2 claims (1G, DECISIONS A5) not built yet: validated range, and the new vectors
- * carried-rule-forecast and parameter-aging (20 claims). Added by the integrator at merge so the
- * revision 1 guard stays exact; 2C deletes this when it implements revision 2 (74 claims).
- */
-const REVISION_2_PENDING: Readonly<Record<string, readonly string[]>> = {
-  'extension-validation': ['validated-range'],
-};
-
 describe('estimator vectors', () => {
-  it('all 54 revision 1 claims hold, and each vector claim was evaluated', () => {
+  it('all 74 claims hold, and each vector claim was evaluated', () => {
     const vectors = [
       rawNewton,
       rawTwo,
@@ -703,21 +996,17 @@ describe('estimator vectors', () => {
       rawBurn,
       rawValidation,
       rawForecast,
+      rawCarried,
+      rawAging,
     ].map(V);
     let total = 0;
     for (const v of vectors) {
       const mine = claims.get(v.id);
       expect(mine, v.id).toBeDefined();
-      const pending = REVISION_2_PENDING[v.id] ?? [];
-      expect([...mine!.keys()].sort()).toEqual(
-        v.checks
-          .map((c) => c.id)
-          .filter((id) => !pending.includes(id))
-          .sort(),
-      );
+      expect([...mine!.keys()].sort()).toEqual(v.checks.map((c) => c.id).sort());
       for (const [id, ok] of mine!) expect(ok, `${v.id}/${id}`).toBe(true);
       total += mine!.size;
     }
-    expect(total).toBe(54);
+    expect(total).toBe(74);
   });
 });

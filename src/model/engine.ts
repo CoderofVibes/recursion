@@ -12,6 +12,7 @@
 import type {
   AttemptId,
   AttemptRecord,
+  BelievedAsteroid,
   BelievedBody,
   CalibrationProfile,
   CovarianceMatrix,
@@ -26,8 +27,18 @@ import type {
   ResidualStats,
   ShipDefinition,
   ShipEstimate,
+  TransitRecord,
 } from '../contracts/index.ts';
 import { hashState } from '../lib/hash.ts';
+import {
+  agingClass,
+  agingOf,
+  conditionAtEnd,
+  historyIn,
+  historyVariance,
+  transitHistory,
+  type AgingHistory,
+} from './aging.ts';
 import { arcsFromRecord, type ArcBuild, type Burn } from './adapt.ts';
 import {
   compileArc,
@@ -35,11 +46,16 @@ import {
   usable,
   SHIP_REFS,
   type Arc,
+  type ArcSolution as DynArcSolution,
   type BodyDef,
   type EngineDef,
+  type Ref,
   type Structure,
+  type ThrustSegment,
 } from './dynamics.ts';
+import type { ValidatedHedge } from './extensions.ts';
 import { zeros, type Matrix } from './linalg.ts';
+import { probeArcs, shipArcOf } from './probes.ts';
 import { resolveSettings, settingsRecord, type ModelSettings } from './settings.ts';
 import { fitGet, fitNu, stagedFit, type FitResult, type Param } from './solve.ts';
 import {
@@ -49,13 +65,14 @@ import {
   flatProfile,
   guessBody,
   guessShip,
-  localFit,
+  localFitDetailed,
   makeWindows,
   noiseScale,
   rangeFixes,
   shipParams,
   type Anchor,
   type FrozenBody,
+  type LocalFitResult,
   type ProfileFit,
   type ReferenceLaw,
   type WindowFit,
@@ -73,6 +90,8 @@ export interface ModelContext {
   readonly priors: readonly ParameterPrior[];
   /** Bodies known on arrival, as believed at t = 0 (briefing). */
   readonly bodies: readonly BelievedBody[];
+  /** Asteroids known on arrival (briefing): their radii set forecast clearances. */
+  readonly asteroids?: readonly BelievedAsteroid[];
   readonly ship: ShipDefinition;
   /** Navigation estimate on arrival (briefing). */
   readonly arrival: ShipEstimate;
@@ -92,6 +111,7 @@ export function contextFromBriefing(
     encounterId: briefing.id,
     priors: briefing.priors,
     bodies: briefing.knownBodies,
+    asteroids: briefing.knownAsteroids,
     ship,
     arrival: briefing.arrivalEstimate,
     ...opts,
@@ -258,8 +278,10 @@ export function tierGProblem(
   const hasAccel = arcs.some((a) => a.meas.some((m) => m.kind === 'accel'));
   const camId = `sensor.${spec.cameraId}.bias`;
   const kAId = `sensor.${accelSource ?? 'accelerometer'}.scale`;
+  // Ship calibrations: arrival value plus a per-arc deviation with an aging prior (§3.7).
+  const dev = (g: string): Ref => [g, `{att}.${g}.d`];
   const engines: Record<string, EngineDef> = {};
-  for (const thr of thrusters) engines[thr] = { kE: scaleId(thr), dE: misalignId(thr) };
+  for (const thr of thrusters) engines[thr] = { kE: dev(scaleId(thr)), dE: dev(misalignId(thr)) };
   const others = spec.bodies.slice(1);
   const bodies: BodyDef[] = spec.bodies.map((id, j) => {
     if (j === 0) return { id, mu: muId(id), state: 'gauge' };
@@ -285,8 +307,8 @@ export function tierGProblem(
     dynamicBodies: spec.dynamic,
     engine: { kE: 1, dE: 0 },
     engines,
-    kA: hasAccel ? kAId : 1,
-    camBias: camId,
+    kA: hasAccel ? dev(kAId) : 1,
+    camBias: dev(camId),
   };
   const globals: Param[] = [];
   for (const id of spec.bodies) {
@@ -385,6 +407,36 @@ export function tierGProblem(
       });
     }
   }
+  // Per-arc deviations of ship calibrations: prior σ² = aging accrued from arrival to the
+  // arc's last retained measurement (§3.7 item 1).
+  const recOf = new Map<string, AttemptRecord>();
+  const segsOf = new Map<AttemptId, ThrustSegment[]>();
+  for (const rec of attempts) {
+    const b = builds.get(rec.id)!;
+    for (const a of b.arcs) recOf.set(a.id, rec);
+    segsOf.set(
+      rec.id,
+      b.arcs.flatMap((a) => a.commands),
+    );
+  }
+  for (const a of arcs) {
+    const rec = recOf.get(a.id)!;
+    const tLast = a.meas[a.meas.length - 1]!.t;
+    for (const g of globals) {
+      const ag = agingOf(g.name, spec.cameraId);
+      if (!ag) continue;
+      const hist = historyIn(rec, segsOf.get(rec.id)!, ag.cls, ag.equipment, 0, tLast);
+      const q = historyVariance(agingClass(s, ag.cls), ag.cls, hist);
+      locals.push({
+        name: `${a.id}.${g.name}.d`,
+        init: 0,
+        scale: g.scale,
+        priorMean: 0,
+        priorSigma: Math.max(Math.sqrt(q), 1e-3 * g.scale),
+        group: a.id,
+      });
+    }
+  }
   for (const name of levels) {
     const arc = name.slice(0, name.indexOf('.burn'));
     locals.push({
@@ -417,20 +469,65 @@ export interface ModelInput {
   readonly adopted: readonly ExtensionId[];
   /** Extension history for ModelState.extensions. */
   readonly extensions?: readonly ExtensionState[];
-  /** Hedge earned by validated rules (§7.4); default settings.sigmaH. */
-  readonly hedge?: number;
+  /** Earned hedge per body: validated spans of adopted rules and their σ_e (§7.4, A5). */
+  readonly validated?: Readonly<Record<string, ValidatedHedge>>;
   readonly version: number;
   readonly parent?: number;
   /** The attempt in progress, for the present state. */
   readonly current?: AttemptId;
 }
 
-export interface ArcSolution {
-  readonly arc: Arc;
-  /** Parameter vector and index of the Tier G fit (or priors when not fitted). */
-  readonly x: Float64Array;
-  readonly idx: ReadonlyMap<string, number>;
-  readonly structure: Structure;
+/**
+ * A ship arc's believed trajectory: the structure, parameter vector and index it was fitted
+ * with (Tier G, or a fit of that arc alone with the globals frozen), with covariance.
+ */
+export type ArcSolution = DynArcSolution;
+
+/** Replace global parameter names by their values (arc-local names stay parameters). */
+function freezeRef(r: Ref, values: Readonly<Record<string, number>>): Ref {
+  if (typeof r === 'object') return r.map((q) => freezeRef(q, values));
+  if (typeof r === 'string') return values[r] ?? r;
+  return r;
+}
+
+export function frozenStructure(
+  st: Structure,
+  values: Readonly<Record<string, number>>,
+): Structure {
+  const f = (r: Ref) => freezeRef(r, values);
+  const engines: Record<string, EngineDef> = {};
+  for (const [k, e] of Object.entries(st.engines ?? {})) engines[k] = { kE: f(e.kE), dE: f(e.dE) };
+  return {
+    ...st,
+    n: f(st.n),
+    bodies: st.bodies.map((b) => ({ ...b, mu: f(b.mu) })),
+    engine: { kE: f(st.engine.kE), dE: f(st.engine.dE) },
+    engines,
+    kA: f(st.kA),
+    camBias: f(st.camBias),
+  };
+}
+
+/** Fit one arc's own parameters with the globals frozen at `values` (in-flight refresh). */
+export function arcFit(
+  problem: TierGProblem,
+  values: Readonly<Record<string, number>>,
+  arc: Arc,
+  s: ModelSettings,
+): ArcSolution | null {
+  const params = problem.params.filter((p) => p.group === arc.id);
+  if (params.length === 0) return null;
+  const structure = frozenStructure(problem.structure, values);
+  const fit = stagedFit(structure, [arc], params, { dt: s.dt, h: s.fdStep });
+  return {
+    arc,
+    structure,
+    x: fit.x,
+    idx: new Map(params.map((p, i) => [p.name, i])),
+    P: fit.P,
+    rel: params.map((_, i) => i),
+    scale: Float64Array.from(params, (p) => p.scale),
+  };
 }
 
 export interface PresentState {
@@ -452,12 +549,17 @@ export interface ModelDerived {
   readonly values: Readonly<Record<string, number>>;
   readonly sigmas: Readonly<Record<string, number>>;
   readonly solutions: ReadonlyMap<string, ArcSolution>;
+  /** Tracked asteroids as test-particle arcs, per attempt (spec §10). */
+  readonly probes: ReadonlyMap<AttemptId, readonly Arc[]>;
   readonly windows: readonly WindowFit[];
   readonly profiles: readonly ProfileFit[];
   /** Covered ranges for bodies without a profile (hedge, §8.2). */
   readonly flatProfiles: readonly ProfileFit[];
   readonly noiseScale: number;
-  readonly hedge: number;
+  /** Default hedge σ_h0 (§8.2). */
+  readonly sigmaH0: number;
+  /** Earned hedge per body, from adopted rules' validated spans (§7.4). */
+  readonly validated: Readonly<Record<string, ValidatedHedge>>;
   readonly present: PresentState | null;
 }
 
@@ -481,7 +583,8 @@ export function referenceFor(
     const m = /^thruster\.(.+)\.scale$/.exec(k);
     if (m) engines[m[1]!] = { kE: val, dE: v[misalignId(m[1]!)] ?? 0 };
   }
-  const sol = d.solutions.get(arcId);
+  // A probe arc flies in the same world as the ship arc it was built from.
+  const sol = d.solutions.get(arcId) ?? d.solutions.get(shipArcOf(arcId));
   const others: FrozenBody[] = spec.bodies
     .filter((b) => b !== body)
     .map((id) => ({
@@ -546,7 +649,7 @@ function believedPull(mu: number, n: number, r0: number, r: number): number {
 }
 
 /** Local fits keyed by window and reference law; results are identical with or without it. */
-export type TierLCache = Map<string, WindowFit>;
+export type TierLCache = Map<string, LocalFitResult>;
 
 export interface BuildOptions {
   /** Reuse these Tier G results instead of refitting (in-flight refresh, §11.2). */
@@ -579,25 +682,37 @@ export function buildModel(input: ModelInput, opts: BuildOptions = {}): ModelSna
     values[g] = reuse?.values[g] ?? x[i]!;
     sigmas[g] = reuse?.sigmas[g] ?? (useFit ? fitGet(fit!, g)[1] : (prm.priorSigma ?? 0));
   }
+  const scale = Float64Array.from(problem.params, (p) => p.scale);
   const solutions = new Map<string, ArcSolution>();
   for (const a of problem.arcs) {
     const old = reuse?.solutions.get(a.id);
+    if (old && old.arc.epoch === a.epoch && old.arc.meas.length === a.meas.length) {
+      solutions.set(a.id, old);
+      continue;
+    }
+    if (useFit) {
+      const rel = problem.params.flatMap((p, i) =>
+        p.group === 'global' || p.group === a.id ? [i] : [],
+      );
+      solutions.set(a.id, { arc: a, x, idx, structure: problem.structure, P: fit!.P, rel, scale });
+      continue;
+    }
+    // Not in a converged Tier G (in flight, or a fit that did not converge): fit the arc alone.
+    const own = arcFit(problem, values, a, s);
     solutions.set(
       a.id,
-      old && old.arc.epoch === a.epoch ? old : { arc: a, x, idx, structure: problem.structure },
+      own ?? { arc: a, x, idx, structure: problem.structure, P: null, rel: [], scale },
     );
   }
 
-  // Tier L per body with range fixes (§5).
+  // Tier L per body with range fixes (§5): first the ship's arcs, then the tracked asteroids'
+  // probe arcs (§10), whose fixes use the ship's path from its own window fits.
   const partial = { spec, values, solutions };
   const rule = windowRule(s);
-  const windows: WindowFit[] = [];
-  const profiles: ProfileFit[] = [];
-  const flatProfiles: ProfileFit[] = [];
   const n = spec.exponent ? (values[EXPONENT_ID] ?? 2) : 2;
-  for (const body of spec.bodies) {
-    const rows: WindowFit[] = [];
-    for (const a of problem.arcs) {
+  const fitWindows = (arcs: readonly Arc[], body: string): LocalFitResult[] => {
+    const out: LocalFitResult[] = [];
+    for (const a of arcs) {
       const ref = referenceFor(partial, body, a.id, ctx);
       for (const w of makeWindows(a, body, rule)) {
         // Coasting windows only; a sliver between two burns is too short to fit.
@@ -615,6 +730,7 @@ export function buildModel(input: ModelInput, opts: BuildOptions = {}): ModelSna
         }
         const key = opts.cache
           ? `${w.id}|${w.t0}|${w.t1}|${w.fixes.length}|${hashState([
+              w.fixes.map((f) => [f.t, f.z, f.sigma]),
               ref.mu,
               ref.n,
               ref.cam,
@@ -625,11 +741,63 @@ export function buildModel(input: ModelInput, opts: BuildOptions = {}): ModelSna
             ])}`
           : '';
         const hit = opts.cache?.get(key);
-        const row = hit ?? localFit(ref, a, w, s.dt, [1, s.localScalePriorSigma]);
-        if (!hit) opts.cache?.set(key, row);
-        rows.push(row);
+        const res = hit ?? localFitDetailed(ref, a, w, s.dt, [1, s.localScalePriorSigma]);
+        if (!hit) opts.cache?.set(key, res);
+        out.push(res);
       }
     }
+    return out;
+  };
+  const shipFits = new Map(spec.bodies.map((body) => [body, fitWindows(problem.arcs, body)]));
+
+  // The ship's path relative to each body: the window fit covering t (to the next window).
+  const paths = new Map(
+    spec.bodies.map((body) => {
+      const list = shipFits
+        .get(body)!
+        .map((r) => r.solution)
+        .sort((a, b) => a.arc.epoch - b.arc.epoch);
+      return [body, list] as const;
+    }),
+  );
+  const pathFor = (body: string, t: number): ArcSolution | null => {
+    const list = paths.get(body)!;
+    let best: ArcSolution | null = null;
+    for (const sol of list) if (sol.arc.epoch <= t) best = sol;
+    if (!best) return null;
+    const last = best.arc.meas[best.arc.meas.length - 1]!.t;
+    const next = list.find(
+      (q) =>
+        q.arc.epoch > best!.arc.epoch &&
+        shipArcOf(q.arc.id.split('.w')[0]!) === shipArcOf(best!.arc.id.split('.w')[0]!),
+    );
+    const until = next ? next.arc.epoch : last + s.normalPointInterval;
+    return t <= until ? best : null;
+  };
+  const probes = new Map<AttemptId, Arc[]>();
+  for (const rec of attempts) {
+    const shipArcs = problem.builds.get(rec.id)?.arcs ?? [];
+    if (shipArcs.length === 0) continue;
+    const list = probeArcs({
+      record: rec,
+      shipArcs,
+      bodies: spec.bodies,
+      pathFor,
+      cameraBias: values[`sensor.${spec.cameraId}.bias`] ?? 0,
+      dt: s.dt,
+      h: s.fdStep,
+      normalPointInterval: s.normalPointInterval,
+    });
+    if (list.length > 0) probes.set(rec.id, list);
+  }
+  const probeList = [...probes.values()].flat();
+  const allArcs = [...problem.arcs, ...probeList];
+
+  const windows: WindowFit[] = [];
+  const profiles: ProfileFit[] = [];
+  const flatProfiles: ProfileFit[] = [];
+  for (const body of spec.bodies) {
+    const rows = [...shipFits.get(body)!, ...fitWindows(probeList, body)].map((r) => r.row);
     windows.push(...rows);
     if (rows.length > 0)
       profiles.push(
@@ -640,7 +808,7 @@ export function buildModel(input: ModelInput, opts: BuildOptions = {}): ModelSna
         }),
       );
     else {
-      const ranges = problem.arcs.flatMap((a) => rangeFixes(a, body).map((m) => m.z[1]!));
+      const ranges = allArcs.flatMap((a) => rangeFixes(a, body).map((m) => m.z[1]!));
       flatProfiles.push(
         ranges.length > 0
           ? flatProfile(body, Math.min(...ranges), Math.max(...ranges), s.r0)
@@ -649,7 +817,6 @@ export function buildModel(input: ModelInput, opts: BuildOptions = {}): ModelSna
     }
   }
   const s2 = noiseScale(windows);
-  const hedge = Math.max(s.sigmaHFloor, Math.min(s.sigmaH, input.hedge ?? s.sigmaH));
 
   const derivedBase = {
     spec,
@@ -658,11 +825,13 @@ export function buildModel(input: ModelInput, opts: BuildOptions = {}): ModelSna
     values,
     sigmas,
     solutions,
+    probes,
     windows,
     profiles,
     flatProfiles,
     noiseScale: s2,
-    hedge,
+    sigmaH0: s.sigmaH,
+    validated: input.validated ?? {},
   };
   const present = input.current
     ? presentState({ ...derivedBase, present: null }, ctx, input.current)
@@ -670,6 +839,78 @@ export function buildModel(input: ModelInput, opts: BuildOptions = {}): ModelSna
   const derived: ModelDerived = { ...derivedBase, present };
   const state = toModelState(input, derived, attempts);
   return { state, derived };
+}
+
+export interface ArcCalibration {
+  readonly id: string;
+  readonly arc: string;
+  readonly value: number;
+  /** σ as fitted in the arc (arrival value and deviation, jointly). */
+  readonly sigma: number;
+  /** Time of the arc's last retained measurement. */
+  readonly tLast: number;
+}
+
+/**
+ * Ship calibrations as used in one arc: arrival value plus that arc's deviation, with σ from
+ * the joint covariance (§3.7). From Tier G when the arc was in it, else from the arc's own fit
+ * (frozen arrival value, whose σ is added in quadrature).
+ */
+export function arcCalibration(
+  d: Pick<ModelDerived, 'problem' | 'solutions' | 'values' | 'sigmas' | 'spec'>,
+  arcId: string,
+): ArcCalibration[] {
+  const sol = d.solutions.get(arcId);
+  const arc = d.problem.arcs.find((a) => a.id === arcId);
+  if (!arc) return [];
+  const tLast = arc.meas[arc.meas.length - 1]!.t;
+  const out: ArcCalibration[] = [];
+  for (const g of d.problem.globals) {
+    if (!agingOf(g, d.spec.cameraId)) continue;
+    const devName = `${arcId}.${g}.d`;
+    const i = sol?.idx.get(g);
+    const k = sol?.idx.get(devName);
+    const P = sol?.P ?? null;
+    let value = d.values[g] ?? 0;
+    let v = (d.sigmas[g] ?? 0) ** 2;
+    if (sol && k !== undefined) {
+      const n = P?.cols ?? 0;
+      if (i !== undefined) {
+        value = sol.x[i]! + sol.x[k]!;
+        v = P ? P.data[i * n + i]! + P.data[k * n + k]! + 2 * P.data[i * n + k]! : v;
+      } else {
+        value = (d.values[g] ?? 0) + sol.x[k]!;
+        v += P ? P.data[k * n + k]! : 0;
+      }
+    }
+    out.push({ id: g, arc: arcId, value, sigma: Math.sqrt(Math.max(v, 0)), tLast });
+  }
+  return out;
+}
+
+/** Aging of a ship calibration from `t0` to `t1` in an attempt (§3.7), with its drivers. */
+export function agingBetween(
+  d: Pick<ModelDerived, 'problem' | 'spec'>,
+  rec: AttemptRecord,
+  id: string,
+  t0: number,
+  t1: number,
+): { variance: number; history: AgingHistory } {
+  const ag = agingOf(id, d.spec.cameraId);
+  if (!ag) return { variance: 0, history: { shipTime: 0, deltaV: 0, powerCycles: 0, drops: [] } };
+  const segs = (d.problem.builds.get(rec.id)?.arcs ?? []).flatMap((a) => a.commands);
+  const history = historyIn(rec, segs, ag.cls, ag.equipment, t0, t1);
+  return {
+    variance: historyVariance(agingClass(d.spec.settings, ag.cls), ag.cls, history),
+    history,
+  };
+}
+
+/** Latest recorded time of an attempt (its end, if it has ended). */
+export function attemptEnd(rec: AttemptRecord): number {
+  if (rec.outcome.kind !== 'in-progress') return rec.outcome.t;
+  const last = <T extends { t: number }>(a: readonly T[]) => (a.length ? a[a.length - 1]!.t : 0);
+  return Math.max(last(rec.measurements), last(rec.executed), last(rec.events));
 }
 
 /** §8.1: the present state of an attempt from its most recent coasting windows. */
@@ -849,6 +1090,46 @@ function toModelState(
           ...(p.extension ? { extension: p.extension } : {}),
           support: 0,
         });
+  // Ship calibrations as used in each attempt's latest arc, with freshness (§3.7, §9.7).
+  for (const rec of attempts) {
+    const arcs = d.problem.builds.get(rec.id)?.arcs ?? [];
+    const last = arcs[arcs.length - 1];
+    if (!last) continue;
+    const end = attemptEnd(rec);
+    for (const c of arcCalibration(d, last.id)) {
+      const g = parameters.find((q) => q.id === c.id)!;
+      const aged = agingBetween(d, rec, c.id, c.tLast, end);
+      const sigmaAged = Math.sqrt(aged.variance);
+      const devPrior = prm.get(`${last.id}.${c.id}.d`);
+      const priorSigma = Math.hypot(g.prior.sigma, devPrior?.priorSigma ?? 0);
+      const sigma = Math.hypot(c.sigma, sigmaAged);
+      parameters.push({
+        id: c.id,
+        label: g.label,
+        unit: g.unit,
+        value: c.value,
+        sigma,
+        prior: { mean: g.prior.mean, sigma: priorSigma },
+        ...(g.extension ? { extension: g.extension } : {}),
+        support:
+          priorSigma > 0
+            ? Math.min(1, Math.max(0, 1 - (c.sigma * c.sigma) / (priorSigma * priorSigma)))
+            : 0,
+        arc: rec.id,
+        freshness: {
+          sigmaMeasured: c.sigma,
+          sigmaAged,
+          lastMeasured: { attempt: rec.id, t: c.tLast },
+          since: {
+            shipTime: aged.history.shipTime,
+            deltaV: aged.history.deltaV,
+            powerCycles: aged.history.powerCycles,
+            conditionLost: aged.history.drops.reduce((q, x) => q + x, 0),
+          },
+        },
+      });
+    }
+  }
   const ids = d.problem.globals;
   const values = new Array<number>(ids.length * ids.length).fill(0);
   if (fit && fit.converged) {
@@ -862,7 +1143,7 @@ function toModelState(
   const distance: Record<string, [number, number][]> = {};
   for (const body of d.spec.bodies) {
     const spans: [number, number][] = [];
-    for (const a of d.problem.arcs) {
+    for (const a of [...d.problem.arcs, ...[...d.probes.values()].flat()]) {
       const r = rangeFixes(a, body).map((m) => m.z[1]!);
       if (r.length > 0) spans.push([Math.min(...r), Math.max(...r)]);
     }
@@ -918,6 +1199,7 @@ function toModelState(
         }
       : {}),
     calibration: d.profiles.map((p) => toCalibrationProfile(p, d.windows)),
+    noiseScale: d.noiseScale,
     settings: settingsRecord(d.spec.settings),
   };
 }
@@ -928,11 +1210,43 @@ export function parameterValues(d: Pick<ModelDerived, 'values'>): Record<string,
 }
 
 /**
- * Ship calibration that carries to the next encounter (A4): thruster and sensor estimates as
- * priors. Body values and calibration tables do not transfer.
+ * Ship calibration that carries to the next encounter (A4, A5; spec §11.5): the value of the
+ * arc that carried the ship onward becomes the prior for the new arrival value, with variance
+ * σ² + aging from that arc's last measurement to the new arrival (the rest of the attempt, then
+ * the transit). Body values and calibration tables do not transfer.
  */
-export function carriedCalibration(state: ModelState): ParameterPrior[] {
-  return state.parameters
-    .filter((p) => /^(thruster|sensor)\./.test(p.id) && p.support > 0)
-    .map((p) => ({ id: p.id, label: p.label, unit: p.unit, value: p.value, sigma: p.sigma }));
+export function carriedCalibration(
+  state: ModelState,
+  transit?: TransitRecord,
+  opts: { carrying?: AttemptRecord; settings?: Partial<ModelSettings> } = {},
+): ParameterPrior[] {
+  const settings = opts.settings;
+  const s = resolveSettings(settings ?? (state.settings as Partial<ModelSettings> | undefined));
+  const ship = state.parameters.filter((p) => /^(thruster|sensor)\./.test(p.id));
+  const fromArc = transit ? ship.filter((p) => p.arc === transit.from) : [];
+  const ids = [...new Set(ship.map((p) => p.id))];
+  return ids.flatMap((id) => {
+    const perArc = ship.filter((p) => p.id === id && p.arc !== undefined);
+    const chosen =
+      fromArc.find((p) => p.id === id) ??
+      perArc[perArc.length - 1] ??
+      ship.find((p) => p.id === id && p.arc === undefined);
+    if (!chosen || chosen.support <= 0) return [];
+    let v = chosen.sigma ** 2; // already includes aging to the end of the carrying attempt
+    if (transit) {
+      const cam = /^sensor\.(.+)\.bias$/.exec(id)?.[1] ?? '';
+      const ag = agingOf(id, cam);
+      if (ag) {
+        const start = conditionAtEnd(opts.carrying, ag.equipment);
+        v += historyVariance(
+          agingClass(s, ag.cls),
+          ag.cls,
+          transitHistory(transit, ag.equipment, start),
+        );
+      }
+    }
+    return [
+      { id, label: chosen.label, unit: chosen.unit, value: chosen.value, sigma: Math.sqrt(v) },
+    ];
+  });
 }

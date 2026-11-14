@@ -25,10 +25,30 @@ export interface ModelSettings {
   /** Present state (§8.1): windows used and prior σ of the local slope. */
   readonly anchorWindows: number;
   readonly anchorSlopePriorSigma: number;
-  /** Hedge (§8.2, §7.4) and horizon (§8.4). */
+  /** Default hedge σ_h0 (§8.2), earned-hedge floor (§7.4) and horizon (§8.4). */
   readonly sigmaH: number;
   readonly sigmaHFloor: number;
   readonly horizonFraction: number;
+  /**
+   * Validated range transfer (§7.4, DECISIONS A5: "every body"): 1 = a rule shared by all bodies
+   * applies its validated spans around every body (shared-law); 0 = the same body only.
+   */
+  readonly validatedRangeSharedLaw: number;
+  /** Aging of ship calibrations (§3.7, A5): σ per √day, per √(use/ref) and per condition lost. */
+  readonly agingEngineScaleDay: number;
+  readonly agingEngineScaleUse: number;
+  readonly agingEngineScaleCondition: number;
+  readonly agingMisalignmentDay: number;
+  readonly agingMisalignmentUse: number;
+  readonly agingMisalignmentCondition: number;
+  /** Commanded Δv unit for engine use, m/s. */
+  readonly agingEngineUseRef: number;
+  readonly agingAccelScaleDay: number;
+  readonly agingAccelScaleCondition: number;
+  readonly agingCameraBiasDay: number;
+  /** Per √(camera power cycle). */
+  readonly agingCameraBiasCycle: number;
+  readonly agingCameraBiasCondition: number;
   /** Held-out test k (§7.2) and the confounding threshold (§9.3). */
   readonly heldOutSigmaK: number;
   readonly confoundedRho: number;
@@ -82,6 +102,19 @@ export const DEFAULT_SETTINGS: ModelSettings = {
   sigmaH: 0.3,
   sigmaHFloor: 0.01,
   horizonFraction: 0.1,
+  validatedRangeSharedLaw: 1,
+  agingEngineScaleDay: 0.002,
+  agingEngineScaleUse: 0.005,
+  agingEngineScaleCondition: 0.1,
+  agingMisalignmentDay: 2e-4,
+  agingMisalignmentUse: 1e-3,
+  agingMisalignmentCondition: 0.02,
+  agingEngineUseRef: 100,
+  agingAccelScaleDay: 5e-5,
+  agingAccelScaleCondition: 0.01,
+  agingCameraBiasDay: 5e-6,
+  agingCameraBiasCycle: 1e-5,
+  agingCameraBiasCondition: 2e-4,
   heldOutSigmaK: 3,
   confoundedRho: 0.9,
   otherBodyPullLimit: 0.2,

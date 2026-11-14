@@ -9,6 +9,7 @@ import {
   type BlackBoxArchive,
   type EncounterId,
   type ExtensionId,
+  type ExtensionTestRecord,
   type Forecast,
   type Lead,
   type Procedure,
@@ -16,7 +17,7 @@ import {
 } from '../contracts/index.ts';
 
 export function emptyArchive(): BlackBoxArchive {
-  return { attempts: [], procedures: [], adoptedExtensions: [], leads: [] };
+  return { attempts: [], procedures: [], adoptedExtensions: [], leads: [], extensionTests: [] };
 }
 
 /** Add or replace an attempt (by id), keeping attempts ordered by index. */
@@ -48,6 +49,11 @@ export function withAdoptedExtensions(
   ids: readonly ExtensionId[],
 ): BlackBoxArchive {
   return { ...a, adoptedExtensions: [...ids] };
+}
+
+/** Append a rule test (spec §6.1: every test is kept and never edited). */
+export function withExtensionTest(a: BlackBoxArchive, t: ExtensionTestRecord): BlackBoxArchive {
+  return { ...a, extensionTests: [...(a.extensionTests ?? []), t] };
 }
 
 export function withLead(a: BlackBoxArchive, lead: Lead): BlackBoxArchive {

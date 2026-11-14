@@ -13,8 +13,11 @@
  * times are recorded. Belief side: never imports src/sim or truth (P11).
  */
 
-/** A number, or the name of a parameter. Names may contain "{att}", replaced by the arc id. */
-export type Ref = number | string;
+/**
+ * A number, the name of a parameter, or a list of refs whose values add (an arrival value plus
+ * a per-arc deviation, §3.7). Names may contain "{att}", replaced by the arc id.
+ */
+export type Ref = number | string | readonly Ref[];
 
 export interface BodyDef {
   readonly id: string;
@@ -42,9 +45,10 @@ export interface EmpDef {
 
 /**
  * Calibration profile for one body's pull on the ship (§5.4, §8.2). With u = ln r clipped to
- * [ln rMin, ln rMax] the pull is multiplied by g(u)·exp(−η·L(r)); g is piecewise linear on
- * uNodes (absolute ln r) with values gNodes[b] + dNodes[b]; L(r) = ln(r/rMax) above the
- * covered range, ln(r/rMin) below it, 0 inside.
+ * [ln rMin, ln rMax] the pull is multiplied by g(u)·exp(−ηe·Le(r) − η·(L(r) − Le(r))); g is
+ * piecewise linear on uNodes (absolute ln r) with values gNodes[b] + dNodes[b]; L(r) = ln(r/rMax)
+ * above the covered range, ln(r/rMin) below it, 0 inside; Le is the part of that stretch of
+ * ln r inside the validated spans of an adopted rule (§7.4), signed like L.
  */
 export interface ProfileDef {
   readonly body: string;
@@ -53,7 +57,12 @@ export interface ProfileDef {
   readonly rMin: number;
   readonly rMax: number;
   readonly dNodes?: readonly Ref[];
+  /** Default hedge exponent η (outside validated spans). */
   readonly eta?: Ref;
+  /** Earned hedge exponent ηe (inside validated spans). */
+  readonly etaE?: Ref;
+  /** Validated distance spans [lo, hi] in m (merged, disjoint). */
+  readonly validated?: readonly (readonly [number, number])[];
 }
 
 export interface EngineDef {
@@ -140,6 +149,23 @@ export type EstMeasurement =
       readonly sigma: readonly number[];
     };
 
+/**
+ * A fitted arc: the structure, parameter vector and index it was fitted with, and the
+ * posterior covariance of the parameters that move it (Tier G, an arc fit, or a window fit).
+ */
+export interface ArcSolution {
+  readonly arc: Pick<Arc, 'id' | 'epoch' | 'commands' | 'meas'>;
+  readonly structure: Structure;
+  readonly x: Float64Array;
+  readonly idx: ReadonlyMap<string, number>;
+  /** Posterior covariance aligned with x (null: unknown, treated as zero). */
+  readonly P: { readonly rows: number; readonly cols: number; readonly data: Float64Array } | null;
+  /** Indices of the parameters that affect this arc. */
+  readonly rel: readonly number[];
+  /** Finite-difference scales aligned with x. */
+  readonly scale: Float64Array;
+}
+
 /** One continuous stretch of one attempt (§3.5). */
 export interface Arc {
   readonly id: string;
@@ -175,13 +201,15 @@ export function usable(st: Structure, m: EstMeasurement): boolean {
 // Compilation: refs → slots (constant or parameter index) for one arc
 // ---------------------------------------------------------------------------------------------
 
-type Slot = number; // ≥ 0: parameter index; encoded constants live in a side table
+/** ≥ 0: parameter index; < 0: constant in a side table; array: sum of slots. */
+type Slot = number | readonly Slot[];
 
 interface Slots {
   readonly consts: number[];
 }
 
 function slotOf(ref: Ref, idx: ReadonlyMap<string, number>, arcId: string, s: Slots): Slot {
+  if (typeof ref === 'object') return ref.map((r) => slotOf(r, idx, arcId, s));
   if (typeof ref === 'number') {
     s.consts.push(ref);
     return -s.consts.length; // −1, −2, …
@@ -211,6 +239,9 @@ interface CompiledProfile {
   readonly lmin: number;
   readonly lmax: number;
   readonly eta: Slot;
+  readonly etaE: Slot;
+  /** Validated spans in ln r. */
+  readonly spans: readonly (readonly [number, number])[];
 }
 
 export interface CompiledArc {
@@ -292,6 +323,8 @@ export function compileArc(
       lmin: Math.log(p.rMin),
       lmax: Math.log(p.rMax),
       eta: sl(p.eta ?? 0),
+      etaE: sl(p.etaE ?? 0),
+      spans: (p.validated ?? []).map(([lo, hi]) => [Math.log(lo), Math.log(hi)] as const),
     };
   });
   const compiled = {
@@ -324,6 +357,11 @@ export function compileArc(
 }
 
 function val(ca: CompiledArc, slot: Slot, x: ArrayLike<number>): number {
+  if (typeof slot === 'object') {
+    let v = 0;
+    for (const q of slot) v += val(ca, q, x);
+    return v;
+  }
   return slot >= 0 ? x[slot]! : ca.consts[-slot - 1]!;
 }
 
@@ -350,6 +388,8 @@ interface Resolved {
     lmin: number;
     lmax: number;
     eta: number;
+    etaE: number;
+    spans: readonly (readonly [number, number])[];
   } | null)[];
   readonly segKE: Float64Array;
   readonly segDE: Float64Array;
@@ -364,7 +404,15 @@ function resolve(ca: CompiledArc, x: ArrayLike<number>): Resolved {
   for (const p of ca.profiles) {
     const g = new Float64Array(p.g);
     if (p.dn) for (let b = 0; b < g.length; b++) g[b]! += v(p.dn[b]!);
-    prof[p.body] = { un: p.un, g, lmin: p.lmin, lmax: p.lmax, eta: v(p.eta) };
+    prof[p.body] = {
+      un: p.un,
+      g,
+      lmin: p.lmin,
+      lmax: p.lmax,
+      eta: v(p.eta),
+      etaE: v(p.etaE),
+      spans: p.spans,
+    };
   }
   return {
     r0: ca.r0,
@@ -478,7 +526,16 @@ export function simulate(
           const wq = xq - i0;
           const mult = (1 - wq) * pf.g[i0]! + wq * pf.g[i0 + 1]!;
           const L = lr > pf.lmax ? lr - pf.lmax : lr < pf.lmin ? lr - pf.lmin : 0;
-          k *= L === 0 ? mult : mult * Math.exp(-pf.eta * L);
+          if (L === 0) k *= mult;
+          else {
+            // Part of the stretch from the covered edge to r inside validated spans (§8.2).
+            let Le = 0;
+            for (const [vlo, vhi] of pf.spans) {
+              if (lr < pf.lmin) Le -= Math.max(Math.min(vhi, pf.lmin) - Math.max(vlo, lr), 0);
+              else Le += Math.max(Math.min(vhi, lr) - Math.max(vlo, pf.lmax), 0);
+            }
+            k *= mult * Math.exp(-pf.etaE * Le - pf.eta * (L - Le));
+          }
         }
       }
       ax += dx * k;

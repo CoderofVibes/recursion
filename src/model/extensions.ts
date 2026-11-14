@@ -9,6 +9,8 @@
  */
 
 import type {
+  ExtensionTestRecord,
+  ValidatedSpan,
   AttemptId,
   AttemptRecord,
   ExtensionId,
@@ -35,32 +37,21 @@ import {
   type ArcSolution,
   type ModelContext,
 } from './engine.ts';
-import { earnedHedge, localFit, makeWindows, rangeFixes } from './tierL.ts';
+import { earnedHedge, localFit, makeWindows, mergeSpans, rangeFixes } from './tierL.ts';
 
 /** Extensions the model can fit (unseen-body and region thrust response are specified only). */
 export function isTestableExtension(ext: ExtensionId): boolean {
   return ext === 'distance-law' || extensionBody(ext) !== null;
 }
 
-export interface ExtensionRecord {
-  readonly state: ExtensionState;
-  readonly training: readonly AttemptId[];
-  readonly heldOut?: AttemptId;
-  readonly evidence?: {
-    readonly deltaCost: number;
-    readonly penalty: number;
-    readonly evidence: boolean;
-  };
-  readonly identifiable?: { readonly identifiable: boolean; readonly reasons: readonly string[] };
+/**
+ * One test of a rule, as Black Box keeps it (contract ExtensionTestRecord, never edited), plus
+ * the held-out statistics. Its state carries the validated spans the test covered (§7.4).
+ */
+export interface ExtensionRecord extends ExtensionTestRecord {
   readonly heldOutTest?: Omit<HeldOutResult, 'fit' | 'globalShiftSigma'> & {
     readonly globalShiftSigma: Readonly<Record<string, number>>;
   };
-  /** Fitted values of the parameters the extension adds. */
-  readonly fitted?: Readonly<Record<string, { readonly value: number; readonly sigma: number }>>;
-  /** Hedge earned in the held-out test (§7.4); absent if nothing was earned. */
-  readonly earnedHedge?: number;
-  /** Passed the held-out test with training evidence and identifiable parameters. */
-  readonly adoptable: boolean;
 }
 
 interface Trained {
@@ -164,8 +155,9 @@ export function testExtension(
     rmsAfter: heldRms(extd),
     verdict: pass && ev.evidence ? 'better' : pass ? 'no-better' : 'worse',
   };
-  // §7.4: how well the trained law extrapolated into the held-out attempt.
-  let hedge: number | undefined;
+  // §7.4: how well the trained law extrapolated into the held-out attempt, and over which
+  // distances per body (training plus held-out): the validated spans.
+  const spans: ValidatedSpan[] = [];
   if (pass) {
     const spec = modelSpec(ctx, withExt);
     const s = spec.settings;
@@ -176,7 +168,18 @@ export function testExtension(
       extd.fit.names.includes(p.name) ? fitGet(extd.fit, p.name)[0] : p.init,
     );
     const solutions = new Map<string, ArcSolution>(
-      extd.problem.arcs.map((a) => [a.id, { arc: a, x, idx, structure: extd.problem.structure }]),
+      extd.problem.arcs.map((a) => [
+        a.id,
+        {
+          arc: a,
+          x,
+          idx,
+          structure: extd.problem.structure,
+          P: null,
+          rel: [],
+          scale: Float64Array.from(extd.problem.params, (p) => p.scale),
+        },
+      ]),
     );
     const heldArc = extd.problem.arcs.find((a) => a.id === extd.heldArcId)!;
     const ref = referenceFor({ spec, values, solutions }, spec.primary, heldArc.id, ctx);
@@ -196,74 +199,141 @@ export function testExtension(
         s.sigmaH,
         s.sigmaHFloor,
       );
-      if (eh.nWindowsOutside > 0) hedge = eh.sigmaH;
+      if (eh.nWindowsOutside > 0 && eh.validatedRange) {
+        spans.push({
+          body: spec.primary,
+          rMin: eh.validatedRange[0],
+          rMax: eh.validatedRange[1],
+          sigmaE: eh.sigmaH,
+          heldOutAttempt: heldOutId,
+        });
+        const testArcs = extd.problem.arcs.filter(
+          (a) => a.id === extd.heldArcId || train.some((r) => a.id.split('~')[0] === r.id),
+        );
+        for (const body of spec.bodies.slice(1)) {
+          const r = testArcs.flatMap((a) => rangeFixes(a, body).map((m) => m.z[1]!));
+          if (r.length > 0)
+            spans.push({
+              body,
+              rMin: Math.min(...r),
+              rMax: Math.max(...r),
+              sigmaE: eh.sigmaH,
+              heldOutAttempt: heldOutId,
+            });
+        }
+      }
     }
   }
   const adoptable = pass && ev.evidence && ident.identifiable;
   const { fit: _f, globalShiftSigma, ...hoRest } = ho;
   return {
-    state: { id: ext, status: pass ? 'candidate' : 'rejected', fittedAt: modelVersion, validation },
+    state: {
+      id: ext,
+      status: pass ? 'candidate' : 'rejected',
+      fittedAt: modelVersion,
+      validation,
+      validatedSpans: spans,
+    },
     training: [...training],
     heldOut: heldOutId,
     evidence: ev,
     identifiable: ident,
     heldOutTest: { ...hoRest, globalShiftSigma },
     fitted,
-    ...(hedge !== undefined ? { earnedHedge: hedge } : {}),
     adoptable,
   };
 }
 
-/** The player adopts a rule. Refused unless its latest test made it adoptable (§7.5). */
+/**
+ * The player adopts a rule (adoption is the player's act, kept in BlackBoxArchive
+ * .adoptedExtensions; test records are never edited). Refused unless the rule's latest test
+ * made it adoptable (§7.5).
+ */
 export function adoptExtension(
-  history: readonly ExtensionRecord[],
+  tests: readonly ExtensionRecord[],
+  adopted: readonly ExtensionId[],
   ext: ExtensionId,
-): ExtensionRecord[] {
-  const i = latestIndex(history, ext);
-  const rec = i >= 0 ? history[i]! : undefined;
+): ExtensionId[] {
+  const rec = latest(tests, ext);
   if (!rec || !rec.adoptable) throw new Error(`extension ${ext} has not passed a held-out test`);
-  const out = [...history];
-  out[i] = { ...rec, state: { ...rec.state, status: 'adopted' } };
-  return out;
+  return adopted.includes(ext) ? [...adopted] : [...adopted, ext];
 }
 
 /** The player withdraws an adopted rule. */
-export function revokeExtension(
-  history: readonly ExtensionRecord[],
-  ext: ExtensionId,
-): ExtensionRecord[] {
-  const i = latestIndex(history, ext);
-  if (i < 0 || history[i]!.state.status !== 'adopted')
-    throw new Error(`extension ${ext} is not adopted`);
-  const out = [...history];
-  out[i] = { ...history[i]!, state: { ...history[i]!.state, status: 'revoked' } };
+export function revokeExtension(adopted: readonly ExtensionId[], ext: ExtensionId): ExtensionId[] {
+  if (!adopted.includes(ext)) throw new Error(`extension ${ext} is not adopted`);
+  return adopted.filter((e) => e !== ext);
+}
+
+function latest(tests: readonly ExtensionRecord[], ext: ExtensionId): ExtensionRecord | undefined {
+  for (let i = tests.length - 1; i >= 0; i--) if (tests[i]!.state.id === ext) return tests[i];
+  return undefined;
+}
+
+/** Every validated span of a rule: one per body per passing test, kept across tests (§7.4). */
+export function spansOf(tests: readonly ExtensionRecord[], ext: ExtensionId): ValidatedSpan[] {
+  return tests
+    .filter((t) => t.state.id === ext && t.state.status !== 'rejected')
+    .flatMap((t) => t.state.validatedSpans ?? []);
+}
+
+/** A rule shared by every body (the distance law) rather than one about a body or region. */
+export const isSharedLaw = (ext: ExtensionId) => ext === 'distance-law';
+
+export interface ValidatedHedge {
+  /** Merged spans (m) where the earned σ_e applies. */
+  readonly spans: readonly (readonly [number, number])[];
+  /** The largest σ_e among the contributing tests. */
+  readonly sigmaE: number;
+}
+
+/**
+ * The earned hedge in force per body (§7.4, §8.2; DECISIONS A5 "every body"): spans of
+ * adopted rules. With `sharedLaw`, a rule shared by all bodies applies its spans around every
+ * body; a rule about one body applies them only there.
+ */
+export function validatedHedges(
+  tests: readonly ExtensionRecord[],
+  adopted: readonly ExtensionId[],
+  bodies: readonly string[],
+  sharedLaw: boolean,
+): Record<string, ValidatedHedge> {
+  const out: Record<string, ValidatedHedge> = {};
+  for (const body of bodies) {
+    const applies = (ext: ExtensionId, span: ValidatedSpan) => {
+      if (sharedLaw && isSharedLaw(ext)) return true; // a shared law: around every body
+      const about = extensionBody(ext);
+      if (about !== null) return body === about && span.body === about; // a rule about one body
+      return span.body === body; // the same-body reading
+    };
+    const contributing = adopted.flatMap((ext) =>
+      spansOf(tests, ext).filter((sp) => applies(ext, sp)),
+    );
+    if (contributing.length === 0) continue;
+    out[body] = {
+      spans: mergeSpans(contributing.map((sp) => [sp.rMin, sp.rMax] as const)),
+      sigmaE: Math.max(...contributing.map((sp) => sp.sigmaE)),
+    };
+  }
   return out;
 }
 
-function latestIndex(history: readonly ExtensionRecord[], ext: ExtensionId): number {
-  for (let i = history.length - 1; i >= 0; i--) if (history[i]!.state.id === ext) return i;
-  return -1;
-}
-
-/** Adopted extensions, in adoption order. */
-export function adoptedOf(history: readonly ExtensionRecord[]): ExtensionId[] {
-  const out: ExtensionId[] = [];
-  for (const r of history)
-    if (r.state.status === 'adopted' && !out.includes(r.state.id)) out.push(r.state.id);
-  return out.filter((id) => history[latestIndex(history, id)]!.state.status === 'adopted');
-}
-
-/** Hedge in force: the smallest earned by an adopted rule (§7.4), else undefined (default). */
-export function hedgeOf(history: readonly ExtensionRecord[]): number | undefined {
-  const earned = adoptedOf(history)
-    .map((id) => history[latestIndex(history, id)]!.earnedHedge)
-    .filter((h): h is number => h !== undefined);
-  return earned.length ? Math.min(...earned) : undefined;
-}
-
-/** ExtensionState per extension (latest), for ModelState.extensions. */
-export function extensionStates(history: readonly ExtensionRecord[]): ExtensionState[] {
+/** ExtensionState per rule for ModelState: latest test, status from adoption, all its spans. */
+export function extensionStates(
+  tests: readonly ExtensionRecord[],
+  adopted: readonly ExtensionId[],
+  revoked: readonly ExtensionId[] = [],
+): ExtensionState[] {
   const ids: ExtensionId[] = [];
-  for (const r of history) if (!ids.includes(r.state.id)) ids.push(r.state.id);
-  return ids.map((id) => history[latestIndex(history, id)]!.state);
+  for (const t of tests) if (!ids.includes(t.state.id)) ids.push(t.state.id);
+  for (const a of adopted) if (!ids.includes(a)) ids.push(a);
+  return ids.map((id) => {
+    const t = latest(tests, id);
+    const status = adopted.includes(id)
+      ? 'adopted'
+      : revoked.includes(id)
+        ? 'revoked'
+        : (t?.state.status ?? 'candidate');
+    return { ...(t?.state ?? { id }), status, validatedSpans: spansOf(tests, id) };
+  });
 }

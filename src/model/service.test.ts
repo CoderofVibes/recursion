@@ -83,8 +83,9 @@ const records = (v: VectorJson, caseId: string | number, thrust = 150): AttemptR
   );
 };
 
+/** A world parameter, or a ship calibration's arrival value. */
 const param = (s: ModelState, id: string) => {
-  const p = s.parameters.find((q) => q.id === id);
+  const p = s.parameters.find((q) => q.id === id && q.arc === undefined);
   if (!p) throw new Error(`no parameter ${id}`);
   return p;
 };
@@ -134,7 +135,9 @@ describe('game layer against the vectors', () => {
       ['thruster.main.misalignment', 'engine.dE'],
       ['sensor.imu.scale', 'accel.kA'],
     ] as const) {
-      const p = param(state, mine);
+      // Ship calibrations as used in the attempt (arrival value plus its deviation, §3.7).
+      const p =
+        state.parameters.find((q) => q.id === mine && q.arc === 'att1') ?? param(state, mine);
       expect(Math.abs(p.value - e.estimate[ref]!), mine).toBeLessThan(0.05 * e.sigma[ref]!);
       expect(Math.abs(p.sigma / e.sigma[ref]! - 1), mine).toBeLessThan(0.05);
     }
@@ -298,7 +301,15 @@ describe('extensions: rules only from the player (A4, P5)', () => {
     expect(rec.state.validation!.verdict).toBe('better');
     expect(Math.abs(rec.state.validation!.statistic / ref.heldOut!.TperNu - 1)).toBeLessThan(0.02);
     expect(rec.state.validation!.rmsAfter).toBeLessThan(rec.state.validation!.rmsBefore);
-    expect(Math.abs(rec.earnedHedge! / ref.earnedHedge!.sigmaH - 1)).toBeLessThan(0.05);
+    // The earned hedge and the distances its test covered (§7.4).
+    const eh = ref.earnedHedge as unknown as { sigmaH: number; validatedRange: [number, number] };
+    expect(rec.state.validatedSpans).toHaveLength(1);
+    const span = rec.state.validatedSpans![0]!;
+    expect(span.body).toBe('A');
+    expect(span.heldOutAttempt).toBe('att3');
+    expect(Math.abs(span.sigmaE / eh.sigmaH - 1)).toBeLessThan(0.05);
+    expect(Math.abs(span.rMin / eh.validatedRange[0] - 1)).toBeLessThan(1e-3);
+    expect(Math.abs(span.rMax / eh.validatedRange[1] - 1)).toBeLessThan(1e-3);
     // Testing never adopts.
     expect(svc.state.parameters.some((p) => p.id === 'law.gravity.exponent')).toBe(false);
     expect(svc.state.version).toBe(before.version);
@@ -309,7 +320,13 @@ describe('extensions: rules only from the player (A4, P5)', () => {
       expect.objectContaining({ id: 'distance-law', status: 'adopted' }),
     ]);
     expect(after.version).toBe(before.version + 1);
-    expect(svc.snapshot.derived.hedge).toBeCloseTo(rec.earnedHedge!, 12);
+    // Inside the validated span σ_e applies; elsewhere the default stays (A5).
+    expect(svc.snapshot.derived.sigmaH0).toBe(0.3);
+    expect(svc.snapshot.derived.validated['A']).toEqual({
+      spans: [[span.rMin, span.rMax]],
+      sigmaE: span.sigmaE,
+    });
+    expect(after.extensions[0]!.validatedSpans).toEqual([span]);
     const revoked = svc.revoke('distance-law');
     expect(revoked.parameters.some((p) => p.id === 'law.gravity.exponent')).toBe(false);
     expect(revoked.extensions[0]!.status).toBe('revoked');
@@ -412,5 +429,5 @@ describe('truth/belief boundary (P11) holds for the real model and Black Box fil
     );
     expect(bad).toEqual([]);
     expect(results.length).toBeGreaterThan(10);
-  });
+  }, 30_000);
 });

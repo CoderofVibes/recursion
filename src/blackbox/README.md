@@ -1,6 +1,6 @@
 # src/blackbox — Black Box
 
-Owner: 2C. Belief side (P11): records hold only what the ship sensed or commanded. Black Box keeps every attempt, saved procedures, adopted extensions and the history of extension tests across recurrence (P8); the model is rebuilt from these records, so it carries over.
+Owner: 2C. Belief side (P11): records hold only what the ship sensed or commanded. Black Box keeps every attempt, saved procedures, adopted extensions and every test of a rule across recurrence and into later encounters (P8, A4); the model is rebuilt from these records, so it carries over.
 
 ## Recording an attempt (`recorder.ts`)
 
@@ -29,10 +29,11 @@ const final = recorder.end({ kind: 'lost', t, cause: 'collision' }, state.versio
 
 ## Archive and storage (`archive.ts`, `store.ts`)
 
-- `emptyArchive`, `withAttempt` (add or replace by id, ordered by index), `nextAttemptIndex`, `attemptsFor(encounterId)`, `withProcedure`, `withoutProcedure`, `withAdoptedExtensions`, `withLead`, `reissue`.
+- `emptyArchive`, `withAttempt` (add or replace by id, ordered by index), `nextAttemptIndex`, `attemptsFor(encounterId)`, `withProcedure`, `withoutProcedure`, `withAdoptedExtensions`, `withExtensionTest` (append; tests are never edited, spec §11.4), `withLead`, `reissue`.
 - `createBlackBoxStore(name?)`: IndexedDB in the browser (`IndexedDbBlackBoxStore`, one database per save slot, stores `attempts`, `procedures`, `meta`), memory elsewhere (`MemoryBlackBoxStore`, JSON-serialising like real storage).
-- `load()` returns `{ archive, extensions }`; every forecast is passed through `issueForecast` again, so it comes back frozen.
-- `putMeta({ adoptedExtensions, leads, extensions })` stores the extension-test history (`ExtensionRecord[]` from the model), which `BlackBoxArchive` does not have a field for yet (see the 2C handoff).
+- `load()` returns `{ archive }` with `archive.extensionTests`; every forecast is passed through `issueForecast` again, so it comes back frozen.
+- `putMeta({ adoptedExtensions, leads, extensionTests })` stores the adopted rules, the chart of leads and every rule test (the model's `ExtensionRecord`, a superset of the contract's `ExtensionTestRecord`: each test's state carries its validated spans).
+- Pass `archive.extensionTests` and `archive.adoptedExtensions` to the model's `load()`; they carry to later encounters (A4, A5).
 
 ## Comparing two attempts (`compare.ts`)
 
