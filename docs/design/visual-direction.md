@@ -211,7 +211,13 @@ Tokens in `src/theme/motion.ts`.
 
 ## 9. For the console and view threads
 
-- `src/theme/index.ts` exports `colour`, `opacity`, `type`, `space`, `surface`, `line`, `dash`, `hatch`, `motion`, `render`, `cssVariables` (for the console root) and the 3D style table (`lineStyles`, `envelopeStyle`, `planeStyle`, `objectStyle`). `hex()` turns a token into a Three.js colour number.
+- Three entry points (see `src/theme/README.md`):
+  - `src/theme/index.ts`: tokens as plain data (`colour`, `opacity`, `type`, `space`, `surface`, `instrument`, `line`, `dash`, `hatch`, `motion`, `render`), the 3D style table (`lineStyles`, `envelopeStyle`, `planeStyle`, `objectStyle`), `cssVariables` and `applyTheme()` for the root, `hex()` and `rgba()`.
+  - `src/theme/components/index.ts`: the instrument primitives (`Panel`, `LevelBar`, `Gauge`, `Trend`, `Readout`, `ReadoutGrid`, `Schematic`, `SchematicBox`, `ComponentRow`, `ComponentList`, `ModeChips`, `Toggle`, `Alert`, `AlertStack`, `BlackBoxMark`). They take plain values plus a `status` (nominal, caution, warning, off, stale) and a `tone` (measured, forecast, blackbox).
+  - `src/theme/three/index.ts`: material builders for the view (`LineKit`, `envelopeGeometry` and `envelopeMaterial`, `planeMaterial` and `setPlaneCoverage`, `bodyMaterial`, `rockMaterial`, `wireMaterial`, `latticeMaterial`, `wellLineMaterial`).
+- The UI lab shows all of them on the contract fixtures: `npm run dev`, then `/src/theme/lab/index.html`.
+
+  ![UI lab](img/ui-lab.png)
 - Contract mapping (`src/contracts/view.ts`): `trail` → `lineStyles.trail`; `forecasts[].samples` → `lineStyles.forecast` + `envelopeStyle` (`positionCov` → 2σ half-width, `extrapolating` → hatched); `ship.footprint`, `ship.centerOfMass`, `ship.thrust` → § 6.3; `coverage.sectors` → § 6.2 (sector `quality` can scale the tint); `compare` → § 6.7; `world.asteroids[].tracked` and last fix → tracked / stale.
 - Handedness: the contracts use counter-clockwise angles from +x. With Three.js y-up, map game (x, y) to (x, 0, −y) so the view from above is not mirrored. (The prototype uses (x, 0, y); it does not matter there.)
 - Dashes: tokens are screen px; scale `LineMaterial` dashes with camera distance so the forecast keeps its rhythm.
