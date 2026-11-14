@@ -32,7 +32,12 @@ export {
   testExtension,
   type ExtensionRecord,
 } from './extensions.ts';
-export { buildForecast, plannedBurns, type ForecastDetail, type ForecastRequest } from './forecast.ts';
+export {
+  buildForecast,
+  plannedBurns,
+  type ForecastDetail,
+  type ForecastRequest,
+} from './forecast.ts';
 export {
   burnReport,
   empiricalReport,

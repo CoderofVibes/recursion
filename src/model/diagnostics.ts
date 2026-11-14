@@ -6,7 +6,14 @@
  */
 
 import { type Arc, type ThrustSegment } from './dynamics.ts';
-import { stagedFit, fitGet, type FitResult, type Param, type SolverOptions, Problem } from './solve.ts';
+import {
+  stagedFit,
+  fitGet,
+  type FitResult,
+  type Param,
+  type SolverOptions,
+  Problem,
+} from './solve.ts';
 import {
   guessShip,
   makeWindows,
@@ -31,7 +38,14 @@ export function empParams(arcId: string, nseg: number, priorSigma = 1e-2): Param
   const out: Param[] = [];
   for (let k = 0; k < nseg; k++)
     for (const c of ['R', 'T'])
-      out.push({ name: `${arcId}.emp${k}.${c}`, init: 0, scale: 1e-6, priorMean: 0, priorSigma, group: arcId });
+      out.push({
+        name: `${arcId}.emp${k}.${c}`,
+        init: 0,
+        scale: 1e-6,
+        priorMean: 0,
+        priorSigma,
+        group: arcId,
+      });
   return out;
 }
 
@@ -63,7 +77,11 @@ export function empiricalFit(
   ref: ReferenceLaw,
   prof: ProfileFit | null,
   arcs: readonly Arc[],
-  opts: SolverOptions & { end?: Readonly<Record<string, number>>; rule?: WindowRule; priorSigma?: number },
+  opts: SolverOptions & {
+    end?: Readonly<Record<string, number>>;
+    rule?: WindowRule;
+    priorSigma?: number;
+  },
 ): EmpiricalResult {
   const bounds: Record<string, number[]> = {};
   for (const a of arcs) {
@@ -86,7 +104,15 @@ export function empiricalFit(
     for (let k = 0; k + 1 < b.length; k++) {
       const [aR, sR] = fitGet(fit, `${a.id}.emp${k}.R`);
       const [aT, sT] = fitGet(fit, `${a.id}.emp${k}.T`);
-      table.push({ window: `${a.id}.emp${k}`, t0: b[k]!, t1: b[k + 1]!, aR, sigmaR: sR, aT, sigmaT: sT });
+      table.push({
+        window: `${a.id}.emp${k}`,
+        t0: b[k]!,
+        t1: b[k + 1]!,
+        aR,
+        sigmaR: sR,
+        aT,
+        sigmaT: sT,
+      });
     }
   }
   return {

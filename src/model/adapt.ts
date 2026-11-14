@@ -62,14 +62,27 @@ export interface Burn {
 
 /** Burns from executed commands (rejected commands never reached the ship). */
 export function burnsFromExecuted(executed: readonly ExecutedCommand[], tEnd = Infinity): Burn[] {
-  const order = executed.map((c, i) => [c, i] as const).sort((a, b) => a[0].t - b[0].t || a[1] - b[1]);
-  const active = new Map<string, { t0: number; tEnd: number; throttle: number; limited: boolean; attitude?: AttitudeTarget }>();
+  const order = executed
+    .map((c, i) => [c, i] as const)
+    .sort((a, b) => a[0].t - b[0].t || a[1] - b[1]);
+  const active = new Map<
+    string,
+    { t0: number; tEnd: number; throttle: number; limited: boolean; attitude?: AttitudeTarget }
+  >();
   const out: Omit<Burn, 'index'>[] = [];
   const close = (thr: string, t: number) => {
     const b = active.get(thr);
     if (!b) return;
     const t1 = Math.min(b.tEnd, t);
-    if (t1 > b.t0) out.push({ thruster: thr, t0: b.t0, t1, throttle: b.throttle, limited: b.limited, ...(b.attitude ? { attitude: b.attitude } : {}) });
+    if (t1 > b.t0)
+      out.push({
+        thruster: thr,
+        t0: b.t0,
+        t1,
+        throttle: b.throttle,
+        limited: b.limited,
+        ...(b.attitude ? { attitude: b.attitude } : {}),
+      });
     active.delete(thr);
   };
   for (const [c] of order) {
@@ -91,7 +104,9 @@ export function burnsFromExecuted(executed: readonly ExecutedCommand[], tEnd = I
     }
   }
   for (const thr of [...active.keys()]) close(thr, tEnd);
-  return out.sort((a, b) => a.t0 - b.t0 || a.thruster.localeCompare(b.thruster)).map((b, index) => ({ ...b, index }));
+  return out
+    .sort((a, b) => a.t0 - b.t0 || a.thruster.localeCompare(b.thruster))
+    .map((b, index) => ({ ...b, index }));
 }
 
 /** Attitude knowledge from star-tracker records: latest value at or before t. */
@@ -271,12 +286,33 @@ export function estMeasurements(
       const r = ranges.get(key(m))?.find((q) => !used.has(q));
       if (r) {
         used.add(r);
-        out.push({ kind: 'opnav', t: m.t, target: m.target, z: [m.value[0]!, r.value[0]!], sigma: [m.sigma[0]!, r.sigma[0]!] });
-      } else out.push({ kind: 'opnav', t: m.t, target: m.target, z: [m.value[0]!], sigma: [m.sigma[0]!] });
+        out.push({
+          kind: 'opnav',
+          t: m.t,
+          target: m.target,
+          z: [m.value[0]!, r.value[0]!],
+          sigma: [m.sigma[0]!, r.sigma[0]!],
+        });
+      } else
+        out.push({
+          kind: 'opnav',
+          t: m.t,
+          target: m.target,
+          z: [m.value[0]!],
+          sigma: [m.sigma[0]!],
+        });
     } else if (m.kind === 'relative-position' && m.target && bodies.has(m.target)) {
-      out.push({ kind: 'relpos', t: m.t, target: m.target, z: [m.value[0]!, m.value[1]!], sigma: [m.sigma[0]!, m.sigma[1]!] });
+      out.push({
+        kind: 'relpos',
+        t: m.t,
+        target: m.target,
+        z: [m.value[0]!, m.value[1]!],
+        sigma: [m.sigma[0]!, m.sigma[1]!],
+      });
     } else if (m.kind === 'accel') {
-      const b = burns.find((q) => m.t >= q.t0 + settings.accelEdge && m.t < q.t1 - settings.accelEdge);
+      const b = burns.find(
+        (q) => m.t >= q.t0 + settings.accelEdge && m.t < q.t1 - settings.accelEdge,
+      );
       if (!b) continue;
       const bin = Math.floor((m.t - b.t0) / settings.accelBin);
       const k = `${b.index}|${bin}`;
@@ -299,12 +335,18 @@ export function estMeasurements(
     const mean = (v: number[]) => v.reduce((s, x) => s + x, 0) / n;
     // Bin time: the sample nearest the mean time, so it lies inside the burn.
     const tm = mean(acc.t);
-    const t = acc.t.reduce((best, x) => (Math.abs(x - tm) < Math.abs(best - tm) ? x : best), acc.t[0]!);
+    const t = acc.t.reduce(
+      (best, x) => (Math.abs(x - tm) < Math.abs(best - tm) ? x : best),
+      acc.t[0]!,
+    );
     const sigma = Math.sqrt(mean(acc.s2) / n + settings.accelBiasSigma ** 2);
     out.push({ kind: 'accel', t, z: [mean(acc.fx), mean(acc.fy)], sigma: [sigma, sigma] });
   }
   // Stable sort: equal times keep record order.
-  const sorted = out.map((m, i) => [m, i] as const).sort((a, b) => a[0].t - b[0].t || a[1] - b[1]).map((p) => p[0]);
+  const sorted = out
+    .map((m, i) => [m, i] as const)
+    .sort((a, b) => a[0].t - b[0].t || a[1] - b[1])
+    .map((p) => p[0]);
   return normalPoints(sorted, burns, settings.normalPointInterval);
 }
 
@@ -345,7 +387,8 @@ export function normalPoints(
     const b0 = g[0]!.z[0]!;
     const b = wrapAngle(b0 + g.reduce((s, m) => s + wrapAngle(m.z[0]! - b0), 0) / n);
     const sb = Math.sqrt(g.reduce((s, m) => s + m.sigma[0]! ** 2, 0)) / n;
-    if (g[0]!.z.length === 1) return { kind: 'opnav', t, target: g[0]!.target, z: [b], sigma: [sb] };
+    if (g[0]!.z.length === 1)
+      return { kind: 'opnav', t, target: g[0]!.target, z: [b], sigma: [sb] };
     const r = g.reduce((s, m) => s + m.z[1]!, 0) / n;
     const sr = Math.sqrt(g.reduce((s, m) => s + m.sigma[1]! ** 2, 0)) / n;
     return { kind: 'opnav', t, target: g[0]!.target, z: [b, r], sigma: [sb, sr] };
@@ -364,7 +407,10 @@ export function arcsFromRecord(rec: AttemptRecord, ctx: AdaptContext): ArcBuild 
   const burns = burnsFromExecuted(rec.executed, tEnd);
   const att = new AttitudeLog(rec.measurements);
   const mass = new MassLog(ctx.ship, rec.measurements, arrivalMassOf(ctx));
-  const breaks = rec.events.filter((e) => e.kind === 'contact').map((e) => e.t).sort((a, b) => a - b);
+  const breaks = rec.events
+    .filter((e) => e.kind === 'contact')
+    .map((e) => e.t)
+    .sort((a, b) => a - b);
   const bounds = [-Infinity, ...breaks, Infinity];
   const arcs: Arc[] = [];
   const limitedLevels: string[] = [];
@@ -377,7 +423,9 @@ export function arcsFromRecord(rec: AttemptRecord, ctx: AdaptContext): ArcBuild 
     const hi = bounds[k + 1]!;
     const id = k === 0 ? rec.id : `${rec.id}~${k}`;
     const meas = all.filter((m) => m.t >= lo && m.t < hi);
-    const nRange = meas.filter((m) => m.kind === 'opnav' && m.target === ctx.primary && m.z.length === 2).length;
+    const nRange = meas.filter(
+      (m) => m.kind === 'opnav' && m.target === ctx.primary && m.z.length === 2,
+    ).length;
     if (nRange < 3) {
       if (meas.length > 0) skipped.push(id);
       continue;
@@ -392,6 +440,8 @@ export function arcsFromRecord(rec: AttemptRecord, ctx: AdaptContext): ArcBuild 
 }
 
 /** Commands of a plan at absolute times (plan epoch + item time). */
-export function planCommands(plan: Plan): { t: number; command: Plan['items'][number]['command'] }[] {
+export function planCommands(
+  plan: Plan,
+): { t: number; command: Plan['items'][number]['command'] }[] {
   return plan.items.map((i) => ({ t: plan.epoch + i.at, command: i.command }));
 }

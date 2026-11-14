@@ -11,7 +11,14 @@ import rawValidation from '../../tests/vectors/estimator/extension-validation.js
 import rawForecast from '../../tests/vectors/estimator/forecast-envelope.json?raw';
 import rawNewton from '../../tests/vectors/estimator/newton-recovers-gm.json?raw';
 import { fixtures } from '../contracts/fixtures/index.ts';
-import type { AttemptRecord, BelievedBody, MassProperties, ModelState, ParameterPrior, Plan } from '../contracts/index.ts';
+import type {
+  AttemptRecord,
+  BelievedBody,
+  MassProperties,
+  ModelState,
+  ParameterPrior,
+  Plan,
+} from '../contracts/index.ts';
 import { hashState } from '../lib/hash.ts';
 import { createModelClient } from './client.ts';
 import { contextFromBriefing, type ModelContext } from './engine.ts';
@@ -36,7 +43,13 @@ function body(id: string, x = 0, y = 0, posSigma = 1e3): BelievedBody {
   };
 }
 
-const muPrior = (id: string, value = 1.02e10, sigma = 3e8): ParameterPrior => ({ id: `body.${id}.mu`, label: `${id} μ`, unit: 'm³/s²', value, sigma });
+const muPrior = (id: string, value = 1.02e10, sigma = 3e8): ParameterPrior => ({
+  id: `body.${id}.mu`,
+  label: `${id} μ`,
+  unit: 'm³/s²',
+  value,
+  sigma,
+});
 
 function context(opts: {
   thrust?: number;
@@ -49,14 +62,25 @@ function context(opts: {
     priors: opts.priors ?? [muPrior('A')],
     bodies: opts.bodies ?? [body('A')],
     ship: testShip(MASS, opts.thrust ?? 150),
-    arrival: { t: 0, position: { x: 1e6, y: 0 }, velocity: { x: 0, y: 100 }, positionCov: [1e8, 0, 1e8], velocityCov: [100, 0, 100], attitude: 0, attitudeSigma: 1e-3, angularRate: 0 },
+    arrival: {
+      t: 0,
+      position: { x: 1e6, y: 0 },
+      velocity: { x: 0, y: 100 },
+      positionCov: [1e8, 0, 1e8],
+      velocityCov: [100, 0, 100],
+      attitude: 0,
+      attitudeSigma: 1e-3,
+      angularRate: 0,
+    },
     settings: { dt: 60, ...(opts.settings ?? {}) },
   };
 }
 
 const records = (v: VectorJson, caseId: string | number, thrust = 150): AttemptRecord[] => {
   const c = typeof caseId === 'number' ? v.cases[caseId]! : v.cases.find((q) => q.id === caseId)!;
-  return c.attempts.map((a, i) => recordFromAttempt(a, i + 1, { encounterId: 'range', mass: MASS, thrust }));
+  return c.attempts.map((a, i) =>
+    recordFromAttempt(a, i + 1, { encounterId: 'range', mass: MASS, thrust }),
+  );
 };
 
 const param = (s: ModelState, id: string) => {
@@ -69,7 +93,12 @@ const massProperties: MassProperties = {
   mass: MASS,
   centerOfMass: { x: 0, y: 0 },
   inertia: 1e5,
-  footprint: [{ x: -5, y: -2 }, { x: 5, y: -2 }, { x: 5, y: 2 }, { x: -5, y: 2 }],
+  footprint: [
+    { x: -5, y: -2 },
+    { x: 5, y: -2 },
+    { x: 5, y: 2 },
+    { x: -5, y: 2 },
+  ],
 };
 
 /** Everything in a ModelState except its version bookkeeping. */
@@ -94,7 +123,9 @@ describe('game layer against the vectors', () => {
 
   it('rebuilds thrust segments and accelerometer records from executed burns (burn-plus-accel)', () => {
     const v = V(rawBurn);
-    const svc = new ModelService(context({ settings: { accelBiasSigma: 0, accelEdge: 0, maxSegment: 60 } }));
+    const svc = new ModelService(
+      context({ settings: { accelBiasSigma: 0, accelEdge: 0, maxSegment: 60 } }),
+    );
     const state = svc.load({ attempts: records(v, 'burn-plus-accel') });
     const e = v.cases.find((c) => c.id === 'burn-plus-accel')!.fits[0]!.expected;
     for (const [mine, ref] of [
@@ -146,11 +177,25 @@ describe('forecast service (forecast-envelope through the game layer)', () => {
       items: p.commands.map((q, i) => ({
         id: `i${i}`,
         at: q.t0 - now,
-        command: { kind: 'burn', thruster: 'main', throttle: 1, duration: q.t1 - q.t0, attitude: { reference: 'inertial', angle: q.theta } },
+        command: {
+          kind: 'burn',
+          thruster: 'main',
+          throttle: 1,
+          duration: q.t1 - q.t0,
+          attitude: { reference: 'inertial', angle: q.theta },
+        },
       })),
     };
   };
-  const run = (pid: string) => svc.forecast({ id: `fc-${pid}`, issuedAt: now, plan: plan(pid), massProperties, step: 3600, duration: 8 * 3600 });
+  const run = (pid: string) =>
+    svc.forecast({
+      id: `fc-${pid}`,
+      issuedAt: now,
+      plan: plan(pid),
+      massProperties,
+      step: 3600,
+      duration: 8 * 3600,
+    });
   const truth = (pid: string) => c.forecasts!.find((f) => f.plan === pid)!.points;
 
   it('present state comes from Tier L on the current attempt', () => {
@@ -159,7 +204,8 @@ describe('forecast service (forecast-envelope through the game layer)', () => {
     expect(p.t).toBe(now);
     const ra = c.anchor!;
     const C = fromRows(ra.covariance);
-    for (let i = 0; i < 4; i++) expect(Math.abs(p.state[i]! - ra.state[i]!)).toBeLessThan(Math.sqrt(C.data[i * 4 + i]!));
+    for (let i = 0; i < 4; i++)
+      expect(Math.abs(p.state[i]! - ra.state[i]!)).toBeLessThan(Math.sqrt(C.data[i * 4 + i]!));
   });
 
   it('coasting inside sampled distances: honest at every hour, full horizon', () => {
@@ -169,8 +215,13 @@ describe('forecast service (forecast-envelope through the game layer)', () => {
     for (const p of pts) {
       const s = byT.get(p.t);
       expect(s, `sample at ${p.t}`).toBeDefined();
-      const cov = fromRows([[s!.positionCov[0], s!.positionCov[1]], [s!.positionCov[1], s!.positionCov[2]]]);
-      expect(mahalanobis([p.truth[0] - s!.position.x, p.truth[1] - s!.position.y], cov)).toBeLessThan(3);
+      const cov = fromRows([
+        [s!.positionCov[0], s!.positionCov[1]],
+        [s!.positionCov[1], s!.positionCov[2]],
+      ]);
+      expect(
+        mahalanobis([p.truth[0] - s!.position.x, p.truth[1] - s!.position.y], cov),
+      ).toBeLessThan(3);
       expect(s!.extrapolating).toBe(false);
     }
     expect(detail.sigmaMajor.every((q) => q.hedge < 1e-6)).toBe(true);
@@ -187,8 +238,13 @@ describe('forecast service (forecast-envelope through the game layer)', () => {
       const s = byT.get(p.t);
       if (!s) continue;
       kept++;
-      const cov = fromRows([[s.positionCov[0], s.positionCov[1]], [s.positionCov[1], s.positionCov[2]]]);
-      expect(mahalanobis([p.truth[0] - s.position.x, p.truth[1] - s.position.y], cov)).toBeLessThan(3);
+      const cov = fromRows([
+        [s.positionCov[0], s.positionCov[1]],
+        [s.positionCov[1], s.positionCov[2]],
+      ]);
+      expect(mahalanobis([p.truth[0] - s.position.x, p.truth[1] - s.position.y], cov)).toBeLessThan(
+        3,
+      );
     }
     expect(kept).toBeGreaterThanOrEqual(3);
     expect(draft.horizon).toBeLessThan(pts[pts.length - 1]!.t);
@@ -234,7 +290,9 @@ describe('extensions: rules only from the player (A4, P5)', () => {
     const before = svc.state;
     expect(() => svc.adopt('distance-law')).toThrow();
     const rec = svc.testExtension('distance-law', ['att1', 'att2'], 'att3');
-    const ref = v.cases.find((c) => c.id === 'distance-law')!.fits.find((f) => f.id === 'exponent')!;
+    const ref = v.cases
+      .find((c) => c.id === 'distance-law')!
+      .fits.find((f) => f.id === 'exponent')!;
     expect(rec.adoptable).toBe(true);
     expect(rec.state.status).toBe('candidate');
     expect(rec.state.validation!.verdict).toBe('better');
@@ -247,7 +305,9 @@ describe('extensions: rules only from the player (A4, P5)', () => {
     const after = svc.adopt('distance-law');
     const n = param(after, 'law.gravity.exponent');
     expect(Math.abs(n.value - 2.5)).toBeLessThan(3 * n.sigma);
-    expect(after.extensions).toEqual([expect.objectContaining({ id: 'distance-law', status: 'adopted' })]);
+    expect(after.extensions).toEqual([
+      expect.objectContaining({ id: 'distance-law', status: 'adopted' }),
+    ]);
     expect(after.version).toBe(before.version + 1);
     expect(svc.snapshot.derived.hedge).toBeCloseTo(rec.earnedHedge!, 12);
     const revoked = svc.revoke('distance-law');
@@ -257,7 +317,10 @@ describe('extensions: rules only from the player (A4, P5)', () => {
 
   it('overlooked body: the wrong rule fails visibly, the right one passes', () => {
     const recs = records(v, 'overlooked-body');
-    const ctx = context({ bodies: [body('A'), body('B', 4e6, 0, 1e7)], settings: { priorBodyVelocitySigma: 1e3 } });
+    const ctx = context({
+      bodies: [body('A'), body('B', 4e6, 0, 1e7)],
+      settings: { priorBodyVelocitySigma: 1e3 },
+    });
     const svc = new ModelService(ctx);
     svc.load({ attempts: recs });
     const wrong = svc.testExtension('distance-law', ['att1', 'att2'], 'att3');
@@ -285,7 +348,14 @@ describe('issued forecasts are immutable and versioned', () => {
     await client.beginAttempt({ ...recs[2]!, outcome: { kind: 'in-progress' } });
     const state = await client.refresh();
     const plan: Plan = { id: 'p', epoch: 14400, items: [] };
-    const { forecast } = await client.forecast({ id: 'f1', issuedAt: 14400, plan, massProperties, step: 600, duration: 3600 });
+    const { forecast } = await client.forecast({
+      id: 'f1',
+      issuedAt: 14400,
+      plan,
+      massProperties,
+      step: 600,
+      duration: 3600,
+    });
     expect(forecast.modelVersion).toBe(state.version);
     expect(Object.isFrozen(forecast)).toBe(true);
     expect(Object.isFrozen(forecast.samples)).toBe(true);
@@ -305,16 +375,29 @@ describe('issued forecasts are immutable and versioned', () => {
 
 describe('fixtures (mock Gravity range)', () => {
   it('builds a model and a forecast from the contract fixtures', () => {
-    const ctx = contextFromBriefing(fixtures.briefing, fixtures.shipDefinition, { fixedBodies: true });
+    const ctx = contextFromBriefing(fixtures.briefing, fixtures.shipDefinition, {
+      fixedBodies: true,
+    });
     const svc = new ModelService(ctx);
     const state = svc.load({ attempts: fixtures.attempts.slice(0, 1) });
-    expect(state.parameters.every((p) => Number.isFinite(p.value) && Number.isFinite(p.sigma))).toBe(true);
+    expect(
+      state.parameters.every((p) => Number.isFinite(p.value) && Number.isFinite(p.sigma)),
+    ).toBe(true);
     expect(state.calibration.length).toBeGreaterThan(0);
     svc.beginAttempt({ ...fixtures.attempts[1]!, outcome: { kind: 'in-progress' } });
     svc.refresh();
-    const { draft } = svc.forecast({ id: 'fx', issuedAt: 600, plan: { id: 'p', epoch: 600, items: [] }, massProperties: fixtures.believedWorld.ship.massProperties, step: 60, duration: 1800 });
+    const { draft } = svc.forecast({
+      id: 'fx',
+      issuedAt: 600,
+      plan: { id: 'p', epoch: 600, items: [] },
+      massProperties: fixtures.believedWorld.ship.massProperties,
+      step: 60,
+      duration: 1800,
+    });
     expect(draft.samples.length).toBeGreaterThan(0);
-    expect(draft.samples.every((s) => Number.isFinite(s.position.x) && s.positionCov[0] >= 0)).toBe(true);
+    expect(draft.samples.every((s) => Number.isFinite(s.position.x) && s.positionCov[0] >= 0)).toBe(
+      true,
+    );
   });
 });
 
@@ -322,7 +405,11 @@ describe('truth/belief boundary (P11) holds for the real model and Black Box fil
   it('no file in src/model or src/blackbox imports truth or the simulation', async () => {
     const eslint = new ESLint({ errorOnUnmatchedPattern: false });
     const results = await eslint.lintFiles(['src/model/**/*.ts', 'src/blackbox/**/*.ts']);
-    const bad = results.flatMap((r) => r.messages.filter((m) => m.ruleId === 'no-restricted-imports').map((m) => `${r.filePath}: ${m.message}`));
+    const bad = results.flatMap((r) =>
+      r.messages
+        .filter((m) => m.ruleId === 'no-restricted-imports')
+        .map((m) => `${r.filePath}: ${m.message}`),
+    );
     expect(bad).toEqual([]);
     expect(results.length).toBeGreaterThan(10);
   });

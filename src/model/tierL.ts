@@ -18,7 +18,16 @@ import {
   type Structure,
   type ThrustSegment,
 } from './dynamics.ts';
-import { fromRows, inverse, lstsq, sandwich, solve, symEig2, zeros, type Matrix } from './linalg.ts';
+import {
+  fromRows,
+  inverse,
+  lstsq,
+  sandwich,
+  solve,
+  symEig2,
+  zeros,
+  type Matrix,
+} from './linalg.ts';
 import { Problem, fitChi2Nu, fitGet, type Param } from './solve.ts';
 
 // ---------------------------------------------------------------------------------------------
@@ -36,7 +45,12 @@ export interface WindowRule {
   readonly keepFixes: number;
 }
 
-export const DEFAULT_WINDOW_RULE: WindowRule = { sweep: 0.7, lnRange: 0.15, minFixes: 12, keepFixes: 6 };
+export const DEFAULT_WINDOW_RULE: WindowRule = {
+  sweep: 0.7,
+  lnRange: 0.15,
+  minFixes: 12,
+  keepFixes: 6,
+};
 
 // ---------------------------------------------------------------------------------------------
 // Reference law (§5.2): the adopted structure with its globals frozen
@@ -90,7 +104,9 @@ export function refStructure(
     id: o.id,
     mu: o.mu,
     state: o.stateAt(epoch),
-    ...(opts.arcs ? { stateByArc: Object.fromEntries(opts.arcs.map((a) => [a.id, o.stateAt(a.epoch)])) } : {}),
+    ...(opts.arcs
+      ? { stateByArc: Object.fromEntries(opts.arcs.map((a) => [a.id, o.stateAt(a.epoch)])) }
+      : {}),
   }));
   const engines: Record<string, { kE: number; dE: number }> = { ...(ref.engines ?? {}) };
   return {
@@ -136,7 +152,11 @@ export function rangeFixes(arc: Arc, body: string): Fix[] {
     .map((p) => p[0]);
 }
 
-export function makeWindows(arc: Arc, body: string, rule: WindowRule = DEFAULT_WINDOW_RULE): Window[] {
+export function makeWindows(
+  arc: Arc,
+  body: string,
+  rule: WindowRule = DEFAULT_WINDOW_RULE,
+): Window[] {
   const fx = rangeFixes(arc, body);
   const groups: { fixes: Fix[]; sweep: number; forced: boolean }[] = [];
   let cur: Fix[] = [];
@@ -157,7 +177,10 @@ export function makeWindows(arc: Arc, body: string, rule: WindowRule = DEFAULT_W
     const lr = Math.log(m.z[1]!);
     lmin = Math.min(lmin, lr);
     lmax = Math.max(lmax, lr);
-    if (cur.length >= rule.minFixes && (Math.abs(sweep) >= rule.sweep || lmax - lmin >= rule.lnRange)) {
+    if (
+      cur.length >= rule.minFixes &&
+      (Math.abs(sweep) >= rule.sweep || lmax - lmin >= rule.lnRange)
+    ) {
       groups.push({ fixes: cur, sweep, forced: false });
       cur = [];
       sweep = 0;
@@ -167,7 +190,12 @@ export function makeWindows(arc: Arc, body: string, rule: WindowRule = DEFAULT_W
   }
   if (cur.length > 0) {
     const prev = groups[groups.length - 1];
-    if (cur.length < rule.minFixes && prev && !prev.forced && pw(prev.fixes[0]!.t) === pw(cur[0]!.t)) {
+    if (
+      cur.length < rule.minFixes &&
+      prev &&
+      !prev.forced &&
+      pw(prev.fixes[0]!.t) === pw(cur[0]!.t)
+    ) {
       groups.pop();
       groups.push({ fixes: [...prev.fixes, ...cur], sweep: prev.sweep + sweep, forced: false });
     } else if (cur.length >= rule.keepFixes) {
@@ -198,32 +226,55 @@ export function makeWindows(arc: Arc, body: string, rule: WindowRule = DEFAULT_W
 // ---------------------------------------------------------------------------------------------
 
 /** Least-squares quadratic through the first fixes (ship relative to the body), at tEpoch. */
-export function quadGuess(fixes: readonly Fix[], tEpoch: number, nfix = 10): [number, number, number, number] {
+export function quadGuess(
+  fixes: readonly Fix[],
+  tEpoch: number,
+  nfix = 10,
+): [number, number, number, number] {
   const fx = fixes.slice(0, nfix);
   if (fx.length < 3) throw new Error('quadGuess: need at least three range fixes');
-  const design = fromRows(fx.map((m) => {
-    const tau = m.t - tEpoch;
-    return [1, tau, 0.5 * tau * tau];
-  }));
+  const design = fromRows(
+    fx.map((m) => {
+      const tau = m.t - tEpoch;
+      return [1, tau, 0.5 * tau * tau];
+    }),
+  );
   const rhs = fromRows(fx.map((m) => [-m.z[1]! * Math.cos(m.z[0]!), -m.z[1]! * Math.sin(m.z[0]!)]));
   const c = lstsq(design, rhs);
   return [c.data[0]!, c.data[1]!, c.data[2]!, c.data[3]!];
 }
 
 /** Ship state guess at tEpoch from the first ≤ 10 range fixes on `body` (in record order). */
-export function guessShip(arc: Arc, body: string, tEpoch = arc.epoch, nfix = 10): [number, number, number, number] {
-  const fx = arc.meas.filter((m): m is Fix => m.kind === 'opnav' && m.target === body && m.z.length === 2);
+export function guessShip(
+  arc: Arc,
+  body: string,
+  tEpoch = arc.epoch,
+  nfix = 10,
+): [number, number, number, number] {
+  const fx = arc.meas.filter(
+    (m): m is Fix => m.kind === 'opnav' && m.target === body && m.z.length === 2,
+  );
   return quadGuess(fx, tEpoch, nfix);
 }
 
 /** Seen body state guess (§4.5): ship quadratic plus the measured offset, linear over ≤ 8 fixes. */
-export function guessBody(arc: Arc, primary: string, target: string, tEpoch = arc.epoch, nfix = 8): [number, number, number, number] {
-  const fxA = arc.meas.filter((m): m is Fix => m.kind === 'opnav' && m.target === primary && m.z.length === 2).slice(0, 10);
+export function guessBody(
+  arc: Arc,
+  primary: string,
+  target: string,
+  tEpoch = arc.epoch,
+  nfix = 8,
+): [number, number, number, number] {
+  const fxA = arc.meas
+    .filter((m): m is Fix => m.kind === 'opnav' && m.target === primary && m.z.length === 2)
+    .slice(0, 10);
   const coef = lstsq(
     fromRows(fxA.map((m) => [1, m.t - tEpoch, 0.5 * (m.t - tEpoch) ** 2])),
     fromRows(fxA.map((m) => [-m.z[1]! * Math.cos(m.z[0]!), -m.z[1]! * Math.sin(m.z[0]!)])),
   );
-  const fx = arc.meas.filter((m): m is Fix => m.kind === 'opnav' && m.target === target && m.z.length === 2).slice(0, nfix);
+  const fx = arc.meas
+    .filter((m): m is Fix => m.kind === 'opnav' && m.target === target && m.z.length === 2)
+    .slice(0, nfix);
   const rows = fx.map((m) => {
     const tau = m.t - tEpoch;
     const sx = coef.data[0]! + coef.data[2]! * tau + coef.data[4]! * 0.5 * tau * tau;
@@ -236,7 +287,12 @@ export function guessBody(arc: Arc, primary: string, target: string, tEpoch = ar
 
 export function shipParams(id: string, guess: readonly number[]): Param[] {
   const sc = [1e3, 1e3, 1, 1];
-  return ['x', 'y', 'vx', 'vy'].map((k, i) => ({ name: `${id}.ship.${k}`, init: guess[i]!, scale: sc[i]!, group: id }));
+  return ['x', 'y', 'vx', 'vy'].map((k, i) => ({
+    name: `${id}.ship.${k}`,
+    init: guess[i]!,
+    scale: sc[i]!,
+    group: id,
+  }));
 }
 
 export function bodyStateParams(
@@ -302,7 +358,14 @@ export function localFit(
   const st = refStructure(ref, w.t0, { gs: '{att}.g' });
   const params: Param[] = [
     ...shipParams(w.id, quadGuess(w.fixes, w.t0)),
-    { name: `${w.id}.g`, init: gPrior[0], scale: 1e-3, priorMean: gPrior[0], priorSigma: gPrior[1], group: w.id },
+    {
+      name: `${w.id}.g`,
+      init: gPrior[0],
+      scale: 1e-3,
+      priorMean: gPrior[0],
+      priorSigma: gPrior[1],
+      group: w.id,
+    },
   ];
   const res = new Problem(st, [sub], params, { dt }).solve(params.map((p) => p.init));
   const [g, sg] = fitGet(res, `${w.id}.g`);
@@ -428,7 +491,8 @@ export function buildProfile(
   const c2 = 1 / (curv * curv);
   for (let r = 0; r + 2 < nn; r++) {
     const d = [1, -2, 1];
-    for (let a = 0; a < 3; a++) for (let b = 0; b < 3; b++) H.data[(r + a) * nn + (r + b)]! += d[a]! * d[b]! * c2;
+    for (let a = 0; a < 3; a++)
+      for (let b = 0; b < 3; b++) H.data[(r + a) * nn + (r + b)]! += d[a]! * d[b]! * c2;
   }
   const rr = 1 / (ridge * ridge);
   for (let i = 0; i < nn; i++) {
@@ -444,7 +508,8 @@ export function buildProfile(
     chi2 += W[k]! * (ac - g[k]!) ** 2;
   }
   let tr = 0;
-  for (let i = 0; i < nn; i++) for (let j = 0; j < nn; j++) tr += Hd.data[i * nn + j]! * C.data[j * nn + i]!;
+  for (let i = 0; i < nn; i++)
+    for (let j = 0; j < nn; j++) tr += Hd.data[i * nn + j]! * C.data[j * nn + i]!;
   const nu = Math.max(1, K - tr);
   const inflation = Math.max(1, chi2 / nu);
   const Ci = { rows: nn, cols: nn, data: C.data.map((v) => v * inflation) };
@@ -538,7 +603,12 @@ export function anchorState(
   arc: Arc,
   wins: readonly Window[],
   dt: number,
-  opts: { h?: number; gPrior?: readonly [number, number]; slopeSigma?: number; extraProfiles?: readonly ProfileFit[] } = {},
+  opts: {
+    h?: number;
+    gPrior?: readonly [number, number];
+    slopeSigma?: number;
+    extraProfiles?: readonly ProfileFit[];
+  } = {},
 ): Anchor {
   const h = opts.h ?? 1e-3;
   const gPrior = opts.gPrior ?? [1, 0.5];
@@ -549,11 +619,21 @@ export function anchorState(
   const tLast = fixes[fixes.length - 1]!.t;
   const u0 = fixes.reduce((s, m) => s + Math.log(m.z[1]!), 0) / fixes.length;
   const sub: Arc = { id: aid, epoch: tFirst, commands: arc.commands, meas: fixes };
-  const profiles = [...(prof ? [profileDef(prof)] : []), ...(opts.extraProfiles ?? []).map((p) => profileDef(p))];
+  const profiles = [
+    ...(prof ? [profileDef(prof)] : []),
+    ...(opts.extraProfiles ?? []).map((p) => profileDef(p)),
+  ];
   const st = refStructure(ref, tFirst, { gs: '{att}.g', gs1: '{att}.g1', gsU0: u0, profiles });
   const params: Param[] = [
     ...shipParams(aid, quadGuess(fixes, tFirst)),
-    { name: `${aid}.g`, init: gPrior[0], scale: 1e-3, priorMean: gPrior[0], priorSigma: gPrior[1], group: aid },
+    {
+      name: `${aid}.g`,
+      init: gPrior[0],
+      scale: 1e-3,
+      priorMean: gPrior[0],
+      priorSigma: gPrior[1],
+      group: aid,
+    },
     { name: `${aid}.g1`, init: 0, scale: 1e-2, priorMean: 0, priorSigma: slopeSigma, group: aid },
   ];
   const prob = new Problem(st, [sub], params, { dt });
@@ -653,7 +733,10 @@ export function forecastCore(inp: ForecastCoreInput): ForecastCoreResult {
   const names: string[] = ['fc.ship.x', 'fc.ship.y', 'fc.ship.vx', 'fc.ship.vy', 'f.kE', 'f.dE'];
   const x: number[] = [...Array.from(inp.xNow), ref.kE, ref.dE];
   const scale: number[] = [1e3, 1e3, 1, 1, 1e-3, 1e-3];
-  const engineCols: [number, number][] = [[4, inp.engineSigma[0]], [5, inp.engineSigma[1]]];
+  const engineCols: [number, number][] = [
+    [4, inp.engineSigma[0]],
+    [5, inp.engineSigma[1]],
+  ];
   const engines: Record<string, { kE: string; dE: string }> = {};
   for (const [thr, e] of Object.entries(ref.engines ?? {})) {
     const sig = inp.engineSigmas?.[thr] ?? [0, 0];
@@ -736,7 +819,11 @@ export function forecastCore(inp: ForecastCoreInput): ForecastCoreResult {
     }
     S.push(col);
   }
-  const outer = (cols: readonly number[], C: (a: number, b: number) => number, k: number): Matrix => {
+  const outer = (
+    cols: readonly number[],
+    C: (a: number, b: number) => number,
+    k: number,
+  ): Matrix => {
     const m = zeros(2, 2);
     for (let a = 0; a < cols.length; a++)
       for (let b = 0; b < cols.length; b++) {
@@ -769,10 +856,19 @@ export function forecastCore(inp: ForecastCoreInput): ForecastCoreResult {
     );
     const hedge = outer(etaIdx, (a, b) => (a === b ? sh2 : 0), k);
     const profile = add(
-      ...profiles.map((p, j) => outer(nodeIdx[j]!, (a, b) => p.covariance.data[a * p.covariance.cols + b]!, k)),
+      ...profiles.map((p, j) =>
+        outer(nodeIdx[j]!, (a, b) => p.covariance.data[a * p.covariance.cols + b]!, k),
+      ),
     );
     const mass = add(...muIdx.map(([i, sig]) => outer([i], () => sig * sig, k)));
-    covs[k] = { state, profile, hedge, engine, mass, total: add(state, profile, hedge, engine, mass) };
+    covs[k] = {
+      state,
+      profile,
+      hedge,
+      engine,
+      mass,
+      total: add(state, profile, hedge, engine, mass),
+    };
     means[k] = base.state[k]!;
     bodies[k] = base.bodies[k]!;
   }
@@ -806,7 +902,14 @@ function shipAndBodies(
   const bodies: Float64Array[] = [];
   traj.pos.forEach((p, k) => {
     const v = traj.vel[k]!;
-    state.push(Float64Array.of(p[2 * s]! - p[0]!, p[2 * s + 1]! - p[1]!, v[2 * s]! - v[0]!, v[2 * s + 1]! - v[1]!));
+    state.push(
+      Float64Array.of(
+        p[2 * s]! - p[0]!,
+        p[2 * s + 1]! - p[1]!,
+        v[2 * s]! - v[0]!,
+        v[2 * s + 1]! - v[1]!,
+      ),
+    );
     rel.push(Float64Array.of(p[2 * s]! - p[0]!, p[2 * s + 1]! - p[1]!));
     const o = new Float64Array(4 * (nb - 1));
     for (let j = 1; j < nb; j++) {

@@ -37,7 +37,8 @@ export function fromRows(rows: readonly (readonly number[])[]): Matrix {
 
 export function toRows(m: Matrix): number[][] {
   const out: number[][] = [];
-  for (let i = 0; i < m.rows; i++) out.push(Array.from(m.data.subarray(i * m.cols, (i + 1) * m.cols)));
+  for (let i = 0; i < m.rows; i++)
+    out.push(Array.from(m.data.subarray(i * m.cols, (i + 1) * m.cols)));
   return out;
 }
 

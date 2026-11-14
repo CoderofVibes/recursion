@@ -102,7 +102,12 @@ function myInit(fit: FitJson, arcs: ReadonlyMap<string, Arc>): Record<string, nu
 function runFit(fit: FitJson, arcs: ReadonlyMap<string, Arc>, x0?: Record<string, number>) {
   const st = toStructure(fit.model);
   const params = toParams(fit, x0 ?? myInit(fit, arcs));
-  const res = stagedFit(st, fit.attempts.map((a) => arcs.get(a)!), params, OPTS);
+  const res = stagedFit(
+    st,
+    fit.attempts.map((a) => arcs.get(a)!),
+    params,
+    OPTS,
+  );
   return { st, params, res };
 }
 
@@ -112,7 +117,8 @@ function compareFit(f: FitResult, e: ExpectedFit): string[] {
   for (const [name, ref] of Object.entries(e.estimate)) {
     const [x, s] = fitGet(f, name);
     const sr = e.sigma[name]!;
-    if (Math.abs(x - ref) > 0.05 * sr) bad.push(`${name}: ${x} vs ${ref} (${((x - ref) / sr).toFixed(3)} σ)`);
+    if (Math.abs(x - ref) > 0.05 * sr)
+      bad.push(`${name}: ${x} vs ${ref} (${((x - ref) / sr).toFixed(3)} σ)`);
     if (Math.abs(s / sr - 1) > 0.05) bad.push(`${name} σ: ${s} vs ${sr}`);
   }
   if (Math.abs(f.chi2 / e.chi2 - 1) > 0.02) bad.push(`chi2 ${f.chi2} vs ${e.chi2}`);
@@ -137,23 +143,34 @@ function compareGuesses(fit: FitJson, arcs: ReadonlyMap<string, Arc>): string[] 
     .map((p) => `${p.name}: ${mine[p.name]} vs ${p.init}`);
 }
 
-function compareTierL(rows: readonly WindowFit[], prof: ProfileFit, s2: number, tl: TierLJson): string[] {
+function compareTierL(
+  rows: readonly WindowFit[],
+  prof: ProfileFit,
+  s2: number,
+  tl: TierLJson,
+): string[] {
   const bad: string[] = [];
-  if (rows.length !== tl.windows.length) return [`window count ${rows.length} vs ${tl.windows.length}`];
+  if (rows.length !== tl.windows.length)
+    return [`window count ${rows.length} vs ${tl.windows.length}`];
   rows.forEach((r, i) => {
     const w = tl.windows[i]!;
     if (r.window !== w.window || r.t0 !== w.t0 || r.t1 !== w.t1 || r.nFixes !== w.nFixes)
-      bad.push(`window ${w.window}: boundaries ${r.window} ${r.t0}-${r.t1}/${r.nFixes} vs ${w.t0}-${w.t1}/${w.nFixes}`);
+      bad.push(
+        `window ${w.window}: boundaries ${r.window} ${r.t0}-${r.t1}/${r.nFixes} vs ${w.t0}-${w.t1}/${w.nFixes}`,
+      );
     if (Math.abs(r.g - w.g) > 0.05 * w.sigma) bad.push(`window ${w.window}: g ${r.g} vs ${w.g}`);
-    if (Math.abs(r.sigma / w.sigma - 1) > 0.05) bad.push(`window ${w.window}: σ ${r.sigma} vs ${w.sigma}`);
+    if (Math.abs(r.sigma / w.sigma - 1) > 0.05)
+      bad.push(`window ${w.window}: σ ${r.sigma} vs ${w.sigma}`);
   });
   const p = tl.profile;
   if (prof.g.length !== p.g.length) bad.push(`profile nodes ${prof.g.length} vs ${p.g.length}`);
   prof.g.forEach((g, b) => {
     if (Math.abs(g - p.g[b]!) > 0.1 * p.sigma[b]!) bad.push(`profile node ${b}: ${g} vs ${p.g[b]}`);
-    if (Math.abs(prof.sigma[b]! / p.sigma[b]! - 1) > 0.05) bad.push(`profile σ ${b}: ${prof.sigma[b]} vs ${p.sigma[b]}`);
+    if (Math.abs(prof.sigma[b]! / p.sigma[b]! - 1) > 0.05)
+      bad.push(`profile σ ${b}: ${prof.sigma[b]} vs ${p.sigma[b]}`);
   });
-  if (Math.abs(prof.inflation / p.inflation - 1) > 0.05) bad.push(`inflation ${prof.inflation} vs ${p.inflation}`);
+  if (Math.abs(prof.inflation / p.inflation - 1) > 0.05)
+    bad.push(`inflation ${prof.inflation} vs ${p.inflation}`);
   if (Math.abs(s2 / tl.noiseScale - 1) > 0.02) bad.push(`noise scale ${s2} vs ${tl.noiseScale}`);
   return bad;
 }
@@ -193,8 +210,10 @@ describe('newton-recovers-gm', () => {
   it('initial guesses follow §4.5', () => {
     expect(compareGuesses(j1, arcs)).toEqual([]);
   });
-  it('Newtonian fit matches the reference', () => expect(compareFit(r1.res, j1.expected)).toEqual([]));
-  it('superfluous exponent fit matches the reference', () => expect(compareFit(r2.res, j2.expected)).toEqual([]));
+  it('Newtonian fit matches the reference', () =>
+    expect(compareFit(r1.res, j1.expected)).toEqual([]));
+  it('superfluous exponent fit matches the reference', () =>
+    expect(compareFit(r2.res, j2.expected)).toEqual([]));
 
   it('claims', () => {
     const [mu, smu] = fitGet(r1.res, 'mu.A');
@@ -297,11 +316,19 @@ describe('inv25-exponent-coverage', () => {
     claim(v.id, 'gm-vs-distance-trend', worst <= 1);
     const slope = gmSlope(tl.rows)!.slope;
     claim(v.id, 'gm-slope', Math.abs(slope + 0.5) < 0.02);
-    claim(v.id, 'all-windows-converge', tl.rows.every((r) => r.converged));
+    claim(
+      v.id,
+      'all-windows-converge',
+      tl.rows.every((r) => r.converged),
+    );
     claim(v.id, 'wrong-law-leaves-no-tangential', emp.maxAbsTangentialZ < 4);
     claim(v.id, 'calibrated-law-fits', fitChi2Nu(emp.fit) < 1.5);
     claim(v.id, 'profile-distance-explains', tl.profile.inflation < 3);
-    claim(v.id, 'coverage-narrows', fitGet(out.wide!, 'law.n')[1] < 0.5 * fitGet(out.narrow!, 'law.n')[1]);
+    claim(
+      v.id,
+      'coverage-narrows',
+      fitGet(out.wide!, 'law.n')[1] < 0.5 * fitGet(out.narrow!, 'law.n')[1],
+    );
     for (const [, ok] of claims.get(v.id)!) expect(ok).toBe(true);
   });
 });
@@ -329,18 +356,23 @@ describe('missing-body-signature', () => {
   };
   const tl = tierL(ref, [a1]);
   const empJ = fitById(c, 'empirical-on-calibrated-law');
-  const emp = empiricalFit(ref, tl.profile, [a1], { ...OPTS, end: { att1: c.attempts[0]!.duration } });
+  const emp = empiricalFit(ref, tl.profile, [a1], {
+    ...OPTS,
+    end: { att1: c.attempts[0]!.duration },
+  });
   const jB = fitById(c, 'add-body-B');
   const rB = runFit(jB, arcs);
 
-  it('initial guesses for the seen body follow §4.5', () => expect(compareGuesses(jB, arcs)).toEqual([]));
+  it('initial guesses for the seen body follow §4.5', () =>
+    expect(compareGuesses(jB, arcs)).toEqual([]));
   it('Tier L under the A-only law matches the reference', () =>
     expect(compareTierL(tl.rows, tl.profile, tl.s2, c.tierL!)).toEqual([]));
   it('empirical fit matches the reference', () => {
     expect(emp.bounds).toEqual(empJ.model.empirical!.bounds);
     expect(compareFit(emp.fit, empJ.expected)).toEqual([]);
   });
-  it('body extension fit matches the reference', () => expect(compareFit(rB.res, jB.expected)).toEqual([]));
+  it('body extension fit matches the reference', () =>
+    expect(compareFit(rB.res, jB.expected)).toEqual([]));
 
   it('claims', () => {
     claim(v.id, 'A-only-misfit', fitChi2Nu(rA.res) > 5);
@@ -369,7 +401,11 @@ describe('burn-only-confounded', () => {
   const results = v.cases.map((c) => {
     const j = c.fits[0]!;
     const r = runFit(j, arcsOf(c));
-    const conf = confounding(r.res, ['mu.A'], ['engine.kE', 'engine.dE'], { 'engine.kE': 0.05, 'engine.dE': 0.01, 'mu.A': 3e8 });
+    const conf = confounding(r.res, ['mu.A'], ['engine.kE', 'engine.dE'], {
+      'engine.kE': 0.05,
+      'engine.dE': 0.01,
+      'mu.A': 3e8,
+    });
     return { c, j, r, conf };
   });
 
@@ -391,7 +427,8 @@ describe('burn-only-confounded', () => {
       claim(
         v.id,
         `recovered-${c.id}`,
-        Math.abs(mu - truth['truth.muA']!) <= 3 * smu && Math.abs(kE - truth['truth.kE']!) <= 3 * skE,
+        Math.abs(mu - truth['truth.muA']!) <= 3 * smu &&
+          Math.abs(kE - truth['truth.kE']!) <= 3 * skE,
       );
       rho[c.id] = fitCorr(r.res, 'mu.A', 'engine.kE');
       kRatio[c.id] = conf.posteriorOverPrior['engine.kE']!;
@@ -421,7 +458,10 @@ describe('extension-validation', () => {
       .filter((p) => p.group === c.training![0])
       .map((p) => {
         const name = p.name.replace(`${c.training![0]}.`, `${held.id}.`);
-        const guess = myInit({ ...j, parameters: [{ name, group: held.id, init: 0, prior: null }] }, arcs)[name]!;
+        const guess = myInit(
+          { ...j, parameters: [{ name, group: held.id, init: 0, prior: null }] },
+          arcs,
+        )[name]!;
         return { name, init: guess, scale: p.scale, group: held.id };
       });
     const ho = heldOutConsistency(r.st, r.res, r.params, held, local, OPTS, 3);
@@ -440,11 +480,21 @@ describe('extension-validation', () => {
   const fX = X.r.res;
   const [nX, snX] = fitGet(fX, 'law.n');
   const heldArc = X.arcs.get('att3')!;
-  const trainRanges = law.training!.flatMap((id) => rangeFixes(X.arcs.get(id)!, 'A').map((m) => m.z[1]!));
+  const trainRanges = law.training!.flatMap((id) =>
+    rangeFixes(X.arcs.get(id)!, 'A').map((m) => m.z[1]!),
+  );
   const trainMin = Math.min(...trainRanges);
   const trainMax = Math.max(...trainRanges);
   const rows = localFits(
-    { r0: R0, body: 'A', mu: fitGet(fX, 'mu.A')[0], n: nX, cam: fitGet(fX, 'camera.bias')[0], kE: 1, dE: 0 },
+    {
+      r0: R0,
+      body: 'A',
+      mu: fitGet(fX, 'mu.A')[0],
+      n: nX,
+      cam: fitGet(fX, 'camera.bias')[0],
+      kE: 1,
+      dE: 0,
+    },
     [heldArc],
     DT,
     { gSigma: 0.5 },
@@ -500,7 +550,9 @@ describe('forecast-envelope', () => {
   const arcs = arcsOf(c);
   const a3 = arcs.get('att3')!;
   const tl = tierL(ref, [...arcs.values()]);
-  const wins = makeWindows(a3, 'A').filter((w) => !w.powered).slice(-fi.anchorWindows);
+  const wins = makeWindows(a3, 'A')
+    .filter((w) => !w.powered)
+    .slice(-fi.anchorWindows);
   const anc = anchorState(ref, tl.profile, a3, wins, DT, { gPrior: [1, 0.5], slopeSigma: 0.2 });
 
   const plans = Object.entries(c.plans!).map(([pid, p]) => {
@@ -534,7 +586,11 @@ describe('forecast-envelope', () => {
       };
       within = within && sig.total <= fi.horizonFraction * r;
       const dev: [number, number] = [truth[0] - mean[0]!, truth[1] - mean[1]!];
-      const noHedge = { rows: 2, cols: 2, data: cv.total.data.map((q, k) => q - cv.hedge.data[k]!) };
+      const noHedge = {
+        rows: 2,
+        cols: 2,
+        data: cv.total.data.map((q, k) => q - cv.hedge.data[k]!),
+      };
       return {
         t,
         mean,
@@ -551,7 +607,8 @@ describe('forecast-envelope', () => {
     return { pid, points, refPoints };
   });
 
-  it('Tier L matches the reference', () => expect(compareTierL(tl.rows, tl.profile, tl.s2, c.tierL!)).toEqual([]));
+  it('Tier L matches the reference', () =>
+    expect(compareTierL(tl.rows, tl.profile, tl.s2, c.tierL!)).toEqual([]));
 
   it('present state matches the reference', () => {
     const ra = c.anchor!;
@@ -574,7 +631,9 @@ describe('forecast-envelope', () => {
         expect(p.within).toBe(rp.withinHorizon);
         expect(p.inside).toBe(rp.insideCoverage);
         if (!rp.withinHorizon) return;
-        expect(Math.hypot(p.mean[0]! - rp.mean[0], p.mean[1]! - rp.mean[1])).toBeLessThan(0.05 * rp.sigmaMajor.total);
+        expect(Math.hypot(p.mean[0]! - rp.mean[0], p.mean[1]! - rp.mean[1])).toBeLessThan(
+          0.05 * rp.sigmaMajor.total,
+        );
         for (const k of ['state', 'profile', 'hedge', 'engine', 'total'] as const) {
           const a = p.sig[k];
           const b = rp.sigmaMajor[k];
@@ -587,21 +646,33 @@ describe('forecast-envelope', () => {
   it('claims', () => {
     const coast = plans.find((p) => p.pid === 'coast')!.points;
     const dive = plans.find((p) => p.pid === 'dive')!.points;
-    for (const [pid, pts] of [['coast', coast], ['dive', dive]] as const) {
+    for (const [pid, pts] of [
+      ['coast', coast],
+      ['dive', dive],
+    ] as const) {
       const inh = pts.filter((p) => p.within);
       const worst = Math.max(...inh.map((p) => p.maha));
       claim(v.id, `honest-${pid}`, worst < 3 && inh.length >= 3);
     }
-    claim(v.id, 'coast-full-horizon', coast.every((p) => p.within));
+    claim(
+      v.id,
+      'coast-full-horizon',
+      coast.every((p) => p.within),
+    );
     claim(v.id, 'calibration-pays', coast[5]!.uncal > 10 * coast[5]!.deviation);
-    claim(v.id, 'no-hedge-inside-coverage', coast.every((p) => p.sig.hedge < 1e-6));
+    claim(
+      v.id,
+      'no-hedge-inside-coverage',
+      coast.every((p) => p.sig.hedge < 1e-6),
+    );
     const out = dive.filter((p) => !p.inside && p.within);
     claim(v.id, 'dive-leaves-coverage', out.length >= 1);
     const deep = out[out.length - 1]!;
     claim(
       v.id,
       'hedge-widens-outside',
-      deep.sig.hedge === Math.max(deep.sig.state, deep.sig.profile, deep.sig.hedge, deep.sig.engine),
+      deep.sig.hedge ===
+        Math.max(deep.sig.state, deep.sig.profile, deep.sig.hedge, deep.sig.engine),
     );
     claim(v.id, 'hedge-needed', Math.max(...out.map((p) => p.mahaNoHedge)) > 3);
     claim(v.id, 'horizon-ends-dive', !dive[dive.length - 1]!.within);
@@ -615,7 +686,15 @@ describe('forecast-envelope', () => {
 
 describe('estimator vectors', () => {
   it('all 54 claims hold, and each vector claim was evaluated', () => {
-    const vectors = [rawNewton, rawTwo, rawCoverage, rawBody, rawBurn, rawValidation, rawForecast].map(V);
+    const vectors = [
+      rawNewton,
+      rawTwo,
+      rawCoverage,
+      rawBody,
+      rawBurn,
+      rawValidation,
+      rawForecast,
+    ].map(V);
     let total = 0;
     for (const v of vectors) {
       const mine = claims.get(v.id);

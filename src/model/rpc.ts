@@ -25,7 +25,9 @@ export interface RpcRequest {
   readonly args: readonly unknown[];
 }
 
-export type RpcResponse = { readonly id: number; readonly result: unknown } | { readonly id: number; readonly error: string };
+export type RpcResponse =
+  | { readonly id: number; readonly result: unknown }
+  | { readonly id: number; readonly error: string };
 
 /** Call a service method by name (also used in-thread, so both paths behave the same). */
 export function dispatch(service: ModelService, method: string, args: readonly unknown[]): unknown {

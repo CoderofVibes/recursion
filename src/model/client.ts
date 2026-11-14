@@ -38,7 +38,11 @@ export interface ModelClient {
   forecast(
     req: Omit<ForecastRequest, 'record'> & { attemptId?: AttemptId },
   ): Promise<{ forecast: Forecast; detail: ForecastDetail }>;
-  testExtension(ext: ExtensionId, training: readonly AttemptId[], heldOut: AttemptId): Promise<ExtensionRecord>;
+  testExtension(
+    ext: ExtensionId,
+    training: readonly AttemptId[],
+    heldOut: AttemptId,
+  ): Promise<ExtensionRecord>;
   adopt(ext: ExtensionId): Promise<ModelState>;
   revoke(ext: ExtensionId): Promise<ModelState>;
   state(): Promise<ModelState>;
@@ -88,7 +92,13 @@ function localCall(): { call: Call; terminate: () => void } {
       }
       if (!service) throw new Error('model: init first');
       // Round-trip through structuredClone so in-thread behaves like the worker.
-      return structuredClone(dispatch(service, method, args.map((a) => structuredClone(a))));
+      return structuredClone(
+        dispatch(
+          service,
+          method,
+          args.map((a) => structuredClone(a)),
+        ),
+      );
     },
     terminate: () => {
       service = null;
@@ -99,7 +109,8 @@ function localCall(): { call: Call; terminate: () => void } {
 export function createModelClient(opts: { worker?: boolean } = {}): ModelClient {
   const useWorker = (opts.worker ?? true) && typeof Worker !== 'undefined';
   const { call, terminate } = useWorker ? workerCall() : localCall();
-  const c = <T>(method: ServiceMethod | 'init', ...args: unknown[]) => call(method, args) as Promise<T>;
+  const c = <T>(method: ServiceMethod | 'init', ...args: unknown[]) =>
+    call(method, args) as Promise<T>;
   return {
     init: (ctx) => c('init', ctx),
     load: (input) => c('load', input),

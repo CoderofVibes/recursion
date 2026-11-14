@@ -6,7 +6,12 @@
  * and is never passed to estimator code (1G, P11).
  */
 
-import type { AttemptRecord, Measurement, ShipDefinition, ExecutedCommand } from '../contracts/index.ts';
+import type {
+  AttemptRecord,
+  Measurement,
+  ShipDefinition,
+  ExecutedCommand,
+} from '../contracts/index.ts';
 import type { Arc, BodyDef, EstMeasurement, Ref, Structure, ThrustSegment } from './dynamics.ts';
 import type { Param } from './solve.ts';
 
@@ -55,14 +60,44 @@ export interface FitJson {
   compare: 'numeric' | 'qualitative';
   attempts: string[];
   model: ModelJson;
-  parameters: { name: string; group: string; init: number; prior: { mean: number; sigma: number } | null }[];
+  parameters: {
+    name: string;
+    group: string;
+    init: number;
+    prior: { mean: number; sigma: number } | null;
+  }[];
   expected: ExpectedFit;
   heldOut?: HeldOutJson;
-  adoption?: { deltaCost: number; penalty: number; adopt: boolean; evidence?: boolean; heldOutPass?: boolean };
-  earnedHedge?: { trainingCoverage: [number, number]; nWindowsOutside: number; delta?: number; ell?: number; sigmaH: number };
-  table?: { window: string; t0: number; t1: number; aR: number; sigmaR: number; aT: number; sigmaT: number; tidalAtMidT?: number }[];
+  adoption?: {
+    deltaCost: number;
+    penalty: number;
+    adopt: boolean;
+    evidence?: boolean;
+    heldOutPass?: boolean;
+  };
+  earnedHedge?: {
+    trainingCoverage: [number, number];
+    nWindowsOutside: number;
+    delta?: number;
+    ell?: number;
+    sigmaH: number;
+  };
+  table?: {
+    window: string;
+    t0: number;
+    t1: number;
+    aR: number;
+    sigmaR: number;
+    aT: number;
+    sigmaT: number;
+    tidalAtMidT?: number;
+  }[];
   signature?: { maxAbsTangentialZ: number; maxAbsTangentialOverG0: number };
-  confounding?: { maxAbsRho: number; pairs: { gravity: string; propulsion: string; rho: number }[]; posteriorOverPrior: Record<string, number> };
+  confounding?: {
+    maxAbsRho: number;
+    pairs: { gravity: string; propulsion: string; rho: number }[];
+    posteriorOverPrior: Record<string, number>;
+  };
   theory?: { muLocal: number };
 }
 
@@ -71,7 +106,13 @@ export interface AttemptJson {
   epoch: number;
   duration: number;
   commands: { t0: number; t1: number; u: number; theta: number }[];
-  measurements: { t: number; kind: 'opnav' | 'accel'; target?: string; z: number[]; sigma: number[] }[];
+  measurements: {
+    t: number;
+    kind: 'opnav' | 'accel';
+    target?: string;
+    z: number[];
+    sigma: number[];
+  }[];
 }
 
 export interface WindowJson {
@@ -129,8 +170,24 @@ export interface CaseJson {
   derived?: { gmRatioExpected: number };
   now?: number;
   plans?: Record<string, { commands: AttemptJson['commands']; checkpoints: number[] }>;
-  forecastInputs?: { reference: TierLJson['reference']; engineSigma: { kE: number; dE: number }; sigmaH: number; horizonFraction: number; noiseScale: number; anchorWindows: number };
-  anchor?: { windows: string[]; tNow: number; state: number[]; covariance: number[][]; g: number; gSigma: number; g1: number; g1Sigma: number };
+  forecastInputs?: {
+    reference: TierLJson['reference'];
+    engineSigma: { kE: number; dE: number };
+    sigmaH: number;
+    horizonFraction: number;
+    noiseScale: number;
+    anchorWindows: number;
+  };
+  anchor?: {
+    windows: string[];
+    tNow: number;
+    state: number[];
+    covariance: number[][];
+    g: number;
+    gSigma: number;
+    g1: number;
+    g1Sigma: number;
+  };
   forecasts?: { plan: string; points: ForecastPointJson[] }[];
 }
 
@@ -148,7 +205,10 @@ export function toStructure(m: ModelJson): Structure {
   const bodies: BodyDef[] = m.bodies.map((b) => ({
     id: b.id,
     mu: refOf(b.mu),
-    state: b.state === 'gauge' ? 'gauge' : (b.state.map(refOf) as unknown as readonly [Ref, Ref, Ref, Ref]),
+    state:
+      b.state === 'gauge'
+        ? 'gauge'
+        : (b.state.map(refOf) as unknown as readonly [Ref, Ref, Ref, Ref]),
     gs: refOf(b.localScale),
   }));
   return {
@@ -164,7 +224,12 @@ export function toStructure(m: ModelJson): Structure {
 }
 
 export function toArc(a: AttemptJson): Arc {
-  const commands: ThrustSegment[] = a.commands.map((c) => ({ t0: c.t0, t1: c.t1, u: c.u, theta: c.theta }));
+  const commands: ThrustSegment[] = a.commands.map((c) => ({
+    t0: c.t0,
+    t1: c.t1,
+    u: c.u,
+    theta: c.theta,
+  }));
   const meas: EstMeasurement[] = a.measurements.map((m) =>
     m.kind === 'opnav'
       ? { kind: 'opnav', t: m.t, target: m.target!, z: m.z, sigma: m.sigma }
@@ -204,10 +269,16 @@ export function toParams(fit: FitJson, init?: Readonly<Record<string, number>>):
 // Vectors as Black Box records (for the game-facing layer)
 // ---------------------------------------------------------------------------------------------
 
-
 /** Test ship: one camera, one accelerometer, one thruster along +x; constant mass (no flow). */
 export function testShip(mass: number, thrust: number): ShipDefinition {
-  const base = { mass: 0, position: { x: 0, y: 0 }, ratedPower: 0, modes: ['on'], defaultMode: 'on', sheddable: false } as const;
+  const base = {
+    mass: 0,
+    position: { x: 0, y: 0 },
+    ratedPower: 0,
+    modes: ['on'],
+    defaultMode: 'on',
+    sheddable: false,
+  } as const;
   return {
     id: 'test-ship',
     name: 'Test ship',
@@ -230,7 +301,19 @@ export function testShip(mass: number, thrust: number): ShipDefinition {
     tanks: [],
     buses: [],
     thermalNodes: [],
-    configurations: [{ id: 'stowed', name: 'Stowed', footprint: [{ x: -5, y: -2 }, { x: 5, y: -2 }, { x: 5, y: 2 }, { x: -5, y: 2 }], transitionTime: 0 }],
+    configurations: [
+      {
+        id: 'stowed',
+        name: 'Stowed',
+        footprint: [
+          { x: -5, y: -2 },
+          { x: 5, y: -2 },
+          { x: 5, y: 2 },
+          { x: -5, y: 2 },
+        ],
+        transitionTime: 0,
+      },
+    ],
     defaultConfiguration: 'stowed',
   };
 }
@@ -243,7 +326,13 @@ export function testShip(mass: number, thrust: number): ShipDefinition {
 export function recordFromAttempt(
   a: AttemptJson,
   index: number,
-  opts: { encounterId: string; mass: number; thrust: number; thruster?: string; target?: (t: string) => string },
+  opts: {
+    encounterId: string;
+    mass: number;
+    thrust: number;
+    thruster?: string;
+    target?: (t: string) => string;
+  },
 ): AttemptRecord {
   const thr = opts.thruster ?? 'main';
   const tgt = opts.target ?? ((t: string) => t);
@@ -261,16 +350,42 @@ export function recordFromAttempt(
   for (const m of a.measurements) {
     flushAtt(m.t);
     if (m.kind === 'opnav') {
-      measurements.push({ kind: 'bearing', t: m.t, source: 'cam', target: tgt(m.target!), value: [m.z[0]!], sigma: [m.sigma[0]!] });
+      measurements.push({
+        kind: 'bearing',
+        t: m.t,
+        source: 'cam',
+        target: tgt(m.target!),
+        value: [m.z[0]!],
+        sigma: [m.sigma[0]!],
+      });
       if (m.z.length > 1)
-        measurements.push({ kind: 'range', t: m.t, source: 'cam', target: tgt(m.target!), value: [m.z[1]!], sigma: [m.sigma[1]!] });
-    } else measurements.push({ kind: 'accel', t: m.t, source: 'imu', value: [...m.z], sigma: [...m.sigma] });
+        measurements.push({
+          kind: 'range',
+          t: m.t,
+          source: 'cam',
+          target: tgt(m.target!),
+          value: [m.z[1]!],
+          sigma: [m.sigma[1]!],
+        });
+    } else
+      measurements.push({
+        kind: 'accel',
+        t: m.t,
+        source: 'imu',
+        value: [...m.z],
+        sigma: [...m.sigma],
+      });
   }
   flushAtt(Infinity);
   measurements.sort((x, y) => x.t - y.t);
   const executed: ExecutedCommand[] = a.commands.map((c) => ({
     t: c.t0,
-    command: { kind: 'burn', thruster: thr, throttle: (c.u * opts.mass) / opts.thrust, duration: c.t1 - c.t0 },
+    command: {
+      kind: 'burn',
+      thruster: thr,
+      throttle: (c.u * opts.mass) / opts.thrust,
+      duration: c.t1 - c.t0,
+    },
     source: 'plan',
     status: 'executed',
   }));
@@ -281,7 +396,16 @@ export function recordFromAttempt(
     encounterId: opts.encounterId,
     startedAt: '2026-11-14T12:00:00Z',
     start: {
-      estimate: { t: 0, position: { x: 0, y: 0 }, velocity: { x: 0, y: 0 }, positionCov: [1e8, 0, 1e8], velocityCov: [100, 0, 100], attitude: 0, attitudeSigma: 1e-3, angularRate: 0 },
+      estimate: {
+        t: 0,
+        position: { x: 0, y: 0 },
+        velocity: { x: 0, y: 0 },
+        positionCov: [1e8, 0, 1e8],
+        velocityCov: [100, 0, 100],
+        attitude: 0,
+        attitudeSigma: 1e-3,
+        angularRate: 0,
+      },
       configuration: 'stowed',
       modelVersion: 0,
     },

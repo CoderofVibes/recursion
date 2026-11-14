@@ -336,7 +336,8 @@ export class Problem {
     for (let i = 0; i < p; i++)
       for (let j = 0; j < p; j++) P.data[i * p + j] = S[i]! * Hi.data[i * p + j]! * S[j]!;
     let pEff = 0;
-    for (let i = 0; i < p; i++) for (let k = 0; k < p; k++) pEff += Hd.data[i * p + k]! * Hi.data[k * p + i]!;
+    for (let i = 0; i < p; i++)
+      for (let k = 0; k < p; k++) pEff += Hd.data[i * p + k]! * Hi.data[k * p + i]!;
     return {
       names: this.names,
       x,
@@ -541,9 +542,15 @@ export function heldOutConsistency(
   const n = gi.length;
   const cov = zeros(n, n);
   for (let a = 0; a < n; a++)
-    for (let b = 0; b < n; b++) cov.data[a * n + b] = trainFit.P.data[gi[a]! * trainFit.P.cols + gi[b]!]!;
+    for (let b = 0; b < n; b++)
+      cov.data[a * n + b] = trainFit.P.data[gi[a]! * trainFit.P.cols + gi[b]!]!;
   const info = inverse(cov);
-  const gparams: Param[] = gl.map((p, a) => ({ name: p.name, init: mean[a]!, scale: p.scale, group: 'global' }));
+  const gparams: Param[] = gl.map((p, a) => ({
+    name: p.name,
+    init: mean[a]!,
+    scale: p.scale,
+    group: 'global',
+  }));
   const params = [...localParams, ...gparams];
   const fp: FullPrior = { names: gl.map((p) => p.name), mean, info };
   const res = stagedFit(st, [heldOut], params, { ...opts, fullPriors: [fp] });
@@ -592,7 +599,8 @@ export function identifiability(
   for (const a of added) {
     const ps = priorSigma[a];
     const s = fitGet(f, a)[1];
-    if (ps !== undefined && s > 0.5 * ps) reasons.push(`${a}: posterior σ is ${(s / ps).toFixed(2)} of its prior`);
+    if (ps !== undefined && s > 0.5 * ps)
+      reasons.push(`${a}: posterior σ is ${(s / ps).toFixed(2)} of its prior`);
     for (const b of among) {
       if (b === a || !f.names.includes(b)) continue;
       const rho = fitCorr(f, a, b);

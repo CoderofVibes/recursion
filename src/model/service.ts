@@ -35,7 +35,14 @@ import {
   type ExtensionRecord,
 } from './extensions.ts';
 import { buildForecast, type ForecastDetail, type ForecastRequest } from './forecast.ts';
-import { burnReport, empiricalReport, modelReport, type BurnReport, type EmpiricalReport, type ModelReport } from './report.ts';
+import {
+  burnReport,
+  empiricalReport,
+  modelReport,
+  type BurnReport,
+  type EmpiricalReport,
+  type ModelReport,
+} from './report.ts';
 
 export interface AttemptDelta {
   readonly measurements?: readonly Measurement[];
@@ -110,7 +117,9 @@ export class ModelService {
 
   /** Rebuild from Black Box records (P8). */
   load(input: LoadInput): ModelState {
-    this.attempts = input.attempts.filter((a) => a.encounterId === this.ctx.encounterId).map((a) => ({ ...a }));
+    this.attempts = input.attempts
+      .filter((a) => a.encounterId === this.ctx.encounterId)
+      .map((a) => ({ ...a }));
     this.history = [...(input.extensions ?? [])];
     this.current = null;
     this.version = input.version ?? 0;
@@ -149,7 +158,8 @@ export class ModelService {
 
   /** The attempt ended: keep the final record and run Tier G (§11.3). */
   endAttempt(final: AttemptRecord): ModelState {
-    if (!this.current || this.current.id !== final.id) throw new Error(`attempt ${final.id} is not in progress`);
+    if (!this.current || this.current.id !== final.id)
+      throw new Error(`attempt ${final.id} is not in progress`);
     this.attempts = [...this.attempts, { ...final }];
     this.current = null;
     return this.bump();
@@ -161,15 +171,32 @@ export class ModelService {
   }
 
   /** Forecast for the attempt in progress (or the latest attempt). */
-  forecast(req: Omit<ForecastRequest, 'record'> & { attemptId?: AttemptId }): { draft: ReturnType<typeof buildForecast>['draft']; detail: ForecastDetail } {
+  forecast(req: Omit<ForecastRequest, 'record'> & { attemptId?: AttemptId }): {
+    draft: ReturnType<typeof buildForecast>['draft'];
+    detail: ForecastDetail;
+  } {
     const all = this.allAttempts();
-    const rec = req.attemptId ? all.find((a) => a.id === req.attemptId) : this.current ?? all[all.length - 1];
+    const rec = req.attemptId
+      ? all.find((a) => a.id === req.attemptId)
+      : (this.current ?? all[all.length - 1]);
     if (!rec) throw new Error('no attempt to forecast from');
     return buildForecast(this.snap, this.ctx, { ...req, record: rec });
   }
 
-  testExtension(ext: ExtensionId, training: readonly AttemptId[], heldOut: AttemptId): ExtensionRecord {
-    const rec = testExtension(this.ctx, this.attempts, adoptedOf(this.history), ext, training, heldOut, this.version);
+  testExtension(
+    ext: ExtensionId,
+    training: readonly AttemptId[],
+    heldOut: AttemptId,
+  ): ExtensionRecord {
+    const rec = testExtension(
+      this.ctx,
+      this.attempts,
+      adoptedOf(this.history),
+      ext,
+      training,
+      heldOut,
+      this.version,
+    );
     this.history = [...this.history, rec];
     this.snap = this.build(this.version, this.snap.state.parent, this.snap);
     return rec;

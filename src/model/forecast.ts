@@ -67,13 +67,25 @@ export interface ForecastRequest {
 
 export interface ForecastDetail {
   /** Per sample, the 1σ major axis of each uncertainty source (m). */
-  readonly sigmaMajor: readonly { t: number; state: number; profile: number; hedge: number; engine: number; mass: number; total: number }[];
+  readonly sigmaMajor: readonly {
+    t: number;
+    state: number;
+    profile: number;
+    hedge: number;
+    engine: number;
+    mass: number;
+    total: number;
+  }[];
   /** How the present state was obtained. */
   readonly presentSource: PresentState['source'];
   readonly presentTime: number;
 }
 
-const toCov2 = (m: { data: Float64Array }): Cov2 => [m.data[0]!, 0.5 * (m.data[1]! + m.data[2]!), m.data[3]!];
+const toCov2 = (m: { data: Float64Array }): Cov2 => [
+  m.data[0]!,
+  0.5 * (m.data[1]! + m.data[2]!),
+  m.data[3]!,
+];
 
 /** Believed arrival barycentre of the modelled bodies (position, velocity) in the briefing frame. */
 function barycentre(ctx: ModelContext, bodies: readonly string[], mu: (id: string) => number) {
@@ -123,7 +135,11 @@ function planAttitudes(plan: Plan): Map<number, AttitudeTarget | undefined> {
 }
 
 /** Build the forecast draft for a plan (not yet issued: pass it to issueForecast). */
-export function buildForecast(snap: ModelSnapshot, ctx: ModelContext, req: ForecastRequest): { draft: ForecastDraft; detail: ForecastDetail } {
+export function buildForecast(
+  snap: ModelSnapshot,
+  ctx: ModelContext,
+  req: ForecastRequest,
+): { draft: ForecastDraft; detail: ForecastDetail } {
   const d = snap.derived;
   const spec = d.spec;
   const s = spec.settings;
@@ -151,7 +167,10 @@ export function buildForecast(snap: ModelSnapshot, ctx: ModelContext, req: Forec
     const st: Structure = {
       r0: ref.r0,
       n: ref.n,
-      bodies: [{ id: ref.body, mu: ref.mu, state: 'gauge' }, ...others.map((o) => ({ id: o.id, mu: o.mu, state: o.stateAt(tNow) }))],
+      bodies: [
+        { id: ref.body, mu: ref.mu, state: 'gauge' },
+        ...others.map((o) => ({ id: o.id, mu: o.mu, state: o.stateAt(tNow) })),
+      ],
       ship: [present.state[0]!, present.state[1]!, present.state[2]!, present.state[3]!],
       dynamicBodies: nOthers > 0,
       engine: { kE: ref.kE, dE: ref.dE },
@@ -194,9 +213,14 @@ export function buildForecast(snap: ModelSnapshot, ctx: ModelContext, req: Forec
       pvx = bc.v.x - bvx / M;
       pvy = bc.v.y - bvy / M;
     }
-    const ship = { position: { x: px + rel[0]!, y: py + rel[1]! }, velocity: { x: pvx + rel[2]!, y: pvy + rel[3]! } };
+    const ship = {
+      position: { x: px + rel[0]!, y: py + rel[1]! },
+      velocity: { x: pvx + rel[2]!, y: pvy + rel[3]! },
+    };
     const bodyPos: Record<string, Vec2> = { [spec.primary]: { x: px, y: py } };
-    others.forEach((o, k) => (bodyPos[o.id] = { x: px + bodies[4 * k]!, y: py + bodies[4 * k + 1]! }));
+    others.forEach(
+      (o, k) => (bodyPos[o.id] = { x: px + bodies[4 * k]!, y: py + bodies[4 * k + 1]! }),
+    );
     return { ship, bodyPos };
   };
   const meanAt = (segs: readonly ThrustSegment[], t: number) => {
@@ -205,11 +229,19 @@ export function buildForecast(snap: ModelSnapshot, ctx: ModelContext, req: Forec
     const P = tr.pos[0]!;
     const V = tr.vel[0]!;
     const sh = nOthers + 1;
-    const rel = Float64Array.of(P[2 * sh]! - P[0]!, P[2 * sh + 1]! - P[1]!, V[2 * sh]! - V[0]!, V[2 * sh + 1]! - V[1]!);
+    const rel = Float64Array.of(
+      P[2 * sh]! - P[0]!,
+      P[2 * sh + 1]! - P[1]!,
+      V[2 * sh]! - V[0]!,
+      V[2 * sh + 1]! - V[1]!,
+    );
     const bodies = new Float64Array(4 * nOthers);
     for (let k = 0; k < nOthers; k++) {
       const j = k + 1;
-      bodies.set([P[2 * j]! - P[0]!, P[2 * j + 1]! - P[1]!, V[2 * j]! - V[0]!, V[2 * j + 1]! - V[1]!], 4 * k);
+      bodies.set(
+        [P[2 * j]! - P[0]!, P[2 * j + 1]! - P[1]!, V[2 * j]! - V[0]!, V[2 * j + 1]! - V[1]!],
+        4 * k,
+      );
     }
     return frameAt(rel, bodies, Math.max(t, tNow));
   };
@@ -227,11 +259,18 @@ export function buildForecast(snap: ModelSnapshot, ctx: ModelContext, req: Forec
       if (target.reference === 'inertial') angle = target.angle;
       else if (target.reference === 'prograde' || target.reference === 'retrograde') {
         const st = meanAt(commands, b.t0).ship.velocity;
-        angle = Math.atan2(st.y, st.x) + (target.reference === 'retrograde' ? Math.PI : 0) + (target.offset ?? 0);
+        angle =
+          Math.atan2(st.y, st.x) +
+          (target.reference === 'retrograde' ? Math.PI : 0) +
+          (target.offset ?? 0);
       } else if (target.reference === 'toward' || target.reference === 'away') {
         const f = meanAt(commands, b.t0);
         const tp = f.bodyPos[target.target];
-        if (tp) angle = Math.atan2(tp.y - f.ship.position.y, tp.x - f.ship.position.x) + (target.reference === 'away' ? Math.PI : 0) + (target.offset ?? 0);
+        if (tp)
+          angle =
+            Math.atan2(tp.y - f.ship.position.y, tp.x - f.ship.position.x) +
+            (target.reference === 'away' ? Math.PI : 0) +
+            (target.offset ?? 0);
       } else if (target.reference === 'rate') angle = latest + target.rate * (b.t0 - req.issuedAt);
     }
     const flow = info.isp > 0 ? (info.thrust * b.throttle) / (info.isp * s.g0) : 0;
@@ -239,7 +278,14 @@ export function buildForecast(snap: ModelSnapshot, ctx: ModelContext, req: Forec
     for (let t0 = b.t0; t0 < b.t1 - 1e-9; t0 += s.maxSegment) {
       const t1 = Math.min(b.t1, t0 + s.maxSegment);
       const mMid = Math.max(1, mPlan - flow * (0.5 * (t1 - t0)));
-      commands.push({ t0, t1, u: force / mMid, theta: angle + info.bodyAngle, bodyAngle: info.bodyAngle, thruster: b.thruster });
+      commands.push({
+        t0,
+        t1,
+        u: force / mMid,
+        theta: angle + info.bodyAngle,
+        bodyAngle: info.bodyAngle,
+        thruster: b.thruster,
+      });
       mPlan -= flow * (t1 - t0);
     }
   }
@@ -248,13 +294,17 @@ export function buildForecast(snap: ModelSnapshot, ctx: ModelContext, req: Forec
   const step = req.step ?? s.forecastStep;
   const duration = req.duration ?? s.forecastMaxDuration;
   const times: number[] = [];
-  for (let t = req.issuedAt; t <= req.issuedAt + duration + 1e-9; t += step) if (t >= tNow) times.push(t);
+  for (let t = req.issuedAt; t <= req.issuedAt + duration + 1e-9; t += step)
+    if (t >= tNow) times.push(t);
   if (times.length === 0) times.push(Math.max(req.issuedAt, tNow));
 
   const profiles: ProfileFit[] = [...d.profiles, ...d.flatProfiles];
   const engineSigmas: Record<string, [number, number]> = {};
   for (const thr of Object.keys(ref.engines ?? {}))
-    engineSigmas[thr] = [d.sigmas[scaleId(thr)] ?? s.priorThrustScaleSigma, d.sigmas[misalignId(thr)] ?? s.priorMisalignmentSigma];
+    engineSigmas[thr] = [
+      d.sigmas[scaleId(thr)] ?? s.priorThrustScaleSigma,
+      d.sigmas[misalignId(thr)] ?? s.priorMisalignmentSigma,
+    ];
   // Thrusters never fitted fly with prior values and prior σ.
   const engines: Record<string, { kE: number; dE: number }> = { ...(ref.engines ?? {}) };
   for (const c of commands) {
@@ -262,10 +312,14 @@ export function buildForecast(snap: ModelSnapshot, ctx: ModelContext, req: Forec
     const ps = ctx.priors.find((p) => p.id === scaleId(c.thruster!));
     const pm = ctx.priors.find((p) => p.id === misalignId(c.thruster!));
     engines[c.thruster] = { kE: ps?.value ?? 1, dE: pm?.value ?? 0 };
-    engineSigmas[c.thruster] = [ps?.sigma ?? s.priorThrustScaleSigma, pm?.sigma ?? s.priorMisalignmentSigma];
+    engineSigmas[c.thruster] = [
+      ps?.sigma ?? s.priorThrustScaleSigma,
+      pm?.sigma ?? s.priorMisalignmentSigma,
+    ];
   }
   const muSigma: Record<string, number> = {};
-  for (const o of others) if (!d.profiles.some((p) => p.body === o.id)) muSigma[o.id] = d.sigmas[`body.${o.id}.mu`] ?? 0;
+  for (const o of others)
+    if (!d.profiles.some((p) => p.body === o.id)) muSigma[o.id] = d.sigmas[`body.${o.id}.mu`] ?? 0;
   const fc = forecastCore({
     ref: { ...ref, engines },
     profiles,
@@ -285,25 +339,35 @@ export function buildForecast(snap: ModelSnapshot, ctx: ModelContext, req: Forec
 
   // Horizon (§8.4) and samples.
   const radius = (id: string) => ctx.bodies.find((b) => b.id === id)?.radius ?? 0;
-  const hull = Math.max(0, ...req.massProperties.footprint.map((p) => Math.hypot(p.x - req.massProperties.centerOfMass.x, p.y - req.massProperties.centerOfMass.y)));
+  const hull = Math.max(
+    0,
+    ...req.massProperties.footprint.map((p) =>
+      Math.hypot(p.x - req.massProperties.centerOfMass.x, p.y - req.massProperties.centerOfMass.y),
+    ),
+  );
   const samples: ForecastSample[] = [];
   const sigmaMajor: ForecastDetail['sigmaMajor'][number][] = [];
-  const tracks = new Map<string, { t: number; position: Vec2; positionCov: Cov2 }[]>(spec.bodies.map((b) => [b, []]));
+  const tracks = new Map<string, { t: number; position: Vec2; positionCov: Cov2 }[]>(
+    spec.bodies.map((b) => [b, []]),
+  );
   const approach = new Map<string, ClosestApproach>();
-  const L = (p: ProfileFit, r: number) => (r > p.rMax ? Math.log(r / p.rMax) : r < p.rMin ? Math.log(r / p.rMin) : 0);
+  const L = (p: ProfileFit, r: number) =>
+    r > p.rMax ? Math.log(r / p.rMax) : r < p.rMin ? Math.log(r / p.rMin) : 0;
   for (let k = 0; k < fc.times.length; k++) {
     const rel = fc.mean[k]!;
     const bodies = fc.bodies[k]!;
     const cv = fc.cov[k]!;
     const total = majorSigma(cv.total);
     const dist: Record<string, number> = { [spec.primary]: Math.hypot(rel[0]!, rel[1]!) };
-    others.forEach((o, j) => (dist[o.id] = Math.hypot(rel[0]! - bodies[4 * j]!, rel[1]! - bodies[4 * j + 1]!)));
+    others.forEach(
+      (o, j) => (dist[o.id] = Math.hypot(rel[0]! - bodies[4 * j]!, rel[1]! - bodies[4 * j + 1]!)),
+    );
     const nearest = Math.min(...Object.values(dist));
     if (total > s.horizonFraction * nearest) break;
     const t = fc.times[k]!;
     const frame = frameAt(rel, bodies, t);
     // Extrapolating: outside the covered range of the body that pulls hardest here.
-    const n = spec.exponent ? d.values[EXPONENT_ID] ?? 2 : 2;
+    const n = spec.exponent ? (d.values[EXPONENT_ID] ?? 2) : 2;
     let dominant = spec.primary;
     let best = -1;
     for (const [id, r] of Object.entries(dist)) {
@@ -316,8 +380,22 @@ export function buildForecast(snap: ModelSnapshot, ctx: ModelContext, req: Forec
     const prof = profiles.find((p) => p.body === dominant);
     const extrapolating = prof ? L(prof, dist[dominant]!) !== 0 : true;
     const positionCov = toCov2(cv.total);
-    samples.push({ t, position: frame.ship.position, velocity: frame.ship.velocity, positionCov, extrapolating });
-    sigmaMajor.push({ t, state: majorSigma(cv.state), profile: majorSigma(cv.profile), hedge: majorSigma(cv.hedge), engine: majorSigma(cv.engine), mass: majorSigma(cv.mass), total });
+    samples.push({
+      t,
+      position: frame.ship.position,
+      velocity: frame.ship.velocity,
+      positionCov,
+      extrapolating,
+    });
+    sigmaMajor.push({
+      t,
+      state: majorSigma(cv.state),
+      profile: majorSigma(cv.profile),
+      hedge: majorSigma(cv.hedge),
+      engine: majorSigma(cv.engine),
+      mass: majorSigma(cv.mass),
+      total,
+    });
     for (const id of spec.bodies) {
       const bp = frame.bodyPos[id]!;
       tracks.get(id)!.push({ t, position: bp, positionCov: [0, 0, 0] });
@@ -329,7 +407,12 @@ export function buildForecast(snap: ModelSnapshot, ctx: ModelContext, req: Forec
       if (!prev || clearance < prev.distance) {
         const ux = dx / r;
         const uy = dy / r;
-        const sig = Math.sqrt(Math.max(0, ux * ux * positionCov[0] + 2 * ux * uy * positionCov[1] + uy * uy * positionCov[2]));
+        const sig = Math.sqrt(
+          Math.max(
+            0,
+            ux * ux * positionCov[0] + 2 * ux * uy * positionCov[1] + uy * uy * positionCov[2],
+          ),
+        );
         approach.set(id, { id, t, distance: clearance, sigma: sig });
       }
     }
@@ -351,7 +434,10 @@ export function buildForecast(snap: ModelSnapshot, ctx: ModelContext, req: Forec
     attitudeSigma: ctx.arrival.attitudeSigma,
     angularRate: lastValue(req.record, 'rate') ?? 0,
   };
-  const objects: ForecastObjectTrack[] = [...tracks.entries()].map(([id, samplesB]) => ({ id, samples: samplesB }));
+  const objects: ForecastObjectTrack[] = [...tracks.entries()].map(([id, samplesB]) => ({
+    id,
+    samples: samplesB,
+  }));
   const adopted = snap.state.extensions.filter((e) => e.status === 'adopted').map((e) => e.id);
   const draft: ForecastDraft = {
     id: req.id,

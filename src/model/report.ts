@@ -4,7 +4,13 @@
  */
 
 import type { AttemptId } from '../contracts/index.ts';
-import { burnResponse, empiricalFit, gmSlope, type BurnResponse, type EmpiricalRow } from './diagnostics.ts';
+import {
+  burnResponse,
+  empiricalFit,
+  gmSlope,
+  type BurnResponse,
+  type EmpiricalRow,
+} from './diagnostics.ts';
 import { EXPONENT_ID, referenceFor, type ModelContext, type ModelSnapshot } from './engine.ts';
 import { confounding, residualSummary, type Confounding, type ResidualClass } from './solve.ts';
 
@@ -74,7 +80,7 @@ export interface ModelReport {
 /** §9.1–§9.3 from a snapshot. Cheap: no new fits. */
 export function modelReport(snap: ModelSnapshot): ModelReport {
   const d = snap.derived;
-  const n = d.spec.exponent ? d.values[EXPONENT_ID] ?? 2 : 2;
+  const n = d.spec.exponent ? (d.values[EXPONENT_ID] ?? 2) : 2;
   const strength: BodyStrength[] = d.spec.bodies.map((body) => {
     const mu = d.values[`body.${body}.mu`] ?? 0;
     const rows = d.windows.filter((w) => w.body === body);
@@ -114,10 +120,16 @@ export function modelReport(snap: ModelSnapshot): ModelReport {
       }))
     : [];
   const gravity = d.problem.globals.filter((g) => g.startsWith('body.') || g === EXPONENT_ID);
-  const propulsion = d.problem.globals.filter((g) => g.startsWith('thruster.') || /^sensor\..+\.scale$/.test(g));
+  const propulsion = d.problem.globals.filter(
+    (g) => g.startsWith('thruster.') || /^sensor\..+\.scale$/.test(g),
+  );
   const priorSigma: Record<string, number> = {};
-  for (const p of d.problem.params) if (p.priorSigma !== undefined) priorSigma[p.name] = p.priorSigma;
-  const conf = fit && propulsion.length > 0 ? confounding(fit, gravity, propulsion, priorSigma, d.spec.settings.confoundedRho) : null;
+  for (const p of d.problem.params)
+    if (p.priorSigma !== undefined) priorSigma[p.name] = p.priorSigma;
+  const conf =
+    fit && propulsion.length > 0
+      ? confounding(fit, gravity, propulsion, priorSigma, d.spec.settings.confoundedRho)
+      : null;
   const coverage: DataCoverage[] = [...d.problem.builds.entries()].map(([attempt, b]) => {
     let coast = 0;
     let powered = 0;
@@ -132,7 +144,8 @@ export function modelReport(snap: ModelSnapshot): ModelReport {
         }
       }
     const missing: string[] = [];
-    if (b.arcs.length === 0) missing.push('no fittable tracking (fewer than 3 range fixes on the primary)');
+    if (b.arcs.length === 0)
+      missing.push('no fittable tracking (fewer than 3 range fixes on the primary)');
     if (coast === 0) missing.push('no coasting fixes');
     if (b.burns.length > 0 && powered === 0) missing.push('no fixes while thrusting');
     if (b.burns.length > 0 && accel === 0) missing.push('no accelerometer record during burns');
@@ -165,7 +178,11 @@ export interface BurnReport extends BurnResponse {
 }
 
 /** §9.5 per-burn response for every burn of the given attempts (more costly: one fit per burn). */
-export function burnReport(snap: ModelSnapshot, ctx: ModelContext, attempts?: readonly AttemptId[]): BurnReport[] {
+export function burnReport(
+  snap: ModelSnapshot,
+  ctx: ModelContext,
+  attempts?: readonly AttemptId[],
+): BurnReport[] {
   const d = snap.derived;
   const out: BurnReport[] = [];
   for (const [attempt, b] of d.problem.builds) {
@@ -174,8 +191,17 @@ export function burnReport(snap: ModelSnapshot, ctx: ModelContext, attempts?: re
       const ref = referenceFor(d, d.spec.primary, arc.id, ctx);
       for (const burn of b.burns) {
         if (burn.t1 <= arc.epoch) continue;
-        const segs = arc.commands.filter((c) => c.thruster === burn.thruster && c.t0 >= burn.t0 && c.t1 <= burn.t1);
-        const r = burnResponse(ref, [...d.profiles, ...d.flatProfiles], arc, segs, d.spec.settings.dt, d.spec.settings.burnPad);
+        const segs = arc.commands.filter(
+          (c) => c.thruster === burn.thruster && c.t0 >= burn.t0 && c.t1 <= burn.t1,
+        );
+        const r = burnResponse(
+          ref,
+          [...d.profiles, ...d.flatProfiles],
+          arc,
+          segs,
+          d.spec.settings.dt,
+          d.spec.settings.burnPad,
+        );
         if (r) out.push({ ...r, attempt, thruster: burn.thruster });
       }
     }

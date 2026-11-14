@@ -130,11 +130,16 @@ export function modelSpec(ctx: ModelContext, adopted: readonly ExtensionId[]): M
     const m = /^body\.(.+)\.mu$/.exec(p.id);
     if (m && !withPrior.includes(m[1]!)) withPrior.push(m[1]!);
   }
-  const extra = adopted.map(extensionBody).filter((b): b is string => b !== null && !withPrior.includes(b));
+  const extra = adopted
+    .map(extensionBody)
+    .filter((b): b is string => b !== null && !withPrior.includes(b));
   const bodies = [...withPrior, ...extra];
   if (bodies.length === 0) throw new Error('model: the briefing gives no body.<id>.mu prior');
   const muPrior = (id: string) => priorOf(ctx, muId(id))?.value ?? 0;
-  const primary = bodies.reduce((best, id) => (muPrior(id) > muPrior(best) ? id : best), bodies[0]!);
+  const primary = bodies.reduce(
+    (best, id) => (muPrior(id) > muPrior(best) ? id : best),
+    bodies[0]!,
+  );
   const camera = ctx.ship.equipment.find((e) => e.kind === 'optical-tracker')?.id ?? 'camera';
   return {
     primary,
@@ -170,7 +175,12 @@ export function briefingBodiesAt(ctx: ModelContext, spec: ModelSpec, t: number):
   const rel = spec.bodies.slice(1).map((id) => {
     const b = briefingBody(ctx, id);
     if (!p || !b) return [0, 0, 0, 0];
-    return [b.position.x - p.position.x, b.position.y - p.position.y, b.velocity.x - p.velocity.x, b.velocity.y - p.velocity.y];
+    return [
+      b.position.x - p.position.x,
+      b.position.y - p.position.y,
+      b.velocity.x - p.velocity.x,
+      b.velocity.y - p.velocity.y,
+    ];
   });
   if (t === 0 || rel.length === 0) return rel;
   if (!spec.dynamic) return rel.map((r) => [r[0]! + r[2]! * t, r[1]! + r[3]! * t, r[2]!, r[3]!]);
@@ -180,7 +190,8 @@ export function briefingBodiesAt(ctx: ModelContext, spec: ModelSpec, t: number):
     bodies: spec.bodies.map((id, j) => ({
       id,
       mu: priorOf(ctx, muId(id))?.value ?? 0,
-      state: j === 0 ? 'gauge' : (rel[j - 1] as unknown as readonly [number, number, number, number]),
+      state:
+        j === 0 ? 'gauge' : (rel[j - 1] as unknown as readonly [number, number, number, number]),
     })),
     ship: [1e15, 0, 0, 0],
     dynamicBodies: true,
@@ -241,7 +252,9 @@ export function tierGProblem(
     levels.push(...b.limitedLevels);
   }
   const thrusters = thrustersOf(arcs);
-  const accelSource = attempts.flatMap((r) => r.measurements).find((m) => m.kind === 'accel')?.source;
+  const accelSource = attempts
+    .flatMap((r) => r.measurements)
+    .find((m) => m.kind === 'accel')?.source;
   const hasAccel = arcs.some((a) => a.meas.some((m) => m.kind === 'accel'));
   const camId = `sensor.${spec.cameraId}.bias`;
   const kAId = `sensor.${accelSource ?? 'accelerometer'}.scale`;
@@ -258,7 +271,11 @@ export function tierGProblem(
       }
       return { id, mu: muId(id), state: [0, 0, 0, 0], stateByArc: byArc };
     }
-    return { id, mu: muId(id), state: [`{att}.${id}.x`, `{att}.${id}.y`, `{att}.${id}.vx`, `{att}.${id}.vy`] as const };
+    return {
+      id,
+      mu: muId(id),
+      state: [`{att}.${id}.x`, `{att}.${id}.y`, `{att}.${id}.vx`, `{att}.${id}.vy`] as const,
+    };
   });
   const structure: Structure = {
     r0: s.r0,
@@ -277,25 +294,67 @@ export function tierGProblem(
     const mean = p?.value ?? 0;
     const sigma = p?.sigma ?? s.priorExtraBodyMuSigma;
     const unit = Math.abs(mean) > 0 ? Math.abs(mean) : 0.01 * sigma;
-    globals.push({ name: muId(id), init: mean === 0 ? 0.01 * sigma : mean, scale: 1e-3 * unit, priorMean: mean, priorSigma: sigma, group: 'global' });
+    globals.push({
+      name: muId(id),
+      init: mean === 0 ? 0.01 * sigma : mean,
+      scale: 1e-3 * unit,
+      priorMean: mean,
+      priorSigma: sigma,
+      group: 'global',
+    });
   }
   if (spec.exponent) {
     const p = priorOf(ctx, EXPONENT_ID);
-    globals.push({ name: EXPONENT_ID, init: p?.value ?? 2, scale: 1e-3, priorMean: p?.value ?? 2, priorSigma: p?.sigma ?? s.priorExponentSigma, group: 'global' });
+    globals.push({
+      name: EXPONENT_ID,
+      init: p?.value ?? 2,
+      scale: 1e-3,
+      priorMean: p?.value ?? 2,
+      priorSigma: p?.sigma ?? s.priorExponentSigma,
+      group: 'global',
+    });
   }
   for (const thr of thrusters) {
     const ps = priorOf(ctx, scaleId(thr));
     const pm = priorOf(ctx, misalignId(thr));
-    globals.push({ name: scaleId(thr), init: ps?.value ?? 1, scale: 1e-3, priorMean: ps?.value ?? 1, priorSigma: ps?.sigma ?? s.priorThrustScaleSigma, group: 'global' });
-    globals.push({ name: misalignId(thr), init: pm?.value ?? 0, scale: 1e-3, priorMean: pm?.value ?? 0, priorSigma: pm?.sigma ?? s.priorMisalignmentSigma, group: 'global' });
+    globals.push({
+      name: scaleId(thr),
+      init: ps?.value ?? 1,
+      scale: 1e-3,
+      priorMean: ps?.value ?? 1,
+      priorSigma: ps?.sigma ?? s.priorThrustScaleSigma,
+      group: 'global',
+    });
+    globals.push({
+      name: misalignId(thr),
+      init: pm?.value ?? 0,
+      scale: 1e-3,
+      priorMean: pm?.value ?? 0,
+      priorSigma: pm?.sigma ?? s.priorMisalignmentSigma,
+      group: 'global',
+    });
   }
   if (hasAccel) {
     const p = priorOf(ctx, kAId);
-    globals.push({ name: kAId, init: p?.value ?? 1, scale: 1e-4, priorMean: p?.value ?? 1, priorSigma: p?.sigma ?? s.priorAccelScaleSigma, group: 'global' });
+    globals.push({
+      name: kAId,
+      init: p?.value ?? 1,
+      scale: 1e-4,
+      priorMean: p?.value ?? 1,
+      priorSigma: p?.sigma ?? s.priorAccelScaleSigma,
+      group: 'global',
+    });
   }
   {
     const p = priorOf(ctx, camId);
-    globals.push({ name: camId, init: p?.value ?? 0, scale: 1e-5, priorMean: p?.value ?? 0, priorSigma: p?.sigma ?? s.priorCameraBiasSigma, group: 'global' });
+    globals.push({
+      name: camId,
+      init: p?.value ?? 0,
+      scale: 1e-5,
+      priorMean: p?.value ?? 0,
+      priorSigma: p?.sigma ?? s.priorCameraBiasSigma,
+      group: 'global',
+    });
   }
   const locals: Param[] = [];
   for (const a of arcs) {
@@ -306,7 +365,8 @@ export function tierGProblem(
       others.forEach((id, k) => {
         const b = briefingBody(ctx, id);
         const posSigma = Math.sqrt(
-          Math.max(b?.positionCov[0] ?? 0, b?.positionCov[2] ?? 0) + Math.max(pBody?.positionCov[0] ?? 0, pBody?.positionCov[2] ?? 0),
+          Math.max(b?.positionCov[0] ?? 0, b?.positionCov[2] ?? 0) +
+            Math.max(pBody?.positionCov[0] ?? 0, pBody?.positionCov[2] ?? 0),
         );
         const mean = prior[k]!;
         const nFix = rangeFixes(a, id).length;
@@ -314,7 +374,12 @@ export function tierGProblem(
         locals.push(
           ...bodyStateParams(a.id, id, guess, {
             mean,
-            sigma: [Math.max(posSigma, 1), Math.max(posSigma, 1), s.priorBodyVelocitySigma, s.priorBodyVelocitySigma],
+            sigma: [
+              Math.max(posSigma, 1),
+              Math.max(posSigma, 1),
+              s.priorBodyVelocitySigma,
+              s.priorBodyVelocitySigma,
+            ],
           }),
         );
       });
@@ -322,7 +387,14 @@ export function tierGProblem(
   }
   for (const name of levels) {
     const arc = name.slice(0, name.indexOf('.burn'));
-    locals.push({ name, init: 1, scale: 1e-3, priorMean: 1, priorSigma: s.limitedBurnLevelSigma, group: arc });
+    locals.push({
+      name,
+      init: 1,
+      scale: 1e-3,
+      priorMean: 1,
+      priorSigma: s.limitedBurnLevelSigma,
+      group: arc,
+    });
   }
   return {
     structure,
@@ -395,10 +467,15 @@ export interface ModelSnapshot {
 }
 
 /** Reference law for Tier L around `body` within one arc (§5.2), others frozen from Tier G. */
-export function referenceFor(d: Pick<ModelDerived, 'spec' | 'values' | 'solutions'>, body: string, arcId: string, ctx: ModelContext): ReferenceLaw {
+export function referenceFor(
+  d: Pick<ModelDerived, 'spec' | 'values' | 'solutions'>,
+  body: string,
+  arcId: string,
+  ctx: ModelContext,
+): ReferenceLaw {
   const v = d.values;
   const spec = d.spec;
-  const n = spec.exponent ? v[EXPONENT_ID] ?? 2 : 2;
+  const n = spec.exponent ? (v[EXPONENT_ID] ?? 2) : 2;
   const engines: Record<string, { kE: number; dE: number }> = {};
   for (const [k, val] of Object.entries(v)) {
     const m = /^thruster\.(.+)\.scale$/.exec(k);
@@ -456,7 +533,12 @@ function relativeState(
   }
   const i = bodies.indexOf(id);
   const j = bodies.indexOf(ref);
-  return [P[2 * i]! - P[2 * j]!, P[2 * i + 1]! - P[2 * j + 1]!, V[2 * i]! - V[2 * j]!, V[2 * i + 1]! - V[2 * j + 1]!];
+  return [
+    P[2 * i]! - P[2 * j]!,
+    P[2 * i + 1]! - P[2 * j + 1]!,
+    V[2 * i]! - V[2 * j]!,
+    V[2 * i + 1]! - V[2 * j + 1]!,
+  ];
 }
 
 function believedPull(mu: number, n: number, r0: number, r: number): number {
@@ -495,12 +577,15 @@ export function buildModel(input: ModelInput, opts: BuildOptions = {}): ModelSna
     const i = idx.get(g)!;
     const prm = problem.params[i]!;
     values[g] = reuse?.values[g] ?? x[i]!;
-    sigmas[g] = reuse?.sigmas[g] ?? (useFit ? fitGet(fit!, g)[1] : prm.priorSigma ?? 0);
+    sigmas[g] = reuse?.sigmas[g] ?? (useFit ? fitGet(fit!, g)[1] : (prm.priorSigma ?? 0));
   }
   const solutions = new Map<string, ArcSolution>();
   for (const a of problem.arcs) {
     const old = reuse?.solutions.get(a.id);
-    solutions.set(a.id, old && old.arc.epoch === a.epoch ? old : { arc: a, x, idx, structure: problem.structure });
+    solutions.set(
+      a.id,
+      old && old.arc.epoch === a.epoch ? old : { arc: a, x, idx, structure: problem.structure },
+    );
   }
 
   // Tier L per body with range fixes (§5).
@@ -509,7 +594,7 @@ export function buildModel(input: ModelInput, opts: BuildOptions = {}): ModelSna
   const windows: WindowFit[] = [];
   const profiles: ProfileFit[] = [];
   const flatProfiles: ProfileFit[] = [];
-  const n = spec.exponent ? values[EXPONENT_ID] ?? 2 : 2;
+  const n = spec.exponent ? (values[EXPONENT_ID] ?? 2) : 2;
   for (const body of spec.bodies) {
     const rows: WindowFit[] = [];
     for (const a of problem.arcs) {
@@ -547,26 +632,52 @@ export function buildModel(input: ModelInput, opts: BuildOptions = {}): ModelSna
     }
     windows.push(...rows);
     if (rows.length > 0)
-      profiles.push(buildProfile(rows, s.r0, body, { delta: s.profileStep, curvature: s.profileCurvature, ridge: s.profileRidge }));
+      profiles.push(
+        buildProfile(rows, s.r0, body, {
+          delta: s.profileStep,
+          curvature: s.profileCurvature,
+          ridge: s.profileRidge,
+        }),
+      );
     else {
       const ranges = problem.arcs.flatMap((a) => rangeFixes(a, body).map((m) => m.z[1]!));
       flatProfiles.push(
-        ranges.length > 0 ? flatProfile(body, Math.min(...ranges), Math.max(...ranges), s.r0) : flatProfile(body, s.r0, s.r0, s.r0),
+        ranges.length > 0
+          ? flatProfile(body, Math.min(...ranges), Math.max(...ranges), s.r0)
+          : flatProfile(body, s.r0, s.r0, s.r0),
       );
     }
   }
   const s2 = noiseScale(windows);
   const hedge = Math.max(s.sigmaHFloor, Math.min(s.sigmaH, input.hedge ?? s.sigmaH));
 
-  const derivedBase = { spec, problem, fit, values, sigmas, solutions, windows, profiles, flatProfiles, noiseScale: s2, hedge };
-  const present = input.current ? presentState({ ...derivedBase, present: null }, ctx, input.current) : null;
+  const derivedBase = {
+    spec,
+    problem,
+    fit,
+    values,
+    sigmas,
+    solutions,
+    windows,
+    profiles,
+    flatProfiles,
+    noiseScale: s2,
+    hedge,
+  };
+  const present = input.current
+    ? presentState({ ...derivedBase, present: null }, ctx, input.current)
+    : null;
   const derived: ModelDerived = { ...derivedBase, present };
   const state = toModelState(input, derived, attempts);
   return { state, derived };
 }
 
 /** §8.1: the present state of an attempt from its most recent coasting windows. */
-export function presentState(d: ModelDerived, ctx: ModelContext, attemptId: AttemptId): PresentState | null {
+export function presentState(
+  d: ModelDerived,
+  ctx: ModelContext,
+  attemptId: AttemptId,
+): PresentState | null {
   const s = d.spec.settings;
   const build = d.problem.builds.get(attemptId);
   const arc = build?.arcs[build.arcs.length - 1];
@@ -611,7 +722,12 @@ export function arrivalState(ctx: ModelContext, spec: ModelSpec): PresentState {
   return {
     source: 'arrival',
     t: a.t,
-    state: Float64Array.of(a.position.x - px, a.position.y - py, a.velocity.x - vx, a.velocity.y - vy),
+    state: Float64Array.of(
+      a.position.x - px,
+      a.position.y - py,
+      a.velocity.x - vx,
+      a.velocity.y - vy,
+    ),
     covariance: cov,
   };
 }
@@ -620,15 +736,20 @@ export function arrivalState(ctx: ModelContext, spec: ModelSpec): PresentState {
 // Contract view
 // ---------------------------------------------------------------------------------------------
 
-function labelFor(ctx: ModelContext, id: string): { label: string; unit: string; extension?: string } {
+function labelFor(
+  ctx: ModelContext,
+  id: string,
+): { label: string; unit: string; extension?: string } {
   const p = priorOf(ctx, id);
-  if (p) return { label: p.label, unit: p.unit, ...(p.extension ? { extension: p.extension } : {}) };
+  if (p)
+    return { label: p.label, unit: p.unit, ...(p.extension ? { extension: p.extension } : {}) };
   let m = /^body\.(.+)\.mu$/.exec(id);
   if (m) {
     const name = ctx.bodies.find((b) => b.id === m![1])?.name ?? m[1]!;
     return { label: `${name} μ`, unit: 'm³/s²', extension: `unmodeled-body:${m[1]}` };
   }
-  if (id === EXPONENT_ID) return { label: 'Distance-law exponent', unit: '', extension: 'distance-law' };
+  if (id === EXPONENT_ID)
+    return { label: 'Distance-law exponent', unit: '', extension: 'distance-law' };
   const eqName = (eq: string) => ctx.ship.equipment.find((e) => e.id === eq)?.name ?? eq;
   m = /^thruster\.(.+)\.scale$/.exec(id);
   if (m) return { label: `${eqName(m[1]!)} thrust scale`, unit: '' };
@@ -641,7 +762,10 @@ function labelFor(ctx: ModelContext, id: string): { label: string; unit: string;
   return { label: id, unit: '' };
 }
 
-export function toCalibrationProfile(p: ProfileFit, windows: readonly WindowFit[]): CalibrationProfile {
+export function toCalibrationProfile(
+  p: ProfileFit,
+  windows: readonly WindowFit[],
+): CalibrationProfile {
   return {
     body: p.body,
     distances: p.uNodes.map((u) => p.r0 * Math.exp(u)),
@@ -666,7 +790,9 @@ function mergeSpans(spans: [number, number][]): [number, number][] {
 }
 
 /** Cross-range residuals (m) from bearing residuals: whitened residual × σ × measured range. */
-export function crossRangeResiduals(d: Pick<ModelDerived, 'fit' | 'problem'>): { arc: string; t: number; powered: boolean; m: number }[] {
+export function crossRangeResiduals(
+  d: Pick<ModelDerived, 'fit' | 'problem'>,
+): { arc: string; t: number; powered: boolean; m: number }[] {
   const fit = d.fit;
   if (!fit) return [];
   // The fit may predate the current arcs (in-flight refresh), so match by tag, not position.
@@ -684,7 +810,11 @@ export function crossRangeResiduals(d: Pick<ModelDerived, 'fit' | 'problem'>): {
   return out;
 }
 
-function toModelState(input: ModelInput, d: ModelDerived, attempts: readonly AttemptRecord[]): ModelState {
+function toModelState(
+  input: ModelInput,
+  d: ModelDerived,
+  attempts: readonly AttemptRecord[],
+): ModelState {
   const ctx = input.context;
   const fit = d.fit;
   const used = new Set(d.problem.arcs.map((a) => a.id.split('~')[0]!));
@@ -704,14 +834,28 @@ function toModelState(input: ModelInput, d: ModelDerived, attempts: readonly Att
   });
   // Priors the model does not estimate stay at the prior (support 0).
   for (const p of ctx.priors)
-    if (!parameters.some((q) => q.id === p.id) && !(p.extension && !input.adopted.includes(p.extension)))
+    if (
+      !parameters.some((q) => q.id === p.id) &&
+      !(p.extension && !input.adopted.includes(p.extension))
+    )
       if (!/^body\./.test(p.id))
-        parameters.push({ id: p.id, label: p.label, unit: p.unit, value: p.value, sigma: p.sigma, prior: { mean: p.value, sigma: p.sigma }, ...(p.extension ? { extension: p.extension } : {}), support: 0 });
+        parameters.push({
+          id: p.id,
+          label: p.label,
+          unit: p.unit,
+          value: p.value,
+          sigma: p.sigma,
+          prior: { mean: p.value, sigma: p.sigma },
+          ...(p.extension ? { extension: p.extension } : {}),
+          support: 0,
+        });
   const ids = d.problem.globals;
   const values = new Array<number>(ids.length * ids.length).fill(0);
   if (fit && fit.converged) {
     const gi = ids.map((g) => fit.names.indexOf(g));
-    gi.forEach((a, i) => gi.forEach((b, j) => (values[i * ids.length + j] = fit.P.data[a * fit.P.cols + b]!)));
+    gi.forEach((a, i) =>
+      gi.forEach((b, j) => (values[i * ids.length + j] = fit.P.data[a * fit.P.cols + b]!)),
+    );
   } else ids.forEach((g, i) => (values[i * ids.length + i] = d.sigmas[g]! ** 2));
   const covariance: CovarianceMatrix = { ids: [...ids], values };
 
@@ -736,11 +880,19 @@ function toModelState(input: ModelInput, d: ModelDerived, attempts: readonly Att
   const res = crossRangeResiduals(d);
   const stat = (p: boolean) => {
     const sel = res.filter((r) => r.powered === p);
-    return { rms: sel.length ? Math.sqrt(sel.reduce((s, r) => s + r.m * r.m, 0) / sel.length) : 0, n: sel.length };
+    return {
+      rms: sel.length ? Math.sqrt(sel.reduce((s, r) => s + r.m * r.m, 0) / sel.length) : 0,
+      n: sel.length,
+    };
   };
   const residuals: ResidualStats = { coast: stat(false), powered: stat(true) };
   const measurementCount = d.problem.arcs.reduce((s, a) => s + a.meas.length, 0);
-  const manifest = attempts.map((a) => [a.id, a.measurements.length, a.executed.length, a.events.length]);
+  const manifest = attempts.map((a) => [
+    a.id,
+    a.measurements.length,
+    a.executed.length,
+    a.events.length,
+  ]);
   return {
     version: input.version,
     ...(input.parent !== undefined ? { parent: input.parent } : {}),
@@ -749,10 +901,21 @@ function toModelState(input: ModelInput, d: ModelDerived, attempts: readonly Att
     extensions: [...(input.extensions ?? [])],
     support,
     residuals,
-    basedOn: { attempts: attempts.filter((a) => used.has(a.id)).map((a) => a.id), measurementCount },
+    basedOn: {
+      attempts: attempts.filter((a) => used.has(a.id)).map((a) => a.id),
+      measurementCount,
+    },
     dataManifest: hashState(manifest),
     ...(fit
-      ? { fit: { chi2: fit.chi2, nu: fitNu(fit), pEff: fit.pEff, iterations: fit.iterations, converged: fit.converged } }
+      ? {
+          fit: {
+            chi2: fit.chi2,
+            nu: fitNu(fit),
+            pEff: fit.pEff,
+            iterations: fit.iterations,
+            converged: fit.converged,
+          },
+        }
       : {}),
     calibration: d.profiles.map((p) => toCalibrationProfile(p, d.windows)),
     settings: settingsRecord(d.spec.settings),

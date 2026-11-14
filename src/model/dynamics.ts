@@ -274,7 +274,8 @@ export function compileArc(
       aT.push(sl(`{att}.emp${k}.T`));
     }
     const ref = bodyIndex.get(st.emp.ref);
-    if (ref === undefined) throw new Error(`dynamics: empirical frame body ${st.emp.ref} not modelled`);
+    if (ref === undefined)
+      throw new Error(`dynamics: empirical frame body ${st.emp.ref} not modelled`);
     const inner = Float64Array.from(bnd.slice(1, -1));
     for (const b of inner) breaks.push(b);
     emp = { ref, aR, aT, inner };
@@ -343,7 +344,13 @@ interface Resolved {
   readonly n: number;
   readonly mu: Float64Array;
   readonly gs: ({ g0: number; g1: number; u0: number } | null)[];
-  readonly prof: ({ un: Float64Array; g: Float64Array; lmin: number; lmax: number; eta: number } | null)[];
+  readonly prof: ({
+    un: Float64Array;
+    g: Float64Array;
+    lmin: number;
+    lmax: number;
+    eta: number;
+  } | null)[];
   readonly segKE: Float64Array;
   readonly segDE: Float64Array;
   readonly segScale: Float64Array;
@@ -642,7 +649,9 @@ export function predict(
       if (!segKE) {
         segKE = Float64Array.from(ca.segments, (s) => val(ca, s.kE, x));
         segDE = Float64Array.from(ca.segments, (s) => val(ca, s.dE, x));
-        segScale = Float64Array.from(ca.segments, (s) => (s.scale === null ? 1 : val(ca, s.scale, x)));
+        segScale = Float64Array.from(ca.segments, (s) =>
+          s.scale === null ? 1 : val(ca, s.scale, x),
+        );
         kA = val(ca, ca.kA, x);
       }
       let fx = 0;
