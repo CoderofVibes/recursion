@@ -55,6 +55,8 @@ export const colour = {
   // Bodies and hull materials
   body: '#2a2018',
   bodyRim: '#ffb070',
+  /** A body's sunlit face, seen through the window. */
+  bodyLit: '#8a6a4a',
   asteroid: '#c9b89a',
   hull: '#3a3026',
   hullEmissive: '#120d08',
@@ -89,6 +91,13 @@ export const opacity = {
   shipFootprint: 0.55,
   hullEdges: 0.8,
   connector: 0.6,
+  /** Forecast envelope inside an adopted rule's validated span (A5): between sampled and extrapolated. */
+  validatedBody: 0.08,
+  validatedEdge: 0.42,
+  validatedHatch: 0.12,
+  /** Hologram wireframes: a ship drawing, a ghosted hull. */
+  wire: 0.5,
+  wireGhost: 0.07,
   /** Instrument washes: a hovered row, a selected row, a Black Box highlight. */
   rowHover: 0.05,
   rowSelected: 0.11,

@@ -47,6 +47,8 @@ export const hatch = {
   unknownSpacing: 6,
   /** Extrapolated part of a forecast envelope, −45°. */
   envelopeSpacing: 2.4,
+  /** Envelope inside a validated span: the same hatch, twice as open. */
+  validatedSpacing: 4.8,
   /** CSS legend swatch. */
   legendPx: 4,
 } as const;
