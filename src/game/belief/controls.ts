@@ -21,7 +21,7 @@ import type {
   ViewSnapshot,
 } from '../../contracts/index.ts';
 import type { PlanStep } from './maneuver.ts';
-import type { BlackBoxPort, ModelPort } from './ports.ts';
+import type { BlackBoxPort, ModelPort, RuleControls } from './ports.ts';
 
 /** A plan before it is committed: times are seconds after the moment of commitment. */
 export interface PlanDraft {
@@ -60,6 +60,8 @@ export interface GameControls {
   readonly ship: ShipDefinition;
   readonly model: ModelPort;
   readonly blackBox: BlackBoxPort;
+  /** Testing, adopting and revoking rules, and the model's diagnostics. Absent with a stand-in. */
+  readonly rules?: RuleControls;
 
   status(): SessionStatus;
   /** What the console and 3D view draw this frame. */

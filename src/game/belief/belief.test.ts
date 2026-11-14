@@ -34,9 +34,9 @@ describe('belief side of the game layer stays on its side (P11)', () => {
 
 describe('attitude references resolve from the believed navigation solution', () => {
   const nav: NavigationView = {
-    ship: { position: { x: -1000, y: 0 }, velocity: { x: 3, y: -100 } },
+    ship: { position: { x: -1000, y: 0 }, velocity: { x: 0, y: -100 } },
     bodies: [
-      { id: 'alpha', position: { x: 0, y: 0 }, velocity: { x: 3, y: 0 } },
+      { id: 'alpha', position: { x: 0, y: 0 }, velocity: { x: 0, y: 0 } },
       { id: 'beta', position: { x: 4000, y: 0 }, velocity: { x: 0, y: 40 } },
     ],
     asteroids: [{ id: 'a-01', position: { x: -1000, y: 500 } }],
@@ -47,7 +47,7 @@ describe('attitude references resolve from the believed navigation solution', ()
     return resolved.angle;
   };
 
-  it('prograde is the velocity relative to the nearest body', () => {
+  it('prograde is the believed inertial velocity', () => {
     expect(angle({ reference: 'prograde' })).toBeCloseTo(-Math.PI / 2, 12);
     expect(angle({ reference: 'retrograde' })).toBeCloseTo(Math.PI / 2, 12);
     expect(angle({ reference: 'prograde', offset: 0.1 })).toBeCloseTo(-Math.PI / 2 + 0.1, 12);
@@ -71,7 +71,7 @@ describe('attitude references resolve from the believed navigation solution', ()
 
   it('cannot resolve what the ship does not know', () => {
     expect(resolveAttitude({ reference: 'toward', target: 'nowhere' }, nav)).toBeUndefined();
-    const still = { ...nav, ship: { ...nav.ship, velocity: { x: 3, y: 0 } } };
+    const still = { ...nav, ship: { ...nav.ship, velocity: { x: 0, y: 0 } } };
     expect(resolveAttitude({ reference: 'prograde' }, still)).toBeUndefined();
   });
 

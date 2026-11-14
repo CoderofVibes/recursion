@@ -18,6 +18,7 @@ const DIRECTIONS: Readonly<Record<string, AttitudeTarget>> = {
   'Away from Alpha': { reference: 'away', target: 'alpha' },
 };
 const SPANS = [600e3, 1.3e6, 2.6e6, 6e6];
+const RULE = 'distance-law';
 
 const clock = (seconds: number): string => {
   const h = Math.floor(seconds / 3600);
@@ -41,8 +42,19 @@ const describe = (event: ShipEvent): string => {
   }
 };
 
-export function Bench({ game }: { readonly game: GameControls }) {
+export interface BenchProps {
+  readonly game: GameControls;
+  /** The last failed model call, if any. */
+  readonly modelError?: () => string | undefined;
+  /** Delete the saved records (the page reloads afterwards). */
+  readonly erase?: () => Promise<void>;
+}
+
+export function Bench({ game, modelError, erase }: BenchProps) {
   const [, refresh] = useState(0);
+  const [heldOut, setHeldOut] = useState('');
+  const [verdict, setVerdict] = useState('');
+  const [adoptable, setAdoptable] = useState(false);
   const [direction, setDirection] = useState('Retrograde');
   const [deltaV, setDeltaV] = useState(9.85);
   const [delay, setDelay] = useState(400);
@@ -111,6 +123,48 @@ export function Bench({ game }: { readonly game: GameControls }) {
     setCompare(next && done.length >= 2);
     game.setCompare(next && done.length >= 2 ? [done.at(-2)!.id, done.at(-1)!.id] : undefined);
   };
+  // Rules come only from the player: fit the distance law on the other finished attempts,
+  // check it against the one held out, and adopt it only if that passed.
+  const finished = archive.attempts.filter((a) => a.outcome.kind !== 'in-progress');
+  const held = finished.some((a) => a.id === heldOut) ? heldOut : (finished[0]?.id ?? '');
+  const ruled = model.extensions.some((e) => e.id === RULE && e.status === 'adopted');
+  const onTest = (): void => {
+    const training = finished.filter((a) => a.id !== held).map((a) => a.id);
+    if (!game.rules || !held || training.length === 0) return;
+    setVerdict('testing');
+    game.rules.test(RULE, training, held).then(
+      (result) => {
+        const fitted = result.fitted?.['law.gravity.exponent'];
+        const test = result.heldOutTest;
+        setAdoptable(result.adoptable);
+        setVerdict(
+          `${result.adoptable ? 'holds' : 'fails'}` +
+            (test ? ` · T/ν ${test.TperNu.toFixed(2)} (limit ${test.threshold.toFixed(2)})` : '') +
+            (fitted ? ` · exponent ${fitted.value.toFixed(3)}` : ''),
+        );
+      },
+      (reason: unknown) => {
+        setAdoptable(false);
+        setVerdict(`no test · ${reason instanceof Error ? reason.message : String(reason)}`);
+      },
+    );
+  };
+  const onRule = (): void => {
+    if (!game.rules) return;
+    void (ruled ? game.rules.revoke(RULE) : game.rules.adopt(RULE)).then(
+      () => setVerdict(ruled ? 'revoked' : 'adopted'),
+      (reason: unknown) => setVerdict(reason instanceof Error ? reason.message : String(reason)),
+    );
+  };
+  // Measured strength of Alpha's pull against the model's law, nearest and farthest sampled.
+  const profile = model.calibration[0];
+  const strength =
+    profile && profile.distances.length > 1
+      ? `×${profile.scale[0]!.toFixed(2)} at ${(profile.distances[0]! / 1e3).toFixed(0)} km · ` +
+        `×${profile.scale.at(-1)!.toFixed(2)} at ${(profile.distances.at(-1)! / 1e3).toFixed(0)} km`
+      : 'no data';
+  const failure = modelError?.();
+
   const again = (): void => {
     preview.current = undefined;
     setCompare(false);
@@ -140,6 +194,8 @@ export function Bench({ game }: { readonly game: GameControls }) {
     ],
     ['Forecast', forecast ? `${forecast.id} · ends +${clock(forecast.horizon)}` : 'none issued'],
     ['Plan', status.planId ? `${status.planId} · ${status.pending} pending` : 'none'],
+    ['Strength', strength],
+    ...(failure ? ([['Model fault', failure]] as [string, string][]) : []),
     [
       'Black Box',
       `${archive.attempts.length} attempts · ${record?.measurements.length ?? 0} records`,
@@ -255,9 +311,37 @@ export function Bench({ game }: { readonly game: GameControls }) {
           </button>
         </fieldset>
 
+        {game.rules && (
+          <fieldset>
+            <legend>Rule · distance law</legend>
+            <label>
+              Hold out
+              <select value={held} onChange={(e) => setHeldOut(e.target.value)}>
+                {finished.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.index}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button onClick={onTest} disabled={finished.length < 2 || ruled}>
+              Test
+            </button>
+            <button onClick={onRule} disabled={!ruled && !adoptable}>
+              {ruled ? 'Revoke' : 'Adopt'}
+            </button>
+            <span className="bench-note">{verdict}</span>
+          </fieldset>
+        )}
+
         <fieldset>
           <legend>Recurrence</legend>
           <button onClick={again}>{ended ? 'Begin again' : 'Recall'}</button>
+          {erase && (
+            <button onClick={() => void erase().then(() => window.location.reload())}>
+              Erase records
+            </button>
+          )}
         </fieldset>
 
         <ul className="bench-events">

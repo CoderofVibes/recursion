@@ -6,7 +6,7 @@
 import { describe, expect, it } from 'vitest';
 import type { TruthWorld } from '../../contracts/truth/index.ts';
 import { burnDuration, burnSteps } from '../../game/belief/maneuver.ts';
-import { createStandInBlackBox } from '../../game/belief/standin-blackbox.ts';
+import { createBlackBox } from '../../game/belief/blackbox.ts';
 import { createStandInModel } from '../../game/belief/standin-model.ts';
 import { createGameSession } from '../../game/session.ts';
 import { hashState } from '../../lib/hash.ts';
@@ -235,16 +235,23 @@ describe('Gravity range: flown through the game loop', () => {
     { timeout: 180_000 },
     async () => {
       const model = createStandInModel({ referenceRadius: LAW.referenceRadius });
-      const blackBox = createStandInBlackBox();
+      const blackBox = createBlackBox();
       const session = createGameSession(setup, { model, blackBox, now: () => 'test' });
+      /** The believed ship: position in the believed frame; r, v and radial speed about Alpha. */
       const believed = () => {
-        const s = model.believedWorld(session.status().t).ship;
-        const r = Math.hypot(s.position.x, s.position.y);
+        const w = model.believedWorld(session.status().t);
+        const s = w.ship;
+        const a = w.bodies[0]!;
+        const x = s.position.x - a.position.x;
+        const y = s.position.y - a.position.y;
+        const vx = s.velocity.x - a.velocity.x;
+        const vy = s.velocity.y - a.velocity.y;
+        const r = Math.hypot(x, y);
         return {
           position: s.position,
           r,
-          v: Math.hypot(s.velocity.x, s.velocity.y),
-          radial: (s.position.x * s.velocity.x + s.position.y * s.velocity.y) / r,
+          v: Math.hypot(vx, vy),
+          radial: (x * vx + y * vy) / r,
           mass: s.massProperties.mass,
         };
       };

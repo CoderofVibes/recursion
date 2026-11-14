@@ -3,9 +3,12 @@
  * angles from the believed navigation solution, before a command reaches the ship. Ship
  * systems (2B) reject unresolved references instead of evaluating them against truth.
  *
- * Conventions [ASSUMED; see the 2F handoff: the forecast must resolve planned burns the same way]:
- * - prograde / retrograde: along the believed ship velocity **relative to the nearest believed
- *   body** (orbital prograde about it), or the plain believed velocity if no body is known;
+ * Conventions, the same ones the model's forecast uses for planned burns (src/model README), so
+ * the ship flies what was forecast:
+ * - prograde / retrograde: along the believed ship velocity in the briefing's inertial frame
+ *   (where the primary starts at rest). Near the primary this is orbital prograde to within a
+ *   degree for the first day; it is not prograde about a body that moves fast in that frame.
+ *   [ASSUMED by 2C; a body-relative rule would have to change in both places together];
  * - toward / away: along the line from the believed ship position to the believed position of
  *   the named body or asteroid;
  * - `offset` is added counter-clockwise.
@@ -29,23 +32,10 @@ export interface NavigationView {
 
 export const navigationView = (world: BelievedWorld): NavigationView => world;
 
-/** Inertial angle of the believed orbital velocity, or undefined when the ship is at rest. */
+/** Inertial angle of the believed velocity, or undefined when the ship is at rest. */
 export function progradeAngle(nav: NavigationView): Radians | undefined {
-  let reference: Vec2 = { x: 0, y: 0 };
-  let nearest = Infinity;
-  for (const body of nav.bodies) {
-    const d = Math.hypot(
-      body.position.x - nav.ship.position.x,
-      body.position.y - nav.ship.position.y,
-    );
-    if (d < nearest) {
-      nearest = d;
-      reference = body.velocity;
-    }
-  }
-  const vx = nav.ship.velocity.x - reference.x;
-  const vy = nav.ship.velocity.y - reference.y;
-  return vx === 0 && vy === 0 ? undefined : Math.atan2(vy, vx);
+  const { x, y } = nav.ship.velocity;
+  return x === 0 && y === 0 ? undefined : Math.atan2(y, x);
 }
 
 /**

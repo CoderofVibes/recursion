@@ -1,7 +1,11 @@
 /**
- * BELIEF side (no truth imports). The seams where the predictive model and Black Box (2C) plug
- * into the game loop. Until 2C merges, `standin-model.ts` and `standin-blackbox.ts` implement
- * them; afterwards thin adapters over src/model and src/blackbox do.
+ * BELIEF side (no truth imports). The seams between the game loop and the believed-side
+ * services (2C): what the loop needs from the predictive model and from Black Box.
+ *
+ * - `ModelPort`: `model-bridge.ts` runs the real model (src/model, in its Web Worker) with a
+ *   small navigator beside it for the frame-by-frame believed world; `standin-model.ts` alone
+ *   is a fast, synchronous stand-in for tests and headless runs.
+ * - `BlackBoxPort`: `blackbox.ts`, over src/blackbox's recorder and archive.
  *
  * Everything crossing these interfaces is what the ship sensed, commanded or was briefed with.
  */
@@ -14,6 +18,7 @@ import type {
   BlackBoxArchive,
   EncounterBriefing,
   ExecutedCommand,
+  ExtensionId,
   Forecast,
   ForecastDraft,
   ForecastId,
@@ -24,6 +29,7 @@ import type {
   ShipDefinition,
   ShipEvent,
 } from '../../contracts/index.ts';
+import type { ExtensionRecord, ModelReport } from '../../model/index.ts';
 
 /** A new attempt: at arrival, or after recurrence (P8). */
 export interface AttemptStartInfo {
@@ -32,6 +38,8 @@ export interface AttemptStartInfo {
   readonly index: number;
   readonly briefing: EncounterBriefing;
   readonly ship: ShipDefinition;
+  /** Ship mass on arrival from the loading record, kg. */
+  readonly arrivalMass?: number;
   /** Wall-clock ISO time, for the record list only. */
   readonly startedAt: string;
 }
@@ -57,31 +65,59 @@ export interface ForecastRequest {
 }
 
 /**
- * The predictive model (A2, P5, P6). It sees only recorded measurements, executed commands and
- * sensed events (P8, 1G), and never plans.
+ * The predictive model as the loop uses it (A2, P5, P6). It sees only recorded measurements,
+ * executed commands and sensed events (P8, 1G), and never plans.
  */
 export interface ModelPort {
   /**
    * Arrival or recurrence: the present state returns to the briefing's arrival estimate;
-   * everything learned is kept.
+   * everything learned is kept. `record` is the new attempt's (empty) Black Box record.
    */
-  beginAttempt(start: AttemptStartInfo): void;
+  beginAttempt(start: AttemptStartInfo, record: AttemptRecord): void;
   /** Records in the order Black Box stored them. Cheap; called once per tick that recorded. */
   ingest(batch: RecordBatch): void;
+  /** The attempt ended (loss, Recall, completion): its final record. The model refits. */
+  endAttempt(final: AttemptRecord): void;
   /** The believed world extrapolated to `t`. Called every frame and when resolving commands. */
   believedWorld(t: Seconds): BelievedWorld;
+  /** The latest model state known on this thread. */
   state(): ModelState;
-  /** A draft forecast of the plan from the present state. May run in a worker. */
+  /** A forecast of the plan from the present state (a draft; the loop issues and freezes it). */
   forecast(request: ForecastRequest): Promise<ForecastDraft>;
+  /** Resolves once everything handed over so far has been taken in. */
+  settled(): Promise<void>;
+}
+
+/**
+ * Rules come only from the player (A4, P5): test an extension against a held-out attempt,
+ * adopt one that passed, revoke one. Plus the diagnostics that prompt the question.
+ */
+export interface RuleControls {
+  test(
+    extension: ExtensionId,
+    training: readonly AttemptId[],
+    heldOut: AttemptId,
+  ): Promise<ExtensionRecord>;
+  adopt(extension: ExtensionId): Promise<ModelState>;
+  revoke(extension: ExtensionId): Promise<ModelState>;
+  /** Strength against distance, residuals, confounding, coverage (src/model report.ts). */
+  report(): Promise<ModelReport>;
 }
 
 /** Black Box (P8): keeps every attempt across recurrence. */
 export interface BlackBoxPort {
-  beginAttempt(start: AttemptStartInfo, modelVersion: number): void;
+  /** Start a record; returns it as it stands (empty). */
+  beginAttempt(start: AttemptStartInfo, modelVersion: number): AttemptRecord;
   record(batch: RecordBatch): void;
   recordPlan(attemptId: AttemptId, plan: Plan): void;
   recordForecast(attemptId: AttemptId, forecast: Forecast): void;
-  endAttempt(attemptId: AttemptId, outcome: AttemptOutcome, modelVersionAtEnd: number): void;
+  /** End the attempt; returns the final, frozen record. */
+  endAttempt(
+    attemptId: AttemptId,
+    outcome: Exclude<AttemptOutcome, { kind: 'in-progress' }>,
+    modelVersionAtEnd: number,
+  ): AttemptRecord;
+  /** A finished attempt's record, or the record so far of the one in progress. */
   attempt(attemptId: AttemptId): AttemptRecord | undefined;
   archive(): BlackBoxArchive;
 }

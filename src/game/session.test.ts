@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { createGravityRange, LAW } from '../content/gravity-range/index.ts';
 import { hashState } from '../lib/hash.ts';
 import { burnDuration, burnSteps } from './belief/maneuver.ts';
-import { createStandInBlackBox } from './belief/standin-blackbox.ts';
+import { createBlackBox } from './belief/blackbox.ts';
 import { createStandInModel } from './belief/standin-model.ts';
 import type { PlanDraft } from './belief/controls.ts';
 import { createGameSession, type GameSession } from './session.ts';
@@ -15,7 +15,7 @@ const setup = createGravityRange();
 
 function start(clock?: () => number) {
   const model = createStandInModel({ referenceRadius: LAW.referenceRadius });
-  const blackBox = createStandInBlackBox();
+  const blackBox = createBlackBox();
   const session = createGameSession(setup, {
     model,
     blackBox,
@@ -112,11 +112,18 @@ describe('game session: prepare, operate', () => {
     const view = session.snapshot();
     const truth = trueRelative(session);
     expect(view.t).toBe(600);
+    const about = view.world.bodies[0]!.position;
     expect(
-      Math.hypot(view.world.ship.position.x - truth.x, view.world.ship.position.y - truth.y),
+      Math.hypot(
+        view.world.ship.position.x - about.x - truth.x,
+        view.world.ship.position.y - about.y - truth.y,
+      ),
     ).toBeLessThan(5000);
-    // The believed frame has Alpha at the origin; truth's barycentric frame does not.
-    expect(view.world.bodies[0]).toMatchObject({ id: 'alpha', position: { x: 0, y: 0 } });
+    // The believed frame starts with Alpha at the origin and at rest (it has drifted a few
+    // tens of metres by now, pulled by Beta); truth's barycentric frame has it 800 km away.
+    const alpha = view.world.bodies[0]!;
+    expect(alpha.id).toBe('alpha');
+    expect(Math.hypot(alpha.position.x, alpha.position.y)).toBeLessThan(100);
     expect(session.truth().sim.world.bodies[0]!.position.x).toBeLessThan(-600e3);
     expect(view.trail.map((p) => p.t)).toEqual([
       0, 60, 120, 180, 240, 300, 360, 420, 480, 540, 600,
@@ -125,9 +132,10 @@ describe('game session: prepare, operate', () => {
     expect(view.coverage.sectors[0]).toMatchObject({ sensor: 'camera' });
     // The camera is locked on Alpha, so its sector points along the believed line to it.
     expect(Math.abs(view.coverage.sectors[0]!.center)).toBeLessThan(0.1);
+    // The objective ring follows Alpha's believed position.
     expect(view.objectives[0]).toMatchObject({
       id: 'low-orbit',
-      region: { center: { x: 0, y: 0 } },
+      region: { center: alpha.position },
     });
     expect(view.world.ship.propellant['main-propellant']!.mean).toBe(6000);
   });
@@ -338,7 +346,7 @@ describe('game session: recurrence v0 (P8)', () => {
         },
       },
     };
-    const blackBox = createStandInBlackBox();
+    const blackBox = createBlackBox();
     const session = createGameSession(blocked, {
       model: createStandInModel({ referenceRadius: LAW.referenceRadius }),
       blackBox,

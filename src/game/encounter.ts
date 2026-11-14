@@ -67,6 +67,11 @@ export interface EncounterSetup {
    * source `procedure`), so the believed side knows how the ship is set up without reading truth.
    */
   readonly arrivalCommands: readonly Command[];
+  /**
+   * The ship's mass on arrival as the crew knows it from the loading record, kg. The model
+   * uses it until the first tank gauges are recorded.
+   */
+  readonly arrivalMass: Kilograms;
   readonly objectiveRules: readonly ObjectiveRule[];
   readonly play: PlayValues;
 }

@@ -32,7 +32,13 @@ import type {
 } from '../contracts/index.ts';
 import { issueForecast } from '../contracts/index.ts';
 import type { GameControls, Phase, PlanDraft, SessionStatus } from './belief/controls.ts';
-import type { AttemptStartInfo, BlackBoxPort, ModelPort, RecordBatch } from './belief/ports.ts';
+import type {
+  AttemptStartInfo,
+  BlackBoxPort,
+  ModelPort,
+  RecordBatch,
+  RuleControls,
+} from './belief/ports.ts';
 import { navigationView, resolveCommand } from './belief/resolve.ts';
 import { createTelemetryFilter } from './belief/telemetry.ts';
 import {
@@ -52,6 +58,8 @@ import {
 export interface SessionOptions {
   readonly model: ModelPort;
   readonly blackBox: BlackBoxPort;
+  /** Rule testing and diagnostics, when the model offers them (the real one does). */
+  readonly rules?: RuleControls;
   /** Wall-clock ISO time for the record list. Default: the system clock. */
   readonly now?: () => string;
   /** Milliseconds, for the per-frame budget. Default: `performance.now`. */
@@ -93,7 +101,8 @@ export function createGameSession(setup: EncounterSetup, options: SessionOptions
 
   let truth: GameTruthState = stepper.initial;
   let last: TickResult | undefined;
-  let attemptIndex = 0;
+  // Attempts are numbered on from whatever Black Box already holds (a restored save).
+  let attemptIndex = blackBox.archive().attempts.reduce((n, a) => Math.max(n, a.index), 0);
   let attemptId: AttemptId = '';
   let tick = 0;
   let paused = true;
@@ -137,10 +146,10 @@ export function createGameSession(setup: EncounterSetup, options: SessionOptions
       index: attemptIndex,
       briefing: definition.briefing,
       ship: definition.ship,
+      arrivalMass: setup.arrivalMass,
       startedAt: now(),
     };
-    model.beginAttempt(start);
-    blackBox.beginAttempt(start, model.state().version);
+    model.beginAttempt(start, blackBox.beginAttempt(start, model.state().version));
     trails.set(attemptId, trail);
     trail.push({ t: 0, position: model.believedWorld(0).ship.position });
   }
@@ -150,13 +159,14 @@ export function createGameSession(setup: EncounterSetup, options: SessionOptions
     model.ingest(batch);
   }
 
-  function end(result: AttemptOutcome): void {
+  function end(result: Exclude<AttemptOutcome, { kind: 'in-progress' }>): void {
     outcome = result;
     paused = true;
     debt = 0;
     queue = [];
     planId = undefined;
-    blackBox.endAttempt(attemptId, result, model.state().version);
+    // Black Box keeps the final record; the model refits from it (P8).
+    model.endAttempt(blackBox.endAttempt(attemptId, result, model.state().version));
   }
 
   function tickOnce(): void {
@@ -248,6 +258,7 @@ export function createGameSession(setup: EncounterSetup, options: SessionOptions
     ship: definition.ship,
     model,
     blackBox,
+    ...(options.rules ? { rules: options.rules } : {}),
 
     status(): SessionStatus {
       return {

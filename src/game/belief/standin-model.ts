@@ -7,9 +7,12 @@
  * their briefing priors: it learns nothing, fits no extension and validates nothing. That is
  * 2C's work (src/model); this exists so the loop, the seams and the encounter can be exercised.
  *
- * Simplifications [ASSUMED, stand-in only]:
- * - Frame: the primary (first briefed body) at the origin, treated as inertial. The secondary's
- *   pull on the primary is included as a differential term (1B §4).
+ * Frame: the filter works relative to the primary (first briefed body). What it reports is in
+ * the briefing's believed inertial frame, built the way the model's forecasts are (src/model
+ * forecast.ts): the two bodies' barycentre moves uniformly from its believed arrival state.
+ *
+ * Simplifications [ASSUMED]:
+ * - The secondary's pull on the primary is included as a differential term (1B §4).
  * - Unmodelled acceleration is white noise that grows away from the reference radius, which
  *   also widens the forecast envelope there. The forecast ends at the P10 horizon.
  * - Planned burns start at their commanded attitude at once (no slew).
@@ -90,6 +93,11 @@ export interface StandInModelOptions {
 export interface StandInModel extends ModelPort {
   /** Stand-in only: overwrite a parameter value, e.g. `law.gravity.exponent`, for seam tests. */
   setParameter(id: string, value: number): void;
+  /**
+   * Take the law in force from a model state: body GMs, and the exponent while the
+   * `distance-law` rule is adopted. Used when this runs as the navigator beside the real model.
+   */
+  adopt(state: ModelState): void;
 }
 
 const diagonal = (diag: Row): Mat => {
@@ -342,10 +350,49 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
     p[(offset + 1) * (N + 1)]!,
   ];
 
-  const estimate = (n: Nav): ShipEstimate => ({
-    t: n.t,
+  /**
+   * The primary's state in the briefing's inertial frame at time t, given the secondary's state
+   * relative to it: the barycentre moves uniformly from its believed arrival state.
+   */
+  const primaryInertial = (t: number, s: Particle | undefined): Particle => {
+    const p = primary();
+    const second = briefing!.knownBodies[1];
+    const mp = Math.max(mu(p.id), 0);
+    const ms = s && second ? Math.max(mu(second.id), 0) : 0;
+    if (!s || !second || mp + ms <= 0 || ms === 0)
+      return {
+        position: { x: p.position.x + p.velocity.x * t, y: p.position.y + p.velocity.y * t },
+        velocity: p.velocity,
+      };
+    const f = ms / (mp + ms);
+    // Barycentre at arrival: the primary's briefed state plus f × the secondary's offset from it.
+    const bx = p.position.x + f * (second.position.x - p.position.x);
+    const by = p.position.y + f * (second.position.y - p.position.y);
+    const bvx = p.velocity.x + f * (second.velocity.x - p.velocity.x);
+    const bvy = p.velocity.y + f * (second.velocity.y - p.velocity.y);
+    return {
+      position: { x: bx + bvx * t - f * s.position.x, y: by + bvy * t - f * s.position.y },
+      velocity: { x: bvx - f * s.velocity.x, y: bvy - f * s.velocity.y },
+    };
+  };
+  const offset = (origin: Particle, relative: Particle): Particle => ({
+    position: {
+      x: origin.position.x + relative.position.x,
+      y: origin.position.y + relative.position.y,
+    },
+    velocity: {
+      x: origin.velocity.x + relative.velocity.x,
+      y: origin.velocity.y + relative.velocity.y,
+    },
+  });
+  const shipOf = (n: Nav): Particle => ({
     position: { x: n.x[0], y: n.x[1] },
     velocity: { x: n.x[2], y: n.x[3] },
+  });
+
+  const estimate = (n: Nav, origin: Particle): ShipEstimate => ({
+    t: n.t,
+    ...offset(origin, shipOf(n)),
     positionCov: cov2(n.p, 0),
     velocityCov: cov2(n.p, 2),
     attitude: attitude.value,
@@ -374,18 +421,18 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
       ]),
     );
 
-  const believedBodies = (t: number): BelievedBody[] =>
+  const believedBodies = (t: number, origin: Particle): BelievedBody[] =>
     briefing!.knownBodies.map((b, i) =>
       i === 0 || !secondary || b.id !== secondary.id
         ? {
             ...b,
+            ...(i === 0 ? origin : {}),
             tracked: i === 0 && primaryFixT !== undefined && t - primaryFixT < 120,
             lastFix: primaryFixT ?? b.lastFix,
           }
         : {
             ...b,
-            position: secondary.position,
-            velocity: secondary.velocity,
+            ...offset(origin, secondary),
             tracked: secondary.tracked && t - secondary.fixT < 120,
             lastFix: secondary.fixT,
           },
@@ -397,6 +444,18 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
       version += 1;
     },
 
+    adopt(state) {
+      for (const parameter of state.parameters)
+        if (parameter.id.startsWith('body.') && !parameter.arc)
+          parameters.set(parameter.id, parameter.value);
+      const ruled = state.extensions.some((e) => e.id === 'distance-law' && e.status === 'adopted');
+      const exponentValue = state.parameters.find((q) => q.id === 'law.gravity.exponent')?.value;
+      if (ruled && exponentValue !== undefined)
+        parameters.set('law.gravity.exponent', exponentValue);
+      else parameters.delete('law.gravity.exponent');
+      version = state.version;
+    },
+
     beginAttempt(start: AttemptStartInfo) {
       briefing = start.briefing;
       ship = start.ship;
@@ -405,9 +464,15 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
           if (!prior.extension && !parameters.has(prior.id)) parameters.set(prior.id, prior.value);
       attemptsSeen.push(start.attemptId);
       const a = briefing.arrivalEstimate;
+      const origin = briefing.knownBodies[0]!;
+      const relative = (q: Particle): Particle => ({
+        position: { x: q.position.x - origin.position.x, y: q.position.y - origin.position.y },
+        velocity: { x: q.velocity.x - origin.velocity.x, y: q.velocity.y - origin.velocity.y },
+      });
+      const arrival = relative(a);
       nav = {
         t: a.t,
-        x: [a.position.x, a.position.y, a.velocity.x, a.velocity.y, 1],
+        x: [arrival.position.x, arrival.position.y, arrival.velocity.x, arrival.velocity.y, 1],
         p: diagonal([
           a.positionCov[0],
           a.positionCov[2],
@@ -418,18 +483,11 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
       };
       const second = briefing.knownBodies[1];
       secondary = second
-        ? {
-            id: second.id,
-            position: second.position,
-            velocity: second.velocity,
-            fixT: a.t,
-            tracked: false,
-          }
+        ? { id: second.id, ...relative(second), fixT: a.t, tracked: false }
         : undefined;
       asteroids = briefing.knownAsteroids.map((known) => ({
         known,
-        position: known.position,
-        velocity: known.velocity,
+        ...relative(known),
         t: a.t,
       }));
       attitude = { value: a.attitude, sigma: a.attitudeSigma, rate: a.angularRate };
@@ -513,10 +571,19 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
       }
     },
 
+    endAttempt() {
+      // Nothing to refit: the navigator keeps no parameters of its own.
+    },
+
+    settled() {
+      return Promise.resolve();
+    },
+
     believedWorld(t: Seconds): BelievedWorld {
       if (!briefing || !ship) throw new Error('model has no attempt');
       advanceTo(t);
-      const base = estimate(nav);
+      const origin = primaryInertial(t, secondary);
+      const base = estimate(nav, origin);
       const propellant = Object.fromEntries(
         ship.tanks.map((tank) => [tank.id, { mean: gauged(tank.id), sigma: 0 }]),
       );
@@ -533,12 +600,8 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
         t,
         modelVersion: version,
         ship: believed,
-        bodies: believedBodies(t),
-        asteroids: asteroids.map((a) => ({
-          ...a.known,
-          position: a.position,
-          velocity: a.velocity,
-        })),
+        bodies: believedBodies(t, origin),
+        asteroids: asteroids.map((a) => ({ ...a.known, ...offset(origin, a) })),
         fields: [],
       };
     },
@@ -588,17 +651,18 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
       advanceTo(request.issuedAt);
       const def = ship;
       const known = briefing.knownBodies;
-      const initial = estimate(nav);
+      const initial = estimate(nav, primaryInertial(nav.t, secondary));
       const mp = massProperties();
 
       const state: Nav = { t: nav.t, x: [...nav.x], p: nav.p.slice() };
       const second: Particle | undefined = secondary
         ? { position: secondary.position, velocity: secondary.velocity }
         : undefined;
-      const bodyAt = (i: number): Particle =>
-        i === 0 || !second
-          ? { position: known[i]!.position, velocity: known[i]!.velocity }
-          : second;
+      /** Inertial state of briefed body i at the forecast's current time. */
+      const bodyAt = (i: number): Particle => {
+        const origin = primaryInertial(state.t, second);
+        return i === 0 || !second ? origin : offset(origin, second);
+      };
 
       // Burns still running, plus the plan's, each resolved against the forecast's own state
       // at the moment it starts (the same rule the game uses when the command executes).
@@ -621,7 +685,9 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
       const sample = (): boolean => {
         const positionCov = cov2(state.p, 0);
         const sigma = covEllipse(positionCov).major;
-        const [px, py] = state.x;
+        const here = offset(bodyAt(0), shipOf(state));
+        const px = here.position.x;
+        const py = here.position.y;
         let nearest = Infinity;
         let surface = false;
         known.forEach((b, i) => {
@@ -636,11 +702,11 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
         });
         // Past the horizon the model says nothing (P10); the first sample is always kept.
         if (samples.length > 0 && sigma > HORIZON_FRACTION * nearest) return false;
-        const r = Math.hypot(px, py);
+        const r = Math.hypot(state.x[0], state.x[1]);
         samples.push({
           t: state.t,
-          position: { x: px, y: py },
-          velocity: { x: state.x[2], y: state.x[3] },
+          position: here.position,
+          velocity: here.velocity,
           positionCov,
           extrapolating: !(r >= support.min && r <= support.max),
         });
@@ -654,10 +720,7 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
             if (command.kind !== 'burn') continue;
             const resolved = command.attitude
               ? resolveAttitude(command.attitude, {
-                  ship: {
-                    position: { x: state.x[0], y: state.x[1] },
-                    velocity: { x: state.x[2], y: state.x[3] },
-                  },
+                  ship: offset(bodyAt(0), shipOf(state)),
                   bodies: known.map((b, i) => ({ id: b.id, ...bodyAt(i) })),
                   asteroids: [],
                 })

@@ -29,6 +29,14 @@ body {
   font-size: 0.8rem;
 }
 
+.bench-wait {
+  height: 100%;
+  display: grid;
+  place-content: center;
+  letter-spacing: 0.6em;
+  color: var(--accent);
+}
+
 .bench {
   height: 100%;
   display: grid;
@@ -147,6 +155,11 @@ body {
 .bench-side button:disabled {
   color: var(--dim);
   cursor: default;
+}
+
+.bench-note {
+  flex-basis: 100%;
+  color: var(--accent);
 }
 
 .bench-events {
