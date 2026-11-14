@@ -3,7 +3,7 @@
 **Thread:** Claude (Fable) · **Branch:** `p2/2g-3d-flight` (worktree `.worktrees/2g`) · **Phase:** 2 (starts now) · **Needs:** main with 2C update 3 merged (done)
 
 ## Context
-Recursion is a browser-based spacecraft engineering roguelike for NASA Space Apps 2026. The submission deadline is **17:00 PST Sunday, November 15**.
+Recursion is a browser-based spacecraft engineering roguelike for NASA Space Apps 2026.
 
 The owner has decided that flight is three-dimensional (DECISIONS A11, replacing P1; `docs/CREATIVE_BRIEF.md` §10, second addendum). Everything below the screen is planar today:
 - 2D vectors (`src/lib/vec2.ts`) and 2×2 covariances (`Cov2`);
@@ -63,7 +63,7 @@ Every checkpoint must:
 
 Never hand over a half-converted step. Once the lift has landed, steps 2–4 touch separate folders, so you may run them in parallel with your own subagents; merge each as its own green checkpoint.
 
-### 1. Lift: 3D types, everything still flat (first, and fast)
+### 1. Lift: 3D types, everything still flat (first; 2D builds on it)
 - **Vectors:** a 3D vector module in place of `vec2`.
 - **Covariance:** a 3D position covariance (six unique terms) as a tuple. Fix `DeepReadonly` so tuples keep their shape; today `Forecast` turns `Cov2` into `number[]` (1E's request).
 - **Attitude:** a unit quaternion (body to inertial) and an angular-velocity vector, with inertia as principal moments and axes.
@@ -144,9 +144,6 @@ Never hand over a half-converted step. Once the lift has landed, steps 2–4 tou
 ## Left for 2C and 2F (they resume after your handoff)
 - **2C:** its unfinished, uncommitted work in `.worktrees/2c` is still planar and not on main: two moving bodies (2F requests 2, 12 and 13). Leave it alone.
 - **2F:** asteroid ranging from known-size rocks, A10's per-run seeds, and `EncounterBriefing.referenceRadius`. Take these only if they fall out of step 5 for free.
-
-## If time runs short
-Tell the owner at once, with options and your recommendation. Merged checkpoints stand on their own.
 
 ## Done when
 - `npm run check` and `npm run build` pass.
