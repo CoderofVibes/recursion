@@ -7,7 +7,8 @@
  * Afterwards they are `{ x, y, z }`, six terms, a quaternion with an angular-velocity vector,
  * a hull of prisms and a cone. Everything on screen is drawn in 3D from the start and reads
  * through these functions, which accept either shape, so the switch is a change here and
- * nowhere else. The two places that build planar commands are marked `PLANAR` below.
+ * nowhere else. The two places that build planar commands are marked `PLANAR` below; the
+ * switch itself is proved on the local branch `scratch/2d-on-2g-lift` (docs/handoffs/2D.md).
  *
  * Scene axes: game (x, y, z) maps to scene (x, z, -y). Game z (out of the old flight plane) is
  * scene "up", and the plane seen from above is not mirrored (visual-direction.md § 9).
