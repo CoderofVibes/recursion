@@ -31,12 +31,16 @@ function randomPlan(world: TruthWorld, seed: string, steps: number): (SimInput |
           thrusts: [
             {
               source: 'main-engine',
-              point: { x: -6, y: rng.range(-0.05, 0.05) },
-              force: { x: 4000 * throttle, y: 0 },
+              point: { x: -6, y: rng.range(-0.05, 0.05), z: 0 },
+              force: { x: 4000 * throttle, y: 0, z: 0 },
             },
-            { source: 'rcs-1', point: { x: 5, y: 2 }, force: { x: 0, y: rng.range(-50, 50) } },
+            {
+              source: 'rcs-1',
+              point: { x: 5, y: 2, z: 0 },
+              force: { x: 0, y: rng.range(-50, 50), z: 0 },
+            },
           ],
-          torque: rng.range(-20, 20),
+          torque: { x: 0, y: 0, z: rng.range(-20, 20) },
           massProperties: mp,
         };
         current = { actuators };

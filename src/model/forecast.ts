@@ -13,29 +13,36 @@
  * its believed arrival state, and every position is placed relative to it.
  */
 
-import type {
-  AttemptRecord,
-  AttitudeTarget,
-  ClosestApproach,
-  Cov2,
-  ExecutedCommand,
-  ForecastDraft,
-  ForecastId,
-  ForecastObjectTrack,
-  ForecastSample,
-  MassProperties,
-  Plan,
-  ShipEstimate,
+import {
+  cov3FromPlanar,
+  type AttemptRecord,
+  type AttitudeTarget,
+  type ClosestApproach,
+  type Cov2,
+  type Cov3,
+  type ExecutedCommand,
+  type ForecastDraft,
+  type ForecastId,
+  type ForecastObjectTrack,
+  type ForecastSample,
+  type MassProperties,
+  type Plan,
+  type ShipEstimate,
 } from '../contracts/index.ts';
+import * as quat from '../lib/quat.ts';
 import type { Vec2 } from '../lib/vec2.ts';
+import type { Vec3 } from '../lib/vec3.ts';
 import {
   AttitudeLog,
   MassLog,
   arrivalMassOf,
   burnsFromExecuted,
+  handsOnThrust,
+  recordEnd,
   segmentsFor,
   thrusterInfo,
   type Burn,
+  type HandsOnThrust,
 } from './adapt.ts';
 import { compileArc, simulate, type Arc, type Structure, type ThrustSegment } from './dynamics.ts';
 import {
@@ -110,8 +117,12 @@ const toCov2 = (m: { data: Float64Array }): Cov2 => [
   m.data[3]!,
 ];
 
+// LIFT(2G): the forecast is propagated in the x–y plane; positions leave with z = 0.
+const lift = (p: Vec2): Vec3 => ({ x: p.x, y: p.y, z: 0 });
+
 /** Believed arrival barycentre of the modelled bodies (position, velocity) in the briefing frame. */
 function barycentre(ctx: ModelContext, bodies: readonly string[], mu: (id: string) => number) {
+  // LIFT(2G): briefing bodies enter as their x and y; z is ignored.
   let M = 0;
   const p = { x: 0, y: 0 };
   const v = { x: 0, y: 0 };
@@ -132,8 +143,11 @@ function barycentre(ctx: ModelContext, bodies: readonly string[], mu: (id: strin
   return { p: { x: p.x / M, y: p.y / M }, v: { x: v.x / M, y: v.y / M } };
 }
 
-/** Planned burns from plan items (cutoffs and replacements as the ship would execute them). */
-export function plannedBurns(plan: Plan): Burn[] {
+/**
+ * Planned burns from plan items (cutoffs and replacements as the ship would execute them).
+ * With `handsOn`, `fly` items (a replayed procedure) count as main-engine burns.
+ */
+export function plannedBurns(plan: Plan, handsOn?: HandsOnThrust): Burn[] {
   const executed: ExecutedCommand[] = plan.items.map((i) => ({
     t: plan.epoch + i.at,
     command: i.command,
@@ -142,7 +156,7 @@ export function plannedBurns(plan: Plan): Burn[] {
     planItemId: i.id,
     status: 'executed',
   }));
-  return burnsFromExecuted(executed);
+  return burnsFromExecuted(executed, Infinity, handsOn);
 }
 
 /** The attitude target in force at each planned burn (burn's own, else the latest attitude command). */
@@ -153,6 +167,10 @@ function planAttitudes(plan: Plan): Map<number, AttitudeTarget | undefined> {
   for (const i of items) {
     if (i.command.kind === 'attitude') current = i.command.target;
     if (i.command.kind === 'burn') out.set(plan.epoch + i.at, i.command.attitude ?? current);
+    // LIFT(2G): a planned `fly` thrusts along the target in force; its yaw and pitch demands
+    // are not modelled.
+    if (i.command.kind === 'fly' && i.command.input.throttle > 0)
+      out.set(plan.epoch + i.at, current);
   }
   return out;
 }
@@ -182,7 +200,12 @@ export function buildForecast(
   const att = new AttitudeLog(req.record.measurements);
   const mass = new MassLog(ctx.ship, req.record.measurements, arrivalMassOf(ctx));
   const adaptCtx = { ship: ctx.ship, settings: s, bodies: spec.bodies, primary: spec.primary };
-  const executed = burnsFromExecuted(req.record.executed, Infinity).filter((b) => b.t1 > tNow);
+  // LIFT(2G): a hands-on burn still open when the forecast is issued stops at the last record.
+  const executed = burnsFromExecuted(
+    req.record.executed,
+    Infinity,
+    handsOnThrust(ctx.ship, recordEnd(req.record)),
+  ).filter((b) => b.t1 > tNow);
   const commands: ThrustSegment[] = segmentsFor(executed, adaptCtx, att, mass).segments;
 
   const bc = barycentre(ctx, spec.bodies, muOf);
@@ -275,29 +298,36 @@ export function buildForecast(
   // Planned burns: direction resolved at ignition from the believed state (P6: as commanded).
   const attitudes = planAttitudes(req.plan);
   let mPlan = req.massProperties.mass;
-  for (const b of plannedBurns(req.plan)) {
+  // A planned hands-on burn left open runs to the end of the forecast.
+  const planHandsOn = handsOnThrust(
+    ctx.ship,
+    req.issuedAt + (req.duration ?? s.forecastMaxDuration),
+  );
+  for (const b of plannedBurns(req.plan, planHandsOn)) {
     const info = thrusterInfo(ctx.ship, b.thruster);
     if (!info) continue;
     const target = b.attitude ?? attitudes.get(b.t0);
-    const latest = att.at(Math.min(b.t0, req.issuedAt)) ?? ctx.arrival.attitude;
+    // LIFT(2G): attitude targets resolve to a yaw in the x–y plane (`quat.pointAlong` is the
+    // 3D form); an inertial attitude enters as its yaw, a rate as its body z component.
+    const latest = att.at(Math.min(b.t0, req.issuedAt)) ?? quat.yawOf(ctx.arrival.attitude);
     let angle = latest;
     if (target) {
-      if (target.reference === 'inertial') angle = target.angle;
-      else if (target.reference === 'prograde' || target.reference === 'retrograde') {
+      if (target.reference === 'inertial') angle = quat.yawOf(target.attitude);
+      else if (target.reference === 'direction') {
+        const dir = target.direction;
+        if (dir.x !== 0 || dir.y !== 0) angle = Math.atan2(dir.y, dir.x);
+      } else if (target.reference === 'prograde' || target.reference === 'retrograde') {
         const st = meanAt(commands, b.t0).ship.velocity;
-        angle =
-          Math.atan2(st.y, st.x) +
-          (target.reference === 'retrograde' ? Math.PI : 0) +
-          (target.offset ?? 0);
+        angle = Math.atan2(st.y, st.x) + (target.reference === 'retrograde' ? Math.PI : 0);
       } else if (target.reference === 'toward' || target.reference === 'away') {
         const f = meanAt(commands, b.t0);
         const tp = f.bodyPos[target.target];
         if (tp)
           angle =
             Math.atan2(tp.y - f.ship.position.y, tp.x - f.ship.position.x) +
-            (target.reference === 'away' ? Math.PI : 0) +
-            (target.offset ?? 0);
-      } else if (target.reference === 'rate') angle = latest + target.rate * (b.t0 - req.issuedAt);
+            (target.reference === 'away' ? Math.PI : 0);
+      } else if (target.reference === 'rate')
+        angle = latest + target.rate.z * (b.t0 - req.issuedAt);
     }
     const flow = info.isp > 0 ? (info.thrust * b.throttle) / (info.isp * s.g0) : 0;
     const force = info.thrust * b.throttle;
@@ -381,15 +411,19 @@ export function buildForecast(
 
   // Horizon (§8.4) and samples.
   const radius = (id: string) => ctx.bodies.find((b) => b.id === id)?.radius ?? 0;
+  // LIFT(2G): hull reach in the body x–y plane from the first prism's outline, as the planar
+  // footprint gave it (`hullReach(hull, centerOfMass)` is the 3D form).
   const hull = Math.max(
     0,
-    ...req.massProperties.footprint.map((p) =>
+    ...(req.massProperties.hull[0]?.outline ?? []).map((p) =>
       Math.hypot(p.x - req.massProperties.centerOfMass.x, p.y - req.massProperties.centerOfMass.y),
     ),
   );
   const samples: ForecastSample[] = [];
+  /** The samples as propagated (planar), by time, for clearances against asteroids. */
+  const shipAt = new Map<number, { position: Vec2; positionCov: Cov2 }>();
   const sigmaMajor: ForecastDetail['sigmaMajor'][number][] = [];
-  const tracks = new Map<string, { t: number; position: Vec2; positionCov: Cov2 }[]>(
+  const tracks = new Map<string, { t: number; position: Vec3; positionCov: Cov3 }[]>(
     spec.bodies.map((b) => [b, []]),
   );
   const approach = new Map<string, ClosestApproach>();
@@ -430,11 +464,12 @@ export function buildForecast(
       );
     const positionCov = toCov2(cv.total);
     primaryAt.set(t, frame.bodyPos[spec.primary]!);
+    shipAt.set(t, { position: frame.ship.position, positionCov });
     samples.push({
       t,
-      position: frame.ship.position,
-      velocity: frame.ship.velocity,
-      positionCov,
+      position: lift(frame.ship.position),
+      velocity: lift(frame.ship.velocity),
+      positionCov: cov3FromPlanar(positionCov),
       extrapolating,
       ...(validated ? { validated } : {}),
     });
@@ -449,7 +484,7 @@ export function buildForecast(
     });
     for (const id of spec.bodies) {
       const bp = frame.bodyPos[id]!;
-      tracks.get(id)!.push({ t, position: bp, positionCov: [0, 0, 0] });
+      tracks.get(id)!.push({ t, position: lift(bp), positionCov: cov3FromPlanar([0, 0, 0]) });
       const dx = frame.ship.position.x - bp.x;
       const dy = frame.ship.position.y - bp.y;
       const r = Math.hypot(dx, dy);
@@ -474,7 +509,6 @@ export function buildForecast(
   const latestProbe = new Map<string, Arc>();
   for (const a of d.probes.get(req.record.id) ?? []) latestProbe.set(asteroidOf(a.id)!, a);
   const primaryProfile = d.profiles.find((p) => p.body === spec.primary) ?? null;
-  const shipAt = new Map(samples.map((q) => [q.t, q]));
   for (const [ast, arc] of latestProbe) {
     let wins = makeWindows(arc, spec.primary, windowRule(s))
       .filter((w) => !w.powered && w.fixes.length >= s.windowKeepFixes)
@@ -517,7 +551,7 @@ export function buildForecast(
       h: s.fdStep,
     });
     const radiusA = ctx.asteroids?.find((q) => q.id === ast)?.radius ?? 0;
-    const track: { t: number; position: Vec2; positionCov: Cov2 }[] = [];
+    const track: { t: number; position: Vec3; positionCov: Cov3 }[] = [];
     for (let k = 0; k < afc.times.length; k++) {
       const rel = afc.mean[k]!;
       const ob = afc.bodies[k]!;
@@ -530,7 +564,7 @@ export function buildForecast(
       const p0 = primaryAt.get(t)!;
       const position = { x: p0.x + rel[0]!, y: p0.y + rel[1]! };
       const positionCov = toCov2(cv.total);
-      track.push({ t, position, positionCov });
+      track.push({ t, position: lift(position), positionCov: cov3FromPlanar(positionCov) });
       const ship = shipAt.get(t)!;
       const dx = ship.position.x - position.x;
       const dy = ship.position.y - position.y;
@@ -562,15 +596,18 @@ export function buildForecast(
     return frameAt(present.state, z, tNow);
   })();
   const pc = present.covariance.data;
+  const yawNow = att.at(tNow);
+  // LIFT(2G): the present estimate leaves planar: z = 0, no out-of-plane covariance, attitude a
+  // yaw about +z and the rate about body z only.
   const initial: ShipEstimate = {
     t: tNow,
-    position: presentFrame.ship.position,
-    velocity: presentFrame.ship.velocity,
-    positionCov: [pc[0]!, pc[1]!, pc[5]!],
-    velocityCov: [pc[10]!, pc[11]!, pc[15]!],
-    attitude: att.at(tNow) ?? ctx.arrival.attitude,
+    position: lift(presentFrame.ship.position),
+    velocity: lift(presentFrame.ship.velocity),
+    positionCov: cov3FromPlanar([pc[0]!, pc[1]!, pc[5]!]),
+    velocityCov: cov3FromPlanar([pc[10]!, pc[11]!, pc[15]!]),
+    attitude: yawNow === undefined ? ctx.arrival.attitude : quat.fromYaw(yawNow),
     attitudeSigma: ctx.arrival.attitudeSigma,
-    angularRate: lastValue(req.record, 'rate') ?? 0,
+    angularVelocity: { x: 0, y: 0, z: lastRate(req.record) ?? 0 },
   };
   const objects: ForecastObjectTrack[] = [...tracks.entries()].map(([id, samplesB]) => ({
     id,
@@ -618,10 +655,12 @@ export function buildForecast(
   };
 }
 
-function lastValue(rec: AttemptRecord, kind: 'rate' | 'attitude'): number | undefined {
+/** Latest gyro rate about body z, rad/s. */
+function lastRate(rec: AttemptRecord): number | undefined {
   for (let i = rec.measurements.length - 1; i >= 0; i--) {
     const m = rec.measurements[i]!;
-    if (m.kind === kind) return m.value[0];
+    // LIFT(2G): only the body z component ([2]) of a rate measurement is used.
+    if (m.kind === 'rate') return m.value[2];
   }
   return undefined;
 }

@@ -10,16 +10,17 @@ import type {
   Forecast,
   Objective,
   Selection,
-  SensorSector,
+  SensorCone,
   ShipDefinition,
   ThrustTick,
   TrailPoint,
   ViewSnapshot,
 } from '../../contracts/index.ts';
-import type { Vec2 } from '../../lib/vec2.ts';
+import { yawOf } from '../../lib/quat.ts';
+import { fromAzEl, type Vec3 } from '../../lib/vec3.ts';
 
-/** [ASSUMED] Display values for the camera's coverage sector. */
-const CAMERA_HALF_WIDTH = Math.PI / 6;
+/** [ASSUMED] Display values for the camera's coverage cone. */
+const CAMERA_HALF_ANGLE = Math.PI / 6;
 const CAMERA_RANGE = 6_000_000;
 
 /**
@@ -33,7 +34,7 @@ export interface CommandedState {
     readonly until: number;
   }[];
   readonly pointing: Readonly<
-    Record<string, { readonly target: string | null; readonly angle?: number }>
+    Record<string, { readonly target: string | null; readonly direction?: Vec3 }>
   >;
 }
 
@@ -64,7 +65,7 @@ export function applyCommanded(state: CommandedState, t: number, command: Comman
           ...state.pointing,
           [command.sensor]: {
             target: command.target,
-            ...(command.angle !== undefined ? { angle: command.angle } : {}),
+            ...(command.direction !== undefined ? { direction: command.direction } : {}),
           },
         },
       };
@@ -97,8 +98,8 @@ function coverage(
   definition: ShipDefinition,
   commanded: CommandedState,
   world: BelievedWorld,
-): SensorSector[] {
-  const sectors: SensorSector[] = [];
+): SensorCone[] {
+  const cones: SensorCone[] = [];
   for (const spec of definition.equipment) {
     if (spec.kind !== 'optical-tracker') continue;
     const status = world.ship.equipment[spec.id];
@@ -108,29 +109,32 @@ function coverage(
       ? (world.bodies.find((b) => b.id === aim.target) ??
         world.asteroids.find((a) => a.id === aim.target))
       : undefined;
+    // LIFT(2G): the cone axis is found in the x–y plane (azimuth only, elevation 0).
     const boresight = spec.mount ? Math.atan2(spec.mount.direction.y, spec.mount.direction.x) : 0;
     const center = target
       ? Math.atan2(
           target.position.y - world.ship.position.y,
           target.position.x - world.ship.position.x,
         )
-      : (aim?.angle ?? world.ship.attitude + boresight);
-    sectors.push({
+      : aim?.direction
+        ? Math.atan2(aim.direction.y, aim.direction.x)
+        : yawOf(world.ship.attitude) + boresight;
+    cones.push({
       sensor: spec.id,
-      center,
-      halfWidth: spec.params.fovHalfAngle ?? CAMERA_HALF_WIDTH,
+      axis: fromAzEl(center),
+      halfAngle: spec.params.fovHalfAngle ?? CAMERA_HALF_ANGLE,
       range: CAMERA_RANGE,
       quality: Math.max(0, Math.min(1, status.powerDraw / spec.ratedPower)),
     });
   }
-  return sectors;
+  return cones;
 }
 
 /** Objectives with a moving target follow that target's believed position. */
 function placeObjectives(objectives: readonly Objective[], world: BelievedWorld): Objective[] {
   return objectives.map((objective) => {
     if (!objective.target || !objective.region) return objective;
-    const target: { position: Vec2 } | undefined =
+    const target: { position: Vec3 } | undefined =
       world.bodies.find((b) => b.id === objective.target) ??
       world.asteroids.find((a) => a.id === objective.target);
     return target
@@ -161,13 +165,13 @@ export function buildViewSnapshot(inputs: ViewInputs): ViewSnapshot {
     warp: inputs.warp,
     world,
     ship: {
-      footprint: world.ship.massProperties.footprint,
+      hull: world.ship.massProperties.hull,
       centerOfMass: world.ship.massProperties.centerOfMass,
       thrust: thrustTicks(definition, commanded, inputs.t),
     },
     trail: inputs.trail,
     forecasts: inputs.forecasts,
-    coverage: { sectors: coverage(definition, commanded, world) },
+    coverage: { cones: coverage(definition, commanded, world) },
     objectives: placeObjectives(inputs.objectives, world),
     ...(inputs.compare ? { compare: inputs.compare } : {}),
     ...(inputs.selection ? { selection: inputs.selection } : {}),

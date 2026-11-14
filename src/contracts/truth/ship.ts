@@ -10,8 +10,9 @@
  * Measurements and events go to the model and Black Box; truth never does.
  */
 
+import type { Quat } from '../../lib/quat.ts';
 import type { RngState } from '../../lib/rng.ts';
-import type { Vec2 } from '../../lib/vec2.ts';
+import type { Vec3 } from '../../lib/vec3.ts';
 import type { AttitudeTarget, Command } from '../commands.ts';
 import type {
   ConfigurationId,
@@ -33,22 +34,20 @@ import type {
   LatticeExposure,
   LatticeIntensity,
   Meters,
-  NewtonMeters,
-  Radians,
-  RadiansPerSecond,
   Seconds,
   Watts,
   WattsPerMeter2,
 } from '../units.ts';
 
-/** Rigid-body state in the flight plane. Integrated by the simulation (2A). */
+/** Rigid-body state in three dimensions (A11). Integrated by the simulation. */
 export interface ShipKinematics {
   /** Centre of mass, inertial. */
-  readonly position: Vec2;
-  readonly velocity: Vec2;
-  /** Inertial angle of body +x. */
-  readonly attitude: Radians;
-  readonly angularRate: RadiansPerSecond;
+  readonly position: Vec3;
+  readonly velocity: Vec3;
+  /** Unit quaternion, body to inertial. */
+  readonly attitude: Quat;
+  /** Angular velocity, body frame, rad/s. */
+  readonly angularVelocity: Vec3;
 }
 
 export interface EquipmentState {
@@ -94,7 +93,7 @@ export interface ShipSystemsState {
   readonly burns: readonly ActiveBurn[];
   /**
    * Derived each step from configuration (interpolated during transitions) and consumables.
-   * The single authoritative geometry for inertia, cooling and clearance.
+   * The single authoritative geometry for inertia, cooling and clearance (hull).
    */
   readonly massProperties: MassProperties;
   /**
@@ -115,16 +114,16 @@ export interface ShipTruth {
 export interface ThrustOutput {
   readonly source: EquipmentId;
   /** Application point, body frame. */
-  readonly point: Vec2;
+  readonly point: Vec3;
   /** Force on the ship, body frame (misalignment and scale errors already applied). */
-  readonly force: Vec2;
+  readonly force: Vec3;
 }
 
 /** What ship systems hand the simulation for this step. */
 export interface ActuatorOutput {
   readonly thrusts: readonly ThrustOutput[];
-  /** Pure torque (reaction wheels), about the plane normal. */
-  readonly torque: NewtonMeters;
+  /** Pure torque (reaction wheels), body frame, N·m. */
+  readonly torque: Vec3;
   readonly massProperties: MassProperties;
 }
 
@@ -133,8 +132,8 @@ export interface SensorTarget {
   readonly id: ObjectId;
   readonly kind: 'body' | 'asteroid';
   /** Target centre minus ship centre of mass, inertial. */
-  readonly relativePosition: Vec2;
-  readonly relativeVelocity: Vec2;
+  readonly relativePosition: Vec3;
+  readonly relativeVelocity: Vec3;
   readonly radius: Meters;
 }
 
@@ -146,7 +145,7 @@ export interface EnvironmentEffects {
    * Non-gravitational acceleration actually experienced over the previous step, body frame,
    * after any field modified the thrust. This is what accelerometers sense.
    */
-  readonly specificForce: Vec2;
+  readonly specificForce: Vec3;
   readonly targets: readonly SensorTarget[];
   /** Lattice intensity over each equipment item's occupied geometry (sampled by the game layer). */
   readonly intensity: Readonly<Record<EquipmentId, LatticeIntensity>>;
@@ -157,7 +156,7 @@ export interface EnvironmentEffects {
    * after shadowing by massive bodies (0 in full shadow, or when the encounter has no sun).
    * Solar output and absorbed radiator heat use this; 1C's formulas are in data/ship-baseline.json.
    */
-  readonly sunlight: { readonly direction: Vec2; readonly irradiance: WattsPerMeter2 };
+  readonly sunlight: { readonly direction: Vec3; readonly irradiance: WattsPerMeter2 };
 }
 
 export interface ShipStepResult {

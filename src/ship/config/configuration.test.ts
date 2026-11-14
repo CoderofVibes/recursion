@@ -34,8 +34,8 @@ describe('configuration geometry (C04)', () => {
     expect(geometry.deployment['radiator-right']).toBe(1);
     expect(geometry.positions['radiator-left']!.y).toBe(4);
     expect(geometry.intrinsicInertia['radiator-left']).toBe(1500);
-    expect(Math.max(...geometry.footprint.map((p) => p.y))).toBe(6.25);
-    expect(Math.min(...geometry.footprint.map((p) => p.y))).toBe(-10);
+    expect(Math.max(...geometry.hull[0]!.outline.map((p) => p.y))).toBe(6.25);
+    expect(Math.min(...geometry.hull[0]!.outline.map((p) => p.y))).toBe(-10);
     expect(computeMassProperties(halfway, definition).centerOfMass.y).toBeLessThan(
       initial.massProperties.centerOfMass.y,
     );
@@ -55,8 +55,8 @@ describe('configuration geometry (C04)', () => {
     expect(result.events).toEqual([
       { kind: 'configuration-changed', t: 20, configuration: 'stowed' },
     ]);
-    expect(getGeometry(result.state, definition).footprint).toEqual(
-      definition.configurations.find((c) => c.id === 'stowed')!.footprint,
+    expect(getGeometry(result.state, definition).hull).toEqual(
+      definition.configurations.find((c) => c.id === 'stowed')!.hull,
     );
   });
 });

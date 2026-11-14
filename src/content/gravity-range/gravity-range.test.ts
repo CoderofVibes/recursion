@@ -10,6 +10,7 @@ import { createBlackBox } from '../../game/belief/blackbox.ts';
 import { createStandInModel } from '../../game/belief/standin-model.ts';
 import { createGameSession } from '../../game/session.ts';
 import { hashState } from '../../lib/hash.ts';
+import { yawOf } from '../../lib/quat.ts';
 import { createSimulation, validateWorld, type SimState } from '../../sim/index.ts';
 import { ALPHA, BAND, BETA, LAW, RESERVE, SEPARATION, createGravityRange } from './index.ts';
 
@@ -31,14 +32,15 @@ const relative = (w: TruthWorld) => {
  */
 function coast(start: TruthWorld, deltaV: number, seconds: number) {
   const k = start.ship.kinematics;
-  const dir = { x: Math.cos(k.attitude), y: Math.sin(k.attitude) };
+  const yaw = yawOf(k.attitude);
+  const dir = { x: Math.cos(yaw), y: Math.sin(yaw) };
   const kicked: TruthWorld = {
     ...start,
     ship: {
       ...start.ship,
       kinematics: {
         ...k,
-        velocity: { x: k.velocity.x + dir.x * deltaV, y: k.velocity.y + dir.y * deltaV },
+        velocity: { x: k.velocity.x + dir.x * deltaV, y: k.velocity.y + dir.y * deltaV, z: 0 },
       },
     },
   };
@@ -162,8 +164,8 @@ describe('Gravity range: what the ship is told', () => {
     );
     // Not the truth, but within four of its own sigmas.
     expect(dp).toBeGreaterThan(0);
-    expect(dp).toBeLessThan(4 * Math.sqrt(e.positionCov[0] + e.positionCov[2]));
-    expect(dv).toBeLessThan(4 * Math.sqrt(e.velocityCov[0] + e.velocityCov[2]));
+    expect(dp).toBeLessThan(4 * Math.sqrt(e.positionCov[0] + e.positionCov[3]));
+    expect(dv).toBeLessThan(4 * Math.sqrt(e.velocityCov[0] + e.velocityCov[3]));
     expect(briefing.arrivalConfiguration).toBe('radiators');
   });
 

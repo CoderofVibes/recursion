@@ -6,9 +6,11 @@ import type {
   ShipSystemsState,
   ThrustOutput,
 } from '../../contracts/truth/ship.ts';
+import { yawOf } from '../../lib/quat.ts';
 import { cross, rotate, scale, sub, wrapAngle, type Vec2 } from '../../lib/vec2.ts';
+import type { Vec3 } from '../../lib/vec3.ts';
 import { getGeometry } from '../config/configuration.ts';
-import { computeMassProperties } from '../massprops/massprops.ts';
+import { computeMassProperties, yawInertia } from '../massprops/massprops.ts';
 
 const clamp = (n: number, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, n));
 const dataFor = (definition: ShipDefinition) =>
@@ -26,12 +28,16 @@ function attitudeControl(
   const target = state.attitudeTarget;
   if (target.reference !== 'inertial' && target.reference !== 'rate') return {};
   const data = dataFor(definition);
-  const inertia = computeMassProperties(state, definition).inertia;
+  const inertia = yawInertia(computeMassProperties(state, definition).inertia);
+  // LIFT(2G): one-axis control. Only yaw (about body z) is held or turned; the x and y parts of
+  // a rate target and the pitch and roll of an inertial target are ignored.
+  const angularRate = env.kinematics.angularVelocity.z;
   // [ASSUMED] 5 s damping and 25 s attitude stiffness; actuator limits still apply.
   const acceleration =
     target.reference === 'rate'
-      ? 0.4 * (target.rate - env.kinematics.angularRate)
-      : 0.04 * wrapAngle(target.angle - env.kinematics.attitude) - 0.4 * env.kinematics.angularRate;
+      ? 0.4 * (target.rate.z - angularRate)
+      : 0.04 * wrapAngle(yawOf(target.attitude) - yawOf(env.kinematics.attitude)) -
+        0.4 * angularRate;
   const demand = inertia * acceleration;
   if (Math.abs(demand) < 1e-9) return {};
   const jetIndex = demand > 0 ? 1 : 0;
@@ -39,6 +45,7 @@ function attitudeControl(
   const jets = data.propulsion.rcs.jets.filter(
     (jet) => jet.bank === 'a' && jet.id.endsWith(`-${jetIndex}`),
   );
+  // LIFT(2G): torque capacity about body z only, from the planar parts of lever arm and force.
   const capacity = Math.abs(
     jets.reduce(
       (total, jet) =>
@@ -121,7 +128,7 @@ export function stepPropulsion(
   definition: ShipDefinition,
   _env: EnvironmentEffects,
   dt: number,
-): { state: ShipSystemsState; thrusts: ThrustOutput[]; torque: number; events: ShipEvent[] } {
+): { state: ShipSystemsState; thrusts: ThrustOutput[]; torque: Vec3; events: ShipEvent[] } {
   const data = dataFor(definition);
   const equipment = { ...state.equipment };
   const tanks = { ...state.tanks };
@@ -235,6 +242,8 @@ export function stepPropulsion(
       pending = 0;
       pulse = 0;
     }
+    // LIFT(2G): thrust directions, mount misalignment and gimbal stay in the body x–y plane
+    // (rotations about z); forces leave with z = 0.
     let direction: Vec2 = isRcs
       ? { x: jet?.direction[0] ?? 0, y: jet?.direction[1] ?? 0 }
       : { x: data.propulsion.main.direction[0]!, y: data.propulsion.main.direction[1]! };
@@ -263,8 +272,10 @@ export function stepPropulsion(
       values.gimbal = gimbal;
       direction = rotate(direction, misalignment + gimbal);
     } else direction = rotate(direction, misalignment);
-    if (impulse > 0)
-      thrusts.push({ source: spec.id, point, force: scale(direction, impulse / dt) });
+    if (impulse > 0) {
+      const force = scale(direction, impulse / dt);
+      thrusts.push({ source: spec.id, point, force: { x: force.x, y: force.y, z: 0 } });
+    }
     values.pendingImpulse = pending;
     values.pulseRemaining = pulse;
     values.impulse = impulse;
@@ -292,7 +303,7 @@ export function stepPropulsion(
   return {
     state: { ...next, massProperties: computeMassProperties(next, definition) },
     thrusts,
-    torque: 0,
+    torque: { x: 0, y: 0, z: 0 },
     events,
   };
 }

@@ -13,7 +13,7 @@
  */
 
 import type { GravityLaw, MassiveBody } from '../contracts/truth/index.ts';
-import type { Vec2 } from '../lib/vec2.ts';
+import type { Vec3 } from '../lib/vec3.ts';
 import { coupling, potentialFrom } from './gravity.ts';
 
 export const circularSpeed = (k: number, n: number, r: number): number =>
@@ -51,13 +51,13 @@ export interface CircularBinarySpec {
 }
 
 export interface CircularBinaryOptions {
-  /** Angle of the line from body A to body B, rad. Default 0. */
+  /** Angle of the line from body A to body B in the x–y plane, from +x, rad. Default 0. */
   readonly phase?: number;
   /** Barycentre position. Default origin. */
-  readonly barycenter?: Vec2;
+  readonly barycenter?: Vec3;
   /** Barycentre velocity. Default zero. */
-  readonly barycenterVelocity?: Vec2;
-  /** Orbit sense: +1 counter-clockwise (default), −1 clockwise. */
+  readonly barycenterVelocity?: Vec3;
+  /** Orbit sense seen from +z: +1 counter-clockwise (default), −1 clockwise. */
   readonly sense?: 1 | -1;
 }
 
@@ -68,6 +68,7 @@ export interface CircularBinaryOptions {
  * turns at ω = √((K_A + K_B) / d^(n+1)). Masses are proportional to gm (shared r0), so the
  * barycentre splits d in the ratio gm_B : gm_A; each body moves at ω × (its barycentric offset).
  */
+// LIFT(2G): the orbit always lies in the x–y plane (axis +z); z comes from the barycentre only.
 export function circularBinary(
   law: GravityLaw,
   a: CircularBinarySpec,
@@ -80,8 +81,8 @@ export function circularBinary(
   const sense = options.sense ?? 1;
   const omega = sense * Math.sqrt(kTotal / Math.pow(separation, n + 1));
   const phase = options.phase ?? 0;
-  const c = options.barycenter ?? { x: 0, y: 0 };
-  const cv = options.barycenterVelocity ?? { x: 0, y: 0 };
+  const c = options.barycenter ?? { x: 0, y: 0, z: 0 };
+  const cv = options.barycenterVelocity ?? { x: 0, y: 0, z: 0 };
   const ux = Math.cos(phase);
   const uy = Math.sin(phase);
   const qB = b.gm / (a.gm + b.gm);
@@ -93,9 +94,9 @@ export function circularBinary(
       name: spec.name,
       gm: spec.gm,
       radius: spec.radius,
-      position: { x: c.x + px, y: c.y + py },
-      // ω ẑ × (px, py) = ω (−py, px)
-      velocity: { x: cv.x - omega * py, y: cv.y + omega * px },
+      position: { x: c.x + px, y: c.y + py, z: c.z },
+      // ω ẑ × (px, py, 0) = ω (−py, px, 0)
+      velocity: { x: cv.x - omega * py, y: cv.y + omega * px, z: cv.z },
       fixed: false,
     };
   };

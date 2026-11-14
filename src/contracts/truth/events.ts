@@ -3,7 +3,7 @@
  * invisible field boundary); the game layer turns the sensible ones into ShipEvents.
  */
 
-import type { Vec2 } from '../../lib/vec2.ts';
+import type { Vec3 } from '../../lib/vec3.ts';
 import type { FieldId, ObjectId } from '../ids.ts';
 import type { ShipEvent } from '../measurements.ts';
 import type { Meters, MetersPerSecond, Seconds } from '../units.ts';
@@ -23,7 +23,7 @@ export type SimEvent =
       readonly with: ObjectId;
       readonly relativeSpeed: MetersPerSecond;
       /** Contact point, body frame. */
-      readonly point: Vec2;
+      readonly point: Vec3;
     }
   | {
       readonly kind: 'field-boundary';

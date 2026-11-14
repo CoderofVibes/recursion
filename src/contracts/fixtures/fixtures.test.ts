@@ -1,15 +1,45 @@
 import { describe, expect, it } from 'vitest';
 import { hashState } from '../../lib/hash.ts';
-import * as v from '../../lib/vec2.ts';
+import * as q from '../../lib/quat.ts';
+import { fromPrincipal } from '../../lib/sym3.ts';
 import type { Vec2 } from '../../lib/vec2.ts';
-import { covEllipse, isoCov2 } from '../estimates.ts';
+import * as v from '../../lib/vec3.ts';
+import {
+  covEllipse,
+  covEllipsoid,
+  isoCov2,
+  isoCov3,
+  projectCov3,
+  varianceAlong,
+} from '../estimates.ts';
+import type { Hull } from '../ship.ts';
+import { hullReach } from '../ship.ts';
 import { issueForecast } from '../forecast.ts';
 import { createFieldRegistry } from '../truth/index.ts';
 import { buildFixtures, fixtures } from './index.ts';
 import { mockEncounter, mockEnvironmentEffects, mockTruthTracks, mockTruthWorld } from './truth.ts';
 
 const signedArea = (poly: readonly Vec2[]): number =>
-  poly.reduce((s, p, i) => s + v.cross(p, poly[(i + 1) % poly.length] as Vec2), 0) / 2;
+  poly.reduce((s, p, i) => {
+    const n = poly[(i + 1) % poly.length] as Vec2;
+    return s + p.x * n.y - p.y * n.x;
+  }, 0) / 2;
+
+/** Every prism: a counter-clockwise convex outline with some height. */
+const expectWellFormedHull = (hull: Hull): void => {
+  expect(hull.length).toBeGreaterThan(0);
+  for (const prism of hull) {
+    expect(signedArea(prism.outline)).toBeGreaterThan(0);
+    expect(prism.zMax).toBeGreaterThan(prism.zMin);
+    const n = prism.outline.length;
+    for (let i = 0; i < n; i++) {
+      const a = prism.outline[i] as Vec2;
+      const b = prism.outline[(i + 1) % n] as Vec2;
+      const c = prism.outline[(i + 2) % n] as Vec2;
+      expect((b.x - a.x) * (c.y - b.y) - (b.y - a.y) * (c.x - b.x)).toBeGreaterThanOrEqual(0);
+    }
+  }
+};
 
 describe('fixtures', () => {
   it('build deterministically', () => {
@@ -83,13 +113,58 @@ describe('fixtures', () => {
   it('provide a consistent view snapshot', () => {
     const snap = fixtures.viewSnapshot;
     expect(snap.trail.every((p) => p.t <= snap.t)).toBe(true);
-    expect(signedArea(snap.ship.footprint)).toBeGreaterThan(0);
+    expectWellFormedHull(snap.ship.hull);
     expect(snap.world.modelVersion).toBe(2);
     expect(snap.forecasts).toHaveLength(1);
     expect(fixtures.viewSnapshotCompare.compare).toHaveLength(2);
-    for (const c of fixtures.shipDefinition.configurations) {
-      expect(signedArea(c.footprint)).toBeGreaterThan(0);
-    }
+    for (const c of fixtures.shipDefinition.configurations) expectWellFormedHull(c.hull);
+  });
+
+  it('are three-dimensional where views need it (A11)', () => {
+    const snap = fixtures.viewSnapshot;
+    // Asteroids sit off the bodies' plane; a-07 comes in from above.
+    expect(snap.world.asteroids.some((a) => Math.abs(a.position.z) > 5e3)).toBe(true);
+    expect(mockTruthWorld.asteroids.find((a) => a.id === 'a-07')?.velocity.z).toBeLessThan(0);
+    // The camera's cone, the objective and the sun have a real direction in space.
+    const cone = snap.coverage.cones[0];
+    expect(cone).toBeDefined();
+    expect(v.length(cone?.axis ?? v.ZERO)).toBeCloseTo(1, 12);
+    expect(fixtures.briefing.objectives[0]?.region?.center.z).not.toBe(0);
+    expect(mockTruthWorld.sun?.direction.z).toBeGreaterThan(0);
+    // Uncertainty is an ellipsoid: longest along the direction of travel.
+    const sample = snap.forecasts[0]?.samples[10];
+    expect(sample).toBeDefined();
+    if (!sample) return;
+    const ellipsoid = covEllipsoid(sample.positionCov);
+    expect(ellipsoid.radii[0]).toBeGreaterThan(1.5 * ellipsoid.radii[1]);
+    expect(Math.abs(v.dot(ellipsoid.axes[0], v.normalize(sample.velocity)))).toBeCloseTo(1, 6);
+    // The ship has height: a hull with z extent, equipment off the x–y plane, and a full
+    // inertia whose roll moment is the smallest.
+    const mp = snap.world.ship.massProperties;
+    expect(hullReach(mp.hull, mp.centerOfMass)).toBeGreaterThan(7);
+    expect(fixtures.shipDefinition.equipment.some((e) => e.position.z !== 0)).toBe(true);
+    expect(mp.centerOfMass.z).not.toBe(0);
+    const tensor = fromPrincipal(mp.inertia.moments, mp.inertia.axes);
+    expect(tensor[0]).toBeLessThan(tensor[3]);
+    expect(tensor[0]).toBeLessThan(tensor[5]);
+    expect(q.norm(mp.inertia.axes)).toBeCloseTo(1, 12);
+    // The deployed configuration is concave, so it is more than one prism.
+    const deployed = fixtures.shipDefinition.configurations.find(
+      (c) => c.id === 'radiators-deployed',
+    );
+    expect(deployed?.hull.length).toBe(3);
+  });
+
+  it('give attitude fixes as rotation vectors and bearings as azimuth and elevation', () => {
+    const attempt = fixtures.attempts[0];
+    const fix = attempt.measurements.find((m) => m.kind === 'attitude');
+    expect(fix?.value).toHaveLength(3);
+    // The mock ship flies nose along its velocity, in the x–y plane: a yaw, within the noise.
+    expect(Math.abs(fix?.value[0] ?? 1)).toBeLessThan(1e-3);
+    expect(Math.abs(fix?.value[1] ?? 1)).toBeLessThan(1e-3);
+    const bearing = attempt.measurements.find((m) => m.kind === 'bearing');
+    expect(bearing?.value).toHaveLength(2);
+    expect(attempt.measurements.find((m) => m.kind === 'accel')?.value).toHaveLength(3);
   });
 
   it('carry no truth in belief-side data', () => {
@@ -146,9 +221,10 @@ describe('sunlight fixtures', () => {
     expect(v.length(sun.direction)).toBeCloseTo(1, 12);
     const ship = mockTruthWorld.ship.kinematics.position;
     for (const b of mockTruthWorld.bodies) {
+      // A body's shadow is a cylinder of its radius behind it, along the light.
       const r = v.sub(ship, b.position);
       const behind = v.dot(r, sun.direction) < 0;
-      const offAxis = Math.abs(v.cross(r, sun.direction));
+      const offAxis = v.length(v.cross(r, sun.direction));
       expect(behind && offAxis < b.radius).toBe(false);
     }
     expect(mockEnvironmentEffects.sunlight.irradiance).toBe(sun.irradiance);
@@ -180,12 +256,12 @@ describe('field registry', () => {
     const registry = createFieldRegistry([
       {
         kind: 'uniform',
-        create: (spec) => ({ id: spec.id, kind: spec.kind, acceleration: () => v.vec2(0, -1) }),
+        create: (spec) => ({ id: spec.id, kind: spec.kind, acceleration: () => v.vec3(0, -1, 0) }),
       },
     ]);
     expect(registry.kinds()).toEqual(['uniform']);
     const field = registry.create({ id: 'u1', kind: 'uniform', params: null });
-    expect(field.acceleration?.(v.ZERO, 0)).toEqual({ x: 0, y: -1 });
+    expect(field.acceleration?.(v.ZERO, 0)).toEqual({ x: 0, y: -1, z: 0 });
     expect(() => registry.create({ id: 'x', kind: 'lattice', params: null })).toThrow();
     expect(() => registry.register({ kind: 'uniform', create: () => field })).toThrow();
   });
@@ -200,5 +276,28 @@ describe('estimate helpers', () => {
     expect(tilted.major).toBeCloseTo(2, 12);
     expect(tilted.minor).toBeCloseTo(1, 12);
     expect(tilted.angle).toBeCloseTo(0, 12);
+  });
+
+  it('compute covariance ellipsoids, variances along a direction and planar projections', () => {
+    const iso = covEllipsoid(isoCov3(3), 2);
+    expect(iso.radii[0]).toBeCloseTo(6, 12);
+    expect(iso.radii[2]).toBeCloseTo(6, 12);
+    // Sigmas 3, 2 and 1 along x, y and z.
+    const boxy = covEllipsoid([9, 0, 0, 4, 0, 1]);
+    expect(boxy.radii[0]).toBeCloseTo(3, 12);
+    expect(boxy.radii[1]).toBeCloseTo(2, 12);
+    expect(boxy.radii[2]).toBeCloseTo(1, 12);
+    expect(Math.abs(boxy.axes[0].x)).toBeCloseTo(1, 12);
+    expect(Math.abs(boxy.axes[2].z)).toBeCloseTo(1, 12);
+    // Sigma 5 along the diagonal of the x–z plane and 1 across it.
+    const d = Math.SQRT1_2;
+    const diagonal = { x: d, y: 0, z: d };
+    const tilted: [number, number, number, number, number, number] = [13, 0, 12, 1, 0, 13];
+    expect(varianceAlong(tilted, diagonal)).toBeCloseTo(25, 10);
+    const e = covEllipsoid(tilted);
+    expect(e.radii[0]).toBeCloseTo(5, 10);
+    expect(Math.abs(v.dot(e.axes[0], diagonal))).toBeCloseTo(1, 10);
+    expect(projectCov3(tilted, v.UNIT_X, v.UNIT_Y)).toEqual([13, 0, 1]);
+    expect(projectCov3(tilted, v.UNIT_X, v.UNIT_Z)).toEqual([13, 12, 13]);
   });
 });
