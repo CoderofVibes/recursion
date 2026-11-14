@@ -9,9 +9,16 @@
 import type { Vec2 } from '../lib/vec2.ts';
 import { deepFreeze, type DeepReadonly } from '../lib/freeze.ts';
 import type { Plan } from './commands.ts';
-import type { Cov2 } from './estimates.ts';
+import type { Cov2, CovarianceMatrix } from './estimates.ts';
 import type { ShipEstimate } from './belief.ts';
-import type { AttemptId, ExtensionId, ForecastId, ObjectId, ParameterId } from './ids.ts';
+import type {
+  AttemptId,
+  BodyId,
+  ExtensionId,
+  ForecastId,
+  ObjectId,
+  ParameterId,
+} from './ids.ts';
 import type { CalibrationProfile } from './model.ts';
 import type { MassProperties } from './ship.ts';
 import type { Meters, Seconds } from './units.ts';
@@ -24,6 +31,19 @@ export interface ForecastSample {
   readonly positionCov: Cov2;
   /** True where the model has no supporting data (envelope drawn as extrapolation). */
   readonly extrapolating: boolean;
+  /**
+   * True where extrapolating but inside an adopted rule's validated span, so the smaller earned
+   * hedge applied (1G spec §7.4, DECISIONS A5). Absent or false: sampled, or untested.
+   */
+  readonly validated?: boolean;
+}
+
+/** Earned hedge applied around one body (1G spec §7.4, §8.2). */
+export interface EarnedHedge {
+  /** σ_e: the largest earned sigma among the rules' passing tests. */
+  readonly sigma: number;
+  /** Distance spans (m) where σ_e replaced the default hedge. */
+  readonly spans: readonly (readonly [Meters, Meters])[];
 }
 
 /** Predicted motion of another object (for clearance). */
@@ -55,8 +75,21 @@ export interface ForecastInputs {
   readonly calibration: readonly CalibrationProfile[];
   /** Measurement noise scale s² applied to the present-state covariance. */
   readonly noiseScale: number;
-  /** Hedge σ_h used outside sampled distances (smaller once a rule is validated). */
+  /**
+   * Default hedge σ_h0 (1G spec §8.2): applied outside sampled distances wherever no validated
+   * span applies. It does not shrink when a rule is validated; `earnedHedge` covers that.
+   */
   readonly hedge: number;
+  /** Per body, where a validated rule's earned hedge applied instead (A5). Absent: none applied. */
+  readonly earnedHedge?: Readonly<Record<BodyId, EarnedHedge>>;
+  /**
+   * Engine terms planned burns used: the current arc's values and covariance, including aging
+   * since their last measurement (1G spec §3.7, §8.6). The model records it; stand-ins may omit.
+   */
+  readonly engine?: {
+    readonly values: Readonly<Record<ParameterId, number>>;
+    readonly covariance: CovarianceMatrix;
+  };
 }
 
 export interface ForecastDraft {
