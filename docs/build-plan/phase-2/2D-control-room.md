@@ -27,7 +27,7 @@ Read first:
 - **What must be on screen:** `phase-2/2D-console-ui.md` and `phase-2/2E-sensor-view.md` (superseded, but their build lists still apply).
 
 ## Goal
-The Gravity range is playable in the control room by the Phase 2 playtest (about 19:00 Saturday). In that playtest the player can, without explanatory text:
+The Gravity range is playable in the control room for the Phase 2 playtest, held when the owner is ready. In that playtest the player can, without explanatory text:
 - plan and fly;
 - see the forecast fail;
 - compare attempts in Black Box;
@@ -57,7 +57,7 @@ You do not own:
    3. **Planar flight seen through a window** (P1).
    4. Then 1E's remaining questions as they come up: map scope, room scale, window arc, hologram orientation, loss sequence.
 
-   Don't hold the build for the minor ones; use 1E's defaults until the owner answers. Whether a loss restarts the encounter or the whole expedition is with the integrator. Build the loss sequence so either works.
+   Don't hold the build for the minor ones; use 1E's defaults until the owner answers. Whether a loss restarts the encounter or the whole expedition is decided: the whole expedition (A9). The loss sequence returns the player to the door at the beginning.
 3. **Record findings in your handoff.** List everything in the build plan, contracts or decisions that the composition contradicts, each with a proposed fix and who owns it. The integrator applies contract and decision changes.
 
 ## Step 2 — Build, in this order

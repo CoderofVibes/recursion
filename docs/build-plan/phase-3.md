@@ -42,7 +42,7 @@ Every prompt below assumes the thread first reads `docs/CREATIVE_BRIEF.md`, `doc
 **Inputs:** 1F expedition design (as approved by the owner), P8, P9.
 **Goal:** the frame that turns encounters into an expedition.
 - The authored graph, travel between nodes, the chart and glimmer leads (shown only as the ship has sensed them).
-- Recurrence contract (P8) in full: triggers, reset, persistence; ship state carried between encounters within a run, with no repair or refill. On arrival at a later encounter, write `AttemptStart.transit` (`TransitRecord`: ship time, commanded Δv, camera power cycles and condition changes since the carrying attempt) so the model can age ship calibrations (1G spec §3.7).
+- Recurrence contract (P8, A9) in full: a loss restarts the whole expedition; triggers, reset, persistence; ship state carried between encounters within a run, with no repair or refill. On arrival at a later encounter, write `AttemptStart.transit` (`TransitRecord`: ship time, commanded Δv, camera power cycles and condition changes since the carrying attempt) so the model can age ship calibrations (1G spec §3.7).
 - Saved procedures (P9): record, match conditions, replay, adapt.
 - Progress gated by demonstrated capability and workable procedures, never visited flags.
 - Save/load to IndexedDB; versioned save format.
@@ -55,7 +55,7 @@ Every prompt below assumes the thread first reads `docs/CREATIVE_BRIEF.md`, `doc
 - Headless runner: load an encounter, run a scripted plan, report clearance minima, propellant, power and thermal margins, damage, outcome.
 - Sweeps: e.g. success rate of random straight-line lattice traversals; sensitivity of a route to burn-timing error; feasibility of a passage under a given ship state.
 - Expert run: chain scripted routes from arrival to home, carrying ship state across encounters, and report the remaining propellant, charge and damage after each one. This is how the fuel budget gets tuned (DECISIONS P14 item 2): an expert who knows the rules should get home with a margin. Build the chaining now; the full chain runs once Phase 4 content exists, and 5A uses it for balance.
-- Cakewalk check (DECISIONS A5): fly each encounter with only the knowledge carried into it (adopted rules, ship calibration) and no new measurements. Report the margin; a comfortable success means the encounter needs a new unknown. Read the forecast horizon and calibration freshness directly. This check is where 1G's play values get tuned: aging rates, default hedge σ_h0 = 0.3, horizon fraction 0.1 (`tools/estimator-ref/assumptions.json`, mirrored in `src/model/settings.ts`).
+- Cakewalk check (DECISIONS A5): fly each encounter with only the knowledge carried into it (adopted rules, ship calibration and, from earlier runs, that encounter's own calibration and saved procedures; A9) and no new measurements. Report the margin; a comfortable success means the encounter needs a new unknown. Read the forecast horizon and calibration freshness directly. This check is where 1G's play values get tuned: aging rates, default hedge σ_h0 = 0.3, horizon fraction 0.1 (`tools/estimator-ref/assumptions.json`, mirrored in `src/model/settings.ts`).
 - Markdown report output; runnable with one `npm run` script.
 
 ## 3F — Console and view, version 2

@@ -123,12 +123,12 @@ The owner dials in the game's look and feel throughout the build, working live w
 | `docs/submission/` | 5C |
 | `docs/handoffs/<ID>.md` | Each section writes its own |
 
-## Rough timeline (owner's window, Pacific)
+## Order of work
 
-| When | Phase |
-|---|---|
-| Sat ~10:00–13:00 | Phase 1 |
-| Sat ~13:00–19:00 | Phase 2, Gravity range playtest at the gate |
-| Sat ~19:00–02:00 | Phase 3 |
-| Sat night – Sun ~11:00 | Phase 4 |
-| Sun ~11:00–17:00 | Phase 5 and submission (hard deadline 17:00 PST Sunday: San Marino, CA local event, virtual, solo team) |
+Phases run in order with no clock targets; the owner's availability sets the pace, and gates happen when the owner is ready. The one fixed time is the submission deadline: **17:00 PST Sunday, November 15** (San Marino, CA local event, virtual, solo team). Leave Phase 5 enough room for a working public build, the video and the write-up; if time runs short, Phase 4 shrinks before Phase 5 does.
+
+1. Phase 1
+2. Phase 2, Gravity range playtest at the gate
+3. Phase 3
+4. Phase 4
+5. Phase 5 and submission
