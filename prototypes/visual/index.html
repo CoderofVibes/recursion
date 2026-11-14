@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Recursion · Night Watch</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+    }
+  }
+  </script>
+</head>
+<body>
+  <div class="room">
+    <div class="bulkhead" aria-hidden="true"></div>
+
+    <!-- Prototype chrome: not part of the game. -->
+    <nav class="proto-bar" aria-label="Prototype scenes">
+      <span class="proto-title">NIGHT WATCH</span>
+      <span id="scene-bar" class="scene-bar"></span>
+      <span id="scene-controls" class="scene-controls"></span>
+      <span class="proto-hint">space pause · ←→ scrub · drag orbit · f fit · v view only · h hide bar</span>
+    </nav>
+
+    <main class="table">
+      <div class="display">
+
+        <section class="panel rack">
+          <header class="ph"><span>EQUIPMENT</span><span class="ph-r">BUS A</span></header>
+          <ul class="eq-list">
+            <li class="eq" data-k="eng"><i class="pip"></i><span class="eq-code">ENG</span><span class="eq-val" id="v-eng">0 %</span></li>
+            <li class="eq" data-k="acs"><i class="pip"></i><span class="eq-code">ACS</span><span class="eq-val" id="v-acs">HOLD</span></li>
+            <li class="eq sel active" data-k="nav"><i class="pip"></i><span class="eq-code">NAV CAM</span><span class="eq-val" id="v-nav">M1</span></li>
+            <li class="eq active" data-k="proc"><i class="pip"></i><span class="eq-code">PROC</span><span class="eq-val" id="v-proc">OPNAV</span></li>
+            <li class="eq bb" data-k="bbx"><i class="pip"></i><span class="eq-code">BLACK BOX</span><span class="eq-val" id="v-bbx">REC</span></li>
+            <li class="eq" data-k="rad"><i class="pip"></i><span class="eq-code">RAD LOOP</span><span class="eq-val" id="v-rad">2/2</span></li>
+            <li class="eq" data-k="bat"><i class="pip"></i><span class="eq-code">BATT</span><span class="eq-val" id="v-bat">78 %</span></li>
+          </ul>
+
+          <div class="eq-detail">
+            <div class="ed-head"><span>NAV CAM</span><span class="ed-pwr"><span id="nav-w">55</span> W</span></div>
+            <div class="slider"><div class="slider-fill" style="width:62%"></div><div class="slider-knob" style="left:62%"></div></div>
+            <div class="ed-row"><span class="lbl">σ POS</span><span class="num" id="nav-sigma">0.42</span><span class="unit">km</span></div>
+            <canvas class="spark" id="nav-spark" width="220" height="34"></canvas>
+          </div>
+
+          <div class="sub" id="power-panel">
+            <header class="ph"><span>POWER</span><span class="ph-r"><span id="pwr-total">0</span> / 900 W</span><i class="alert-glyph" aria-hidden="true"></i></header>
+            <canvas class="inst" id="power" width="230" height="150"></canvas>
+          </div>
+        </section>
+
+        <section class="view" id="view">
+          <div id="view3d"></div>
+          <div class="view-corner tl"><span class="lbl">SENSOR VIEW</span><span class="val">PLANE · M1 FRAME</span></div>
+          <div class="view-corner tr">
+            <span class="val big" id="met">T+00:00.0</span>
+            <span class="tc" id="tc-pause">❚❚</span><span class="tc on" id="tc-play">▶</span><span class="tc">×4</span><span class="tc">×16</span>
+          </div>
+          <div class="view-corner bl legend">
+            <span><i class="lg lg-meas"></i>MEAS</span>
+            <span><i class="lg lg-fc"></i>F-07</span>
+            <span><i class="lg lg-env"></i>2σ</span>
+            <span><i class="lg lg-prev"></i>ATT 02</span>
+            <span><i class="lg lg-unk"></i>UNSENSED</span>
+          </div>
+        </section>
+
+        <section class="panel right" id="res-panel">
+          <header class="ph" id="res-head"><span>RESIDUAL</span><span class="ph-r">MEAS − F-07</span><i class="alert-glyph" aria-hidden="true"></i></header>
+          <canvas class="inst" id="residual" width="250" height="140"></canvas>
+
+          <div class="readouts">
+            <div class="ro"><span class="lbl">R · M1</span><span class="num" id="ro-r1">0</span><span class="unit">km</span></div>
+            <div class="ro"><span class="lbl">|V|</span><span class="num" id="ro-v">0</span><span class="unit">km/s</span></div>
+            <div class="ro"><span class="lbl">PROP</span><span class="num" id="ro-prop">0</span><span class="unit">%</span></div>
+            <div class="ro"><span class="lbl">HEAT</span><span class="num" id="ro-heat">0</span><span class="unit">kW</span></div>
+          </div>
+
+          <header class="ph"><span>ATTITUDE</span><span class="ph-r" id="att-mode">HOLD</span></header>
+          <canvas class="inst" id="attitude" width="250" height="110"></canvas>
+        </section>
+
+        <section class="panel plan">
+          <header class="ph"><span>PLAN</span><span class="ph-r">F-07 ISSUED T+00:00</span></header>
+          <canvas class="inst" id="timeline" width="900" height="92"></canvas>
+        </section>
+
+        <section class="panel blackbox" id="blackbox">
+          <div class="bb-plate">
+            <span class="bb-name">BLACK BOX</span>
+            <span class="bb-lamp" aria-hidden="true"></span>
+          </div>
+          <div class="bb-attempts">
+            <span class="att lost" title="ATT 01">01</span>
+            <span class="att recall" title="ATT 02">02</span>
+            <span class="att now" title="ATT 03">03</span>
+          </div>
+          <canvas class="bb-tape" id="tape" width="250" height="40"></canvas>
+          <div class="bb-store"><span class="lbl">STORE</span><div class="bar"><div class="bar-fill" id="bb-store" style="width:41%"></div></div><span class="num" id="bb-store-n">41</span><span class="unit">%</span></div>
+        </section>
+
+      </div>
+    </main>
+    <div class="table-lip" aria-hidden="true"></div>
+  </div>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>

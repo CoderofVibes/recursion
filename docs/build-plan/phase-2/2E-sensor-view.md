@@ -1,5 +1,7 @@
 # 2E — 3D sensor view
 
+> **Superseded (2026-11-14)** by [2D-control-room.md](2D-control-room.md) after the owner's screen composition (DECISIONS A8). Not to be run. Its build list still describes what must be on screen, and the control-room thread reads it as input.
+
 **Thread:** Claude · **Branch:** `p2/2e-view` (worktree) · **Phase:** 2 (parallel) · **Needs:** 1A merged; 1E handoff
 
 ## Context

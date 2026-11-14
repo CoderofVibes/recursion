@@ -166,6 +166,20 @@ Use clear instruments, motion and restrained feedback. Avoid filling the interfa
 
 Safe preparation should allow deliberate thought without a universal countdown. Local commitments, changing geometry and real resource limits create pressure.
 
+### Addendum: screen composition (owner, 2026-11-14, given to 1E)
+
+> My vision is a real 3D room with a large center command station console in the middle. When the player "revives" they enter the room and have basic wsad controls to walk. There is a large panoramic (maybe 90-180 degree) viewing window of the expanse before the player and the control console. The console can do many things. Click on map and a large holographic 3D map projects. It is interactive - get the full view of the whole universe the player is within, or select sections, actual encounter environments - I'd like information pertinent to the environments to be available in this map.
+>
+> Note - when the map is selected, the player view goes to the map. The whole room is no longer in view so the player can focus on the visuals and interaction with the map. I'd like to know what other features of this map you'd think we should add, given the context you have regarding the game.
+>
+> There should also be a ship view that lets the player inspect the ship, select different systems, everything you can think of there - in 3D holographic view. Please let me know if you have questions from other threads for details needed for any of this. Again, when the player selects this, the view is on this 3D ship selection and the whole room is no longer visible so the player can focus.
+>
+> The main console can be accesses which is where all of the other functions and screens can be accessed. Anything from data assessment, predictive model viewing, system conditions and summary, Black Box (whatever we decide on that meaning) basically everything else. While the map and ship view are 3D and projected above the main console, this screen is in the console so the player is looking down into it. The screen on the console takes over the screen the player sees.
+>
+> There is also a flight screen the player will enter during encounters. I'd like for it to be a 3D projection above the console like the other 3D projections, but in this you can see the back ground which is the view of the environment ahead. The player should have the holographic ship in front of them, with perhaps things like a center of mass dotted line, the ship's movement and tilt/rotation on an access, controls for thrust forward/back, and lateral movement. Objects and other scans (think the lattice when the player makes the engineering decision to allocate resources to the black box scanning function) will pop up on this 3D display and the window in the back drop should also show if an object is approaching (like a big asteroid - it should be seen through the window and on the 3D projection).
+>
+> When the ship is destroyed and the player fails the screen should go black (maybe some camera shaking up and down to simulate the space craft's failure) and the game restarts at the beginning (roguelikes are cruel) with the player walking into the control room and seeing the initial environment. Player hands and such are not part of this game - just a 1st person view and a small white dot on the screen to show what the player is interacting with (something subtle like that).
+
 ## 11. Physics derivation during the build
 
 At some point during the hackathon build window, I plan to give Codex a focused assignment to re-derive the relevant physics from our chosen fictional assumptions, including the inverse-2.5 gravity law.
