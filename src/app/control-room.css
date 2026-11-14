@@ -1,0 +1,374 @@
+/*
+ * The control room's overlays: the cursor, hologram tags, view titles, the loss screen, and
+ * where the flight, ship and map instruments sit around their holograms.
+ * Every colour, size, weight and timing is a theme token (--rx-*, set by applyTheme()).
+ */
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: var(--rx-void);
+}
+
+.cr {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--rx-void);
+  color: var(--rx-ink);
+  font-family: var(--rx-font);
+  font-size: var(--rx-size-body);
+  letter-spacing: var(--rx-tracking-body);
+  font-variant-numeric: tabular-nums;
+  user-select: none;
+}
+.cr *,
+.cr *::before,
+.cr *::after {
+  box-sizing: border-box;
+}
+.cr-gl {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.cr-labels {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  /* The tag renderer orders tags by depth with z-index; keep that ordering inside this layer. */
+  isolation: isolate;
+}
+.cr[data-lost] .cr-labels {
+  display: none;
+}
+.cr[data-mode='console'] .cr-labels {
+  display: none;
+}
+
+/* ---- Hologram tags --------------------------------------------------------------------------- */
+.rx-tag {
+  font-family: var(--rx-font);
+  font-size: var(--rx-size-small);
+  font-weight: var(--rx-weight-strong);
+  letter-spacing: var(--rx-tracking-label);
+  color: var(--rx-ink);
+  white-space: pre;
+  text-shadow: var(--rx-hud-glow-ink);
+  transform: translateY(-50%);
+}
+.rx-tag.dim {
+  color: var(--rx-ink-dim);
+  text-shadow: none;
+}
+.rx-tag.sel {
+  font-size: var(--rx-size-label);
+}
+.rx-tag.fc {
+  color: var(--rx-forecast);
+  text-shadow: var(--rx-hud-glow-forecast);
+}
+.rx-tag.thr {
+  color: var(--rx-thrust);
+}
+.rx-tag.vel {
+  color: var(--rx-velocity);
+}
+.rx-tag.bbx {
+  color: var(--rx-blackbox);
+  text-shadow: var(--rx-hud-glow-blackbox);
+}
+.rx-tag.field {
+  color: var(--rx-lattice);
+}
+.rx-tag.caution {
+  color: var(--rx-caution);
+}
+.rx-tag.warning {
+  color: var(--rx-warning);
+}
+.rx-tag.call {
+  padding: 0 var(--rx-row-pad-x);
+  border-left: var(--rx-line-rule) solid var(--rx-ink-dim);
+  background: var(--rx-hud-plate-soft);
+}
+.rx-tag.call.sel {
+  border-left-color: var(--rx-ink);
+  background: var(--rx-wash-selected);
+}
+
+/* ---- The cursor: a small white dot; it opens into a ring and names what it has found -------- */
+.cr-reticle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  pointer-events: none;
+  display: none;
+}
+.cr[data-mode='room'][data-locked='1'] .cr-reticle {
+  display: block;
+}
+.cr-reticle i {
+  position: absolute;
+  left: calc(var(--rx-hud-reticle) / -2);
+  top: calc(var(--rx-hud-reticle) / -2);
+  width: var(--rx-hud-reticle);
+  height: var(--rx-hud-reticle);
+  border-radius: 50%;
+  background: var(--rx-ink);
+  opacity: var(--rx-hud-o-reticle);
+  transition: all var(--rx-t-fast) var(--rx-ease-out);
+}
+.cr-reticle[data-hot] i {
+  left: calc(var(--rx-hud-reticle-hot) / -2);
+  top: calc(var(--rx-hud-reticle-hot) / -2);
+  width: var(--rx-hud-reticle-hot);
+  height: var(--rx-hud-reticle-hot);
+  background: transparent;
+  border: var(--rx-line-trace) solid var(--rx-ink);
+  opacity: var(--rx-hud-o-reticle-hot);
+}
+.cr-reticle span {
+  position: absolute;
+  top: var(--rx-hud-reticle-hot);
+  left: 0;
+  transform: translateX(-50%);
+  font-size: var(--rx-size-label);
+  font-weight: var(--rx-weight-strong);
+  letter-spacing: var(--rx-tracking-label);
+  white-space: nowrap;
+}
+/* Without pointer lock the cursor is the mouse; the name sits low in the view. */
+.cr[data-mode='room'][data-locked='0'] .cr-reticle[data-hot] {
+  display: block;
+  top: auto;
+  bottom: calc(var(--rx-hud-margin) * 3);
+}
+.cr[data-mode='room'][data-locked='0'] .cr-reticle[data-hot] i {
+  display: none;
+}
+.cr[data-mode='room'][data-locked='0'] .cr-reticle[data-hot] span {
+  top: 0;
+  font-size: var(--rx-size-value);
+}
+
+/* ---- Overlays ---------------------------------------------------------------------------------- */
+.cr-hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transition: opacity var(--rx-t-base) var(--rx-ease-out);
+}
+.cr-hud[data-hidden] {
+  opacity: 0;
+}
+.cr-hud > * {
+  position: absolute;
+}
+.cr-title {
+  left: var(--rx-hud-margin);
+  top: var(--rx-hud-margin);
+  font-size: var(--rx-size-body);
+  font-weight: var(--rx-weight-strong);
+  letter-spacing: var(--rx-tracking-label);
+  color: var(--rx-ink-dim);
+  white-space: pre;
+}
+.cr-back {
+  left: var(--rx-hud-margin);
+  bottom: calc(var(--rx-hud-margin) / 2);
+  font-size: var(--rx-size-small);
+  letter-spacing: var(--rx-tracking-label);
+  color: var(--rx-ink-faint);
+}
+.cr-hint {
+  left: 50%;
+  bottom: var(--rx-hud-margin);
+  transform: translateX(-50%);
+  font-size: var(--rx-size-label);
+  letter-spacing: var(--rx-tracking-label);
+  color: var(--rx-ink-dim);
+  white-space: nowrap;
+}
+
+/* ---- Flight ------------------------------------------------------------------------------------ */
+.fh-top {
+  right: var(--rx-hud-margin);
+  top: calc(var(--rx-hud-margin) - var(--rx-row-gap));
+  pointer-events: auto;
+}
+.fh-alerts {
+  left: 50%;
+  top: var(--rx-hud-top);
+  transform: translateX(-50%);
+  min-width: var(--rx-hud-plate);
+}
+.fh-keys {
+  left: var(--rx-hud-margin);
+  bottom: calc(var(--rx-hud-margin) * 1.6);
+  display: grid;
+  grid-template-columns: repeat(5, var(--rx-hud-key));
+  gap: var(--rx-row-gap);
+}
+.fh-keys i {
+  height: var(--rx-hud-key-height);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: var(--rx-line-rule) solid var(--rx-panel-edge);
+  border-radius: var(--rx-panel-radius);
+  background: var(--rx-hud-plate-soft);
+  font-style: normal;
+  font-size: var(--rx-size-body);
+  font-weight: var(--rx-weight-strong);
+  color: var(--rx-ink-dim);
+}
+.fh-keys i b {
+  font-size: var(--rx-size-small);
+  font-weight: var(--rx-weight-regular);
+  letter-spacing: var(--rx-tracking-label);
+  color: var(--rx-ink-faint);
+}
+.fh-keys i[data-on] {
+  border-color: var(--rx-thrust);
+  color: var(--rx-thrust);
+  box-shadow: var(--rx-hud-glow-thrust);
+}
+.fh-keys i[data-on] b {
+  color: var(--rx-thrust);
+}
+/* A control the ship does not answer to yet: present, hatched, never lit. */
+.fh-keys i[data-off] {
+  opacity: var(--rx-stale);
+  background: repeating-linear-gradient(
+    45deg,
+    var(--rx-unknown) 0 var(--rx-unit),
+    transparent var(--rx-unit) calc(var(--rx-unit) * 3)
+  );
+}
+.fh-forecast {
+  left: 50%;
+  bottom: var(--rx-hud-margin);
+  transform: translateX(-50%);
+  font-size: var(--rx-size-small);
+  font-weight: var(--rx-weight-strong);
+  letter-spacing: var(--rx-tracking-label);
+  color: var(--rx-forecast);
+  text-shadow: var(--rx-hud-glow-forecast);
+  white-space: nowrap;
+}
+.fh-side {
+  right: var(--rx-hud-margin);
+  top: var(--rx-hud-top);
+  bottom: var(--rx-hud-margin);
+  width: var(--rx-hud-column);
+  display: flex;
+  flex-direction: column;
+  gap: var(--rx-gap);
+  overflow-y: auto;
+  pointer-events: auto;
+  scrollbar-width: none;
+}
+.fh-side .rx-panel,
+.sp-col .rx-panel,
+.mp-plate .rx-panel {
+  background: var(--rx-hud-plate);
+  flex: none;
+}
+
+/* ---- Ship: system columns either side of the hologram ----------------------------------------- */
+.sp-col {
+  top: var(--rx-hud-top);
+  bottom: calc(var(--rx-hud-margin) * 1.5);
+  width: var(--rx-hud-column);
+  display: flex;
+  flex-direction: column;
+  gap: var(--rx-gap);
+  overflow-y: auto;
+  pointer-events: auto;
+  scrollbar-width: none;
+}
+.sp-left {
+  left: var(--rx-hud-margin);
+}
+.sp-right {
+  right: var(--rx-hud-margin);
+}
+.sp-systems {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--rx-row-gap);
+}
+
+/* ---- Map ----------------------------------------------------------------------------------------- */
+.mp-plate {
+  right: var(--rx-hud-margin);
+  top: var(--rx-hud-top);
+  width: var(--rx-hud-plate);
+  pointer-events: auto;
+}
+
+/* ---- Loss of the ship: black, then one orange pip that survives --------------------------------- */
+.cr-black {
+  position: absolute;
+  inset: 0;
+  background: var(--rx-void);
+  opacity: 0;
+  pointer-events: none;
+}
+.cr-black:is([data-stage='black'], [data-stage='pip'], [data-stage='reset']) {
+  opacity: 1;
+}
+.cr-black[data-stage='fade'] {
+  opacity: 0;
+  transition: opacity var(--rx-t-loss-fade) var(--rx-ease-in-out);
+}
+.cr-black i,
+.cr-black span {
+  position: absolute;
+  left: 50%;
+  bottom: 12vh;
+  opacity: 0;
+  transition: opacity var(--rx-t-pip-in);
+}
+.cr-black i {
+  width: var(--rx-hud-pip);
+  height: var(--rx-hud-pip);
+  margin-left: calc(var(--rx-hud-pip) / -2);
+  border-radius: 50%;
+  background: var(--rx-blackbox);
+  box-shadow: var(--rx-pip-glow) var(--rx-blackbox);
+}
+.cr-black span {
+  transform: translateX(-50%);
+  bottom: calc(12vh - var(--rx-hud-margin));
+  font-size: var(--rx-size-small);
+  font-weight: var(--rx-weight-strong);
+  letter-spacing: var(--rx-tracking-label);
+  color: var(--rx-blackbox);
+}
+.cr-black:is([data-stage='pip'], [data-stage='reset']) :is(i, span) {
+  opacity: 1;
+}
+.cr-hit {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  box-shadow: var(--rx-hud-hit);
+}
+.cr[data-dying] .cr-hit {
+  opacity: 1;
+  animation: cr-flick calc(var(--rx-t-fast)) steps(2) 3;
+}
+@keyframes cr-flick {
+  50% {
+    opacity: var(--rx-hud-o-flicker);
+  }
+}

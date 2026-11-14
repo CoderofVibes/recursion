@@ -7,12 +7,16 @@
  */
 export { lineStyles, envelopeStyle, planeStyle, objectStyle } from './styles.ts';
 export type { LineStyle } from './styles.ts';
+export { holoLines, holoWire, holoSize } from './holo.ts';
+export { shipWire, shipHoloMotion } from './ship-holo.ts';
+export { mapLines, mapWire, mapHaze, mapMotion } from './map-holo.ts';
 export { lineMaterial, pixelsPerUnit, LineKit, wireMaterial, ghostWireMaterial } from './lines.ts';
 export type { LineStyleName, LineOptions, WireRole } from './lines.ts';
 export { envelopeGeometry, envelopeMaterial } from './envelope.ts';
 export type { EnvelopeStation, EnvelopeMaterialOptions } from './envelope.ts';
 export { planeMaterial, setPlaneCoverage, planeVeilMaterial, MAX_SECTORS } from './plane.ts';
 export type { PlaneSector, PlaneMaterialOptions } from './plane.ts';
+export { holoPlaneMaterial, setHoloPlane } from './holo-plane.ts';
 export { bodyMaterial, rockMaterial, setSun } from './bodies.ts';
 export type { BodyMaterialOptions, RockMaterialOptions } from './bodies.ts';
 export { latticeMaterial, wellLineMaterial, wellColour } from './fields.ts';
