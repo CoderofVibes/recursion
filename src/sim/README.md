@@ -70,6 +70,17 @@ At dt = 1 s against 1B's 20,000 s reference trajectories [DEMONSTRATED: `vectors
 
 Error falls 4× per halving of dt. Scale the step with the dynamics: Verlet's phase error grows like (Ω·dt)² per radian of orbit, so faster orbits (low orbits, close passes) need a smaller `dt`. 1B's resolution guard dt·√(Σ Kᵢ/rᵢⁿ⁺¹) ≤ 0.01 is a minimum, not an accuracy guarantee.
 
+Against NASA GMAT R2026a (1D's Newtonian point-mass Earth cases, every 10 s sample, bounds 0.05 m and 5×10⁻⁵ m/s from `docs/verification/gmat.md`) [DEMONSTRATED: `gmat.test.ts`]:
+
+| Case | dt | Worst position | Worst velocity |
+|---|---|---|---|
+| C1 circular, 3 periods (18,000 s) | 0.0125 s | 13 mm | 1.4×10⁻⁵ m/s |
+| C2 eccentric e ≈ 0.6, 3 periods (72,000 s) | 0.00625 s | 22 mm | 1.8×10⁻⁵ m/s |
+| C3 hyperbolic flyby (40,000 s) | 0.025 s | 14 mm | 2.4×10⁻⁶ m/s |
+| C4 120 s prograde burn + 6,000 s coast | 0.025 s | 5.7 mm | 5.5×10⁻⁶ m/s |
+
+These low orbits turn about ten times faster than the Gravity range and the bound is relative 7×10⁻⁹, hence the small steps. Error falls 4× per halving all the way down (C4 at 0.4 s: 2.7 m; at 0.025 s: 5.7 mm), so there is no offset in the law, units or finite-thrust handling. C4's thrust follows the instantaneous velocity through a test harness acting as a perfect attitude controller, with the mass at the middle of each step.
+
 ## Clearance and contact
 
 - **Clearance** is hull-to-surface: the footprint polygon (convex or not) against each body's and asteroid's circle. Within `hullClearanceRange` (+ the hull's reach) it uses the polygon; farther out it is measured from the centre of mass (error at most the hull's size) and costs almost nothing.
