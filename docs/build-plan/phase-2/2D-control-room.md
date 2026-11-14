@@ -15,7 +15,7 @@ Recursion is a browser-based spacecraft engineering roguelike for NASA Space App
 The main session is the integrator. It merges every branch, owns `src/contracts/` and `docs/DECISIONS.md`, and announces merges; you then commit, run `git merge main` and continue.
 
 Read first:
-- **Owner and decisions:** `docs/CREATIVE_BRIEF.md` (all of it, especially §2, §3, §10 and its addendum); `docs/DECISIONS.md` (all of it: A1–A8, P1–P17, D1–D7); `docs/build-plan/README.md` § Conventions and § UI lane.
+- **Owner and decisions:** `docs/CREATIVE_BRIEF.md` (all of it, especially §2, §3, §10 and its addendum); `docs/DECISIONS.md` (all of it: A1–A10, P1–P17, D1–D7); `docs/build-plan/README.md` § Conventions and § UI lane.
 - **The look and the mock-up (1E):** `docs/handoffs/1E.md` (both rounds), `docs/design/visual-direction.md`, `src/theme/`, and `prototypes/room/`. To run the mock-up: `node prototypes/visual/serve.mjs`, then open http://localhost:5180/room/. It loads Three.js 0.170 from a CDN; the app uses the `three` package (0.187) from `package.json`.
 - **What the room shows:**
   - `src/contracts/README.md` (`ViewSnapshot` in `view.ts`, the believed world, forecasts, Black Box records).
@@ -63,7 +63,7 @@ You do not own:
 ## Step 2 — Build, in this order
 1. **FLIGHT view:** a hologram above the console with the window behind it. Cover everything the 2E list asks for:
    - The view itself: take `ViewSnapshot` as input; draw the flight plane with depth cues; give the camera follow, orbit and fit modes with no motion sickness; keep 60 fps with a few hundred asteroids.
-   - **Bodies and asteroids:** draw both where the ship believes they are, with uncertainty.
+   - **Bodies and asteroids:** draw both where the ship believes they are, with uncertainty. Tracked asteroids' forecast tracks and closest-approach alerts come from the forecast's `objects` and `closestApproaches` (2C).
    - **Ship:** the true footprint, centre of mass, body axis, thrust ticks and velocity.
    - **Forecasts:**
      - The issued forecast is dotted and frozen; the measured trail is solid.
@@ -73,10 +73,10 @@ You do not own:
    - **Field plugins:** the interface at `src/view3d/fields/<id>`, documented in `src/view3d/README.md`.
    - **Window:** it shows what light shows (bodies and sunlit rocks, with shadows from A3).
 2. **CONSOLE screen.** Cover everything the 2D list asks for:
-   - **Plan editor:** timed burns, with directions relative to the body axis, the velocity or a chosen body; duration and throttle; attitude and sensor-pointing commands. Commit issues a frozen forecast.
+   - **Plan editor:** timed burns, with directions relative to the body axis, the velocity or a chosen body; duration and throttle; attitude and sensor-pointing commands. Pointing at an asteroid to track it is how the player probes the law at distances the ship hasn't flown (A6). Commit issues a frozen forecast.
    - **Time controls:** pause, play and warp. Preparation is safe.
    - **Equipment and power allocation,** with visible consequences.
-   - **Model panel:** parameters with uncertainty, strength against distance, the confounding indicator, testing an extension against a chosen held-out attempt, adopt and revoke, and the model version.
+   - **Model panel:** parameters with uncertainty, strength against distance, the confounding indicator, testing an extension against a chosen held-out attempt, adopt and revoke, and the model version. Show calibration freshness for ship calibrations (`ParameterEstimate.freshness`, 1G spec §9.7), and each adopted rule's validated spans against the distances the plan visits.
    - **Black Box compare** (`compareAttempts()`).
    - Recall and save-procedure.
 3. **Challenge fit** (5C-0 requests 2 and 3):

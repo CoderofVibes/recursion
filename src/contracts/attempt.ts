@@ -18,6 +18,7 @@ import type {
   LeadId,
   ParameterId,
 } from './ids.ts';
+import type { EncounterBriefing } from './encounter.ts';
 import type { ExtensionState } from './model.ts';
 import type { LossCause, Measurement, ShipEvent } from './measurements.ts';
 import type { MetersPerSecond, Seconds } from './units.ts';
@@ -52,6 +53,12 @@ export interface AttemptStart {
   readonly modelVersion: number;
   /** Absent for the first encounter of a run. */
   readonly transit?: TransitRecord;
+  /**
+   * The briefing this attempt was given. Each run's starting geometry differs (DECISIONS A10),
+   * so the model takes arrival states of bodies and asteroids per attempt from here. Absent:
+   * the encounter's one briefing applies.
+   */
+  readonly briefing?: EncounterBriefing;
 }
 
 export interface AttemptRecord {
@@ -109,6 +116,16 @@ export interface ExtensionTestRecord {
   readonly adoptable: boolean;
 }
 
+/** The player adopting or revoking a rule (1G spec §6.1). Kept in order; never edited. */
+export interface ExtensionDecision {
+  readonly extension: ExtensionId;
+  readonly action: 'adopted' | 'revoked';
+  /** Model version the decision produced. */
+  readonly modelVersion: number;
+  /** Wall-clock ISO time, for the record list only. */
+  readonly at: string;
+}
+
 /** Everything Black Box preserves across recurrence. */
 export interface BlackBoxArchive {
   readonly attempts: readonly AttemptRecord[];
@@ -117,4 +134,6 @@ export interface BlackBoxArchive {
   readonly leads: readonly Lead[];
   /** Every extension test, in the order run. */
   readonly extensionTests?: readonly ExtensionTestRecord[];
+  /** Every adopt and revoke, in order; `adoptedExtensions` is the current result. */
+  readonly extensionDecisions?: readonly ExtensionDecision[];
 }

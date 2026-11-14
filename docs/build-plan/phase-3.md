@@ -13,7 +13,7 @@ Every prompt below assumes the thread first reads `docs/CREATIVE_BRIEF.md`, `doc
 **Goal:** the operating depth behind the power/thermal learning branch.
 - Thermal network: nodes, pumped loops, heat exchangers, radiators that deploy and point (deployment changes footprint and centre of mass), heaters, time constants; freezing and overheating limits.
 - Power depth: battery thermal limits, protection trips that need deliberate reset, priority and shedding the player configures, bus cross-ties.
-- Equipment condition: wear, damage states, redundancy switching. Emit a `condition-changed` ShipEvent whenever reported condition changes (the model ages ship calibrations on drops, 1G spec §3.7). Consume per-component radiation exposure from `envEffects` and map it onto the 1C radiation-effect classes: glancing exposure accumulates; severe exposure can disable critical electrical capability. No random survival rolls, no universal hit counter.
+- Equipment condition: wear, damage states, redundancy switching. Emit a `condition-changed` ShipEvent whenever reported condition changes, using the equipment ids the model sees (thrusters, camera, accelerometer); the model ages ship calibrations on drops (1G spec §3.7). Consume per-component radiation exposure from `envEffects` and map it onto the 1C radiation-effect classes: glancing exposure accumulates; severe exposure can disable critical electrical capability. No random survival rolls, no universal hit counter.
 - Tests for each coupling; determinism.
 
 ## 3B — Inverse Wells
@@ -42,7 +42,8 @@ Every prompt below assumes the thread first reads `docs/CREATIVE_BRIEF.md`, `doc
 **Inputs:** 1F expedition design (as approved by the owner), P8, P9.
 **Goal:** the frame that turns encounters into an expedition.
 - The authored graph, travel between nodes, the chart and glimmer leads (shown only as the ship has sensed them).
-- Recurrence contract (P8, A9) in full: a loss restarts the whole expedition; triggers, reset, persistence; ship state carried between encounters within a run, with no repair or refill. On arrival at a later encounter, write `AttemptStart.transit` (`TransitRecord`: ship time, commanded Δv, camera power cycles and condition changes since the carrying attempt) so the model can age ship calibrations (1G spec §3.7).
+- Recurrence contract (P8, A9) in full: a loss restarts the whole expedition; triggers, reset, persistence; ship state carried between encounters within a run, with no repair or refill. On arrival at a later encounter, write `AttemptStart.transit` (`TransitRecord`: ship time, commanded Δv, camera power cycles and condition changes since the carrying attempt) so the model can age ship calibrations (1G spec §3.7). Compose a later encounter's briefing with 2C's `carriedCalibration(state, transit, { carrying })`, and put the adopted rules' values with their sigma in its priors.
+- Run seed (A10): generate each encounter's starting geometry from the run's seed within the ranges its content defines, and record each attempt's briefing in `AttemptStart.briefing`.
 - Saved procedures (P9): record, match conditions, replay, adapt.
 - Progress gated by demonstrated capability and workable procedures, never visited flags.
 - Save/load to IndexedDB; versioned save format.
