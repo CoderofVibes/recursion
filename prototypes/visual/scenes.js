@@ -200,9 +200,9 @@ export const SCENES = {
         const grp = new THREE.Group();
         grp.position.set(f.x, 0, f.z);
         grp.rotation.y = -f.th;
-        const lo = new THREE.Mesh(new THREE.PlaneGeometry(f.L, f.H, 1, 1), mat(f, false, 0.45, below)); lo.renderOrder = -20;
-        const hi = new THREE.Mesh(new THREE.PlaneGeometry(f.L, f.H, 1, 1), mat(f, false, 0.45, above)); hi.renderOrder = 4;
-        const cut = new THREE.Mesh(new THREE.PlaneGeometry(f.L, 3, 1, 1).rotateX(-Math.PI / 2), mat(f, true, 1.0, null));
+        const lo = new THREE.Mesh(new THREE.PlaneGeometry(f.L, f.H, 1, 1), mat(f, false, 0.2, below)); lo.renderOrder = -20;
+        const hi = new THREE.Mesh(new THREE.PlaneGeometry(f.L, f.H, 1, 1), mat(f, false, 0.2, above)); hi.renderOrder = 4;
+        const cut = new THREE.Mesh(new THREE.PlaneGeometry(f.L, 3, 1, 1).rotateX(-Math.PI / 2), mat(f, true, 0.75, null));
         cut.position.y = 0.09; cut.renderOrder = 4;
         grp.add(lo, hi, cut);
         g.add(grp);
@@ -211,8 +211,9 @@ export const SCENES = {
       tag.position.set(fences[0].x + 6, 15, fences[0].z);
       g.add(tag);
 
-      const slider = el('input', { type: 'range', id: 'proc-w', min: '0', max: '100', value: '75' });
-      const out = el('span', { class: 'scene-val' }, '75');
+      const pw0 = new URLSearchParams(location.search).get('pw') ?? '75';
+      const slider = el('input', { type: 'range', id: 'proc-w', min: '0', max: '100', value: pw0 });
+      const out = el('span', { class: 'scene-val' }, pw0);
       slider.addEventListener('input', () => { out.textContent = slider.value; });
       const wrap = el('label', { class: 'scene-range' });
       wrap.append(el('span', {}, 'PROC W'), slider, out);

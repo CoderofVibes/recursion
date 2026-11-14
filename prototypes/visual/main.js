@@ -686,7 +686,7 @@ function loadValues(t) {
     if (l.k === 'ACS') return slew ? l.active : l.idle;
     if (l.k === 'THRM') return l.idle + (burning ? 15 : 0) + 4 * Math.sin(t * 0.7);
     if (l.k === 'PROC' && sceneId === 'lattice') return 70 + latticePower() * 2.6;
-    if (l.k === 'HTR' && fx.warning) return 520;
+    if (l.k === 'HTR' && fx.warning) return 600;
     return l.idle;
   });
 }
