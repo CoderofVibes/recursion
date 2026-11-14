@@ -30,17 +30,17 @@
     <div class="chips hud-map" id="map-layers"></div>
     <aside class="plate hud-map" id="map-plate" hidden></aside>
 
-    <div class="chips hud-ship" id="ship-layers"></div>
-    <div class="chips cfg hud-ship" id="ship-configs"></div>
-    <aside class="plate hud-ship" id="ship-plate" hidden></aside>
+    <aside class="col hud-ship" id="ship-left"></aside>
+    <aside class="col hud-ship" id="ship-right"></aside>
 
     <div class="hud-flight" id="flight-keys">
-      <i data-k="q">Q<b>⟲</b></i><i data-k="w">W<b>MAIN</b></i><i data-k="e">E<b>⟳</b></i>
-      <i data-k="a">A<b>◀</b></i><i data-k="s">S<b>RETRO</b></i><i data-k="d">D<b>▶</b></i>
+      <i data-k="q">Q<b>YAW ⟲</b></i><i data-k="w">W<b>MAIN</b></i><i data-k="e">E<b>YAW ⟳</b></i><i data-k="r">R<b>UP</b></i><i data-k="arrowup">↑<b>NOSE UP</b></i>
+      <i data-k="a">A<b>LEFT</b></i><i data-k="s">S<b>RETRO</b></i><i data-k="d">D<b>RIGHT</b></i><i data-k="f">F<b>DOWN</b></i><i data-k="arrowdown">↓<b>NOSE DN</b></i>
     </div>
     <dl class="hud-flight" id="flight-readouts">
       <dt>SPEED</dt><dd><span id="ro-speed">6.0</span> km/s</dd>
       <dt>HEADING</dt><dd><span id="ro-head">000</span>°</dd>
+      <dt>PITCH</dt><dd><span id="ro-pitch">+0</span>°</dd>
       <dt>YAW RATE</dt><dd><span id="ro-rate">0.0</span> °/s</dd>
       <dt>PROPELLANT</dt><dd><span id="ro-prop">100</span> %</dd>
     </dl>

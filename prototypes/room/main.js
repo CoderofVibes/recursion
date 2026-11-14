@@ -15,6 +15,7 @@ import { makeFlightHolo } from './holo-flight.js';
 import { makeMapHolo } from './holo-map.js';
 import { makeShipHolo } from './holo-ship.js';
 import { initConsoleScreen, consoleTopTexture, padTexture } from './screen.js';
+import { dressRoom } from './room-dress.js';
 
 const q = new URLSearchParams(location.search);
 const num = (k, d) => (q.has(k) ? Number(q.get(k)) : d);
@@ -50,6 +51,7 @@ const SO = 8; // metres outside the window per environment unit
 
 // ---- Things that dim when a hologram takes the player's attention ------------------------------
 const lights = [];
+const emissives = [];
 const glows = [];
 const addLight = (l) => { lights.push({ l, base: l.intensity }); scene.add(l); return l; };
 const glowMat = (col, k = 1, extra = {}) => {
@@ -60,6 +62,7 @@ const glowMat = (col, k = 1, extra = {}) => {
 function applyLevel(k) {
   for (const o of lights) o.l.intensity = o.base * k;
   for (const o of glows) o.m.color.copy(o.base).multiplyScalar(k);
+  for (const o of emissives) o.m.emissiveIntensity = o.base * k;
 }
 
 // ---- Textures ------------------------------------------------------------------------------------
@@ -167,57 +170,9 @@ scene.add(room);
   const fstrip = new THREE.Mesh(new THREE.CylinderGeometry(R - 0.03, R - 0.03, 0.025, 64, 1, true, PI / 2, PI), glowMat('#ff9a40', 0.5, { side: THREE.BackSide }));
   fstrip.position.set(0, 0.05, zc);
   room.add(fstrip);
-  // Door the player wakes behind.
-  const door = new THREE.Group();
-  door.position.set(0, 0, back - 0.03);
-  const slab = new THREE.Mesh(new THREE.BoxGeometry(1.3, 2.25, 0.04), new THREE.MeshStandardMaterial({ color: 0x0c0907, roughness: 0.5, metalness: 0.6 }));
-  slab.position.y = 1.125;
-  door.add(slab);
-  for (const x of [-0.72, 0.72]) {
-    const j = new THREE.Mesh(new THREE.BoxGeometry(0.12, 2.4, 0.12), darkMat);
-    j.position.set(x, 1.2, -0.03);
-    door.add(j);
-    const g = new THREE.Mesh(new THREE.BoxGeometry(0.02, 2.1, 0.02), glowMat('#ff9a40', 0.6));
-    g.position.set(x * 0.9, 1.15, -0.1);
-    door.add(g);
-  }
-  const lintel = new THREE.Mesh(new THREE.BoxGeometry(1.56, 0.14, 0.12), darkMat);
-  lintel.position.set(0, 2.33, -0.03);
-  door.add(lintel);
-  room.add(door);
   const dl = new THREE.PointLight(0xffa050, 5, 7, 2);
   dl.position.set(0, 2.2, back - 0.7);
   addLight(dl);
-  // Side-wall status niches.
-  const niche = (seed) => G.canvasTex(512, 256, (x, w, h) => {
-    const r = lcg(seed);
-    x.fillStyle = '#0b0806';
-    x.fillRect(0, 0, w, h);
-    x.strokeStyle = C.panelEdge;
-    x.lineWidth = 3;
-    x.strokeRect(2, 2, w - 4, h - 4);
-    for (let i = 0; i < 7; i++) {
-      x.fillStyle = C.unknown;
-      x.fillRect(24, 26 + i * 30, 210, 9);
-      x.fillStyle = C.ink;
-      x.fillRect(24, 26 + i * 30, 210 * (0.2 + r() * 0.7), 9);
-    }
-    x.strokeStyle = C.ink;
-    x.lineWidth = 3;
-    x.beginPath();
-    let v = 0.5;
-    for (let i = 0; i <= 40; i++) {
-      v = G.clamp(v + (r() - 0.5) * 0.16, 0.1, 0.9);
-      x[i ? 'lineTo' : 'moveTo'](270 + i * 5.4, 230 - v * 200);
-    }
-    x.stroke();
-  });
-  for (const [x, ry, seed] of [[-W / 2 + 0.02, PI / 2, 3], [W / 2 - 0.02, -PI / 2, 9]]) {
-    const m = new THREE.Mesh(new THREE.PlaneGeometry(1.3, 0.65), glowMat('#ffffff', 0.5, { map: niche(seed) }));
-    m.position.set(x, 1.5, 1.6);
-    m.rotation.y = ry;
-    room.add(m);
-  }
 }
 
 // Curved front wall with the panoramic window; rebuilt when the arc changes.
@@ -263,7 +218,9 @@ function buildFront() {
   // A thin warm line under the sill so the window's edge reads in the dark.
   const s = cyl(sill - 0.12, sill - 0.1, PI - a, PI + a, glowMat('#ff9a40', 0.45, { side: THREE.BackSide }), R - 0.02);
   s.userData.glow = true;
+  dress.front(front, a);
 }
+const dress = dressRoom({ room, ROOM, CON, glowMat, emissives, addLight });
 buildFront();
 
 // ---- The console ---------------------------------------------------------------------------------
@@ -498,7 +455,7 @@ const cone = (() => {
 })();
 const flight = makeFlightHolo({ world });
 const map = makeMapHolo({ plate: $('#map-plate'), layers: $('#map-layers') }, { enterRegion: () => setRegion(true) });
-const ship = makeShipHolo({ plate: $('#ship-plate'), layers: $('#ship-layers'), configs: $('#ship-configs') });
+const ship = makeShipHolo({ left: $('#ship-left'), right: $('#ship-right') });
 holoTilt.add(flight.group, map.group, ship.group);
 const consoleScreen = initConsoleScreen($('#console-screen'));
 
@@ -506,7 +463,7 @@ const consoleScreen = initConsoleScreen($('#console-screen'));
 const player = { x: num('px', 0), z: num('pz', 3.75), yaw: num('yaw', 0), pitch: num('pitch', -0.05) };
 const VIEW = {
   room: { level: 1, veil: 0, screen: 0.75, tilt: 0, holo: 1, lift: 0, fov: 62 },
-  map: { pos: [0, 2.75, CON.z + 1.9], look: [0, 1.74, CON.z], level: 0, veil: 1, screen: 0, tilt: 0.45, holo: 1.4, lift: 0.4, fov: 42 },
+  map: { pos: [0, 2.5, CON.z + 2.95], look: [0, 1.93, CON.z], level: 0, veil: 1, screen: 0, tilt: 0.24, holo: 1.4, lift: 0.5, fov: 48 },
   ship: { pos: [0, 2.3, CON.z + 2.3], look: [0, 1.72, CON.z], level: 0, veil: 1, screen: 0, tilt: 0, holo: 1.4, lift: 0.36, fov: 42 },
   console: { pos: [0, 2.56, CON.z + 0.001], look: [0, CON.top, CON.z], up: [0, 0, -1], level: 0.5, veil: 0, screen: 1, tilt: 0, holo: 0, lift: 0, fov: 62 },
   flight: { pos: [0, 1.9, CON.z + 2.55], look: [0, 1.42, CON.z - 1.0], level: 0.3, veil: 0, screen: 0.4, tilt: 0.3, holo: 1.2, lift: 0, fov: 60 },
@@ -561,12 +518,14 @@ function go(m, { instant = false, page } = {}) {
   tiltUser = 0;
   if (m === 'room' || m === 'flight') { flight.setChart(false); flight.setRange(130); }
   if (m === 'console') consoleScreen.show(page);
+  if (m === 'ship') requestAnimationFrame(() => ship.refresh());
   syncHud();
   trans = { t: instant ? 1 : 0, dur: 0.8, from, to: poseOf(m) };
 }
 
 function back() {
-  if (mode === 'map' && region) setRegion(false);
+  if (mode === 'ship' && ship.system) ship.setSystem(null);
+  else if (mode === 'map' && region) setRegion(false);
   else if (mode !== 'room') go('room');
 }
 
@@ -580,6 +539,18 @@ function constrain(p) {
     const d = Math.hypot(p.x, dz);
     if (d > R - m) { p.x = (p.x / d) * (R - m); p.z = zc + (dz / d) * (R - m); }
   }
+  if (p.z > -0.8 && p.z < 3.9) p.x = G.clamp(p.x, -W / 2 + 0.75 + m, W / 2 - 0.75 - m);
+  p.z = Math.min(p.z, bk - 0.45 - m);
+  if (p.z < zc) {
+    const dz = p.z - zc;
+    const d = Math.hypot(p.x, dz);
+    if (d > R - 0.66 - m) { p.x = (p.x / d) * (R - 0.66 - m); p.z = zc + (dz / d) * (R - 0.66 - m); }
+  }
+  for (const sx of [-2.92, 2.92])
+    for (const sz of [0.45, 2.65]) {
+      const d = Math.hypot(p.x - sx, p.z - sz);
+      if (d < 0.5 + m * 0.6 && d > 1e-4) { p.x = sx + ((p.x - sx) / d) * (0.5 + m * 0.6); p.z = sz + ((p.z - sz) / d) * (0.5 + m * 0.6); }
+    }
   const hx = CON.w / 2 + m + 0.25;
   const hz = CON.d / 2 + m + 0.05;
   const lx = p.x - CON.x;
@@ -750,16 +721,16 @@ const SS = new THREE.Vector3();
 const TT = new THREE.Vector3();
 function syncOutside() {
   const sh = world.ship;
-  outsideRot.rotation.y = -sh.th;
-  outside.position.set(-sh.x * SO, 0, -sh.z * SO);
-  uL.value.copy(sunDir).applyEuler(outsideRot.rotation);
+  outsideRot.quaternion.copy(sh.q).invert();
+  outside.position.copy(sh.p).multiplyScalar(-SO);
+  uL.value.copy(sunDir).applyQuaternion(outsideRot.quaternion);
   world.rocks.forEach((r, i) => {
     EE.set(r.tilt, r.spin, r.tilt * 0.5);
-    M4.compose(TT.set(r.x * SO, 0, r.z * SO), QQ.setFromEuler(EE), SS.set(r.r * SO, r.r * SO * 0.8, r.r * SO * 1.1));
+    M4.compose(TT.copy(r.p).multiplyScalar(SO), QQ.setFromEuler(EE), SS.set(r.r * SO, r.r * SO * 0.8, r.r * SO * 1.1));
     rocksOut.setMatrixAt(i, M4);
   });
   rocksOut.instanceMatrix.needsUpdate = true;
-  bigOut.position.set(world.big.x * SO, 0, world.big.z * SO);
+  bigOut.position.copy(world.big.p).multiplyScalar(SO);
   bigOut.scale.setScalar(world.big.r * SO);
   bigOut.rotation.set(world.t * 0.05, world.t * 0.08, 0.4);
 }
@@ -777,9 +748,11 @@ function frame(now) {
     const inp = {
       fwd: (keys.has('w') ? 1 : 0) - (keys.has('s') ? 1 : 0),
       lat: (keys.has('a') ? 1 : 0) - (keys.has('d') ? 1 : 0),
+      vert: (keys.has('r') ? 1 : 0) - (keys.has('f') ? 1 : 0),
       yaw: (keys.has('q') ? 1 : 0) - (keys.has('e') ? 1 : 0),
+      pitch: (keys.has('arrowup') ? 1 : 0) - (keys.has('arrowdown') ? 1 : 0),
     };
-    const active = inp.fwd || inp.lat || inp.yaw;
+    const active = inp.fwd || inp.lat || inp.vert || inp.yaw || inp.pitch;
     acc += dt;
     while (acc >= 1 / 60) { world.step(1 / 60, inp); acc -= 1 / 60; }
     if (active) lastInput = time;
@@ -787,9 +760,11 @@ function frame(now) {
     document.querySelectorAll('#flight-keys [data-k]').forEach((el) => el.classList.toggle('on', keys.has(el.dataset.k)));
     const sh = world.ship;
     const cpa = world.cpa();
-    $('#ro-speed').textContent = Math.hypot(sh.vx, sh.vz).toFixed(1);
-    $('#ro-rate').textContent = `${((-sh.om * 180) / PI).toFixed(1)}`;
-    $('#ro-head').textContent = String(Math.round((((-sh.th * 180) / PI) % 360 + 360) % 360)).padStart(3, '0');
+    const fw = world.fwd();
+    $('#ro-speed').textContent = sh.v.length().toFixed(1);
+    $('#ro-rate').textContent = `${((-sh.wy * 180) / PI).toFixed(1)}`;
+    $('#ro-head').textContent = String(Math.round((((Math.atan2(fw.x, -fw.z) * 180) / PI) % 360 + 360) % 360)).padStart(3, '0');
+    $('#ro-pitch').textContent = `${fw.y >= 0 ? '+' : '−'}${Math.abs((Math.asin(G.clamp(fw.y, -1, 1)) * 180) / PI).toFixed(0)}`;
     $('#ro-prop').textContent = (sh.prop * 100).toFixed(0);
     $('#ro-met').textContent = `T+${world.t.toFixed(0).padStart(3, '0')} s`;
     const danger = world.big.seen && cpa.d < 30 && cpa.t > 0;
@@ -848,7 +823,7 @@ function frame(now) {
   if (Math.abs(camera.fov - cur.fov) > 0.01) { camera.fov = cur.fov; camera.updateProjectionMatrix(); }
   holoTilt.rotation.x = tilt;
   holoRoot.visible = cur.holo > 0.05;
-  holoLight.intensity = 2.2 * cur.holo;
+  holoLight.intensity = 2.2 * cur.holo * (1 - cur.veil); // in a focus view nothing of the room is lit
   bbxLamp.material.color.copy(V3(C.blackbox)).multiplyScalar(0.55 + 0.45 * Math.sin(time * 2.6) ** 2);
   glimmer.material.color.setScalar(0.25 + 1.6 * Math.max(0, Math.sin(time * 0.9)) ** 12);
 
@@ -882,11 +857,11 @@ function frame(now) {
 // ---- Start ---------------------------------------------------------------------------------------
 {
   const t0 = num('t', 0);
-  for (let i = 0; i < t0 * 60; i++) world.step(1 / 60, { fwd: 0, lat: 0, yaw: 0 });
+  for (let i = 0; i < t0 * 60; i++) world.step(1 / 60, { fwd: 0, lat: 0, vert: 0, yaw: 0, pitch: 0 });
   flight.setLattice(num('lat', 0));
   if (q.get('up') === '0') flight.setHeadingUp(false);
   if (q.has('cfg')) ship.setConfig(q.get('cfg'), true);
-  if (q.has('layer')) ship.setLayer(q.get('layer'));
+  if (q.has('sys')) ship.setSystem(q.get('sys'));
   const p = poseOf('room');
   camera.position.copy(p.pos);
   camera.quaternion.copy(p.quat);
@@ -901,6 +876,7 @@ function frame(now) {
   if (q.has('spin')) (mode === 'map' ? map.spin : ship.spin).rotation.y = num('spin', 0);
   if (q.get('region') === '1') setRegion(true);
   if (q.has('sel')) (mode === 'map' ? map : ship).select(q.get('sel'));
+  ship.snap();
   if (q.get('fx') === 'die') setTimeout(die, num('at', 1200));
 }
 window.__room = { world, flight, map, ship, go, die, player, camera, cur };
