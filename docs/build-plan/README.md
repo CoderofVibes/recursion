@@ -28,8 +28,7 @@ Phases 1 and 2 have one ready-to-launch prompt file per section. Phases 3–5 ar
 | 2A | Simulation core | Claude | [phase-2/2A-sim-core.md](phase-2/2A-sim-core.md) | 1A, 1B (1D's vectors join later) |
 | 2B | Ship systems v1 | GPT/Codex | [phase-2/2B-ship-systems.md](phase-2/2B-ship-systems.md) | 1A, 1C |
 | 2C | Predictive model and Black Box | Claude | [phase-2/2C-model-and-blackbox.md](phase-2/2C-model-and-blackbox.md) | 1A, 1G |
-| 2D | Console UI | Claude | [phase-2/2D-console-ui.md](phase-2/2D-console-ui.md) | 1A, 1E |
-| 2E | 3D sensor view | Claude | [phase-2/2E-sensor-view.md](phase-2/2E-sensor-view.md) | 1A, 1E |
+| 2D | Control room: reconcile, then build the console and views (replaces the earlier 2D console and 2E view prompts) | Claude (Fable), worktree | [phase-2/2D-control-room.md](phase-2/2D-control-room.md) | 1E, 2C (2F joins as it lands) |
 | 2F | Gravity range and game loop | Claude (Fable), worktree | [phase-2/2F-gravity-range-integration.md](phase-2/2F-gravity-range-integration.md) | 2A, 2B (2C–2E join as they land) |
 | 3A–3F | Power/thermal depth, Inverse Wells, Chain Link Fence, expedition and recurrence, playability harness, console v2 | 3 Claude, 2 GPT/Codex, 1 Claude | [phase-3.md](phase-3.md) | Phase 2 gate |
 | 4A–4E | Power branch, sensing branch and Petal Gallery, combined encounters, homeward passage, audio | 3 Claude, 2 GPT/Codex | [phase-4.md](phase-4.md) | Phase 3 gate |
@@ -91,12 +90,12 @@ The owner dials in the game's look and feel throughout the build, working live w
 | | Owns | Examples |
 |---|---|---|
 | UI lane (1E) | `src/theme/`: tokens, instrument primitives, 3D styles, the UI lab page; `prototypes/`; `docs/design/visual-direction.md` | Palette, type, line weights, dash patterns, motion; how a gauge, readout or panel frame looks; how the forecast line and envelope are drawn |
-| Console and view (2D, 2E, then 3F; encounter sections for their own panels) | Layout, panels, behaviour, data wiring, scene composition | Which panels exist and where; what a click does; camera |
+| Control room (2D, then 3F; encounter sections for their own panels) | Layout, panels, behaviour, data wiring, scene composition | Which panels exist and where; what a click does; camera |
 
 - UI code never hard-codes a visual value; it uses `src/theme/` (Convention 11). Changing a token or primitive restyles every panel without touching the console or view folders.
 - A thread that needs a primitive the theme lacks builds it locally on tokens and lists it in its handoff; the UI lane may adopt it.
 - Layout or behaviour changes the owner wants go to the owning thread (relayed by the owner, or collected by the integrator at a gate), not into `src/theme/`.
-- The UI lab (`src/theme/lab/index.html`, dev only) shows primitives on the contract fixtures, so the owner can work before the real panels exist. After 2D and 2E merge, the lane runs `git merge main` and tunes against the real console.
+- The UI lab (`src/theme/lab/index.html`, dev only) shows primitives on the contract fixtures, so the owner can work before the real panels exist. After 2D merges, the lane runs `git merge main` and tunes against the real console.
 - The integrator merges the UI lane's branch at every gate, and on request in between; the lane merges `main` back in after each announced merge.
 
 ## File ownership map
@@ -115,8 +114,8 @@ The owner dials in the game's look and feel throughout the build, working live w
 | `src/sim/` (except `fields/`) | 2A |
 | `src/ship/` | 2B; in Phase 3 split between 3A (power, thermal, condition, config, massprops, propulsion) and 3C (sensors) |
 | `src/model/`, `src/blackbox/` | 2C |
-| `src/console/` (except `encounters/`) | 2D, then 3F |
-| `src/view3d/` (except `fields/`) | 2E, then 3F |
+| `src/console/` (except `encounters/`) | 2D (control room), then 3F |
+| `src/view3d/` (except `fields/`) | 2D (control room), then 3F |
 | `src/content/<encounter>/`, `src/sim/fields/<field>.ts`, `src/view3d/fields/<field>/`, `src/console/encounters/<encounter>/` | The section that builds that encounter |
 | `src/game/expedition/`, `recurrence/`, `procedures/`, `save/` | 3D |
 | `tools/harness/` | 3E |
@@ -132,4 +131,4 @@ The owner dials in the game's look and feel throughout the build, working live w
 | Sat ~13:00–19:00 | Phase 2, Gravity range playtest at the gate |
 | Sat ~19:00–02:00 | Phase 3 |
 | Sat night – Sun ~11:00 | Phase 4 |
-| Sun ~11:00–17:00 | Phase 5 and submission |
+| Sun ~11:00–17:00 | Phase 5 and submission (hard deadline 17:00 PST Sunday: San Marino, CA local event, virtual, solo team) |
