@@ -15,6 +15,7 @@ Every prompt below assumes the thread first reads `docs/CREATIVE_BRIEF.md`, `doc
 - Power depth: battery thermal limits, protection trips that need deliberate reset, priority and shedding the player configures, bus cross-ties.
 - Equipment condition: wear, damage states, redundancy switching. Emit a `condition-changed` ShipEvent whenever reported condition changes, using the equipment ids the model sees (thrusters, camera, accelerometer); the model ages ship calibrations on drops (1G spec §3.7). Consume per-component radiation exposure from `envEffects` and map it onto the 1C radiation-effect classes: glancing exposure accumulates; severe exposure can disable critical electrical capability. No random survival rolls, no universal hit counter.
 - Tests for each coupling; determinism.
+- From the Phase 2 handoffs (2F): an attitude and rate deadband and a slew-rate limit (holding attitude costs about 12 kg/h of RCS today, and a 180° turn 15–29 kg at 18 times the star trackers' rate limit); speed up the ship step (0.23 ms per tick caps warp near 2,000×); power, thermal and propellant exhaustion as loss causes.
 
 ## 3B — Inverse Wells
 **Thread:** Claude · **Branch:** `p3/3b-wells` (worktree)
@@ -34,6 +35,7 @@ Every prompt below assumes the thread first reads `docs/CREATIVE_BRIEF.md`, `doc
 - Enough layers that blind traversal almost never succeeds (check with the 3E harness).
 - The processing mode Black Box quietly introduced on **existing** sensor hardware: an unexplained channel with a power allocation; recorded behaviour hints at its purpose; when powered enough it reconstructs the lattice in the 3D view, strands intense and fading toward clear centres; quality scales with power, which competes with other loads.
 - An attentive player can discover it before dying. Flying through still takes skill.
+- Camera scene: replace `fieldSignals['ship-environment']` with a typed field the integrator adds to `src/contracts/truth/ship.ts` (2B and 2F asked).
 - Sensors (you own `src/ship/sensors/` in this phase): report each measurement's sigma from the ship's *believed* equipment condition and draw the noise from its *true* condition, so unreported damage shows up as residuals (1G spec §2.4).
 
 ## 3D — Expedition structure and recurrence
@@ -47,6 +49,7 @@ Every prompt below assumes the thread first reads `docs/CREATIVE_BRIEF.md`, `doc
 - Saved procedures (P9): record, match conditions, replay, adapt.
 - Progress gated by demonstrated capability and workable procedures, never visited flags.
 - Save/load to IndexedDB; versioned save format.
+- Encounter definitions: give `EncounterDefinition` an arrival procedure, arrival mass and truth-side objective rules, or adopt 2F's `EncounterSetup` (`src/game/encounter.ts`); ask the integrator for the contract change.
 
 ## 3E — Playability harness
 **Thread:** GPT/Codex · **Branch:** `p3/3e-harness`

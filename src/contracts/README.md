@@ -121,8 +121,8 @@ What the crew knows from the spec sheets. True deviations live in truth.
 - `BlackBoxArchive` — everything preserved across recurrence: attempts, procedures, adopted extensions, leads, `extensionTests` (`ExtensionTestRecord`: every rule test with its training and held-out attempts, evidence, identifiability, fitted values and resulting state; never edited), and `extensionDecisions` (every adopt and revoke, in order).
 
 ### `encounter.ts` — player-visible briefing
-- `Objective` — kind, short label, optional region / moving target / time window.
-- `EncounterBriefing` — objectives, arrival estimate and configuration, model `priors`, objects visible on arrival.
+- `Objective` — kind (including `depart`), short label, optional region / moving target / time window, a distance `band` about the target, `depart` (leave beyond a distance at a minimum speed, e.g. a slingshot exit, A6) and `maxDeltaV`.
+- `EncounterBriefing` — objectives, arrival estimate and configuration, model `priors`, objects visible on arrival, and the law's shared `referenceRadius` r₀ (P4). Each run's briefing differs with its geometry (A10); attempts record theirs in `AttemptStart.briefing`.
 
 ### `view.ts` — what the console and 3D view receive
 - `ViewSnapshot` — `t`, paused, warp, `world` (`BelievedWorld`), `ship` (`ShipView`: footprint, CoM, `ThrustTick`s), measured `trail`, issued `forecasts`, sensor `coverage` (`SensorSector`s; everything else is unknown), objectives, optional two-attempt `compare` (`AttemptOverlay`s) and `selection`.

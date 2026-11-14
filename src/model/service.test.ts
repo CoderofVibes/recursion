@@ -260,28 +260,33 @@ describe('forecast service (forecast-envelope through the game layer)', () => {
 });
 
 describe('rebuild from records equals the live state (P8, spec §11.3)', () => {
-  it('a live model fed in record order equals a rebuild from stored records', () => {
-    const v = V(rawValidation);
-    const recs = records(v, 'distance-law');
-    const live = new ModelService(context({}));
-    live.load({ attempts: [] });
-    for (const rec of recs) {
-      live.beginAttempt({ ...rec, measurements: [], outcome: { kind: 'in-progress' } });
-      const ms = rec.measurements;
-      for (let i = 0; i < ms.length; i += 150) {
-        live.append(rec.id, { measurements: ms.slice(i, i + 150) });
-        live.refresh();
+  // About 6 s alone; it exceeded the 5 s default when 2F's loop tests ran in parallel.
+  it(
+    'a live model fed in record order equals a rebuild from stored records',
+    { timeout: 60_000 },
+    () => {
+      const v = V(rawValidation);
+      const recs = records(v, 'distance-law');
+      const live = new ModelService(context({}));
+      live.load({ attempts: [] });
+      for (const rec of recs) {
+        live.beginAttempt({ ...rec, measurements: [], outcome: { kind: 'in-progress' } });
+        const ms = rec.measurements;
+        for (let i = 0; i < ms.length; i += 150) {
+          live.append(rec.id, { measurements: ms.slice(i, i + 150) });
+          live.refresh();
+        }
+        live.endAttempt(rec);
       }
-      live.endAttempt(rec);
-    }
-    const stored = JSON.parse(JSON.stringify(recs)) as AttemptRecord[];
-    const rebuilt = new ModelService(context({}));
-    rebuilt.load({ attempts: stored });
-    expect(hashState(content(rebuilt.state))).toBe(hashState(content(live.state)));
-    expect(content(rebuilt.state)).toEqual(content(live.state));
-    expect(live.state.version).toBe(4);
-    expect(live.state.parent).toBe(3);
-  });
+      const stored = JSON.parse(JSON.stringify(recs)) as AttemptRecord[];
+      const rebuilt = new ModelService(context({}));
+      rebuilt.load({ attempts: stored });
+      expect(hashState(content(rebuilt.state))).toBe(hashState(content(live.state)));
+      expect(content(rebuilt.state)).toEqual(content(live.state));
+      expect(live.state.version).toBe(4);
+      expect(live.state.parent).toBe(3);
+    },
+  );
 });
 
 describe('extensions: rules only from the player (A4, P5)', () => {
