@@ -12,6 +12,7 @@ import type { Plan } from './commands.ts';
 import type { Cov2 } from './estimates.ts';
 import type { ShipEstimate } from './belief.ts';
 import type { AttemptId, ExtensionId, ForecastId, ObjectId, ParameterId } from './ids.ts';
+import type { CalibrationProfile } from './model.ts';
 import type { MassProperties } from './ship.ts';
 import type { Meters, Seconds } from './units.ts';
 
@@ -50,6 +51,12 @@ export interface ForecastInputs {
   /** Parameter values used (means). */
   readonly parameters: Readonly<Record<ParameterId, number>>;
   readonly extensions: readonly ExtensionId[];
+  /** Calibration profiles the forecast used, with their covariances (1G spec §8.6). */
+  readonly calibration: readonly CalibrationProfile[];
+  /** Measurement noise scale s² applied to the present-state covariance. */
+  readonly noiseScale: number;
+  /** Hedge σ_h used outside sampled distances (smaller once a rule is validated). */
+  readonly hedge: number;
 }
 
 export interface ForecastDraft {

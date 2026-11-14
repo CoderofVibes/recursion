@@ -34,6 +34,7 @@ Every prompt below assumes the thread first reads `docs/CREATIVE_BRIEF.md`, `doc
 - Enough layers that blind traversal almost never succeeds (check with the 3E harness).
 - The processing mode Black Box quietly introduced on **existing** sensor hardware: an unexplained channel with a power allocation; recorded behaviour hints at its purpose; when powered enough it reconstructs the lattice in the 3D view, strands intense and fading toward clear centres; quality scales with power, which competes with other loads.
 - An attentive player can discover it before dying. Flying through still takes skill.
+- Sensors (you own `src/ship/sensors/` in this phase): report each measurement's sigma from the ship's *believed* equipment condition and draw the noise from its *true* condition, so unreported damage shows up as residuals (1G spec §2.4).
 
 ## 3D — Expedition structure and recurrence
 **Thread:** Claude · **Branch:** `p3/3d-expedition` (worktree)

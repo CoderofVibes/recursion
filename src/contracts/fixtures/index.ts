@@ -26,6 +26,7 @@ import type {
   BelievedShip,
   BelievedWorld,
   BlackBoxArchive,
+  CalibrationProfile,
   ClosestApproach,
   CovarianceMatrix,
   EncounterBriefing,
@@ -50,6 +51,8 @@ import {
   ARRIVAL,
   ENGINE,
   MOCK_BODIES,
+  REFERENCE_RADIUS,
+  TRUE_EXPONENT,
   TRUE_GRAVITY,
   TRUE_IMU_BIAS_X,
   buildMockScenario,
@@ -410,6 +413,49 @@ interface AttemptSpec {
   readonly support: readonly [number, number];
   readonly events: readonly ShipEvent[];
   readonly outcome: AttemptRecord['outcome'];
+  /** Calibration the issuing model held (1G spec §5.4). */
+  readonly calibration: readonly CalibrationProfile[];
+}
+
+/**
+ * Mock calibration profile for Alpha (1G spec §5.4): local fits over attempt 1's coasting
+ * stretches. Scale = the pull the data imply over the pull of the given reference law.
+ */
+function mockCalibration(
+  track: readonly MockSample[],
+  referenceMu: number,
+  referenceExponent: number,
+  inflation: number,
+): CalibrationProfile {
+  const alpha = (MOCK_BODIES[0] as { position: Vec2 }).position;
+  const r0 = REFERENCE_RADIUS;
+  const spans: readonly (readonly [number, number])[] = [
+    [0, 300],
+    [320, 1060],
+    [1060, 1800],
+  ];
+  const windows = spans
+    .map(([start, end]) => {
+      const logs = track
+        .filter((p) => p.t >= start && p.t <= end)
+        .map((p) => Math.log(v.distance(p.position, alpha)));
+      const d = Math.exp(logs.reduce((a, b) => a + b, 0) / logs.length);
+      const pull = (mu: number, n: number): number => (mu * Math.pow(r0, n - 2)) / Math.pow(d, n);
+      const scale = pull(MU_ALPHA, TRUE_EXPONENT) / pull(referenceMu, referenceExponent);
+      return { start, end, distance: d, scale, sigma: 0.004 };
+    })
+    .sort((a, b) => a.distance - b.distance);
+  const n = windows.length;
+  const covariance = new Array<number>(n * n).fill(0);
+  windows.forEach((w, i) => (covariance[i * n + i] = w.sigma * w.sigma * inflation));
+  return {
+    body: 'alpha',
+    distances: windows.map((w) => w.distance),
+    scale: windows.map((w) => w.scale),
+    covariance,
+    inflation,
+    windows,
+  };
 }
 
 const ARRIVAL_ESTIMATE: ShipEstimate = {
@@ -661,6 +707,9 @@ function forecastFor(
         'thruster.main-engine.scale': spec.forecastScale,
       },
       extensions: [],
+      calibration: spec.calibration,
+      noiseScale: 1,
+      hedge: 0.3,
     },
     horizon: FORECAST_HORIZON,
     samples,
@@ -712,6 +761,8 @@ export function buildFixtures(): Fixtures {
   const supportArrival: readonly [number, number] = [146e3, 154e3];
   const fittedMuAlpha = 1.97e9;
   const fittedScale = 0.971;
+  const calibrationV2 = mockCalibration(truth1, fittedMuAlpha, 2, 1.3);
+  const calibrationV3 = mockCalibration(truth1, 2.001e9, 2.49, 1.0);
 
   const specs: [AttemptSpec, AttemptSpec] = [
     {
@@ -725,6 +776,7 @@ export function buildFixtures(): Fixtures {
       support: supportArrival,
       events: [{ kind: 'recall', t: 1800 }],
       outcome: { kind: 'recalled', t: 1800 },
+      calibration: [],
     },
     {
       id: 'attempt-0002',
@@ -740,6 +792,7 @@ export function buildFixtures(): Fixtures {
         { kind: 'ship-lost', t: 1500, cause: 'collision' },
       ],
       outcome: { kind: 'lost', t: 1500, cause: 'collision' },
+      calibration: [calibrationV2],
     },
   ];
 
@@ -795,10 +848,11 @@ export function buildFixtures(): Fixtures {
       version: 1,
       parameters: priorParams,
       covariance: diagonalCovariance(priorParams),
-      extensions: [{ id: 'distance-law', enabled: false }],
+      extensions: [{ id: 'distance-law', status: 'candidate' }],
       support: { distance: { alpha: [supportArrival] }, powered: [] },
       residuals: { coast: { rms: 0, n: 0 }, powered: { rms: 0, n: 0 } },
       basedOn: { attempts: [], measurementCount: 0 },
+      calibration: [],
     },
     massOnly: {
       version: 2,
@@ -809,16 +863,20 @@ export function buildFixtures(): Fixtures {
         'body.beta.mu',
         -0.3,
       ),
-      extensions: [{ id: 'distance-law', enabled: false }],
+      parent: 1,
+      extensions: [{ id: 'distance-law', status: 'candidate' }],
       support: { distance: { alpha: [support1] }, powered: [[300, 320]] },
       residuals: { coast: { rms: 420, n: 180 }, powered: { rms: 35, n: 20 } },
       basedOn: {
         attempts: ['attempt-0001'],
         measurementCount: attempts[0].measurements.length,
       },
+      fit: { chi2: 1530, nu: 196, pEff: 4, iterations: 7, converged: true },
+      calibration: [calibrationV2],
     },
     distanceLaw: {
       version: 3,
+      parent: 2,
       parameters: distanceLawParams,
       covariance: withCorrelation(
         diagonalCovariance(distanceLawParams),
@@ -829,11 +887,13 @@ export function buildFixtures(): Fixtures {
       extensions: [
         {
           id: 'distance-law',
-          enabled: true,
+          status: 'adopted',
           fittedAt: 3,
           validation: {
             heldOutAttempt: 'attempt-0002',
             modelVersion: 3,
+            statistic: 1.04,
+            threshold: 1.2,
             rmsBefore: 2900,
             rmsAfter: 310,
             verdict: 'better',
@@ -852,6 +912,8 @@ export function buildFixtures(): Fixtures {
         attempts: ['attempt-0001', 'attempt-0002'],
         measurementCount: attempts[0].measurements.length + attempts[1].measurements.length,
       },
+      fit: { chi2: 352, nu: 345, pEff: 5, iterations: 5, converged: true },
+      calibration: [calibrationV3],
     },
   } satisfies Fixtures['models'];
 

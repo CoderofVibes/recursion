@@ -155,6 +155,26 @@ describe('sunlight fixtures', () => {
   });
 });
 
+describe('calibration fixtures (1G spec §5.4)', () => {
+  it('show the clue: under the Newtonian model, measured strength falls with distance', () => {
+    const profile = fixtures.models.massOnly.calibration[0];
+    expect(profile?.windows.length).toBe(3);
+    const scales = profile?.scale ?? [];
+    for (let i = 1; i < scales.length; i++) {
+      expect(scales[i]).toBeLessThan(scales[i - 1] as number);
+    }
+    expect(profile?.inflation).toBeGreaterThan(1);
+  });
+
+  it('flatten once the distance law is adopted, and record what each forecast used', () => {
+    for (const s of fixtures.models.distanceLaw.calibration[0]?.scale ?? []) {
+      expect(Math.abs(s - 1)).toBeLessThan(0.01);
+    }
+    expect(fixtures.attempts[0].forecasts[0]?.inputs.calibration).toHaveLength(0);
+    expect(fixtures.attempts[1].forecasts[0]?.inputs.calibration).toHaveLength(1);
+  });
+});
+
 describe('field registry', () => {
   it('creates registered kinds and rejects unknown ones', () => {
     const registry = createFieldRegistry([
