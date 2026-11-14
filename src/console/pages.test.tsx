@@ -1,0 +1,168 @@
+/**
+ * Every console page and every instrument panel beside a hologram renders from the contract
+ * fixtures, with the game stubbed behind `GameControls`: the pages work before, and apart from,
+ * the live loop.
+ */
+import { renderToStaticMarkup } from 'react-dom/server';
+import { describe, expect, it } from 'vitest';
+import {
+  archive,
+  attempts,
+  briefing,
+  models,
+  shipDefinition,
+  viewSnapshot,
+  viewSnapshotCompare,
+} from '../contracts/fixtures/index.ts';
+import type { ModelState, ViewSnapshot } from '../contracts/index.ts';
+import type { GameControls } from '../game/belief/controls.ts';
+import type { MapHolo } from '../view3d/map/MapHolo.ts';
+import type { ShipHolo } from '../view3d/ship/ShipHolo.ts';
+import { ConsoleScreen } from './ConsoleScreen.tsx';
+import { Desk } from './desk.ts';
+import type { PageId } from './desk.ts';
+import { FlightHud } from './FlightHud.tsx';
+import { MapPlate } from './MapPlate.tsx';
+import { designMark, defaultDesign } from './mission.ts';
+import { ShipPanels } from './ShipPanels.tsx';
+
+const pending = <T,>(): Promise<T> => new Promise<T>(() => undefined);
+
+function stubGame(options: { model?: ModelState; snapshot?: ViewSnapshot; ended?: boolean } = {}) {
+  const commands: unknown[] = [];
+  const current = attempts.at(-1)!;
+  const game = {
+    briefing,
+    ship: shipDefinition,
+    model: { state: () => options.model ?? models.distanceLaw },
+    blackBox: {
+      archive: () => archive,
+      attempt: (id: string) => archive.attempts.find((a) => a.id === id),
+    },
+    rules: { report: pending, test: pending, adopt: pending, revoke: pending },
+    status: () => ({
+      phase: options.ended ? 'ended' : 'operate',
+      attemptId: current.id,
+      attemptIndex: current.index,
+      t: viewSnapshot.t,
+      paused: false,
+      warp: 60,
+      warpSteps: [1, 10, 60, 300, 1000, 2000],
+      saturated: false,
+      committing: false,
+      outcome: options.ended ? current.outcome : { kind: 'in-progress' },
+      pending: 0,
+    }),
+    snapshot: () => options.snapshot ?? viewSnapshot,
+    command: (c: unknown) => void commands.push(c),
+    setPaused: () => undefined,
+    setWarp: () => undefined,
+    setCompare: () => undefined,
+    preview: pending,
+    commit: pending,
+  } as unknown as GameControls;
+  return { game, commands };
+}
+
+const PAGES: readonly PageId[] = ['mission', 'plan', 'model', 'blackbox', 'systems'];
+
+describe('console pages on the fixtures', () => {
+  for (const page of PAGES)
+    it(`renders ${page}`, () => {
+      const { game } = stubGame();
+      const desk = new Desk(game);
+      desk.page = page;
+      const html = renderToStaticMarkup(<ConsoleScreen desk={desk} visible />);
+      expect(html).toContain('rx-panel');
+      expect(html).not.toContain('NaN');
+      expect(html).not.toContain('undefined');
+    });
+
+  it('renders the model page before anything has been learned', () => {
+    const { game } = stubGame({ model: models.prior });
+    const desk = new Desk(game);
+    desk.page = 'model';
+    const html = renderToStaticMarkup(<ConsoleScreen desk={desk} visible />);
+    // No rule is in force yet: the page offers a test, never a revoke.
+    expect(html).toContain('DISTANCE LAW');
+    expect(html).not.toContain('REVOKE');
+  });
+
+  it('offers BEGIN AGAIN, not RECALL, once the attempt has ended', () => {
+    const { game } = stubGame({ ended: true });
+    const desk = new Desk(game);
+    desk.page = 'blackbox';
+    const html = renderToStaticMarkup(<ConsoleScreen desk={desk} visible />);
+    expect(html).toContain('BEGIN AGAIN');
+  });
+
+  it('mounts no page while the screen is down', () => {
+    const { game } = stubGame();
+    const html = renderToStaticMarkup(<ConsoleScreen desk={new Desk(game)} visible={false} />);
+    expect(html).not.toContain('rx-panel');
+  });
+
+  it('records the design and sets the ship up through commands only', () => {
+    const { game, commands } = stubGame();
+    const desk = new Desk(game);
+    desk.commitDesign();
+    expect(commands[0]).toEqual(designMark(defaultDesign(shipDefinition, briefing.knownBodies[0]!.id)));
+    expect(commands.length).toBeGreaterThan(1);
+    expect(desk.designedAt).toBe(viewSnapshot.t);
+  });
+});
+
+describe('instruments beside the holograms', () => {
+  it('renders the flight instruments, with and without the two-attempt overlay', () => {
+    for (const snapshot of [viewSnapshot, viewSnapshotCompare]) {
+      const { game } = stubGame({ snapshot });
+      const html = renderToStaticMarkup(
+        <FlightHud
+          desk={new Desk(game)}
+          available={{ throttle: true, yaw: true, pitch: false, translate: false }}
+          headingUp
+          range={1_500_000}
+          onHeadingUp={() => undefined}
+        />,
+      );
+      expect(html).toContain('Margins');
+      expect(html).not.toContain('NaN');
+    }
+  });
+
+  it('renders each ship system beside the drawing', () => {
+    const systems = [
+      { id: 'power', name: 'POWER' },
+      { id: 'thermal', name: 'THERMAL' },
+      { id: 'propulsion', name: 'PROPULSION' },
+      { id: 'guidance', name: 'GUIDANCE' },
+      { id: 'data', name: 'DATA' },
+      { id: 'life', name: 'LIFE SUPPORT' },
+      { id: 'structure', name: 'STRUCTURE' },
+    ];
+    for (const system of [null, ...systems.map((s) => s.id)]) {
+      const first = shipDefinition.equipment[0]!;
+      const holo = {
+        systems,
+        parts: () => [{ id: first.id, system: system ?? 'power', name: first.name }],
+        system: () => system,
+        selected: () => (system ? first.id : null),
+        config: () => shipDefinition.defaultConfiguration,
+        onChange: () => () => undefined,
+      } as unknown as ShipHolo;
+      const { game } = stubGame();
+      const html = renderToStaticMarkup(<ShipPanels desk={new Desk(game)} holo={holo} />);
+      expect(html).toContain('rx-panel');
+      expect(html).not.toContain('NaN');
+    }
+  });
+
+  it('renders the map plate for the charted region', () => {
+    const holo = { selected: () => null, onChange: () => () => undefined } as unknown as MapHolo;
+    const { game } = stubGame();
+    const html = renderToStaticMarkup(
+      <MapPlate desk={new Desk(game)} holo={holo} region={false} onRegion={() => undefined} />,
+    );
+    expect(html).toContain('ENTER REGION');
+  });
+});

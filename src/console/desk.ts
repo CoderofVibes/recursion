@@ -216,5 +216,5 @@ const message = (reason: unknown): string =>
 
 /** Re-render when the desk says so. Returns the desk's change counter. */
 export function useDesk(desk: Desk): number {
-  return useSyncExternalStore(desk.subscribe, desk.getVersion);
+  return useSyncExternalStore(desk.subscribe, desk.getVersion, desk.getVersion);
 }

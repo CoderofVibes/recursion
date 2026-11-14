@@ -1,12 +1,16 @@
 # Visual direction: Night Watch
 
-Owner: 1E, the UI lane. Tokens: `src/theme/`. Running reference: `prototypes/visual/` (see [How to run](#how-to-run-the-prototype)).
+Owner: the UI lane (1E, then the control-room thread 2D from 2026-11-14). Tokens: `src/theme/`. Running reference: `prototypes/visual/` (see [How to run](#how-to-run-the-prototype)).
 
 **Status.** The owner chose Night Watch on 2026-11-14 from three running directions. Their words: they really like Night Watch *as a theme*, but the player's in-game view will not look like the prototype's panel layout; that is still to come.
 
 So this document fixes **how things look**: palette, type, materials, line language, motion and the rendering rules below. It does **not** fix screen layout or scene composition. The prototype's panel arrangement is a test bench for instruments, nothing more. Layout belongs to 2D/3F (console) and 2E/3F (view).
 
 **Screen composition (owner's brief, 2026-11-14, not yet in `docs/DECISIONS.md`).** The owner then described the screen they want: a real 3D control room the player walks in, a panoramic window, and one central console that projects the map, the ship and the flight view as holograms and holds the main screen in its top; then, in a second round, flight and the map in three dimensions, hands-on flying, a fully dressed room and a blueprint-detailed ship with a screen per system. Both briefs, the requests they raise for the integrator and the console and view threads, and a walkable mock-up are in [the 1E handoff, Rounds 2 and 3](../handoffs/1E.md) and `prototypes/room/` (see [How to run](#how-to-run-the-prototype)). The mock-up uses this theme unchanged.
+
+**In the game (2D, 2026-11-14).** The composition is now the game's screen (DECISIONS A8): `src/view3d/room/` is the room, `src/view3d/flight/`, `ship/` and `map/` are the holograms, `src/console/` is the console's screen and the instruments beside the holograms, all on the live simulation, model and Black Box. The room, hologram and overlay tokens are in `src/theme/room.ts`, `dressing.ts`, `hud.ts` and `three/holo*.ts`. The rules in §6 hold there in three dimensions: the envelope is a 2σ tube around the forecast with a ribbon in the reference plane, hatched where the model extrapolates, distinct inside a validated span, and ended by a ring at the horizon; a heading-up hologram turns with the ship but never faster than `motion.maxDisplayTurn`. See [the 2D handoff](../handoffs/2D.md).
+
+![The control room in the game: FLIGHT, the measured trail against the issued forecast](img/room-flight-forecast-and-trail.jpg)
 
 ![Compartment mock-up: the console, its hologram, the window and a wall station](img/comp-room-station.png)
 

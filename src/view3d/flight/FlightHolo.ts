@@ -634,6 +634,7 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
       setFat(horizonRing, flat);
       horizonRing.visible = true;
       horizonTag.position.copy(centre);
+      horizonTag.position.y += r + 0.045 / Sh;
       setTag(horizonTag, `FORECAST ENDS T+${clock(last.t)}`);
       horizonTag.visible = true;
     }
@@ -1062,8 +1063,14 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
       const flat: number[] = [];
       for (const s of sensed) {
         const axis = s.axis;
-        const reach = Math.min(s.range * Sh, (Rh + (hu ? SET_BACK : 0)) * 0.95);
-        const r = Math.tan(Math.min(s.halfAngle, 1.4)) * reach;
+        // As far as the sensor reaches, but never out of the projection volume: the distance
+        // from the ship to the volume's edge along the cone, less the cone's own spread.
+        const half = Math.min(s.halfAngle, 1.4);
+        const along = tmp.copy(axis).applyQuaternion(rot.quaternion);
+        const b = along.dot(rot.position);
+        const toEdge = -b + Math.sqrt(Math.max(0, b * b - rot.position.lengthSq() + (Rh * 0.97) ** 2));
+        const reach = Math.min(s.range * Sh, toEdge * Math.cos(half) * 0.92);
+        const r = Math.tan(half) * reach;
         const u = tmp2.set(0, 1, 0).cross(axis);
         if (u.lengthSq() < 1e-12) u.set(1, 0, 0);
         u.normalize();

@@ -17,10 +17,8 @@ export interface MapPlateProps {
 }
 
 export function MapPlate({ desk, holo, region, onRegion }: MapPlateProps) {
-  const picked = useSyncExternalStore(
-    (listener) => holo.onChange(listener),
-    () => holo.selected(),
-  );
+  const selection = (): ReturnType<MapHolo['selected']> => holo.selected();
+  const picked = useSyncExternalStore((listener) => holo.onChange(listener), selection, selection);
   const { game } = desk;
   const here = game.briefing.id;
   // With one region charted, it is the one the plate describes.

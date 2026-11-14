@@ -193,10 +193,8 @@ function SystemScreen({ desk, system, parts }: { readonly desk: Desk; readonly s
 export function ShipPanels({ desk, holo }: { readonly desk: Desk; readonly holo: ShipHolo }) {
   const { game } = desk;
   // Re-render when the hologram's system, selection or configuration changes.
-  useSyncExternalStore(
-    (listener) => holo.onChange(listener),
-    () => `${holo.system()}|${holo.selected()}|${holo.config()}`,
-  );
+  const drawn = (): string => `${holo.system()}|${holo.selected()}|${holo.config()}`;
+  useSyncExternalStore((listener) => holo.onChange(listener), drawn, drawn);
   const ship = game.snapshot().world.ship;
   const system = holo.system();
   const ended = game.status().phase === 'ended';
