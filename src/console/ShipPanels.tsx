@@ -21,6 +21,7 @@ import {
   Trend,
 } from '../theme/components/index.ts';
 import type { SchematicLink, SchematicNode } from '../theme/components/index.ts';
+import { sigmaMajor, yawInertia } from '../view3d/adapter.ts';
 import type { ShipHolo } from '../view3d/ship/ShipHolo.ts';
 import { Caption, Line } from './controls.tsx';
 import {
@@ -141,7 +142,7 @@ function SystemScreen({ desk, system, parts }: { readonly desk: Desk; readonly s
             <Readout label="Fix rate" value={fixed(fixRate(ship, camera), 2)} unit="per s" />
             <Readout label="Quality" value={sector ? `${Math.round(sector.quality * 100)}%` : '—'} />
             <Readout label="Tracking" value={tracked.map((o) => o.id).join(', ') || 'nothing'} status={tracked.length ? 'nominal' : 'caution'} />
-            <Readout label="Position ±" value={`${fixed(Math.sqrt(Math.max(ship.positionCov[0] ?? 0, ship.positionCov[2] ?? 0)), 0)} m`} />
+            <Readout label="Position ±" value={`${fixed(sigmaMajor(ship.positionCov), 0)} m`} />
           </ReadoutGrid>
           <Trend title="Off the forecast" unit="m" value={whole(desk.history('miss').at(-1) ?? 0)} data={desk.history('miss')} tone="forecast" />
         </>
@@ -181,7 +182,7 @@ function SystemScreen({ desk, system, parts }: { readonly desk: Desk; readonly s
           <ReadoutGrid columns={2}>
             <Readout label="Mass" value={whole(ship.massProperties.mass)} unit="kg" />
             <Readout label="Centre of mass" value={`${fixed(ship.massProperties.centerOfMass.x, 2)}, ${fixed(ship.massProperties.centerOfMass.y, 2)}`} unit="m" />
-            <Readout label="Inertia" value={(ship.massProperties.inertia as number).toExponential(2)} unit="kg·m²" />
+            <Readout label="Inertia" value={yawInertia(ship.massProperties.inertia).toExponential(2)} unit="kg·m²" />
             <Readout label="Configuration" value={ship.configuration} />
           </ReadoutGrid>
         </>

@@ -18,6 +18,7 @@ import type {
   ShipDefinition,
 } from '../contracts/index.ts';
 import { diffCommands, forecastDivergence } from '../blackbox/index.ts';
+import type { ItemDiff } from '../blackbox/index.ts';
 import { clock, dist, fixed, name, whole } from './format.ts';
 
 export type EvidenceGoal = 'calibrate' | 'probe' | 'validate' | 'fly';
@@ -184,7 +185,7 @@ const describeCommand = (c: Command): string => {
     case 'mode':
       return `${name(c.equipment)} ${c.mode}`;
     case 'point':
-      return `point ${name(c.sensor)} at ${c.target ?? 'angle'}`;
+      return `point ${name(c.sensor)} at ${c.target ?? 'a direction'}`;
     case 'configure':
       return `configure ${c.configuration}`;
     case 'recorder':
@@ -202,10 +203,32 @@ const flown = (record: AttemptRecord): { t: number; command: Command }[] =>
     )
     .map((e) => ({ t: e.t, command: e.command }));
 
+/** Commands given at nearly the same moment in two attempts count as given at the same time. */
+const SAME_MOMENT = 120;
+
+/**
+ * One command difference between two attempts in instrument words, or null when it is not a
+ * change the player made: the same command a little earlier or later, or an attitude target
+ * that resolved to a slightly different angle.
+ */
+export function describeDiff(d: ItemDiff, a = 'the first', b = 'the second'): string | null {
+  if (d.kind === 'same') return null;
+  if (d.kind === 'only-a') return `only in ${a}: T+${clock(d.t)} ${describeCommand(d.command)}`;
+  if (d.kind === 'only-b') return `only in ${b}: T+${clock(d.t)} ${describeCommand(d.command)}`;
+  const before = describeCommand(d.a);
+  const after = describeCommand(d.b);
+  const moved = Math.abs(d.tA - d.tB) >= SAME_MOMENT;
+  if (before === after && !moved) return null;
+  return moved
+    ? `T+${clock(d.tA)} ${before} → T+${clock(d.tB)} ${after}`
+    : `T+${clock(d.tA)} ${before} → ${after}`;
+}
+
 /** What differs between this attempt and the one before it. */
 export function changes(record: AttemptRecord, previous: AttemptRecord | undefined): string[] {
   if (!previous) return [];
   const out: string[] = [];
+  const names = [`attempt ${previous.index}`, `attempt ${record.index}`] as const;
   const a = designOf(previous)?.design;
   const b = designOf(record)?.design;
   if (a && b) {
@@ -218,18 +241,13 @@ export function changes(record: AttemptRecord, previous: AttemptRecord | undefin
       out.push(`clearance ${dist(a.clearance)} → ${dist(b.clearance)}`);
   } else if (!a && b) out.push('a design was recorded this time');
   for (const d of diffCommands(flown(previous), flown(record), 5)) {
+    const line = describeDiff(d, names[0], names[1]);
+    if (line === null) continue;
     if (out.length >= 9) {
       out.push('…');
       break;
     }
-    if (d.kind === 'changed')
-      out.push(
-        `T+${clock(d.tA)} ${describeCommand(d.a)} → ` +
-          (Math.abs(d.tA - d.tB) > 5 ? `T+${clock(d.tB)} ` : '') +
-          describeCommand(d.b),
-      );
-    else if (d.kind === 'only-a') out.push(`dropped: T+${clock(d.t)} ${describeCommand(d.command)}`);
-    else if (d.kind === 'only-b') out.push(`added: T+${clock(d.t)} ${describeCommand(d.command)}`);
+    out.push(line);
   }
   if (previous.modelVersionAtEnd !== record.start.modelVersion)
     out.push(`model v${previous.start.modelVersion} → v${record.start.modelVersion} at start`);

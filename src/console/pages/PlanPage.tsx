@@ -11,6 +11,7 @@ import type { PlanDraft } from '../../game/belief/controls.ts';
 import { burnDuration, burnSteps } from '../../game/belief/maneuver.ts';
 import type { PlanStep } from '../../game/belief/maneuver.ts';
 import { ModeChips, Panel, Readout, ReadoutGrid } from '../../theme/components/index.ts';
+import { holdFromNose } from '../../view3d/adapter.ts';
 import { Actions, Button, Caption, Line, NumberField, SelectField } from '../controls.tsx';
 import { visited } from '../data.ts';
 import type { Desk } from '../desk.ts';
@@ -25,7 +26,7 @@ interface BurnRow {
   readonly direction: Direction;
   /** Body for toward/away. */
   readonly target: string;
-  /** Degrees from the reference direction (counter-clockwise); for `axis`, from the nose now. */
+  /** For `axis`: degrees to turn the nose to the left of where it points now. */
   readonly offset: number;
   readonly sizing: Sizing;
   readonly amount: number;
@@ -71,17 +72,16 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
   const ended = status.phase === 'ended';
 
   const attitudeOf = (b: BurnRow): AttitudeTarget => {
-    const offset = (b.offset * Math.PI) / 180;
     switch (b.direction) {
       case 'prograde':
       case 'retrograde':
-        return { reference: b.direction, ...(offset ? { offset } : {}) };
+        return { reference: b.direction };
       case 'toward':
       case 'away':
-        return { reference: b.direction, target: b.target, ...(offset ? { offset } : {}) };
+        return { reference: b.direction, target: b.target };
       case 'axis':
         // Relative to where the nose points now, as believed.
-        return { reference: 'inertial', angle: (ship.attitude as number) + offset };
+        return holdFromNose(ship.attitude, (b.offset * Math.PI) / 180);
     }
   };
   const durationOf = (b: BurnRow): number =>
@@ -226,13 +226,15 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
                   onChange={(v) => patchBurn(b.key, { target: v })}
                 />
               ) : null}
-              <NumberField
-                label="Offset"
-                unit="°"
-                step={5}
-                value={b.offset}
-                onChange={(v) => patchBurn(b.key, { offset: v })}
-              />
+              {b.direction === 'axis' ? (
+                <NumberField
+                  label="Turn"
+                  unit="° left"
+                  step={5}
+                  value={b.offset}
+                  onChange={(v) => patchBurn(b.key, { offset: v })}
+                />
+              ) : null}
               <SelectField
                 label="By"
                 value={b.sizing}

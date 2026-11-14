@@ -1,15 +1,19 @@
 /**
- * The one place the views read geometry from the snapshot (DECISIONS A11).
+ * The one place the views and the console read geometry from the game (DECISIONS A11).
  *
  * Thread 2G is converting the contracts from planar to three-dimensional. Until its lift merges,
- * positions are `{ x, y }`, covariances have three terms and attitude is one yaw angle; afterwards
- * they are `{ x, y, z }`, six terms and a quaternion. Every view draws in 3D from the start and
- * reads through these functions, so the switch is a change here and nowhere else.
+ * positions are `{ x, y }`, covariances have three terms, attitude is one yaw angle with one
+ * turn rate, the ship's outline is a footprint polygon and a sensor covers a planar sector.
+ * Afterwards they are `{ x, y, z }`, six terms, a quaternion with an angular-velocity vector,
+ * a hull of prisms and a cone. Everything on screen is drawn in 3D from the start and reads
+ * through these functions, which accept either shape, so the switch is a change here and
+ * nowhere else. The two places that build planar commands are marked `PLANAR` below.
  *
  * Scene axes: game (x, y, z) maps to scene (x, z, -y). Game z (out of the old flight plane) is
  * scene "up", and the plane seen from above is not mirrored (visual-direction.md § 9).
  */
 import { Quaternion, Vector3 } from 'three';
+import type { AttitudeTarget } from '../contracts/index.ts';
 
 /** A game-frame vector, planar or 3D. */
 export interface GameVec {
@@ -107,29 +111,139 @@ const DRAWING_TO_BODY = SCENE_TO_GAME.clone().multiply(
   new Quaternion().setFromAxisAngle(Y, -Math.PI / 2),
 );
 
-/** Turn rates about the body's up and left axes, rad/s: (yaw, pitch). Planar: yaw only. */
-export function turnRates(angularRate: unknown): { yaw: number; pitch: number } {
-  if (typeof angularRate === 'number') return { yaw: angularRate, pitch: 0 };
-  if (typeof angularRate === 'object' && angularRate !== null) {
-    const w = angularRate as { x?: number; y?: number; z?: number };
-    return { yaw: w.z ?? 0, pitch: w.y ?? 0 };
+/**
+ * Turn rates about the body's up and left axes, rad/s: (yaw, pitch).
+ * Planar: `angularRate`, a yaw rate. Three-dimensional: `angularVelocity`, body frame.
+ */
+export function turnRates(ship: {
+  readonly angularRate?: unknown;
+  readonly angularVelocity?: unknown;
+}): { yaw: number; pitch: number } {
+  const w = ship.angularVelocity ?? ship.angularRate;
+  if (typeof w === 'number') return { yaw: w, pitch: 0 };
+  if (typeof w === 'object' && w !== null) {
+    const v = w as { x?: number; y?: number; z?: number };
+    return { yaw: v.z ?? 0, pitch: v.y ?? 0 };
   }
   return { yaw: 0, pitch: 0 };
 }
 
+/** Compass heading of the nose in the reference plane, radians counter-clockwise from game +x. */
+export function heading(attitude: unknown): number {
+  if (typeof attitude === 'number') return attitude;
+  if (isQuaternion(attitude)) {
+    // Yaw of body +x after rotation by the attitude.
+    const { w, x, y, z } = attitude;
+    return Math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z));
+  }
+  return 0;
+}
+
+/** Moment of inertia about the body's up axis, kg·m². Planar: the one scalar. */
+export function yawInertia(inertia: unknown): number {
+  if (typeof inertia === 'number') return inertia;
+  if (typeof inertia === 'object' && inertia !== null) {
+    const i = inertia as { z?: number; moments?: { z?: number }; principal?: { z?: number } };
+    return i.z ?? i.moments?.z ?? i.principal?.z ?? NaN;
+  }
+  return NaN;
+}
+
+/** A sensor's field of view as the views draw it: a cone from the ship. */
+export interface ViewCone {
+  readonly sensor: string;
+  /** Unit axis in the scene. */
+  readonly axis: Vector3;
+  /** Direction of the axis in the reference plane, radians counter-clockwise from game +x. */
+  readonly bearing: number;
+  readonly halfAngle: number;
+  readonly range: number;
+  readonly quality: number;
+}
+
 /**
- * Axis of a sensor's field of view in the scene. Planar: `center` is an inertial angle in the
- * flight plane. Three-dimensional: the sector carries a direction vector and is a cone.
+ * What the ship can sense right now, as cones. Planar: `sectors`, each an inertial angle and a
+ * half-width in the flight plane. Three-dimensional: `cones`, each an axis and a half-angle.
  */
-export function sectorAxis(
-  sector: { readonly center?: unknown; readonly direction?: unknown },
-  out = new Vector3(),
-): Vector3 {
-  const d = sector.direction ?? sector.center;
-  if (typeof d === 'number') return out.set(Math.cos(d), 0, -Math.sin(d));
-  if (typeof d === 'object' && d !== null && typeof (d as GameVec).x === 'number')
-    return toScene(d as GameVec, out).normalize();
-  return out.set(0, 0, -1);
+export function coverageCones(coverage: {
+  readonly sectors?: readonly {
+    readonly sensor: string;
+    readonly center: number;
+    readonly halfWidth: number;
+    readonly range: number;
+    readonly quality: number;
+  }[];
+  readonly cones?: readonly {
+    readonly sensor: string;
+    readonly axis: GameVec;
+    readonly halfAngle: number;
+    readonly range: number;
+    readonly quality: number;
+  }[];
+}): ViewCone[] {
+  if (coverage.cones)
+    return coverage.cones.map((c) => {
+      const axis = toScene(c.axis).normalize();
+      return {
+        sensor: c.sensor,
+        axis,
+        bearing: Math.atan2(-axis.z, axis.x),
+        halfAngle: c.halfAngle,
+        range: c.range,
+        quality: c.quality,
+      };
+    });
+  return (coverage.sectors ?? []).map((s) => ({
+    sensor: s.sensor,
+    axis: new Vector3(Math.cos(s.center), 0, -Math.sin(s.center)),
+    bearing: s.center,
+    halfAngle: s.halfWidth,
+    range: s.range,
+    quality: s.quality,
+  }));
+}
+
+/**
+ * The outline of the ship in the body x-y plane, for drawing its true hull and footprint.
+ * Planar: the `footprint` polygon of the configuration. Three-dimensional: the `hull` is a
+ * union of prisms; the outline drawn is that of the widest prism.
+ */
+export function hullOutline(source: {
+  readonly footprint?: readonly GameVec[];
+  readonly hull?: readonly { readonly outline: readonly GameVec[] }[];
+}): readonly GameVec[] {
+  if (source.footprint) return source.footprint;
+  let best: readonly GameVec[] = [];
+  let bestSpan = -1;
+  for (const prism of source.hull ?? []) {
+    let lo = Infinity;
+    let hi = -Infinity;
+    for (const p of prism.outline) {
+      lo = Math.min(lo, p.y);
+      hi = Math.max(hi, p.y);
+    }
+    if (hi - lo > bestSpan) {
+      bestSpan = hi - lo;
+      best = prism.outline;
+    }
+  }
+  return best;
+}
+
+/**
+ * PLANAR. Hold the nose `offset` radians counter-clockwise from where it points now.
+ * After the lift this becomes `{ reference: 'direction', direction }`.
+ */
+export function holdFromNose(attitude: unknown, offset: number): AttitudeTarget {
+  return { reference: 'inertial', angle: heading(attitude) + offset };
+}
+
+/**
+ * PLANAR. Command a yaw rate, rad/s. After the lift, hands-on flying goes through
+ * `GameControls.fly` and this is no longer used.
+ */
+export function yawRateTarget(rate: number): AttitudeTarget {
+  return { reference: 'rate', rate };
 }
 
 /** A body-frame point (x forward, y left, z up) → the ship drawing's frame (metres). */

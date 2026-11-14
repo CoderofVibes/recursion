@@ -6,6 +6,7 @@
  */
 import { AlertStack, LevelBar, Panel, Readout, ReadoutGrid } from '../theme/components/index.ts';
 import type { AlertItem } from '../theme/components/index.ts';
+import { distance, heading, length } from '../view3d/adapter.ts';
 import { Actions, Button, Line, TimeControls } from './controls.tsx';
 import { batteries, busLoads, heat, recorder, stores } from './data.ts';
 import type { Desk } from './desk.ts';
@@ -54,9 +55,7 @@ export function FlightHud({ desk, available, headingUp, range, onHeadingUp }: Fl
   const snapshot = game.snapshot();
   const ship = snapshot.world.ship;
   const primary = snapshot.world.bodies[0];
-  const speed = primary
-    ? Math.hypot(ship.velocity.x - primary.velocity.x, ship.velocity.y - primary.velocity.y)
-    : Math.hypot(ship.velocity.x, ship.velocity.y);
+  const speed = primary ? distance(ship.velocity, primary.velocity) : length(ship.velocity);
   const levels = stores(ship, game.ship, desk.design.reserve);
   const main = levels.find((s) => s.id === 'main-propellant');
   const rcs = levels.filter((s) => s.id.startsWith('rcs-'));
@@ -138,14 +137,12 @@ export function FlightHud({ desk, available, headingUp, range, onHeadingUp }: Fl
         <Panel title="Flight" aside={headingUp ? 'heading up' : 'chart up'}>
           <ReadoutGrid columns={2}>
             <Readout label="Speed" value={fixed(speed, 2)} unit="m/s" size="readout" />
-            <Readout label="Heading" value={String(Math.round(degrees(ship.attitude as number))).padStart(3, '0')} unit="°" size="readout" />
+            <Readout label="Heading" value={String(Math.round(degrees(heading(ship.attitude)))).padStart(3, '0')} unit="°" size="readout" />
             {snapshot.world.bodies.map((b) => (
               <Readout
                 key={b.id}
                 label={b.name}
-                value={dist(
-                  Math.hypot(ship.position.x - b.position.x, ship.position.y - b.position.y) - b.radius,
-                )}
+                value={dist(distance(ship.position, b.position) - b.radius)}
                 status={b.tracked ? 'nominal' : 'stale'}
               />
             ))}
@@ -195,7 +192,7 @@ export function FlightHud({ desk, available, headingUp, range, onHeadingUp }: Fl
         {chosen ? (
           <Panel title={chosen.id} aside={chosen.tracked ? 'tracked' : 'seen'} status={chosen.tracked ? 'nominal' : 'stale'}>
             <Line label="range">
-              {dist(Math.hypot(ship.position.x - chosen.position.x, ship.position.y - chosen.position.y) - chosen.radius)}
+              {dist(distance(ship.position, chosen.position) - chosen.radius)}
             </Line>
             <Line label="radius">{dist(chosen.radius)}</Line>
             <Actions>

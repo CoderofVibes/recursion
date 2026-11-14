@@ -66,13 +66,16 @@ import {
   clock,
   distance,
   length,
+  coverageCones,
+  hullOutline,
   range as formatRange,
-  sectorAxis,
   sigmaMajor,
   toScene,
   turnRates,
 } from '../adapter.ts';
 import type { GameVec } from '../adapter.ts';
+import { fieldViewFor, loadFieldViews } from '../fieldViews.ts';
+import type { FieldView } from '../fieldViews.ts';
 import { arcXZ, clamp, label, LineSet, setFat, setFatSegs, setTag, setThin, thin } from '../gfx.ts';
 import type { Tag } from '../gfx.ts';
 import { makeShipModel } from '../ship/model.ts';
@@ -481,6 +484,10 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
   let hullLine: Line2 | null = null;
   let hullKey = '';
 
+  // ---- Field plugins: an encounter's own phenomena, drawn only once the ship detects them ----
+  loadFieldViews();
+  const fieldViews = new Map<string, { view: FieldView; group: Group }>();
+
   // ---- State kept between frames -----------------------------------------------------------
   const displayQ = new Quaternion();
   const shipQ = new Quaternion();
@@ -802,21 +809,19 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
     linesE.setPixelsPerUnit(pixelsPerMetre * Sh);
 
     // Reference plane: grid at a spacing that suits the range, and what is sensed right now.
+    const sensed = coverageCones(snapshot.coverage);
     (planeMat.uniforms.uToVolume!.value as Matrix4).copy(rot.matrix);
     setHoloPlane(
       planeMat,
       [ship.position.x, ship.position.y],
       Sh,
       niceStep(range / 2.5),
-      snapshot.coverage.sectors.map((s) => {
-        const axis = sectorAxis(s, tmp2);
-        return {
-          center: Math.atan2(-axis.z, axis.x),
-          halfWidth: s.halfWidth,
-          range: s.range,
-          quality: s.quality,
-        };
-      }),
+      sensed.map((c) => ({
+        center: c.bearing,
+        halfWidth: c.halfAngle,
+        range: c.range,
+        quality: c.quality,
+      })),
     );
     setTag(rangeTag, `RANGE ${formatRange(range)}`);
 
@@ -900,6 +905,27 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
     rocksSeen.instanceMatrix.needsUpdate = true;
     setThin(stalks, stalkFlat);
     setThin(doubt, doubtFlat);
+
+    // Fields: only what the ship perceives, drawn by the encounter's own plugin.
+    for (const field of snapshot.world.fields) {
+      if (!field.detected) continue;
+      let entry = fieldViews.get(field.id);
+      if (!entry) {
+        const factory = fieldViewFor(field.kind);
+        if (!factory) continue;
+        const fieldGroup = new Group();
+        trans.add(fieldGroup);
+        entry = { view: factory({ group: fieldGroup, lines: linesE }), group: fieldGroup };
+        fieldViews.set(field.id, entry);
+      }
+      entry.view.update({ field, snapshot, scale: Sh, radius: Rh, inside, dt, time });
+    }
+    for (const [id, entry] of fieldViews) {
+      if (snapshot.world.fields.some((f) => f.id === id && f.detected)) continue;
+      entry.view.dispose();
+      trans.remove(entry.group);
+      fieldViews.delete(id);
+    }
 
     // The object the player has chosen.
     const chosen = frame.selected
@@ -1016,7 +1042,7 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
       ]);
     } else velocity.visible = false;
 
-    const rates = turnRates(ship.angularRate);
+    const rates = turnRates(ship);
     const yaw = clamp(-(rates.yaw * 40 + (frame.hands?.yaw ?? 0) * 0.3), -1.6, 1.6);
     yawArc.visible = !chart && Math.abs(yaw) > 0.02;
     if (yawArc.visible) setFat(yawArc, arcXZ(RING, 0, yaw, 24));
@@ -1034,10 +1060,10 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
     // Sensor coverage: a cone from the ship along each sector's axis, as far as fits.
     if (!chart) {
       const flat: number[] = [];
-      for (const s of snapshot.coverage.sectors) {
-        const axis = sectorAxis(s, new Vector3());
+      for (const s of sensed) {
+        const axis = s.axis;
         const reach = Math.min(s.range * Sh, (Rh + (hu ? SET_BACK : 0)) * 0.95);
-        const r = Math.tan(Math.min(s.halfWidth, 1.4)) * reach;
+        const r = Math.tan(Math.min(s.halfAngle, 1.4)) * reach;
         const u = tmp2.set(0, 1, 0).cross(axis);
         if (u.lengthSq() < 1e-12) u.set(1, 0, 0);
         u.normalize();
@@ -1092,7 +1118,8 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
     }
 
     // True hull, at true scale, where the ship is.
-    const key = `${ship.configuration}|${snapshot.ship.footprint.length}`;
+    const outline = hullOutline(snapshot.ship);
+    const key = `${ship.configuration}|${outline.length}`;
     if (key !== hullKey) {
       hullKey = key;
       if (hullLine) {
@@ -1100,7 +1127,6 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
         hullLine.geometry.dispose();
       }
       const flat: number[] = [];
-      const outline = snapshot.ship.footprint;
       for (const p of [...outline, ...(outline[0] ? [outline[0]] : [])]) {
         const d = bodyToDrawing(p, tmp2).sub(bodyToDrawing(snapshot.ship.centerOfMass, tmp3));
         flat.push(d.x, d.y, d.z);
@@ -1155,6 +1181,8 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
       linesH.setPixelsPerUnit(pixels);
     },
     dispose() {
+      for (const entry of fieldViews.values()) entry.view.dispose();
+      fieldViews.clear();
       linesH.dispose();
       linesE.dispose();
       model.dispose();

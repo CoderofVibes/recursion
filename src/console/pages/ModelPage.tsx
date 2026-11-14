@@ -16,6 +16,7 @@ import { validatedSpans, visited } from '../data.ts';
 import type { Desk } from '../desk.ts';
 import { dist, duration, fixed, sci } from '../format.ts';
 import { StrengthPlot } from '../StrengthPlot.tsx';
+import type { StrengthDot } from '../StrengthPlot.tsx';
 
 const RULES: readonly { id: string; label: string; detail: string }[] = [
   { id: 'distance-law', label: 'DISTANCE LAW', detail: 'the pull falls with distance by a fitted power' },
@@ -57,6 +58,32 @@ export function ModelPage({ desk }: { readonly desk: Desk }) {
   const shown = desk.preview ?? snapshot.forecasts.at(-1);
   const visits = visited(shown, snapshot);
   const spans = validatedSpans(model);
+
+  // Strength against distance: the model's local fits. The report says which attempt and which
+  // tracked rock each came from; until it arrives, the state's own calibration windows are drawn.
+  const strength: { body: string; points: StrengthDot[] }[] = report
+    ? report.strength.map((body) => ({
+        body: body.body,
+        points: body.points
+          .filter((pt) => pt.converged)
+          .map((pt) => ({
+            distance: pt.distance,
+            scale: pt.scale,
+            sigma: pt.scaleSigma,
+            probe: pt.probe !== undefined,
+            current: pt.attempt === status.attemptId,
+          })),
+      }))
+    : model.calibration.map((profile) => ({
+        body: profile.body,
+        points: profile.windows.map((w) => ({
+          distance: w.distance,
+          scale: w.scale,
+          sigma: w.sigma,
+          probe: false,
+          current: false,
+        })),
+      }));
 
   // World parameters and rules' parameters once each; ship calibrations as used in this attempt.
   const world = model.parameters.filter((p) => !p.arc && !p.freshness);
@@ -114,7 +141,7 @@ export function ModelPage({ desk }: { readonly desk: Desk }) {
           <Readout label="Version" value={`v${model.version}`} tone="forecast" />
           <Readout
             label="Fit χ²/ν"
-            value={model.fit && model.fit.nu > 0 ? fixed(model.fit.chi2 / model.fit.nu, 2) : '—'}
+            value={model.fit && model.fit.nu > 0 ? sci(model.fit.chi2 / model.fit.nu, 3) : '—'}
           />
           <Readout label="Noise ×" value={model.noiseScale !== undefined ? fixed(model.noiseScale, 2) : '—'} />
           <Readout label="Coast rms" value={dist(model.residuals.coast.rms)} sigma={`n ${model.residuals.coast.n}`} />
@@ -147,23 +174,15 @@ export function ModelPage({ desk }: { readonly desk: Desk }) {
             ? report.strength
                 .map((s) => `${s.body} slope ${s.slope === null ? '—' : fixed(s.slope, 2)}`)
                 .join(' · ')
-            : 'no report yet'
+            : `${strength.reduce((n, b) => n + b.points.length, 0)} local fits · report pending`
         }
       >
-        {(report?.strength ?? []).map((body) => (
+        {strength.map((body) => (
           <div key={body.body}>
             <Caption>{body.body}</Caption>
             <StrengthPlot
               label={`${body.body}: measured strength against distance`}
-              points={body.points
-                .filter((p) => p.converged)
-                .map((p) => ({
-                  distance: p.distance,
-                  scale: p.scale,
-                  sigma: p.scaleSigma,
-                  probe: p.probe !== undefined,
-                  current: p.attempt === status.attemptId,
-                }))}
+              points={body.points}
               validated={spans.get(body.body) ?? []}
               {...(visits.get(body.body) ? { visits: visits.get(body.body)! } : {})}
             />
@@ -220,7 +239,7 @@ export function ModelPage({ desk }: { readonly desk: Desk }) {
               ) : null}
               {fitted.map(([id, f]) => (
                 <Line key={id} label={id.split('.').at(-1) ?? id} tone="forecast">
-                  {fixed(f.value, 3)} ±{fixed(f.sigma, 3)}
+                  {fixed(f.value, 4)} ±{sci(f.sigma, 2)}
                 </Line>
               ))}
               {isRecord(result) && result.evidence ? (

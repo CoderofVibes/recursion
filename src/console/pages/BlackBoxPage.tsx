@@ -8,7 +8,6 @@
 import { useState } from 'react';
 import type { AttemptRecord } from '../../contracts/index.ts';
 import { compareAttempts } from '../../blackbox/index.ts';
-import type { ItemDiff } from '../../blackbox/index.ts';
 import {
   BlackBoxMark,
   ComponentList,
@@ -23,7 +22,7 @@ import { Actions, Button, Caption, Line } from '../controls.tsx';
 import { recorder } from '../data.ts';
 import type { Desk } from '../desk.ts';
 import { bytes, clock, duration, fixed, whole } from '../format.ts';
-import { APPROACH, EVIDENCE, debrief } from '../mission.ts';
+import { APPROACH, EVIDENCE, debrief, describeDiff } from '../mission.ts';
 import type { Debrief } from '../mission.ts';
 
 const rms = (values: readonly { readonly value: number }[]): number =>
@@ -35,22 +34,6 @@ const outcomeText = (a: AttemptRecord): string =>
     : a.outcome.kind === 'completed'
       ? 'completed'
       : a.outcome.kind;
-
-function describe(d: ItemDiff): string {
-  const cmd = d.kind === 'changed' ? d.b : d.command;
-  const what =
-    cmd.kind === 'burn'
-      ? `burn ${cmd.thruster}`
-      : cmd.kind === 'point'
-        ? `point ${cmd.sensor}`
-        : cmd.kind === 'mode'
-          ? `mode ${cmd.equipment}`
-          : cmd.kind === 'power'
-            ? `power ${cmd.equipment}`
-            : cmd.kind;
-  if (d.kind === 'changed') return `${what}: ${d.fields.join(', ')}`;
-  return `${what} · ${d.kind === 'only-a' ? 'only in A' : 'only in B'}`;
-}
 
 /** The attempt judged against its own design. */
 export function DebriefView({ report }: { readonly report: Debrief }) {
@@ -138,6 +121,12 @@ export function BlackBoxPage({ desk }: { readonly desk: Desk }) {
   const b = attempts.find((x) => x.id === picked[1]);
   desk.refreshReport();
   const comparison = a && b ? compareAttempts(a, b, desk.report ?? null) : undefined;
+  const changed = comparison
+    ? comparison.executed
+        .filter((d) => d.kind === 'same' || d.kind === 'changed' ? d.kind === 'changed' && d.a.kind !== 'mark' : d.command.kind !== 'mark')
+        .map((d) => describeDiff(d, 'A', 'B'))
+        .filter((line): line is string => line !== null)
+    : [];
   const overlaid =
     desk.compare !== undefined && a && b && desk.compare[0] === a.id && desk.compare[1] === b.id;
 
@@ -234,17 +223,14 @@ export function BlackBoxPage({ desk }: { readonly desk: Desk }) {
                 : 'same'}
             </Line>
             <Caption>what was changed</Caption>
-            {comparison.executed.filter((d) => d.kind !== 'same').length === 0 ? (
+            {changed.length === 0 ? (
               <p className="cs-note">the same commands reached the ship</p>
             ) : (
-              comparison.executed
-                .filter((d) => d.kind !== 'same')
-                .slice(0, 8)
-                .map((d, i) => (
-                  <p className="cs-change" key={i}>
-                    {describe(d)}
-                  </p>
-                ))
+              changed.slice(0, 8).map((line, i) => (
+                <p className="cs-change" key={i}>
+                  {line}
+                </p>
+              ))
             )}
             <Caption>where the outcome left the forecast</Caption>
             {(['a', 'b'] as const).map((side) => {

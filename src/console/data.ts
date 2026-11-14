@@ -13,6 +13,7 @@ import type {
   ViewSnapshot,
 } from '../contracts/index.ts';
 import type { Status } from '../theme/components/index.ts';
+import { distance } from '../view3d/adapter.ts';
 
 const G0 = 9.80665;
 
@@ -211,7 +212,7 @@ export function visited(
     forecast.samples.forEach((s, i) => {
       // The body's forecast position at the same time, or where it is believed to be now.
       const at = track?.samples[Math.min(i, track.samples.length - 1)]?.position ?? body.position;
-      const r = Math.hypot(s.position.x - at.x, s.position.y - at.y);
+      const r = distance(s.position, at);
       lo = Math.min(lo, r);
       hi = Math.max(hi, r);
     });

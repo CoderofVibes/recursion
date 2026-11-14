@@ -13,7 +13,7 @@
  */
 import type { GameControls } from '../game/belief/controls.ts';
 import { motion } from '../theme/index.ts';
-import { turnRates } from '../view3d/adapter.ts';
+import { turnRates, yawRateTarget } from '../view3d/adapter.ts';
 
 /** The input the shell sends each frame. Proposed to 2G as the hands-on seam's shape. */
 export interface HandsOnInput {
@@ -70,7 +70,7 @@ export function createHandsOn(game: GameControls): HandsOn {
     }
     if (input.yaw !== yaw) {
       yaw = input.yaw;
-      game.command({ kind: 'attitude', target: { reference: 'rate', rate: yaw * YAW_RATE } });
+      game.command({ kind: 'attitude', target: yawRateTarget(yaw * YAW_RATE) });
       settling = yaw === 0 ? game.status().t : undefined;
     }
   };
@@ -80,7 +80,7 @@ export function createHandsOn(game: GameControls): HandsOn {
       const has = (k: string): number => (active && keys.has(k) ? 1 : 0);
       const input: HandsOnInput = {
         translate: {
-          x: -has('s'),
+          x: 0 - has('s'),
           y: has('a') - has('d'),
           z: has('r') - has('f'),
         },
@@ -106,7 +106,7 @@ export function createHandsOn(game: GameControls): HandsOn {
       // Once the turn has stopped, let the attitude go: holding it costs RCS propellant.
       if (settling !== undefined) {
         const now = game.status().t;
-        const rate = Math.abs(turnRates(game.snapshot().world.ship.angularRate).yaw);
+        const rate = Math.abs(turnRates(game.snapshot().world.ship).yaw);
         if ((now - settling > 2 && rate < SETTLE_RATE) || now - settling > SETTLE_LIMIT) {
           game.command({ kind: 'attitude', target: { reference: 'free' } });
           settling = undefined;

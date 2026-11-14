@@ -4,6 +4,7 @@
  * names its components. The readouts beside it are the console's (React); they follow this
  * hologram through `onChange`.
  */
+import { hullOutline } from '../adapter.ts';
 import { Box3, Group, Sphere, Vector3 } from 'three';
 import type { Object3D, Raycaster } from 'three';
 import type { ShipDefinition } from '../../contracts/index.ts';
@@ -122,7 +123,7 @@ export function makeShipHolo(definition: ShipDefinition): ShipHolo {
 
   const engine = definition.equipment.find((e) => e.id === MAIN_ENGINE);
   const engineY = engine?.mount?.position.y ?? engine?.position.y ?? ENGINE_DRAWN_Y;
-  const footprints = new Map(definition.configurations.map((c) => [c.id, c.footprint]));
+  const footprints = new Map(definition.configurations.map((c) => [c.id, hullOutline(c)]));
 
   // Equipment the definition lists, by id, and the pick sphere each answers to.
   const byEquipment = new Map<string, DrawnPart>();

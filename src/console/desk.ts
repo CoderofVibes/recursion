@@ -10,6 +10,7 @@ import { useSyncExternalStore } from 'react';
 import type { AttemptId, ForecastDraft, ViewSnapshot } from '../contracts/index.ts';
 import type { GameControls, PlanDraft } from '../game/belief/controls.ts';
 import type { ExtensionRecord, ModelReport } from '../model/index.ts';
+import { distance, length } from '../view3d/adapter.ts';
 import type { ApproachAlert } from '../view3d/flight/FlightHolo.ts';
 import { defaultDesign, designMark, setupCommands } from './mission.ts';
 import type { MissionDesign } from './mission.ts';
@@ -204,11 +205,8 @@ export class Desk {
     for (const [channel, r] of Object.entries(ship.telemetry))
       if (/\.(load|temperature|charge|bytes|output)$/.test(channel)) push(channel, r.value);
     for (const b of snapshot.world.bodies)
-      push(
-        `range:${b.id}`,
-        Math.hypot(ship.position.x - b.position.x, ship.position.y - b.position.y) - b.radius,
-      );
-    push('speed', Math.hypot(ship.velocity.x, ship.velocity.y));
+      push(`range:${b.id}`, distance(ship.position, b.position) - b.radius);
+    push('speed', length(ship.velocity));
     if (miss !== null) push('miss', miss);
   }
 }

@@ -102,8 +102,7 @@ export function startControlRoom(
   };
 
   const frame = (now: number): void => {
-    raf = requestAnimationFrame(frame);
-    const dt = Math.min(0.1, (now - last) / 1000);
+    const dt = Math.min(0.1, Math.max(0, (now - last) / 1000));
     last = now;
 
     let status = game.status();
@@ -166,12 +165,23 @@ export function startControlRoom(
       desk.notify();
     }
   };
-  raf = requestAnimationFrame(frame);
+  const loop = (now: number): void => {
+    raf = requestAnimationFrame(loop);
+    frame(now);
+  };
+  raf = requestAnimationFrame(loop);
 
   // Development only: a handle for the browser console and for scripted checks, and a way to
-  // open straight into a view (?view=flight, ?view=console&page=model).
+  // open straight into a view (?view=flight, ?view=console&page=model). `step` runs frames by
+  // hand, for when the page is in the background and the browser holds its animation frames.
   if (import.meta.env.DEV) {
-    (window as unknown as { __recursion?: unknown }).__recursion = { game, desk, view };
+    const step = (frames = 1, seconds = 1 / 60): void => {
+      for (let i = 0; i < frames; i++) {
+        last = performance.now() - seconds * 1000;
+        frame(performance.now());
+      }
+    };
+    (window as unknown as { __recursion?: unknown }).__recursion = { game, desk, view, step };
     const query = new URLSearchParams(window.location.search);
     const wanted = query.get('view');
     if (wanted === 'map' || wanted === 'ship' || wanted === 'console' || wanted === 'flight')
