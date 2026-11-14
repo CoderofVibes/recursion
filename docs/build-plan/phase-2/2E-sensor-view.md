@@ -28,10 +28,10 @@ A Three.js view that renders the ship and its surroundings as sensed, plus forec
 9. 60 fps on a mid-range laptop with a few hundred asteroids.
 
 ## Done when
-Renders all fixtures correctly; plugin interface documented in `src/view3d/README.md`; follows 1E.
+Renders all fixtures correctly; plugin interface documented in `src/view3d/README.md`; every colour, material, line style and motion timing comes from `src/theme/` (tokens and `src/theme/three/`) (README § UI lane).
 
 ## Out of scope
-Console panels (2D), real data wiring (2F).
+Console panels (2D), real data wiring (2F), and anything in `src/theme/` (the owner's UI lane, 1E). Missing styles: define them locally on tokens and list them under Requests in your handoff.
 
 ## Handoff
 `docs/handoffs/2E.md` from the template, with screenshots.

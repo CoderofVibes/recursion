@@ -58,7 +58,7 @@ Every prompt below assumes the thread first reads `docs/CREATIVE_BRIEF.md`, `doc
 ## 3F — Console and view, version 2
 **Thread:** Claude · **Branch:** `p3/3f-console-v2` (worktree)
 **Owns:** `src/console/` (except `encounters/`), `src/view3d/` (except `fields/`)
-**Inputs:** Phase 2 playtest notes, 1E direction, 3A's new state.
+**Inputs:** Phase 2 playtest notes, `src/theme/` and the latest `docs/handoffs/1E.md` (UI lane), 3A's new state. Take all visual values and primitives from `src/theme/`; do not edit it (README § UI lane).
 **Goal:** make the deeper systems operable and Black Box recognizable.
 - Power and thermal schematic: component relationships, flows, readings, history; protection resets.
 - Configuration panel showing footprint, centre of mass and cooling consequences before commitment.

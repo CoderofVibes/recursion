@@ -24,9 +24,9 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    // Only crawl the app entry; otherwise Vite scans every .html file it finds,
-    // including those inside worker worktrees and visual prototypes.
-    entries: ['index.html'],
+    // Only crawl the app entry and the UI lab (dev-only page owned by the UI lane, 1E);
+    // otherwise Vite scans every .html file it finds, including worker worktrees and prototypes.
+    entries: ['index.html', 'src/theme/lab/*.html'],
   },
   worker: {
     format: 'es',

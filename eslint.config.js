@@ -13,7 +13,13 @@ import tseslint from 'typescript-eslint';
  * The game layer (`src/game/`) is the only place that holds both sides and builds what the
  * console and 3D view receive.
  */
-export const BELIEF_SIDE = ['src/model/**', 'src/blackbox/**', 'src/console/**', 'src/view3d/**'];
+export const BELIEF_SIDE = [
+  'src/model/**',
+  'src/blackbox/**',
+  'src/console/**',
+  'src/view3d/**',
+  'src/theme/**',
+];
 
 export const TRUTH_IMPORT_PATTERNS = [
   {

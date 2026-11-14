@@ -27,10 +27,10 @@ The console panels for the Gravity range, built against the fixtures in `src/con
 8. **Recall** control (voluntary recurrence, P8) and save-procedure control (P9).
 
 ## Done when
-Every panel renders from fixtures with no console errors; interactions call typed service interfaces (stubbed) that 2F will connect; follows 1E's tokens.
+Every panel renders from fixtures with no console errors; interactions call typed service interfaces (stubbed) that 2F will connect; every colour, font, size, line style and motion timing comes from `src/theme/` tokens, and panels are composed from `src/theme/components/` primitives (README § UI lane).
 
 ## Out of scope
-The 3D scene (2E), real services (2C), game flow (2F).
+The 3D scene (2E), real services (2C), game flow (2F), and anything in `src/theme/` (the owner's UI lane, 1E). If you need a primitive that does not exist yet, build it inside `src/console/`, keep its styling on tokens, and list it under Requests in your handoff so the UI lane can adopt it.
 
 ## Handoff
 `docs/handoffs/2D.md` from the template, with screenshots.

@@ -18,6 +18,7 @@ describe('truth/belief boundary (P11)', () => {
     'src/blackbox/probe.ts',
     'src/console/panels/probe.tsx',
     'src/view3d/probe.ts',
+    'src/theme/lab/probe.tsx',
   ];
   const forbidden = [
     '../sim/gravity.ts',
