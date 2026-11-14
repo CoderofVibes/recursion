@@ -126,6 +126,7 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
   let modes: Record<string, string> = {};
   let burns: Burn[] = [];
   let primaryFixT: number | undefined;
+  let arrivalMass: number | undefined;
 
   const param = (id: string, fallback: number): number => parameters.get(id) ?? fallback;
   const exponent = (): number => param('law.gravity.exponent', 2);
@@ -161,6 +162,9 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
     ship!.structureMass + ship!.equipment.reduce((total, e) => total + e.mass, 0);
   const gauged = (tank: string): number =>
     telemetry[`${tank}.propellant`]?.value ?? ship!.tanks.find((t) => t.id === tank)?.capacity ?? 0;
+  /** True until a tank gauge has been recorded; until then the loading record's mass is used. */
+  const ungauged = (): boolean =>
+    arrivalMass !== undefined && !ship!.tanks.some((t) => telemetry[`${t.id}.propellant`]);
 
   /** Mass properties from the nominal design and gauged tanks (point masses; stand-in). */
   const massProperties = (): MassProperties => {
@@ -180,10 +184,17 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
     const inertia =
       def.structureInertia +
       items.reduce((total, i) => total + i.m * ((i.p.x - cx) ** 2 + (i.p.y - cy) ** 2), 0);
-    return { mass, centerOfMass: { x: cx, y: cy }, inertia, footprint: config.footprint };
+    return {
+      mass: ungauged() ? arrivalMass! : mass,
+      centerOfMass: { x: cx, y: cy },
+      inertia,
+      footprint: config.footprint,
+    };
   };
   const believedMass = (): number =>
-    dryMass() + ship!.tanks.reduce((total, t) => total + gauged(t.id), 0);
+    ungauged()
+      ? arrivalMass!
+      : dryMass() + ship!.tanks.reduce((total, t) => total + gauged(t.id), 0);
 
   /** Commanded thrust acceleration at time t (inertial), from recorded burns. */
   const thrustAt = (t: number, mass: number): [number, number] => {
@@ -458,6 +469,7 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
 
     beginAttempt(start: AttemptStartInfo) {
       briefing = start.briefing;
+      arrivalMass = start.arrivalMass;
       ship = start.ship;
       if (attemptsSeen.length === 0)
         for (const prior of briefing.priors)

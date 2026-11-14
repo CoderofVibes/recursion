@@ -11,6 +11,12 @@
  * flying (`append`, then `refresh` for Tier L and the present state), all of them before any
  * forecast, and the final record when an attempt ends (Tier G). Calls are queued so they reach
  * the model in order; a failure is kept in `lastError` and does not stop the loop.
+ *
+ * Refit in flight: the global fit (Tier G) also runs during an attempt, at most once a minute
+ * of real time (1G spec §11.2) and before a forecast when new records have arrived. Besides
+ * updating the numbers, it is what gives the attempt in progress its own solution: until then
+ * the model moves the second body under Newton with the arrival-prior masses, whatever law has
+ * been adopted, which misplaces Beta by about 2,000 km after 28 hours (2F handoff).
  */
 
 import type {
@@ -35,6 +41,10 @@ export interface ModelBridgeOptions {
   readonly referenceRadius: number;
   /** Real milliseconds between hand-overs while flying. Default 1000. */
   readonly handoverInterval?: number;
+  /** Real milliseconds between global refits while flying. Default 60,000 (1G spec §11.2). */
+  readonly refitInterval?: number;
+  /** A forecast refits first if records arrived since the last refit this long ago, ms. Default 5000. */
+  readonly forecastRefitAfter?: number;
   /** Milliseconds clock. Default `performance.now`. */
   readonly clock?: () => number;
   /** Overrides of the model's [ASSUMED] settings (src/model settings.ts). */
@@ -62,6 +72,8 @@ export function createModelBridge(client: ModelClient, options: ModelBridgeOptio
   const navigator = createStandInModel({ referenceRadius: options.referenceRadius });
   const clock = options.clock ?? (() => performance.now());
   const interval = options.handoverInterval ?? 1000;
+  const refitInterval = options.refitInterval ?? 60_000;
+  const forecastRefitAfter = options.forecastRefitAfter ?? 5000;
 
   let state: ModelState | undefined;
   let error: string | undefined;
@@ -71,6 +83,9 @@ export function createModelBridge(client: ModelClient, options: ModelBridgeOptio
   let executed: ExecutedCommand[] = [];
   let events: ShipEvent[] = [];
   let lastHandover = -Infinity;
+  let lastRefit = -Infinity;
+  /** Records have reached the model since its last global fit. */
+  let stale = false;
   let queue: Promise<void> = Promise.resolve();
 
   /** Run a model call after everything queued before it; keep the loop alive if it fails. */
@@ -96,18 +111,27 @@ export function createModelBridge(client: ModelClient, options: ModelBridgeOptio
     if (options.onExtensions) options.onExtensions(await client.extensions());
   };
 
-  /** Pass what was recorded since the last hand-over, then refresh Tier L and the present state. */
-  const handover = (): void => {
+  /**
+   * Pass what was recorded since the last hand-over, then refresh Tier L and the present state,
+   * or run the global fit instead when `refitAfter` milliseconds have passed since the last one.
+   */
+  const handover = (refitAfter: number): void => {
     lastHandover = clock();
-    if (measurements.length === 0 && executed.length === 0 && events.length === 0) return;
+    const fresh = measurements.length > 0 || executed.length > 0 || events.length > 0;
+    const refit = (stale || fresh) && clock() - lastRefit >= refitAfter;
+    if (!fresh && !refit) return;
     const delta = { measurements, executed, events };
     const id = attemptId;
     measurements = [];
     executed = [];
     events = [];
+    if (refit) {
+      lastRefit = clock();
+      stale = false;
+    } else stale = true;
     void run(async () => {
-      await client.append(id, delta);
-      take(await client.refresh());
+      if (fresh) await client.append(id, delta);
+      take(await (refit ? client.refit() : client.refresh()));
     }).catch(() => undefined);
   };
 
@@ -118,6 +142,8 @@ export function createModelBridge(client: ModelClient, options: ModelBridgeOptio
       measurements = [];
       executed = [];
       events = [];
+      stale = false;
+      lastRefit = clock();
       if (!initialised) {
         initialised = true;
         const context = contextFromBriefing(start.briefing, start.ship, {
@@ -141,7 +167,7 @@ export function createModelBridge(client: ModelClient, options: ModelBridgeOptio
       for (const m of batch.measurements) measurements.push(m);
       for (const e of batch.executed) executed.push(e);
       for (const e of batch.events) events.push(e);
-      if (clock() - lastHandover >= interval) handover();
+      if (clock() - lastHandover >= interval) handover(refitInterval);
     },
 
     endAttempt(final) {
@@ -149,6 +175,7 @@ export function createModelBridge(client: ModelClient, options: ModelBridgeOptio
       measurements = [];
       executed = [];
       events = [];
+      stale = false;
       navigator.endAttempt(final);
       void run(async () => take(await client.endAttempt(final))).catch(() => undefined);
     },
@@ -162,7 +189,7 @@ export function createModelBridge(client: ModelClient, options: ModelBridgeOptio
     },
 
     forecast(request): Promise<ForecastDraft> {
-      handover();
+      handover(forecastRefitAfter);
       const massProperties = navigator.believedWorld(request.issuedAt).ship.massProperties;
       return run(async () => {
         const { forecast } = await client.forecast({
@@ -179,7 +206,7 @@ export function createModelBridge(client: ModelClient, options: ModelBridgeOptio
     },
 
     settled() {
-      handover();
+      handover(refitInterval);
       return queue;
     },
 
