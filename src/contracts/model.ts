@@ -196,6 +196,12 @@ export interface ModelState {
   readonly fit?: FitSummary;
   /** Per-body calibration under this version's reference law (derived, cached). */
   readonly calibration: readonly CalibrationProfile[];
+  /**
+   * Noise scale s² from the local fits (1G spec §5.3; derived): about 1 when measurements'
+   * reported sigmas are right, above 1 when the data are noisier than reported. The hedge is
+   * not here: the default is in `settings`, earned values are per rule in `validatedSpans`.
+   */
+  readonly noiseScale?: number;
   /** Every [ASSUMED] constant the model build uses, by name (1G spec §11.1). */
   readonly settings?: Readonly<Record<string, number>>;
 }
