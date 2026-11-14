@@ -41,14 +41,12 @@ export const ARRIVAL = {
 
 export const ENGINE = { thrust: 4000, isp: 320 } as const;
 
-/** Reference radius per body: distance from the arrival point (DECISIONS P4 normalization). */
-export const REFERENCE_RADIUS: Readonly<Record<string, number>> = Object.fromEntries(
-  MOCK_BODIES.map((b) => [b.id, v.distance(ARRIVAL.position, b.position)]),
-);
+/** Shared reference radius r0 (DECISIONS P4): the arrival distance from Alpha. */
+export const REFERENCE_RADIUS = v.distance(ARRIVAL.position, v.vec2(0, 0));
 
-/** True coupling k = μ·r0^(n−2), so a = k / r^n equals μ / r0² at r0. */
+/** True coupling K = μ·r0^(n−2) with the shared r0, so a = K / r^n equals μ / r0² at r0. */
 export const trueCoupling = (b: MockBody): number =>
-  b.mu * Math.pow(REFERENCE_RADIUS[b.id] as number, TRUE_EXPONENT - 2);
+  b.mu * Math.pow(REFERENCE_RADIUS, TRUE_EXPONENT - 2);
 
 export interface GravityModel {
   readonly exponent: number;

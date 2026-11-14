@@ -94,7 +94,8 @@ describe('fixtures', () => {
 
   it('carry no truth in belief-side data', () => {
     const text = JSON.stringify([fixtures.viewSnapshot, fixtures.archive, fixtures.models]);
-    expect(text).not.toContain('"coupling"');
+    expect(text).not.toContain('"gm"');
+    expect(text).not.toContain('"referenceRadius"');
     expect(text).not.toContain('"hidden"');
     expect(text).not.toContain('"kinematics"');
   });
@@ -124,9 +125,16 @@ describe('truth fixtures', () => {
     const alpha = mockTruthWorld.bodies[0];
     expect(alpha).toBeDefined();
     if (!alpha) return;
-    const r0 = v.distance(mockTruthWorld.ship.kinematics.position, alpha.position);
+    const { exponent: n, referenceRadius: r0 } = mockTruthWorld.law;
+    const ship = mockTruthWorld.ship.kinematics.position;
+    expect(v.distance(ship, alpha.position)).toBeCloseTo(r0, 6);
     const muPrior = fixtures.briefing.priors.find((p) => p.id === 'body.alpha.mu')?.value ?? 0;
-    expect(alpha.coupling / Math.pow(r0, 2.5)).toBeCloseTo(muPrior / (r0 * r0), 12);
+    expect(alpha.gm / (r0 * r0)).toBeCloseTo(muPrior / (r0 * r0), 12);
+    // Beta, farther than r0, pulls less than its Newtonian GM suggests: the drift to discover.
+    const beta = mockTruthWorld.bodies[1];
+    if (!beta) return;
+    const rb = v.distance(ship, beta.position);
+    expect((beta.gm / (r0 * r0)) * Math.pow(r0 / rb, n)).toBeLessThan(beta.gm / (rb * rb));
   });
 });
 

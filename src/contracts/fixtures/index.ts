@@ -941,6 +941,7 @@ export function buildFixtures(): Fixtures {
         allocation: e.ratedPower,
         powerDraw: Math.round(e.ratedPower * 0.95),
         condition: e.id === 'opt-nav' ? 0.98 : 1,
+        tripped: false,
         temperature: 293,
         faults: [],
         readings:

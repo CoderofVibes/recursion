@@ -18,6 +18,8 @@ A deterministic, tested ship-systems step that turns commands into actuator outp
 
 ## Build
 Implement `ShipSystemsStep`: `(state, config, commands, envEffects, dt) → { state, actuators, measurements, events }`. Keep it pure: draw noise from the seeded stream states in `state.rng` and return the advanced states.
+
+0. **Loader:** build a `ShipDefinition` from `data/ship-baseline.json` in `src/ship/`: fill the typed shared fields (equipment, modes, rated power, mounts, tanks including reactants, buses, thermal nodes, configurations and footprints) and keep the rest of 1C's detail under `systems`. Follow 1C's "Notes for the next phase" (per-bus dispatch, not a ship-wide watt sum; life support cannot be shed but can still go short). Recorder capacity limits what is acquired, never what Black Box retains (P8).
 1. **Power:** sources, battery state of charge and limits, buses, load priorities, allocation commands, protection trips and load shedding. Life support can't be shed.
 2. **Propulsion:** main engine and RCS with thrust, specific impulse, mass flow, minimum impulse bit and mounting misalignment. Output thrust vectors at mounting points (the sim turns them into force and torque). Propellant depletes.
 3. **Sensors:** optical tracking produces `Measurement`s whose sigma depends on allocated power, range, pointing and condition; accelerometers report non-gravitational acceleration with noise and bias; star tracker attitude; Black Box recorder load scales with sample rate.

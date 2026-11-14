@@ -11,19 +11,26 @@ import type { FieldInstanceSpec } from './fields.ts';
 import type { ShipTruth } from './ship.ts';
 
 /**
- * Gravity law: each body accelerates everything toward it with a = coupling / r^exponent.
- * This universe uses exponent 2.5 (brief §5). Body couplings then have units m^(n+1)·s⁻².
- * The normalization used to choose couplings (DECISIONS P4) is the physics package's (1B).
+ * Gravity law (DECISIONS P4, as clarified by 1B): each body pulls everything toward its centre
+ *
+ *   a = (gm / r0²) · (r0 / r)^n  =  K / r^n,   K = gm · r0^(n−2)  [m^(n+1)·s⁻²]
+ *
+ * with one shared, fixed reference radius r0 for every body, so forces between bodies stay
+ * equal and opposite. This universe uses n = 2.5 (brief §5). With n = 2 the law is Newtonian
+ * for any r0. Bodies are point sources; radius is only a collision envelope.
  */
 export interface GravityLaw {
   readonly exponent: number;
+  /** Shared reference radius r0, where the law matches Newtonian gravity. Never per body. */
+  readonly referenceRadius: Meters;
 }
 
 export interface MassiveBody {
   readonly id: BodyId;
   readonly name: string;
-  /** k in a = k / r^n, m^(n+1)·s⁻². */
-  readonly coupling: number;
+  /** Newtonian-equivalent GM at the shared reference radius, m³/s². */
+  readonly gm: number;
+  /** Collision envelope (not part of the gravity law). */
   readonly radius: Meters;
   readonly position: Vec2;
   readonly velocity: Vec2;
@@ -31,7 +38,7 @@ export interface MassiveBody {
   readonly fixed: boolean;
 }
 
-/** Test particle under the same law (does not attract anything). */
+/** Massless test particle under the same law (attracts nothing). */
 export interface Asteroid {
   readonly id: AsteroidId;
   readonly position: Vec2;

@@ -15,7 +15,7 @@ import type {
   ThermalNodeId,
 } from './ids.ts';
 import type { Command } from './commands.ts';
-import type { Gray, Kelvin, NewtonSeconds, Seconds } from './units.ts';
+import type { Kelvin, LatticeExposure, NewtonSeconds, Seconds } from './units.ts';
 
 export type MeasurementKind =
   /** [θ] rad: inertial direction from ship to target centre. Needs `target`. */
@@ -32,8 +32,8 @@ export type MeasurementKind =
   | 'rate'
   /** [v]: housekeeping reading, unit given by the channel. Needs `channel`. */
   | 'telemetry'
-  /** [Ḋ] Gy/s: dose rate at the sensing equipment. */
-  | 'dose-rate'
+  /** [I] lattice units: field intensity at the sensing equipment (fictional, not a dose). */
+  | 'lattice-intensity'
   /** Field-specific processed product (e.g. lattice reconstruction samples). Needs `field`. */
   | 'field-signal';
 
@@ -103,8 +103,8 @@ export type ShipEvent =
       readonly kind: 'exposure';
       readonly t: Seconds;
       readonly equipment: EquipmentId;
-      /** Dose received in this event. */
-      readonly dose: Gray;
+      /** Lattice exposure received in this event. */
+      readonly amount: LatticeExposure;
     }
   | {
       readonly kind: 'configuration-changed';
