@@ -5,14 +5,17 @@
  * § One simulation tick.
  */
 
+import type { ShipDefinition } from '../contracts/ship.ts';
 import type {
   EnvironmentEffects,
+  EnvironmentField,
   MassiveBody,
   SensorTarget,
   Sun,
   TruthWorld,
 } from '../contracts/truth/index.ts';
-import type { JsonValue } from '../contracts/units.ts';
+import type { JsonValue, LatticeIntensity } from '../contracts/units.ts';
+import { rotate } from '../lib/quat.ts';
 import type { Vec3 } from '../lib/vec3.ts';
 import type { SimState } from '../sim/index.ts';
 import { sensorTargets } from '../sim/index.ts';
@@ -25,6 +28,43 @@ export interface EnvironmentOptions {
   readonly knownSizeTargets: readonly string[];
   /** A target closer than this to the sun's direction is lost in glare, rad. */
   readonly sunExclusionAngle: number;
+  /** The encounter's fields that give an intensity (radiation clouds, the lattice). */
+  readonly intensityFields?: readonly EnvironmentField[];
+  /** The ship's design, for where each equipment item sits. Needed with `intensityFields`. */
+  readonly ship?: ShipDefinition;
+}
+
+/**
+ * Field intensity at each equipment item, in lattice units (`LatticeIntensity`, 3C's units; A16,
+ * R14): every intensity field summed at the item's position in the configuration the ship is in
+ * (a deployed wing sits where it is deployed), carried by the ship's true attitude. Items where
+ * every field is zero are left out. Each item is sampled at its mount point, the baseline's
+ * approximation for compact equipment (S17); a field with structure on the scale of the ship
+ * (the lattice) sweeps whole occupied geometry through its own encounter's environment hook.
+ * The Gravity range's clouds vary over tens of kilometres, where the point is exact to far less
+ * than a millionth of their peak.
+ */
+export function fieldIntensity(
+  world: TruthWorld,
+  fields: readonly EnvironmentField[],
+  ship: ShipDefinition,
+): Record<string, LatticeIntensity> {
+  const out: Record<string, LatticeIntensity> = {};
+  if (fields.length === 0) return out;
+  const { position, attitude } = world.ship.kinematics;
+  const systems = world.ship.systems;
+  const com = systems.massProperties.centerOfMass;
+  const moved = ship.configurations.find((c) => c.id === systems.configuration)?.equipmentPositions;
+  const t = world.t;
+  for (const spec of ship.equipment) {
+    const p = moved?.[spec.id] ?? spec.position;
+    const offset = rotate(attitude, { x: p.x - com.x, y: p.y - com.y, z: p.z - com.z });
+    const at = { x: position.x + offset.x, y: position.y + offset.y, z: position.z + offset.z };
+    let sum = 0;
+    for (const f of fields) sum += f.intensity!(at, t);
+    if (sum > 0) out[spec.id] = sum;
+  }
+  return out;
 }
 
 /**
@@ -140,7 +180,7 @@ export function targetVisibility(
  * - `specificForce` is the previous step's (2A), so accelerometers lag thrust by one tick.
  * - Stars are always visible [ASSUMED: the two star trackers between them always have a clear
  *   patch of sky away from the sun and the bodies].
- * - No lattice or other field products yet (Phase 3).
+ * - `intensity` from the encounter's intensity fields (`fieldIntensity`); none, `{}`.
  */
 export function buildEnvironment(state: SimState, options: EnvironmentOptions): EnvironmentEffects {
   const world = state.world;
@@ -156,7 +196,10 @@ export function buildEnvironment(state: SimState, options: EnvironmentOptions): 
     kinematics: world.ship.kinematics,
     specificForce: state.specificForce,
     targets,
-    intensity: {},
+    intensity:
+      options.intensityFields && options.intensityFields.length > 0 && options.ship
+        ? fieldIntensity(world, options.intensityFields, options.ship)
+        : {},
     fieldSignals: { 'ship-environment': scene },
     sunlight: sunlightAt(world, world.ship.kinematics.position),
   };
