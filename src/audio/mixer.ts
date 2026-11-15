@@ -1,4 +1,5 @@
 import { onSoundMuted, soundMuted } from '../app/sound.ts';
+import { shotLength } from './caps.ts';
 import { sources, type Cue, type Loop, type Shot } from './catalogue.ts';
 import { onSoundVolume, soundVolume } from './index.ts';
 
@@ -141,6 +142,14 @@ export function startMixer() {
       if (usableLevel() === 0 || effects.has(cue)) return false;
       const voice = start(cue, SHOT_GAIN[cue], false);
       if (!voice) return false;
+      // A file longer than its cue (R65) fades out and stops at the cue's length.
+      const fileSeconds = buffers.get(cue)?.duration ?? 0;
+      const length = shotLength(cue, fileSeconds);
+      if (length < fileSeconds) {
+        const now = voice.source.context.currentTime;
+        voice.gain.gain.setTargetAtTime(0, now + Math.max(0, length - FADE), FADE / 3);
+        voice.source.stop(now + length);
+      }
       effects.set(cue, voice);
       voice.source.onended = () => {
         if (effects.get(cue) === voice) effects.delete(cue);
