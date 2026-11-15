@@ -42,6 +42,6 @@ The title's flicker; the slingshot's shake and forward camera; the wells' displa
 
 - **Owns:** `src/trailer/`, `docs/trailer/`, `docs/handoffs/tr.md`, `docs/handoffs/tr/`. `RoomView.ts` only through TV's merged method. Requests elsewhere go to the integrator (the owner's main Claude chat) as a ready-to-paste message.
 - `npm run check` after every merge (ESLint lints scripts in `docs/` too); `npm run build` stays green, and the trailer stays out of `dist`.
-- **Never loosen a test, tolerance or claim.** One full run had two unrelated game tests fail under load (`clouds.test.ts`, `admission-observer.test.ts`); both passed alone. If they fail again, rerun them alone and report.
+- **Never loosen a test, tolerance or claim.** After TR's checkpoint 3, two full runs had the same two game tests time out at their 60 s limit (`clouds.test.ts` "turns with the binary", `admission-observer.test.ts` "does not change any truth tick"). Alone, each passes in about 20 s; no game, content or simulation code changed since the last green full check, so it reads as load from other threads sharing the machine. If they fail again, rerun them alone and report it; never raise their limits.
 - Commit checkpoints and announce each in one line. Update `docs/handoffs/tr.md` as you go.
 - On this machine, Bash heredocs containing apostrophes fail: write commit messages and scripts to a file and pass the path.
