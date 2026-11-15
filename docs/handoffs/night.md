@@ -79,14 +79,15 @@ Played on the production build (`npm run build`, served by `vite preview`) in he
 4. **No radiation caution before the lattice kills** (R37, open): at warp the first sign is "Critical power short", one second before the loss. The loss review 2C built (the dose-rate spike, the failures in order) is not on the debrief yet, so "SHIP LOST · POWER" is all the Cathedral's debrief says.
 5. **After a forecast ends there are no pass alerts.** On the slingshot the forecast ended at T+11 h, and the ship coasted 20 h at 2000× into a belt rock with no warp drop. By design a forecast must be re-issued on the way (A6); a judge may not know. "Past the forecast horizon" is an advisory and does not drop warp.
 6. **An attempt flown without RECORD DESIGN AND SET UP** has no design to be judged against. Allowed by design; a judge may not notice the button.
-7. A hitch of about 0.6 s as the opening hands off to the live room (each builds its own scene).
-8. The Cathedral's record is large for its length: 97,351 records in four minutes of ship time.
-9. At laptop width two readouts on MODEL are cut short with an ellipsis; FLIGHT's right column runs below the fold once the Cathedral's panel is in it (it scrolls).
-10. `motion.flicker` (60 ms, two cycles: the visual direction's damage flicker) is defined in the theme and used nowhere. If something adopts it, many items damaged together could exceed three flashes a second: gate it then.
+7. **Turning by hand feels unresponsive.** Flying by hand works (in the Well Garden, holding `W` six seconds took the speed from 44.7 to 49.5 m/s and 46 kg of propellant, and releasing issued a coasting forecast), but `Q`/`E` turn the 30 t ship about a degree every two seconds, so a judge may think the keys do nothing. PLAN's turn line states the time honestly ("80° turn needs 3.4 min"); FLIGHT says nothing while a key is held.
+8. A hitch of about 0.6 s as the opening hands off to the live room (each builds its own scene).
+9. The Cathedral's record is large for its length: 97,351 records in four minutes of ship time.
+10. At laptop width two readouts on MODEL are cut short with an ellipsis; FLIGHT's right column runs below the fold once the Cathedral's panel is in it (it scrolls).
+11. `motion.flicker` (60 ms, two cycles: the visual direction's damage flicker) is defined in the theme and used nowhere. If something adopts it, many items damaged together could exceed three flashes a second: gate it then.
 
 ## Requests outside my ownership
 
-- **Integrator, `tools/studies/s15` and `s20` runners:** they wait for `.cr` on a fresh profile, which now arrives after the 19.5 s opening. Set the marker before the page's scripts run (`Page.addScriptToEvaluateOnNewDocument` with `localStorage.setItem('recursion:opening-seen', '1')`), or load a region by `?encounter=…`.
+- **Integrator, `tools/studies/s15` and `s20` runners, and `prototypes/shots/capture.mjs`:** they wait for `.cr` (or the dev handle) on a fresh profile, which now arrives after the 19.5 s opening. Set the marker before the page's scripts run (`Page.addScriptToEvaluateOnNewDocument` with `localStorage.setItem('recursion:opening-seen', '1')`), or load a region by `?encounter=…`.
 - **Integrator, ledger:** R41, R43 and R44 are done here. 2D's request 13 (register `ChainLinkPanel`) is done here, in 3C's folder `src/console/encounters/chain-link/index.ts`: tell 3C. R20, R31 and R37 are still open and are what items 1, 3 and 4 above wait on.
 - **VX:** `RoomView.ts` changed in the loss (`stepDeath`, the end of `frame`, `lose`, the constructor's options) and gained `followFlight` and `setFlightRange`; nothing in the window parts. `outside.ts` is untouched.
 - **2C:** items 1 and 2 above.
