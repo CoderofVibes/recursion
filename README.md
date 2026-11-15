@@ -8,7 +8,7 @@ A ship returning from Mars gets caught in recurrence in an unfamiliar universe. 
 
 Click to look, walk with **WASD**, then aim at the console and click. Set your goals and margins in **MISSION**. Preview and commit a burn in **PLAN**, then compare the forecast with the measured track. **BLACK BOX** keeps the evidence when the ship restarts.
 
-The return expedition is still in development. After 2G merges, the release still needs to demonstrate 3D flight, model adoption and the three additional GMAT cases. [Claim ledger](docs/studies/s12/claim-ledger.md)
+The return expedition is still in development. Not yet shown in this build: full 3D flight, adopting a learned law in play, and three more GMAT cases, all being integrated now. [Claim ledger](docs/studies/s12/claim-ledger.md)
 
 ## What we verified
 
