@@ -27,7 +27,7 @@ import {
   validatedSpans,
   visited,
 } from './data.ts';
-import { bytes, clock, dist, duration, km, sci, whole } from './format.ts';
+import { bytes, clock, configurationName, dist, duration, km, sci, whole } from './format.ts';
 import { changes, debrief, defaultDesign, designMark, designOf, setupCommands } from './mission.ts';
 
 const { readFileSync } = (await import(/* @vite-ignore */ `node:${'fs'}`)) as {
@@ -237,6 +237,11 @@ describe('formatting', () => {
     expect(bytes(2.5e6)).toBe('2.5 MB');
     expect(sci(1.02e10, 3)).toBe('1.02×10¹⁰');
     expect(sci(0.975)).toBe('0.975');
+  });
+
+  it('names a configuration in words, however the ship spells it', () => {
+    expect(configurationName('allDeployed')).toBe('all deployed');
+    expect(configurationName('radiators')).toBe('radiators');
   });
 
   it('formats exactly as toLocaleString did, with formatters made once (S15)', () => {

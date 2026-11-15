@@ -38,7 +38,7 @@ import {
 import type { Desk } from './desk.ts';
 import { FramingControls } from './Framing.tsx';
 import type { Framing } from './Framing.tsx';
-import { bytes, duration, fixed, name, whole } from './format.ts';
+import { bytes, configurationName, duration, fixed, name, whole } from './format.ts';
 import { EquipmentDetail } from './pages/SystemsPage.tsx';
 
 /** One-line diagram of the electrical system: sources over the buses they feed. */
@@ -369,7 +369,10 @@ export function ShipPanels({
           <Caption>configuration</Caption>
           <ModeChips
             label="Configuration"
-            options={game.ship.configurations.map((c) => ({ value: c.id, label: c.name }))}
+            options={game.ship.configurations.map((c) => ({
+              value: c.id,
+              label: configurationName(c.name),
+            }))}
             value={ship.configuration}
             {...(ended
               ? {}

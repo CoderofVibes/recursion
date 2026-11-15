@@ -47,6 +47,36 @@ const frame = (snapshot: ViewSnapshot, extra: { selected?: string } = {}) => ({
 describe('flight hologram', () => {
   afterEach(() => vi.unstubAllGlobals());
 
+  it('starts a new attempt on the arrival’s heading instead of turning round from the last', () => {
+    // The ship as the last attempt left it: late in the flight and turned 2.5 rad about its up.
+    const ship = viewSnapshot.world.ship;
+    const half = 2.5 / 2;
+    const turned = { x: 0, y: 0, z: Math.sin(half), w: Math.cos(half) };
+    const lost: ViewSnapshot = {
+      ...viewSnapshot,
+      t: viewSnapshot.t + 20_000,
+      world: { ...viewSnapshot.world, ship: { ...ship, attitude: turned as typeof ship.attitude } },
+    };
+    const arrival: ViewSnapshot = { ...viewSnapshot, t: 0 };
+    /** The display's orientation: the group that turns the environment into the display frame. */
+    const display = (holo: ReturnType<typeof make>) => holo.group.children[0]!.quaternion;
+
+    const fresh = make();
+    fresh.update(frame(arrival), 0.016, 0);
+    const recurred = make();
+    recurred.update(frame(lost), 0.016, 0);
+    expect(display(recurred).angleTo(display(fresh))).toBeGreaterThan(1);
+    // The clock ran backwards: a new attempt. One frame later the display is the arrival's.
+    recurred.update(frame(arrival), 0.016, 0.016);
+    expect(display(recurred).angleTo(display(fresh))).toBeLessThan(1e-9);
+
+    // Within an attempt it still turns no faster than the theme allows, however fast the ship.
+    const tumbling = make();
+    tumbling.update(frame(arrival), 0.016, 0);
+    tumbling.update(frame({ ...lost, t: 1 }), 0.016, 0.016);
+    expect(display(tumbling).angleTo(display(fresh))).toBeLessThan(0.05);
+  });
+
   it('draws the fixture snapshot and the two-attempt overlay', () => {
     const holo = make();
     holo.setRange(400_000);

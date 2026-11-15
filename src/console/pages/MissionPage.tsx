@@ -18,7 +18,7 @@ import {
   stores,
 } from '../data.ts';
 import type { Desk } from '../desk.ts';
-import { clock, dist, duration, fixed, name, whole } from '../format.ts';
+import { clock, configurationName, dist, duration, fixed, name, whole } from '../format.ts';
 import { APPROACH, EVIDENCE } from '../mission.ts';
 import { RegionsPanel } from '../regions.tsx';
 import type { Approach, EvidenceGoal } from '../mission.ts';
@@ -247,7 +247,10 @@ export function MissionPage({ desk }: { readonly desk: Desk }) {
       >
         <ModeChips
           label="Configuration"
-          options={game.ship.configurations.map((c) => ({ value: c.id, label: c.name }))}
+          options={game.ship.configurations.map((c) => ({
+            value: c.id,
+            label: configurationName(c.name),
+          }))}
           value={design.setup.configuration}
           onChange={(v) => desk.setSetup({ configuration: v })}
         />

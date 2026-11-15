@@ -604,6 +604,8 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
   const displayQ = new Quaternion();
   const shipQ = new Quaternion();
   let displayReady = false;
+  /** The snapshot time the display orientation last followed. */
+  let displayT = 0;
   let reclip = 0;
   let trailCount = -1;
   let forecastKey = '';
@@ -977,6 +979,10 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
     // Display orientation: heading-up follows the ship, but never turns faster than the theme
     // allows, so a tumbling ship under time warp does not spin the hologram.
     attitudeToScene(ship.attitude, shipQ);
+    // A clock that runs backwards is a new attempt (a loss, a Recall): the display starts on the
+    // arrival's heading, as on a first frame, instead of turning round from the last attempt's.
+    if (snapshot.t < displayT) displayReady = false;
+    displayT = snapshot.t;
     if (!displayReady) {
       displayQ.copy(shipQ);
       displayReady = true;

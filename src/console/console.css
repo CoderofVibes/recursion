@@ -280,6 +280,9 @@ button.cs-foot__back:focus-visible {
 }
 .cs-line__label {
   flex: none;
+  /* A long label wraps and leaves the value its room; it never pushes the value off the page. */
+  max-width: 65%;
+  overflow-wrap: anywhere;
   letter-spacing: var(--rx-tracking-label);
   text-transform: uppercase;
   color: var(--rx-ink-dim);

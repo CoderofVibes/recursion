@@ -97,6 +97,10 @@ export function bytes(n: number): string {
 /** An equipment or tank id as an instrument name: "main-engine" → "main engine". */
 export const name = (id: string): string => id.replace(/-/g, ' ');
 
+/** A configuration's name as words: the ship names them in one (`allDeployed` → `all deployed`). */
+export const configurationName = (given: string): string =>
+  given.replace(/([a-z])([A-Z])/g, '$1 $2').toLowerCase();
+
 /** Degrees from radians, 0–360. */
 export const degrees = (radians: number): number =>
   ((((radians * 180) / Math.PI) % 360) + 360) % 360;
