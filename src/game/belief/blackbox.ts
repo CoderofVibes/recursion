@@ -81,6 +81,8 @@ export function createBlackBox(options: BlackBoxOptions = {}): BlackBoxPort {
           estimate: start.briefing.arrivalEstimate,
           configuration: start.briefing.arrivalConfiguration,
           modelVersion,
+          // Each run's geometry differs (A10): the attempt keeps the briefing it was given.
+          briefing: start.briefing,
         },
       };
       recorder = new AttemptRecorder(header);

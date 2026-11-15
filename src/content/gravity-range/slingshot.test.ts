@@ -16,6 +16,7 @@ import { burnDuration } from '../../game/belief/maneuver.ts';
 import { createStandInModel } from '../../game/belief/standin-model.ts';
 import { departStatus } from '../../game/objectives.ts';
 import { createGameSession } from '../../game/session.ts';
+import { quat } from '../../lib/index.ts';
 import { distance, length, sub } from '../../lib/vec3.ts';
 import { DEPART, LAW, createGravityRange } from './index.ts';
 
@@ -76,9 +77,38 @@ describe('Gravity range: the slingshot flown by hand', () => {
       expect(mainBefore - world().ship.systems.tanks['main-propellant']!).toBeGreaterThan(120);
       expect(mainBefore - world().ship.systems.tanks['main-propellant']!).toBeLessThan(150);
 
-      // Eight hours before the pass: lift over the ring, 1 m/s up on the translation controls.
+      // The fuel cells last about 40 hours and the flight about 64, and running out of power
+      // is a loss (A18 (5)). So deploy the arrays and point the nose, which they face, at the
+      // sun the window shows.
+      const facingSun = () => {
+        const sun = session.snapshot().window?.sun;
+        if (!sun) throw new Error('no sun in the window');
+        session.command({
+          kind: 'attitude',
+          target: { reference: 'direction', direction: sun.direction },
+        });
+      };
+      session.command({ kind: 'configure', configuration: 'solar' });
+      facingSun();
+      session.stepTicks(1800);
+      expect(session.status().alerts).toEqual([]);
+
+      // Releasing the controls stops the rotation only (A18 (6)): over the next 20 hours the
+      // attitude drifts within the controller's rate deadband. So level the ship first, nose
+      // along the believed velocity and its top up, ten minutes before lifting.
       const LIFT_AT = 79_920; // 22.2 h
-      session.stepTicks(LIFT_AT - session.status().t);
+      session.stepTicks(LIFT_AT - 600 - session.status().t);
+      const tilt = quat.angleBetween(
+        world().ship.kinematics.attitude,
+        quat.fromYaw(Math.atan2(believedVelocity().y, believedVelocity().x)),
+      );
+      expect(tilt).toBeGreaterThan(0.05);
+      const v = believedVelocity();
+      session.command({
+        kind: 'attitude',
+        target: { reference: 'inertial', attitude: quat.fromYaw(Math.atan2(v.y, v.x)) },
+      });
+      session.stepTicks(600);
       const vzBefore = world().ship.kinematics.velocity.z;
       const rcsBefore = rcs(world());
       session.fly(hold({ translate: { x: 0, y: 0, z: 1 } }));
@@ -86,10 +116,12 @@ describe('Gravity range: the slingshot flown by hand', () => {
       session.fly(HANDS_ON_NEUTRAL);
       await model.settled();
       session.stepTicks(1);
+      facingSun();
       const lift = world().ship.kinematics.velocity.z - vzBefore;
       expect(lift).toBeGreaterThan(0.9);
       expect(lift).toBeLessThan(1.1);
-      // 40 s of translation on the RCS: about 14 kg of the 300 kg load.
+      // 40 s of translation on the RCS: about 14 kg of the 300 kg load (measured after the
+      // levelling turn).
       expect(rcsBefore - rcs(world())).toBeGreaterThan(10);
       expect(rcsBefore - rcs(world())).toBeLessThan(20);
 

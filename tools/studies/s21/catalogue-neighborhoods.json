@@ -1,0 +1,2711 @@
+[
+  {
+    "offset_deg": -15.0,
+    "time_shift_s": -30.0,
+    "dv_shift": -0.025,
+    "summary": {
+      "beta_peri_m": 806251.7872561887,
+      "beta_peri_t": 115560.0,
+      "beta_peri_relative_speed": 72.29415117549125,
+      "alpha_min_m": 999999.9999999999,
+      "exit_t": 259920.0,
+      "exit_speed": 60.43180070906852,
+      "exit_position": [
+        -7944429.904735598,
+        4228957.792615237,
+        -113037.385112491
+      ],
+      "exit_velocity": [
+        -59.937451444936286,
+        -7.6773435937870556,
+        -0.7502310107000465
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 55363.45444779115,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 4795.975432576057,
+      "closest_t": 118399.84800194121,
+      "rock": 109,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": -15.0,
+    "time_shift_s": -30.0,
+    "dv_shift": 0.0,
+    "summary": {
+      "beta_peri_m": 827095.0714146529,
+      "beta_peri_t": 115560.0,
+      "beta_peri_relative_speed": 71.17969256811864,
+      "alpha_min_m": 999999.9999999999,
+      "exit_t": 255840.0,
+      "exit_speed": 61.752149937053815,
+      "exit_position": [
+        -7688976.714070203,
+        4681827.196669708,
+        -107434.92274131412
+      ],
+      "exit_velocity": [
+        -61.58864564984421,
+        -4.424011138252769,
+        -0.7712809571851902
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 45590.27253947139,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 7876.389929282331,
+      "closest_t": 114870.99107696944,
+      "rock": 197,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": -15.0,
+    "time_shift_s": -30.0,
+    "dv_shift": 0.025,
+    "summary": {
+      "beta_peri_m": 847882.3805096726,
+      "beta_peri_t": 115560.0,
+      "beta_peri_relative_speed": 70.12491675212394,
+      "alpha_min_m": 999999.9999999999,
+      "exit_t": 252360.0,
+      "exit_speed": 62.826289847482236,
+      "exit_position": [
+        -7425426.691328227,
+        5087614.127661337,
+        -101416.05856178372
+      ],
+      "exit_velocity": [
+        -62.80892442377014,
+        -1.2528793362927988,
+        -0.782305629323502
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 36062.03600843891,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 17979.50193911996,
+      "closest_t": 112477.51701576993,
+      "rock": 207,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": -15.0,
+    "time_shift_s": 0.0,
+    "dv_shift": -0.025,
+    "summary": {
+      "beta_peri_m": 790878.2153488015,
+      "beta_peri_t": 115320.0,
+      "beta_peri_relative_speed": 73.17727479840877,
+      "alpha_min_m": 999999.9999999999,
+      "exit_t": 262920.0,
+      "exit_speed": 59.39974140751393,
+      "exit_position": [
+        -8109181.391931296,
+        3906968.2364789434,
+        -116155.94582574534
+      ],
+      "exit_velocity": [
+        -58.583786153550854,
+        -9.784647869828156,
+        -0.7279733910080758
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 62770.7313391919,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 10949.37256961987,
+      "closest_t": 111286.02682713339,
+      "rock": 300,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": -15.0,
+    "time_shift_s": 0.0,
+    "dv_shift": 0.0,
+    "summary": {
+      "beta_peri_m": 811663.4048657881,
+      "beta_peri_t": 115320.0,
+      "beta_peri_relative_speed": 72.02211700132827,
+      "alpha_min_m": 999999.9999999999,
+      "exit_t": 258240.0,
+      "exit_speed": 60.911646542524856,
+      "exit_position": [
+        -7854034.2139150435,
+        4394360.634902046,
+        -110848.78071264969
+      ],
+      "exit_velocity": [
+        -60.55946848365504,
+        -6.496705880664032,
+        -0.7564880691838698
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 54068.00357363664,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 6991.058366209911,
+      "closest_t": 118170.54183653899,
+      "rock": 109,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": -15.0,
+    "time_shift_s": 0.0,
+    "dv_shift": 0.025,
+    "summary": {
+      "beta_peri_m": 832402.372115689,
+      "beta_peri_t": 115320.0,
+      "beta_peri_relative_speed": 70.9287806850566,
+      "alpha_min_m": 999999.9999999999,
+      "exit_t": 254400.0,
+      "exit_speed": 62.14520181301034,
+      "exit_position": [
+        -7596887.400702387,
+        4829724.161396408,
+        -105116.13645283674
+      ],
+      "exit_velocity": [
+        -62.054174997118736,
+        -3.272114917925839,
+        -0.7737814747295548
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 43101.96428495216,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 7902.185808984025,
+      "closest_t": 114677.25393500061,
+      "rock": 197,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": -15.0,
+    "time_shift_s": 30.0,
+    "dv_shift": -0.025,
+    "summary": {
+      "beta_peri_m": 775548.4320882793,
+      "beta_peri_t": 115080.0,
+      "beta_peri_relative_speed": 74.09178180793917,
+      "alpha_min_m": 999999.9999999999,
+      "exit_t": 266280.0,
+      "exit_speed": 58.22626861015686,
+      "exit_position": [
+        -8265469.394208871,
+        3559597.9091853355,
+        -118916.12340297361
+      ],
+      "exit_velocity": [
+        -56.99250880114613,
+        -11.902178327384867,
+        -0.7003198387515891
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 70630.34914646298,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 5797.447650485615,
+      "closest_t": 116282.88606917452,
+      "rock": 92,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": -15.0,
+    "time_shift_s": 30.0,
+    "dv_shift": 0.0,
+    "summary": {
+      "beta_peri_m": 796269.5315741906,
+      "beta_peri_t": 115080.0,
+      "beta_peri_relative_speed": 72.89433177732278,
+      "alpha_min_m": 999999.9999999999,
+      "exit_t": 261120.0,
+      "exit_speed": 59.9379931106772,
+      "exit_position": [
+        -8024883.392018661,
+        4083058.1561778095,
+        -114152.10530634203
+      ],
+      "exit_velocity": [
+        -59.31247795610678,
+        -8.605232218445327,
+        -0.7368550119015009
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 62301.03235343058,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 11310.720232940004,
+      "closest_t": 107706.11665506598,
+      "rock": 96,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": -15.0,
+    "time_shift_s": 30.0,
+    "dv_shift": 0.025,
+    "summary": {
+      "beta_peri_m": 816955.3213438597,
+      "beta_peri_t": 115080.0,
+      "beta_peri_relative_speed": 71.76087681256672,
+      "alpha_min_m": 999999.9999999999,
+      "exit_t": 256680.0,
+      "exit_speed": 61.356222106678906,
+      "exit_position": [
+        -7764968.485553923,
+        4551770.560772528,
+        -108643.52911193689
+      ],
+      "exit_velocity": [
+        -61.118973401669656,
+        -5.336437796816257,
+        -0.761257624474723
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 51129.98753588984,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 9786.155269777038,
+      "closest_t": 112454.44385399793,
+      "rock": 197,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": -10.0,
+    "time_shift_s": -30.0,
+    "dv_shift": -0.025,
+    "summary": {
+      "beta_peri_m": 826194.4034886257,
+      "beta_peri_t": 112800.0,
+      "beta_peri_relative_speed": 71.47428504819386,
+      "alpha_min_m": 999999.9999999999,
+      "exit_t": 250560.0,
+      "exit_speed": 62.58753612574553,
+      "exit_position": [
+        -7423152.703891734,
+        5095704.816771413,
+        -107154.7840311443
+      ],
+      "exit_velocity": [
+        -62.57541943718966,
+        -0.9430793287174256,
+        -0.7919355599001608
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 49876.66861578298,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 4273.501031159974,
+      "closest_t": 109736.14680813777,
+      "rock": 109,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": -10.0,
+    "time_shift_s": -30.0,
+    "dv_shift": 0.0,
+    "summary": {
+      "beta_peri_m": 846165.0803874729,
+      "beta_peri_t": 112800.0,
+      "beta_peri_relative_speed": 70.4643656424411,
+      "alpha_min_m": 999999.9999999999,
+      "exit_t": 247440.0,
+      "exit_speed": 63.530427932850586,
+      "exit_position": [
+        -7155050.165958762,
+        5463467.111845869,
+        -101247.00553300531
+      ],
+      "exit_velocity": [
+        -63.48951220010424,
+        2.134885079706776,
+        -0.7996121687309907
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 41096.92230965372,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 9591.369239201109,
+      "closest_t": 101685.63566935489,
+      "rock": 19,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": -10.0,
+    "time_shift_s": -30.0,
+    "dv_shift": 0.025,
+    "summary": {
+      "beta_peri_m": 866060.4034195413,
+      "beta_peri_t": 112800.0,
+      "beta_peri_relative_speed": 69.50746060331626,
+      "alpha_min_m": 999999.9999999999,
+      "exit_t": 244800.0,
+      "exit_speed": 64.28257865468085,
+      "exit_position": [
+        -6888795.285787441,
+        5793970.912307892,
+        -95171.27879419144
+      ],
+      "exit_velocity": [
+        -64.07568950139724,
+        5.090820589269025,
+        -0.7996743985122525
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 29754.33518406446,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 11081.246342043169,
+      "closest_t": 102438.66927399249,
+      "rock": 19,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": -10.0,
+    "time_shift_s": 0.0,
+    "dv_shift": -0.025,
+    "summary": {
+      "beta_peri_m": 810712.0416779163,
+      "beta_peri_t": 112680.0,
+      "beta_peri_relative_speed": 72.32755989364485,
+      "alpha_min_m": 999999.9999999999,
+      "exit_t": 252840.0,
+      "exit_speed": 61.81672069462431,
+      "exit_position": [
+        -7604176.265178662,
+        4823552.100057522,
+        -110761.40892036656
+      ],
+      "exit_velocity": [
+        -61.73614716932518,
+        -3.0573761256284597,
+        -0.7794493896675213
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 58217.492542755324,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 1603.7466852755588,
+      "closest_t": 107839.45780678319,
+      "rock": 109,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": -10.0,
+    "time_shift_s": 0.0,
+    "dv_shift": 0.0,
+    "summary": {
+      "beta_peri_m": 830642.3863274367,
+      "beta_peri_t": 112680.0,
+      "beta_peri_relative_speed": 71.28015353138673,
+      "alpha_min_m": 999999.9999999999,
+      "exit_t": 249360.0,
+      "exit_speed": 62.90785398430148,
+      "exit_position": [
+        -7337931.660793145,
+        5219115.146992295,
+        -105071.52257767954
+      ],
+      "exit_velocity": [
+        -62.902792154162086,
+        0.08939196383036438,
+        -0.7929950802388405
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 48507.6401071376,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 7100.771574120181,
+      "closest_t": 109480.5057673307,
+      "rock": 109,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": -10.0,
+    "time_shift_s": 0.0,
+    "dv_shift": 0.025,
+    "summary": {
+      "beta_peri_m": 850505.6396975345,
+      "beta_peri_t": 112560.0,
+      "beta_peri_relative_speed": 70.2766495720211,
+      "alpha_min_m": 999999.9999999999,
+      "exit_t": 246360.0,
+      "exit_speed": 63.793336357952356,
+      "exit_position": [
+        -7068076.931739954,
+        5574211.391059672,
+        -99088.39561044541
+      ],
+      "exit_velocity": [
+        -63.71153158176695,
+        3.129454258206332,
+        -0.7981373504311972
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 38751.77390778856,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 10959.584798547834,
+      "closest_t": 101523.90206401671,
+      "rock": 19,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": -10.0,
+    "time_shift_s": 30.0,
+    "dv_shift": -0.025,
+    "summary": {
+      "beta_peri_m": 795255.9649877175,
+      "beta_peri_t": 112440.0,
+      "beta_peri_relative_speed": 73.20097507699,
+      "alpha_min_m": 999999.9999999999,
+      "exit_t": 255360.0,
+      "exit_speed": 60.93009118165628,
+      "exit_position": [
+        -7779502.974928805,
+        4529714.6867760625,
+        -114118.04178475776
+      ],
+      "exit_velocity": [
+        -60.70176514913174,
+        -5.214436467721336,
+        -0.7624772184806862
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 66299.90255888097,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 698.9337650248071,
+      "closest_t": 106224.06465565476,
+      "rock": 109,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": false
+  },
+  {
+    "offset_deg": -10.0,
+    "time_shift_s": 30.0,
+    "dv_shift": 0.0,
+    "summary": {
+      "beta_peri_m": 815139.6151539523,
+      "beta_peri_t": 112440.0,
+      "beta_peri_relative_speed": 72.11432778280744,
+      "alpha_min_m": 999999.9999999999,
+      "exit_t": 251400.0,
+      "exit_speed": 62.18730093228932,
+      "exit_position": [
+        -7512181.585351486,
+        4955341.774971182,
+        -108656.898110865
+      ],
+      "exit_velocity": [
+        -62.14993964737049,
+        -2.008226190599271,
+        -0.7825769219120075
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 55887.304545141524,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 3970.1025295862855,
+      "closest_t": 107627.76998211071,
+      "rock": 109,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": -10.0,
+    "time_shift_s": 30.0,
+    "dv_shift": 0.025,
+    "summary": {
+      "beta_peri_m": 834965.5608211077,
+      "beta_peri_t": 112440.0,
+      "beta_peri_relative_speed": 71.08461924093999,
+      "alpha_min_m": 999999.9999999999,
+      "exit_t": 248160.0,
+      "exit_speed": 63.209963742676656,
+      "exit_position": [
+        -7249859.243399316,
+        5337047.204933542,
+        -102943.1448922602
+      ],
+      "exit_velocity": [
+        -63.19538545670525,
+        1.101629879546848,
+        -0.7932117859902106
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 47502.36152419215,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 10611.031215322475,
+      "closest_t": 109220.00046235266,
+      "rock": 109,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": -5.0,
+    "time_shift_s": -30.0,
+    "dv_shift": -0.025,
+    "summary": {
+      "beta_peri_m": 809741.0843679801,
+      "beta_peri_t": 111720.0,
+      "beta_peri_relative_speed": 72.37796792531883,
+      "alpha_min_m": 999999.9999999999,
+      "exit_t": 252000.0,
+      "exit_speed": 61.754155301113265,
+      "exit_position": [
+        -7566934.583864764,
+        4873758.120890129,
+        -111371.97744631064
+      ],
+      "exit_velocity": [
+        -61.69279459677157,
+        -2.639329745067098,
+        -0.7802116965109347
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 59060.353803487844,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 5955.099800424661,
+      "closest_t": 111697.54342547074,
+      "rock": 130,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": -5.0,
+    "time_shift_s": -30.0,
+    "dv_shift": 0.0,
+    "summary": {
+      "beta_peri_m": 829694.9144367648,
+      "beta_peri_t": 111720.0,
+      "beta_peri_relative_speed": 71.3266694647428,
+      "alpha_min_m": 999999.9999999999,
+      "exit_t": 248520.0,
+      "exit_speed": 62.85625358819019,
+      "exit_position": [
+        -7298809.175583073,
+        5269124.567461863,
+        -105732.27782192746
+      ],
+      "exit_velocity": [
+        -62.84903723655199,
+        0.5253284796662484,
+        -0.7944580352826117
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 48329.31373175094,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 4044.289597201536,
+      "closest_t": 113748.2287795689,
+      "rock": 305,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": -5.0,
+    "time_shift_s": -30.0,
+    "dv_shift": 0.025,
+    "summary": {
+      "beta_peri_m": 849581.9029636766,
+      "beta_peri_t": 111600.0,
+      "beta_peri_relative_speed": 70.3195514725425,
+      "alpha_min_m": 999999.9999999999,
+      "exit_t": 245520.0,
+      "exit_speed": 63.75114458769737,
+      "exit_position": [
+        -7027021.856347898,
+        5623860.453681882,
+        -99784.89763792866
+      ],
+      "exit_velocity": [
+        -63.64547392151722,
+        3.5807499763106185,
+        -0.8001969470815963
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 39552.054660111084,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 15099.380132994673,
+      "closest_t": 101007.53251612844,
+      "rock": 282,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": -5.0,
+    "time_shift_s": 0.0,
+    "dv_shift": -0.025,
+    "summary": {
+      "beta_peri_m": 794285.4454263528,
+      "beta_peri_t": 111480.0,
+      "beta_peri_relative_speed": 73.25354185581011,
+      "alpha_min_m": 999999.9999999999,
+      "exit_t": 254640.0,
+      "exit_speed": 60.85323259624679,
+      "exit_position": [
+        -7750726.829577043,
+        4579660.948731273,
+        -114775.60602561047
+      ],
+      "exit_velocity": [
+        -60.65791508213064,
+        -4.811620559150428,
+        -0.7626027122308358
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 67147.85783257731,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 11000.463207680561,
+      "closest_t": 104589.45051541706,
+      "rock": 92,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": -5.0,
+    "time_shift_s": 0.0,
+    "dv_shift": 0.0,
+    "summary": {
+      "beta_peri_m": 814191.9554318107,
+      "beta_peri_t": 111480.0,
+      "beta_peri_relative_speed": 72.16286684235088,
+      "alpha_min_m": 999999.9999999999,
+      "exit_t": 250680.0,
+      "exit_speed": 62.122466991474724,
+      "exit_position": [
+        -7481740.873241022,
+        5005534.301505341,
+        -109377.93040830556
+      ],
+      "exit_velocity": [
+        -62.09727114173777,
+        -1.586185381385071,
+        -0.7834780100604398
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 56712.74923539464,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 6371.475929040313,
+      "closest_t": 111376.25501712388,
+      "rock": 130,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": -5.0,
+    "time_shift_s": 0.0,
+    "dv_shift": 0.025,
+    "summary": {
+      "beta_peri_m": 834041.6206929907,
+      "beta_peri_t": 111480.0,
+      "beta_peri_relative_speed": 71.12937530319279,
+      "alpha_min_m": 999999.9999999999,
+      "exit_t": 247320.0,
+      "exit_speed": 63.16177047984982,
+      "exit_position": [
+        -7210041.440361729,
+        5387192.1804033,
+        -103614.89962609643
+      ],
+      "exit_velocity": [
+        -63.13787288109334,
+        1.544802665004134,
+        -0.7948854800050567
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 47928.33210165207,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 5492.321332515921,
+      "closest_t": 113484.30819886776,
+      "rock": 305,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": -5.0,
+    "time_shift_s": 30.0,
+    "dv_shift": -0.025,
+    "summary": {
+      "beta_peri_m": 778870.3661936732,
+      "beta_peri_t": 111240.0,
+      "beta_peri_relative_speed": 74.16076546291909,
+      "alpha_min_m": 999999.9999999999,
+      "exit_t": 257640.0,
+      "exit_speed": 59.82007325722418,
+      "exit_position": [
+        -7931882.931390102,
+        4261231.324772026,
+        -117917.2968498913
+      ],
+      "exit_velocity": [
+        -59.40221897283943,
+        -7.019265370918081,
+        -0.7399048960060269
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 74971.32180710905,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 5796.517917245272,
+      "closest_t": 116877.34865705833,
+      "rock": 200,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": -5.0,
+    "time_shift_s": 30.0,
+    "dv_shift": 0.0,
+    "summary": {
+      "beta_peri_m": 798724.9473332537,
+      "beta_peri_t": 111240.0,
+      "beta_peri_relative_speed": 73.02907043112769,
+      "alpha_min_m": 999999.9999999999,
+      "exit_t": 253200.0,
+      "exit_speed": 61.269155121158256,
+      "exit_position": [
+        -7667733.774380914,
+        4720324.58146283,
+        -112893.01682034966
+      ],
+      "exit_velocity": [
+        -61.149452321722414,
+        -3.750197952935875,
+        -0.7680269056130373
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 64837.43373209948,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 11053.926344598292,
+      "closest_t": 109832.23615067826,
+      "rock": 266,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": -5.0,
+    "time_shift_s": 30.0,
+    "dv_shift": 0.025,
+    "summary": {
+      "beta_peri_m": 818531.0138258926,
+      "beta_peri_t": 111240.0,
+      "beta_peri_relative_speed": 71.95673061979458,
+      "alpha_min_m": 999999.9999999999,
+      "exit_t": 249360.0,
+      "exit_speed": 62.470371598460275,
+      "exit_position": [
+        -7393053.505003633,
+        5131489.079693158,
+        -107320.98770553737
+      ],
+      "exit_velocity": [
+        -62.46298894890418,
+        -0.5521666093018611,
+        -0.7857806655539167
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 54921.64113957957,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 7356.122102765223,
+      "closest_t": 111038.4451895681,
+      "rock": 130,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 0.0,
+    "time_shift_s": -30.0,
+    "dv_shift": -0.025,
+    "summary": {
+      "beta_peri_m": 829128.8049235982,
+      "beta_peri_t": 109080.0,
+      "beta_peri_relative_speed": 71.61797854273165,
+      "alpha_min_m": 1000000.0,
+      "exit_t": 243480.0,
+      "exit_speed": 63.64620881812451,
+      "exit_position": [
+        -7008294.237833055,
+        5654965.725717848,
+        -105186.0105768626
+      ],
+      "exit_velocity": [
+        -63.51023333829658,
+        4.077857301594382,
+        -0.813165458725729
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 53350.28823001031,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 9335.153488941414,
+      "closest_t": 88371.42934521529,
+      "rock": 140,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 0.0,
+    "time_shift_s": -30.0,
+    "dv_shift": 0.0,
+    "summary": {
+      "beta_peri_m": 848228.5377648743,
+      "beta_peri_t": 108960.0,
+      "beta_peri_relative_speed": 70.65477806814091,
+      "alpha_min_m": 1000000.0,
+      "exit_t": 240720.0,
+      "exit_speed": 64.4279020398523,
+      "exit_position": [
+        -6730636.018052055,
+        5974135.863155287,
+        -99299.30293285809
+      ],
+      "exit_velocity": [
+        -64.0390168807668,
+        7.020911645281483,
+        -0.8158908449173579
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 43022.79713951901,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 4093.2373714498162,
+      "closest_t": 88617.0266168235,
+      "rock": 140,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 0.0,
+    "time_shift_s": -30.0,
+    "dv_shift": 0.025,
+    "summary": {
+      "beta_peri_m": 867245.8034739329,
+      "beta_peri_t": 108960.0,
+      "beta_peri_relative_speed": 69.75136220554037,
+      "alpha_min_m": 1000000.0,
+      "exit_t": 238560.0,
+      "exit_speed": 65.03713190196063,
+      "exit_position": [
+        -6470306.380996951,
+        6262972.327745131,
+        -93472.31318733704
+      ],
+      "exit_velocity": [
+        -64.28621367887838,
+        9.820995131790783,
+        -0.8119799800228521
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 34543.35429634468,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 1925.714650253086,
+      "closest_t": 88865.6180819208,
+      "rock": 140,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 0.0,
+    "time_shift_s": 0.0,
+    "dv_shift": -0.025,
+    "summary": {
+      "beta_peri_m": 813592.3572213105,
+      "beta_peri_t": 108840.0,
+      "beta_peri_relative_speed": 72.45262511961633,
+      "alpha_min_m": 1000000.0,
+      "exit_t": 245400.0,
+      "exit_speed": 62.98709354216531,
+      "exit_position": [
+        -7196688.977000297,
+        5407195.221210286,
+        -108905.74878816208
+      ],
+      "exit_velocity": [
+        -62.951668644574134,
+        1.9529098045280535,
+        -0.8046807122103691
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 61635.664788748254,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 7963.222554235945,
+      "closest_t": 112037.16143955727,
+      "rock": 200,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 0.0,
+    "time_shift_s": 0.0,
+    "dv_shift": 0.0,
+    "summary": {
+      "beta_peri_m": 832661.91722471,
+      "beta_peri_t": 108840.0,
+      "beta_peri_relative_speed": 71.46394851536151,
+      "alpha_min_m": 1000000.0,
+      "exit_t": 242400.0,
+      "exit_speed": 63.89663056667601,
+      "exit_position": [
+        -6922818.980359874,
+        5751540.880757799,
+        -103238.71172973365
+      ],
+      "exit_velocity": [
+        -63.69717314683885,
+        4.978880163655858,
+        -0.8125781143132156
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 51606.54051209404,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 6059.04396194182,
+      "closest_t": 88241.85760070209,
+      "rock": 140,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 0.0,
+    "time_shift_s": 0.0,
+    "dv_shift": 0.025,
+    "summary": {
+      "beta_peri_m": 851659.6044340315,
+      "beta_peri_t": 108840.0,
+      "beta_peri_relative_speed": 70.5259249956601,
+      "alpha_min_m": 1000000.0,
+      "exit_t": 239880.0,
+      "exit_speed": 64.62725984431898,
+      "exit_position": [
+        -6654402.737428262,
+        6061600.642813838,
+        -97433.37752089942
+      ],
+      "exit_velocity": [
+        -64.14020570573413,
+        7.8775222982377615,
+        -0.8132462431539588
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 42698.143345235905,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 1979.9685281280963,
+      "closest_t": 88484.3825396178,
+      "rock": 140,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 0.0,
+    "time_shift_s": 30.0,
+    "dv_shift": -0.025,
+    "summary": {
+      "beta_peri_m": 798087.3890832535,
+      "beta_peri_t": 108720.0,
+      "beta_peri_relative_speed": 73.32817691278737,
+      "alpha_min_m": 1000000.0,
+      "exit_t": 247680.0,
+      "exit_speed": 62.21307370204814,
+      "exit_position": [
+        -7391009.799448807,
+        5139213.616226214,
+        -112537.82899456061
+      ],
+      "exit_velocity": [
+        -62.20758060971719,
+        -0.237490525133241,
+        -0.7918663981275137
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 69648.66714702523,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 14251.227184815023,
+      "closest_t": 87641.20556784663,
+      "rock": 140,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 0.0,
+    "time_shift_s": 30.0,
+    "dv_shift": 0.0,
+    "summary": {
+      "beta_peri_m": 817121.0543895775,
+      "beta_peri_t": 108720.0,
+      "beta_peri_relative_speed": 72.30180860487259,
+      "alpha_min_m": 1000000.0,
+      "exit_t": 244320.0,
+      "exit_speed": 63.26699996178317,
+      "exit_position": [
+        -7117046.974541618,
+        5510602.14883717,
+        -107082.00212318145
+      ],
+      "exit_velocity": [
+        -63.19692201770769,
+        2.865899028708193,
+        -0.8055770660177972
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 59923.28875497531,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 8321.117172776554,
+      "closest_t": 87875.08572289077,
+      "rock": 140,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 0.0,
+    "time_shift_s": 30.0,
+    "dv_shift": 0.025,
+    "summary": {
+      "beta_peri_m": 836089.9118872235,
+      "beta_peri_t": 108600.0,
+      "beta_peri_relative_speed": 71.31714064355438,
+      "alpha_min_m": 1000000.0,
+      "exit_t": 241440.0,
+      "exit_speed": 64.12818351430144,
+      "exit_position": [
+        -6843530.963298443,
+        5844344.643424659,
+        -101368.08249176362
+      ],
+      "exit_velocity": [
+        -63.85513611747018,
+        5.855534189908039,
+        -0.8113147441633033
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 50018.303696515846,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 3188.6481165906234,
+      "closest_t": 88111.75758710403,
+      "rock": 140,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 5.0,
+    "time_shift_s": -30.0,
+    "dv_shift": -0.025,
+    "summary": {
+      "beta_peri_m": 819306.2278387242,
+      "beta_peri_t": 107880.0,
+      "beta_peri_relative_speed": 72.14327751887804,
+      "alpha_min_m": 999999.9999999998,
+      "exit_t": 243600.0,
+      "exit_speed": 63.25860215494536,
+      "exit_position": [
+        -7068556.581722228,
+        5575265.42607302,
+        -107787.75870694067
+      ],
+      "exit_velocity": [
+        -63.16142546280865,
+        3.4101489154050513,
+        -0.8099163404244805
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 59236.76870809065,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 7776.392074893144,
+      "closest_t": 112446.90307765253,
+      "rock": 48,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 5.0,
+    "time_shift_s": -30.0,
+    "dv_shift": 0.0,
+    "summary": {
+      "beta_peri_m": 838382.9732144289,
+      "beta_peri_t": 107880.0,
+      "beta_peri_relative_speed": 71.16844942533736,
+      "alpha_min_m": 999999.9999999998,
+      "exit_t": 240720.0,
+      "exit_speed": 64.11654207124369,
+      "exit_position": [
+        -6791285.636950698,
+        5907105.835384717,
+        -102056.68741256084
+      ],
+      "exit_velocity": [
+        -63.79002052084719,
+        6.410816452885714,
+        -0.81589308788923
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 49075.9566379796,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 9978.786682610158,
+      "closest_t": 102837.0891063593,
+      "rock": 305,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 5.0,
+    "time_shift_s": -30.0,
+    "dv_shift": 0.025,
+    "summary": {
+      "beta_peri_m": 857384.8018069183,
+      "beta_peri_t": 107880.0,
+      "beta_peri_relative_speed": 70.24358518465813,
+      "alpha_min_m": 999999.9999999998,
+      "exit_t": 238320.0,
+      "exit_speed": 64.80060828104651,
+      "exit_position": [
+        -6521495.855311384,
+        6205950.2010343615,
+        -96226.00263029156
+      ],
+      "exit_velocity": [
+        -64.12795015798038,
+        9.276895296093945,
+        -0.8148961863494578
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 38679.39390249996,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 3262.275318497941,
+      "closest_t": 103948.4121732131,
+      "rock": 305,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 5.0,
+    "time_shift_s": 0.0,
+    "dv_shift": -0.025,
+    "summary": {
+      "beta_peri_m": 803792.6897073783,
+      "beta_peri_t": 107760.0,
+      "beta_peri_relative_speed": 73.00735469100911,
+      "alpha_min_m": 999999.9999999998,
+      "exit_t": 245760.0,
+      "exit_speed": 62.528766054166574,
+      "exit_position": [
+        -7264706.14537372,
+        5317298.262307059,
+        -111471.57290341496
+      ],
+      "exit_velocity": [
+        -62.511433170099025,
+        1.2366918701765972,
+        -0.7986867315639429
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 67365.9350505278,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 5686.474413243545,
+      "closest_t": 86587.65633441346,
+      "rock": 140,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 5.0,
+    "time_shift_s": 0.0,
+    "dv_shift": 0.0,
+    "summary": {
+      "beta_peri_m": 822836.8181193545,
+      "beta_peri_t": 107760.0,
+      "beta_peri_relative_speed": 71.99531490520889,
+      "alpha_min_m": 999999.9999999998,
+      "exit_t": 242520.0,
+      "exit_speed": 63.527034439601756,
+      "exit_position": [
+        -6985563.163133626,
+        5675222.524150603,
+        -105917.26623863791
+      ],
+      "exit_velocity": [
+        -63.374709305071,
+        4.321315844578912,
+        -0.8102805436918055
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 57506.82636120252,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 7376.567500817319,
+      "closest_t": 112231.07419743776,
+      "rock": 48,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 5.0,
+    "time_shift_s": 0.0,
+    "dv_shift": 0.025,
+    "summary": {
+      "beta_peri_m": 841814.7061016323,
+      "beta_peri_t": 107760.0,
+      "beta_peri_relative_speed": 71.03506355319671,
+      "alpha_min_m": 999999.9999999998,
+      "exit_t": 239880.0,
+      "exit_speed": 64.33171429679074,
+      "exit_position": [
+        -6716897.608147783,
+        5997569.622361733,
+        -100248.57116775439
+      ],
+      "exit_velocity": [
+        -63.913456697361404,
+        7.2785170469082034,
+        -0.8140681521133263
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 47388.50345477625,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 7117.047841157762,
+      "closest_t": 102554.14193180748,
+      "rock": 305,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 5.0,
+    "time_shift_s": 30.0,
+    "dv_shift": -0.025,
+    "summary": {
+      "beta_peri_m": 788310.0240492446,
+      "beta_peri_t": 107520.0,
+      "beta_peri_relative_speed": 73.89227283009649,
+      "alpha_min_m": 999999.9999999998,
+      "exit_t": 248160.0,
+      "exit_speed": 61.68519473754178,
+      "exit_position": [
+        -7457459.676217833,
+        5037758.7158727795,
+        -114922.74314710974
+      ],
+      "exit_velocity": [
+        -61.672214657698504,
+        -0.9940506564589676,
+        -0.7829765741087383
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 75219.00185061898,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 3466.025792392419,
+      "closest_t": 86247.05788910086,
+      "rock": 140,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 5.0,
+    "time_shift_s": 30.0,
+    "dv_shift": 0.0,
+    "summary": {
+      "beta_peri_m": 807313.5368514946,
+      "beta_peri_t": 107520.0,
+      "beta_peri_relative_speed": 72.84138824843009,
+      "alpha_min_m": 999999.9999999998,
+      "exit_t": 244680.0,
+      "exit_speed": 62.8281931634511,
+      "exit_position": [
+        -7188048.961265009,
+        5424336.24390289,
+        -109739.61919260163
+      ],
+      "exit_velocity": [
+        -62.78599482563043,
+        2.158636695085035,
+        -0.8006232312795356
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 65666.98224906612,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 8976.78791682548,
+      "closest_t": 86468.53546649944,
+      "rock": 140,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 5.0,
+    "time_shift_s": 30.0,
+    "dv_shift": 0.025,
+    "summary": {
+      "beta_peri_m": 826256.7238951295,
+      "beta_peri_t": 107520.0,
+      "beta_peri_relative_speed": 71.84438418160373,
+      "alpha_min_m": 999999.9999999998,
+      "exit_t": 241560.0,
+      "exit_speed": 63.77573069597397,
+      "exit_position": [
+        -6908535.021422131,
+        5771259.554921243,
+        -104116.54145344376
+      ],
+      "exit_velocity": [
+        -63.55754946447268,
+        5.208239955136676,
+        -0.8099187898939036
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 55850.37662905257,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 7164.016923617713,
+      "closest_t": 112013.13592771131,
+      "rock": 48,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 10.0,
+    "time_shift_s": -30.0,
+    "dv_shift": -0.025,
+    "summary": {
+      "beta_peri_m": 837654.4261056219,
+      "beta_peri_t": 105360.0,
+      "beta_peri_relative_speed": 71.48540641804107,
+      "alpha_min_m": 1000000.0000000001,
+      "exit_t": 235920.0,
+      "exit_speed": 64.8248300383152,
+      "exit_position": [
+        -6476579.464636374,
+        6250217.643246066,
+        -101673.11030437157
+      ],
+      "exit_velocity": [
+        -64.05332046316883,
+        9.936573429984104,
+        -0.8338078972909388
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 53122.12972086237,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 17601.290995812968,
+      "closest_t": 96299.3428193766,
+      "rock": 317,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 10.0,
+    "time_shift_s": -30.0,
+    "dv_shift": 0.0,
+    "summary": {
+      "beta_peri_m": 855894.973483189,
+      "beta_peri_t": 105240.0,
+      "beta_peri_relative_speed": 70.59088613810984,
+      "alpha_min_m": 1000000.0000000001,
+      "exit_t": 233760.0,
+      "exit_speed": 65.41318571279251,
+      "exit_position": [
+        -6207888.12184627,
+        6518216.040001133,
+        -95979.44007757715
+      ],
+      "exit_velocity": [
+        -64.1687259142162,
+        12.671613571089658,
+        -0.830475253970581
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 43365.89490518614,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 17220.181459236297,
+      "closest_t": 104441.06414975863,
+      "rock": 151,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 10.0,
+    "time_shift_s": -30.0,
+    "dv_shift": 0.025,
+    "summary": {
+      "beta_peri_m": 874048.5308557122,
+      "beta_peri_t": 105240.0,
+      "beta_peri_relative_speed": 69.7515984901381,
+      "alpha_min_m": 1000000.0000000001,
+      "exit_t": 231960.0,
+      "exit_speed": 65.86685529044581,
+      "exit_position": [
+        -5948297.439934795,
+        6760865.532838159,
+        -90279.87034598408
+      ],
+      "exit_velocity": [
+        -64.06879436194896,
+        15.262920362340374,
+        -0.8218739998823377
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 34946.43066041273,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 8348.652679702209,
+      "closest_t": 109165.49203260575,
+      "rock": 48,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 10.0,
+    "time_shift_s": 0.0,
+    "dv_shift": -0.025,
+    "summary": {
+      "beta_peri_m": 822095.4500291228,
+      "beta_peri_t": 105120.0,
+      "beta_peri_relative_speed": 72.29886874753473,
+      "alpha_min_m": 1000000.0000000001,
+      "exit_t": 237600.0,
+      "exit_speed": 64.29765436718998,
+      "exit_position": [
+        -6679809.782066836,
+        6033800.492966108,
+        -105654.97785376571
+      ],
+      "exit_velocity": [
+        -63.810887669727244,
+        7.852994749024472,
+        -0.8303284867267372
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 61417.78215786896,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 16408.15424139413,
+      "closest_t": 109801.89562523726,
+      "rock": 297,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 10.0,
+    "time_shift_s": 0.0,
+    "dv_shift": 0.0,
+    "summary": {
+      "beta_peri_m": 840315.3615743247,
+      "beta_peri_t": 105120.0,
+      "beta_peri_relative_speed": 71.3809350899961,
+      "alpha_min_m": 1000000.0000000001,
+      "exit_t": 235200.0,
+      "exit_speed": 64.99781291501768,
+      "exit_position": [
+        -6409285.843508281,
+        6323381.203610865,
+        -100077.27312566474
+      ],
+      "exit_velocity": [
+        -64.10783502827206,
+        10.686901264571159,
+        -0.831452394787877
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 51965.981410374865,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 20112.549696477494,
+      "closest_t": 96051.10400704216,
+      "rock": 317,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 10.0,
+    "time_shift_s": 0.0,
+    "dv_shift": 0.025,
+    "summary": {
+      "beta_peri_m": 858458.5748767959,
+      "beta_peri_t": 105120.0,
+      "beta_peri_relative_speed": 70.50881672126886,
+      "alpha_min_m": 1000000.0000000001,
+      "exit_t": 233040.0,
+      "exit_speed": 65.55901227424701,
+      "exit_position": [
+        -6137176.561694869,
+        6583327.536484861,
+        -94319.025368281
+      ],
+      "exit_velocity": [
+        -64.172009884121,
+        13.38856305922792,
+        -0.826811354678952
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 42527.58260646738,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 16985.164698461303,
+      "closest_t": 104057.58811234588,
+      "rock": 151,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 10.0,
+    "time_shift_s": 30.0,
+    "dv_shift": -0.025,
+    "summary": {
+      "beta_peri_m": 806554.1134196424,
+      "beta_peri_t": 105000.0,
+      "beta_peri_relative_speed": 73.15348940064992,
+      "alpha_min_m": 1000000.0000000001,
+      "exit_t": 239520.0,
+      "exit_speed": 63.671650186622266,
+      "exit_position": [
+        -6885865.017505673,
+        5798955.262036674,
+        -109533.54555813142
+      ],
+      "exit_velocity": [
+        -63.41147163170999,
+        5.690949628163449,
+        -0.8230402895002586
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 69428.6189134866,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 15638.943279749908,
+      "closest_t": 94492.67497095033,
+      "rock": 317,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 10.0,
+    "time_shift_s": 30.0,
+    "dv_shift": 0.0,
+    "summary": {
+      "beta_peri_m": 824751.589519384,
+      "beta_peri_t": 105000.0,
+      "beta_peri_relative_speed": 72.19964107739591,
+      "alpha_min_m": 1000000.0000000001,
+      "exit_t": 236760.0,
+      "exit_speed": 64.49875921187319,
+      "exit_position": [
+        -6608606.956487643,
+        6111165.956668754,
+        -104041.7521069868
+      ],
+      "exit_velocity": [
+        -63.914430863350866,
+        8.622522025736082,
+        -0.8292051620890314
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 60286.71147943137,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 16765.552303058223,
+      "closest_t": 109543.79583396124,
+      "rock": 297,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 10.0,
+    "time_shift_s": 30.0,
+    "dv_shift": 0.025,
+    "summary": {
+      "beta_peri_m": 842879.0183877676,
+      "beta_peri_t": 105000.0,
+      "beta_peri_relative_speed": 71.29339459689386,
+      "alpha_min_m": 1000000.0000000001,
+      "exit_t": 234480.0,
+      "exit_speed": 65.16283449604899,
+      "exit_position": [
+        -6341583.045180664,
+        6393405.033160402,
+        -98478.70596141154
+      ],
+      "exit_velocity": [
+        -64.14911400448922,
+        11.419252574732335,
+        -0.8287596955605401
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 50878.31338271999,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 19170.32015624127,
+      "closest_t": 98626.22974383834,
+      "rock": 202,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 15.0,
+    "time_shift_s": -30.0,
+    "dv_shift": -0.025,
+    "summary": {
+      "beta_peri_m": 833449.7109121751,
+      "beta_peri_t": 104280.0,
+      "beta_peri_relative_speed": 71.72009165909394,
+      "alpha_min_m": 1000000.0000000001,
+      "exit_t": 235200.0,
+      "exit_speed": 64.72854917779456,
+      "exit_position": [
+        -6458609.908983681,
+        6270676.681321154,
+        -102806.52562881607
+      ],
+      "exit_velocity": [
+        -63.9221423056518,
+        10.15127742092647,
+        -0.8344869331257203
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 56615.78453505879,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 13073.508477258376,
+      "closest_t": 108078.47118078524,
+      "rock": 297,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 15.0,
+    "time_shift_s": -30.0,
+    "dv_shift": 0.0,
+    "summary": {
+      "beta_peri_m": 851653.5095396511,
+      "beta_peri_t": 104160.0,
+      "beta_peri_relative_speed": 70.81833707105547,
+      "alpha_min_m": 1000000.0000000001,
+      "exit_t": 233040.0,
+      "exit_speed": 65.33862420627953,
+      "exit_position": [
+        -6190081.107904265,
+        6541074.926664913,
+        -97187.0994702696
+      ],
+      "exit_velocity": [
+        -64.04584476024966,
+        12.906319653408914,
+        -0.8321629164104692
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 46930.67682362115,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 19078.940607994467,
+      "closest_t": 100326.57502081282,
+      "rock": 151,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 15.0,
+    "time_shift_s": -30.0,
+    "dv_shift": 0.025,
+    "summary": {
+      "beta_peri_m": 869775.8379620111,
+      "beta_peri_t": 104160.0,
+      "beta_peri_relative_speed": 69.97189614751728,
+      "alpha_min_m": 1000000.0000000001,
+      "exit_t": 231120.0,
+      "exit_speed": 65.81822924428785,
+      "exit_position": [
+        -5922631.004489248,
+        6784081.001127554,
+        -91445.65479073893
+      ],
+      "exit_velocity": [
+        -63.95635063694217,
+        15.522391850040437,
+        -0.8245394544433645
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 36975.9637913435,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 17514.053528958204,
+      "closest_t": 101411.41202309959,
+      "rock": 151,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 15.0,
+    "time_shift_s": 0.0,
+    "dv_shift": -0.025,
+    "summary": {
+      "beta_peri_m": 817904.7240499551,
+      "beta_peri_t": 104040.0,
+      "beta_peri_relative_speed": 72.54089015705581,
+      "alpha_min_m": 1000000.0000000001,
+      "exit_t": 236880.0,
+      "exit_speed": 64.18237448419899,
+      "exit_position": [
+        -6661498.031738688,
+        6051898.530159288,
+        -106721.77242093658
+      ],
+      "exit_velocity": [
+        -63.67030345916072,
+        8.048631245591826,
+        -0.8301728258784377
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 64664.6890961999,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 10782.528528947996,
+      "closest_t": 109782.3401773263,
+      "rock": 125,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 15.0,
+    "time_shift_s": 0.0,
+    "dv_shift": 0.0,
+    "summary": {
+      "beta_peri_m": 836090.307778199,
+      "beta_peri_t": 104040.0,
+      "beta_peri_relative_speed": 71.61518217896601,
+      "alpha_min_m": 1000000.0000000001,
+      "exit_t": 234480.0,
+      "exit_speed": 64.90603123382364,
+      "exit_position": [
+        -6391459.931745768,
+        6344049.269488435,
+        -101233.4750998899
+      ],
+      "exit_velocity": [
+        -63.978271989740406,
+        10.90324260582274,
+        -0.8324088006861184
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 55480.7645677781,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 13361.072141008266,
+      "closest_t": 107801.8813769844,
+      "rock": 297,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 15.0,
+    "time_shift_s": 0.0,
+    "dv_shift": 0.025,
+    "summary": {
+      "beta_peri_m": 854200.9828551481,
+      "beta_peri_t": 104040.0,
+      "beta_peri_relative_speed": 70.73563363313204,
+      "alpha_min_m": 1000000.0000000001,
+      "exit_t": 232320.0,
+      "exit_speed": 65.48851209229208,
+      "exit_position": [
+        -6119451.304129438,
+        6606350.108735784,
+        -95544.9067945955
+      ],
+      "exit_velocity": [
+        -64.05017120712162,
+        13.624755505727958,
+        -0.8287471326235764
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 45826.67531142582,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 18008.005242368563,
+      "closest_t": 99972.32887957402,
+      "rock": 151,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 15.0,
+    "time_shift_s": 30.0,
+    "dv_shift": -0.025,
+    "summary": {
+      "beta_peri_m": 802382.8818085897,
+      "beta_peri_t": 103920.0,
+      "beta_peri_relative_speed": 73.40284719729604,
+      "alpha_min_m": 1000000.0000000001,
+      "exit_t": 238920.0,
+      "exit_speed": 63.52939451454666,
+      "exit_position": [
+        -6874490.54721393,
+        5815250.505154197,
+        -110618.78432132959
+      ],
+      "exit_velocity": [
+        -63.253012905248035,
+        5.8621578386394235,
+        -0.8218462558870095
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 72829.79565334262,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 11835.276431937742,
+      "closest_t": 102579.14276354326,
+      "rock": 49,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 15.0,
+    "time_shift_s": 30.0,
+    "dv_shift": 0.0,
+    "summary": {
+      "beta_peri_m": 820544.3153827713,
+      "beta_peri_t": 103920.0,
+      "beta_peri_relative_speed": 72.44094171352621,
+      "alpha_min_m": 1000000.0000000001,
+      "exit_t": 236040.0,
+      "exit_speed": 64.3882800669081,
+      "exit_position": [
+        -6590515.754542306,
+        6129475.90035932,
+        -105134.8868977163
+      ],
+      "exit_velocity": [
+        -63.77596186447274,
+        8.819834420773041,
+        -0.8293485552289916
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 63749.694501798134,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 10630.002911250494,
+      "closest_t": 109570.31953715789,
+      "rock": 125,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  },
+  {
+    "offset_deg": 15.0,
+    "time_shift_s": 30.0,
+    "dv_shift": 0.025,
+    "summary": {
+      "beta_peri_m": 838635.318535954,
+      "beta_peri_t": 103800.0,
+      "beta_peri_relative_speed": 71.51618190293475,
+      "alpha_min_m": 1000000.0000000001,
+      "exit_t": 233640.0,
+      "exit_speed": 65.08169936610564,
+      "exit_position": [
+        -6316206.800623881,
+        6412869.079891506,
+        -99556.67480164587
+      ],
+      "exit_velocity": [
+        -64.0264728674414,
+        11.642565006813694,
+        -0.8300871020939715
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 54401.73748736468,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "clearance": {
+      "phase_deg": 0.0,
+      "clearance_m": 13599.523150419303,
+      "closest_t": 107519.13231075401,
+      "rock": 297,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "passes": true
+  }
+]

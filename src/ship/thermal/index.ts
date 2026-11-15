@@ -7,8 +7,44 @@ import type {
 import type { ShipEvent } from '../../contracts/measurements.ts';
 import type { JsonValue } from '../../contracts/units.ts';
 import { getGeometry } from '../config/configuration.ts';
-import { bounded, systems } from '../power/baseline.ts';
+import { bounded, systems, type Baseline } from '../power/baseline.ts';
 import { sunIncidence } from '../power/sun.ts';
+
+/**
+ * The thermal facts of a design, indexed once (S15 rank 1): each node's control target and
+ * each pump's active power were searched for inside the integration loop. Values only.
+ */
+interface ThermalTables {
+  /** `controlTargetTemperature` of the first node with each id. */
+  readonly target: ReadonlyMap<string, { readonly controlTargetTemperature: number }>;
+  /** Power a pump draws when active, by id: `modes.active.power` in the baseline, else ∞. */
+  readonly pumpPower: Map<string, number>;
+  readonly data: Baseline;
+}
+const thermalTables = new WeakMap<Baseline, ThermalTables>();
+const EXTERNAL_PUMPS = ['external-pump-a', 'external-pump-b'] as const;
+
+function tablesOf(data: Baseline): ThermalTables {
+  let tables = thermalTables.get(data);
+  if (!tables) {
+    const target = new Map<string, { readonly controlTargetTemperature: number }>();
+    for (const node of data.thermalNodes) if (!target.has(node.id)) target.set(node.id, node);
+    tables = { target, pumpPower: new Map(), data };
+    thermalTables.set(data, tables);
+  }
+  return tables;
+}
+
+/** Active power of one pump (looked up once, then remembered: the baseline never changes). */
+function activePower(tables: ThermalTables, id: string): number {
+  let power = tables.pumpPower.get(id);
+  if (power === undefined) {
+    const base = tables.data.equipment.find((entry) => entry.id === id);
+    power = base?.modes.active?.power ?? Infinity;
+    tables.pumpPower.set(id, power);
+  }
+  return power;
+}
 
 /** [ASSUMED] C04/C11 thermal stub: conservative finite nodes, passive/active transport and IR rejection.
  * Local freeze rupture, equipment damage and failed regulators remain Phase 3 work.
@@ -22,6 +58,7 @@ export function stepThermal(
   if (!(dt > 0) || !Number.isFinite(dt))
     throw new RangeError('Thermal dt must be finite and positive');
   const data = systems(definition);
+  const tables = tablesOf(data);
   const thermal = { ...state.thermal };
   const equipment: Record<string, EquipmentState> = { ...state.equipment };
   const events: ShipEvent[] = [];
@@ -42,8 +79,7 @@ export function stepThermal(
   const isPumping = (ids: readonly string[]): boolean =>
     ids.some((id) => {
       const e = equipment[id];
-      const base = data.equipment.find((entry) => entry.id === id);
-      const active = base?.modes.active?.power ?? Infinity;
+      const active = activePower(tables, id);
       return e?.mode === 'active' && e.condition > 0 && !e.tripped && e.powerDraw >= active - 1e-9;
     });
   const geometry = getGeometry(state, definition);
@@ -79,7 +115,7 @@ export function stepThermal(
       gain: number,
     ): void => {
       const difference = thermal[from]! - thermal[to]!;
-      const target = data.thermalNodes.find((node) => node.id === from)!.controlTargetTemperature;
+      const target = tables.target.get(from)!.controlTargetTemperature;
       const raw = conductance * difference;
       const regulated =
         active && raw > 0
@@ -106,7 +142,7 @@ export function stepThermal(
       );
     }
     for (const link of data.thermalLinks) {
-      const pump = isPumping(['external-pump-a', 'external-pump-b']);
+      const pump = isPumping(EXTERNAL_PUMPS);
       transfer(
         link.from,
         link.to,

@@ -1,13 +1,15 @@
 # src/content/gravity-range — the Gravity range (C02)
 
-Owner: 2F; 2G for the 3D conversion. Truth side. `createGravityRange()` returns the `EncounterSetup` the game loop runs.
+Owner: 2F; 2G for the 3D conversion. Truth side. `createGravityRange(seed?, { run?, geometry? })` returns the `EncounterSetup` the game loop runs: the reference geometry by default, or run `run` of a save with its own arrival geometry and sensor noise (A10, A18 (4)).
 
 | File | Holds |
 |---|---|
 | `world.ts` | The true world at arrival: law, binary, Alpha's asteroid field, Beta's ring, sun, hidden calibration, the 1C ship's arrival state |
 | `briefing.ts` | What the ship is told, in the believed frame (Alpha at the origin, at rest at t = 0): arrival estimate, priors, known bodies and asteroids, the objective |
+| `geometry.ts` | The catalogue of validated arrival geometries (below) |
 | `index.ts` | Seed, `dt`, arrival procedure, objective rule, `createGravityRange()` |
-| `gravity-range.test.ts` | The claims below |
+| `gravity-range.test.ts`, `slingshot.test.ts` | The claims below; the slingshot flown by hand through the game loop |
+| `geometry.test.ts`, `s8-vectors.test.ts` | The catalogue against S8's rejection rules; S8's reference vectors in this game's simulation |
 
 ## The world, in three dimensions (A11)
 
@@ -21,9 +23,15 @@ Owner: 2F; 2G for the 3D conversion. Truth side. `createGravityRange()` returns 
 - [ASSUMED] One sensor value retuned (`rangeShip()`): camera range noise per fix 0.2% of range (1G spec §2.1) in place of the baseline's 5% (2F handoff, request 1).
 - `SAVE_FORMAT` names the save slot; bump it when a change here would make earlier Black Box records describe a different world or ship. It is 5 since the 3D ship's hidden calibration (4: the ring, the 3D simulation and ship; 3: the lift to 3D types).
 
-## Objective (owner, A6): leave on a slingshot past Beta
+## Arrival geometries (A10, A18 (4))
 
-`depart`: once the ship is 9,000 km from the pair's centre of mass, in any direction, it must be moving at **50 m/s or more** relative to it, having spent **no more than 16 m/s** of Δv (main engine and RCS translation together). Judged on truth (`ObjectiveRule` `depart`); the ship learns the result as an `objective` event.
+Each run of a save arrives at one of S8's seven admitted geometries: the same circular 1,000 km orbit about Alpha, at bearing 180° + δ from the line to Beta, δ = −15° to +15° in 5° steps (S8, `docs/studies/s8/seeds.md`; +25° and +30° had no robust route in its search). The first run of a save meets δ = 0, the reference every study used; later runs draw from the catalogue by a hash of the seed and the run. Each run has its own sensor-noise seed and survey error, and its briefing is recorded with the attempt. Not varied yet: the binary's phase (the sun stays put relative to the bodies), the ring's layout and phase (S21 resizes the belt), Alpha's field (its seeded layout, with the 60 km arrival exclusion applied round each geometry's own arrival point).
+
+[DEMONSTRATED: `geometry.test.ts`, S8's rules 1–3: only the arrival changes; nothing within 60 km of any arrival, and two hours' coast from each clears every rock and body by over 10 km; every arrival's Jacobi constant is above 5,769, against 5,468 at the neck, so none can drift out of Alpha's lobe. Rule 4, `s8-vectors.test.ts`: every geometry's S8 route and its nine perturbed controls (70 flights) pass Beta within 200 m of S8's distance and leave at S8's speed to 0.002 m/s, all over 50 m/s. Rule 5 (the ring's phase) waits for S21; rule 6 (a wrong-law warning before contact) is S8's wrong-law vector, for the reference geometry.]
+
+## Objective (owner, A6, A18 (3)): leave on a slingshot past Beta
+
+`depart`: when the ship crosses outward past 9,000 km from the pair's centre of mass, in any direction, it must be moving away at **50 m/s or more**, having spent **no more than 16 m/s** of Δv since it could first leave Alpha's lobe, and having **swung round Beta** on the way: a visit inside 2,000 km of Beta's centre that gave it at least 1,000 m²/s² of energy from Beta's motion. Burns at Alpha while the ship cannot leave its lobe (dives, a low orbit, the first 2 m/s or so of the departure burn) are free, so the player can explore. Judged on truth (`ObjectiveRule` `depart`, `learningFree`, `assist`); the ship learns the result as an `objective` event. [DEMONSTRATED: `src/game/depart.test.ts`: S8's representative pass gains 2,400–2,800 m²/s²; S8's counterexample (already 9,000 km out at 51 m/s, nothing spent) is missed for want of an assist. `s8-vectors.test.ts`: S8's low orbit then slingshot spends 45.2 m/s, counts 3–8 m/s of it and is reached.] The 1,000 m²/s² threshold leaves room for wider passes and is a play value for S21 to confirm.
 
 Why it takes Beta [DEMONSTRATED: `gravity-range.test.ts`; 2G handoff, slingshot study]: 16 m/s alone leaves the binary at under 40 m/s (13–39 m/s over the burn times tried). A pass 680–1,650 km from Beta's centre, behind it as it moves, leaves at 50–66 m/s. The burn that does it is about 14 m/s along the orbit, an hour after arrival; the pass comes 30 h later; the ship is 9,000 km out about 64 h after arrival. The pass distance moves about 700 km for every 1 m/s of burn, so it cannot be aimed by a model that has the law wrong: under Newton the same burn is forecast to go somewhere else entirely.
 
@@ -63,3 +71,4 @@ The rocks move under the same law as everything else, so a model that has not le
 | Measured strength of Alpha's pull after two dives | 1.36–1.47 times stronger at 500 km than at 1,000 km against the model's law: a mass-only fix cannot hold at both |
 | The player tests the distance law (fitted on the shallow dive, held out on the deep one) and adopts it | Passes; exponent 2.5 to two decimals |
 | Attempt 3: a dive deeper than anything flown (to 391 km) | Table only: the forecast ends above 490 km. With the rule: it reaches more than 80 km deeper |
+| The slingshot flown by hand (`slingshot.test.ts`) | Turn, burn on the throttle, deploy the arrays facing the sun (the fuel cells alone last about 40 h of the 64 h flight, and running out of power is a loss), level the ship, lift over the ring, leave at over 55 m/s |

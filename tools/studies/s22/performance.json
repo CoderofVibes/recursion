@@ -1,0 +1,61 @@
+{
+  "scope": "Node standalone; warmed 9 batches of 5000 queries, not browser frames",
+  "node": "v24.22.1",
+  "funnels": 2601,
+  "python_vectors": 202,
+  "max_abs_parity_error": 1.8189894035458565e-12,
+  "maximum_bucket_population": 8,
+  "trials": [
+    {
+      "naive_us": 5.368360000000001,
+      "indexed_us": 0.31002000000000296,
+      "full_miss_us": 7.039060000000001
+    },
+    {
+      "naive_us": 5.132679999999999,
+      "indexed_us": 0.3129000000000019,
+      "full_miss_us": 7.900860000000001
+    },
+    {
+      "naive_us": 5.512560000000002,
+      "indexed_us": 0.3860400000000027,
+      "full_miss_us": 8.103240000000005
+    },
+    {
+      "naive_us": 6.304039999999998,
+      "indexed_us": 0.27690000000000053,
+      "full_miss_us": 8.307580000000007
+    },
+    {
+      "naive_us": 5.782839999999998,
+      "indexed_us": 0.308540000000005,
+      "full_miss_us": 8.477419999999995
+    },
+    {
+      "naive_us": 6.265999999999997,
+      "indexed_us": 0.38290000000000646,
+      "full_miss_us": 8.511860000000002
+    },
+    {
+      "naive_us": 5.8452,
+      "indexed_us": 0.3243999999999915,
+      "full_miss_us": 8.657400000000008
+    },
+    {
+      "naive_us": 6.077440000000002,
+      "indexed_us": 0.35493999999998777,
+      "full_miss_us": 8.089199999999982
+    },
+    {
+      "naive_us": 5.811619999999994,
+      "indexed_us": 0.2625,
+      "full_miss_us": 7.721299999999997
+    }
+  ],
+  "median_naive_us": 5.811619999999994,
+  "median_indexed_us": 0.3129000000000019,
+  "median_rejected_funnel_ns": 3.115432525951559,
+  "indexed_4x_cpu_four_evaluations_eight_ticks_ms": 0.040051200000000245,
+  "sink": -47.585188302320965,
+  "warning": "4x is arithmetic sensitivity, not actual CPU throttling; optics, sensing, ship systems and rendering excluded"
+}

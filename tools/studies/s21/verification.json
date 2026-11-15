@@ -1,0 +1,290 @@
+{
+  "convergence": [
+    {
+      "dt": 120.0,
+      "summary": {
+        "beta_peri_m": 830440.144272294,
+        "beta_peri_t": 108840.0,
+        "beta_peri_relative_speed": 71.57674406823568,
+        "alpha_min_m": 1000000.0,
+        "exit_t": 242760.0,
+        "exit_speed": 63.79858642998982,
+        "exit_position": [
+          -6956874.544691452,
+          5713436.89704086,
+          -101749.76598392802
+        ],
+        "exit_velocity": [
+          -63.62523601597463,
+          4.631183432314788,
+          -0.8006949435703518
+        ],
+        "qualifies": true
+      },
+      "clearance": {
+        "phase_deg": 0.0,
+        "clearance_m": 6384.714431208481,
+        "closest_t": 88214.4738004177,
+        "rock": 140,
+        "contact_rock": -1,
+        "first_contact_t": null,
+        "first_20km_t": null
+      },
+      "cloud": {
+        "raw_exposure": 0.0,
+        "peak_intensity": 0.0,
+        "sampled_support_clearance_lower_bound_m": 53325.497756750556,
+        "caution_t": null,
+        "standard_failure_t": null,
+        "power_switch_failure_t": null,
+        "hardened_failure_t": null
+      },
+      "wide_cloud": {
+        "raw_exposure": 1733.0826850317724,
+        "peak_intensity": 0.05,
+        "sampled_support_clearance_lower_bound_m": -20.0,
+        "caution_t": 102018.34019711969,
+        "standard_failure_t": 104327.66025192052,
+        "power_switch_failure_t": 105727.66025192052,
+        "hardened_failure_t": 109127.66025192052
+      },
+      "power": {
+        "policy": "stowed",
+        "events": {
+          "fuel_empty_t": 141870.0,
+          "caution_t": 145680.0,
+          "reserve_t": 149220.0,
+          "brownout_t": 160110.0,
+          "death_t": 160230.0
+        },
+        "hydrogen_kg": 0.0,
+        "oxygen_kg": 0.0,
+        "product_water_kg": 54.0,
+        "batteries_J": [
+          0.0,
+          0.0
+        ],
+        "reserve_s": 0.0,
+        "eclipse_s": 0.0,
+        "ledger": {
+          "load_J": 481195989.47365165,
+          "solar_used_J": 0.0,
+          "solar_available_J": 0.0,
+          "fuel_J": 425999999.999934,
+          "battery_out_J": 54719999.999999784,
+          "battery_in_J": 0.0,
+          "unmet_J": 475989.4737234901,
+          "conversion_loss_J": 22137039.473686125
+        },
+        "ledger_residual_J": 5.621754098683596e-06,
+        "battery_residual_J": -2.2351741790771484e-07,
+        "snapshots": [],
+        "windows_s": [
+          [
+            0,
+            7200
+          ],
+          [
+            72000,
+            93600
+          ]
+        ],
+        "incidence_deg": null,
+        "constant_overhead_W": 0.0,
+        "dt": 30.0
+      }
+    },
+    {
+      "dt": 60.0,
+      "summary": {
+        "beta_peri_m": 830440.1539808741,
+        "beta_peri_t": 108840.0,
+        "beta_peri_relative_speed": 71.57674355574228,
+        "alpha_min_m": 1000000.0,
+        "exit_t": 242760.0,
+        "exit_speed": 63.79858675655924,
+        "exit_position": [
+          -6956874.496434785,
+          5713437.059553029,
+          -101749.76432714397
+        ],
+        "exit_velocity": [
+          -63.6252362450571,
+          4.631184783612538,
+          -0.8006949449842827
+        ],
+        "qualifies": true
+      },
+      "clearance": {
+        "phase_deg": 0.0,
+        "clearance_m": 6384.714469093141,
+        "closest_t": 88214.47193187756,
+        "rock": 140,
+        "contact_rock": -1,
+        "first_contact_t": null,
+        "first_20km_t": null
+      },
+      "cloud": {
+        "raw_exposure": 0.0,
+        "peak_intensity": 0.0,
+        "sampled_support_clearance_lower_bound_m": 52715.963468941525,
+        "caution_t": null,
+        "standard_failure_t": null,
+        "power_switch_failure_t": null,
+        "hardened_failure_t": null
+      },
+      "wide_cloud": {
+        "raw_exposure": 1733.082329270822,
+        "peak_intensity": 0.05,
+        "sampled_support_clearance_lower_bound_m": -20.0,
+        "caution_t": 102023.52551178915,
+        "standard_failure_t": 104327.6658205257,
+        "power_switch_failure_t": 105727.6658205257,
+        "hardened_failure_t": 109127.6658205257
+      },
+      "power": {
+        "policy": "stowed",
+        "events": {
+          "fuel_empty_t": 141855.0,
+          "caution_t": 145680.0,
+          "reserve_t": 149205.0,
+          "brownout_t": 160140.0,
+          "death_t": 160260.0
+        },
+        "hydrogen_kg": 0.0,
+        "oxygen_kg": 0.0,
+        "product_water_kg": 54.0,
+        "batteries_J": [
+          0.0,
+          0.0
+        ],
+        "reserve_s": 0.0,
+        "eclipse_s": 0.0,
+        "ledger": {
+          "load_J": 481286084.2106257,
+          "solar_used_J": 0.0,
+          "solar_available_J": 0.0,
+          "fuel_J": 426000000.0000176,
+          "battery_out_J": 54720000.000002235,
+          "battery_in_J": 0.0,
+          "unmet_J": 566084.2105761959,
+          "conversion_loss_J": 22141184.210527167
+        },
+        "ledger_residual_J": -2.9723509214818478e-05,
+        "battery_residual_J": 2.3543834686279297e-06,
+        "snapshots": [],
+        "windows_s": [
+          [
+            0,
+            7200
+          ],
+          [
+            72000,
+            93600
+          ]
+        ],
+        "incidence_deg": null,
+        "constant_overhead_W": 0.0,
+        "dt": 15.0
+      }
+    },
+    {
+      "dt": 30.0,
+      "summary": {
+        "beta_peri_m": 830440.1545751343,
+        "beta_peri_t": 108840.0,
+        "beta_peri_relative_speed": 71.5767435243498,
+        "alpha_min_m": 1000000.0,
+        "exit_t": 242730.0,
+        "exit_speed": 63.800167754359975,
+        "exit_position": [
+          -6954965.7139298525,
+          5713298.115945294,
+          -101725.74298012121
+        ],
+        "exit_velocity": [
+          -63.626733877065305,
+          4.6323845688965335,
+          -0.8007214418472599
+        ],
+        "qualifies": true
+      },
+      "clearance": {
+        "phase_deg": 0.0,
+        "clearance_m": 6384.7160630348235,
+        "closest_t": 88214.47069503723,
+        "rock": 140,
+        "contact_rock": -1,
+        "first_contact_t": null,
+        "first_20km_t": null
+      },
+      "cloud": {
+        "raw_exposure": 0.0,
+        "peak_intensity": 0.0,
+        "sampled_support_clearance_lower_bound_m": 52715.96379463279,
+        "caution_t": null,
+        "standard_failure_t": null,
+        "power_switch_failure_t": null,
+        "hardened_failure_t": null
+      },
+      "wide_cloud": {
+        "raw_exposure": 1733.0822748357743,
+        "peak_intensity": 0.05,
+        "sampled_support_clearance_lower_bound_m": -20.0,
+        "caution_t": 102025.69792949026,
+        "standard_failure_t": 104327.66678614414,
+        "power_switch_failure_t": 105727.66678614414,
+        "hardened_failure_t": 109127.66678614414
+      },
+      "power": {
+        "policy": "stowed",
+        "events": {
+          "fuel_empty_t": 141855.0,
+          "caution_t": 145672.5,
+          "reserve_t": 149197.5,
+          "brownout_t": 160147.5,
+          "death_t": 160267.5
+        },
+        "hydrogen_kg": 0.0,
+        "oxygen_kg": 0.0,
+        "product_water_kg": 54.0,
+        "batteries_J": [
+          0.0,
+          1.7458768723248864e-251
+        ],
+        "reserve_s": 5.522796625563301e-255,
+        "eclipse_s": 0.0,
+        "ledger": {
+          "load_J": 481308607.8949206,
+          "solar_used_J": 0.0,
+          "solar_available_J": 0.0,
+          "fuel_J": 426000000.000096,
+          "battery_out_J": 54720000.00000084,
+          "battery_in_J": 0.0,
+          "unmet_J": 588607.8947916069,
+          "conversion_loss_J": 22142220.394741673
+        },
+        "ledger_residual_J": -3.212306182831526e-05,
+        "battery_residual_J": 8.866190910339355e-07,
+        "snapshots": [],
+        "windows_s": [
+          [
+            0,
+            7200
+          ],
+          [
+            72000,
+            93600
+          ]
+        ],
+        "incidence_deg": null,
+        "constant_overhead_W": 0.0,
+        "dt": 7.5
+      }
+    }
+  ],
+  "grid_count": 743,
+  "wide_gate_candidates": 38,
+  "wide_surviving_pdus": 0,
+  "numerical_checks": "Swept clearance convergence, cloud-free support margin, electrical/battery ledgers, finite-grid bypass screen"
+}

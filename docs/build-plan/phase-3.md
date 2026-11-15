@@ -60,7 +60,7 @@ For every section:
 
 ## 3C — Chain Link Fence
 
-**Thread:** Claude · **Branch:** `p3/3c-lattice`
+**Thread:** GPT/Codex (reassigned from Claude by the owner, 2026-11-14) · **Branch:** `p3/3c-lattice`
 
 **Owns:** `src/sim/fields/lattice.ts`, `src/sim/fields/lattice.test.ts`, `src/ship/sensors/`, `src/content/chain-link/`, `src/view3d/fields/lattice/`, `src/console/encounters/chain-link/`.
 

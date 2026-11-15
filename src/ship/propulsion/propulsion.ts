@@ -33,6 +33,65 @@ const dataFor = (definition: ShipDefinition) =>
 /** `ext.handsOnHold`: released controls first null the rates ('pending'), then hold ('held'). */
 export const HANDS_ON_HOLD_KEY = 'handsOnHold';
 
+/** One thruster the propulsion step fires, with what never changes about it. */
+interface Thruster {
+  readonly spec: EquipmentSpec;
+  readonly isRcs: boolean;
+  /** Power each mode needs: the spec's `mode.<m>.power`, else the baseline's, else ∞. */
+  readonly modePower: (mode: string) => number;
+}
+/**
+ * The propulsion facts of a design, indexed once (S15 rank 1): the thrusters in the
+ * definition's order, the flight computers, and each thruster's mode powers. Values only.
+ */
+interface PropulsionTables {
+  /** RCS pods and the main engine, as `stepPropulsion` fires them. */
+  readonly thrusters: readonly Thruster[];
+  /** Main engines and RCS pods by kind, as `preparePropulsion` sets their modes. */
+  readonly byKind: readonly EquipmentSpec[];
+  /** RCS pods, for the controller. */
+  readonly pods: readonly EquipmentSpec[];
+  /** Flight computers, each with the power it needs to run the controller. */
+  readonly computers: readonly { readonly spec: EquipmentSpec; readonly power: number }[];
+}
+const propulsionTables = new WeakMap<ShipDefinition, PropulsionTables>();
+
+function tablesOf(definition: ShipDefinition): PropulsionTables {
+  let tables = propulsionTables.get(definition);
+  if (!tables) {
+    const data = dataFor(definition);
+    const thrusters: Thruster[] = [];
+    for (const spec of definition.equipment) {
+      const isRcs = spec.kind === 'rcs-thruster';
+      if (!isRcs && spec.id !== data.propulsion.main.equipmentId) continue;
+      const baselineModes = data.equipment.find((item) => item.id === spec.id)?.modes as
+        Record<string, { power: number }> | undefined;
+      const powers = new Map<string, number>();
+      const modePower = (mode: string): number => {
+        let power = powers.get(mode);
+        if (power === undefined) {
+          power = spec.params[`mode.${mode}.power`] ?? baselineModes?.[mode]?.power ?? Infinity;
+          powers.set(mode, power);
+        }
+        return power;
+      };
+      thrusters.push({ spec, isRcs, modePower });
+    }
+    tables = {
+      thrusters,
+      byKind: definition.equipment.filter(
+        (spec) => spec.kind === 'main-engine' || spec.kind === 'rcs-thruster',
+      ),
+      pods: definition.equipment.filter((spec) => spec.kind === 'rcs-thruster'),
+      computers: definition.equipment
+        .filter((spec) => spec.id.startsWith('flight-cpu'))
+        .map((spec) => ({ spec, power: spec.params['mode.active.power'] ?? 120 })),
+    };
+    propulsionTables.set(definition, tables);
+  }
+  return tables;
+}
+
 /**
  * A thrust direction turned by a mount or gimbal error: `yaw` about body +z (toward +y for a
  * +x thruster), `pitch` about body −y (toward +z). With pitch 0 this is the planar rotation.
@@ -79,15 +138,22 @@ function jetControl(
 ): Record<string, Record<string, number>> {
   const data = dataFor(definition);
   const settings = controlSettings(definition);
-  const mass = massDetail(state, definition);
-  const torque = attitudeTorque(state.attitudeTarget, env.kinematics, mass.tensor, settings);
   const force = handsOnForce(state.ext?.handsOn as unknown as HandsOnInput | undefined, definition);
+  // Only an inertial or rate target asks for torque; with nothing else asked for there is
+  // nothing to allocate, and the mass properties are not needed.
+  const target = state.attitudeTarget;
+  const steering = target.reference === 'inertial' || target.reference === 'rate';
+  if (!steering && force.x === 0 && force.y === 0 && force.z === 0) return {};
+  const mass = massDetail(state, definition);
+  const torque = steering
+    ? attitudeTorque(target, env.kinematics, mass.tensor, settings)
+    : undefined;
   if (!torque && force.x === 0 && force.y === 0 && force.z === 0) return {};
   const geometry = getGeometry(state, definition);
   const pods: string[] = [];
   const jets: (AllocatorJet & { readonly jet: Jet })[] = [];
-  for (const spec of definition.equipment) {
-    if (spec.kind !== 'rcs-thruster' || !podAvailable(state, spec, data)) continue;
+  for (const spec of tablesOf(definition).pods) {
+    if (!podAvailable(state, spec, data)) continue;
     const point = geometry.positions[spec.id] ?? spec.position;
     for (const jet of activeJets(definition, state, spec.id))
       jets.push({ pod: pods.length, point, direction: jet.direction, jet });
@@ -141,8 +207,7 @@ export function preparePropulsion(
   const equipment = { ...state.equipment };
   const control = jetControl(state, definition, env);
   const pulses = pulsesOf(state);
-  for (const spec of definition.equipment) {
-    if (spec.kind !== 'main-engine' && spec.kind !== 'rcs-thruster') continue;
+  for (const spec of tablesOf(definition).byKind) {
     const current = equipment[spec.id];
     if (!current) continue;
     const isRcs = spec.kind === 'rcs-thruster';
@@ -242,28 +307,21 @@ export function stepPropulsion(
   const events: ShipEvent[] = [];
   const thrusts: ThrustOutput[] = [];
   const geometry = getGeometry(state, definition);
-  const mass = computeMassProperties(state, definition);
+  const tables = tablesOf(definition);
   const control = controlOf(state);
   const oldPulses = pulsesOf(state);
   const pulses: Record<string, JetPulse> = {};
-  const controllerPowered = definition.equipment.some(
-    (spec) =>
-      spec.id.startsWith('flight-cpu') &&
+  const controllerPowered = tables.computers.some(
+    ({ spec, power }) =>
       equipment[spec.id]?.mode === 'active' &&
-      (equipment[spec.id]?.powerDraw ?? 0) >= (spec.params['mode.active.power'] ?? 120) - 1e-9 &&
+      (equipment[spec.id]?.powerDraw ?? 0) >= power - 1e-9 &&
       !equipment[spec.id]?.tripped &&
       (equipment[spec.id]?.condition ?? 0) > 0,
   );
-  for (const spec of definition.equipment) {
-    const isRcs = spec.kind === 'rcs-thruster';
-    if (!isRcs && spec.id !== data.propulsion.main.equipmentId) continue;
+  for (const { spec, isRcs, modePower } of tables.thrusters) {
     const current = equipment[spec.id];
     if (!current) continue;
     const values = { ...current.values };
-    const baselineModes = data.equipment.find((item) => item.id === spec.id)?.modes as
-      Record<string, { power: number }> | undefined;
-    const modePower = (mode: string) =>
-      spec.params[`mode.${mode}.power`] ?? baselineModes?.[mode]?.power ?? Infinity;
     const burn = state.burns.find((b) => b.thruster === spec.id && b.until > state.t);
     const nominalThrust = isRcs ? data.propulsion.rcs.thrustPerJet : data.propulsion.main.thrust;
     const minimumImpulse = isRcs
@@ -387,24 +445,29 @@ export function stepPropulsion(
     let pitch = misalignmentPitch;
     if (!isRcs) {
       // Two-axis gimbal: aim the thrust line through the centre of mass, each axis within the
-      // gimbal limit and rate. Yaw turns the thrust toward +y, pitch toward +z.
+      // gimbal limit and rate. Yaw turns the thrust toward +y, pitch toward +z. With no valve
+      // open the gimbal holds where it is (and the centre of mass is not needed).
       const main = data.propulsion.main;
-      const dx = mass.centerOfMass.x - point.x;
-      const dy = mass.centerOfMass.y - point.y;
-      const dz = mass.centerOfMass.z - point.z;
       const steer = (ideal: number, previous: number): number =>
-        valves >= 1
-          ? previous +
-            clamp(
-              clamp(ideal, -main.gimbalLimit, main.gimbalLimit) - previous,
-              -main.gimbalRate * dt,
-              main.gimbalRate * dt,
-            )
-          : previous;
-      values.gimbal = steer(Math.atan2(dy, dx) - misalignment, values.gimbal ?? 0);
-      values.gimbalPitch = unsigned(
-        steer(Math.atan2(dz, Math.hypot(dx, dy)) - misalignmentPitch, values.gimbalPitch ?? 0),
-      );
+        previous +
+        clamp(
+          clamp(ideal, -main.gimbalLimit, main.gimbalLimit) - previous,
+          -main.gimbalRate * dt,
+          main.gimbalRate * dt,
+        );
+      if (valves >= 1) {
+        const mass = computeMassProperties(state, definition);
+        const dx = mass.centerOfMass.x - point.x;
+        const dy = mass.centerOfMass.y - point.y;
+        const dz = mass.centerOfMass.z - point.z;
+        values.gimbal = steer(Math.atan2(dy, dx) - misalignment, values.gimbal ?? 0);
+        values.gimbalPitch = unsigned(
+          steer(Math.atan2(dz, Math.hypot(dx, dy)) - misalignmentPitch, values.gimbalPitch ?? 0),
+        );
+      } else {
+        values.gimbal = values.gimbal ?? 0;
+        values.gimbalPitch = unsigned(values.gimbalPitch ?? 0);
+      }
       yaw += values.gimbal;
       pitch += values.gimbalPitch;
       direction = {

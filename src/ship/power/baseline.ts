@@ -14,7 +14,8 @@ export function systems(definition: ShipDefinition): Baseline {
   return (definition.systems ?? baseline) as unknown as Baseline;
 }
 
-const NO_MODE: OperatingMode = { power: 0, heat: 0, generatedPower: 0, dataRate: 0 };
+/** What `modeOf` gives for a mode the baseline does not list. */
+export const NO_MODE: OperatingMode = { power: 0, heat: 0, generatedPower: 0, dataRate: 0 };
 const modeTables = new WeakMap<object, Map<string, Record<string, OperatingMode>>>();
 
 /** Every assembly's mode table by id, built once per baseline payload (a lookup, not state). */
@@ -34,6 +35,14 @@ function modesById(data: Baseline): Map<string, Record<string, OperatingMode>> {
 
 export function modeOf(definition: ShipDefinition, id: string, mode: string): OperatingMode {
   return modesById(systems(definition)).get(id)?.[mode] ?? NO_MODE;
+}
+
+/** An assembly's whole mode table in the baseline (`modeOf` reads one entry of it). */
+export function modesOf(
+  definition: ShipDefinition,
+  id: string,
+): Readonly<Record<string, OperatingMode>> | undefined {
+  return modesById(systems(definition)).get(id);
 }
 
 export const bounded = (x: number, min: number, max: number): number =>
