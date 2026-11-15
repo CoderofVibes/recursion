@@ -1,0 +1,288 @@
+{
+  "seed": 8008,
+  "dt": 60.0,
+  "initial_rocks_file": "ring-witness.json",
+  "time_offset_s": 60.0,
+  "dv_offset_m_s": 0.05,
+  "fixed_lift_time": 80040.0,
+  "fixed_lift_dv": [
+    0.0,
+    0.0,
+    1.0
+  ],
+  "certified_count": 8,
+  "count": 9,
+  "minimum_clearance_m": 965.8481631336454,
+  "rows": [
+    {
+      "main_time": 3900.0,
+      "main_dv": 13.747104407101869,
+      "summary": {
+        "beta_peri_m": 823233.1736463831,
+        "beta_peri_t": 109200.0,
+        "beta_peri_relative_speed": 71.88562263587445,
+        "alpha_min_m": 1000000.0,
+        "exit_t": 244800.0,
+        "exit_speed": 63.28059539868446,
+        "exit_position": [
+          -7116815.757777502,
+          5512655.318442813,
+          -105533.62377697426
+        ],
+        "exit_velocity": [
+          -63.213241368114666,
+          2.806648724282012,
+          -0.8016187915513748
+        ],
+        "qualifies": true
+      },
+      "closest": {
+        "rock": 140,
+        "t": 88472.36319375645,
+        "clearance_m": 13321.522859424356,
+        "relative_speed": 31.496879566800747
+      },
+      "certified": true
+    },
+    {
+      "main_time": 3900.0,
+      "main_dv": 13.79710440710187,
+      "summary": {
+        "beta_peri_m": 861581.1497732415,
+        "beta_peri_t": 109140.0,
+        "beta_peri_relative_speed": 69.98387396402859,
+        "alpha_min_m": 1000000.0,
+        "exit_t": 239580.0,
+        "exit_speed": 64.79750360471,
+        "exit_position": [
+          -6576684.307917472,
+          6147491.600720652,
+          -93829.13198883108
+        ],
+        "exit_velocity": [
+          -64.21113374767292,
+          8.660292368043,
+          -0.8038111350818489
+        ],
+        "qualifies": true
+      },
+      "closest": {
+        "rock": 140,
+        "t": 88972.14269708283,
+        "clearance_m": 2575.1421463882616,
+        "relative_speed": 30.88410543994937
+      },
+      "certified": true
+    },
+    {
+      "main_time": 3900.0,
+      "main_dv": 13.84710440710187,
+      "summary": {
+        "beta_peri_m": 899579.3721044471,
+        "beta_peri_t": 109080.0,
+        "beta_peri_relative_speed": 68.27175966840609,
+        "alpha_min_m": 1000000.0,
+        "exit_t": 235740.0,
+        "exit_speed": 65.71540593909863,
+        "exit_position": [
+          -6051447.1606507655,
+          6662338.0254897745,
+          -81839.57398415268
+        ],
+        "exit_velocity": [
+          -64.2103670343529,
+          13.961749958725747,
+          -0.7828672583694798
+        ],
+        "qualifies": true
+      },
+      "closest": {
+        "rock": 140,
+        "t": 89484.27571230843,
+        "clearance_m": 6899.589889363827,
+        "relative_speed": 30.24682515173148
+      },
+      "certified": true
+    },
+    {
+      "main_time": 3960,
+      "main_dv": 13.747104407101869,
+      "summary": {
+        "beta_peri_m": 792223.928176079,
+        "beta_peri_t": 108840.0,
+        "beta_peri_relative_speed": 73.62023416919946,
+        "alpha_min_m": 1000000.0,
+        "exit_t": 249300.0,
+        "exit_speed": 61.73612979456918,
+        "exit_position": [
+          -7498982.744064638,
+          4976458.639391629,
+          -112772.36583253584
+        ],
+        "exit_velocity": [
+          -61.71171794077555,
+          -1.5523474713224938,
+          -0.7770509238992996
+        ],
+        "qualifies": true
+      },
+      "closest": {
+        "rock": 130,
+        "t": 101036.90757446077,
+        "clearance_m": 14481.053986096347,
+        "relative_speed": 19.286791065544655
+      },
+      "certified": true
+    },
+    {
+      "main_time": 3960,
+      "main_dv": 13.79710440710187,
+      "summary": {
+        "beta_peri_m": 830440.1539808741,
+        "beta_peri_t": 108840.0,
+        "beta_peri_relative_speed": 71.57674355574228,
+        "alpha_min_m": 1000000.0,
+        "exit_t": 242760.0,
+        "exit_speed": 63.79858675655924,
+        "exit_position": [
+          -6956874.496434785,
+          5713437.059553029,
+          -101749.76432714397
+        ],
+        "exit_velocity": [
+          -63.6252362450571,
+          4.631184783612538,
+          -0.8006949449842827
+        ],
+        "qualifies": true
+      },
+      "closest": {
+        "rock": 140,
+        "t": 88214.47193187756,
+        "clearance_m": 6384.714469093141,
+        "relative_speed": 31.760036615432096
+      },
+      "certified": true
+    },
+    {
+      "main_time": 3960,
+      "main_dv": 13.84710440710187,
+      "summary": {
+        "beta_peri_m": 868370.2627816751,
+        "beta_peri_t": 108780.0,
+        "beta_peri_relative_speed": 69.7319361135076,
+        "alpha_min_m": 1000000.0,
+        "exit_t": 237960.0,
+        "exit_speed": 65.14346456707518,
+        "exit_position": [
+          -6420520.784582565,
+          6309965.201521852,
+          -89977.21618704316
+        ],
+        "exit_velocity": [
+          -64.31497259824827,
+          10.325814503633895,
+          -0.795506332405199
+        ],
+        "qualifies": true
+      },
+      "closest": {
+        "rock": 140,
+        "t": 88701.76422320385,
+        "clearance_m": 2085.391444841993,
+        "relative_speed": 31.151166898723297
+      },
+      "certified": true
+    },
+    {
+      "main_time": 4020.0,
+      "main_dv": 13.747104407101869,
+      "summary": {
+        "beta_peri_m": 761351.0147390622,
+        "beta_peri_t": 108480.0,
+        "beta_peri_relative_speed": 75.48397467987687,
+        "alpha_min_m": 1000000.0,
+        "exit_t": 255240.0,
+        "exit_speed": 59.679405342584836,
+        "exit_position": [
+          -7882208.792946929,
+          4346587.738771342,
+          -119166.59404923409
+        ],
+        "exit_velocity": [
+          -59.36164253630783,
+          -6.1065331673645495,
+          -0.7328506751234646
+        ],
+        "qualifies": true
+      },
+      "closest": {
+        "rock": 73,
+        "t": 109784.43834299606,
+        "clearance_m": 1650.515636457818,
+        "relative_speed": 18.08354505093628
+      },
+      "certified": true
+    },
+    {
+      "main_time": 4020.0,
+      "main_dv": 13.79710440710187,
+      "summary": {
+        "beta_peri_m": 799386.4454512656,
+        "beta_peri_t": 108480.0,
+        "beta_peri_relative_speed": 73.28128925867598,
+        "alpha_min_m": 1000000.0,
+        "exit_t": 246900.0,
+        "exit_speed": 62.40110133754141,
+        "exit_position": [
+          -7343282.189215808,
+          5205129.885127151,
+          -109270.0720487693
+        ],
+        "exit_velocity": [
+          -62.395350326783785,
+          0.32378233503315507,
+          -0.7828606105532416
+        ],
+        "qualifies": true
+      },
+      "closest": {
+        "rock": 140,
+        "t": 87490.3045204123,
+        "clearance_m": 11226.41069819378,
+        "relative_speed": 32.61247261078755
+      },
+      "certified": true
+    },
+    {
+      "main_time": 4020.0,
+      "main_dv": 13.84710440710187,
+      "summary": {
+        "beta_peri_m": 837204.3112587152,
+        "beta_peri_t": 108480.0,
+        "beta_peri_relative_speed": 71.29839340797085,
+        "alpha_min_m": 1000000.0,
+        "exit_t": 240840.0,
+        "exit_speed": 64.25894702012846,
+        "exit_position": [
+          -6798505.376133709,
+          5897416.004384052,
+          -97978.25095331267
+        ],
+        "exit_velocity": [
+          -63.93718955978512,
+          6.3727737600998156,
+          -0.7973819250290002
+        ],
+        "qualifies": true
+      },
+      "closest": {
+        "rock": 140,
+        "t": 87954.45147946676,
+        "clearance_m": 965.8481631336454,
+        "relative_speed": 32.030579225977704
+      },
+      "certified": false
+    }
+  ]
+}

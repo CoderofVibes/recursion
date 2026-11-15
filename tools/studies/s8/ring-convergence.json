@@ -1,0 +1,24 @@
+{
+  "witness_seed": 8008,
+  "steps_s": [
+    120,
+    60,
+    30
+  ],
+  "closest_clearance_m": [
+    6384.714431208481,
+    6384.714469093141,
+    6384.7160630348235
+  ],
+  "exit_speed_m_s": [
+    63.79858642998982,
+    63.79858675655924,
+    63.800167754359975
+  ],
+  "exit_t_s": [
+    242760.0,
+    242760.0,
+    242730.0
+  ],
+  "method": "Same route, all336rocks, swept chords; gate sampled to step precision."
+}

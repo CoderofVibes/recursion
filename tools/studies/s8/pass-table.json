@@ -1,0 +1,261 @@
+{
+  "rows": [
+    {
+      "target_peri_m": 680000.0,
+      "burn_m_s": 13.601848319172857,
+      "summary": {
+        "beta_peri_m": 679995.8385506693,
+        "beta_peri_t": 108531.5506711527,
+        "beta_peri_relative_speed": 80.95999233106733,
+        "alpha_min_m": 1000000.0,
+        "exit_t": 289329.51311334036,
+        "exit_speed": 49.04750817606834,
+        "exit_position": [
+          -8862171.449525174,
+          1569049.7758942118,
+          0.0
+        ],
+        "exit_velocity": [
+          -44.69090509703989,
+          -20.20844031311829,
+          0.0
+        ],
+        "qualifies": false,
+        "beta_peri_z": 0.0
+      },
+      "claim_speed_interval": [
+        49,
+        49
+      ],
+      "difference_from_claim_interval": [
+        0.0475081760683409,
+        0.0475081760683409
+      ]
+    },
+    {
+      "target_peri_m": 830000.0,
+      "burn_m_s": 13.797104385495185,
+      "summary": {
+        "beta_peri_m": 829999.7284906211,
+        "beta_peri_t": 108855.1417619499,
+        "beta_peri_relative_speed": 71.59582075331996,
+        "alpha_min_m": 1000000.0,
+        "exit_t": 242810.74141013436,
+        "exit_speed": 63.77526343267149,
+        "exit_position": [
+          -6963551.664143302,
+          5701661.88236514,
+          0.0
+        ],
+        "exit_velocity": [
+          -63.61436749530294,
+          4.527303179508595,
+          0.0
+        ],
+        "qualifies": true,
+        "beta_peri_z": 0.0
+      },
+      "claim_speed_interval": [
+        64,
+        64
+      ],
+      "difference_from_claim_interval": [
+        -0.2247365673285131,
+        -0.2247365673285131
+      ]
+    },
+    {
+      "target_peri_m": 980000.0,
+      "burn_m_s": 13.997999951243402,
+      "summary": {
+        "beta_peri_m": 979999.9736489424,
+        "beta_peri_t": 108244.19097912604,
+        "beta_peri_relative_speed": 65.17242199382301,
+        "alpha_min_m": 1000000.0,
+        "exit_t": 230146.2956729997,
+        "exit_speed": 66.31409479639181,
+        "exit_position": [
+          -4949835.010685044,
+          7516590.54139608,
+          0.0
+        ],
+        "exit_velocity": [
+          -61.817898099112476,
+          24.002221632019523,
+          0.0
+        ],
+        "qualifies": true,
+        "beta_peri_z": 0.0
+      },
+      "claim_speed_interval": [
+        66,
+        66
+      ],
+      "difference_from_claim_interval": [
+        0.3140947963918137,
+        0.3140947963918137
+      ]
+    },
+    {
+      "target_peri_m": 1120000.0,
+      "burn_m_s": 14.196503832936289,
+      "summary": {
+        "beta_peri_m": 1119999.7353186617,
+        "beta_peri_t": 106900.28527344309,
+        "beta_peri_relative_speed": 60.89860539103438,
+        "alpha_min_m": 1000000.0,
+        "exit_t": 227865.7518500369,
+        "exit_speed": 64.39034736123511,
+        "exit_position": [
+          -3384792.128082636,
+          8339255.497325634,
+          0.0
+        ],
+        "exit_velocity": [
+          -53.989841392951504,
+          35.08865713680785,
+          0.0
+        ],
+        "qualifies": true,
+        "beta_peri_z": 0.0
+      },
+      "claim_speed_interval": [
+        64,
+        64
+      ],
+      "difference_from_claim_interval": [
+        0.39034736123511493,
+        0.39034736123511493
+      ]
+    },
+    {
+      "target_peri_m": 1250000.0,
+      "burn_m_s": 14.39466800391674,
+      "summary": {
+        "beta_peri_m": 1249999.3525409836,
+        "beta_peri_t": 105032.9999965228,
+        "beta_peri_relative_speed": 58.01697333594319,
+        "alpha_min_m": 1000000.0,
+        "exit_t": 229724.01318286546,
+        "exit_speed": 61.01662053664676,
+        "exit_position": [
+          -2170898.049766804,
+          8734254.499241482,
+          0.0
+        ],
+        "exit_velocity": [
+          -45.44719686971241,
+          40.71339188029838,
+          0.0
+        ],
+        "qualifies": true,
+        "beta_peri_z": 0.0
+      },
+      "claim_speed_interval": [
+        61,
+        61
+      ],
+      "difference_from_claim_interval": [
+        0.01662053664676222,
+        0.01662053664676222
+      ]
+    },
+    {
+      "target_peri_m": 1400000.0,
+      "burn_m_s": 14.64504453241825,
+      "summary": {
+        "beta_peri_m": 1399999.5449574797,
+        "beta_peri_t": 102209.34659700122,
+        "beta_peri_relative_speed": 55.73229384389556,
+        "alpha_min_m": 1000000.0,
+        "exit_t": 234631.20327140205,
+        "exit_speed": 56.37019765845201,
+        "exit_position": [
+          -969810.4217081364,
+          8947595.64050386,
+          0.0
+        ],
+        "exit_velocity": [
+          -35.89981437759228,
+          43.46035563254593,
+          0.0
+        ],
+        "qualifies": true,
+        "beta_peri_z": 0.0
+      },
+      "claim_speed_interval": [
+        57,
+        60
+      ],
+      "difference_from_claim_interval": [
+        -0.6298023415479932,
+        -3.629802341547993
+      ]
+    },
+    {
+      "target_peri_m": 1570000.0,
+      "burn_m_s": 14.964454993605614,
+      "summary": {
+        "beta_peri_m": 1569999.9876887319,
+        "beta_peri_t": 98282.42668755677,
+        "beta_peri_relative_speed": 54.29006956474075,
+        "alpha_min_m": 1000000.0,
+        "exit_t": 242360.93869700097,
+        "exit_speed": 50.89770518443591,
+        "exit_position": [
+          233828.11749697552,
+          8996961.954541799,
+          0.0
+        ],
+        "exit_velocity": [
+          -26.292538837184686,
+          43.58071585617759,
+          0.0
+        ],
+        "qualifies": true,
+        "beta_peri_z": 0.0
+      },
+      "claim_speed_interval": [
+        53,
+        53
+      ],
+      "difference_from_claim_interval": [
+        -2.1022948155640933,
+        -2.1022948155640933
+      ]
+    },
+    {
+      "target_peri_m": 1660000.0,
+      "burn_m_s": 15.151966670155526,
+      "summary": {
+        "beta_peri_m": 1659999.250774959,
+        "beta_peri_t": 95960.18003143216,
+        "beta_peri_relative_speed": 53.9699730983907,
+        "alpha_min_m": 1000000.0,
+        "exit_t": 246986.0417149868,
+        "exit_speed": 48.08140540338758,
+        "exit_position": [
+          833431.6060750483,
+          8961327.566715902,
+          0.0
+        ],
+        "exit_velocity": [
+          -21.787723744983992,
+          42.86159865867311,
+          0.0
+        ],
+        "qualifies": false,
+        "beta_peri_z": 0.0
+      },
+      "claim_speed_interval": [
+        51,
+        51
+      ],
+      "difference_from_claim_interval": [
+        -2.9185945966124223,
+        -2.9185945966124223
+      ]
+    }
+  ],
+  "local_dperi_dv_m_per_m_s": 727570.8312501316
+}
