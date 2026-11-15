@@ -26,6 +26,7 @@ import type {
   ParameterEstimate,
   ParameterPrior,
   ResidualStats,
+  ShipDefinition,
   TransitRecord,
 } from '../contracts/index.ts';
 import { hashState } from '../lib/hash.ts';
@@ -33,7 +34,8 @@ import { contextFor, contextFromBriefing, type ModelContext } from './context.ts
 import {
   agingClass,
   agingOf,
-  conditionAtEnd,
+  conditionsAtEnd,
+  groupMembers,
   historyIn,
   historyVariance,
   transitHistory,
@@ -134,6 +136,8 @@ export interface ModelSpec {
   /** Planar reduction (spec Appendix A.3, `settings.planar`). */
   readonly planar: boolean;
   readonly settings: ModelSettings;
+  /** The ship's equipment ids and kinds, for the calibrations' aging (R27). */
+  readonly equipment: ShipDefinition['equipment'];
 }
 
 function priorOf(ctx: ModelContext, id: string): ParameterPrior | undefined {
@@ -167,6 +171,7 @@ export function modelSpec(ctx: ModelContext, adopted: readonly ExtensionId[]): M
     cameraId: camera,
     planar: settings.planar === 1,
     settings,
+    equipment: ctx.ship.equipment,
   };
 }
 
@@ -480,7 +485,15 @@ export function tierGProblem(
     for (const g of globals) {
       const ag = agingOf(g.name, spec.cameraId);
       if (!ag) continue;
-      const hist = historyIn(rec, segsOf.get(rec.id)!, ag.cls, ag.equipment, 0, tLast);
+      const hist = historyIn(
+        rec,
+        segsOf.get(rec.id)!,
+        ag.cls,
+        ag.equipment,
+        0,
+        tLast,
+        groupMembers(ctx.ship, ag.equipment),
+      );
       const q = historyVariance(agingClass(s, ag.cls), ag.cls, hist);
       locals.push({
         name: `${a.id}.${g.name}.d`,
@@ -1236,7 +1249,15 @@ export function agingBetween(
   const ag = agingOf(id, d.spec.cameraId);
   if (!ag) return { variance: 0, history: { shipTime: 0, deltaV: 0, powerCycles: 0, drops: [] } };
   const segs = (d.problem.builds.get(rec.id)?.arcs ?? []).flatMap((a) => a.commands);
-  const history = historyIn(rec, segs, ag.cls, ag.equipment, t0, t1);
+  const history = historyIn(
+    rec,
+    segs,
+    ag.cls,
+    ag.equipment,
+    t0,
+    t1,
+    groupMembers({ equipment: d.spec.equipment }, ag.equipment),
+  );
   return {
     variance: historyVariance(agingClass(d.spec.settings, ag.cls), ag.cls, history),
     history,
@@ -1976,7 +1997,12 @@ export function parameterValues(d: Pick<ModelDerived, 'values'>): Record<string,
 export function carriedCalibration(
   state: ModelState,
   transit?: TransitRecord,
-  opts: { carrying?: AttemptRecord; settings?: Partial<ModelSettings> } = {},
+  opts: {
+    carrying?: AttemptRecord;
+    settings?: Partial<ModelSettings>;
+    /** The ship whose equipment ids the calibrations age with (R27); by name without it. */
+    ship?: Pick<ShipDefinition, 'equipment'>;
+  } = {},
 ): ParameterPrior[] {
   const settings = opts.settings;
   const s = resolveSettings(settings ?? (state.settings as Partial<ModelSettings> | undefined));
@@ -1995,11 +2021,12 @@ export function carriedCalibration(
       const cam = /^sensor\.(.+)\.bias(?:-x|-y)?$/.exec(id)?.[1] ?? '';
       const ag = agingOf(id, cam);
       if (ag) {
-        const start = conditionAtEnd(opts.carrying, ag.equipment);
+        const members = groupMembers(opts.ship, ag.equipment);
+        const start = conditionsAtEnd(opts.carrying, ag.equipment, members);
         v += historyVariance(
           agingClass(s, ag.cls),
           ag.cls,
-          transitHistory(transit, ag.equipment, start),
+          transitHistory(transit, ag.equipment, start, members),
         );
       }
     }
