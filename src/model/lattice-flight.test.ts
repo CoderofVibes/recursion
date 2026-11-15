@@ -24,6 +24,7 @@ import * as quat from '../lib/quat.ts';
 import { createRng } from '../lib/rng.ts';
 import type { ModelContext } from './engine.ts';
 import { encodeFrame } from './lattice-harness.ts';
+import { latticeFields } from './lattice/visual.ts';
 import { ModelService } from './service.ts';
 import { fromRows } from './linalg.ts';
 import { mahalanobis } from './tierL.ts';
@@ -338,6 +339,38 @@ describe('the lattice from a flight’s records, through the model', () => {
     const again = new ModelService(context(rec));
     again.load({ attempts: [{ ...rec, outcome: { kind: 'recalled', t: T_END + 1 } }] });
     expect(again.lattice(rec.id)).toEqual(svc.lattice());
+  });
+
+  it('rebuilt again and again as frames come in, each rebuild equals one from scratch (R61)', () => {
+    // The attempt in progress keeps the last rebuild's work; the result must not depend on it.
+    const live = new ModelService(context(rec));
+    live.load({ attempts: [] });
+    live.beginAttempt({ ...rec, measurements: [], executed: [], events: [] });
+    const times = [...new Set(rec.measurements.map((m) => m.t))].sort((a, b) => a - b);
+    let from = -Infinity;
+    for (const f of [0.3, 0.55, 0.8, 1]) {
+      const cut = times[Math.floor(f * (times.length - 1))]!;
+      const upTo = <T extends { t: number }>(list: readonly T[]) =>
+        list.filter((x) => x.t > from && x.t <= cut);
+      live.append(rec.id, {
+        measurements: upTo(rec.measurements),
+        executed: upTo(rec.executed),
+        events: upTo(rec.events),
+      });
+      from = cut;
+      live.refresh();
+      const kept = live.latticeDetail(rec.id, cut);
+      const sofar = {
+        ...rec,
+        measurements: rec.measurements.filter((m) => m.t <= cut),
+        executed: rec.executed.filter((e) => e.t <= cut),
+        events: rec.events.filter((e) => e.t <= cut),
+      };
+      const fresh = latticeFields(live.snapshot, context(rec), sofar, cut).reconstruction;
+      expect(kept).toEqual(fresh);
+    }
+    // And the last equals the archived rebuild above.
+    expect(live.lattice(rec.id, Infinity)).toEqual(svc.lattice());
   });
 
   it('uses only frames delivered by `now`, and an earlier run stays in its own frame', () => {

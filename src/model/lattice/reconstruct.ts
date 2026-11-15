@@ -448,126 +448,227 @@ interface Partner {
  *    the linked groups. A group that would hold two nodes of one frame is not one point: those
  *    frames' nodes leave it. Competing associations are never settled from a truth mesh.
  */
-function associate(frames: FrameNodes[], frameIds: string[], s: LatticeSettings) {
-  const grids = frames.map((fr) => {
-    const sigMax = Math.max(0, ...fr.nodes.map((o) => o.sigma));
-    return new SlopeGrid(fr.nodes, Math.max(Math.min(s.associationGate, 0.02), 4 * sigMax, 1e-3));
-  });
+/**
+ * What one rebuild can hand the next, for one attempt (R61): each frame's sightings, each pair of
+ * frames' partner links and each sighting's vote. Each result depends only on the frames it was
+ * made from, so it is kept under their identity: the frame's id, its place in the pass and its
+ * exact believed pose (and, for a vote, its whole partner list). A frame whose pose has changed
+ * misses and is recomputed. A rebuild with the memo equals one without it; it only grows with the
+ * frames since the last. Entries a rebuild did not use are dropped.
+ */
+export class LatticeMemo {
+  private prev = new Map<string, unknown>();
+  private next = new Map<string, unknown>();
+  readonly settingsHash: string;
+  constructor(settings: LatticeSettings = LATTICE_SETTINGS) {
+    this.settingsHash = hashState(settings as unknown as Record<string, number>);
+  }
+  /** The kept result for `key`, or `make()`'s, kept for the next rebuild either way. */
+  get<T>(key: string, make: () => T): T {
+    const v = this.next.has(key)
+      ? (this.next.get(key) as T)
+      : this.prev.has(key)
+        ? (this.prev.get(key) as T)
+        : make();
+    this.next.set(key, v);
+    return v;
+  }
+  private readonly ids = new Map<string, string>();
+  /** A short stand-in for a frame's identity (`frameKey`), the same for as long as it is used. */
+  idOf(identity: string): string {
+    let id = this.ids.get(identity);
+    if (id === undefined) {
+      id = `f${this.ids.size}`;
+      this.ids.set(identity, id);
+    }
+    return id;
+  }
+  /** Keep `value` under `key` for the next rebuild, replacing what was there. */
+  set(key: string, value: unknown): void {
+    this.next.set(key, value);
+  }
+  /** Whether the last rebuild (or this one) made `key`. */
+  has(key: string): boolean {
+    return this.next.has(key) || this.prev.has(key);
+  }
+  /** The end of a rebuild: what it used is what the next may reuse. */
+  commit(): void {
+    this.prev = this.next;
+    this.next = new Map();
+  }
+}
+
+/** A frame's identity for the memo: its id, its place in the pass and its exact believed pose. */
+function frameKey(pf: PosedFrame, k: number): string {
+  return `${k}|${pf.sampleId}|${JSON.stringify(pf.pose)}`;
+}
+
+/** One partner link between sighting a of frame k and sighting b of an earlier frame. */
+type Link = readonly [a: number, b: number, lamA: number, sigA: number, lamB: number, sigB: number];
+
+function associate(
+  frames: FrameNodes[],
+  frameIds: string[],
+  s: LatticeSettings,
+  memo?: { readonly memo: LatticeMemo; readonly keys: readonly string[] },
+) {
+  const grids: (SlopeGrid | undefined)[] = [];
+  const gridOf = (k: number) =>
+    (grids[k] ??= (() => {
+      const fr = frames[k]!;
+      const sigMax = Math.max(0, ...fr.nodes.map((o) => o.sigma));
+      return new SlopeGrid(fr.nodes, Math.max(Math.min(s.associationGate, 0.02), 4 * sigMax, 1e-3));
+    })());
   const partners: Partner[][][] = frames.map((fr) => fr.nodes.map(() => []));
+  /** Sightings a pair computed afresh this rebuild touched: their partner lists may differ. */
+  const changed: Uint8Array[] = frames.map((fr) => new Uint8Array(fr.nodes.length));
   const cosGate = Math.cos(s.associationGate);
   const g = s.associationSigmas;
+  /** The partner links between frame k and an earlier frame k2, in the order they are found. */
+  const linksOf = (k: number, k2: number): Link[] => {
+    const fr = frames[k]!;
+    const other = frames[k2]!;
+    const ref = other.nodes[0]!;
+    const out: Link[] = [];
+    for (let a = 0; a < fr.nodes.length; a++) {
+      const na = fr.nodes[a]!;
+      const p = slopesOf(na.ray, ref);
+      if (!p) continue;
+      const stretch = 1 + p[0] * p[0] + p[1] * p[1];
+      const base = subV(na.origin, ref.origin);
+      const nrm = v(
+        base.y * na.ray.z - base.z * na.ray.y,
+        base.z * na.ray.x - base.x * na.ray.z,
+        base.x * na.ray.y - base.y * na.ray.x,
+      );
+      const nLen = lenV(nrm);
+      if (!(nLen > 1e-9 * (1 + lenV(base)))) continue;
+      for (const b of gridOf(k2).near(p, s.associationGate * stretch)) {
+        const nb = other.nodes[b]!;
+        const cos = dotV(na.ray, nb.ray);
+        if (cos < cosGate) continue;
+        const den = 1 - cos * cos;
+        if (!(den > 1e-14)) continue;
+        // Closest approach: depth λ along a's ray, μ along b's.
+        const w0 = subV(nb.origin, na.origin);
+        const dd = dotV(na.ray, w0);
+        const ee = dotV(nb.ray, w0);
+        const lam = (dd - cos * ee) / den;
+        const mu = (cos * dd - ee) / den;
+        const limit = Math.min(na.rangeLimit, nb.rangeLimit);
+        if (!(lam > 0 && mu > 0 && lam <= limit && mu <= limit)) continue;
+        // Out of the epipolar plane, in angle at b, against the slopes' σ and the drift.
+        const e = dotV(nb.ray, nrm) / nLen;
+        const drift = (Math.sqrt(trace3(na.velocityCov)) * Math.abs(na.t - nb.t)) / mu;
+        const var0 = na.sigma * na.sigma + nb.sigma * nb.sigma + drift * drift;
+        if (e * e > g * g * var0) continue;
+        const sinG = Math.sqrt(den);
+        const spread = Math.sqrt(var0);
+        out.push([a, b, lam, (lam * spread) / sinG, mu, (mu * spread) / sinG]);
+      }
+    }
+    return out;
+  };
   frames.forEach((fr, k) => {
     if (fr.nodes.length === 0) return;
     for (let k2 = k - 1; k2 >= 0; k2--) {
-      const other = frames[k2]!;
-      const ref = other.nodes[0];
+      const ref = frames[k2]!.nodes[0];
       if (!ref) continue;
       if (fr.nodes[0]!.t - ref.t > s.associationWindow) break;
-      for (let a = 0; a < fr.nodes.length; a++) {
-        const na = fr.nodes[a]!;
-        const p = slopesOf(na.ray, ref);
-        if (!p) continue;
-        const stretch = 1 + p[0] * p[0] + p[1] * p[1];
-        const base = subV(na.origin, ref.origin);
-        const nrm = v(
-          base.y * na.ray.z - base.z * na.ray.y,
-          base.z * na.ray.x - base.x * na.ray.z,
-          base.x * na.ray.y - base.y * na.ray.x,
-        );
-        const nLen = lenV(nrm);
-        if (!(nLen > 1e-9 * (1 + lenV(base)))) continue;
-        for (const b of grids[k2]!.near(p, s.associationGate * stretch)) {
-          const nb = other.nodes[b]!;
-          const cos = dotV(na.ray, nb.ray);
-          if (cos < cosGate) continue;
-          const den = 1 - cos * cos;
-          if (!(den > 1e-14)) continue;
-          // Closest approach: depth λ along a's ray, μ along b's.
-          const w0 = subV(nb.origin, na.origin);
-          const dd = dotV(na.ray, w0);
-          const ee = dotV(nb.ray, w0);
-          const lam = (dd - cos * ee) / den;
-          const mu = (cos * dd - ee) / den;
-          const limit = Math.min(na.rangeLimit, nb.rangeLimit);
-          if (!(lam > 0 && mu > 0 && lam <= limit && mu <= limit)) continue;
-          // Out of the epipolar plane, in angle at b, against the slopes' σ and the drift.
-          const e = dotV(nb.ray, nrm) / nLen;
-          const drift = (Math.sqrt(trace3(na.velocityCov)) * Math.abs(na.t - nb.t)) / mu;
-          const var0 = na.sigma * na.sigma + nb.sigma * nb.sigma + drift * drift;
-          if (e * e > g * g * var0) continue;
-          const sinG = Math.sqrt(den);
-          const spread = Math.sqrt(var0);
-          partners[k]![a]!.push({ k: k2, a: b, lam, sig: (lam * spread) / sinG });
-          partners[k2]![b]!.push({ k, a, lam: mu, sig: (mu * spread) / sinG });
+      const pairKey = memo ? `pair|${memo.keys[k]}|${memo.keys[k2]}` : '';
+      const fresh = !memo || !memo.memo.has(pairKey);
+      const links = memo ? memo.memo.get(pairKey, () => linksOf(k, k2)) : linksOf(k, k2);
+      for (const [a, b, lamA, sigA, lamB, sigB] of links) {
+        partners[k]![a]!.push({ k: k2, a: b, lam: lamA, sig: sigA });
+        partners[k2]![b]!.push({ k, a, lam: lamB, sig: sigB });
+        if (fresh) {
+          changed[k]![a] = 1;
+          changed[k2]![b] = 1;
         }
       }
     }
   });
   // Votes. Distinct frames are counted with stamps, not sets: each node compares its partners
   // with each other (tens of them), and there are tens of thousands of nodes.
-  const chosen: (Set<string> | null)[][] = frames.map((fr) => fr.nodes.map(() => null));
-  const key = (k: number, a: number) => `${k}:${a}`;
+  const chosen: (Set<number> | null)[][] = frames.map((fr) => fr.nodes.map(() => null));
+  /** A sighting as one number (frames and sightings per frame stay far below 2¹⁶). */
+  const key = (k: number, a: number) => k * 65536 + a;
   const stamp = new Int32Array(frames.length);
   let tick = 0;
   const ag = s.associationDepthSigmas;
+  const vote = (C: readonly Partner[]): number[] | null => {
+    const n = C.length;
+    if (n < s.associationVotes) return null;
+    const lam = Float64Array.from(C, (c) => c.lam);
+    const sig2 = Float64Array.from(C, (c) => c.sig * c.sig);
+    const fk = Int32Array.from(C, (c) => c.k);
+    const sigMax = Math.sqrt(Math.max(...sig2));
+    const agree = (i: number, j: number) => {
+      const d = lam[i]! - lam[j]!;
+      return d * d <= ag * ag * (sig2[i]! + sig2[j]!);
+    };
+    /** The partners whose depth could agree with j's (sorted by depth): [from, to). */
+    const span = (j: number): [number, number] => {
+      const reach = ag * (Math.sqrt(sig2[j]!) + sigMax);
+      let lo = j;
+      while (lo > 0 && lam[j]! - lam[lo - 1]! <= reach) lo--;
+      let hi = j + 1;
+      while (hi < n && lam[hi]! - lam[j]! <= reach) hi++;
+      return [lo, hi];
+    };
+    let best = -1;
+    let bestFrames = 0;
+    for (let j = 0; j < n; j++) {
+      tick++;
+      let count = 0;
+      const [lo, hi] = span(j);
+      for (let i = lo; i < hi; i++)
+        if (stamp[fk[i]!] !== tick && agree(i, j)) {
+          stamp[fk[i]!] = tick;
+          count++;
+        }
+      if (count > bestFrames || (count === bestFrames && best >= 0 && sig2[j]! < sig2[best]!)) {
+        best = j;
+        bestFrames = count;
+      }
+    }
+    if (best < 0 || bestFrames < s.associationVotes) return null;
+    let rival = 0;
+    for (let j = 0; j < n; j++) {
+      if (agree(j, best)) continue;
+      tick++;
+      let count = 0;
+      const [lo, hi] = span(j);
+      for (let i = lo; i < hi; i++)
+        if (stamp[fk[i]!] !== tick && agree(i, j) && !agree(i, best)) {
+          stamp[fk[i]!] = tick;
+          count++;
+        }
+      rival = Math.max(rival, count);
+    }
+    if (rival > s.associationRatio * bestFrames) return null;
+    const sup: number[] = [];
+    for (let i = 0; i < n; i++) if (agree(i, best)) sup.push(key(C[i]!.k, C[i]!.a));
+    return sup;
+  };
   frames.forEach((fr, k) =>
     fr.nodes.forEach((_, a) => {
-      const C = partners[k]![a]!
-        .filter((c) => c.sig <= s.associationDepthPrecision * c.lam)
-        .sort((x, y) => x.lam - y.lam);
-      const n = C.length;
-      if (n < s.associationVotes) return;
-      const lam = Float64Array.from(C, (c) => c.lam);
-      const sig2 = Float64Array.from(C, (c) => c.sig * c.sig);
-      const fk = Int32Array.from(C, (c) => c.k);
-      const sigMax = Math.sqrt(Math.max(...sig2));
-      const agree = (i: number, j: number) => {
-        const d = lam[i]! - lam[j]!;
-        return d * d <= ag * ag * (sig2[i]! + sig2[j]!);
-      };
-      /** The partners whose depth could agree with j's (sorted by depth): [from, to). */
-      const span = (j: number): [number, number] => {
-        const reach = ag * (Math.sqrt(sig2[j]!) + sigMax);
-        let lo = j;
-        while (lo > 0 && lam[j]! - lam[lo - 1]! <= reach) lo--;
-        let hi = j + 1;
-        while (hi < n && lam[hi]! - lam[j]! <= reach) hi++;
-        return [lo, hi];
-      };
-      let best = -1;
-      let bestFrames = 0;
-      for (let j = 0; j < n; j++) {
-        tick++;
-        let count = 0;
-        const [lo, hi] = span(j);
-        for (let i = lo; i < hi; i++)
-          if (stamp[fk[i]!] !== tick && agree(i, j)) {
-            stamp[fk[i]!] = tick;
-            count++;
-          }
-        if (count > bestFrames || (count === bestFrames && best >= 0 && sig2[j]! < sig2[best]!)) {
-          best = j;
-          bestFrames = count;
-        }
+      const choose = () =>
+        vote(
+          partners[k]![a]!.filter((c) => c.sig <= s.associationDepthPrecision * c.lam).sort(
+            (x, y) => x.lam - y.lam,
+          ),
+        );
+      // A sighting no fresh pair touched has the partner list it had last time, so its vote.
+      let sup: number[] | null;
+      if (!memo) sup = choose();
+      else {
+        const voteKey = `vote|${memo.keys[k]}|${a}`;
+        sup = changed[k]![a] || !memo.memo.has(voteKey) ? choose() : memo.memo.get(voteKey, choose);
+        if (changed[k]![a]) memo.memo.set(voteKey, sup);
+        else memo.memo.get(voteKey, () => sup);
       }
-      if (best < 0 || bestFrames < s.associationVotes) return;
-      let rival = 0;
-      for (let j = 0; j < n; j++) {
-        if (agree(j, best)) continue;
-        tick++;
-        let count = 0;
-        const [lo, hi] = span(j);
-        for (let i = lo; i < hi; i++)
-          if (stamp[fk[i]!] !== tick && agree(i, j) && !agree(i, best)) {
-            stamp[fk[i]!] = tick;
-            count++;
-          }
-        rival = Math.max(rival, count);
-      }
-      if (rival > s.associationRatio * bestFrames) return;
-      const sup = new Set<string>();
-      for (let i = 0; i < n; i++) if (agree(i, best)) sup.add(key(C[i]!.k, C[i]!.a));
-      chosen[k]![a] = sup;
+      if (sup) chosen[k]![a] = new Set(sup);
     }),
   );
   // Links: mutual support. Union–find over every node.
@@ -1058,11 +1159,7 @@ function strands(
   const adj = new Map<string, string[]>();
   for (const [a, list] of seen)
     for (const { other: b, count } of list)
-      if (
-        strong(a, count) &&
-        strong(b, count) &&
-        length(a, b) <= s.maxEdgeOverTypical * typical
-      )
+      if (strong(a, count) && strong(b, count) && length(a, b) <= s.maxEdgeOverTypical * typical)
         adj.set(a, [...(adj.get(a) ?? []), b]);
   for (const list of adj.values()) list.sort();
   const used = new Set<string>();
@@ -1156,16 +1253,26 @@ export function reconstructLattice(
   frames: readonly PosedFrame[],
   prefix: string,
   settings: LatticeSettings = LATTICE_SETTINGS,
+  /** The last rebuild's work for this attempt (`LatticeMemo`); the result is the same without. */
+  memo?: LatticeMemo,
 ): LatticeReconstruction {
+  const settingsHash = hashState(settings as unknown as Record<string, number>);
+  const reuse = memo && memo.settingsHash === settingsHash ? memo : undefined;
   const fieldIds = [...new Set(frames.map((f) => f.frame.field))].sort();
   const out: FieldReconstruction[] = fieldIds.map((field) => {
     const mine = frames.filter((f) => f.frame.field === field);
     const posed = mine.filter((f) => f.pose !== null);
-    const fn = posed.map((pf, k) => frameNodes(pf, k, settings));
+    const keys = reuse ? posed.map((pf, k) => reuse.idOf(frameKey(pf, k))) : [];
+    const fn = posed.map((pf, k) =>
+      reuse
+        ? reuse.get(`nodes|${keys[k]}`, () => frameNodes(pf, k, settings))
+        : frameNodes(pf, k, settings),
+    );
     const { tracks, trackOf } = associate(
       fn,
       posed.map((pf) => `${prefix}:${pf.frame.id}`),
       settings,
+      reuse ? { memo: reuse, keys } : undefined,
     );
     const nodes = fitNodes(tracks, field, settings);
     const edgeFrames = new Map<string, number>();
@@ -1212,9 +1319,10 @@ export function reconstructLattice(
       viewedVolume: viewed,
     };
   });
+  reuse?.commit();
   return {
     version: LATTICE_RECONSTRUCTION_VERSION,
-    settingsHash: hashState(settings as unknown as Record<string, number>),
+    settingsHash,
     fields: out,
   };
 }

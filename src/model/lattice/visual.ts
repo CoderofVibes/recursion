@@ -24,6 +24,7 @@ import { believedPoses } from './poses.ts';
 import {
   LATTICE_SETTINGS,
   reconstructLattice,
+  type LatticeMemo,
   type LatticeReconstruction,
   type LatticeSettings,
   type PosedFrame,
@@ -58,6 +59,8 @@ export function latticeFields(
   rec: AttemptRecord,
   now = Infinity,
   settings: LatticeSettings = LATTICE_SETTINGS,
+  /** The attempt's memo of earlier rebuilds (R61): faster, the same result. */
+  memo?: LatticeMemo,
 ): LatticeFields {
   const frames = latticeFrames(rec, now);
   const bySource = new Map<string, number[]>();
@@ -80,7 +83,7 @@ export function latticeFields(
     pose: poses[i] ?? null,
     sampleId: `${rec.id}/${frame.id}`,
   }));
-  const reconstruction = reconstructLattice(posed, rec.id, settings);
+  const reconstruction = reconstructLattice(posed, rec.id, settings, memo);
   const enabled = enabledAt(rec, now);
   const fields: BelievedField[] = reconstruction.fields.map((f) => {
     const mine = frames.filter((q) => q.frame.field === f.field);
