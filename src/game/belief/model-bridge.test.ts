@@ -221,4 +221,38 @@ describe('model bridge', () => {
     expect(calls.at(-1)).toBe('forecast:30:600:30374');
     expect(bridge.lastError()).toBeUndefined();
   });
+
+  it('delivers a draft that carries the forecast detail, whether the model puts it inside or beside', async () => {
+    const beside = { sigmaMajor: [], presentSource: 'arrival', presentTime: 0, asteroids: [] };
+    const inside = { sigmaMajor: [], presentSource: 'window', presentTime: 25, asteroids: [] };
+    const { client } = recordingClient();
+    const answer = (draft: object) =>
+      Object.assign(client, {
+        forecast: () => Promise.resolve({ forecast: draft as unknown as Forecast, detail: beside }),
+      });
+    const bridge = createModelBridge(client, { referenceRadius: 1e6, clock: () => 0 });
+    const box = createBlackBox();
+    bridge.beginAttempt(start, box.beginAttempt(start, 0));
+    const request = { id: 'f', attemptId: 'attempt-0001', issuedAt: 30, plan, span: 600 };
+    // An older client: the detail comes back beside the forecast and is put into the draft.
+    answer({ id: 'f', samples: [] });
+    expect((await bridge.forecast(request)).detail).toEqual(beside);
+    // The model now puts it inside: that one is kept.
+    answer({ id: 'f', samples: [], detail: inside });
+    expect((await bridge.forecast(request)).detail).toEqual(inside);
+  });
+
+  it('passes the burn and empirical reports through, in the queue with everything else', async () => {
+    const { client, calls } = recordingClient();
+    const bridge = createModelBridge(client, { referenceRadius: 1e6, clock: () => 0 });
+    const box = createBlackBox();
+    bridge.beginAttempt(start, box.beginAttempt(start, 0));
+    const [burns, empirical] = await Promise.all([
+      bridge.rules.burns(['attempt-0001']),
+      bridge.rules.empirical(),
+    ]);
+    expect(burns).toEqual([]);
+    expect(empirical).toBeNull();
+    expect(calls).toEqual(['init:30374', 'begin:attempt-0001', 'burns', 'empirical']);
+  });
 });

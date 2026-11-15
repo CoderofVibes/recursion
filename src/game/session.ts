@@ -18,10 +18,12 @@ import type {
   AttemptId,
   AttemptOutcome,
   AttemptOverlay,
+  AttemptRecord,
   BelievedWorld,
   Chart,
   Command,
   CommandSource,
+  CoverageLook,
   ExecutedCommand,
   Forecast,
   ForecastDraft,
@@ -36,13 +38,15 @@ import type {
   ViewSnapshot,
 } from '../contracts/index.ts';
 import { HANDS_ON_NEUTRAL, isHandsOnNeutral, issueForecast } from '../contracts/index.ts';
-import { handsOnFirings } from '../ship/index.ts';
+import { handsOnBodyRate, handsOnFirings } from '../ship/index.ts';
 import { buildChart } from './belief/chart.ts';
+import { earlierCoverage, type CoverageReplayOptions } from './belief/coverage.ts';
 import type { GameControls, Phase, PlanDraft, SessionStatus } from './belief/controls.ts';
 import type {
   AttemptStartInfo,
   BlackBoxPort,
   HandsOnThrust,
+  HandsOnTurn,
   ModelPort,
   RecordBatch,
   RuleControls,
@@ -141,6 +145,10 @@ export function createGameSession(setup: EncounterSetup, options: SessionOptions
   /** The hands-on input last sent to the ship this attempt; the controls start released. */
   let flown: HandsOnInput = HANDS_ON_NEUTRAL;
   let commanded: CommandedState = initialCommandedState;
+  /** Finished attempts when this one began, and what their sensors covered (built on demand). */
+  let earlierRecords: readonly AttemptRecord[] = [];
+  let earlierLooks: readonly CoverageLook[] | undefined;
+  const looksByAttempt = new Map<AttemptId, readonly CoverageLook[]>();
   /** The thrust drawn for the controls as held, and what it was worked out from. */
   let drawn: { input: HandsOnInput; mass: number; thrust: readonly ThrustTick[] } | undefined;
   let trail: TrailPoint[] = [];
@@ -158,6 +166,9 @@ export function createGameSession(setup: EncounterSetup, options: SessionOptions
    * It reads nothing of the ship's true state, so the believed side may use the answer: the
    * view draws it and the navigator follows it.
    */
+  /** The turn the controls ask for, from the same flight-software law the ship flies. */
+  const handsOnTurn: HandsOnTurn = (input) => handsOnBodyRate(definition.ship, input);
+
   const handsOnThrust: HandsOnThrust = (input, massProperties) =>
     handsOnFirings(definition.ship, input, massProperties)
       .filter((firing) => firing.force >= FAINTEST_FIRING)
@@ -167,6 +178,17 @@ export function createGameSession(setup: EncounterSetup, options: SessionOptions
         direction: firing.direction,
         magnitude: firing.force,
       }));
+
+  /** What a replay of an earlier attempt needs to follow it as the navigator did. */
+  const replay: CoverageReplayOptions = {
+    ship: definition.ship,
+    briefing: definition.briefing,
+    referenceRadius:
+      definition.briefing.referenceRadius ?? setup.definition.world.law.referenceRadius,
+    arrivalMass: setup.arrivalMass,
+    handsOnThrust,
+    handsOnTurn,
+  };
 
   /** The thrust the controls ask for right now, from the last executed `fly` input. */
   function heldThrust(world: BelievedWorld): readonly ThrustTick[] {
@@ -209,7 +231,11 @@ export function createGameSession(setup: EncounterSetup, options: SessionOptions
       arrivalMass: setup.arrivalMass,
       startedAt: now(),
       handsOnThrust,
+      handsOnTurn,
     };
+    // Every attempt Black Box holds is finished now; this attempt's own is not among them.
+    earlierRecords = blackBox.archive().attempts;
+    earlierLooks = undefined;
     model.beginAttempt(start, blackBox.beginAttempt(start, model.state().version));
     trails.set(attemptId, trail);
     trail.push({ t: 0, position: model.believedWorld(0).ship.position });
@@ -390,6 +416,12 @@ export function createGameSession(setup: EncounterSetup, options: SessionOptions
         ...(selection ? { selection } : {}),
         // The one place truth reaches the view without an instrument: what the eye can see.
         window: buildWindowView(truth.sim.world, play.windowMinAngularRadius),
+        coverageEarlier: (earlierLooks ??= earlierCoverage(
+          earlierRecords,
+          attemptId,
+          replay,
+          looksByAttempt,
+        )),
       });
     },
 

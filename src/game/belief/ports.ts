@@ -33,6 +33,7 @@ import type {
   ShipDefinition,
   ShipEvent,
   ThrustTick,
+  Vec3,
 } from '../../contracts/index.ts';
 import type {
   BurnReport,
@@ -52,6 +53,12 @@ export type HandsOnThrust = (
   massProperties: MassProperties,
 ) => readonly ThrustTick[];
 
+/**
+ * The body rate (rad/s) the ship's flight software turns at for a hands-on yaw and pitch
+ * demand, as designed (src/ship `handsOnBodyRate`). Body frame; roll is always zero.
+ */
+export type HandsOnTurn = (input: Pick<HandsOnInput, 'yaw' | 'pitch'>) => Vec3;
+
 /** A new attempt: at arrival, or after recurrence (P8). */
 export interface AttemptStartInfo {
   readonly attemptId: AttemptId;
@@ -68,6 +75,11 @@ export interface AttemptStartInfo {
    * translation flown by hand; without it, only the main-engine throttle.
    */
   readonly handsOnThrust?: HandsOnThrust;
+  /**
+   * The turn a hands-on yaw and pitch demand asks for, as designed. With it the believed
+   * attitude follows a stick the moment it moves; without it, from the next gyro reading.
+   */
+  readonly handsOnTurn?: HandsOnTurn;
 }
 
 /** What Black Box recorded for one tick, in acquisition order. */

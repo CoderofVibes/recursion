@@ -68,6 +68,7 @@ import type {
   AttemptStartInfo,
   ForecastRequest,
   HandsOnThrust,
+  HandsOnTurn,
   ModelPort,
   RecordBatch,
 } from './ports.ts';
@@ -205,6 +206,12 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
   let briefing: EncounterBriefing | undefined;
   let ship: ShipDefinition | undefined;
   let handsOnThrust: HandsOnThrust | undefined;
+  let handsOnTurn: HandsOnTurn | undefined;
+  /**
+   * When the controls last changed the turn. A gyro reading taken at that instant describes
+   * the ship before the controls took effect, so it does not replace the turn they ask for.
+   */
+  let turnChangedAt = -Infinity;
   let version = 1;
   const parameters = new Map<string, number>();
   const attemptsSeen: string[] = [];
@@ -924,6 +931,7 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
       arrivalMass = start.arrivalMass;
       ship = start.ship;
       handsOnThrust = start.handsOnThrust;
+      handsOnTurn = start.handsOnTurn;
       if (attemptsSeen.length === 0)
         for (const prior of briefing.priors)
           if (!prior.extension && !parameters.has(prior.id)) parameters.set(prior.id, prior.value);
@@ -992,6 +1000,7 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
       modes = {};
       burns = [];
       flown = [];
+      turnChangedAt = -Infinity;
       primaryFixT = undefined;
     },
 
@@ -1030,15 +1039,18 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
           const thrust = thrustFlown(c.input);
           if (thrust.length > 0)
             flown.push({ start: done.t, end: Infinity, thrust, force: netForce(thrust) });
-          // With the sticks centred the ship stops turning and holds (contracts: HandsOnInput),
-          // so the last gyro rate no longer describes it: keep the attitude it has now until
-          // the gyros and star trackers speak again.
-          if (c.input.yaw === 0 && c.input.pitch === 0)
+          // The sticks set the turn (contracts: HandsOnInput): centred, the ship stops turning
+          // and holds; deflected, it turns at the rate the flight software asks for. Either
+          // way the last gyro rate no longer describes it, so the attitude is carried at the
+          // new rate from now until the gyros and star trackers speak again.
+          const centred = c.input.yaw === 0 && c.input.pitch === 0;
+          if (centred || handsOnTurn) turnChangedAt = done.t;
+          if (centred || handsOnTurn)
             attitude = {
               ...attitude,
               q: attitudeAt(done.t),
               t: done.t,
-              rate: { x: 0, y: 0, z: 0 },
+              rate: centred || !handsOnTurn ? { x: 0, y: 0, z: 0 } : handsOnTurn(c.input),
             };
         } else if (c.kind === 'mode') modes[c.equipment] = c.mode;
       }
@@ -1076,13 +1088,15 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
             sigma: Math.max(sigma, m.sigma[1] ?? 0, m.sigma[2] ?? 0),
           };
         } else if (m.kind === 'rate') {
-          // Gyros: carry the attitude to now at the old rate, then take the new one.
-          attitude = {
-            ...attitude,
-            q: attitudeAt(m.t),
-            t: m.t,
-            rate: { x: value, y: m.value[1] ?? 0, z: m.value[2] ?? 0 },
-          };
+          // Gyros: carry the attitude to now at the old rate, then take the new one, unless the
+          // reading was taken as the controls changed (it shows the ship before they acted).
+          if (m.t > turnChangedAt)
+            attitude = {
+              ...attitude,
+              q: attitudeAt(m.t),
+              t: m.t,
+              rate: { x: value, y: m.value[1] ?? 0, z: m.value[2] ?? 0 },
+            };
         } else if ((m.kind === 'bearing' || m.kind === 'range') && m.target === p.id) {
           advanceShip(m.t);
           const [px, py, pz] = nav.x as [number, number, number];

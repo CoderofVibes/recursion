@@ -9,6 +9,7 @@ import type {
   AttemptOverlay,
   BelievedWorld,
   Command,
+  CoverageLook,
   EquipmentId,
   Forecast,
   HandsOnInput,
@@ -25,9 +26,9 @@ import { isHandsOnNeutral } from '../../contracts/index.ts';
 import { rotate } from '../../lib/quat.ts';
 import type { Vec3 } from '../../lib/vec3.ts';
 
-/** [ASSUMED] Display values for the camera's coverage cone. */
+/** [ASSUMED] Display values for the camera's coverage cone: its reach, m. */
 const CAMERA_HALF_ANGLE = Math.PI / 6;
-const CAMERA_RANGE = 6_000_000;
+export const CAMERA_RANGE = 6_000_000;
 
 const UNIT_X: Vec3 = { x: 1, y: 0, z: 0 };
 
@@ -133,7 +134,11 @@ const unit = (v: Vec3): Vec3 | undefined => {
   return length > 0 ? { x: v.x / length, y: v.y / length, z: v.z / length } : undefined;
 };
 
-function coverage(
+/**
+ * Where the ship's cameras can look right now, as commanded: one cone per camera that is on
+ * and drawing power, along its believed axis, with its half-angle from the design.
+ */
+export function sensorCones(
   definition: ShipDefinition,
   commanded: CommandedState,
   world: BelievedWorld,
@@ -201,6 +206,8 @@ export interface ViewInputs {
   readonly selection?: Selection;
   /** What the eye sees outside, from the truth-side window module. */
   readonly window?: WindowView;
+  /** Coverage sensed in earlier attempts of this encounter, from Black Box (`coverage.ts`). */
+  readonly coverageEarlier?: readonly CoverageLook[];
 }
 
 export function buildViewSnapshot(inputs: ViewInputs): ViewSnapshot {
@@ -219,10 +226,13 @@ export function buildViewSnapshot(inputs: ViewInputs): ViewSnapshot {
     },
     trail: inputs.trail,
     forecasts: inputs.forecasts,
-    coverage: { cones: coverage(definition, commanded, world) },
+    coverage: { cones: sensorCones(definition, commanded, world) },
     objectives: placeObjectives(inputs.objectives, world),
     ...(inputs.compare ? { compare: inputs.compare } : {}),
     ...(inputs.selection ? { selection: inputs.selection } : {}),
     ...(inputs.window ? { window: inputs.window } : {}),
+    ...(inputs.coverageEarlier && inputs.coverageEarlier.length > 0
+      ? { coverageEarlier: inputs.coverageEarlier }
+      : {}),
   };
 }

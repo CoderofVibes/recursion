@@ -4,7 +4,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import { MemoryBlackBoxStore } from '../../blackbox/index.ts';
+import { MemoryBlackBoxStore, saveProcedure } from '../../blackbox/index.ts';
 import { createGravityRange, LAW } from '../../content/gravity-range/index.ts';
 import { createGameSession } from '../session.ts';
 import { createBlackBox } from './blackbox.ts';
@@ -140,5 +140,48 @@ describe('Black Box in the game loop', () => {
     expect(session.status()).toMatchObject({ attemptId: 'attempt-0002', attemptIndex: 2 });
     await flush();
     expect((await store.load()).archive.attempts[0]!.outcome).toEqual({ kind: 'recalled', t: 40 });
+  });
+
+  it('keeps a saved procedure across attempts and a reload, until it is removed (P9)', async () => {
+    const store = new MemoryBlackBoxStore();
+    const session = createGameSession(setup, {
+      model: createStandInModel({ referenceRadius: LAW.referenceRadius }),
+      blackBox: createBlackBox({ store, saveInterval: 0, clock: () => 0 }),
+      now: () => 'now',
+    });
+    session.stepTicks(30);
+    session.command({ kind: 'mark', label: 'here' });
+    session.stepTicks(10);
+    // The console saves the opening of this attempt as a procedure, through GameControls.
+    const procedure = saveProcedure({
+      id: 'opening',
+      name: 'Opening',
+      record: session.blackBox.attempt('attempt-0001')!,
+      from: 0,
+      to: 40,
+      tolerance: { position: 5e3, velocity: 2, attitude: 0.05 },
+    });
+    expect(procedure.items.map((i) => i.command.kind)).toEqual(['recorder', 'point', 'mark']);
+    session.blackBox.saveProcedure(procedure);
+    expect(session.blackBox.archive().procedures).toEqual([procedure]);
+
+    // The next attempt still has it.
+    session.recall();
+    expect(session.status().attemptId).toBe('attempt-0002');
+    expect(session.blackBox.archive().procedures).toEqual([procedure]);
+    // Saving it again under the same id replaces it.
+    const renamed = { ...procedure, name: 'Opening, kept' };
+    session.blackBox.saveProcedure(renamed);
+    expect(session.blackBox.archive().procedures).toEqual([renamed]);
+
+    // A reload: a new Black Box over what the store holds.
+    await flush();
+    const reloaded = createBlackBox({ archive: (await store.load()).archive, store });
+    expect(reloaded.archive().procedures).toEqual([renamed]);
+    reloaded.removeProcedure('opening');
+    reloaded.removeProcedure('never-saved');
+    expect(reloaded.archive().procedures).toEqual([]);
+    await flush();
+    expect((await store.load()).archive.procedures).toEqual([]);
   });
 });

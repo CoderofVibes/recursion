@@ -226,6 +226,41 @@ describe('game session: commit a plan', () => {
     expect(blackBox.attempt('attempt-0001')!.forecasts).toEqual([]);
   });
 
+  it('keeps the forecast detail through preview, commit and Black Box', async () => {
+    const { session, blackBox } = start();
+    session.stepTicks(100);
+    const draft = await session.preview(dive(session, 9.85));
+    expect(draft.detail!.sigmaMajor).toHaveLength(draft.samples.length);
+    expect(draft.detail!.presentSource).toBe('navigator');
+    const forecast = await session.commit(dive(session, 9.85));
+    expect(forecast.detail!.sigmaMajor).toHaveLength(forecast.samples.length);
+    expect(Object.isFrozen(forecast.detail)).toBe(true);
+    expect(blackBox.attempt('attempt-0001')!.forecasts[0]!.detail).toEqual(forecast.detail);
+    // The planned burn's attitude, resolved as the ship will resolve it, is in the record too.
+    expect(forecast.inputs.plannedAttitudes).toHaveLength(1);
+    expect(forecast.inputs.plannedAttitudes![0]!.t).toBe(700);
+  });
+
+  it('charts the encounter: its attempts, and what the model has measured there', () => {
+    const { session } = start();
+    expect(session.chart().regions[0]).toMatchObject({
+      id: 'gravity-range',
+      surveyed: 0,
+      current: true,
+      attempts: [{ index: 1, outcome: 'in-progress' }],
+    });
+    session.stepTicks(100);
+    session.recall();
+    // Alpha's pull has been measured (fixes at r0); Beta's has not, and no rule is adopted.
+    expect(session.chart().regions[0]).toMatchObject({
+      surveyed: 1 / 3,
+      attempts: [
+        { index: 1, outcome: 'recalled' },
+        { index: 2, outcome: 'in-progress' },
+      ],
+    });
+  });
+
   it('holds time still while a commit waits for its forecast', async () => {
     const { session } = start(() => 0);
     session.setPaused(false);

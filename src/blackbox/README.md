@@ -65,6 +65,8 @@ const plan = procedurePlan(p, planId, epoch);                                 //
 
 Saved items are the commands that reached the ship between `from` and `to` (not rejected ones, not protection actions). `matchProcedure` says which condition differs (encounter, configuration, position, velocity, attitude); only a full match replays exactly. Position and velocity differences are 3D distances; the attitude difference is the angle of the rotation between the two attitudes.
 
+In the game a procedure is kept with `GameControls.blackBox.saveProcedure(p)` (and forgotten with `removeProcedure(id)`): it goes into the archive's `procedures` and to the store (`putProcedure`, `deleteProcedure`), so it is there in the next attempt and after a reload (`src/game/belief/blackbox.ts`).
+
 ## Tests
 
 `blackbox.test.ts`: recorder ordering, freezing and loss; storage round trip with forecasts reissued; model rebuilt from stored records equals the live model fed through the recorder; comparison finding where an outcome left a forecast (and not where it did not), divergence measured in 3D against a flat ellipsoid (3σ out of the plane, 1σ in it), plan and configuration diffs, residual split and missing data; procedure save, match and replay. The IndexedDB store was exercised in Chrome via the dev server (records written, read back, model rebuilt in a Web Worker).
