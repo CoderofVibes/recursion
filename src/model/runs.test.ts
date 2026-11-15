@@ -38,7 +38,8 @@ const R0 = 1e6;
 const v = JSON.parse(rawValidation) as VectorJson;
 const lawCase = v.cases.find((c) => c.id === 'distance-law')!;
 const binaryCase = v.cases.find((c) => c.id === 'overlooked-body')!;
-// LIFT(2G): the scenarios in this file are planar (z = 0, yaw-only attitude, flat hull).
+// The scenarios in this file are planar (z = 0, yaw-only attitude, flat hull): the model runs
+// them in the planar reduction (`planar: 1`, spec Appendix A.3), as the planar model did.
 const massProperties: MassProperties = {
   mass: MASS,
   centerOfMass: { x: 0, y: 0, z: 0 },
@@ -86,7 +87,7 @@ function context(
     bodies,
     ship: testShip(MASS, 150),
     arrival,
-    settings: { dt: 60 },
+    settings: { dt: 60, planar: 1 },
     ...extra,
   };
 }
@@ -138,17 +139,25 @@ describe('each run starts from different geometry (A10)', () => {
   const ctx = context(priors, bodiesOf('att1'));
   const plain = records(binaryCase);
 
-  it('fits attempts at different binary phases together when each carries its briefing', () => {
-    const svc = new ModelService(ctx);
-    const s = svc.load({ attempts: plain.map((r) => withBriefing(r)) });
-    expect(s.fit!.converged).toBe(true);
-    expect(s.fit!.chi2 / s.fit!.nu).toBeLessThan(1.2);
-    const mb = s.parameters.find((p) => p.id === 'body.B.mu')!;
-    expect(Math.abs(mb.value - tv['truth.muB']!)).toBeLessThan(3 * mb.sigma);
-    // Without per-attempt geometry, attempts 2 and 3 are fitted against attempt 1's B.
-    const blind = new ModelService(ctx).load({ attempts: plain });
-    expect(blind.fit!.chi2 / blind.fit!.nu).toBeGreaterThan(5);
-  });
+  // About 4 s alone (two rebuilds of three 16 h binary arcs; the 3D code propagates nine numbers
+  // per particle where the planar one had six): past the 5 s default under the whole suite.
+  it(
+    'fits attempts at different binary phases together when each carries its briefing',
+    {
+      timeout: 60_000,
+    },
+    () => {
+      const svc = new ModelService(ctx);
+      const s = svc.load({ attempts: plain.map((r) => withBriefing(r)) });
+      expect(s.fit!.converged).toBe(true);
+      expect(s.fit!.chi2 / s.fit!.nu).toBeLessThan(1.2);
+      const mb = s.parameters.find((p) => p.id === 'body.B.mu')!;
+      expect(Math.abs(mb.value - tv['truth.muB']!)).toBeLessThan(3 * mb.sigma);
+      // Without per-attempt geometry, attempts 2 and 3 are fitted against attempt 1's B.
+      const blind = new ModelService(ctx).load({ attempts: plain });
+      expect(blind.fit!.chi2 / blind.fit!.nu).toBeGreaterThan(5);
+    },
+  );
 
   it('places each attempt’s forecast in that attempt’s geometry', () => {
     const shift = { x: 5e5, y: -2e5 };
@@ -252,22 +261,23 @@ describe('asteroid fixes a passing test fits widen its validated span (A5)', () 
   const apsisSpeed = (rFrom: number, rTo: number) =>
     Math.sqrt((2 * (potential(rTo) - potential(rFrom))) / (1 - (rFrom / rTo) ** 2));
   const truthAt = (state: readonly number[], times: readonly number[]) => {
+    const [x, y, vx, vy] = state as [number, number, number, number];
     const st = {
       r0: R0,
       n: N,
       bodies: [{ id: 'A', mu: MU, state: 'gauge' as const }],
-      ship: state as unknown as readonly [number, number, number, number],
+      ship: [x, y, 0, vx, vy, 0] as const,
       dynamicBodies: false,
-      engine: { kE: 1, dE: 0 },
+      engine: { kE: 1, dE: 0, dP: 0 },
       kA: 1,
-      camBias: 0,
+      camBias: [0, 0, 0] as const,
     };
     return simulate(
       compileArc(st, { id: 'truth', epoch: 0, commands: [] }, new Map()),
       [],
       times,
       15,
-    ).pos.map((p) => [p[2]!, p[3]!] as const);
+    ).pos.map((p) => [p[3]!, p[4]!] as const);
   };
   const tv = lawCase.truth.values;
   /** Add an asteroid seen with the ship's camera at every fix time of the attempt. */

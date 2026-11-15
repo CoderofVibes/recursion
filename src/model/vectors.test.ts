@@ -1,7 +1,12 @@
 /**
- * 1G estimator vectors (tests/vectors/estimator/): every fit is rebuilt from the vector's
- * inputs by this implementation, numeric fits are compared within the vectors' tolerances, and
- * all 74 physical claims (revision 2) are re-evaluated from this implementation's results.
+ * 1G estimator vectors, the planar set (tests/vectors/estimator/), run through the
+ * three-dimensional estimator in the planar reduction of spec revision 3 (Appendix A.3): z and
+ * vz, the pitch misalignment, the camera components about body x and y and the orbit-normal
+ * empirical term are held at zero as fixed numbers, and the elevation and f_z rows are left out.
+ * Every fit is rebuilt from the vector's inputs by this implementation, numeric fits are compared
+ * within the vectors' tolerances, and all 74 physical claims (revision 2) are re-evaluated from
+ * this implementation's results. The out-of-plane parts of every state, covariance and forecast
+ * must come out exactly zero.
  *
  * Truth (the `truth` blocks and the truth columns of forecast points) is read here only to
  * evaluate claims. It never reaches estimator code (P11).
@@ -52,6 +57,7 @@ import {
   type WindowFit,
 } from './tierL.ts';
 import {
+  liftCommand,
   toArc,
   toParams,
   toStructure,
@@ -95,7 +101,7 @@ function myInit(fit: FitJson, arcs: ReadonlyMap<string, Arc>): Record<string, nu
   for (const p of fit.parameters) {
     const ship = /^(.+)\.ship\.(x|y|vx|vy)$/.exec(p.name);
     const body = /^(.+)\.B\.(x|y|vx|vy)$/.exec(p.name);
-    const k = ['x', 'y', 'vx', 'vy'];
+    const k = ['x', 'y', 'z', 'vx', 'vy', 'vz'];
     if (ship) out[p.name] = guessShip(arcs.get(ship[1]!)!, 'A', 0)[k.indexOf(ship[2]!)]!;
     else if (body) out[p.name] = guessBody(arcs.get(body[1]!)!, 'A', 'B', 0)[k.indexOf(body[2]!)]!;
     else out[p.name] = p.init;
@@ -115,16 +121,23 @@ function runFit(fit: FitJson, arcs: ReadonlyMap<string, Arc>, x0?: Record<string
   return { st, params, res };
 }
 
+/** Worst agreement with the reference over every numeric fit compared (DECISIONS D7). */
+const worst = { fits: 0, estimateOverSigma: 0, sigmaRelative: 0, chi2Relative: 0, correlation: 0 };
+
 /** Numeric comparison within the vectors' stated tolerance. Returns failures. */
 function compareFit(f: FitResult, e: ExpectedFit): string[] {
   const bad: string[] = [];
+  worst.fits++;
   for (const [name, ref] of Object.entries(e.estimate)) {
     const [x, s] = fitGet(f, name);
     const sr = e.sigma[name]!;
+    worst.estimateOverSigma = Math.max(worst.estimateOverSigma, Math.abs(x - ref) / sr);
+    worst.sigmaRelative = Math.max(worst.sigmaRelative, Math.abs(s / sr - 1));
     if (Math.abs(x - ref) > 0.05 * sr)
       bad.push(`${name}: ${x} vs ${ref} (${((x - ref) / sr).toFixed(3)} σ)`);
     if (Math.abs(s / sr - 1) > 0.05) bad.push(`${name} σ: ${s} vs ${sr}`);
   }
+  worst.chi2Relative = Math.max(worst.chi2Relative, Math.abs(f.chi2 / e.chi2 - 1));
   if (Math.abs(f.chi2 / e.chi2 - 1) > 0.02) bad.push(`chi2 ${f.chi2} vs ${e.chi2}`);
   if (f.m !== e.m) bad.push(`m ${f.m} vs ${e.m}`);
   const names = e.correlation.names;
@@ -133,6 +146,7 @@ function compareFit(f: FitResult, e: ExpectedFit): string[] {
       if (j <= i) return;
       const rho = fitCorr(f, a, b);
       const ref = e.correlation.matrix[i]![j]!;
+      worst.correlation = Math.max(worst.correlation, Math.abs(rho - ref));
       if (Math.abs(rho - ref) > 0.02) bad.push(`rho(${a},${b}) ${rho} vs ${ref}`);
     }),
   );
@@ -179,15 +193,21 @@ function compareTierL(
   return bad;
 }
 
+/** The planar reference law: `cam` is the camera bias about z; states are fitted in the plane. */
 const refLaw = (r: TierLJson['reference']): ReferenceLaw => ({
   r0: r.r0,
   body: 'A',
   mu: r.mu,
   n: r.n,
-  cam: r.cam,
+  cam: [0, 0, r.cam],
   kE: r.kE ?? 1,
   dE: r.dE ?? 0,
+  planar: true,
 });
+
+/** In-plane components of a six-number state, in the planar order x, y, vx, vy. */
+const PLANE = [0, 1, 3, 4] as const;
+const OUT = [2, 5] as const;
 
 function tierL(ref: ReferenceLaw, arcs: readonly Arc[]) {
   const rows = localFits(ref, arcs, DT, { gSigma: 0.5 });
@@ -354,9 +374,10 @@ describe('missing-body-signature', () => {
     body: 'A',
     mu: fitGet(rA.res, 'mu.A')[0],
     n: 2,
-    cam: fitGet(rA.res, 'camera.bias')[0],
+    cam: [0, 0, fitGet(rA.res, 'camera.bias')[0]],
     kE: 1,
     dE: 0,
+    planar: true,
   };
   const tl = tierL(ref, [a1]);
   const empJ = fitById(c, 'empirical-on-calibrated-law');
@@ -485,7 +506,7 @@ describe('extension-validation', () => {
   const [nX, snX] = fitGet(fX, 'law.n');
   const heldArc = X.arcs.get('att3')!;
   const trainRanges = law.training!.flatMap((id) =>
-    rangeFixes(X.arcs.get(id)!, 'A').map((m) => m.z[1]!),
+    rangeFixes(X.arcs.get(id)!, 'A').map((m) => m.z[2]!),
   );
   const trainMin = Math.min(...trainRanges);
   const trainMax = Math.max(...trainRanges);
@@ -495,9 +516,10 @@ describe('extension-validation', () => {
       body: 'A',
       mu: fitGet(fX, 'mu.A')[0],
       n: nX,
-      cam: fitGet(fX, 'camera.bias')[0],
+      cam: [0, 0, fitGet(fX, 'camera.bias')[0]],
       kE: 1,
       dE: 0,
+      planar: true,
     },
     [heldArc],
     DT,
@@ -554,6 +576,9 @@ describe('extension-validation', () => {
 // 7. forecast-envelope
 // ---------------------------------------------------------------------------------------------
 
+/** Worst forecast mean against the reference inside the horizon, in units of its major sigma. */
+let forecastWorst = 0;
+
 describe('forecast-envelope', () => {
   const v = V(rawForecast);
   const c = v.cases[0]!;
@@ -568,7 +593,7 @@ describe('forecast-envelope', () => {
   const anc = anchorState(ref, tl.profile, a3, wins, DT, { gPrior: [1, 0.5], slopeSigma: 0.2 });
 
   const plans = Object.entries(c.plans!).map(([pid, p]) => {
-    const commands = p.commands.map((q) => ({ t0: q.t0, t1: q.t1, u: q.u, theta: q.theta }));
+    const commands = p.commands.map(liftCommand);
     const base = {
       ref,
       commands,
@@ -578,7 +603,7 @@ describe('forecast-envelope', () => {
       times: p.checkpoints,
       dt: DT,
       s2: tl.s2,
-      engineSigma: [fi.engineSigma.kE, fi.engineSigma.dE] as const,
+      engineSigma: [fi.engineSigma.kE, fi.engineSigma.dE, 0] as const,
     };
     const fc = forecastCore({ ...base, profiles: [tl.profile], sigmaH: fi.sigmaH });
     const bare = forecastCore({ ...base, profiles: [], sigmaH: 0 });
@@ -588,7 +613,7 @@ describe('forecast-envelope', () => {
       const mean = fc.mean[i]!;
       const cv = fc.cov[i]!;
       const truth = refPoints[i]!.truth;
-      const r = Math.hypot(mean[0]!, mean[1]!);
+      const r = Math.hypot(mean[0]!, mean[1]!, mean[2]!);
       const sig = {
         state: majorSigma(cv.state),
         profile: majorSigma(cv.profile),
@@ -597,15 +622,16 @@ describe('forecast-envelope', () => {
         total: majorSigma(cv.total),
       };
       within = within && sig.total <= fi.horizonFraction * r;
-      const dev: [number, number] = [truth[0] - mean[0]!, truth[1] - mean[1]!];
+      const dev = [truth[0] - mean[0]!, truth[1] - mean[1]!, 0];
       const noHedge = {
-        rows: 2,
-        cols: 2,
+        rows: 3,
+        cols: 3,
         data: cv.total.data.map((q, k) => q - cv.hedge.data[k]!),
       };
       return {
         t,
         mean,
+        cov: cv.total,
         sig,
         r,
         inside: tl.profile.rMin <= r && r <= tl.profile.rMax,
@@ -628,12 +654,31 @@ describe('forecast-envelope', () => {
     expect(anc.tNow).toBe(ra.tNow);
     const C = fromRows(ra.covariance);
     for (let i = 0; i < 4; i++) {
+      const k = PLANE[i]!;
       const s = Math.sqrt(C.data[i * 4 + i]!);
-      expect(Math.abs(anc.state[i]! - ra.state[i]!)).toBeLessThan(0.05 * s);
-      expect(Math.abs(Math.sqrt(anc.covariance.data[i * 4 + i]!) / s - 1)).toBeLessThan(0.05);
+      expect(Math.abs(anc.state[k]! - ra.state[i]!)).toBeLessThan(0.05 * s);
+      expect(Math.abs(Math.sqrt(anc.covariance.data[k * 6 + k]!) / s - 1)).toBeLessThan(0.05);
     }
     expect(Math.abs(anc.info.g - ra.g)).toBeLessThan(0.05 * ra.gSigma);
     expect(Math.abs(anc.info.g1 - ra.g1)).toBeLessThan(0.05 * ra.g1Sigma);
+  });
+
+  it('planar inputs stay planar: nothing out of the plane in the state or the forecast', () => {
+    // The planar reduction holds z and vz as the fixed number 0, so these are exact zeros.
+    for (const k of OUT) {
+      expect(anc.state[k]).toBe(0);
+      for (let j = 0; j < 6; j++) {
+        expect(anc.covariance.data[k * 6 + j]).toBe(0);
+        expect(anc.covariance.data[j * 6 + k]).toBe(0);
+      }
+    }
+    for (const { points } of plans)
+      for (const p of points) {
+        expect(p.mean[2]).toBe(0);
+        expect(p.mean[5]).toBe(0);
+        // xz, yz, zx, zy, zz of the 3×3 covariance: the planar one embedded as [xx, xy, 0, yy, 0, 0].
+        for (const k of [2, 5, 6, 7, 8]) expect(p.cov.data[k]).toBe(0);
+      }
   });
 
   it('forecast points inside the horizon match the reference', () => {
@@ -643,9 +688,9 @@ describe('forecast-envelope', () => {
         expect(p.within).toBe(rp.withinHorizon);
         expect(p.inside).toBe(rp.insideCoverage);
         if (!rp.withinHorizon) return;
-        expect(Math.hypot(p.mean[0]! - rp.mean[0], p.mean[1]! - rp.mean[1])).toBeLessThan(
-          0.05 * rp.sigmaMajor.total,
-        );
+        const off = Math.hypot(p.mean[0]! - rp.mean[0], p.mean[1]! - rp.mean[1]);
+        forecastWorst = Math.max(forecastWorst, off / rp.sigmaMajor.total);
+        expect(off).toBeLessThan(0.05 * rp.sigmaMajor.total);
         for (const k of ['state', 'profile', 'hedge', 'engine', 'total'] as const) {
           const a = p.sig[k];
           const b = rp.sigmaMajor[k];
@@ -748,7 +793,7 @@ describe('carried-rule-forecast', () => {
     const fc = forecastCore({
       ref,
       profiles: [tl.profile],
-      commands: c.plan.commands.map((q) => ({ t0: q.t0, t1: q.t1, u: q.u, theta: q.theta })),
+      commands: c.plan.commands.map(liftCommand),
       tNow: anc.tNow,
       xNow: anc.state,
       PNow: anc.covariance,
@@ -756,7 +801,7 @@ describe('carried-rule-forecast', () => {
       dt: DT,
       s2: tl.s2,
       sigmaH: f.sigmaDefault,
-      engineSigma: [fi.engineSigma.kE, fi.engineSigma.dE],
+      engineSigma: [fi.engineSigma.kE, fi.engineSigma.dE, 0],
       ...(f.validated.length > 0
         ? { validated: { A: { spans: f.validated, sigmaE: f.sigmaEarned! } } }
         : {}),
@@ -765,7 +810,7 @@ describe('carried-rule-forecast', () => {
     const points = c.plan.checkpoints.map((t, i) => {
       const mean = fc.mean[i]!;
       const cv = fc.cov[i]!;
-      const r = Math.hypot(mean[0]!, mean[1]!);
+      const r = Math.hypot(mean[0]!, mean[1]!, mean[2]!);
       const sig: SigmaParts = {
         state: majorSigma(cv.state),
         profile: majorSigma(cv.profile),
@@ -776,7 +821,7 @@ describe('carried-rule-forecast', () => {
       };
       within = within && sig.total <= fi.horizonFraction * r;
       const truth = f.points[i]!.truth;
-      const dev: [number, number] = [truth[0] - mean[0]!, truth[1] - mean[1]!];
+      const dev = [truth[0] - mean[0]!, truth[1] - mean[1]!, 0];
       return {
         t,
         mean,
@@ -800,9 +845,10 @@ describe('carried-rule-forecast', () => {
     const ra = R.f.anchor;
     const C = fromRows(ra.covariance);
     for (let i = 0; i < 4; i++) {
+      const k = PLANE[i]!;
       const sg = Math.sqrt(C.data[i * 4 + i]!);
-      expect(Math.abs(R.anc.state[i]! - ra.state[i]!)).toBeLessThan(0.05 * sg);
-      expect(Math.abs(Math.sqrt(R.anc.covariance.data[i * 4 + i]!) / sg - 1)).toBeLessThan(0.05);
+      expect(Math.abs(R.anc.state[k]! - ra.state[i]!)).toBeLessThan(0.05 * sg);
+      expect(Math.abs(Math.sqrt(R.anc.covariance.data[k * 6 + k]!) / sg - 1)).toBeLessThan(0.05);
     }
   });
 
@@ -916,7 +962,7 @@ describe('parameter-aging', () => {
     const arc = subset.startsWith('quick') ? quick : full;
     const init: Record<string, number> = {};
     const g = guessShip(arc, 'A', arc.epoch);
-    ['x', 'y', 'vx', 'vy'].forEach((k, i) => (init[`att1.ship.${k}`] = g[i]!));
+    ['x', 'y', 'vx', 'vy'].forEach((k, i) => (init[`att1.ship.${k}`] = g[PLANE[i]!]!));
     const res = stagedFit(toStructure(j.model), [arc], toParams(j, init), OPTS);
     return { j, res, init };
   });
@@ -1008,5 +1054,22 @@ describe('estimator vectors', () => {
       total += mine!.size;
     }
     expect(total).toBe(74);
+  });
+
+  it('agrees with the reference far inside the tolerance (DECISIONS D7)', () => {
+    // Tolerance: 0.05 σ per estimate, 5% per sigma, 2% in χ², 0.02 per correlation.
+    console.log(
+      `planar vectors through the 3D estimator (planar reduction): ${worst.fits} numeric fits; ` +
+        `worst estimate ${worst.estimateOverSigma.toExponential(1)} σ from the reference, ` +
+        `sigma ${worst.sigmaRelative.toExponential(1)} relative, ` +
+        `χ² ${worst.chi2Relative.toExponential(1)} relative, ` +
+        `correlation ${worst.correlation.toExponential(1)}; ` +
+        `worst forecast mean ${forecastWorst.toExponential(1)} of its major sigma`,
+    );
+    expect(worst.fits).toBeGreaterThanOrEqual(19);
+    expect(worst.estimateOverSigma).toBeLessThan(1e-3);
+    expect(worst.sigmaRelative).toBeLessThan(1e-3);
+    expect(worst.chi2Relative).toBeLessThan(1e-5);
+    expect(forecastWorst).toBeLessThan(1e-3);
   });
 });

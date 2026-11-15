@@ -66,7 +66,8 @@ vi.mock('./solve.ts', async (importOriginal) => {
   return { ...real, stagedFit: staged };
 });
 
-// LIFT(2G): the scenarios in this file are planar (z = 0, yaw-only attitude, flat hull).
+// The scenarios in this file are planar (z = 0, yaw-only attitude, flat hull): the model runs
+// them in the planar reduction (`planar: 1`, spec Appendix A.3), as the planar model did.
 const MASS = 30000;
 const THRUST = 4500;
 /** Thrust acceleration at full throttle, m/s². */
@@ -87,7 +88,7 @@ const primary: BelievedBody = {
 const priors: ParameterPrior[] = [
   { id: 'body.A.mu', label: 'A μ', unit: 'm³/s²', value: 1.02e10, sigma: 3e8 },
 ];
-const context = (extra: Partial<ModelContext> = {}): ModelContext => ({
+const context = (extra: Partial<ModelContext> = {}, planar = true): ModelContext => ({
   encounterId: 'range',
   priors,
   bodies: [primary],
@@ -103,6 +104,7 @@ const context = (extra: Partial<ModelContext> = {}): ModelContext => ({
     angularVelocity: { x: 0, y: 0, z: 0 },
   },
   ...extra,
+  settings: { ...(planar ? { planar: 1 } : {}), ...(extra.settings ?? {}) },
 });
 const massProperties: MassProperties = {
   mass: MASS,
@@ -120,28 +122,36 @@ const massProperties: MassProperties = {
   ),
 };
 
-type State4 = readonly [number, number, number, number];
+type State6 = readonly [number, number, number, number, number, number];
 /** Circular orbit at r0 about the primary (100 m/s). */
-const CIRCULAR: State4 = [R0, 0, 0, 100];
+const CIRCULAR: State6 = [R0, 0, 0, 0, 100, 0];
+
+/** A planar thrust segment along yaw `theta`. */
+const along = (t0: number, t1: number, theta: number): ThrustSegment => ({
+  t0,
+  t1,
+  u: U,
+  q: quat.fromYaw(theta),
+});
 
 /** Ship relative to the primary at the given times, under the true law and thrust. */
-function truthAt(start: State4, thrust: readonly ThrustSegment[], times: readonly number[]) {
+function truthAt(start: State6, thrust: readonly ThrustSegment[], times: readonly number[]) {
   const st: Structure = {
     r0: R0,
     n: 2,
     bodies: [{ id: 'A', mu: MU, state: 'gauge' }],
     ship: start,
     dynamicBodies: false,
-    engine: { kE: 1, dE: 0 },
+    engine: { kE: 1, dE: 0, dP: 0 },
     kA: 1,
-    camBias: 0,
+    camBias: [0, 0, 0],
   };
   return simulate(
     compileArc(st, { id: 'truth', epoch: 0, commands: thrust }, new Map()),
     [],
     times,
     1,
-  ).pos.map((p) => [p[2]!, p[3]!] as const);
+  ).pos.map((p) => [p[3]!, p[4]!, p[5]!] as const);
 }
 
 interface Flight {
@@ -173,19 +183,27 @@ function record(f: Flight): AttemptRecord {
   const sb = 4.1e-5;
   const measurements: Measurement[] = [];
   times.forEach((t, k) => {
-    const [x, y] = pos[k]!;
-    const r = Math.hypot(x, y);
+    const [x, y, z] = pos[k]!;
+    const r = Math.hypot(x, y, z);
     const seg = thrust.find((c) => t >= c.t0 && t < c.t1);
     // The ship is turned to a burn's attitude before it starts and stays there afterwards.
-    const yaw = (thrust.find((c) => c.t1 > t) ?? thrust.at(-1))?.theta ?? 0;
+    const q = (thrust.find((c) => c.t1 > t) ?? thrust.at(-1))?.q ?? quat.IDENTITY;
+    const phi = quat.toRotationVector(q);
+    const el = Math.atan2(-z, Math.hypot(x, y));
     measurements.push(
-      { kind: 'attitude', t, source: 'st', value: [0, 0, yaw], sigma: [3.88e-5, 3.88e-5, 3.88e-5] },
+      {
+        kind: 'attitude',
+        t,
+        source: 'st',
+        value: [phi.x, phi.y, phi.z],
+        sigma: [3.88e-5, 3.88e-5, 3.88e-5],
+      },
       {
         kind: 'bearing',
         t,
         source: 'cam',
         target: 'A',
-        value: [Math.atan2(-y, -x) + rng.normal(0, sb), 0],
+        value: [Math.atan2(-y, -x) + rng.normal(0, sb), el],
         sigma: [sb, sb],
       },
       {
@@ -347,7 +365,7 @@ function reported() {
     id: 'attempt-0001',
     index: 1,
     fixes: every(20, 100, 18.5),
-    thrust: [{ t0: 96, t1: 100, u: U, theta: 0 }],
+    thrust: [along(96, 100, 0)],
     executed: [burn(96)],
     last: 100,
     outcome: { kind: 'recalled', t: 100 },
@@ -359,9 +377,11 @@ function reported() {
     last: 40,
     outcome: { kind: 'recalled', t: 40 },
   });
-  const thrust = [{ t0: 200, t1: 600, u: U, theta: -Math.PI / 2 }];
+  const thrust = [along(200, 600, -Math.PI / 2)];
   const packets = every(20, 16000, 18.5);
-  const hit = truthAt(CIRCULAR, thrust, packets).findIndex(([x, y]) => Math.hypot(x, y) <= RADIUS);
+  const hit = truthAt(CIRCULAR, thrust, packets).findIndex(
+    ([x, y, z]) => Math.hypot(x, y, z) <= RADIUS,
+  );
   const tLost = packets[hit]!;
   const c = record({
     id: 'attempt-0003',
@@ -592,7 +612,7 @@ describe('thrust never runs past the end of its record', () => {
       id,
       index: 1,
       fixes: every(20, 100, 18.5),
-      thrust: [{ t0: 96, t1: 100, u: U, theta: 0 }],
+      thrust: [along(96, 100, 0)],
       executed: [command],
       last: 100,
       outcome: { kind: 'recalled', t: 100 },
@@ -635,7 +655,7 @@ describe('thrust never runs past the end of its record', () => {
       id: 'held',
       index: 1,
       fixes: every(20, 400, 18.5),
-      thrust: [{ t0: 96, t1: 400, u: U, theta: 0 }],
+      thrust: [along(96, 400, 0)],
       executed: [burn(96, Infinity)],
       outcome: { kind: 'in-progress' },
     });
@@ -667,7 +687,7 @@ describe('thrust never runs past the end of its record', () => {
       id: 'no-fix-after',
       index: 1,
       fixes: every(20, 180, 18.5),
-      thrust: [{ t0: 182, t1: 190, u: U, theta: 0 }],
+      thrust: [along(182, 190, 0)],
       executed: [burn(182), cutoff(190)],
       last: 195,
       outcome: { kind: 'recalled', t: 195 },
@@ -677,7 +697,7 @@ describe('thrust never runs past the end of its record', () => {
       id: 'from-the-start',
       index: 2,
       fixes: every(20, 190, 18.5),
-      thrust: [{ t0: 5, t1: 200, u: U, theta: 0 }],
+      thrust: [along(5, 200, 0)],
       executed: [burn(5)],
       last: 200,
       outcome: { kind: 'recalled', t: 200 },
@@ -720,7 +740,7 @@ describe('thrust never runs past the end of its record', () => {
       id: 'taps',
       index: 1,
       fixes: every(20, 90, 17.5),
-      thrust: [{ t0: 30, t1: 40, u: U, theta: 0 }],
+      thrust: [along(30, 40, 0)],
       executed: [fly(30, 1), fly(40, 0)],
       last: 90,
       outcome: { kind: 'recalled', t: 90 },
@@ -744,7 +764,7 @@ describe('random short attempts (the whole family at once)', () => {
       for (let t = rng.range(0, 60); style !== 'coast' && t < end;) {
         const open = style.endsWith('open') && rng.chance(0.4);
         const t1 = open ? end : Math.min(end, t + rng.pick([0.5, 4, 4, 25, 90]));
-        if (t1 > t) thrust.push({ t0: t, t1, u: U, theta: 0 });
+        if (t1 > t) thrust.push(along(t, t1, 0));
         if (style.startsWith('burn')) executed.push(burn(t, rng.pick([3600, 1e9, Infinity])));
         else executed.push(fly(t, 1));
         if (open) break;
@@ -932,5 +952,147 @@ describe('one bad attempt never stops the model', () => {
     expect(svc.state).toBe(state);
     expect(svc.decisions).toEqual([]);
     expect(svc.refit().version).toBe(state.version + 1);
+  });
+});
+
+// ---------------------------------------------------------------------------------------------
+// Six state numbers (spec revision 3): the same rule in three dimensions
+// ---------------------------------------------------------------------------------------------
+
+describe('six-state attempts: the same rule in three dimensions', () => {
+  /** The model in three dimensions (no planar reduction). */
+  const context3 = (extra: Partial<ModelContext> = {}) => context(extra, false);
+  /** A burn pitched up by `pitch` (a rotation about body −y) from yaw `yaw`. */
+  const pitched = (t0: number, t1: number, yaw: number, pitch: number): ThrustSegment => ({
+    t0,
+    t1,
+    u: U,
+    q: quat.multiply(quat.fromYaw(yaw), quat.fromAxisAngle({ x: 0, y: -1, z: 0 }, pitch)),
+  });
+
+  it('a quarter of a three-fix arc still holds one fix: its velocity, z included, is not determined', () => {
+    const { a } = reported();
+    const ctx = context3();
+    const spec = modelSpec(ctx, []);
+    expect(spec.planar).toBe(false);
+    const problem = tierGProblem(ctx, spec, [a]);
+    const arc = problem.arcs[0]!;
+    const fixes = rangeFixTimes(arc.meas, 'A');
+    expect(fixes).toEqual([38.5, 78.5, 98.5]);
+    const opts = { dt: spec.settings.dt, h: spec.settings.fdStep };
+    const x0 = problem.params.map((p) => p.init);
+    const quarter = fixes[0]! + 0.25 * (fixes[2]! - fixes[0]!);
+    const cut = new Problem(problem.structure, [arc], problem.params, {
+      ...opts,
+      tmax: new Map([[arc.id, quarter]]),
+    });
+    // One fix: azimuth, elevation and range.
+    expect(cut.m).toBe(3);
+    expect(() => cut.solve(x0)).toThrow(
+      'fit: the data do not determine attempt-0001.ship.vx, attempt-0001.ship.vy, attempt-0001.ship.vz',
+    );
+    // Three fixes give nine numbers for the six of the state: the arc is fitted, z included.
+    const fit = stagedFit(problem.structure, [arc], problem.params, opts);
+    expect(fit.converged).toBe(true);
+    expect(notFinite([fit.x, fit.P.data, fit.chi2])).toEqual([]);
+    // Three fixes of three rows, and one accelerometer bin of three axes.
+    expect(fit.m).toBe(12);
+  });
+
+  it('bearings without an elevation cannot place the ship out of the plane: the attempt is left out, with the reason', () => {
+    const hour = (id: string, index: number): AttemptRecord =>
+      record({ id, index, fixes: every(20, 3600, 18.5), outcome: { kind: 'recalled', t: 3600 } });
+    const good = hour('good', 1);
+    // The same record with its bearings reduced to an azimuth: range and azimuth are the same
+    // for z and −z, so nothing decides z (a planar-era record fed to the 3D model).
+    const flat: AttemptRecord = (() => {
+      const r = hour('azimuth-only', 2);
+      return {
+        ...r,
+        measurements: r.measurements.map((m) =>
+          m.kind === 'bearing' ? { ...m, value: [m.value[0]!], sigma: [m.sigma[0]!] } : m,
+        ),
+      };
+    })();
+    const svc = new ModelService(context3());
+    const state = svc.load({ attempts: [good, flat] });
+    expect(state.basedOn.attempts).toEqual([good.id]);
+    expect(state.fit!.converged).toBe(true);
+    expect([...svc.snapshot.derived.unusable.keys()]).toEqual([flat.id]);
+    expect(svc.snapshot.derived.unusable.get(flat.id)).toBe(
+      'fit: the data do not determine azimuth-only.ship.z, azimuth-only.ship.vz',
+    );
+    expect(coverageOf(svc, flat.id).used).toBe(false);
+    expect(notFinite([state, svc.report()])).toEqual([]);
+    // The same records flown live give the same model.
+    const live = new ModelService(context3());
+    for (const rec of [good, flat]) flyLive(live, rec, 600, 1800);
+    expect(hashState(content(live.state))).toBe(hashState(content(state)));
+    // In the planar reduction the same record is fine: z is held at zero there.
+    const planar = new ModelService(context());
+    expect(planar.load({ attempts: [good, flat] }).basedOn.attempts).toEqual([good.id, flat.id]);
+  });
+
+  it('a record ending inside an out-of-plane burn: thrust stops at the record, rebuild equals live', () => {
+    const thrust = [pitched(96, 100, 0.3, 0.5)];
+    const rec = record({
+      id: 'pitched',
+      index: 1,
+      fixes: every(20, 100, 18.5),
+      thrust,
+      executed: [burn(96, 3600)],
+      last: 100,
+      outcome: { kind: 'recalled', t: 100 },
+    });
+    const adapt3 = {
+      ship: testShip(MASS, THRUST),
+      settings: resolveSettings(),
+      bodies: ['A'],
+      primary: 'A',
+    };
+    for (const t of [98.5, 100]) {
+      const open = soFar(rec, t);
+      const live = arcsFromRecord(open, adapt3);
+      expect(live.burns.map((q) => [q.t0, q.t1])).toEqual([[96, t]]);
+      expect(live).toEqual(
+        arcsFromRecord({ ...open, outcome: { kind: 'recalled', t: lastTime(open) } }, adapt3),
+      );
+      for (const arc of live.arcs)
+        for (const seg of arc.commands) {
+          expect(seg.t1).toBeLessThanOrEqual(lastTime(open));
+          // The recorded attitude, out of the plane: the push has an upward part.
+          expect(quat.angleBetween(seg.q, thrust[0]!.q)).toBeLessThan(1e-9);
+          expect(quat.axisX(seg.q).z).toBeGreaterThan(0.4);
+        }
+    }
+    const svc = new ModelService(context3());
+    const state = svc.load({ attempts: [rec] });
+    expect(state.basedOn.attempts).toEqual([rec.id]);
+    expect(state.fit!.converged).toBe(true);
+    expect(notFinite([state, svc.report()])).toEqual([]);
+    const live = new ModelService(context3());
+    flyLive(live, rec, 1, 60);
+    expect(hashState(content(live.state))).toBe(hashState(content(state)));
+    // A longer flight that climbs out of the plane, with forecasts on the way, never fails.
+    const climb = record({
+      id: 'climb',
+      index: 2,
+      fixes: every(20, 3600, 18.5),
+      thrust: [pitched(600, 900, 1.0, 0.6)],
+      executed: [burn(600, 300)],
+      outcome: { kind: 'recalled', t: 3600 },
+    });
+    const z = truthAt(CIRCULAR, [pitched(600, 900, 1.0, 0.6)], [3600]);
+    expect(Math.abs(z[0]![2])).toBeGreaterThan(1000);
+    const flown = new ModelService(context3());
+    flyLive(flown, climb, 300, 1200);
+    const rebuilt = new ModelService(context3());
+    rebuilt.load({ attempts: [climb] });
+    expect(hashState(content(rebuilt.state))).toBe(hashState(content(flown.state)));
+    expect(flown.state.basedOn.attempts).toEqual([climb.id]);
+    const pitch = flown.state.parameters.find(
+      (p) => p.id === 'thruster.main.misalignment-pitch' && p.arc === undefined,
+    )!;
+    expect(Math.abs(pitch.value)).toBeLessThan(3 * pitch.sigma);
   });
 });

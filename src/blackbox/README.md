@@ -46,13 +46,13 @@ const cmp = compareAttempts(recordA, recordB, await model.report());
 |---|---|
 | `configurationDiffers`, `a.configuration`, `b.configuration` | What did I change (start configuration and recorded changes)? |
 | `plans`, `executed` | Command diff: `same`, `changed` (with the differing fields, `t` included), `only-a`, `only-b`; paired by kind and equipment |
-| `a.divergence[]`, `b.divergence[]` | Per issued forecast: measured position relative to a tracked body against the forecast's, in metres and in σ of envelope ⊕ fix noise; `firstBeyond3Sigma` = where the outcome left the forecast (RMS over 5 consecutive fixes > 3σ); `gaps` where nothing was measured; `unmeasured` |
-| `a.residuals.coast/powered` | Whitened residuals split by whether thrust was commanded (spec §9.1) |
+| `a.divergence[]`, `b.divergence[]` | Per issued forecast: measured position relative to a tracked body (from the fix's azimuth, elevation and range) against the forecast's, in metres and in σ of the forecast's 3D envelope (its 3×3 covariance, an ellipsoid) ⊕ the fix's noise (range σ along the line of sight, ρ·σ across it in both tangent directions); `firstBeyond3Sigma` = where the outcome left the forecast (RMS over 5 consecutive fixes > 3σ); `gaps` where nothing was measured; `unmeasured` |
+| `a.residuals.coast/powered` | Whitened residuals split by whether thrust (main engine or RCS) was commanded, each labelled by direction: `along` the track, `normal` (out of the orbit plane), `range`, `accel` (spec §9.1) |
 | `a.strength`, `strengthSummary` | Measured strength against distance per body (§9.2), with slope and profile inflation |
 | `confounding`, `a.coverage` | Confounding indicator (§9.3) and what each attempt lacks |
 | `a.missing` | Missing data, stated plainly (no model report, no fitted data, no forecast, unmeasured forecasts…) |
 
-`forecastDivergence(forecast, record)` and `diffCommands(a, b)` are usable on their own. Divergence is still measured in the x–y plane (bearing azimuth, the envelope's x–y block; marked `// LIFT(2G):`).
+`forecastDivergence(forecast, record)` and `diffCommands(a, b)` are usable on their own. Divergence is three-dimensional: a ship that leaves its forecast out of the orbit plane is caught as surely as one that leaves it along the track.
 
 ## Procedures (`procedures.ts`, P9)
 
@@ -67,4 +67,4 @@ Saved items are the commands that reached the ship between `from` and `to` (not 
 
 ## Tests
 
-`blackbox.test.ts`: recorder ordering, freezing and loss; storage round trip with forecasts reissued; model rebuilt from stored records equals the live model fed through the recorder; comparison finding where an outcome left a forecast (and not where it did not), plan and configuration diffs, residual split and missing data; procedure save, match and replay. The IndexedDB store was exercised in Chrome via the dev server (records written, read back, model rebuilt in a Web Worker).
+`blackbox.test.ts`: recorder ordering, freezing and loss; storage round trip with forecasts reissued; model rebuilt from stored records equals the live model fed through the recorder; comparison finding where an outcome left a forecast (and not where it did not), divergence measured in 3D against a flat ellipsoid (3σ out of the plane, 1σ in it), plan and configuration diffs, residual split and missing data; procedure save, match and replay. The IndexedDB store was exercised in Chrome via the dev server (records written, read back, model rebuilt in a Web Worker).

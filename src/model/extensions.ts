@@ -194,6 +194,7 @@ export function testExtension(
           P: null,
           rel: [],
           scale: Float64Array.from(extd.problem.params, (p) => p.scale),
+          fromGlobalFit: extd.fit.converged,
         },
       ]),
     );
@@ -222,13 +223,13 @@ export function testExtension(
           a.id !== extd.heldArcId &&
           train.some((r) => attemptOfArc(a.id) === r.id),
       )
-      .flatMap((a) => rangeFixes(a, spec.primary).map((m) => m.z[1]!));
+      .flatMap((a) => rangeFixes(a, spec.primary).map((m) => m.z[2]!));
     // Every fit of the test counts toward the span: the ship's fixes and, around the body
     // they were measured from, the tracked asteroids' (A5).
     const probeRanges = (body: string) =>
       extd.problem.arcs
         .filter((a) => isProbeArc(a.id) && inTest(a))
-        .flatMap((a) => rangeFixes(a, body).map((m) => m.z[1]!));
+        .flatMap((a) => rangeFixes(a, body).map((m) => m.z[2]!));
     if (ranges.length > 0) {
       const sigmaN = extd.fit.names.includes(EXPONENT_ID) ? fitGet(extd.fit, EXPONENT_ID)[1] : 0;
       const eh = earnedHedge(
@@ -250,7 +251,7 @@ export function testExtension(
         });
         const testArcs = extd.problem.arcs.filter(inTest);
         for (const body of spec.bodies.slice(1)) {
-          const r = testArcs.flatMap((a) => rangeFixes(a, body).map((m) => m.z[1]!));
+          const r = testArcs.flatMap((a) => rangeFixes(a, body).map((m) => m.z[2]!));
           if (r.length > 0)
             spans.push({
               body,

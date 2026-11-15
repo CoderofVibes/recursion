@@ -33,7 +33,8 @@ import {
 
 const MASS = 30000;
 const V = (raw: string) => JSON.parse(raw) as VectorJson;
-// LIFT(2G): the scenarios in this file are planar (z = 0, yaw-only attitude, flat hull).
+// The scenarios in this file are planar (z = 0, yaw-only attitude, flat hull): the model runs
+// them in the planar reduction (`planar: 1`, spec Appendix A.3), as the planar model did.
 const massProperties: MassProperties = {
   mass: MASS,
   centerOfMass: { x: 0, y: 0, z: 0 },
@@ -80,7 +81,7 @@ function context(
       attitudeSigma: 1e-3,
       angularVelocity: { x: 0, y: 0, z: 0 },
     },
-    settings: { dt: 60, ...settings },
+    settings: { dt: 60, planar: 1, ...settings },
   };
 }
 

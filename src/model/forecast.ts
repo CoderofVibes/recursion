@@ -1,12 +1,19 @@
 /**
- * Forecast service (1G spec §8; DECISIONS P6, P10, P11).
+ * Forecast service (1G spec revision 3, §8; DECISIONS A11, P6, P10, P11).
  *
- * The forecast propagates the player's plan from the present state (Tier L) under the adopted
- * law × the calibration profiles, with a linearised envelope (state, profile nodes, hedge outside
- * sampled distances, engine and unprofiled masses) and ends at the horizon where the 1σ envelope
- * exceeds a fraction of the distance to the nearest body. It uses its own propagation from
- * believed parameters only; it never imports src/sim or truth. The model forecasts; it does not
- * plan: attitude targets are resolved exactly as commanded, at ignition.
+ * The forecast propagates the player's plan from the present state (Tier L: six numbers and a
+ * 6×6 covariance that carries the camera misalignment) under the adopted law × the calibration
+ * profiles, with a linearised envelope (state, profile nodes, hedge outside sampled distances,
+ * engine scale and both misalignment angles, the RCS scale, unprofiled masses) as a 3×3 position
+ * covariance per sample, and ends at the horizon where the longest axis of the 1σ ellipsoid
+ * exceeds a fraction of the distance to the nearest body (§8.4). It uses its own propagation
+ * from believed parameters only; it never imports src/sim or truth. The model forecasts; it does
+ * not plan.
+ *
+ * Planned attitudes (§3.3): the plan is resolved in time order with one running attitude, roll
+ * held (`quat.pointAlong`, the function the game layer uses when the command executes), so the
+ * ship flies the attitude that was forecast. Tracked asteroids get their own track and a closest
+ * approach whose σ comes from the covariance of the relative position (§8.7).
  *
  * Frames: the estimator works relative to the primary body (§3.4). Output positions are in the
  * believed inertial frame of the briefing: the modelled bodies' barycentre moves uniformly from
@@ -14,30 +21,37 @@
  */
 
 import {
-  cov3FromPlanar,
+  hullReach,
+  type AsteroidForecastNote,
   type AttemptRecord,
   type AttitudeTarget,
   type ClosestApproach,
-  type Cov2,
   type Cov3,
   type ExecutedCommand,
+  type ForecastDetail,
   type ForecastDraft,
   type ForecastId,
   type ForecastObjectTrack,
   type ForecastSample,
+  type ForecastSigmaBySource,
+  type JsonValue,
   type MassProperties,
   type Plan,
+  type ShipDefinition,
   type ShipEstimate,
 } from '../contracts/index.ts';
 import * as quat from '../lib/quat.ts';
-import type { Vec2 } from '../lib/vec2.ts';
+import type { Quat } from '../lib/quat.ts';
 import type { Vec3 } from '../lib/vec3.ts';
 import {
   AttitudeLog,
   MassLog,
+  RCS_GROUP,
   arrivalMassOf,
   burnsFromExecuted,
   handsOnThrust,
+  rcsForce,
+  rcsInfo,
   recordEnd,
   segmentsFor,
   thrusterInfo,
@@ -47,19 +61,21 @@ import {
 import { compileArc, simulate, type Arc, type Structure, type ThrustSegment } from './dynamics.ts';
 import {
   EXPONENT_ID,
+  RCS_SCALE_ID,
   agingBetween,
   arcCalibration,
   arrivalState,
   contextFor,
   misalignId,
+  pitchId,
   presentState,
   referenceFor,
   scaleId,
   windowRule,
   type ModelContext,
   type ModelSnapshot,
-  type PresentState,
 } from './engine.ts';
+import { zeros, type Matrix } from './linalg.ts';
 import { asteroidOf } from './probes.ts';
 import {
   anchorState,
@@ -67,8 +83,11 @@ import {
   majorSigma,
   makeWindows,
   wholeArcWindow,
+  type ForecastCoreResult,
   type ProfileFit,
 } from './tierL.ts';
+
+export type { AsteroidForecastNote, ForecastDetail } from '../contracts/index.ts';
 
 export interface ForecastRequest {
   readonly id: ForecastId;
@@ -84,68 +103,62 @@ export interface ForecastRequest {
   readonly step?: number;
 }
 
-/** How a tracked asteroid entered the forecast (spec §10). */
-export interface AsteroidForecastNote {
-  readonly id: string;
-  /** False when its track was too short to forecast; it is then absent from `objects`. */
-  readonly forecast: boolean;
-  /** Time of its last fix used, and how many normal points its present state came from. */
-  readonly tLast?: number;
-  readonly fixes?: number;
-}
-
-export interface ForecastDetail {
-  /** Per sample, the 1σ major axis of each uncertainty source (m). */
-  readonly sigmaMajor: readonly {
-    t: number;
-    state: number;
-    profile: number;
-    hedge: number;
-    engine: number;
-    mass: number;
-    total: number;
-  }[];
-  /** How the present state was obtained. */
-  readonly presentSource: PresentState['source'];
-  readonly presentTime: number;
-  readonly asteroids: readonly AsteroidForecastNote[];
-}
-
-const toCov2 = (m: { data: Float64Array }): Cov2 => [
+/** Row-major 3×3 (symmetrised) → [xx, xy, xz, yy, yz, zz]. */
+const toCov3 = (m: Matrix): Cov3 => [
   m.data[0]!,
-  0.5 * (m.data[1]! + m.data[2]!),
-  m.data[3]!,
+  0.5 * (m.data[1]! + m.data[3]!),
+  0.5 * (m.data[2]! + m.data[6]!),
+  m.data[4]!,
+  0.5 * (m.data[5]! + m.data[7]!),
+  m.data[8]!,
 ];
 
-// LIFT(2G): the forecast is propagated in the x–y plane; positions leave with z = 0.
-const lift = (p: Vec2): Vec3 => ({ x: p.x, y: p.y, z: 0 });
+/** Block (row, col offsets) of a 6×6 as a Cov3. */
+const block3 = (m: Matrix, o: number): Cov3 => {
+  const at = (i: number, j: number) => m.data[(o + i) * m.cols + o + j]!;
+  return [at(0, 0), at(0, 1), at(0, 2), at(1, 1), at(1, 2), at(2, 2)];
+};
+
+const vec = (x: ArrayLike<number>, o = 0): Vec3 => ({ x: x[o]!, y: x[o + 1]!, z: x[o + 2]! });
+const add = (a: Vec3, b: Vec3): Vec3 => ({ x: a.x + b.x, y: a.y + b.y, z: a.z + b.z });
+const sub = (a: Vec3, b: Vec3): Vec3 => ({ x: a.x - b.x, y: a.y - b.y, z: a.z - b.z });
+const scale = (a: Vec3, s: number): Vec3 => ({ x: a.x * s, y: a.y * s, z: a.z * s });
+const len = (a: Vec3) => Math.hypot(a.x, a.y, a.z);
+
+/** dᵀ C d / |d|² for a 3×3: the variance along d. */
+function along(m: Matrix, d: Vec3): number {
+  const n = len(d);
+  if (!(n > 0)) return 0;
+  const u = [d.x / n, d.y / n, d.z / n];
+  let v = 0;
+  for (let i = 0; i < 3; i++) for (let j = 0; j < 3; j++) v += u[i]! * m.data[3 * i + j]! * u[j]!;
+  return Math.max(v, 0);
+}
 
 /** Believed arrival barycentre of the modelled bodies (position, velocity) in the briefing frame. */
 function barycentre(ctx: ModelContext, bodies: readonly string[], mu: (id: string) => number) {
-  // LIFT(2G): briefing bodies enter as their x and y; z is ignored.
   let M = 0;
-  const p = { x: 0, y: 0 };
-  const v = { x: 0, y: 0 };
+  let p: Vec3 = { x: 0, y: 0, z: 0 };
+  let v: Vec3 = { x: 0, y: 0, z: 0 };
   for (const id of bodies) {
     const b = ctx.bodies.find((q) => q.id === id);
     const m = Math.max(mu(id), 0);
     if (!b) continue;
     M += m;
-    p.x += m * b.position.x;
-    p.y += m * b.position.y;
-    v.x += m * b.velocity.x;
-    v.y += m * b.velocity.y;
+    p = add(p, scale(b.position, m));
+    v = add(v, scale(b.velocity, m));
   }
   if (M === 0) {
     const b = ctx.bodies.find((q) => q.id === bodies[0]);
-    return { p: b?.position ?? { x: 0, y: 0 }, v: b?.velocity ?? { x: 0, y: 0 } };
+    return { p: b?.position ?? { x: 0, y: 0, z: 0 }, v: b?.velocity ?? { x: 0, y: 0, z: 0 } };
   }
-  return { p: { x: p.x / M, y: p.y / M }, v: { x: v.x / M, y: v.y / M } };
+  return { p: scale(p, 1 / M), v: scale(v, 1 / M) };
 }
 
 /**
  * Planned burns from plan items (cutoffs and replacements as the ship would execute them).
- * With `handsOn`, `fly` items (a replayed procedure) count as main-engine burns.
+ * With `handsOn`, `fly` items (a replayed procedure) count as burns: the throttle of the main
+ * engine and the translation of the RCS.
  */
 export function plannedBurns(plan: Plan, handsOn?: HandsOnThrust): Burn[] {
   const executed: ExecutedCommand[] = plan.items.map((i) => ({
@@ -159,20 +172,18 @@ export function plannedBurns(plan: Plan, handsOn?: HandsOnThrust): Burn[] {
   return burnsFromExecuted(executed, Infinity, handsOn);
 }
 
-/** The attitude target in force at each planned burn (burn's own, else the latest attitude command). */
-function planAttitudes(plan: Plan): Map<number, AttitudeTarget | undefined> {
-  const items = [...plan.items].sort((a, b) => a.at - b.at);
-  const out = new Map<number, AttitudeTarget | undefined>();
-  let current: AttitudeTarget | undefined;
-  for (const i of items) {
-    if (i.command.kind === 'attitude') current = i.command.target;
-    if (i.command.kind === 'burn') out.set(plan.epoch + i.at, i.command.attitude ?? current);
-    // LIFT(2G): a planned `fly` thrusts along the target in force; its yaw and pitch demands
-    // are not modelled.
-    if (i.command.kind === 'fly' && i.command.input.throttle > 0)
-      out.set(plan.epoch + i.at, current);
-  }
-  return out;
+const child = (v: JsonValue | undefined, key: string): JsonValue | undefined =>
+  v !== null && typeof v === 'object' && !Array.isArray(v)
+    ? (v as { readonly [k: string]: JsonValue })[key]
+    : undefined;
+
+/**
+ * The body rate a full hands-on yaw or pitch deflection asks for, from the design
+ * (`propulsion.attitudeControl.handsOnTurnRate`), or 0 when the definition does not say.
+ */
+function handsOnTurnRate(ship: ShipDefinition): number {
+  const v = child(child(child(ship.systems, 'propulsion'), 'attitudeControl'), 'handsOnTurnRate');
+  return typeof v === 'number' ? v : 0;
 }
 
 /** Build the forecast draft for a plan (not yet issued: pass it to issueForecast). */
@@ -200,13 +211,13 @@ export function buildForecast(
   const ref = referenceFor(d, spec.primary, arcId, model);
   const muOf = (id: string) => d.values[`body.${id}.mu`] ?? 0;
 
-  // Executed burns not finished at the present state, then the plan's burns.
+  // Executed burns not finished at the present state, then the plan's burns. A hands-on burn
+  // still open when the forecast is issued stops at the last record (it is not known to go on);
+  // a commanded burn of the attempt in progress runs on as commanded; once the attempt has
+  // ended, nothing thrusts past its end.
   const att = new AttitudeLog(req.record.measurements);
   const mass = new MassLog(ctx.ship, req.record.measurements, arrivalMassOf(ctx));
   const adaptCtx = { ship: ctx.ship, settings: s, bodies: spec.bodies, primary: spec.primary };
-  // LIFT(2G): a hands-on burn still open when the forecast is issued stops at the last record.
-  // A commanded burn of the attempt in progress runs on as commanded; once the attempt has
-  // ended, nothing thrusts past its end.
   const executed = burnsFromExecuted(
     req.record.executed,
     req.record.outcome.kind === 'in-progress' ? Infinity : req.record.outcome.t,
@@ -219,8 +230,9 @@ export function buildForecast(
   const bc = barycentre(ctx, spec.bodies, muOf);
   const others = ref.others ?? [];
   const nOthers = others.length;
-  // Mean propagation (for attitude resolution at ignition and for the frame).
+  // Mean propagation (for attitude resolution and for the frame).
   const meanStructure = (segs: readonly ThrustSegment[]): ReturnType<typeof compileArc> => {
+    const x = present.state;
     const st: Structure = {
       r0: ref.r0,
       n: ref.n,
@@ -228,126 +240,167 @@ export function buildForecast(
         { id: ref.body, mu: ref.mu, state: 'gauge' },
         ...others.map((o) => ({ id: o.id, mu: o.mu, state: o.stateAt(tNow) })),
       ],
-      ship: [present.state[0]!, present.state[1]!, present.state[2]!, present.state[3]!],
+      ship: [x[0]!, x[1]!, x[2]!, x[3]!, x[4]!, x[5]!],
       dynamicBodies: nOthers > 0,
-      engine: { kE: ref.kE, dE: ref.dE },
+      engine: { kE: ref.kE, dE: ref.dE, dP: ref.dP ?? 0 },
       ...(ref.engines ? { engines: ref.engines } : {}),
+      kR: ref.kR ?? 1,
       kA: 1,
-      camBias: 0,
+      camBias: [0, 0, 0],
     };
     return compileArc(st, { id: 'mean', epoch: tNow, commands: segs }, new Map());
   };
   /** Believed game-frame state of the ship and bodies at t. */
-  const frameAt = (rel: Float64Array, bodies: Float64Array, t: number) => {
-    // bodies: [x, y, vx, vy] per other body, relative to the primary
+  const frameAt = (rel: ArrayLike<number>, bodies: ArrayLike<number>, t: number) => {
+    // bodies: six numbers per other body, relative to the primary
     let M = muOf(spec.primary);
-    let bx = 0;
-    let by = 0;
-    let bvx = 0;
-    let bvy = 0;
+    let bp: Vec3 = { x: 0, y: 0, z: 0 };
+    let bv: Vec3 = { x: 0, y: 0, z: 0 };
     others.forEach((o, k) => {
       const m = Math.max(o.mu, 0);
       M += m;
-      bx += m * bodies[4 * k]!;
-      by += m * bodies[4 * k + 1]!;
-      bvx += m * bodies[4 * k + 2]!;
-      bvy += m * bodies[4 * k + 3]!;
+      bp = add(bp, scale(vec(bodies, 6 * k), m));
+      bv = add(bv, scale(vec(bodies, 6 * k + 3), m));
     });
-    const fixed = !spec.dynamic;
     const primary = ctx.bodies.find((b) => b.id === spec.primary);
-    let px: number;
-    let py: number;
-    let pvx: number;
-    let pvy: number;
-    if (fixed || M <= 0) {
-      px = (primary?.position.x ?? 0) + (primary?.velocity.x ?? 0) * t;
-      py = (primary?.position.y ?? 0) + (primary?.velocity.y ?? 0) * t;
-      pvx = primary?.velocity.x ?? 0;
-      pvy = primary?.velocity.y ?? 0;
+    const zero = { x: 0, y: 0, z: 0 };
+    let pp: Vec3;
+    let pv: Vec3;
+    if (!spec.dynamic || M <= 0) {
+      pv = primary?.velocity ?? zero;
+      pp = add(primary?.position ?? zero, scale(pv, t));
     } else {
-      px = bc.p.x + bc.v.x * t - bx / M;
-      py = bc.p.y + bc.v.y * t - by / M;
-      pvx = bc.v.x - bvx / M;
-      pvy = bc.v.y - bvy / M;
+      pp = sub(add(bc.p, scale(bc.v, t)), scale(bp, 1 / M));
+      pv = sub(bc.v, scale(bv, 1 / M));
     }
-    const ship = {
-      position: { x: px + rel[0]!, y: py + rel[1]! },
-      velocity: { x: pvx + rel[2]!, y: pvy + rel[3]! },
-    };
-    const bodyPos: Record<string, Vec2> = { [spec.primary]: { x: px, y: py } };
-    others.forEach(
-      (o, k) => (bodyPos[o.id] = { x: px + bodies[4 * k]!, y: py + bodies[4 * k + 1]! }),
-    );
+    const ship = { position: add(pp, vec(rel, 0)), velocity: add(pv, vec(rel, 3)) };
+    const bodyPos: Record<string, Vec3> = { [spec.primary]: pp };
+    others.forEach((o, k) => (bodyPos[o.id] = add(pp, vec(bodies, 6 * k))));
     return { ship, bodyPos };
   };
   const meanAt = (segs: readonly ThrustSegment[], t: number) => {
     const ca = meanStructure(segs);
-    const tr = simulate(ca, [], [Math.max(t, tNow)], s.dt);
+    const tt = Math.max(t, tNow);
+    const tr = simulate(ca, [], [tt], s.dt);
     const P = tr.pos[0]!;
     const V = tr.vel[0]!;
-    const sh = nOthers + 1;
-    const rel = Float64Array.of(
-      P[2 * sh]! - P[0]!,
-      P[2 * sh + 1]! - P[1]!,
-      V[2 * sh]! - V[0]!,
-      V[2 * sh + 1]! - V[1]!,
-    );
-    const bodies = new Float64Array(4 * nOthers);
+    const sh = 3 * (nOthers + 1);
+    const rel = [0, 1, 2].map((c) => P[sh + c]! - P[c]!);
+    rel.push(...[0, 1, 2].map((c) => V[sh + c]! - V[c]!));
+    const bodies = new Float64Array(6 * nOthers);
     for (let k = 0; k < nOthers; k++) {
-      const j = k + 1;
-      bodies.set(
-        [P[2 * j]! - P[0]!, P[2 * j + 1]! - P[1]!, V[2 * j]! - V[0]!, V[2 * j + 1]! - V[1]!],
-        4 * k,
-      );
+      const j = 3 * (k + 1);
+      for (let c = 0; c < 3; c++) {
+        bodies[6 * k + c] = P[j + c]! - P[c]!;
+        bodies[6 * k + 3 + c] = V[j + c]! - V[c]!;
+      }
     }
-    return frameAt(rel, bodies, Math.max(t, tNow));
+    return frameAt(rel, bodies, tt);
   };
 
-  // Planned burns: direction resolved at ignition from the believed state (P6: as commanded).
-  const attitudes = planAttitudes(req.plan);
-  let mPlan = req.massProperties.mass;
-  // A planned hands-on burn left open runs to the end of the forecast.
-  const planHandsOn = handsOnThrust(ctx.ship, tStop);
-  for (const b of plannedBurns(req.plan, planHandsOn).map(untilStop)) {
-    const info = thrusterInfo(ctx.ship, b.thruster);
-    if (!info) continue;
-    const target = b.attitude ?? attitudes.get(b.t0);
-    // LIFT(2G): attitude targets resolve to a yaw in the x–y plane (`quat.pointAlong` is the
-    // 3D form); an inertial attitude enters as its yaw, a rate as its body z component.
-    const latest = att.at(Math.min(b.t0, req.issuedAt)) ?? quat.yawOf(ctx.arrival.attitude);
-    let angle = latest;
-    if (target) {
-      if (target.reference === 'inertial') angle = quat.yawOf(target.attitude);
-      else if (target.reference === 'direction') {
-        const dir = target.direction;
-        if (dir.x !== 0 || dir.y !== 0) angle = Math.atan2(dir.y, dir.x);
-      } else if (target.reference === 'prograde' || target.reference === 'retrograde') {
-        const st = meanAt(commands, b.t0).ship.velocity;
-        angle = Math.atan2(st.y, st.x) + (target.reference === 'retrograde' ? Math.PI : 0);
-      } else if (target.reference === 'toward' || target.reference === 'away') {
-        const f = meanAt(commands, b.t0);
+  // ---- The plan's attitudes, in time order, with one running attitude (§3.3) ----
+  const turnRate = handsOnTurnRate(ctx.ship);
+  const qStart = att.at(req.issuedAt) ?? ctx.arrival.attitude;
+  /** The attitude in force: held, or turning at a body rate from (t0, q0). */
+  let mode: { t0: number; q0: Quat; w: Vec3 | null } = { t0: req.issuedAt, q0: qStart, w: null };
+  const attitudeAt = (t: number): Quat =>
+    mode.w ? quat.integrateBodyRate(mode.q0, mode.w, Math.max(0, t - mode.t0)) : mode.q0;
+  const hold = (t: number, q: Quat) => (mode = { t0: t, q0: quat.normalize(q), w: null });
+  /** A pointing target resolved at t from the running attitude, roll held; null: keep it. */
+  const resolve = (target: AttitudeTarget, t: number): Quat | null => {
+    const q = attitudeAt(t);
+    switch (target.reference) {
+      case 'inertial':
+        return quat.normalize(target.attitude);
+      case 'direction':
+        return quat.pointAlong(q, target.direction);
+      case 'prograde':
+      case 'retrograde': {
+        const v = meanAt(commands, t).ship.velocity;
+        return quat.pointAlong(q, target.reference === 'prograde' ? v : scale(v, -1));
+      }
+      case 'toward':
+      case 'away': {
+        const f = meanAt(commands, t);
         const tp = f.bodyPos[target.target];
-        if (tp)
-          angle =
-            Math.atan2(tp.y - f.ship.position.y, tp.x - f.ship.position.x) +
-            (target.reference === 'away' ? Math.PI : 0);
-      } else if (target.reference === 'rate')
-        angle = latest + target.rate.z * (b.t0 - req.issuedAt);
+        if (!tp) return null;
+        const dir = sub(tp, f.ship.position);
+        return quat.pointAlong(q, target.reference === 'toward' ? dir : scale(dir, -1));
+      }
+      default:
+        return null;
     }
-    const flow = info.isp > 0 ? (info.thrust * b.throttle) / (info.isp * s.g0) : 0;
-    const force = info.thrust * b.throttle;
-    for (let t0 = b.t0; t0 < b.t1 - 1e-9; t0 += s.maxSegment) {
-      const t1 = Math.min(b.t1, t0 + s.maxSegment);
-      const mMid = Math.max(1, mPlan - flow * (0.5 * (t1 - t0)));
-      commands.push({
-        t0,
-        t1,
-        u: force / mMid,
-        theta: angle + info.bodyAngle,
-        bodyAngle: info.bodyAngle,
-        thruster: b.thruster,
-      });
-      mPlan -= flow * (t1 - t0);
+  };
+  /** Apply a plan item's effect on the running attitude. */
+  const steer = (t: number, cmd: Plan['items'][number]['command']) => {
+    if (cmd.kind === 'attitude') {
+      const target = cmd.target;
+      if (target.reference === 'rate') mode = { t0: t, q0: attitudeAt(t), w: target.rate };
+      else if (target.reference === 'free') hold(t, attitudeAt(t));
+      else {
+        const q = resolve(target, t);
+        if (q) hold(t, q);
+      }
+    } else if (cmd.kind === 'fly') {
+      // Hands-on yaw (about body +z) and pitch (about body −y); roll is held at zero, the
+      // demand's travel is a circle, and a deflection of 5% or less does nothing (src/ship).
+      const { yaw, pitch } = cmd.input;
+      const k = Math.hypot(yaw, pitch);
+      if (turnRate > 0 && k > 0.05) {
+        const c = turnRate / Math.max(1, k);
+        mode = { t0: t, q0: attitudeAt(t), w: { x: 0, y: -pitch * c, z: yaw * c } };
+      } else hold(t, attitudeAt(t));
+    }
+  };
+
+  let mPlan = req.massProperties.mass;
+  const rcs = rcsInfo(ctx.ship);
+  // A planned hands-on burn left open runs to the end of the forecast.
+  const planBurns = plannedBurns(req.plan, handsOnThrust(ctx.ship, tStop)).map(untilStop);
+  const done = new Set<number>();
+  const plannedAttitudes: { t: number; attitude: Quat }[] = [];
+  const items = req.plan.items
+    .map((it, i) => ({ t: req.plan.epoch + it.at, cmd: it.command, i }))
+    .sort((a, b) => a.t - b.t || a.i - b.i);
+  for (const item of items) {
+    steer(item.t, item.cmd);
+    for (const b of planBurns) {
+      if (done.has(b.index) || b.t0 > item.t + 1e-9) continue;
+      done.add(b.index);
+      const force = burnForce(ctx.ship, b, s.g0);
+      if (!force) continue;
+      // A burn holds its own target while it fires, otherwise the running attitude (§3.3).
+      const own = b.attitude ? resolve(b.attitude, b.t0) : null;
+      if (own) hold(b.t0, own);
+      const fixed = own;
+      plannedAttitudes.push({ t: b.t0, attitude: fixed ?? attitudeAt(b.t0) });
+      const info = b.thruster === RCS_GROUP ? null : thrusterInfo(ctx.ship, b.thruster);
+      const push =
+        b.thruster === RCS_GROUP && rcs && b.translate ? rcsForce(rcs, b.translate) : null;
+      for (let t0 = b.t0; t0 < b.t1 - 1e-9; t0 += s.maxSegment) {
+        const t1 = Math.min(b.t1, t0 + s.maxSegment);
+        const mMid = Math.max(1, mPlan - force.flow * (0.5 * (t1 - t0)));
+        const q = fixed ?? attitudeAt(0.5 * (t0 + t1));
+        if (push)
+          commands.push({
+            t0,
+            t1,
+            u: 0,
+            q,
+            rcs: [push.x / mMid, push.y / mMid, push.z / mMid],
+            thruster: RCS_GROUP,
+          });
+        else
+          commands.push({
+            t0,
+            t1,
+            u: force.force / mMid,
+            q,
+            ...(info?.mount ? { mount: info.mount } : {}),
+            thruster: b.thruster,
+          });
+        mPlan -= force.flow * (t1 - t0);
+      }
     }
   }
 
@@ -374,30 +427,37 @@ export function buildForecast(
     const aged = agingBetween(d, req.record, id, c?.tLast ?? 0, req.issuedAt).variance;
     return { value, sigma: Math.sqrt(sigma * sigma + aged) };
   };
-  const engines: Record<string, { kE: number; dE: number }> = {};
-  const engineSigmas: Record<string, [number, number]> = {};
+  const engines: Record<string, { kE: number; dE: number; dP: number }> = {};
+  const engineSigmas: Record<string, [number, number, number]> = {};
   const engineValues: Record<string, number> = {};
+  const engineVar: Record<string, number> = {};
+  const term = (id: string, fallback: number, fallbackSigma: number) => {
+    const t = engineTerm(id, fallback, fallbackSigma);
+    engineValues[id] = t.value;
+    engineVar[id] = t.sigma * t.sigma;
+    return t;
+  };
   for (const thr of [
-    ...new Set(commands.flatMap((c) => (c.thruster ? [c.thruster] : []))),
+    ...new Set(commands.flatMap((c) => (c.thruster && c.u !== 0 ? [c.thruster] : []))),
   ].sort()) {
-    const k = engineTerm(scaleId(thr), 1, s.priorThrustScaleSigma);
-    const m = engineTerm(misalignId(thr), 0, s.priorMisalignmentSigma);
-    engines[thr] = { kE: k.value, dE: m.value };
-    engineSigmas[thr] = [k.sigma, m.sigma];
-    engineValues[scaleId(thr)] = k.value;
-    engineValues[misalignId(thr)] = m.value;
+    const k = term(scaleId(thr), 1, s.priorThrustScaleSigma);
+    const m = term(misalignId(thr), 0, s.priorMisalignmentSigma);
+    const p = spec.planar
+      ? { value: 0, sigma: 0 }
+      : term(pitchId(thr), 0, s.priorMisalignmentSigma);
+    engines[thr] = { kE: k.value, dE: m.value, dP: p.value };
+    engineSigmas[thr] = [k.sigma, m.sigma, p.sigma];
   }
+  const rcsUsed = commands.some((c) => c.rcs !== undefined);
+  const kR = rcsUsed ? term(RCS_SCALE_ID, 1, s.priorRcsScaleSigma) : { value: 1, sigma: 0 };
   const engineIds = Object.keys(engineValues);
   const engineCov = new Array<number>(engineIds.length * engineIds.length).fill(0);
-  engineIds.forEach((id, i) => {
-    const m = /^thruster\.(.+)\.(scale|misalignment)$/.exec(id)!;
-    engineCov[i * engineIds.length + i] = engineSigmas[m[1]!]![m[2] === 'scale' ? 0 : 1] ** 2;
-  });
+  engineIds.forEach((id, i) => (engineCov[i * engineIds.length + i] = engineVar[id]!));
   const muSigma: Record<string, number> = {};
   for (const o of others)
     if (!d.profiles.some((p) => p.body === o.id)) muSigma[o.id] = d.sigmas[`body.${o.id}.mu`] ?? 0;
   const fc = forecastCore({
-    ref: { ...ref, engines },
+    ref: { ...ref, engines, kR: kR.value },
     profiles,
     commands,
     tNow,
@@ -408,42 +468,37 @@ export function buildForecast(
     s2: 1, // the present-state covariance already carries s²
     sigmaH: d.sigmaH0,
     validated: d.validated,
-    engineSigma: [0, 0],
+    engineSigma: [0, 0, 0],
     engineSigmas,
+    rcsSigma: kR.sigma,
     muSigma,
     h: s.fdStep,
   });
 
   // Horizon (§8.4) and samples.
   const radius = (id: string) => ctx.bodies.find((b) => b.id === id)?.radius ?? 0;
-  // LIFT(2G): hull reach in the body x–y plane from the first prism's outline, as the planar
-  // footprint gave it (`hullReach(hull, centerOfMass)` is the 3D form).
-  const hull = Math.max(
-    0,
-    ...(req.massProperties.hull[0]?.outline ?? []).map((p) =>
-      Math.hypot(p.x - req.massProperties.centerOfMass.x, p.y - req.massProperties.centerOfMass.y),
-    ),
-  );
+  // The farthest point of the hull from the centre of mass, in 3D.
+  const hull = hullReach(req.massProperties.hull, req.massProperties.centerOfMass);
   const samples: ForecastSample[] = [];
-  /** The samples as propagated (planar), by time, for clearances against asteroids. */
-  const shipAt = new Map<number, { position: Vec2; positionCov: Cov2 }>();
-  const sigmaMajor: ForecastDetail['sigmaMajor'][number][] = [];
+  const sigmaMajor: ForecastSigmaBySource[] = [];
+  /** The ship's samples inside the horizon: index into fc, position, believed frame origin. */
+  const kept: { k: number; t: number; ship: Vec3; primary: Vec3 }[] = [];
   const tracks = new Map<string, { t: number; position: Vec3; positionCov: Cov3 }[]>(
     spec.bodies.map((b) => [b, []]),
   );
-  const approach = new Map<string, ClosestApproach>();
   const L = (p: ProfileFit, r: number) =>
     r > p.rMax ? Math.log(r / p.rMax) : r < p.rMin ? Math.log(r / p.rMin) : 0;
-  const primaryAt = new Map<number, Vec2>();
+  const bodySeries = new Map<string, { t: number; d: Vec3; cov: Matrix }[]>(
+    spec.bodies.map((b) => [b, []]),
+  );
   for (let k = 0; k < fc.times.length; k++) {
     const rel = fc.mean[k]!;
     const bodies = fc.bodies[k]!;
     const cv = fc.cov[k]!;
     const total = majorSigma(cv.total);
-    const dist: Record<string, number> = { [spec.primary]: Math.hypot(rel[0]!, rel[1]!) };
-    others.forEach(
-      (o, j) => (dist[o.id] = Math.hypot(rel[0]! - bodies[4 * j]!, rel[1]! - bodies[4 * j + 1]!)),
-    );
+    const shipRel = vec(rel);
+    const dist: Record<string, number> = { [spec.primary]: len(shipRel) };
+    others.forEach((o, j) => (dist[o.id] = len(sub(shipRel, vec(bodies, 6 * j)))));
     const nearest = Math.min(...Object.values(dist));
     // The line ends at the horizon, and wherever a number stops being finite.
     if (!(total <= s.horizonFraction * nearest) || !rel.every(Number.isFinite)) break;
@@ -468,14 +523,12 @@ export function buildForecast(
       (d.validated[dominant]?.spans ?? []).some(
         ([lo, hi]) => lo <= dist[dominant]! && dist[dominant]! <= hi,
       );
-    const positionCov = toCov2(cv.total);
-    primaryAt.set(t, frame.bodyPos[spec.primary]!);
-    shipAt.set(t, { position: frame.ship.position, positionCov });
+    kept.push({ k, t, ship: frame.ship.position, primary: frame.bodyPos[spec.primary]! });
     samples.push({
       t,
-      position: lift(frame.ship.position),
-      velocity: lift(frame.ship.velocity),
-      positionCov: cov3FromPlanar(positionCov),
+      position: frame.ship.position,
+      velocity: frame.ship.velocity,
+      positionCov: toCov3(cv.total),
       extrapolating,
       ...(validated ? { validated } : {}),
     });
@@ -490,31 +543,24 @@ export function buildForecast(
     });
     for (const id of spec.bodies) {
       const bp = frame.bodyPos[id]!;
-      tracks.get(id)!.push({ t, position: lift(bp), positionCov: cov3FromPlanar([0, 0, 0]) });
-      const dx = frame.ship.position.x - bp.x;
-      const dy = frame.ship.position.y - bp.y;
-      const r = Math.hypot(dx, dy);
-      const clearance = r - radius(id) - hull;
-      const prev = approach.get(id);
-      if (!prev || clearance < prev.distance) {
-        const ux = dx / r;
-        const uy = dy / r;
-        const sig = Math.sqrt(
-          Math.max(
-            0,
-            ux * ux * positionCov[0] + 2 * ux * uy * positionCov[1] + uy * uy * positionCov[2],
-          ),
-        );
-        approach.set(id, { id, t, distance: clearance, sigma: sig });
-      }
+      tracks.get(id)!.push({ t, position: bp, positionCov: [0, 0, 0, 0, 0, 0] });
+      // Relative to a modelled body, the ship's envelope is the relative position's (§8.7).
+      bodySeries.get(id)!.push({ t, d: sub(frame.ship.position, bp), cov: cv.total });
     }
   }
 
-  // Tracked asteroids (§10): each from its latest probe arc, flown under the same law.
+  const approach = new Map<string, ClosestApproach>();
+  for (const [id, series] of bodySeries) {
+    const ca = closestApproach(id, series, radius(id) + hull);
+    if (ca) approach.set(id, ca);
+  }
+
+  // Tracked asteroids (§10, §8.7): each from its latest probe arc, flown under the same law.
   const asteroidNotes: AsteroidForecastNote[] = [];
   const latestProbe = new Map<string, Arc>();
   for (const a of d.probes.get(req.record.id) ?? []) latestProbe.set(asteroidOf(a.id)!, a);
   const primaryProfile = d.profiles.find((p) => p.body === spec.primary) ?? null;
+  const keptAt = new Map(kept.map((q) => [q.t, q]));
   for (const [ast, arc] of latestProbe) {
     let wins = makeWindows(arc, spec.primary, windowRule(s))
       .filter((w) => !w.powered && w.fixes.length >= s.windowKeepFixes)
@@ -541,12 +587,12 @@ export function buildForecast(
       asteroidNotes.push({ id: ast, forecast: false });
       continue;
     }
-    const aTimes = samples.map((q) => q.t).filter((t) => t >= anc.tNow);
+    const aTimes = kept.map((q) => q.t).filter((t) => t >= anc.tNow);
     if (aTimes.length === 0 || ![...anc.state, ...anc.covariance.data].every(Number.isFinite)) {
       asteroidNotes.push({ id: ast, forecast: false });
       continue;
     }
-    const PA = { rows: 4, cols: 4, data: anc.covariance.data.map((v) => v * d.noiseScale) };
+    const PA = { rows: 6, cols: 6, data: anc.covariance.data.map((v) => v * d.noiseScale) };
     const afc = forecastCore({
       ref: aref,
       profiles,
@@ -559,42 +605,34 @@ export function buildForecast(
       s2: 1,
       sigmaH: d.sigmaH0,
       validated: d.validated,
-      engineSigma: [0, 0],
+      engineSigma: [0, 0, 0],
       muSigma,
       h: s.fdStep,
     });
     const radiusA = ctx.asteroids?.find((q) => q.id === ast)?.radius ?? 0;
     const track: { t: number; position: Vec3; positionCov: Cov3 }[] = [];
+    const series: { t: number; d: Vec3; cov: Matrix }[] = [];
     for (let k = 0; k < afc.times.length; k++) {
       const rel = afc.mean[k]!;
       const ob = afc.bodies[k]!;
       const cv = afc.cov[k]!;
-      let nearest = Math.hypot(rel[0]!, rel[1]!);
+      let nearest = len(vec(rel));
       for (let j = 0; j < nOthers; j++)
-        nearest = Math.min(nearest, Math.hypot(rel[0]! - ob[4 * j]!, rel[1]! - ob[4 * j + 1]!));
+        nearest = Math.min(nearest, len(sub(vec(rel), vec(ob, 6 * j))));
       if (!(majorSigma(cv.total) <= s.horizonFraction * nearest)) break;
       const t = afc.times[k]!;
-      const p0 = primaryAt.get(t)!;
-      const position = { x: p0.x + rel[0]!, y: p0.y + rel[1]! };
-      const positionCov = toCov2(cv.total);
-      track.push({ t, position: lift(position), positionCov: cov3FromPlanar(positionCov) });
-      const ship = shipAt.get(t)!;
-      const dx = ship.position.x - position.x;
-      const dy = ship.position.y - position.y;
-      const r = Math.hypot(dx, dy);
-      const clearance = r - radiusA - hull;
-      const prev = approach.get(ast);
-      if (!prev || clearance < prev.distance) {
-        const ux = dx / r;
-        const uy = dy / r;
-        const c0 = ship.positionCov[0] + positionCov[0];
-        const c1 = ship.positionCov[1] + positionCov[1];
-        const c2 = ship.positionCov[2] + positionCov[2];
-        const sig = Math.sqrt(Math.max(0, ux * ux * c0 + 2 * ux * uy * c1 + uy * uy * c2));
-        approach.set(ast, { id: ast, t, distance: clearance, sigma: sig });
-      }
+      const here = keptAt.get(t)!;
+      const position = add(here.primary, vec(rel));
+      track.push({ t, position, positionCov: toCov3(cv.total) });
+      series.push({
+        t,
+        d: sub(here.ship, position),
+        cov: relativeCovariance(fc, here.k, afc, k),
+      });
     }
     if (track.length > 0) tracks.set(ast, track);
+    const ca = closestApproach(ast, series, radiusA + hull);
+    if (ca) approach.set(ast, ca);
     asteroidNotes.push({
       id: ast,
       forecast: track.length > 0,
@@ -604,29 +642,33 @@ export function buildForecast(
   }
 
   const presentFrame = (() => {
-    const z = new Float64Array(4 * nOthers);
-    others.forEach((o, k) => z.set(o.stateAt(tNow), 4 * k));
+    const z = new Float64Array(6 * nOthers);
+    others.forEach((o, k) => z.set(o.stateAt(tNow), 6 * k));
     return frameAt(present.state, z, tNow);
   })();
-  const pc = present.covariance.data;
-  const yawNow = att.at(tNow);
-  // LIFT(2G): the present estimate leaves planar: z = 0, no out-of-plane covariance, attitude a
-  // yaw about +z and the rate about body z only.
+  const rate = lastRate(req.record);
   const initial: ShipEstimate = {
     t: tNow,
-    position: lift(presentFrame.ship.position),
-    velocity: lift(presentFrame.ship.velocity),
-    positionCov: cov3FromPlanar([pc[0]!, pc[1]!, pc[5]!]),
-    velocityCov: cov3FromPlanar([pc[10]!, pc[11]!, pc[15]!]),
-    attitude: yawNow === undefined ? ctx.arrival.attitude : quat.fromYaw(yawNow),
+    position: presentFrame.ship.position,
+    velocity: presentFrame.ship.velocity,
+    positionCov: block3(present.covariance, 0),
+    velocityCov: block3(present.covariance, 3),
+    attitude: att.at(tNow) ?? ctx.arrival.attitude,
     attitudeSigma: ctx.arrival.attitudeSigma,
-    angularVelocity: { x: 0, y: 0, z: lastRate(req.record) ?? 0 },
+    angularVelocity: rate ?? { x: 0, y: 0, z: 0 },
   };
   const objects: ForecastObjectTrack[] = [...tracks.entries()].map(([id, samplesB]) => ({
     id,
     samples: samplesB,
   }));
   const adopted = snap.state.extensions.filter((e) => e.status === 'adopted').map((e) => e.id);
+  const camera = present.camera;
+  const detail: ForecastDetail = {
+    sigmaMajor,
+    presentSource: present.source,
+    presentTime: tNow,
+    asteroids: asteroidNotes,
+  };
   const draft: ForecastDraft = {
     id: req.id,
     attemptId: req.record.id,
@@ -651,29 +693,122 @@ export function buildForecast(
       ...(engineIds.length > 0
         ? { engine: { values: engineValues, covariance: { ids: engineIds, values: engineCov } } }
         : {}),
+      ...(camera
+        ? {
+            camera: {
+              values: Object.fromEntries(camera.ids.map((id, i) => [id, camera.value[i]!])),
+              covariance: {
+                ids: [...camera.ids],
+                values: camera.ids.flatMap((_, i) =>
+                  camera.ids.map((__, j) => (i === j ? camera.sigma[i]! ** 2 : 0)),
+                ),
+              },
+            },
+          }
+        : {}),
+      ...(plannedAttitudes.length > 0 ? { plannedAttitudes } : {}),
     },
     horizon: samples.length > 0 ? samples[samples.length - 1]!.t : req.issuedAt,
     samples,
     objects,
     closestApproaches: [...approach.values()],
+    detail,
   };
-  return {
-    draft,
-    detail: {
-      sigmaMajor,
-      presentSource: present.source,
-      presentTime: tNow,
-      asteroids: asteroidNotes,
-    },
-  };
+  return { draft, detail };
 }
 
-/** Latest gyro rate about body z, rad/s. */
-function lastRate(rec: AttemptRecord): number | undefined {
+/** Nominal force (N) and propellant flow (kg/s) of a planned burn. */
+function burnForce(
+  ship: ShipDefinition,
+  b: Burn,
+  g0: number,
+): { force: number; flow: number } | null {
+  if (b.thruster === RCS_GROUP) {
+    const info = rcsInfo(ship);
+    if (!info || !b.translate) return null;
+    const f = rcsForce(info, b.translate);
+    const force = len(f);
+    return { force, flow: info.isp > 0 ? force / (info.isp * g0) : 0 };
+  }
+  const info = thrusterInfo(ship, b.thruster);
+  if (!info) return null;
+  const force = info.thrust * b.throttle;
+  return { force, flow: info.isp > 0 ? force / (info.isp * g0) : 0 };
+}
+
+/**
+ * §8.7: covariance of the relative position d = r_object − r_ship at one sample. Not the sum of
+ * the two envelopes: both paths respond to the same law, so the shared sources (profile nodes,
+ * hedge exponents, unprofiled masses) enter through S_object − S_ship. The two present states
+ * and the ship's engine terms are independent.
+ */
+function relativeCovariance(
+  ship: ForecastCoreResult,
+  ks: number,
+  obj: ForecastCoreResult,
+  ko: number,
+): Matrix {
+  const m = zeros(3, 3);
+  for (let i = 0; i < 9; i++)
+    m.data[i] =
+      ship.cov[ks]!.state.data[i]! + ship.cov[ks]!.engine.data[i]! + obj.cov[ko]!.state.data[i]!;
+  const col = (r: ForecastCoreResult, name: string, k: number, c: number) =>
+    r.sensitivity.columns.get(name)?.[3 * k + c] ?? 0;
+  for (const blk of ship.sensitivity.shared) {
+    const n = blk.names.length;
+    const S = blk.names.map((name) =>
+      [0, 1, 2].map((c) => col(obj, name, ko, c) - col(ship, name, ks, c)),
+    );
+    for (let a = 0; a < n; a++)
+      for (let b = 0; b < n; b++) {
+        const v = blk.cov.data[a * n + b]!;
+        if (v === 0) continue;
+        for (let r = 0; r < 3; r++)
+          for (let c = 0; c < 3; c++) m.data[3 * r + c]! += S[a]![r]! * v * S[b]![c]!;
+      }
+  }
+  return m;
+}
+
+/**
+ * §8.7: the closest approach along the samples inside the horizon: the smallest |d|, refined with
+ * a parabola through the three samples around it; clearance |d| − `margin` (the object's radius
+ * and the hull's reach), σ along the line between the centres. When the smallest |d| is the last
+ * sample inside the horizon it is reported there: the closest the forecast shows.
+ */
+function closestApproach(
+  id: string,
+  series: readonly { t: number; d: Vec3; cov: Matrix }[],
+  margin: number,
+): ClosestApproach | null {
+  if (series.length === 0) return null;
+  const r = series.map((q) => len(q.d));
+  let k = 0;
+  for (let i = 1; i < r.length; i++) if (r[i]! < r[k]!) k = i;
+  let t = series[k]!.t;
+  let dist = r[k]!;
+  if (k > 0 && k + 1 < r.length) {
+    const a = r[k - 1]!;
+    const b = r[k]!;
+    const c = r[k + 1]!;
+    const curv = a - 2 * b + c;
+    const h0 = series[k]!.t - series[k - 1]!.t;
+    const h1 = series[k + 1]!.t - series[k]!.t;
+    if (curv > 0 && Math.abs(h0 - h1) < 1e-6 * Math.max(h0, 1)) {
+      const off = (0.5 * (a - c)) / curv;
+      t = series[k]!.t + off * h0;
+      dist = b - ((a - c) * (a - c)) / (8 * curv);
+    }
+  }
+  const q = series[k]!;
+  return { id, t, distance: dist - margin, sigma: Math.sqrt(along(q.cov, q.d)) };
+}
+
+/** Latest gyro rate, body frame, rad/s. */
+function lastRate(rec: AttemptRecord): Vec3 | undefined {
   for (let i = rec.measurements.length - 1; i >= 0; i--) {
     const m = rec.measurements[i]!;
-    // LIFT(2G): only the body z component ([2]) of a rate measurement is used.
-    if (m.kind === 'rate') return m.value[2];
+    if (m.kind === 'rate') return { x: m.value[0] ?? 0, y: m.value[1] ?? 0, z: m.value[2] ?? 0 };
   }
   return undefined;
 }

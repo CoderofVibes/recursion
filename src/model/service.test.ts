@@ -79,7 +79,7 @@ function context(opts: {
       attitudeSigma: 1e-3,
       angularVelocity: { x: 0, y: 0, z: 0 },
     },
-    settings: { dt: 60, ...(opts.settings ?? {}) },
+    settings: { dt: 60, planar: 1, ...(opts.settings ?? {}) },
   };
 }
 
@@ -97,7 +97,8 @@ const param = (s: ModelState, id: string) => {
   return p;
 };
 
-// LIFT(2G): the scenarios in this file are planar (z = 0, yaw-only attitude, flat hull).
+// The scenarios in this file are planar (z = 0, yaw-only attitude, flat hull): the model runs
+// them in the planar reduction (`planar: 1`, spec Appendix A.3), as the planar model did.
 const massProperties: MassProperties = {
   mass: MASS,
   centerOfMass: { x: 0, y: 0, z: 0 },
@@ -276,8 +277,14 @@ describe('forecast service (forecast-envelope through the game layer)', () => {
     expect(p.t).toBe(now);
     const ra = c.anchor!;
     const C = fromRows(ra.covariance);
+    // The present state has six numbers (x, y, z, vx, vy, vz); the planar vector's four are
+    // x, y, vx, vy. In the planar reduction z and vz are exactly zero.
+    const plane = [0, 1, 3, 4];
     for (let i = 0; i < 4; i++)
-      expect(Math.abs(p.state[i]! - ra.state[i]!)).toBeLessThan(Math.sqrt(C.data[i * 4 + i]!));
+      expect(Math.abs(p.state[plane[i]!]! - ra.state[i]!)).toBeLessThan(
+        Math.sqrt(C.data[i * 4 + i]!),
+      );
+    expect([p.state[2], p.state[5]]).toEqual([0, 0]);
   });
 
   it('coasting inside sampled distances: honest at every hour, full horizon', () => {

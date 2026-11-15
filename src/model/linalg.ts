@@ -264,3 +264,62 @@ export function lstsq(design: Matrix, rhs: Matrix): Matrix {
   }
   return x;
 }
+
+/**
+ * Eigenvalues (ascending) and eigenvectors of a small symmetric matrix by cyclic Jacobi
+ * rotations (a fixed number of sweeps; deterministic). `vectors` is row-major with eigenvector
+ * k in column k. A block that is already diagonal is left untouched, so a planar covariance
+ * embedded in 3D keeps its out-of-plane axis exactly.
+ */
+export function symEig(m: Matrix): { values: Float64Array; vectors: Matrix } {
+  if (m.rows !== m.cols) throw new Error('symEig: matrix must be square');
+  const n = m.rows;
+  const a = new Float64Array(n * n);
+  for (let i = 0; i < n; i++)
+    for (let j = 0; j < n; j++) a[i * n + j] = 0.5 * (m.data[i * n + j]! + m.data[j * n + i]!);
+  const v = identity(n);
+  for (let sweep = 0; sweep < 30; sweep++) {
+    let off = 0;
+    for (let p = 0; p < n; p++) for (let q = p + 1; q < n; q++) off += Math.abs(a[p * n + q]!);
+    if (off === 0) break;
+    for (let p = 0; p < n; p++) {
+      for (let q = p + 1; q < n; q++) {
+        const apq = a[p * n + q]!;
+        if (apq === 0) continue;
+        const theta = (a[q * n + q]! - a[p * n + p]!) / (2 * apq);
+        const t = (theta >= 0 ? 1 : -1) / (Math.abs(theta) + Math.sqrt(theta * theta + 1));
+        const c = 1 / Math.sqrt(t * t + 1);
+        const s = t * c;
+        for (let k = 0; k < n; k++) {
+          const akp = a[k * n + p]!;
+          const akq = a[k * n + q]!;
+          a[k * n + p] = c * akp - s * akq;
+          a[k * n + q] = s * akp + c * akq;
+        }
+        for (let k = 0; k < n; k++) {
+          const apk = a[p * n + k]!;
+          const aqk = a[q * n + k]!;
+          a[p * n + k] = c * apk - s * aqk;
+          a[q * n + k] = s * apk + c * aqk;
+        }
+        a[p * n + q] = 0;
+        a[q * n + p] = 0;
+        for (let k = 0; k < n; k++) {
+          const vkp = v.data[k * n + p]!;
+          const vkq = v.data[k * n + q]!;
+          v.data[k * n + p] = c * vkp - s * vkq;
+          v.data[k * n + q] = s * vkp + c * vkq;
+        }
+      }
+    }
+  }
+  const order = Array.from({ length: n }, (_, i) => i).sort(
+    (i, j) => a[i * n + i]! - a[j * n + j]! || i - j,
+  );
+  const values = Float64Array.from(order, (i) => a[i * n + i]!);
+  const vectors = zeros(n, n);
+  order.forEach((i, k) => {
+    for (let r = 0; r < n; r++) vectors.data[r * n + k] = v.data[r * n + i]!;
+  });
+  return { values, vectors };
+}
