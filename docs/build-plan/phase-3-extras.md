@@ -330,3 +330,33 @@ This replaces 3F in [phase-3.md](phase-3.md), which extended the console for an 
 - No visual value hard-coded outside `src/theme/` (Convention 11); at most three flashes in any second; reduced motion respected.
 - **The lighter bar (A26) applies to process:** S15's runner is your evidence; no new evidence suites.
 - Keep `npm run check` and `npm run build` green; commit checkpoints and announce each in one line.
+
+---
+
+## TR — The 30-second trailer
+
+**Thread:** GPT/Codex (GPT-6 Astra) · **Branch:** `p3/tr-trailer` · **Worktree:** `.worktrees/tr`
+
+**Gated (owner, 2026-11-15):** starts when VX's mission views (Twin Deeps' pass; the wells in the window, R50), 3F's redesigned screens and AU's cue list have merged. 2C's R46 (FLIGHT drawing the lattice) helps but isn't required. The integrator says when.
+
+**Read:**
+- **`docs/submission/video.md`: the owner's beat sheet, which this page plays exactly**, and `docs/submission/requirements.md` (the organizer's rules and labels);
+- `docs/art/art-bible.md`; DECISIONS A16, A21, A26; ledger R43 (flashes);
+- the handoffs of VX (the sky, the fx helpers, and its preview page, which isn't part of the app), 3F (the screens) and OP (the room's hooks for scripted shots: `RoomView`'s `scripted` option and its scripted-frame method);
+- NIGHT's driver in `docs/handoffs/night/judge-run/`, to prepare real sessions.
+
+**Goal:** a page that plays the owner's 30-second sequence at 1920 × 1080, so the owner records it in one take. The snap to black is the core of Recursion, the constant death loop: make every cut land.
+
+1. **A separate page**, `src/trailer/index.html` with its code in `src/trailer/`, served by the dev server. The game never imports it and it isn't in the production build, so the game's bundle and S15's numbers don't change.
+2. **Start and replay:** a black page; Space or a click starts it (so the owner starts recording first); R replays it; every run plays the same.
+3. **Real where the beat sheet says real:** the game's own renderers (the room, VX's sky and wells, the FLIGHT hologram, 3F's screens) showing real data from real sessions. Prepare the sessions by playing them (NIGHT's driver can), and load them as saved states. The instrument montage shows the real screens.
+4. **Staged where the beat sheet says staged:** the title's flicker, the slingshot's shake, the wells' rotation, the braid, and FLIGHT's lattice if R46 hasn't landed. Use the art bible's style and VX's helpers. List every staged element in your handoff; the final card's label covers them.
+5. **Cuts:** the snaps to black are hard cuts; at 12.8 s the alarm cuts with the black. No black between the montage and the console shot.
+6. **Captions and the final card** in the page, with the theme's fonts and the labels from `video.md`. A key hides the captions for a clean take.
+7. **Sound:** play AU's cues where they exist (the alarm above all), silence where they don't; write the cue times in your handoff so sound can be laid in the edit.
+8. **At most three flashes in any second**, the title's flicker and the snaps included: a black snap between two bright shots counts as a flash.
+9. **Smooth enough to record:** 60 frames a second at 1920 × 1080 on the owner's machine; compile shaders and load scenes before Start, so the first shot doesn't hitch.
+
+**Owns:** `src/trailer/` (new), `docs/handoffs/tr.md` and `docs/handoffs/tr/`. Read anything; ask the integrator for any change elsewhere, and prefer the room's existing scripted-shot hooks to new ones.
+
+**The bar is lighter (A26):** done when the owner records a clean take. Keep `npm run check` and `npm run build` green, and never loosen a test. In your handoff: a timestamped run showing each beat within 0.05 s of the sheet, and one still per beat.

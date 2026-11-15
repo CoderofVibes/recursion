@@ -27,6 +27,7 @@ The live state of the build between threads: who is running, who holds which sha
 | NIGHT judge's run | Claude (Fable 5.2) | `.worktrees/night` · `p3/night-hardening` | **Done, merged** (`42b5c36`, from `cb1ace1`); report `docs/handoffs/night.md`; judge-run driver in `docs/handoffs/night/judge-run/` | Its found-not-fixed list feeds R46–R48 | `42b5c36` |
 | AU basic audio | GPT/Codex | `.worktrees/au` · `p3/au-audio` | **Relaunching** (owner, 2026-11-15): its first launch left no work; the branch is brought up to main. Prompt `phase-3-extras.md` § AU with its relaunch notes; lighter bar | First checkpoint: the cue list (R25), then the owner generates the files | — |
 | PF speed | GPT/Codex (GPT-6 Astra) | `.worktrees/pf` · `p3/pf-speed` | **Ready to launch** (owner, 2026-11-15; prompt `phase-3-extras.md` § PF) | Pass S15's release check (A18 (7), R49); fix the runners first (R48) | — |
+| TR the 30 s trailer | GPT/Codex (GPT-6 Astra) | `.worktrees/tr` · `p3/tr-trailer` | **Gated** (owner, 2026-11-15; prompt `phase-3-extras.md` § TR; beats in `docs/submission/video.md`) | After VX's mission views (R50), 3F's screens and AU's cue list merge; the integrator says when | — |
 | ART window references | Owner's choice (Claude or GPT) | `.worktrees/art` · `art/window-references` | **Merged** (`0e9bf1b`, from `49cfd09`; through round 7 prompts): `docs/art/` only, no images (checked). **References only (A23): no image ships or is committed** | If it runs again, merge docs only | `0e9bf1b` |
 | S22 well field (real funnels) | GPT/Codex | `.worktrees/s22` · `st/s22-big-well-field` | **Done**: funnels 120 km long, 20 km mouth, 1 km throat, pull 0.02–0.10 m/s²; 2,601 sites, 650 appearing; owner questions open | Feeds 3B (R12) | `15171df` |
 | S17 lattice first contact | GPT/Codex | `.worktrees/s17` · `st/s17-lattice-first-contact` | **Done**; five owner questions open | Feeds 3C (R8), 3A, 2C | `ba7568e` |
@@ -72,6 +73,7 @@ In the morning the integrator merges in this order: the paused threads' checkpoi
 - **The judge's README:** the picker and the Twin Deeps recipe.
 - **Decided:** AU relaunched (it never ran). Was: **AU:** did it run? Without it the game ships silent.
 - **Submission:** S12's opening line, demo format and capture, `docs/submission/`, the portal, and when the owner calls the switch (a couple of hours before 5 pm Pacific).
+- **The demo video:** the owner's beats are in `docs/submission/video.md` (2026-11-15). Thread TR builds a page that plays them; the owner records it. Staged for the video only: the title's flicker, the slingshot's shake, the wells' rotation, the braid, and FLIGHT's lattice unless R46 lands.
 - Still open from before: credits or a debrief after the ending; the loss audio at the reveal; reduced motion (R44, integrator chose a still sky).
 
 ## Shared files: who holds them now
@@ -183,7 +185,9 @@ Decided: A15 (S11's queue), A16 (the lattice), A17 (the ending) and A18 (the Gra
 
 | Commit | What |
 |---|---|
-| (this commit) | PF (speed, GPT) written: S15's release check (R48, R49); scoped exceptions in `standin-model.ts`, `RoomView.ts`'s renderer setup and `vite.config.ts`; 2F and 3F told |
+| (this commit) | The owner's demo video: beats in `docs/submission/video.md`; TR (the trailer page, GPT) written and gated |
+| `a674cc0` | Submission: the owner's notes from the instruction video |
+| `1089339` | PF (speed, GPT) written: S15's release check (R48, R49); scoped exceptions in `standin-model.ts`, `RoomView.ts`'s renderer setup and `vite.config.ts`; 2F and 3F told |
 | `49343ff` | Ledger: the 3F worktree created; AU's branch brought up to main |
 | `4ea1e87` | AU relaunched (notes in its prompt: the existing mute seam, the mount line via 3F, R42's cue times); 3F told to hide the sound switch until audio exists |
 | `3690c4b` | A26 (the owner's morning playtest) recorded; prompts for the morning threads in `phase-3-extras.md`: 3F (console v2, full bar), VX's next pass, 2C and 2F resuming (lighter bar); 2D retired into 3F; R50 |
