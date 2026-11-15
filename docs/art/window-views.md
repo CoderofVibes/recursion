@@ -33,7 +33,7 @@ Internal names only. Nothing is ever labelled on screen (Night Watch §8).
 | **Pair** | Two interacting galaxies | Small, faint, joined by a thin tidal tail; 1–2° in all |
 | **Ember** | One bright deep-red star | The brightest star in the sky, unmistakably red |
 | **Hollow** | A starless dark cloud | A soft-edged patch of near-black about 15° across, few stars in front of it |
-| **Ember Wheel** (proposed, owner to decide) | A second, tilted spiral on the opposite side of the sky (X03b `027eec67` #0) | About 30–40° across, its rim lined with bright star-forming points like embers |
+| **Ember Wheel** (owner approved 2026-11-15) | A second, tilted spiral on the opposite side of the sky (X03b `027eec67` #0) | About 30–40° across, its rim lined with bright star-forming points like embers |
 | **Deep pole** | The sky farthest from the Galaxy's disc | Very sparse stars, many faint galaxies (S03 style), the darkest sky |
 
 ## The views, region by region
@@ -45,7 +45,7 @@ Internal names only. Nothing is ever labelled on screen (Night Watch §8).
 | C01 Unfamiliar Sky | A dark limb below, fragments above and aside, one "star" that's really a nearby rock | **Galaxy**, whole | The first view after the black hole: the wrongness right ahead | S01, B03 |
 | Transit legs | Open sky; the next region's bodies as small discs or points if the window channel has them | Whatever the heading gives | The quiet sky while preparing (A12) | S02 |
 | C02 Twin Deeps | Alpha upper left, Beta lower right, the belt a thin ring of sparks, the radiation crescent | **Deep pole** | Dark sky makes the crescents and sparks the whole picture | B01 (hero), B02, L01, X06, X07 |
-| C03 Lantern Field | A rim brightening high to port, lit rocks like lanterns, a repeated silhouette astern | **Deep pole**, galaxy-rich side | Lanterns against a deep field | L07, X08 |
+| C03 Lantern Field | A rim brightening high to port, lit rocks like lanterns, a repeated silhouette astern | **Ember Wheel** | Lit rocks like lanterns in front of a galaxy rimmed with embers: the lanterns rhyme with the sky | L07, X08 |
 | N01 Shadow Observatory | An unlit overhang above, black fragments below | **Bulge** | Black bodies are seen only by the stars they hide, so put them in front of the densest stars | X02 |
 | N02 Far Aperture | One body edge above, another receding below, a flicker between | **Blue Cloud** | A dense patch for the flicker to slip across | X09 |
 | N03 Unseen Cathedral | An ordinary, calm rock field (A16: no hint of the lattice) | **Pair** | The most peaceful view in the game, which is the trap | X10 |
@@ -59,7 +59,7 @@ Internal names only. Nothing is ever labelled on screen (Night Watch §8).
 | R02 Hinge | A knife-thin ridge above, isolated rocks | A **Tip** | The ridge's crest pointing along the Galaxy's needle | X12 |
 | P04 Back of the World | A dark body blocking one side, a sliver of limb, the sun going behind it | **Bulge**, rising as the sun sets | The eclipse: the stars and the Bulge come up as the eye adapts | B06, X13 |
 | A01 Countercurrent | A dark moon below (a streamer only if gas is approved) | **Ember** | A single red point above the dark moon | B05, G02 |
-| C04 Stillwater | A massive limb to one side, a few still rocks, a far glimmer | **Deep pole** | Stillness | X16 |
+| C04 Stillwater | A massive limb to one side, a few still rocks, a far glimmer | **Ember Wheel**, low | Stillness: a massive limb, a few still rocks, and the second galaxy hanging calm beyond them | X16 |
 | R04 Crooked Ship | Rocks around a roomy central volume | **Blue Cloud** | Open and clear, a place to drill | — |
 | C05 Braided Crossing | Debris streams crossing at angles, separate funnels beyond | **Scar** | Braids against the torn lane | X14 |
 | C06 Turning Rim | A hairline that opens into a tilted oval; home's warm Milky Way inside, Earth possibly a blue point | **Deep pole** | The inside must outshine the outside | L02, L03, X15 |
