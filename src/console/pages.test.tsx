@@ -553,10 +553,14 @@ describe('the loop on the console', () => {
     } as unknown as ViewSnapshot;
     const { html } = render('plan', { snapshot });
     expect(html).toContain('against the objective');
-    expect(html).toMatch(/aria-label="Speed out at its end"[^>]*aria-valuetext="[\d.]+ of 50 m\/s/);
+    expect(html).toContain('against the objective · where the forecast ends');
+    // What the objective needs is said once; each bar then carries only its own figure.
+    expect(html).toContain('50 m/s outward, beyond 9,000 km');
+    // (A ship heading back in, or short of the speed, is a caution, and the bar says so.)
     expect(html).toMatch(
-      /aria-label="Distance out at its end"[^>]*aria-valuetext="[\d,.]+ km ±[\d,.]+ k?m of 9,000 km"/,
+      /aria-label="Speed out"[^>]*aria-valuetext="[\d,.]+ m\/s( · inward)?(, caution)?"/,
     );
+    expect(html).toMatch(/aria-label="Distance out"[^>]*aria-valuetext="[\d,.]+ km ±[\d,.]+ k?m"/);
     // With no objective of either kind, the panel claims nothing about one.
     expect(render('plan').html).not.toContain('against the objective');
   });

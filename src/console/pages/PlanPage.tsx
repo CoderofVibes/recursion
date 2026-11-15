@@ -969,7 +969,11 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
                   {dist(c.distance)} ±{dist(c.sigma)} · T+{clock(c.t)}
                 </Line>
               ))}
-              {reaches.length || leaving ? <Caption>against the objective</Caption> : null}
+              {reaches.length || leaving ? (
+                <Caption>
+                  against the objective{leaving ? ' · where the forecast ends' : ''}
+                </Caption>
+              ) : null}
               {reaches.map((r) => (
                 <Line
                   key={r.id}
@@ -984,13 +988,15 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
               ))}
               {leaving ? (
                 <>
+                  <Line label="needs" tone="forecast">
+                    {fixed(leaving.minSpeed, 0)} m/s outward, beyond {dist(leaving.beyond)}
+                  </Line>
                   <LevelBar
-                    label="Speed out at its end"
+                    label="Speed out"
                     value={leaving.speed}
                     max={Math.max(leaving.minSpeed * 2.5, leaving.speed * 1.15)}
                     text={
-                      `${fixed(leaving.speed, 1)} of ${fixed(leaving.minSpeed, 0)} m/s` +
-                      (leaving.outward <= 0 ? ' · inward' : '')
+                      `${fixed(leaving.speed, 1)} m/s` + (leaving.outward <= 0 ? ' · inward' : '')
                     }
                     tone="forecast"
                     status={
@@ -1001,13 +1007,12 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
                     marks={[{ at: leaving.minSpeed, kind: 'target', label: 'needed' }]}
                   />
                   <LevelBar
-                    label="Distance out at its end"
+                    label="Distance out"
                     value={leaving.distance}
                     max={leaving.beyond * 1.1}
                     text={
                       dist(leaving.distance) +
-                      (leaving.distanceSigma !== null ? ` ±${dist(leaving.distanceSigma)}` : '') +
-                      ` of ${dist(leaving.beyond)}`
+                      (leaving.distanceSigma !== null ? ` ±${dist(leaving.distanceSigma)}` : '')
                     }
                     tone="forecast"
                     marks={[{ at: leaving.beyond, kind: 'target', label: 'the gate' }]}
