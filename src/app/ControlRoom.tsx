@@ -6,7 +6,7 @@
  *
  * Belief side only: the game is reached through `GameControls`.
  */
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { ConsoleScreen } from '../console/ConsoleScreen.tsx';
 import { Desk, useDesk } from '../console/desk.ts';
 import { loadEncounterPanels } from '../console/encounterPanels.ts';
@@ -19,6 +19,7 @@ import { HOTSPOT_NAME, PADS } from '../view3d/room/layout.ts';
 import type { ViewMode } from '../view3d/room/layout.ts';
 import type { RoomView } from '../view3d/room/RoomView.ts';
 import { AVAILABLE } from './hands.ts';
+import { onSoundMuted, setSoundMuted, soundMuted } from './sound.ts';
 
 /** Before the encounter the flight controls do not answer (A12). */
 const NOT_YET = { throttle: false, yaw: false, pitch: false, translate: false } as const;
@@ -110,6 +111,35 @@ export function ControlRoom({ game, modelError, erase }: ControlRoomProps) {
     (route ?? canvas).focus({ preventScroll: true });
   }, [ui.mode, ui.consoleUp, ui.loss]);
 
+  // Sound on or off (AU, R24): the switch below, the console's footer, and the M key.
+  const muted = useSyncExternalStore(onSoundMuted, soundMuted, soundMuted);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent): void => {
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      if (
+        e.repeat ||
+        e.key.toLowerCase() !== 'm' ||
+        tag === 'INPUT' ||
+        tag === 'SELECT' ||
+        tag === 'TEXTAREA'
+      )
+        return;
+      setSoundMuted(!soundMuted());
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+  const soundSwitch = (className: string) => (
+    <button
+      type="button"
+      className={className}
+      aria-pressed={muted}
+      onClick={() => setSoundMuted(!muted)}
+    >
+      M ▸ SOUND {muted ? 'OFF' : 'ON'}
+    </button>
+  );
+
   const status = game.status();
   const title =
     ui.mode === 'map' && ui.region ? `MAP  ›  ${game.briefing.name.toUpperCase()}` : TITLE[ui.mode];
@@ -149,6 +179,7 @@ export function ControlRoom({ game, modelError, erase }: ControlRoomProps) {
 
       <div className="cr-hud" data-hidden={dying ? '' : undefined} inert={dying}>
         <div className="cr-title">{title}</div>
+        {ui.mode !== 'console' ? soundSwitch('cr-sound') : null}
         {ui.mode !== 'room' && ui.mode !== 'console' ? (
           <button type="button" className="cr-back" onClick={() => room?.back()}>
             ESC ▸ STEP BACK
@@ -206,6 +237,7 @@ export function ControlRoom({ game, modelError, erase }: ControlRoomProps) {
         desk={desk}
         visible={ui.mode === 'console' && ui.consoleUp && !dying}
         onBack={() => room?.back()}
+        footerExtra={soundSwitch('cs-foot__back')}
       />
 
       {/* Loss of the ship: black, then one orange pip that survives. */}

@@ -57,6 +57,30 @@ export function chartView(chart: Chart): HoloChart {
   };
 }
 
+/** One phenomenon the eye can see through the window, in its own optical schema. */
+export interface WindowField {
+  readonly id: string;
+  readonly kind: string;
+  readonly visual: unknown;
+}
+
+/**
+ * The window channel's visible phenomena (A19's glowing funnels). Proposed to the integrator as
+ * an optional `WindowView.fields` of `{ id, kind, visual }` (the shape of `BelievedField`);
+ * until the contract carries it, this reads it if present and otherwise finds none.
+ */
+export function windowFields(view: object | undefined): readonly WindowField[] {
+  const fields = (view as { fields?: unknown } | undefined)?.fields;
+  if (!Array.isArray(fields)) return [];
+  return fields.filter(
+    (f): f is WindowField =>
+      typeof f === 'object' &&
+      f !== null &&
+      typeof (f as WindowField).id === 'string' &&
+      typeof (f as WindowField).kind === 'string',
+  );
+}
+
 /** Game position → scene, appended to a flat point list. */
 export function pushScene(flat: number[], v: GameVec): void {
   flat.push(v.x, v.z ?? 0, -v.y);
