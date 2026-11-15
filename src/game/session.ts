@@ -68,7 +68,7 @@ import {
   initialCommandedState,
   type CommandedState,
 } from './belief/view.ts';
-import type { EncounterSetup } from './encounter.ts';
+import type { EncounterSetup, EncounterSource } from './encounter.ts';
 import {
   createTruthStepper,
   type DueCommand,
@@ -129,10 +129,20 @@ const sameControls = (a: HandsOnInput, b: HandsOnInput): boolean =>
   a.pitch === b.pitch &&
   a.throttle === b.throttle;
 
-export function createGameSession(setup: EncounterSetup, options: SessionOptions): GameSession {
-  const { definition, play } = setup;
+export function createGameSession(source: EncounterSource, options: SessionOptions): GameSession {
   const { model, blackBox } = options;
-  const stepper = createTruthStepper(setup);
+  /** The encounter as run `run` meets it (A10). */
+  const setupFor = (run: number): EncounterSetup =>
+    typeof source === 'function' ? source(run) : source;
+  // The current attempt's encounter; the ship and the play values are the same for every run.
+  // Attempts are numbered on from whatever Black Box already holds (a restored save), and the
+  // run is the attempt's index less one.
+  const firstRun = blackBox.archive().attempts.reduce((n, a) => Math.max(n, a.index), 0);
+  let setupRun = firstRun;
+  let setup = setupFor(firstRun);
+  let definition = setup.definition;
+  const play = setup.play;
+  let stepper = createTruthStepper(setup);
   const dt = stepper.dt;
   const now = options.now ?? (() => new Date().toISOString());
   const clock = options.clock ?? (() => performance.now());
@@ -142,8 +152,7 @@ export function createGameSession(setup: EncounterSetup, options: SessionOptions
 
   let truth: GameTruthState = stepper.initial;
   let last: TickResult | undefined;
-  // Attempts are numbered on from whatever Black Box already holds (a restored save).
-  let attemptIndex = blackBox.archive().attempts.reduce((n, a) => Math.max(n, a.index), 0);
+  let attemptIndex = firstRun;
   let attemptId: AttemptId = '';
   let tick = 0;
   let paused = true;
@@ -197,7 +206,7 @@ export function createGameSession(setup: EncounterSetup, options: SessionOptions
       }));
 
   /** What a replay of an earlier attempt needs to follow it as the navigator did. */
-  const replay: CoverageReplayOptions = {
+  const replayOptions = (): CoverageReplayOptions => ({
     ship: definition.ship,
     briefing: definition.briefing,
     referenceRadius:
@@ -205,7 +214,7 @@ export function createGameSession(setup: EncounterSetup, options: SessionOptions
     arrivalMass: setup.arrivalMass,
     handsOnThrust,
     handsOnTurn,
-  };
+  });
 
   /** The thrust the controls ask for right now, from the last executed `fly` input. */
   function heldThrust(world: BelievedWorld): readonly ThrustTick[] {
@@ -225,6 +234,15 @@ export function createGameSession(setup: EncounterSetup, options: SessionOptions
   function begin(): void {
     attemptIndex += 1;
     attemptId = `attempt-${pad(attemptIndex)}`;
+    if (typeof source === 'function' && attemptIndex - 1 !== setupRun) {
+      // A new run: its own geometry and sensor noise (A10). The first is already built.
+      const next = setupFor(attemptIndex - 1);
+      if (next.definition.dt !== dt) throw new Error('an encounter may not change its step');
+      setupRun = attemptIndex - 1;
+      setup = next;
+      definition = next.definition;
+      stepper = createTruthStepper(next);
+    }
     truth = stepper.initial;
     last = undefined;
     tick = 0;
@@ -396,7 +414,10 @@ export function createGameSession(setup: EncounterSetup, options: SessionOptions
   const phase = (): Phase => (!running() ? 'ended' : tick === 0 ? 'prepare' : 'operate');
 
   const session: GameSession = {
-    briefing: definition.briefing,
+    /** The briefing of the attempt in progress (each run has its own, A10). */
+    get briefing() {
+      return definition.briefing;
+    },
     ship: definition.ship,
     model,
     blackBox,
@@ -442,7 +463,7 @@ export function createGameSession(setup: EncounterSetup, options: SessionOptions
         coverageEarlier: (earlierLooks ??= earlierCoverage(
           earlierRecords,
           attemptId,
-          replay,
+          replayOptions(),
           looksByAttempt,
         )),
       });

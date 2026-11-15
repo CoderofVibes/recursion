@@ -24,8 +24,12 @@ describe('Gravity range with the real model', () => {
       const range = createGravityRange();
       const setup = { ...range, play: { ...range.play, forecastSpan: 16 * 3600 } };
       // In-thread client: the same service the browser runs in a Web Worker.
+      // The bridge paces hand-overs and in-flight refits by real time, so a loaded machine
+      // would refit more often and move the model's version; a still clock makes it hand over
+      // only before each forecast and when the test waits for it, the same on any machine.
       const model = createModelBridge(createModelClient({ worker: false }), {
         referenceRadius: LAW.referenceRadius,
+        clock: () => 0,
       });
       const blackBox = createBlackBox();
       const session = createGameSession(setup, {

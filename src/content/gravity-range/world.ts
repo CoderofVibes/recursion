@@ -230,9 +230,14 @@ function belt(seed: string, beta: MassiveBody): Asteroid[] {
  * Every asteroid at arrival: Alpha's field (`a-…`) and Beta's ring (`b-…`). Nothing starts
  * within 60 km of where the ship appears.
  */
-export function asteroids(seed: string, host: readonly [MassiveBody, MassiveBody]): Asteroid[] {
+export function asteroids(
+  seed: string,
+  host: readonly [MassiveBody, MassiveBody],
+  arrivalAngle = ARRIVAL_ANGLE,
+): Asteroid[] {
   const [alpha, beta] = host;
-  const ship = arrivalKinematics(alpha).position;
+  // S8 rule 2: the exclusion round the actual arrival point, whatever the geometry.
+  const ship = arrivalKinematics(alpha, arrivalAngle).position;
   return [...alphaField(seed, alpha), ...belt(seed, beta)].filter(
     (a) => distance(a.position, ship) > 60_000 + a.radius,
   );
@@ -240,12 +245,16 @@ export function asteroids(seed: string, host: readonly [MassiveBody, MassiveBody
 
 /**
  * The ship's true arrival: circular about Alpha at r0 in the binary's plane, counter-clockwise,
- * nose along its path.
+ * nose along its path, at bearing `angle` about Alpha (π: opposite Beta; a catalogue geometry
+ * adds its offset, `geometry.ts`).
  */
-export function arrivalKinematics(alpha: MassiveBody): TruthWorld['ship']['kinematics'] {
+export function arrivalKinematics(
+  alpha: MassiveBody,
+  angle = ARRIVAL_ANGLE,
+): TruthWorld['ship']['kinematics'] {
   const r = LAW.referenceRadius;
-  const ux = Math.cos(ARRIVAL_ANGLE);
-  const uy = Math.sin(ARRIVAL_ANGLE);
+  const ux = Math.cos(angle);
+  const uy = Math.sin(angle);
   const v = circularSpeedAbout(alpha.gm, r);
   const velocity = { x: alpha.velocity.x - v * uy, y: alpha.velocity.y + v * ux, z: 0 };
   return {
@@ -256,17 +265,26 @@ export function arrivalKinematics(alpha: MassiveBody): TruthWorld['ship']['kinem
   };
 }
 
-/** The true world at arrival (t = 0). Recurrence resets to exactly this (P8). */
-export function arrivalWorld(definition: ShipDefinition, seed: string): TruthWorld {
+/**
+ * The true world at arrival (t = 0). Recurrence resets to exactly this (P8). `seed` lays out the
+ * rocks; `options.noise` roots the ship's sensor noise (default `seed`; each run has its own,
+ * A10); `options.arrivalAngle` places the ship (default opposite Beta).
+ */
+export function arrivalWorld(
+  definition: ShipDefinition,
+  seed: string,
+  options: { readonly noise?: string; readonly arrivalAngle?: number } = {},
+): TruthWorld {
   const pair = bodies();
+  const angle = options.arrivalAngle ?? ARRIVAL_ANGLE;
   return {
     t: 0,
     law: LAW,
     bodies: pair,
-    asteroids: asteroids(seed, pair),
+    asteroids: asteroids(seed, pair, angle),
     ship: {
-      kinematics: arrivalKinematics(pair[0]),
-      systems: createArrivalSystems(definition, HIDDEN, seed),
+      kinematics: arrivalKinematics(pair[0], angle),
+      systems: createArrivalSystems(definition, HIDDEN, options.noise ?? seed),
     },
     fields: [],
     sun: SUN,

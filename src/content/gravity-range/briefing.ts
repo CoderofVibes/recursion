@@ -24,13 +24,22 @@ import type { Vec3 } from '../../lib/vec3.ts';
 export const ENCOUNTER_ID = 'gravity-range';
 
 /**
- * [ASSUMED; owner direction A6] The objective: leave the binary on a slingshot past Beta.
- * Judged when the ship is `beyond` this distance from the pair's centre of mass: it must be
- * moving at `minSpeed` or more relative to it, having spent no more than `maxDeltaV`. Without
- * Beta's help 16 m/s leaves at under 40 m/s; a pass 680–1,650 km from Beta leaves at 50–66 m/s
- * (2G handoff, slingshot study).
+ * [ASSUMED; owner direction A6, A18 (3)] The objective: leave the binary on a slingshot past
+ * Beta. Judged when the ship crosses outward past `beyond` from the pair's centre of mass: it
+ * must be moving away at `minSpeed` or more, having spent no more than `maxDeltaV` since it
+ * could first leave Alpha's lobe (burns spent learning at Alpha are free), and having swung
+ * round Beta first: a visit inside `assist.within` of Beta's centre that gave the ship at least
+ * `assist.minGain` of energy from Beta's motion. Without Beta 16 m/s leaves at under 40 m/s; a
+ * pass 680–1,650 km from Beta leaves at 50–66 m/s (2G handoff; S8). S8's representative pass
+ * gains 2,615 m²/s² inside 2,000 km of Beta; the threshold leaves room for wider and weaker
+ * passes and is a play value for S21 to confirm.
  */
-export const DEPART = { beyond: 9_000_000, minSpeed: 50, maxDeltaV: 16 } as const;
+export const DEPART = {
+  beyond: 9_000_000,
+  minSpeed: 50,
+  maxDeltaV: 16,
+  assist: { body: 'beta', within: 2_000_000, minGain: 1_000 },
+} as const;
 
 /** [ASSUMED] One-sigma survey error on arrival. */
 const SIGMA = {
