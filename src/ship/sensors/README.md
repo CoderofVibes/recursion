@@ -3,6 +3,33 @@
 A24's physical radiation monitor, channel, caution policy and exact owner seams
 are documented in [RADIATION.md](RADIATION.md).
 
+## Shared optical packet dispatch (R36)
+
+`stepSensors` dispatches the acquired funnel-camera channel through 3B's
+`stepWellAcquisition`, using the same physical recorder packets as lattice data.
+Ordinary channels, the monitor and the raw diagnostic tile reserve their bytes
+first. Lattice and well frames then alternate first claim on the remaining bytes;
+each receives only what the preceding product did not consume. The saved
+`ext.sensors.nextOpticalProduct` cursor advances only on actual charged packets.
+Both helpers return their actual packet-byte consumption; a result outside its
+assigned budget throws instead of spending another channel's capacity.
+
+Fresh camera-equipped ships initialize the independent `sensors.camera/well-contours`
+stream alongside the original ten navigation streams and the radiation stream.
+The original navigation draws are unchanged. 3B's explicit legacy initializer
+remains the save owner's migration seam. Pending well-camera data is serviced even
+after the current luminous scene disappears; its original acquisition is retained,
+and outages are governed by 3B's camera-memory policy. No synthetic scene, extra
+recorder power, private geometry or unsensed safe gap is created by dispatch.
+
+The current well scene must still come from the game/window light producer. The
+channel's exact acquisition contract and limits are in
+`src/content/inverse-wells/CAMERA.md`. R45 transfers `wells*` maintenance to 3C:
+availability now comes from 3A's `functionAvailable`, while `functionalPower`
+excludes leakage from thresholds, cadence and optical quality. Recorded electrical
+draw still includes that heat. Real-dispatch regressions in `wells.test.ts` prove
+that leakage cannot energize underpowered optics or improve resolution.
+
 `index.ts` retains the existing 3D camera, IMU and star-head measurements. A component's
 `values.reportedCondition`, when supplied by the condition owner, controls declared sigma
 and condition telemetry; its actual `condition` controls availability and random draws.

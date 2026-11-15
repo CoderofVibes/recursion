@@ -88,14 +88,15 @@ The reading may share a packet with other data; coincident schedules charge once
    fresh measurements on resume.
    A transition from no `caution` to a `caution` must immediately
    set warp to 1× and stop the remaining ticks in that rendered frame. The existing
-   power-only alert union/session loop needs this owner edit. No truth input belongs
+   session loop needs this measured-caution wiring. No truth input belongs
    in this check. The helper retains the caution on missing, stale or out-of-order
    data; only a fresh unsaturated low reading clears it. A retained stale caution
    must be labelled stale by `validUntil`, not painted as a current measurement.
 3. **2C / 2D:** decode with `decodeRadiationReading`; preserve original times and
    saturation in archive/loss review and the live dose-rate display. Low local rate
    does not certify any component or spatial gap safe. The record includes no
-   component doses; 3A's separate R35 removal of `exposure` events is still needed.
+   component doses; 3A's separate R35 removal of `exposure` events is merged through
+   main `6ac2397`.
 
 The sensor code does not own the session's warp or screen alerts. A codec/caution
 unit test alone is not a demonstrated app-level warp drop.

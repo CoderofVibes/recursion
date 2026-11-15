@@ -20,6 +20,7 @@ import {
   recordRadiationMonitor,
 } from './radiation.ts';
 import { RADIATION_MONITOR } from './radiation-spec.ts';
+import { isWellsSensorScene, stepWellAcquisition, WELL_CAMERA_STREAM } from './wells.ts';
 
 type Sensing = typeof baseline.sensing;
 type Recorder = typeof baseline.recorder;
@@ -42,6 +43,8 @@ interface SensorMemory {
   /** Recorder dictionary state: repeated telemetry uses a channel reference, not another payload. */
   readonly packetValues?: Readonly<Record<string, readonly number[]>>;
   readonly nextPhysicalPacketAt?: number;
+  /** Alternate first claim on real spare packets when both optical products are active. */
+  readonly nextOpticalProduct?: 'lattice' | 'wells';
 }
 
 const clamp = (n: number, low: number, high: number) => Math.min(high, Math.max(low, n));
@@ -105,6 +108,7 @@ export function sensorStreamNames(definition: ShipDefinition): string[] {
   return [
     ...instruments.map((e) => `sensors.${e.id}`),
     ...instruments.map((e) => outOfPlaneStream(e.id)),
+    ...(instruments.some((e) => e.id === 'camera') ? [WELL_CAMERA_STREAM] : []),
     ...(definition.equipment.some((e) => e.id === RADIATION_MONITOR.host)
       ? [RADIATION_MONITOR.stream]
       : []),
@@ -235,9 +239,12 @@ export function stepSensors(
   const diagnostic = latticeAvailable
     ? latticeDiagnosticSchedule(state, definition, env)
     : { due: false, rate: 0 };
+  const wellsAvailable =
+    Object.values(env.fieldSignals).some(isWellsSensorScene) || state.ext?.wellCamera !== undefined;
   const monitorDue = radiationMonitorDue(state, env.t);
   const packetClock =
     latticeAvailable ||
+    wellsAvailable ||
     state.ext?.radiationMonitor !== undefined ||
     memory.nextPhysicalPacketAt !== undefined;
   const physicalPacketReady =
@@ -563,6 +570,16 @@ export function stepSensors(
           : (memory.nextRecorderAt ?? env.t),
         nextSampleAt,
         capacityWarning,
+        ...((latticeAvailable && wellsAvailable) || memory.nextOpticalProduct
+          ? {
+              nextOpticalProduct:
+                packetDue && latticeAvailable && wellsAvailable
+                  ? memory.nextOpticalProduct === 'wells'
+                    ? 'lattice'
+                    : 'wells'
+                  : (memory.nextOpticalProduct ?? 'lattice'),
+            }
+          : {}),
         ...(packetValues ? { packetValues } : {}),
         ...(packetClock
           ? {
@@ -581,19 +598,26 @@ export function stepSensors(
     latticeAvailable && packetDue
       ? stepLatticeDiagnostic(ordinaryState, definition, env, spareBytes)
       : { state: ordinaryState, measurements: [], bytes: 0 };
-  const lattice = latticeAvailable
-    ? stepLatticeAcquisition(
-        tile.state,
-        definition,
-        env,
-        dt,
-        Math.max(0, spareBytes - tile.bytes),
-        rate,
-      )
-    : { state: tile.state, measurements: [] };
+  let acquired = tile.state;
+  let remaining = Math.max(0, spareBytes - tile.bytes);
+  const products: Measurement[] = [];
+  const order =
+    memory.nextOpticalProduct === 'wells'
+      ? (['wells', 'lattice'] as const)
+      : (['lattice', 'wells'] as const);
+  for (const channel of order) {
+    if (channel === 'lattice' ? !latticeAvailable : !wellsAvailable) continue;
+    const acquire = channel === 'lattice' ? stepLatticeAcquisition : stepWellAcquisition;
+    const result = acquire(acquired, definition, env, dt, remaining, rate);
+    if (!Number.isSafeInteger(result.bytes) || result.bytes < 0 || result.bytes > remaining)
+      throw new Error('Optical product exceeded its actual recorder packet budget');
+    remaining -= result.bytes;
+    acquired = result.state;
+    products.push(...result.measurements);
+  }
   return {
-    state: lattice.state,
-    measurements: [...measurements, ...tile.measurements, ...lattice.measurements],
+    state: acquired,
+    measurements: [...measurements, ...tile.measurements, ...products],
     events,
   };
 }

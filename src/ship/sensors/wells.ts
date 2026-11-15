@@ -19,7 +19,8 @@ import * as v3 from '../../lib/vec3.ts';
 import type { Vec3 } from '../../lib/vec3.ts';
 import { getGeometry } from '../config/index.ts';
 import { opticalQuality } from './index.ts';
-import { sensorFunctionAvailable } from './function-available.ts';
+import { functionAvailable } from '../condition/index.ts';
+import { functionalPower } from './functional-power.ts';
 import {
   decodeWellCameraFrame,
   encodeWellCameraFrame,
@@ -147,7 +148,7 @@ function healthy(
 ): EquipmentState | undefined {
   const e = state.equipment[id],
     spec = definition.equipment.find((s) => s.id === id);
-  if (!spec || !sensorFunctionAvailable(e, t) || !(e.powerDraw > 0)) return;
+  if (!e || !spec || !functionAvailable(e, t) || !(functionalPower(e) > 0)) return;
   const temperature =
     (spec.thermalNode ? state.thermal[spec.thermalNode] : undefined) ?? e.temperature;
   if (
@@ -176,13 +177,13 @@ export function wellCameraSchedule(
   const scene = env.fieldSignals['ship-environment'] as { opticsValid?: boolean } | undefined;
   const ready =
     camera &&
-    camera.powerDraw >= c.minTrackingPower &&
+    functionalPower(camera) >= c.minTrackingPower &&
     env.t >= (camera.values.readyAt ?? 0) &&
     env.t >= (aim?.settleUntil ?? 0) &&
     scene?.opticsValid !== false;
   const rate =
     ready && recorder
-      ? Math.max(0, Math.min(recorderRate, camera.powerDraw / c.referenceTrackingPower))
+      ? Math.max(0, Math.min(recorderRate, functionalPower(camera) / c.referenceTrackingPower))
       : 0;
   const nextAt = memoryOf(state, env.t).nextAt;
   return { rate, nextAt, due: rate > 0 && env.t + 1e-10 >= nextAt };
@@ -220,7 +221,7 @@ export function stepWellAcquisition(
   const c = sensingOf(definition).camera;
   const camera = healthy(state, definition, 'camera', env.t),
     recorder = healthy(state, definition, 'black-box', env.t);
-  if (next.pending && (!camera || camera.powerDraw < c.minTrackingPower))
+  if (next.pending && (!camera || functionalPower(camera) < c.minTrackingPower))
     next = { ...next, pending: undefined, droppedFrames: next.droppedFrames + 1 };
   const retain = () => {
     if (!next.pending || !recorder || spare <= 0) return;
@@ -288,11 +289,25 @@ export function stepWellAcquisition(
       // [ASSUMED] Split the existing camera angular variance equally between frame-common
       // pointing readback and independent endpoint noise. No new exact attitude is exposed.
       const commonTrue =
-        opticalQuality(camera.powerDraw, 1, camera.condition, exposure, 0, halfAngle, definition)!
-          .angularSigma / Math.SQRT2;
+        opticalQuality(
+          functionalPower(camera),
+          1,
+          camera.condition,
+          exposure,
+          0,
+          halfAngle,
+          definition,
+        )!.angularSigma / Math.SQRT2;
       const commonReported =
-        opticalQuality(camera.powerDraw, 1, reportedCondition, exposure, 0, halfAngle, definition)!
-          .angularSigma / Math.SQRT2;
+        opticalQuality(
+          functionalPower(camera),
+          1,
+          reportedCondition,
+          exposure,
+          0,
+          halfAngle,
+          definition,
+        )!.angularSigma / Math.SQRT2;
       const saved = state.rng[WELL_CAMERA_STREAM];
       if (!saved) throw new Error(`Missing initialized sensor RNG stream: ${WELL_CAMERA_STREAM}`);
       const noise = createRng(0);
@@ -355,7 +370,7 @@ export function stepWellAcquisition(
             // [ASSUMED] Three-sigma image separation is the contour extraction threshold.
             const angle = v3.angleBetween(av, bv);
             const q = opticalQuality(
-              camera.powerDraw,
+              functionalPower(camera),
               v3.length(middle),
               camera.condition,
               exposure,
@@ -386,7 +401,7 @@ export function stepWellAcquisition(
       ): { slope: readonly [number, number]; cov: WellImageCovariance } => {
         const theta = Math.min(halfAngle, v3.angleBetween(p, forward));
         const trueSigma = opticalQuality(
-          camera.powerDraw,
+          functionalPower(camera),
           v3.length(p),
           camera.condition,
           exposure,
@@ -395,7 +410,7 @@ export function stepWellAcquisition(
           definition,
         )!.angularSigma;
         const reportedSigma = opticalQuality(
-          camera.powerDraw,
+          functionalPower(camera),
           v3.length(p),
           reportedCondition,
           exposure,
