@@ -56,6 +56,29 @@ function stubGame(options: { model?: ModelState; snapshot?: ViewSnapshot; ended?
       pending: 0,
     }),
     snapshot: () => options.snapshot ?? viewSnapshot,
+    chart: () => ({
+      regions: [
+        {
+          id: briefing.id,
+          name: briefing.name,
+          position: { x: 0, y: 0, z: 0 },
+          radius: 2e7,
+          surveyed: 0,
+          current: true,
+          attempts: [{ index: 1, outcome: 'in-progress' }],
+        },
+      ],
+      corridors: [],
+      leads: [
+        {
+          id: 'lead-1',
+          name: 'Faint source',
+          from: briefing.id,
+          direction: { x: 0, y: 1, z: 0 },
+          spread: 0.1,
+        },
+      ],
+    }),
     command: (c: unknown) => void commands.push(c),
     setPaused: () => undefined,
     setWarp: () => undefined,
@@ -208,12 +231,23 @@ describe('instruments beside the holograms', () => {
     }
   });
 
-  it('renders the map plate for the charted region', () => {
+  it('renders the map plate for the charted region, and for a chosen lead', () => {
     const holo = { selected: () => null, onChange: () => () => undefined } as unknown as MapHolo;
     const { game } = stubGame();
     const html = renderToStaticMarkup(
       <MapPlate desk={new Desk(game)} holo={holo} region={false} onRegion={() => undefined} />,
     );
     expect(html).toContain('ENTER REGION');
+    // The charted objects as a list the keyboard can use (S9 R13): the region and the lead.
+    expect(html).toContain('LEAD · FAINT SOURCE');
+    const onLead = {
+      selected: () => ({ kind: 'lead', id: 'lead-1' }),
+      onChange: () => () => undefined,
+    } as unknown as MapHolo;
+    const lead = renderToStaticMarkup(
+      <MapPlate desk={new Desk(game)} holo={onLead} region={false} onRegion={() => undefined} />,
+    );
+    expect(lead).toContain('Faint source');
+    expect(lead).toContain('unknown');
   });
 });

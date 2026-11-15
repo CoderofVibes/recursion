@@ -112,6 +112,12 @@ export class RoomView {
   } | null = null;
   private tilt = 0;
   private tiltUser = 0;
+  /** How each hologram was framed at first, for resetFraming(). */
+  private readonly framingAtRest: {
+    readonly range: number;
+    readonly map: Quaternion;
+    readonly ship: Quaternion;
+  };
   private readonly cur = {
     level: VIEW.room.level,
     veil: VIEW.room.veil,
@@ -196,6 +202,11 @@ export class RoomView {
     this.ship = makeShipHolo(definition);
     this.map = makeMapHolo();
     this.holoTilt.add(this.flight.group, this.map.group, this.ship.group);
+    this.framingAtRest = {
+      range: this.flight.range(),
+      map: this.map.spin.quaternion.clone(),
+      ship: this.ship.spin.quaternion.clone(),
+    };
 
     this.bind();
     this.resize();
@@ -230,6 +241,46 @@ export class RoomView {
     this.syncVisibility();
     this.trans = { t: instant ? 1 : 0, from, to: this.poseOf(mode) };
     this.events.mode(mode, this.inRegion);
+  }
+
+  // ---- Framing (S9 R13): the wheel, the drag, keys and buttons all come here -------------------
+  // Framing moves the camera on a hologram only: it never senses, points or fires anything.
+
+  /** Range of the view's hologram: a factor above 1 zooms out, below 1 zooms in. */
+  frameZoom(factor: number): void {
+    const mode = this.current;
+    if (mode === 'flight' || (mode === 'map' && this.inRegion))
+      this.flight.setRange(this.flight.range() * factor);
+    else if (mode === 'map')
+      this.map.spin.scale.setScalar(clamp(this.map.spin.scale.x / factor, 0.7, 2.4));
+    else if (mode === 'ship')
+      this.ship.group.scale.setScalar(clamp(this.ship.group.scale.x / factor, 0.6, 2.6));
+  }
+  /** Turn MAP or SHIP about the vertical, radians. */
+  frameOrbit(radians: number): void {
+    if (this.current === 'ship') this.ship.spin.rotateY(radians);
+    else if (this.current === 'map' && !this.inRegion) this.map.spin.rotateY(radians);
+  }
+  /** Tilt the hologram toward or away from the player, radians. */
+  frameTilt(radians: number): void {
+    const mode = this.current;
+    if (mode === 'flight') this.tiltUser = clamp(this.tiltUser + radians, -0.3, 0.6);
+    else if (mode === 'map' || mode === 'ship')
+      this.tiltUser = clamp(this.tiltUser + radians, -0.25, 0.8);
+  }
+  /** Back to how the view first framed its hologram. */
+  resetFraming(): void {
+    this.tiltUser = 0;
+    const mode = this.current;
+    if (mode === 'flight' || (mode === 'map' && this.inRegion))
+      this.flight.setRange(this.framingAtRest.range);
+    else if (mode === 'map') {
+      this.map.spin.quaternion.copy(this.framingAtRest.map);
+      this.map.spin.scale.setScalar(1);
+    } else if (mode === 'ship') {
+      this.ship.spin.quaternion.copy(this.framingAtRest.ship);
+      this.ship.group.scale.setScalar(1);
+    }
   }
 
   /** Step back one level: out of an isolated system, out of a region, out of a view. */
@@ -589,6 +640,14 @@ export class RoomView {
       if (k === '0') this.go('room');
       if (k === 'u' && this.current === 'flight')
         this.flight.setHeadingUp(!this.flight.headingUp());
+      // Framing by key (S9 R13), clear of the flight keys: - = zoom, , . orbit, [ ] tilt, / reset.
+      if (k === '-' || k === '_') this.frameZoom(roomMotion.frameZoom);
+      if (k === '=' || k === '+') this.frameZoom(1 / roomMotion.frameZoom);
+      if (k === ',') this.frameOrbit(-roomMotion.frameOrbit);
+      if (k === '.') this.frameOrbit(roomMotion.frameOrbit);
+      if (k === '[') this.frameTilt(-roomMotion.frameTilt);
+      if (k === ']') this.frameTilt(roomMotion.frameTilt);
+      if (k === '/') this.resetFraming();
       if ((k === 'f' || k === 'enter') && this.current === 'room' && this.hot)
         this.activate(this.hot);
     });
@@ -637,12 +696,9 @@ export class RoomView {
       if (mode === 'room') {
         p.yaw += e.movementX * roomMotion.dragLook;
         p.pitch = clamp(p.pitch + e.movementY * roomMotion.dragLook, -1.25, 1.25);
-      } else if (mode === 'map' || mode === 'ship') {
-        if (mode === 'ship') this.ship.spin.rotateY(e.movementX * 0.006);
-        else if (!this.inRegion) this.map.spin.rotateY(e.movementX * 0.006);
-        this.tiltUser = clamp(this.tiltUser + e.movementY * roomMotion.dragLook, -0.25, 0.8);
-      } else if (mode === 'flight') {
-        this.tiltUser = clamp(this.tiltUser + e.movementY * roomMotion.dragLook, -0.3, 0.6);
+      } else if (mode === 'map' || mode === 'ship' || mode === 'flight') {
+        this.frameOrbit(e.movementX * 0.006);
+        this.frameTilt(e.movementY * roomMotion.dragLook);
       }
     });
     on(
@@ -650,14 +706,7 @@ export class RoomView {
       'wheel',
       (e: WheelEvent) => {
         e.preventDefault();
-        const k = Math.exp(e.deltaY * 0.0012);
-        const mode = this.current;
-        if (mode === 'flight' || (mode === 'map' && this.inRegion))
-          this.flight.setRange(this.flight.range() * k);
-        else if (mode === 'map')
-          this.map.spin.scale.setScalar(clamp(this.map.spin.scale.x / k, 0.7, 2.4));
-        else if (mode === 'ship')
-          this.ship.group.scale.setScalar(clamp(this.ship.group.scale.x / k, 0.6, 2.6));
+        this.frameZoom(Math.exp(e.deltaY * 0.0012));
       },
       { passive: false },
     );

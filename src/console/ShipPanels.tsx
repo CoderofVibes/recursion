@@ -36,6 +36,8 @@ import {
   stores,
 } from './data.ts';
 import type { Desk } from './desk.ts';
+import { FramingControls } from './Framing.tsx';
+import type { Framing } from './Framing.tsx';
 import { bytes, duration, fixed, name, whole } from './format.ts';
 import { EquipmentDetail } from './pages/SystemsPage.tsx';
 
@@ -314,7 +316,16 @@ function SystemScreen({
   }
 }
 
-export function ShipPanels({ desk, holo }: { readonly desk: Desk; readonly holo: ShipHolo }) {
+export function ShipPanels({
+  desk,
+  holo,
+  framing,
+}: {
+  readonly desk: Desk;
+  readonly holo: ShipHolo;
+  /** Framing the drawing without a pointer. */
+  readonly framing?: Framing;
+}) {
   const { game } = desk;
   // Re-render when the hologram's system, selection or configuration changes.
   const drawn = (): string => `${holo.system()}|${holo.selected()}|${holo.config()}`;
@@ -367,6 +378,7 @@ export function ShipPanels({ desk, holo }: { readonly desk: Desk; readonly holo:
                     game.command({ kind: 'configure', configuration }),
                 })}
           />
+          {framing ? <FramingControls view={framing} orbit /> : null}
         </Panel>
         {system ? (
           <Panel title={holo.systems.find((s) => s.id === system)?.name ?? system}>

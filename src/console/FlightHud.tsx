@@ -7,7 +7,9 @@
 import { AlertStack, LevelBar, Panel, Readout, ReadoutGrid } from '../theme/components/index.ts';
 import { distance, heading, length } from '../view3d/adapter.ts';
 import { flightAlerts } from './alerts.ts';
-import { Actions, Button, Line, TimeControls } from './controls.tsx';
+import { Actions, Button, Line, SelectField, TimeControls } from './controls.tsx';
+import { FramingControls } from './Framing.tsx';
+import type { Framing } from './Framing.tsx';
 import { batteries, busLoads, heat, recorder, stores } from './data.ts';
 import type { Desk } from './desk.ts';
 import { bytes, clock, degrees, dist, fixed, whole } from './format.ts';
@@ -31,6 +33,8 @@ export interface FlightHudProps {
   readonly headingUp: boolean;
   readonly range: number;
   readonly onHeadingUp: () => void;
+  /** Framing the hologram without a pointer. */
+  readonly framing?: Framing;
 }
 
 const CAPS: readonly {
@@ -51,7 +55,14 @@ const CAPS: readonly {
   { key: 'arrowdown', cap: '↓', label: 'NOSE DN', control: 'pitch' },
 ];
 
-export function FlightHud({ desk, available, headingUp, range, onHeadingUp }: FlightHudProps) {
+export function FlightHud({
+  desk,
+  available,
+  headingUp,
+  range,
+  onHeadingUp,
+  framing,
+}: FlightHudProps) {
   const { game } = desk;
   const keys: FlightKeys = { held: desk.keys, available };
   const miss = desk.flightMiss;
@@ -139,8 +150,23 @@ export function FlightHud({ desk, available, headingUp, range, onHeadingUp }: Fl
             </ReadoutGrid>
             <Actions>
               <Button onClick={onHeadingUp}>{headingUp ? 'CHART UP' : 'HEADING UP'}</Button>
-              <span className="cs-note">range {dist(range)} · wheel</span>
+              <span className="cs-note">range {dist(range)} · wheel · U</span>
             </Actions>
+            {/* What the hologram shows, by name: only what the ship senses (S9 R13, P11). */}
+            <SelectField
+              label="Look at"
+              value={chosen ? chosen.id : ''}
+              options={[
+                { value: '', label: '—' },
+                ...snapshot.world.bodies.map((b) => ({ value: b.id, label: b.name.toUpperCase() })),
+                ...snapshot.world.asteroids.map((a) => ({
+                  value: a.id,
+                  label: `${a.id.toUpperCase()} · ${a.tracked ? 'tracked' : 'seen'}`,
+                })),
+              ]}
+              onChange={(v) => desk.select(v || null)}
+            />
+            {framing ? <FramingControls view={framing} orbit={false} /> : null}
           </Panel>
 
           <Panel title="Margins">

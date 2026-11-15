@@ -13,9 +13,8 @@ import {
 } from '../contracts/fixtures/index.ts';
 import type { AttemptRecord, ExecutedCommand } from '../contracts/index.ts';
 import { cssVariables } from '../theme/index.ts';
-import { surveyed } from './chart.ts';
-import { busLoads, deltaV, heat, stores, validatedSpans, visited } from './data.ts';
-import { bytes, clock, dist, duration, sci } from './format.ts';
+import { batteries, busLoads, deltaV, heat, stores, validatedSpans, visited } from './data.ts';
+import { bytes, clock, dist, duration, km, sci, whole } from './format.ts';
 import { changes, debrief, defaultDesign, designMark, designOf, setupCommands } from './mission.ts';
 
 const { readFileSync } = (await import(/* @vite-ignore */ `node:${'fs'}`)) as {
@@ -214,16 +213,6 @@ describe('instrument rows', () => {
   });
 });
 
-describe('chart', () => {
-  it('counts a region as more surveyed as the model measures and a rule is adopted', () => {
-    const none = surveyed(models.prior, 2);
-    const some = surveyed(models.distanceLaw, 2);
-    expect(none).toBeGreaterThanOrEqual(0);
-    expect(some).toBeGreaterThanOrEqual(none);
-    expect(some).toBeLessThanOrEqual(1);
-  });
-});
-
 describe('formatting', () => {
   it('keeps units in lower case and picks a sensible scale', () => {
     expect(clock(3723)).toBe('01:02:03');
@@ -235,6 +224,35 @@ describe('formatting', () => {
     expect(bytes(2.5e6)).toBe('2.5 MB');
     expect(sci(1.02e10, 3)).toBe('1.02×10¹⁰');
     expect(sci(0.975)).toBe('0.975');
+  });
+
+  it('formats exactly as toLocaleString did, with formatters made once (S15)', () => {
+    const values = [0, -0, -0.4, 0.5, 1234.5, -98765.4, 1e9, 4_840_000, NaN, Infinity, -Infinity];
+    for (const v of values) {
+      expect(whole(v)).toBe(Number.isFinite(v) ? Math.round(v).toLocaleString('en-US') : '—');
+      for (const digits of [0, 1, 2])
+        expect(km(v, digits)).toBe(
+          (v / 1000).toLocaleString('en-US', {
+            minimumFractionDigits: digits,
+            maximumFractionDigits: digits,
+          }),
+        );
+    }
+  });
+});
+
+describe('readings not yet taken', () => {
+  it('shows an unread battery or bus as no reading, not as empty or idle', () => {
+    const blank = { ...viewSnapshot.world.ship, telemetry: {}, equipment: {} };
+    const pack = batteries(blank, shipDefinition);
+    if (pack) {
+      expect(pack.text).toBe('no reading');
+      expect(pack.status).toBe('stale');
+    }
+    for (const bus of busLoads(blank, shipDefinition)) {
+      expect(bus.text).toBe('no reading');
+      expect(bus.status).toBe('stale');
+    }
   });
 });
 

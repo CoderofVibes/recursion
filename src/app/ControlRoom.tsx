@@ -179,19 +179,23 @@ export function ControlRoom({ game, modelError, erase }: ControlRoomProps) {
             available={status.phase === 'operate' ? AVAILABLE : NOT_YET}
             headingUp={room.flight.headingUp()}
             range={room.flight.range()}
+            framing={room}
             onHeadingUp={() => {
               room.flight.setHeadingUp(!room.flight.headingUp());
               desk.notify();
             }}
           />
         ) : null}
-        {ui.mode === 'ship' && room ? <ShipPanels desk={desk} holo={room.ship} /> : null}
+        {ui.mode === 'ship' && room ? (
+          <ShipPanels desk={desk} holo={room.ship} framing={room} />
+        ) : null}
         {ui.mode === 'map' && room ? (
           <MapPlate
             desk={desk}
             holo={room.map}
             region={ui.region}
             onRegion={(on) => room.setRegion(on)}
+            framing={room}
           />
         ) : null}
       </div>

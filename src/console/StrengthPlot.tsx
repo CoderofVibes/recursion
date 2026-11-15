@@ -9,6 +9,7 @@
  * A local primitive on theme tokens (console.css); listed in docs/handoffs/2D.md.
  */
 import { extent } from '../theme/components/index.ts';
+import { whole } from './format.ts';
 
 export interface StrengthDot {
   /** Distance from the body's centre, m. */
@@ -77,7 +78,7 @@ export function StrengthPlot({ label, points, validated = [], visits }: Strength
       </text>
       {ticks.map((d) => (
         <text key={d} className="cs-plot__tick" x={lx(d)} y={H - 2} textAnchor="middle">
-          {Math.round(d / 1000).toLocaleString('en-US')} km
+          {whole(d / 1000)} km
         </text>
       ))}
       {validated.map((v, i) => (

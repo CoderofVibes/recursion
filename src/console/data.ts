@@ -14,6 +14,7 @@ import type {
 } from '../contracts/index.ts';
 import type { Status } from '../theme/components/index.ts';
 import { distance } from '../view3d/adapter.ts';
+import { whole } from './format.ts';
 
 const G0 = 9.80665;
 
@@ -54,14 +55,23 @@ export function stores(ship: BelievedShip, definition: ShipDefinition, reserve?:
 /** Load on each bus against its protection limit. */
 export function busLoads(ship: BelievedShip, definition: ShipDefinition): Level[] {
   return definition.buses.map((b) => {
-    const load = reading(ship, `${b.id}.load`) ?? 0;
+    const measured = reading(ship, `${b.id}.load`);
+    const load = measured ?? 0;
     return {
       id: b.id,
       label: b.name,
       value: load,
       max: b.limit,
-      text: `${Math.round(load).toLocaleString('en-US')} / ${b.limit.toLocaleString('en-US')} W`,
-      status: load > b.limit * 0.9 ? 'warning' : load > b.limit * 0.75 ? 'caution' : 'nominal',
+      // Before the first telemetry there is no load to show, not a load of zero.
+      text: measured === undefined ? 'no reading' : `${whole(load)} / ${whole(b.limit)} W`,
+      status:
+        measured === undefined
+          ? 'stale'
+          : load > b.limit * 0.9
+            ? 'warning'
+            : load > b.limit * 0.75
+              ? 'caution'
+              : 'nominal',
       mark: b.limit * 0.75,
     };
   });
@@ -92,11 +102,24 @@ export function batteries(ship: BelievedShip, definition: ShipDefinition): Level
   if (packs.length === 0) return undefined;
   let charge = 0;
   let capacity = 0;
+  let measured = false;
   for (const p of packs) {
-    charge += ship.equipment[p.id]?.readings.charge ?? reading(ship, `${p.id}.charge`) ?? 0;
+    const c = ship.equipment[p.id]?.readings.charge ?? reading(ship, `${p.id}.charge`);
+    if (c !== undefined) measured = true;
+    charge += c ?? 0;
     capacity += p.params.capacity ?? p.params.energyCapacity ?? 0;
   }
   if (!(capacity > 0)) capacity = Math.max(charge, 1);
+  // Before the first telemetry the packs are unread, not empty.
+  if (!measured)
+    return {
+      id: 'batteries',
+      label: 'batteries',
+      value: 0,
+      max: capacity,
+      text: 'no reading',
+      status: 'stale',
+    };
   return {
     id: 'batteries',
     label: 'batteries',

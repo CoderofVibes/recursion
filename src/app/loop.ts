@@ -12,9 +12,9 @@
  * Belief side only: the game is reached through `GameControls`.
  */
 import { flightAlerts, freshAlerts } from '../console/alerts.ts';
-import { buildChart } from '../console/chart.ts';
 import type { Desk } from '../console/desk.ts';
 import type { GameControls } from '../game/belief/controls.ts';
+import { chartView } from '../view3d/adapter.ts';
 import type { Chart } from '../view3d/map/MapHolo.ts';
 import type { Hotspot, ViewMode } from '../view3d/room/layout.ts';
 import { RoomView } from '../view3d/room/RoomView.ts';
@@ -76,7 +76,7 @@ export function startControlRoom(
   let last = performance.now();
   let sinceInstruments = 0;
   let sinceChart = Infinity;
-  let chart: Chart = buildChart(game, game.blackBox.archive());
+  let chart: Chart = chartView(game.chart());
   let attemptSeen = '';
   let endHandled = '';
   let alertsShowing: ReadonlySet<string> = new Set();
@@ -149,7 +149,7 @@ export function startControlRoom(
     sinceChart += dt;
     if (sinceChart > 1) {
       sinceChart = 0;
-      chart = buildChart(game, game.blackBox.archive());
+      chart = chartView(game.chart());
     }
     view.frame(dt, {
       snapshot,
