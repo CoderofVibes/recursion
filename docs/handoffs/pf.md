@@ -1,6 +1,26 @@
 # Handoff: PF — Release performance
 
-Thread: GPT/Codex · Branch: `p3/pf-speed` · Date (Pacific): 2026-11-15
+Thread: GPT/Codex · Current branch: `p3/pf-speed-2` · Date (Pacific): 2026-11-15
+
+## R59 — Full render scale for recordings
+
+Based on main's squash `f118dd2`. **The old `p3/pf-speed` branch is retired and must never be merged.** Its first-pass results below are historical; the integrator intentionally excluded 11 raw traces containing local filesystem paths.
+
+TR: load the recording page with **`?quality=full`**, or append **`&quality=full`** to an existing query, before constructing the scene. For example, `/?encounter=gravity-range&quality=full`. Keep `?perf` off for the trailer. Reload to change the quality policy: the pin lasts for the created hook's lifetime, including opening and scripted shots.
+
+The pin explicitly sets the composer to the renderer's native pixel ratio and prevents adaptive downscaling despite slow frames. Scale 1 retains the existing renderer DPR cap and budget-bloom policy. Missing or unrecognized quality values retain automatic adaptation. No simulation, theme or `RoomView.ts` change is needed; TV's R64 method is untouched.
+
+[DEMONSTRATED: `src/view3d/perf/quality.test.ts`] All seven quality tests pass, covering native-DPR restoration and 30 seconds of slow frames in normal/scripted views, console/warp changes, and unchanged automatic downscaling without the exact pin. Typecheck, lint and `npm run build` pass. The unrestricted `npm run check` test stage exhausted worker memory and hit timeouts on the shared host; the complete rerun passed **1,394 tests plus the separate speed test**, with concurrency capped and all timeouts/tolerances unchanged:
+
+```powershell
+npm exec --no -- vitest run src/view3d/perf/quality.test.ts
+npm exec --no -- vitest run --maxWorkers=2
+npm exec --no -- vitest run --config vitest.perf.config.ts --maxWorkers=1
+```
+
+No new benchmark traces or other raw capture evidence are part of this follow-up. Changed files were scanned for absolute filesystem paths before committing; none were found. The release-performance findings below are unchanged by this recording override.
+
+## First-pass handoff (historical)
 
 **PF changes and evidence are delivered; the A18 (7) release gate still fails.** All cold loads and all four 3D views exceed the unchanged targets. Thirteen of 27 region/view cells pass both 1× repeats. The physical modest-laptop check remains open.
 
@@ -172,4 +192,4 @@ The cold-start and handoff profiles above establish remaining work for the integ
 
 ## Notes for the next phase
 
-Merge the small source checkpoints separately from the evidence if useful. The optional scene patch is **not applied** and needs 3F's review, especially transitions, loss, picking and supported field visuals. R48's runner fix is delivered. R49's release gate and R11/R18's physical-device follow-up must not be marked passed on this proxy evidence.
+The first-pass source is already on main through squash `f118dd2`; the older checkpoint IDs above are historical references, not merge instructions. Never merge `p3/pf-speed` again. The optional scene patch is **not applied** and needs 3F's review, especially transitions, loss, picking and supported field visuals. R48's runner fix is delivered. R49's release gate and R11/R18's physical-device follow-up must not be marked passed on this proxy evidence.
