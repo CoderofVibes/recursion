@@ -1,5 +1,8 @@
 # Sensor acquisition
 
+A24's physical radiation monitor, channel, caution policy and exact owner seams
+are documented in [RADIATION.md](RADIATION.md).
+
 `index.ts` retains the existing 3D camera, IMU and star-head measurements. A component's
 `values.reportedCondition`, when supplied by the condition owner, controls declared sigma
 and condition telemetry; its actual `condition` controls availability and random draws.
