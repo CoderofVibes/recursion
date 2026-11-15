@@ -34,6 +34,9 @@ Internal names only. Nothing is ever labelled on screen (Night Watch §8).
 | **Ember** | One bright deep-red star | The brightest star in the sky, unmistakably red |
 | **Hollow** | A starless dark cloud | A soft-edged patch of near-black about 15° across, few stars in front of it |
 | **Ember Wheel** (owner approved 2026-11-15) | A second, tilted spiral on the opposite side of the sky (X03b `027eec67` #0) | About 30–40° across, its rim lined with bright star-forming points like embers |
+| **Needle** (owner approved) | A galaxy stretched into a long needle, a blazing star at its tip (`a4516a95` #3) | A few degrees long; place it near a Tip of the Galaxy so the two needles echo |
+| **Hollow** (owner approved) | A thin tilted galaxy with an empty dark oval (`a4516a95` #0) | A few degrees across, in the dark sky between the two great galaxies |
+| **Eye** (owner approved) | A spiral wrapped round a black hollow (`2050f52c` #0) | A few degrees across, the recursion motif: put it where the Unfamiliar Sky's arrival can just catch it, low and easy to miss |
 | **Deep pole** | The sky farthest from the Galaxy's disc | Very sparse stars, many faint galaxies (S03 style), the darkest sky |
 
 ## The views, region by region

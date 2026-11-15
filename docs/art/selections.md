@@ -99,9 +99,9 @@ For the disclosure: MidJourney was used to make reference images that guided the
 | X14b | `4bef5e21-9c1f-41c8-bf7a-b4e81d5af8c6` | 0 | **chosen** | Braided Crossing debris | Streams of sparkling debris crossing at shallow angles like loose braids, black between them, a small warm sun. Minimal and beautiful. The funnels come from 3B's look, added beyond the braids. |
 | X14b | `27c82348-b133-418f-859b-72b4faa5bd53` | 0 | partial | Funnels among debris | A debris stream with two funnels seen end-on as fine rings around bright points. The way they sit in the stream is right; the rings should be violet, not grey-blue. |
 | X14b | `27c82348-b133-418f-859b-72b4faa5bd53` | 1 | partial | Dense version | The same idea, much denser and drenched in orange. Too much, but it shows how funnels read inside a crowded field. |
-| W05b | `a4516a95-035b-47a2-88c6-2f56b3e9e658` | 3 | **proposed sky oddity** | A needle galaxy | Not a funnel: a spiral galaxy stretched into a long needle with a blazing star at its tip. A strange distant object. Owner to decide. |
-| W05b | `a4516a95-035b-47a2-88c6-2f56b3e9e658` | 0 | **proposed sky oddity** | A hollow galaxy | A thin, tilted galaxy with a dark empty oval in its middle and a bright knot on its rim. Owner to decide. |
-| W05b | `2050f52c-4a02-40f2-9253-9a068550f4a7` | 0 | **proposed sky oddity** | The Eye | A spiral galaxy wrapped around a black hollow, like the thing that swallowed the ship, seen far away. A recursion motif in the sky. Owner to decide. |
+| W05b | `a4516a95-035b-47a2-88c6-2f56b3e9e658` | 3 | **chosen by the owner** (2026-11-15), sky oddity | A needle galaxy | Not a funnel: a spiral galaxy stretched into a long needle with a blazing star at its tip. A strange distant object. |
+| W05b | `a4516a95-035b-47a2-88c6-2f56b3e9e658` | 0 | **chosen by the owner** (2026-11-15), sky oddity | A hollow galaxy | A thin, tilted galaxy with a dark empty oval in its middle and a bright knot on its rim. |
+| W05b | `2050f52c-4a02-40f2-9253-9a068550f4a7` | 0 | **chosen by the owner** (2026-11-15), sky oddity | The Eye | A spiral galaxy wrapped around a black hollow, like the thing that swallowed the ship, seen far away. A recursion motif in the sky. |
 | W05b | `a4516a95-035b-47a2-88c6-2f56b3e9e658` | 1 | partial | Funnel brightness gradient | A long cone of light concentrating into a brilliant point: how a funnel's light should build toward the throat. Not the wireframe look. |
 | W05b | `2050f52c-4a02-40f2-9253-9a068550f4a7` | 3 | dropped | | A dome of streaked light over a ground. |
 

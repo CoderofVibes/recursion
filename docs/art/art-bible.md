@@ -109,9 +109,9 @@ A long pale slab of rock adrift overhead, cream and bone white with rusty stains
 
 Several long streams of fine sparkling debris crossing at shallow, different angles, like loose braids, with black space between them and gaps that never line up. Beyond and between the braids hang a few separate funnels, mostly seen near end-on as fine violet rings around bright throat points. Lit warm by a small far sun.
 
-### Proposed sky oddities (2D) — owner to decide
+### Sky oddities (2D) — owner approved all three, 2026-11-15
 
-Raised weirdness in round 5 produced three strange distant objects. Each could sit somewhere in the sky atlas as a small landmark (a few degrees across), far from the two great galaxies:
+Raised weirdness in round 5 produced three strange distant objects. Each sits in the sky atlas as a small landmark, a few degrees across, far from the two great galaxies and from each other, dimmer than either galaxy's core:
 
 - **Needle** (`a4516a95…` #3): a spiral galaxy stretched into a long thin needle with a blazing star at its tip.
 - **Hollow** (`a4516a95…` #0): a thin tilted galaxy with a dark empty oval at its centre and one bright knot on its rim.

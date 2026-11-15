@@ -18,7 +18,7 @@ Every usable MidJourney reference, grouped by the scene or element it guides, so
 - **Primary:** `027eec67` #0.
 - **Gap:** only one. Prompt **S07** below gives alternates.
 
-### Sky oddities (proposed, owner to decide)
+### Sky oddities (owner approved all three)
 - **Needle** `a4516a95` #3 · **Hollow** `a4516a95` #0 · **Eye** `2050f52c` #0.
 
 ### Star field and other landmarks
