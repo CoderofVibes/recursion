@@ -1,6 +1,8 @@
 /**
  * Main-thread handle on the predictive model. Runs the ModelService in a Web Worker when one is
- * available (browser), else in-thread (tests, SSR). Same promises either way.
+ * available (browser), else in-thread (tests, SSR). Same promises either way. The in-thread
+ * service is loaded only when a client falls back to it (S15 rank 5), so the page's own bundle
+ * does not carry the model the worker already has.
  *
  *   const model = createModelClient();
  *   await model.init(contextFromBriefing(briefing, shipDefinition));
@@ -22,10 +24,10 @@ import {
 } from '../contracts/index.ts';
 import type { ModelContext } from './engine.ts';
 import type { ExtensionRecord } from './extensions.ts';
-import type { ForecastDetail, ForecastRequest } from './forecast.ts';
+import type { ForecastRequest, ModelForecastDetail } from './forecast.ts';
 import type { BurnReport, EmpiricalReport, ModelReport } from './report.ts';
-import { dispatch, type RpcRequest, type RpcResponse, type ServiceMethod } from './rpc.ts';
-import { ModelService, type AttemptDelta, type LoadInput } from './service.ts';
+import type { RpcRequest, RpcResponse, ServiceMethod } from './rpc.ts';
+import type { AttemptDelta, LoadInput, ModelService } from './service.ts';
 
 export interface ModelClient {
   init(ctx: ModelContext): Promise<ModelState>;
@@ -38,7 +40,7 @@ export interface ModelClient {
   /** Builds the forecast in the worker and issues it here (frozen, versioned by model version). */
   forecast(
     req: Omit<ForecastRequest, 'record'> & { attemptId?: AttemptId },
-  ): Promise<{ forecast: Forecast; detail: ForecastDetail }>;
+  ): Promise<{ forecast: Forecast; detail: ModelForecastDetail }>;
   testExtension(
     ext: ExtensionId,
     training: readonly AttemptId[],
@@ -87,25 +89,39 @@ function workerCall(): { call: Call; terminate: () => void } {
   };
 }
 
+/**
+ * The in-thread fallback. The service and its dispatcher are imported on the first call, and
+ * every call runs after the ones issued before it, as the worker's queue does: a call made
+ * before `init` has resolved waits for it. Once terminated, nothing more runs.
+ */
 function localCall(): { call: Call; terminate: () => void } {
   let service: ModelService | null = null;
+  let terminated = false;
+  const modules = import('./service.ts').then(async (svc) => ({
+    ...svc,
+    ...(await import('./rpc.ts')),
+  }));
+  let queue: Promise<unknown> = Promise.resolve();
   return {
-    call: async (method, args) => {
-      if (method === 'init') {
-        service = new ModelService(args[0] as ModelContext);
-        return service.state;
-      }
-      if (!service) throw new Error('model: init first');
-      // Round-trip through structuredClone so in-thread behaves like the worker.
-      return structuredClone(
-        dispatch(
-          service,
-          method,
-          args.map((a) => structuredClone(a)),
-        ),
-      );
+    call: (method, args) => {
+      // Arguments are copied when the call is made, as posting them to a worker would.
+      const input = method === 'init' ? args : args.map((a) => structuredClone(a));
+      const job = queue.then(async () => {
+        const { ModelService: Service, dispatch } = await modules;
+        if (terminated) throw new Error('model: terminated');
+        if (method === 'init') {
+          service = new Service(input[0] as ModelContext);
+          return service.state;
+        }
+        if (!service) throw new Error('model: init first');
+        // Round-trip through structuredClone so in-thread behaves like the worker.
+        return structuredClone(dispatch(service, method, input));
+      });
+      queue = job.catch(() => undefined);
+      return job;
     },
     terminate: () => {
+      terminated = true;
       service = null;
     },
   };
@@ -125,7 +141,7 @@ export function createModelClient(opts: { worker?: boolean } = {}): ModelClient 
     endAttempt: (rec) => c('endAttempt', rec),
     refit: () => c('refit'),
     forecast: async (req) => {
-      const r = await c<{ draft: ForecastDraft; detail: ForecastDetail }>('forecast', req);
+      const r = await c<{ draft: ForecastDraft; detail: ModelForecastDetail }>('forecast', req);
       return { forecast: issueForecast(r.draft), detail: r.detail };
     },
     testExtension: (ext, training, heldOut) => c('testExtension', ext, training, heldOut),

@@ -15,25 +15,21 @@
 import type {
   AttemptId,
   AttemptRecord,
-  BelievedAsteroid,
   BelievedBody,
   CalibrationProfile,
   Cov3,
   CovarianceMatrix,
   DataSupport,
-  EncounterBriefing,
-  EncounterId,
   ExtensionId,
   ExtensionState,
   ModelState,
   ParameterEstimate,
   ParameterPrior,
   ResidualStats,
-  ShipDefinition,
-  ShipEstimate,
   TransitRecord,
 } from '../contracts/index.ts';
 import { hashState } from '../lib/hash.ts';
+import { contextFor, contextFromBriefing, type ModelContext } from './context.ts';
 import {
   agingClass,
   agingOf,
@@ -54,11 +50,13 @@ import {
   segmentPowered,
   shipRefs,
   simulate,
+  STATE_KEYS,
   usable,
   type Arc,
   type ArcSolution as DynArcSolution,
   type BodyDef,
   type EngineDef,
+  type ProfileDef,
   type Ref,
   type Refs3,
   type State6,
@@ -80,6 +78,7 @@ import {
   localFitDetailed,
   makeWindows,
   noiseScale,
+  profileDef,
   rangeFixes,
   shipParams,
   type Anchor,
@@ -89,6 +88,7 @@ import {
   type ProfileFit,
   type ReferenceLaw,
   type Vec3T,
+  type Window,
   type WindowFit,
   type WindowRule,
 } from './tierL.ts';
@@ -98,51 +98,7 @@ import {
 // ---------------------------------------------------------------------------------------------
 
 /** What the model knows on arrival: the briefing, the nominal ship and settings. Belief only. */
-export interface ModelContext {
-  readonly encounterId: EncounterId;
-  /** Arrival priors (briefing). `body.<id>.mu` priors define the modelled bodies. */
-  readonly priors: readonly ParameterPrior[];
-  /** Bodies known on arrival, as believed at t = 0 (briefing). */
-  readonly bodies: readonly BelievedBody[];
-  /** Asteroids known on arrival (briefing): their radii set forecast clearances. */
-  readonly asteroids?: readonly BelievedAsteroid[];
-  readonly ship: ShipDefinition;
-  /** Navigation estimate on arrival (briefing). */
-  readonly arrival: ShipEstimate;
-  /** Ship mass on arrival, kg (default: dry plus full tanks). */
-  readonly arrivalMass?: number;
-  /** Bodies are held fixed instead of attracting each other (mock worlds only). */
-  readonly fixedBodies?: boolean;
-  readonly settings?: Partial<ModelSettings>;
-}
-
-export function contextFromBriefing(
-  briefing: EncounterBriefing,
-  ship: ShipDefinition,
-  opts: { arrivalMass?: number; fixedBodies?: boolean; settings?: Partial<ModelSettings> } = {},
-): ModelContext {
-  return {
-    encounterId: briefing.id,
-    priors: briefing.priors,
-    bodies: briefing.knownBodies,
-    asteroids: briefing.knownAsteroids,
-    ship,
-    arrival: briefing.arrivalEstimate,
-    ...opts,
-  };
-}
-
-/**
- * The geometry an attempt was given (DECISIONS A10: each run starts from different geometry):
- * the bodies' and asteroids' arrival states and the arrival estimate from the attempt's own
- * briefing when recorded (`AttemptStart.briefing`), else the encounter's. Priors, masses and
- * the ship never vary with it.
- */
-export function contextFor(ctx: ModelContext, rec?: Pick<AttemptRecord, 'start'>): ModelContext {
-  const b = rec?.start.briefing;
-  if (!b) return ctx;
-  return { ...ctx, bodies: b.knownBodies, asteroids: b.knownAsteroids, arrival: b.arrivalEstimate };
-}
+export { contextFor, contextFromBriefing, type ModelContext };
 
 export const muId = (body: string) => `body.${body}.mu`;
 export const EXPONENT_ID = 'law.gravity.exponent';
@@ -229,12 +185,40 @@ function briefingBody(ctx: ModelContext, id: string): BelievedBody | undefined {
   return ctx.bodies.find((b) => b.id === id);
 }
 
+/** The law and masses a propagation uses: the values in force, else the arrival priors. */
+export interface LawInForce {
+  readonly n: number;
+  readonly mu: (body: string) => number;
+}
+
+/**
+ * The law and body masses in force (2F request 2): the model's current values (a converged
+ * global fit's, carried into the attempt in progress) where it has them, else the priors; the
+ * exponent only once the distance-law rule is adopted.
+ */
+export function lawInForce(
+  ctx: ModelContext,
+  spec: ModelSpec,
+  values?: Readonly<Record<string, number>>,
+): LawInForce {
+  const prior = (id: string) => priorOf(ctx, id)?.value;
+  return {
+    n: spec.exponent ? (values?.[EXPONENT_ID] ?? prior(EXPONENT_ID) ?? 2) : 2,
+    mu: (b) => values?.[muId(b)] ?? prior(muId(b)) ?? 0,
+  };
+}
+
 /**
  * Other modelled bodies relative to the primary (primary at rest) at time t, from the briefing
- * at t = 0 propagated with the arrival priors. Rows: [x, y, z, vx, vy, vz] per non-primary body
- * (z and vz are 0 in the planar reduction).
+ * at t = 0 propagated under `law` (default: the arrival priors). Rows: [x, y, z, vx, vy, vz] per
+ * non-primary body (z and vz are 0 in the planar reduction).
  */
-export function briefingBodiesAt(ctx: ModelContext, spec: ModelSpec, t: number): State6[] {
+export function briefingBodiesAt(
+  ctx: ModelContext,
+  spec: ModelSpec,
+  t: number,
+  law: LawInForce = lawInForce(ctx, spec),
+): State6[] {
   const p = briefingBody(ctx, spec.primary);
   const out = spec.planar ? 0 : 1;
   const rel: State6[] = spec.bodies.slice(1).map((id) => {
@@ -254,10 +238,10 @@ export function briefingBodiesAt(ctx: ModelContext, spec: ModelSpec, t: number):
     return rel.map((r) => [r[0] + r[3] * t, r[1] + r[4] * t, r[2] + r[5] * t, r[3], r[4], r[5]]);
   const st: Structure = {
     r0: spec.settings.r0,
-    n: 2,
+    n: law.n,
     bodies: spec.bodies.map((id, j) => ({
       id,
-      mu: priorOf(ctx, muId(id))?.value ?? 0,
+      mu: law.mu(id),
       state: j === 0 ? 'gauge' : rel[j - 1]!,
     })),
     ship: [1e15, 0, 0, 0, 0, 0],
@@ -321,9 +305,15 @@ export function tierGProblem(
     readonly probes?: ReadonlyMap<AttemptId, readonly Arc[]>;
     /** Attempts the model cannot use, with the reason: they give no arcs (`ModelDerived.unusable`). */
     readonly unusable?: ReadonlyMap<AttemptId, string>;
+    /**
+     * Values in force (the last global fit's, in flight): the briefing's bodies are carried to
+     * each arc's epoch under them (2F request 2). Absent: the priors.
+     */
+    readonly values?: Readonly<Record<string, number>>;
   } = {},
 ): TierGProblem {
   const s = spec.settings;
+  const law = lawInForce(ctx, spec, opts.values);
   const builds = new Map<AttemptId, ArcBuild>();
   const records = new Map(attempts.map((r) => [r.id, r] as const));
   const arcCtx = (a: Arc) => contextFor(ctx, records.get(attemptOfArc(a.id)));
@@ -378,7 +368,7 @@ export function tierGProblem(
     if (!spec.dynamic) {
       const byArc: Record<string, State6> = {};
       for (const a of arcs) {
-        const r = briefingBodiesAt(arcCtx(a), spec, a.epoch)[j - 1]!;
+        const r = briefingBodiesAt(arcCtx(a), spec, a.epoch, law)[j - 1]!;
         byArc[a.id] = [r[0], r[1], r[2], 0, 0, 0];
       }
       return { id, mu: muId(id), state: [0, 0, 0, 0, 0, 0], stateByArc: byArc };
@@ -445,7 +435,7 @@ export function tierGProblem(
     locals.push(...shipParams(a.id, guessShip(a, spec.primary, a.epoch), planar));
     if (spec.dynamic && others.length > 0) {
       const actx = arcCtx(a);
-      const prior = briefingBodiesAt(actx, spec, a.epoch);
+      const prior = briefingBodiesAt(actx, spec, a.epoch, law);
       const pBody = briefingBody(actx, spec.primary);
       const largest = (c?: Cov3) => Math.max(c?.[0] ?? 0, c?.[3] ?? 0, c?.[5] ?? 0);
       others.forEach((id, k) => {
@@ -600,9 +590,14 @@ export function arcFit(
 
 export interface PresentState {
   readonly source: 'anchor' | 'arrival';
-  /** Time of the state. */
+  /**
+   * The body the state is fixed against and relative to: the one the camera fixed most recently
+   * (2F request 12; the primary at arrival).
+   */
+  readonly body: string;
+  /** Time of the state (its last fix). */
   readonly t: number;
-  /** Ship relative to the primary (x, y, z, vx, vy, vz), primary at rest at t. */
+  /** Ship relative to `body` (x, y, z, vx, vy, vz), that body at rest at t. */
   readonly state: Float64Array;
   /** 6×6 covariance including s² (and the camera misalignment's share, §8.1). */
   readonly covariance: Matrix;
@@ -615,6 +610,11 @@ export interface PresentState {
     readonly value: Vec3T;
     readonly sigma: Vec3T;
   };
+  /**
+   * How the true state differs from `state` per unit of each shared hedge exponent (the present
+   * state's consider analysis, `Anchor.hedge`): the forecast moves it with the exponent.
+   */
+  readonly hedge?: Readonly<Record<string, Float64Array>>;
   readonly anchor?: Anchor;
 }
 
@@ -655,7 +655,7 @@ export interface ModelSnapshot {
 /** Reference law for Tier L around `body` within one arc (§5.2), others frozen from Tier G. */
 export function referenceFor(
   d: Pick<ModelDerived, 'spec' | 'values' | 'solutions'> & {
-    readonly problem?: Pick<TierGProblem, 'records'>;
+    readonly problem?: Pick<TierGProblem, 'records'> & Partial<Pick<TierGProblem, 'params'>>;
   },
   body: string,
   arcId: string,
@@ -673,20 +673,21 @@ export function referenceFor(
   const cam = cameraIds(spec.cameraId);
   // A probe arc flies in the same world as the ship arc it was built from.
   const sol = d.solutions.get(arcId) ?? d.solutions.get(shipArcOf(arcId));
-  // A body's believed state comes from the arc's solution when a converged global fit made it,
-  // or when the arc tracked the body (and the reference body); otherwise from the briefing,
-  // propagated with the prior law (§5.2: the reference law holds believed values only).
-  const seen = (id: string) =>
-    sol !== undefined && rangeFixTimes(sol.arc.meas, id).length >= MIN_ARC_FIXES;
-  const trusted = (id: string) =>
-    sol?.fromGlobalFit === true || (seen(id) && (body === spec.primary || seen(body)));
   const others: FrozenBody[] = spec.bodies
     .filter((b) => b !== body)
     .map((id) => ({
       id,
       mu: v[muId(id)] ?? 0,
       stateAt: (t: number) =>
-        relativeState(d, ctx, trusted(id) ? sol : undefined, arcId, id, body, t),
+        relativeState(
+          d,
+          ctx,
+          fromSolution(sol, spec, body, id, d.problem?.params) ? sol : undefined,
+          arcId,
+          id,
+          body,
+          t,
+        ),
     }));
   return {
     r0: spec.settings.r0,
@@ -704,9 +705,62 @@ export function referenceFor(
   };
 }
 
+/**
+ * Whether body `id`'s believed state in an arc, seen from reference body `body`, comes from the
+ * arc's solution: when a converged global fit made it, or when the arc tracked the body (and the
+ * reference body). Otherwise it comes from the briefing, propagated under the law in force (§5.2:
+ * the reference law holds believed values only).
+ *
+ * A converged global fit is not believed for a body the arc never fixed if it moved that body's
+ * state beyond `settings.bodyPriorPullLimit` σ of its prior: with nothing measuring the body, the
+ * fit is using it to absorb what its law cannot explain (a Newtonian fit of an inverse-2.5 dive
+ * moved Beta 88 km at 11,400 s and 870 km at 13,800 s, against a 5 km, 1 m/s prior; 2F request
+ * 13).
+ */
+function fromSolution(
+  sol: ArcSolution | undefined,
+  spec: ModelSpec,
+  body: string,
+  id: string,
+  params?: readonly Param[],
+): boolean {
+  if (!sol) return false;
+  const seen = (b: string) => rangeFixTimes(sol.arc.meas, b).length >= MIN_ARC_FIXES;
+  if (seen(id) && (body === spec.primary || seen(body))) return true;
+  return sol.fromGlobalFit === true && !pulledBeyondPrior(sol, id, params, spec.settings);
+}
+
+const priorsByProblem = new WeakMap<readonly Param[], Map<string, Param>>();
+
+/** A body's state in an arc's solution sits beyond the pull limit of its prior (see above). */
+function pulledBeyondPrior(
+  sol: ArcSolution,
+  id: string,
+  params: readonly Param[] | undefined,
+  s: ModelSettings,
+): boolean {
+  if (!params) return false;
+  let byName = priorsByProblem.get(params);
+  if (!byName) {
+    byName = new Map(params.map((p) => [p.name, p]));
+    priorsByProblem.set(params, byName);
+  }
+  // The body's state in this arc, and its mass, which carries it along the arc.
+  for (const name of [...STATE_KEYS.map((k) => `${sol.arc.id}.${id}.${k}`), muId(id)]) {
+    const p = byName.get(name);
+    const i = sol.idx.get(name);
+    if (!p || i === undefined || p.priorMean === undefined || !(p.priorSigma! > 0)) continue;
+    if (Math.abs(sol.x[i]! - p.priorMean) > s.bodyPriorPullLimit * p.priorSigma!) return true;
+  }
+  return false;
+}
+
 /** State of body `id` relative to body `ref` (ref at rest) at t, from an arc solution. */
 function relativeState(
-  d: Pick<ModelDerived, 'spec'> & { readonly problem?: Pick<TierGProblem, 'records'> },
+  d: Pick<ModelDerived, 'spec'> & {
+    readonly problem?: Pick<TierGProblem, 'records'>;
+    readonly values?: Readonly<Record<string, number>>;
+  },
   ctx: ModelContext,
   sol: ArcSolution | undefined,
   arcId: string,
@@ -727,6 +781,7 @@ function relativeState(
       contextFor(ctx, d.problem?.records.get(attemptOfArc(arcId))),
       d.spec,
       t,
+      lawInForce(ctx, d.spec, d.values),
     );
     P = new Float64Array(3 * bodies.length);
     V = new Float64Array(3 * bodies.length);
@@ -859,8 +914,11 @@ function buildOnce(
   const attempts = [...input.attempts]
     .filter((a) => a.encounterId === ctx.encounterId)
     .sort((a, b) => a.index - b.index || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-  const problem = tierGProblem(ctx, spec, attempts, { unusable });
   const reuse = opts.reuse;
+  const problem = tierGProblem(ctx, spec, attempts, {
+    unusable,
+    ...(reuse ? { values: reuse.values } : {}),
+  });
   let fit: FitResult | null = reuse ? reuse.fit : null;
   let fitFailure = reuse?.fitFailure;
   if (!reuse && problem.arcs.length > 0) {
@@ -884,6 +942,26 @@ function buildOnce(
     const prm = problem.params[i]!;
     values[g] = reuse?.values[g] ?? x[i]!;
     sigmas[g] = reuse?.sigmas[g] ?? (useFit ? fitGet(fit!, g)[1] : (prm.priorSigma ?? 0));
+  }
+  // The mass of a body no arc ever fixed is believed only as far as its prior allows: a fit that
+  // moves it further is using it to absorb what its law cannot explain (a Newtonian fit of an
+  // inverse-2.5 dive put Beta's μ at 1.4e10 against 2.2e9 ± 8e8; 2F request 13). It is then held
+  // at its prior, with the prior's σ, everywhere the values are in force.
+  if (useFit) {
+    const fixed = new Set(
+      spec.bodies.filter((b) =>
+        problem.arcs.some((a) => rangeFixTimes(a.meas, b).length >= MIN_ARC_FIXES),
+      ),
+    );
+    for (const b of spec.bodies) {
+      const id = muId(b);
+      const prm = problem.params[idx.get(id) ?? -1];
+      if (fixed.has(b) || !prm || prm.priorMean === undefined || !(prm.priorSigma! > 0)) continue;
+      if (Math.abs(values[id]! - prm.priorMean) > s.bodyPriorPullLimit * prm.priorSigma!) {
+        values[id] = prm.priorMean;
+        sigmas[id] = prm.priorSigma!;
+      }
+    }
   }
   const scale = Float64Array.from(problem.params, (p) => p.scale);
   const solutions = new Map<string, ArcSolution>();
@@ -922,13 +1000,26 @@ function buildOnce(
   const partial = { spec, values, solutions, problem };
   const rule = windowRule(s);
   const n = spec.exponent ? (values[EXPONENT_ID] ?? 2) : 2;
-  const fitWindows = (arcs: readonly Arc[], body: string): LocalFitResult[] => {
-    const out: LocalFitResult[] = [];
+  /**
+   * Local fits of the coasting windows of `arcs` about `body`. A window where another body pulls
+   * too hard is left out of the calibration profile (§13.7); with `forPaths` true for its arc it
+   * is still fitted, flagged `excluded`, because the ship's path there is all a tracked rock's
+   * fixes need (a rock of Beta's belt is met between the bodies, where Alpha pulls half as hard
+   * as Beta and every window is excluded; S8's ring crossing).
+   */
+  const fitWindows = (
+    arcs: readonly Arc[],
+    body: string,
+    forPaths: (arc: Arc) => boolean = () => false,
+  ): (LocalFitResult & { readonly excluded: boolean })[] => {
+    const out: (LocalFitResult & { readonly excluded: boolean })[] = [];
     for (const a of arcs) {
       const ref = referenceFor(partial, body, a.id, ctx);
+      const paths = forPaths(a);
       for (const w of makeWindows(a, body, rule)) {
         // Coasting windows only; a sliver between two burns is too short to fit.
         if (w.powered || w.fixes.length < s.windowKeepFixes) continue;
+        let excluded = false;
         if (ref.others && ref.others.length > 0) {
           const mid = w.fixes[w.fixes.length >> 1]!;
           const los = lineOfSight(mid);
@@ -939,7 +1030,8 @@ function buildOnce(
             const r = Math.hypot(st[0] - ship[0]!, st[1] - ship[1]!, st[2] - ship[2]!);
             return believedPull(o.mu, n, s.r0, r) > s.otherBodyPullLimit * own;
           });
-          if (tooStrong) continue;
+          if (tooStrong && !paths) continue;
+          excluded = tooStrong;
         }
         const key = opts.cache
           ? `${w.id}|${w.t0}|${w.t1}|${w.fixes.length}|${hashState([
@@ -954,14 +1046,34 @@ function buildOnce(
             ])}`
           : '';
         const hit = opts.cache?.get(key);
-        const res = hit ?? localFitDetailed(ref, a, w, s.dt, [1, s.localScalePriorSigma]);
+        let res: LocalFitResult;
+        try {
+          res = hit ?? localFitDetailed(ref, a, w, s.dt, [1, s.localScalePriorSigma]);
+        } catch (e) {
+          // A path-only window that cannot be fitted is simply not a path.
+          if (excluded) continue;
+          throw e;
+        }
         if (!hit) opts.cache?.set(key, res);
-        out.push(res);
+        out.push({ ...res, excluded });
       }
     }
     return out;
   };
-  const shipFits = new Map(spec.bodies.map((body) => [body, fitWindows(problem.arcs, body)]));
+  // Attempts that tracked a rock (a range fix on anything that is not a briefed body).
+  const rockArcs = new Set(
+    attempts
+      .filter((rec) => {
+        const known = new Set(contextFor(ctx, rec).bodies.map((b) => b.id));
+        return rec.measurements.some(
+          (m) => m.kind === 'range' && !!m.target && !known.has(m.target),
+        );
+      })
+      .flatMap((rec) => (problem.builds.get(rec.id)?.arcs ?? []).map((a) => a.id)),
+  );
+  const shipFits = new Map(
+    spec.bodies.map((body) => [body, fitWindows(problem.arcs, body, (a) => rockArcs.has(a.id))]),
+  );
 
   // The ship's path relative to each body: the window fit covering t (to the next window).
   // The ship's path relative to each body: per ship arc, its window fits in time order; the
@@ -1018,7 +1130,9 @@ function buildOnce(
   const profiles: ProfileFit[] = [];
   const flatProfiles: ProfileFit[] = [];
   for (const body of spec.bodies) {
-    const rows = [...shipFits.get(body)!, ...fitWindows(probeList, body)].map((r) => r.row);
+    const rows = [...shipFits.get(body)!, ...fitWindows(probeList, body)]
+      .filter((r) => !r.excluded)
+      .map((r) => r.row);
     windows.push(...rows);
     if (rows.length > 0)
       profiles.push(
@@ -1136,31 +1250,72 @@ export function attemptEnd(rec: AttemptRecord): number {
   return Math.max(last(rec.measurements), last(rec.executed), last(rec.events));
 }
 
-/** §8.1: the present state of an attempt from its most recent coasting windows. */
+/**
+ * The body whose coasting windows end last in an arc, with its most recent windows (§8.1): the
+ * body the camera fixed most recently. Ties go to the first in `bodies` (the primary).
+ */
+export function latestWindows(
+  arc: Arc,
+  bodies: readonly string[],
+  s: ModelSettings,
+): { body: string; wins: Window[] } | null {
+  let best: { body: string; wins: Window[]; end: number } | null = null;
+  for (const body of bodies) {
+    if (rangeFixes(arc, body).length < s.windowMinFixes) continue;
+    const wins = makeWindows(arc, body, windowRule(s))
+      .filter((w) => !w.powered && w.fixes.length >= s.windowKeepFixes)
+      .slice(-s.anchorWindows);
+    if (wins.length === 0) continue;
+    const end = wins[wins.length - 1]!.t1;
+    if (!best || end > best.end) best = { body, wins, end };
+  }
+  return best ? { body: best.body, wins: best.wins } : null;
+}
+
+/** An arc's data up to time t (the moment a forecast was asked for, A18). */
+function arcAsOf(arc: Arc, t: number): Arc {
+  const last = arc.meas[arc.meas.length - 1];
+  return !last || last.t <= t ? arc : { ...arc, meas: arc.meas.filter((m) => m.t <= t) };
+}
+
+/**
+ * §8.1: the present state of an attempt from its most recent coasting windows, on whichever body
+ * the camera fixed last (2F request 12: hours pointed at the second body must not leave the
+ * present state behind). With `asOf`, only data up to that time are used (A18: a forecast is
+ * computed from the moment of commitment, whatever has been recorded since).
+ */
 export function presentState(
   d: ModelDerived,
   ctx: ModelContext,
   attemptId: AttemptId,
+  asOf?: number,
 ): PresentState | null {
   const s = d.spec.settings;
   const build = d.problem.builds.get(attemptId);
   const rec = d.problem.records.get(attemptId);
   const actx = contextFor(ctx, rec);
-  const arc = build?.arcs[build.arcs.length - 1];
-  const nFix = arc ? rangeFixes(arc, d.spec.primary).length : 0;
-  if (!arc || nFix < s.windowMinFixes) return arrivalState(actx, d.spec);
-  const wins = makeWindows(arc, d.spec.primary, windowRule(s))
-    .filter((w) => !w.powered && w.fixes.length >= s.windowKeepFixes)
-    .slice(-s.anchorWindows);
-  if (wins.length === 0) return arrivalState(actx, d.spec);
-  const prof = d.profiles.find((p) => p.body === d.spec.primary) ?? null;
-  const extra = d.profiles.filter((p) => p.body !== d.spec.primary);
-  const base = referenceFor(d, d.spec.primary, arc.id, ctx);
+  const arcs = build?.arcs ?? [];
+  const last = asOf === undefined ? arcs.at(-1) : arcs.filter((a) => a.epoch <= asOf).at(-1);
+  const arc = last && asOf !== undefined ? arcAsOf(last, asOf) : last;
+  const pick = arc ? latestWindows(arc, d.spec.bodies, s) : null;
+  if (!arc || !pick) return arrivalState(actx, d.spec);
+  const { body, wins } = pick;
+  const prof = d.profiles.find((p) => p.body === body) ?? null;
+  const extra = d.profiles.filter((p) => p.body !== body);
+  const base = referenceFor(d, body, arc.id, ctx);
   // §8.1: the camera misalignment joins the fit, held by a prior at the values this arc uses
   // with their σ (Tier G's posterior and the arc's deviation, aged to the last fix), or the
   // arrival prior. The planar reduction holds it fixed, as revision 2 did.
   const camera = d.spec.planar ? null : cameraInForce(d, arc.id, rec, wins);
   const ref: ReferenceLaw = camera ? { ...base, cam: camera.value } : base;
+  // The other bodies join the fit the same way, held by what the model knows of them at the
+  // first fix (2F request 13): a second body moved under a law not sampled out there would
+  // otherwise bias the present state with nothing in its covariance to say so.
+  const tFirst = wins[0]!.fixes[0]!.t;
+  const bodyPriors =
+    d.spec.dynamic && !(globalThis as { __noBP?: boolean }).__noBP
+      ? bodyCovariances(d, bodiesAt(d, ctx, arc.id, body, tFirst, asOf))
+      : undefined;
   // A present-state fit that cannot be solved leaves the arrival state, the best state the
   // model then has: a forecast is always available.
   let anc: Anchor;
@@ -1171,6 +1326,18 @@ export function presentState(
       slopeSigma: s.anchorSlopePriorSigma,
       extraProfiles: extra,
       camSigma: camera?.sigma ?? null,
+      ...(bodyPriors ? { bodyPriors } : {}),
+      considerHedge: {
+        sigmaH: d.sigmaH0,
+        validated: d.validated,
+        flat: d.flatProfiles,
+        // As the forecast does (§8.2): the masses of other bodies without a profile.
+        mu: Object.fromEntries(
+          d.spec.bodies
+            .filter((b) => b !== body && !d.profiles.some((p) => p.body === b))
+            .map((b) => [b, d.sigmas[muId(b)] ?? 0]),
+        ),
+      },
     });
   } catch {
     return arrivalState(actx, d.spec);
@@ -1180,12 +1347,301 @@ export function presentState(
   if (nonFinite([anc.tNow, anc.state, cov.data]) !== null) return arrivalState(actx, d.spec);
   return {
     source: 'anchor',
+    body,
     t: anc.tNow,
     state: anc.state,
     covariance: cov,
     anchor: anc,
+    ...(anc.hedge ? { hedge: anc.hedge } : {}),
     ...(camera ? { camera } : {}),
   };
+}
+
+export interface BodiesAt {
+  /** The other modelled bodies' states relative to the reference body (at rest) at t. */
+  readonly state: Readonly<Record<string, State6>>;
+  /**
+   * Their 6×6 covariances from the data: the arc's fit (Tier G, or the arc alone), else the
+   * briefing's, carried to t. Scaled by the noise scale s², like the present state.
+   */
+  readonly cov: Readonly<Record<string, Matrix>>;
+  /**
+   * How each state at t depends on the shared hedge exponents (`eta:<body>`, `etaE:<body>`):
+   * the law's hedge acts on the bodies' mutual pulls from the time the body was last fixed, so
+   * its believed position at t is already uncertain by that much (2F request 13).
+   */
+  readonly eta: Readonly<Record<string, Readonly<Record<string, Float64Array>>>>;
+  /** From when the hedge acts on each body's motion: its last range fix, or 0 (the briefing). */
+  readonly since: Readonly<Record<string, number>>;
+}
+
+/**
+ * The other modelled bodies relative to `ref` at time t of a ship arc, with what the model knows
+ * of them: where the fits put them, how well, and how the unsampled law has moved them since they
+ * were last fixed (§8.2, §8.7; 2F request 13). Data after `asOf` are not used for the times the
+ * bodies were last fixed.
+ */
+export function bodiesAt(
+  d: ModelDerived,
+  ctx: ModelContext,
+  arcId: string,
+  ref: string,
+  t: number,
+  asOf = Infinity,
+): BodiesAt {
+  const spec = d.spec;
+  const s = spec.settings;
+  const others = spec.bodies.filter((b) => b !== ref);
+  const state: Record<string, State6> = {};
+  const cov: Record<string, Matrix> = {};
+  const eta: Record<string, Record<string, Float64Array>> = {};
+  const since: Record<string, number> = {};
+  const sol = d.solutions.get(arcId) ?? d.solutions.get(shipArcOf(arcId));
+  const trusted = (id: string) => fromSolution(sol, spec, ref, id, d.problem.params);
+  for (const o of others) {
+    state[o] = relativeState(d, ctx, trusted(o) ? sol : undefined, arcId, o, ref, t);
+    cov[o] = zeros(6, 6);
+    eta[o] = {};
+    since[o] = 0;
+  }
+  // Bodies held at their briefed positions (no mutual motion modelled) carry nothing more.
+  if (others.length === 0 || !spec.dynamic) return { state, cov, eta, since };
+  const actx = contextFor(ctx, d.problem.records.get(attemptOfArc(arcId)));
+  const law = lawInForce(ctx, spec, d.values);
+  const s2 = d.noiseScale;
+  /** Every body's state relative to `ref` at t, from a compiled arc run. */
+  const relTo = (ca: ReturnType<typeof compileArc>, x: ArrayLike<number>, at: number) => {
+    const tr = simulate(ca, x, [at], s.dt);
+    const P = tr.pos[0]!;
+    const V = tr.vel[0]!;
+    const r = 3 * ca.bodyIndex.get(ref)!;
+    const out: Record<string, number[]> = {};
+    for (const b of others) {
+      const j = 3 * ca.bodyIndex.get(b)!;
+      out[b] = [0, 1, 2, 0, 1, 2].map((c, k) =>
+        k < 3 ? P[j + c]! - P[r + c]! : V[j + c]! - V[r + c]!,
+      );
+    }
+    return out;
+  };
+  /** cov[b] += Σ J_a C_ab J_bᵀ over central-difference columns of `run` (per body, 6 numbers). */
+  const accumulate = (
+    n: number,
+    step: (i: number) => number,
+    run: (i: number, delta: number) => Record<string, number[]>,
+    C: (a: number, b: number) => number,
+    bodies: readonly string[],
+  ) => {
+    const J: Record<string, number[][]> = {};
+    for (const b of bodies) J[b] = [];
+    for (let i = 0; i < n; i++) {
+      const hstep = step(i);
+      const plus = run(i, hstep);
+      const minus = run(i, -hstep);
+      for (const b of bodies) J[b]!.push(plus[b]!.map((v, c) => (v - minus[b]![c]!) / (2 * hstep)));
+    }
+    for (const b of bodies)
+      for (let a = 0; a < n; a++)
+        for (let bb = 0; bb < n; bb++) {
+          const c = C(a, bb);
+          if (c === 0) continue;
+          const Ja = J[b]![a]!;
+          const Jb = J[b]![bb]!;
+          for (let u = 0; u < 6; u++)
+            for (let w = 0; w < 6; w++) cov[b]!.data[u * 6 + w]! += s2 * Ja[u]! * c * Jb[w]!;
+        }
+  };
+  // The fit's own uncertainty: central differences over the parameters that move the bodies.
+  const solved = others.filter((o) => trusted(o) && sol?.P && t >= sol.arc.epoch);
+  if (sol && sol.P && solved.length > 0) {
+    const P = sol.P;
+    const nP = P.cols;
+    const rel = new Set(sol.rel);
+    const own = new Set(
+      spec.bodies.flatMap((b) => STATE_KEYS.map((k) => `${sol.arc.id}.${b}.${k}`)),
+    );
+    const moving: number[] = [];
+    for (const [name, i] of sol.idx)
+      if (rel.has(i) && (own.has(name) || name === EXPONENT_ID || /^body\..+\.mu$/.test(name)))
+        moving.push(i);
+    const ca = compileArc(sol.structure, sol.arc, sol.idx);
+    const xp = Float64Array.from(sol.x);
+    accumulate(
+      moving.length,
+      (a) => s.fdStep * sol.scale[moving[a]!]!,
+      (a, delta) => {
+        const i = moving[a]!;
+        xp[i] = sol.x[i]! + delta;
+        const out = relTo(ca, xp, t);
+        xp[i] = sol.x[i]!;
+        return out;
+      },
+      (a, b) => P.data[moving[a]! * nP + moving[b]!]!,
+      solved,
+    );
+  }
+  // The briefing's uncertainty, carried to t under the law in force, for the rest.
+  const briefed = others.filter((o) => !solved.includes(o));
+  if (briefed.length > 0) {
+    const pBody = briefingBody(actx, spec.primary);
+    const largest = (c?: Cov3) => Math.max(c?.[0] ?? 0, c?.[3] ?? 0, c?.[5] ?? 0);
+    const rel0 = briefingBodiesAt(actx, spec, 0, law);
+    const nonPrimary = spec.bodies.slice(1);
+    const sig: number[] = [];
+    nonPrimary.forEach((id) => {
+      const b = briefingBody(actx, id);
+      const ps = Math.max(Math.sqrt(largest(b?.positionCov) + largest(pBody?.positionCov)), 1);
+      const vs = s.priorBodyVelocitySigma;
+      const keep = spec.planar ? [1, 1, 0, 1, 1, 0] : [1, 1, 1, 1, 1, 1];
+      [ps, ps, ps, vs, vs, vs].forEach((v, c) => sig.push(keep[c]! * v));
+    });
+    const muSig = spec.bodies.map((b) => d.sigmas[muId(b)] ?? 0);
+    const nState = sig.length;
+    const run = (i: number, delta: number) => {
+      const start = rel0.map((r) => [...r]);
+      const mu = spec.bodies.map((b) => law.mu(b));
+      if (i < nState) start[Math.floor(i / 6)]![i % 6]! += delta;
+      else mu[i - nState]! += delta;
+      const st: Structure = {
+        r0: s.r0,
+        n: law.n,
+        bodies: spec.bodies.map((id, j) => ({
+          id,
+          mu: mu[j]!,
+          state: j === 0 ? 'gauge' : (start[j - 1] as unknown as State6),
+        })),
+        ship: [1e15, 0, 0, 0, 0, 0],
+        dynamicBodies: true,
+        engine: { kE: 1, dE: 0, dP: 0 },
+        kA: 1,
+        camBias: [0, 0, 0],
+      };
+      return relTo(compileArc(st, { id: 'briefing', epoch: 0, commands: [] }, new Map()), [], t);
+    };
+    const steps = [...sig.map((v) => Math.max(1e-3 * v, 1e-6)), ...muSig.map((v) => 1e-3 * v)];
+    const vars = [...sig, ...muSig].map((v) => v * v);
+    const live = vars.flatMap((v, i) => (v > 0 && steps[i]! > 0 ? [i] : []));
+    accumulate(
+      live.length,
+      (a) => steps[live[a]!]!,
+      (a, delta) => run(live[a]!, delta),
+      (a, b) => (a === b ? vars[live[a]!]! / s2 : 0),
+      briefed,
+    );
+  }
+  // The hedge on the bodies' mutual pulls since the pair was last fixed. A body is fixed relative
+  // to the ship at its last range fix (up to asOf), else at the briefing (0); the body pulling
+  // hardest on the ship is fixed by the ship's own motion for as long as anything is tracked
+  // (orbit determination), so its last fix is the last fix on any body.
+  const covered = new Map([...d.profiles, ...d.flatProfiles].map((p) => [p.body, p]));
+  const arc = d.problem.arcs.find((a) => a.id === shipArcOf(arcId));
+  const lastFix = (b: string) =>
+    arc
+      ? rangeFixes(arc, b)
+          .filter((m) => m.t <= asOf)
+          .at(-1)?.t
+      : undefined;
+  const anyLast = Math.max(-Infinity, ...spec.bodies.map((b) => lastFix(b) ?? -Infinity));
+  let dominant: string | null = null;
+  if (sol && Number.isFinite(anyLast)) {
+    const tq = Math.max(sol.arc.epoch, Math.min(t, anyLast));
+    const ca = compileArc(sol.structure, sol.arc, sol.idx);
+    const P = simulate(ca, sol.x, [tq], s.dt).pos[0]!;
+    const sh = 3 * ca.nb;
+    let best = -Infinity;
+    for (const b of spec.bodies) {
+      const j = 3 * ca.bodyIndex.get(b)!;
+      const r = Math.hypot(P[sh]! - P[j]!, P[sh + 1]! - P[j + 1]!, P[sh + 2]! - P[j + 2]!);
+      const pull = law.mu(b) / Math.pow(r, law.n);
+      if (pull > best) {
+        best = pull;
+        dominant = b;
+      }
+    }
+  }
+  const fixedAt = (b: string) => {
+    if (b !== ref && !trusted(b)) return 0;
+    const own = lastFix(b) ?? 0;
+    return b === dominant ? Math.max(own, anyLast) : own;
+  };
+  for (const o of others) {
+    const t0 = Math.min(fixedAt(o), fixedAt(ref), t);
+    since[o] = t0;
+    if (!(t > t0)) continue;
+    const names: string[] = [];
+    const shared: string[] = [];
+    const profiles: ProfileDef[] = [];
+    for (const b of spec.bodies) {
+      const p = covered.get(b);
+      if (!p) continue;
+      const v = d.validated[b];
+      names.push(`h.eta.${b}`);
+      shared.push(`eta:${b}`);
+      const earned = v && v.spans.length > 0 ? { etaE: `h.etaE.${b}`, spans: v.spans } : undefined;
+      if (earned) {
+        names.push(earned.etaE);
+        shared.push(`etaE:${b}`);
+      }
+      profiles.push(profileDef(p, undefined, `h.eta.${b}`, earned));
+    }
+    if (names.length === 0) continue;
+    const start = (b: string): State6 =>
+      relativeState(d, ctx, trusted(b) ? sol : undefined, arcId, b, ref, t0);
+    const st: Structure = {
+      r0: s.r0,
+      n: law.n,
+      bodies: [
+        { id: ref, mu: law.mu(ref), state: 'gauge' },
+        ...others.map((b) => ({ id: b, mu: law.mu(b), state: start(b) })),
+      ],
+      ship: [1e15, 0, 0, 0, 0, 0],
+      dynamicBodies: true,
+      engine: { kE: 1, dE: 0, dP: 0 },
+      kA: 1,
+      camBias: [0, 0, 0],
+      profiles,
+      bodyProfiles: true,
+    };
+    const ca = compileArc(
+      st,
+      { id: 'hedge', epoch: t0, commands: [] },
+      new Map(names.map((nm, i) => [nm, i])),
+    );
+    const x0 = new Float64Array(names.length);
+    const hstep = 1e-3;
+    names.forEach((_, i) => {
+      x0[i] = hstep;
+      const plus = relTo(ca, x0, t)[o]!;
+      x0[i] = -hstep;
+      const minus = relTo(ca, x0, t)[o]!;
+      x0[i] = 0;
+      eta[o]![shared[i]!] = Float64Array.from(plus, (v, c) => (v - minus[c]!) / (2 * hstep));
+    });
+  }
+  return { state, cov, eta, since };
+}
+
+/**
+ * The bodies' full 6×6 covariances at one time: the fits' part plus the hedge's, each hedge
+ * exponent at its σ (σ_h0, or σ_e for an earned one), as used where the hedge exponents are not
+ * carried on as shared sources (the present-state fit).
+ */
+export function bodyCovariances(
+  d: Pick<ModelDerived, 'sigmaH0' | 'validated'>,
+  b: BodiesAt,
+): Record<string, Matrix> {
+  const out: Record<string, Matrix> = {};
+  for (const [id, c] of Object.entries(b.cov)) {
+    const m: Matrix = { rows: 6, cols: 6, data: Float64Array.from(c.data) };
+    for (const [name, J] of Object.entries(b.eta[id] ?? {})) {
+      const body = name.slice(name.indexOf(':') + 1);
+      const sig = name.startsWith('etaE:') ? (d.validated[body]?.sigmaE ?? 0) : d.sigmaH0;
+      for (let u = 0; u < 6; u++)
+        for (let w = 0; w < 6; w++) m.data[u * 6 + w]! += sig * sig * J[u]! * J[w]!;
+    }
+    out[id] = m;
+  }
+  return out;
 }
 
 /**
@@ -1243,6 +1699,7 @@ export function arrivalState(ctx: ModelContext, spec: ModelSpec): PresentState {
     }
   return {
     source: 'arrival',
+    body: spec.primary,
     t: a.t,
     state: Float64Array.of(
       a.position.x - pp.x,
