@@ -80,6 +80,52 @@ Follow `docs/art/art-bible.md` as it lands. Where it's silent, propose a look, w
 
 ---
 
+## NIGHT — The judge's run (overnight)
+
+**Thread:** Claude (Fable 5.2), one long run · **Branch:** `p3/night-hardening` · **Worktree:** `.worktrees/night`
+
+**Read:**
+- [the coordination ledger](coordination.md), its "Overnight" section first;
+- `docs/CREATIVE_BRIEF.md`, and `docs/DECISIONS.md` A8–A25;
+- the handoffs of 2D, 2F, 2C, 3B, 3C, OP and 3E;
+- S20's findings (`docs/studies/s20/`).
+
+**While you run, the owner is asleep and 2D, 2F and 2C are paused.** You hold their lanes for fixes until morning:
+- `src/app/`, `src/console/`, `src/theme/`, `src/game/`, `src/content/gravity-range/`, `src/model/` and `src/blackbox/`;
+- `src/view3d/`, except `src/view3d/sky/`, `src/view3d/fx/`, `src/view3d/opening/` and `src/view3d/room/outside.ts`, which **VX** (GPT) holds tonight.
+
+GPT threads keep their own lanes: VX (visuals), AU (audio), 3C (sensors, including the wells' channel) and 3B (its encounter and the harness). Run `git merge main` first.
+
+**Goal:** when the owner wakes up, a judge who opens the site plays a game that works, end to end, and is a joy to meet.
+
+1. **Photosensitivity (ledger R43), first:** the ordinary loss sequence (A8) flickers faster than 3 times a second. Keep every flash at 3 or fewer in any second, and test it.
+2. **The region picker (A25, R40):**
+   - Twin Deeps, the Well Garden (`?encounter=inverse-wells`) and the Unseen Cathedral (`?encounter=chain-link`), through 2F's loader, each with its own save;
+   - labelled honestly: "Preview regions: the route between them isn't built yet; each starts with a fresh ship";
+   - keyboard-reachable.
+3. **The opening in the game (R41):**
+   - mount `OpeningGate` in `src/app/App.tsx` ahead of the room, waking into the Gravity range;
+   - gate it once per browser, not once per save (A25);
+   - with reduced motion on, a fully still sky with the alarm light and a plain fade to black (R44).
+4. **The judge's run.** Play the production build in headless Chrome, driven over the DevTools protocol with plain Node (install nothing), as a cold judge would:
+   - load, the opening, the room, the picker;
+   - each region: plan, fly, lose, recur, learn, leave.
+
+   Fix every blocker, crash, console error, confusing dead end and performance cliff you find, most important first. Use 3E's harness (`npm run harness`) and S20's findings.
+5. **Rules:**
+   - keep `npm run check` and `npm run build` green;
+   - commit a checkpoint after each group of fixes;
+   - never loosen a test, tolerance or claim;
+   - no new features beyond items 1–3; keep truth and belief apart (P11);
+   - leave port 4175 to S15's runner, and don't edit the ledger (it's the integrator's).
+6. **The morning report:** keep `docs/handoffs/night.md` current as you go:
+   - what you fixed, with commits;
+   - what you found but didn't fix, ranked;
+   - screenshots in `docs/handoffs/night/`, with no user paths in any committed file;
+   - a short "state of the game for judges" for the owner.
+
+---
+
 ## AU — Basic audio
 
 **Thread:** GPT/Codex · **Branch:** `p3/au-audio` · **Worktree:** `.worktrees/au`

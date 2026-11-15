@@ -35,6 +35,17 @@ The live state of the build between threads: who is running, who holds which sha
 
 Prompts: Phase 2 in `phase-2/`, Phase 3 in `phase-3.md`, studies in `studies/`. The resume notes for 2D, 2G, 2F and 2C were sent through the owner on 2026-11-14 and are summarised in the Status column.
 
+## Overnight (2026-11-15, while the owner sleeps)
+
+Owner's plan, to remove copy-and-paste relays overnight. Claude threads 2D, 2F and 2C commit a checkpoint and **pause**. Every thread below is self-contained, with no relays needed.
+- **NIGHT** (Claude Fable, long): holds 2D's, 2F's and 2C's lanes for fixes (see `phase-3-extras.md` §NIGHT). Does the photosensitivity fix, the picker, the opening's mount, then the judge's run.
+- **VX** (GPT): visuals, **and** wires them into the window itself tonight. Scoped exception: `src/view3d/room/outside.ts` and the window parts of `RoomView.ts`.
+- **3C** (GPT): takes over `src/ship/sensors/wells*` from 3B tonight. It fixes 3B's channel (3A's `functionAvailable` and the shared `functionalPower`; total draw only in telemetry) and wires it into the dispatcher (R36).
+- **3B** (GPT): hands its channel to 3C, then continues the harness admission runs in its own lane.
+- **AU** (GPT): audio, in its own lane.
+
+In the morning the integrator merges in this order: the paused threads' checkpoints, NIGHT, VX, 3C, 3B, AU. It smoke-tests each, and the owner reviews before anything else resumes.
+
 ## Shared files: who holds them now
 
 | Path | Holder | Until |
@@ -119,6 +130,8 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 | R42 | OP → AU | Cue times moved with the 19.5 s opening: opening-rumble 6.5 s, alarms 6.6/7.8/8.47, loss-failure 9.35, black-cut 10.65, opening-title 11.95, **new** title-out 15.9, room-wake 17.9 | **Open**: relay | |
 | R43 | OP → 2D | **Photosensitivity:** the ordinary loss sequence (A8) flickers faster than 3 times a second. Fix it before the ending (A17) reuses it. Also: Earth and title-size tokens | **Open**: relay, high priority | It's in the live game |
 | R44 | Integrator | Reduced motion in the opening keeps the slow star bending but not the swelling dark. Integrator's call: a fully still sky with the alarm light and a plain fade to black, the safer choice for motion sensitivity. The owner may overrule | **Open**: relay to VX with the opening | |
+
+| R45 | 3C → 3B | 3B's funnel channel (`4692625`) imports the removed `sensorFunctionAvailable` and counts leakage heat as camera power | **Overnight: 3C takes `src/ship/sensors/wells*` and fixes it**, then wires it (R36). Not merged until fixed | Main has no `sensorFunctionAvailable` |
 
 Add new rows at the bottom with the next ID. Never renumber.
 
