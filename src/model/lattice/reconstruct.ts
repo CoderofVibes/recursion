@@ -1036,7 +1036,7 @@ function strands(
   // with it in some frames (another strand, another fence): seen in far fewer frames than its
   // own two. At a node with three or more, an edge needs `associationRatio` of the frames of the
   // node's second-best edge, at both its ends. Ambiguity draws less, never more.
-  const strong = (a: string, b: string, count: number) => {
+  const strong = (a: string, count: number) => {
     const list = seen.get(a)!;
     if (list.length < 3) return true;
     const second = list.map((e) => e.count).sort((x, y) => y - x)[1]!;
@@ -1059,8 +1059,8 @@ function strands(
   for (const [a, list] of seen)
     for (const { other: b, count } of list)
       if (
-        strong(a, b, count) &&
-        strong(b, a, count) &&
+        strong(a, count) &&
+        strong(b, count) &&
         length(a, b) <= s.maxEdgeOverTypical * typical
       )
         adj.set(a, [...(adj.get(a) ?? []), b]);

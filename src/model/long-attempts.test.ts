@@ -80,11 +80,13 @@ describe('long and messy attempts (R47)', () => {
           expect(r.adoptable).toBe(true);
           expect(ho.diagnosis?.cause).toBe('consistent');
           // Honest: the fitted exponent is within 3σ of the truth.
-          const n = r.fitted['law.gravity.exponent']!;
+          const n = r.fitted?.['law.gravity.exponent'];
+          expect(n).toBeDefined();
+          if (!n) continue;
           expect(Math.abs(n.value - LAW.exponent)).toBeLessThan(3 * n.sigma);
         }
         // The 39 h training fit settles on the law, not on a wild one (before: 2.49996 ± 3e-7).
-        expect(trainLong.fitted['law.gravity.exponent']!.sigma).toBeLessThan(1e-5);
+        expect(trainLong.fitted?.['law.gravity.exponent']?.sigma).toBeLessThan(1e-5);
       } finally {
         client.terminate();
       }
