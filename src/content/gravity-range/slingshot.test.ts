@@ -3,9 +3,10 @@
  * throttle, release (a coasting forecast), lift over the ring on the translation controls,
  * release again, and leave the binary on the slingshot past Beta.
  *
- * The pilot is a script that flies like an informed player: it knows the plan from the
- * slingshot study (2G handoff) and flies it through `GameControls` alone (commands, `fly`, the
- * snapshot). Truth is read only to judge, after each step.
+ * The pilot is a script that flies like an informed player: it knows S21's thread (the 830 km
+ * pass inside the radiation crescent, `docs/studies/s21/belt.md`; the old 980 km pass now runs
+ * through the clouds) and the engine's measured calibration, and flies it through
+ * `GameControls` alone (commands, `fly`, the snapshot). Truth is read only to judge.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -37,23 +38,40 @@ describe('Gravity range: the slingshot flown by hand', () => {
       const world = () => session.truth().sim.world;
       const believedVelocity = () => session.snapshot().world.ship.velocity;
 
-      // Turn the nose along the believed velocity eight minutes ahead of the burn (a half turn
-      // takes about seven), and touch it up just before, so it points where the velocity is then.
-      const BURN_AT = 3_960; // 1.1 h, as a whole number of ticks
-      session.stepTicks(BURN_AT - 480);
-      session.command({ kind: 'attitude', target: { reference: 'prograde' } });
+      // The burn, on the throttle: S21's 13.797 m/s delivered, centred on its 3,960 s. At a
+      // quarter throttle (S21) a whole number of seconds comes close, and the throttle is trimmed
+      // to land on it. The pilot knows what the engine delivers from flying it: about 97.3% of its
+      // rating here (its 97.5% calibration, less the start-up and the steering trim).
+      const BURN_AT = 3_960;
+      const rated = 13.797 / 0.973;
+      const mass = session.snapshot().world.ship.massProperties.mass;
+      const quarter = burnDuration(session.ship, mass, rated, 'main-engine', 0.25);
+      const seconds = Math.round(quarter);
+      const throttle = (0.25 * quarter) / seconds;
+      const start = BURN_AT - Math.round(seconds / 2);
+
+      // Turn the nose along the believed velocity relative to Alpha (S21's burn is prograde about
+      // Alpha; the game's `prograde` is about the briefing's frame, some ten degrees off here)
+      // eight minutes ahead of the burn (a half turn takes about seven), and touch it up just
+      // before, so it points where that velocity is then.
+      const alongAlpha = () => {
+        const w = session.snapshot().world;
+        const alpha = w.bodies.find((b) => b.id === 'alpha')!;
+        session.command({
+          kind: 'attitude',
+          target: { reference: 'direction', direction: sub(w.ship.velocity, alpha.velocity) },
+        });
+      };
+      session.stepTicks(start - 480);
+      alongAlpha();
       session.stepTicks(470);
-      session.command({ kind: 'attitude', target: { reference: 'prograde' } });
+      alongAlpha();
       session.stepTicks(10);
 
-      // The burn, on the throttle: 14.36 m/s by the engine's rating (it delivers about 97.5%).
       const trueBefore = world().ship.kinematics.velocity;
       const believedBefore = believedVelocity();
       const mainBefore = world().ship.systems.tanks['main-propellant']!;
-      const seconds = Math.round(
-        burnDuration(session.ship, session.snapshot().world.ship.massProperties.mass, 14.36),
-      );
-      session.fly(hold({ throttle: 1 }));
+      session.fly(hold({ throttle }));
       session.stepTicks(1);
       // The thrust a held control asks for is drawn while it is held (2D request 1a).
       expect(session.snapshot().ship.thrust.map((t) => t.source)).toContain('main-engine');
@@ -67,8 +85,8 @@ describe('Gravity range: the slingshot flown by hand', () => {
       // uncertainty.
       const trueChange = sub(world().ship.kinematics.velocity, trueBefore);
       const believedChange = sub(believedVelocity(), believedBefore);
-      expect(length(trueChange)).toBeGreaterThan(13.5);
-      expect(length(trueChange)).toBeLessThan(14.3);
+      expect(length(trueChange)).toBeGreaterThan(13.77);
+      expect(length(trueChange)).toBeLessThan(13.83);
       const cov = session.snapshot().world.ship.velocityCov;
       expect(distance(believedChange, trueChange)).toBeLessThan(
         3 * Math.sqrt(cov[0] + cov[3] + cov[5]),
@@ -96,7 +114,7 @@ describe('Gravity range: the slingshot flown by hand', () => {
       // Releasing the controls stops the rotation only (A18 (6)): over the next 20 hours the
       // attitude drifts within the controller's rate deadband. So level the ship first, nose
       // along the believed velocity and its top up, ten minutes before lifting.
-      const LIFT_AT = 79_920; // 22.2 h
+      const LIFT_AT = 80_020; // 22.2 h: 40 s of lift centred on S21's 80,040 s
       session.stepTicks(LIFT_AT - 600 - session.status().t);
       const tilt = quat.angleBetween(
         world().ship.kinematics.attitude,
@@ -125,8 +143,11 @@ describe('Gravity range: the slingshot flown by hand', () => {
       expect(rcsBefore - rcs(world())).toBeGreaterThan(10);
       expect(rcsBefore - rcs(world())).toBeLessThan(20);
 
-      // The pass, judged on truth every ten minutes: past Beta the way the ring turns, well
-      // above it.
+      // The pass, judged on truth every ten minutes: past Beta the way the ring turns, inside the
+      // clouds' inner edge at 1,000 km, well above the ring. S21's impulses pass at 830 km
+      // (s21-vectors.test.ts); flown by hand it is about 900: the engine's thrust runs about 1.4°
+      // off the nose (its gimbal trims the centre of mass's offset), 0.3 m/s of it outward,
+      // and the pilot does not correct for it.
       let pass = Infinity;
       let passAt = 0;
       let height = 0;
@@ -140,8 +161,8 @@ describe('Gravity range: the slingshot flown by hand', () => {
           height = w.ship.kinematics.position.z - w.bodies[1]!.position.z;
         }
       }
-      expect(pass / 1e3).toBeGreaterThan(880);
-      expect(pass / 1e3).toBeLessThan(1_050);
+      expect(pass / 1e3).toBeGreaterThan(800);
+      expect(pass / 1e3).toBeLessThan(960);
       expect(passAt / HOUR).toBeGreaterThan(29);
       expect(passAt / HOUR).toBeLessThan(31.5);
       expect(height).toBeGreaterThan(15_000);
@@ -156,10 +177,13 @@ describe('Gravity range: the slingshot flown by hand', () => {
       const judged = departStatus(world());
       expect(judged.distance).toBeGreaterThan(DEPART.beyond);
       expect(judged.speed).toBeGreaterThan(DEPART.minSpeed + 5);
-      // The objective's budget: 14 m/s of burn and 1 m/s of lift, inside 16.
+      // The objective's budget: 13.8 m/s of burn and 1 m/s of lift, inside 16 (the first part
+      // of the burn, while the ship cannot yet leave Alpha's lobe, is free).
       const spent = session.truth().objectives.deltaV ?? 0;
-      expect(spent).toBeGreaterThan(14.5);
+      expect(spent).toBeGreaterThan(12);
       expect(spent).toBeLessThanOrEqual(DEPART.maxDeltaV);
+      // Not a lattice-unit second of the radiation crescent on any equipment item.
+      expect(session.truth().exposure).toBeUndefined();
 
       // What Black Box kept: the objective reached, no contact, and one coasting forecast per
       // release of the controls, frozen, each from the moment of release.
@@ -173,7 +197,7 @@ describe('Gravity range: the slingshot flown by hand', () => {
         expect(Object.isFrozen(forecast)).toBe(true);
         expect(forecast.inputs.plan.items).toEqual([]);
       }
-      expect(record.forecasts.map((f) => f.issuedAt)).toEqual([BURN_AT + seconds, LIFT_AT + 40]);
+      expect(record.forecasts.map((f) => f.issuedAt)).toEqual([start + seconds, LIFT_AT + 40]);
     },
   );
 });

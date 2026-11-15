@@ -321,8 +321,8 @@ describe('S8 reference vectors in the game’s simulation', () => {
       for (const g of GEOMETRIES) {
         const offset = Math.round((g.offset * 180) / Math.PI);
         const candidate = SEEDS.catalogue.candidates.find((c) => c.bearing_offset_deg === offset)!;
-        expect(candidate.burn_time).toBe(g.route.burnAt);
-        expect(candidate.main_delta_v).toBeCloseTo(g.route.deltaV, 9);
+        expect(candidate.burn_time).toBe(g.s8.burnAt);
+        expect(candidate.main_delta_v).toBeCloseTo(g.s8.deltaV, 9);
         const k = arrivalKinematics(alpha, ARRIVAL_ANGLE + g.offset);
         for (const control of [candidate, ...candidate.robustness]) {
           const run = passAndExit(

@@ -435,7 +435,9 @@ describe('Gravity range: the slingshot past Beta (A6)', () => {
     () => {
       const flight = fly(clear, { dv: 14, at: BURN_AT }, 90 * HOUR);
       expect(flight.impact).toBeUndefined();
-      // Past Beta at about 980 km, the way the ring turns, 30 h after arrival, in the plane.
+      // Past Beta at about 980 km, the way the ring turns, 30 h after arrival, in the plane. The
+      // gravity of it only: this pass now runs through the radiation crescent (S21's pass table,
+      // s21-vectors.test.ts), and the route the content is built round passes at 830 km.
       expect(flight.pass / 1e3).toBeGreaterThan(940);
       expect(flight.pass / 1e3).toBeLessThan(1_020);
       expect(flight.passAt / HOUR).toBeGreaterThan(29.5);
