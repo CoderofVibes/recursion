@@ -244,7 +244,12 @@ export function stepConfiguration(
       baselineModes?.[mode]?.power ??
       Infinity;
     const available =
-      !current.tripped && current.condition > 0 && current.powerDraw >= motorPower - 1e-9;
+      !current.tripped &&
+      current.condition > 0 &&
+      !current.faults.includes('deployment-jam') &&
+      (current.values.radiationRestartUntil ?? 0) <= state.t &&
+      !current.values.thermalInhibited &&
+      current.powerDraw >= motorPower - 1e-9;
     const next = available
       ? fraction +
         Math.sign(target - fraction) * Math.min(Math.abs(target - fraction), dt / duration)

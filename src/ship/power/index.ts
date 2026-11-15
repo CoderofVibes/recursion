@@ -10,6 +10,8 @@ import { getGeometry } from '../config/configuration.ts';
 import { requestedRecorderPower } from '../sensors/index.ts';
 import { bounded, modeOf, modesOf, NO_MODE, systems, type OperatingMode } from './baseline.ts';
 import { sunIncidence } from './sun.ts';
+import { functionAvailable } from '../condition/index.ts';
+import { thermalOperatingFactor } from '../thermal/protection.ts';
 
 type Side = 'a' | 'b';
 /** Functions whose active unit is essential: its spare inherits the priority when selected. */
@@ -104,6 +106,7 @@ interface Load {
   factor: number;
   /** Its operating point in its present mode. */
   mode: OperatingMode;
+  leakage?: number;
 }
 
 /** [ASSUMED] baseline C03/C09/C13: protected per-bus dispatch, with explicit losses. */
@@ -192,7 +195,7 @@ function dispatchPower(
   const oldPower = state.ext?.power as Record<string, JsonValue> | undefined;
   const healthy = (id: string): boolean => {
     const e = equipment[id] ?? state.equipment[id];
-    return !!e && e.condition > 0 && !e.tripped && e.mode !== 'off';
+    return functionAvailable(e, state.t);
   };
   for (const { spec } of tables.specs) {
     const old = state.equipment[spec.id];
@@ -305,16 +308,38 @@ function dispatchPower(
     const e = equipment[spec.id];
     if (!e || !spec.bus || spec.kind === 'battery') continue;
     const mode = modes?.[e.mode] ?? NO_MODE;
-    const wanted =
+    let wanted =
       spec.id === data.recorder.equipmentId
         ? requestedRecorderPower(state.recorder.sampleRate, definition)
         : mode.power;
+    if (spec.id === 'interface-hx' && e.mode === 'antifreeze') {
+      const link = data.thermalLinks[0]!;
+      const temperature = state.thermal['hx-water'] ?? 290;
+      const on =
+        temperature <= link.heaterEnableTemperature ||
+        (temperature < link.heaterDisableTemperature && e.values.heaterOn === 1);
+      e.values.heaterOn = on ? 1 : 0;
+      if (!on) wanted = modes?.regulated?.power ?? 0;
+    }
     const isEssential = activeFunction ? e.mode === 'active' : !spec.sheddable;
     // `healthy(spec.id)`: the record is this one, unchanged so far.
-    const isHealthy = e.condition > 0 && !e.tripped && e.mode !== 'off';
+    // Rebooting electronics still consume power; cold inhibition exempts heaters.
+    const isHealthy =
+      e.condition > 0 &&
+      !e.tripped &&
+      e.mode !== 'off' &&
+      (!e.values.thermalInhibited || ['heater', 'antifreeze'].includes(e.mode));
     let request = isHealthy
       ? Math.min(wanted, Math.max(isEssential ? wanted : 0, e.allocation))
       : 0;
+    request *= thermalOperatingFactor(
+      e,
+      spec.params.tempMin ?? 0,
+      spec.params.tempMax ?? Infinity,
+      data.thermalProtection.derateMargin,
+    );
+    const leakage = Math.max(0, e.values.radiationLeakage ?? 0);
+    request *= 1 + leakage;
     const faultPower = Math.max(0, e.values.faultPower ?? 0);
     if (isHealthy && faultPower > 0) {
       const tripThreshold =
@@ -363,6 +388,7 @@ function dispatchPower(
       priority,
       factor: spec.bus === 'essential' ? 1 / eta : 1,
       mode,
+      leakage,
     });
     equipment[spec.id]!.values.requestedPower = wanted;
   }
@@ -446,8 +472,12 @@ function dispatchPower(
     loadWatts += draw;
     unmet += short;
     conversionLoss += draw * (load.factor - 1);
-    const heat =
+    let heat =
       load.id === 'black-box' ? draw : mode.power > 0 ? (draw * mode.heat) / mode.power : draw;
+    if (load.leakage) {
+      const useful = draw / (1 + load.leakage);
+      heat = (mode.power > 0 ? (useful * mode.heat) / mode.power : useful) + draw - useful;
+    }
     const working = equipment[load.id]!;
     working.powerDraw = draw;
     working.values.heat = heat;

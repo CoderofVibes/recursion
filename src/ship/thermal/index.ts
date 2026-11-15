@@ -9,6 +9,8 @@ import type { JsonValue } from '../../contracts/units.ts';
 import { getGeometry } from '../config/configuration.ts';
 import { bounded, systems, type Baseline } from '../power/baseline.ts';
 import { sunIncidence } from '../power/sun.ts';
+import { functionAvailable } from '../condition/index.ts';
+import { hasFault, stepThermalProtection } from './protection.ts';
 
 /**
  * The thermal facts of a design, indexed once (S15 rank 1): each node's control target and
@@ -46,9 +48,8 @@ function activePower(tables: ThermalTables, id: string): number {
   return power;
 }
 
-/** [ASSUMED] C04/C11 thermal stub: conservative finite nodes, passive/active transport and IR rejection.
- * Local freeze rupture, equipment damage and failed regulators remain Phase 3 work.
- */
+/** [ASSUMED] C04/C11 finite nodes, regulated pumped transport and IR rejection.
+ * Failed bypasses, common leaks, frozen exchangers and jammed louvers persist. */
 export function stepThermal(
   state: ShipSystemsState,
   definition: ShipDefinition,
@@ -60,7 +61,7 @@ export function stepThermal(
   const data = systems(definition);
   const tables = tablesOf(data);
   const thermal = { ...state.thermal };
-  const equipment: Record<string, EquipmentState> = { ...state.equipment };
+  let equipment: Record<string, EquipmentState> = { ...state.equipment };
   const events: ShipEvent[] = [];
   const input: Record<string, number> = {};
   const capacity: Record<string, number> = {};
@@ -80,7 +81,12 @@ export function stepThermal(
     ids.some((id) => {
       const e = equipment[id];
       const active = activePower(tables, id);
-      return e?.mode === 'active' && e.condition > 0 && !e.tripped && e.powerDraw >= active - 1e-9;
+      return (
+        e?.mode === 'active' &&
+        functionAvailable(e, state.t) &&
+        !ids.some((pumpId) => hasFault(equipment[pumpId], 'loop-leak')) &&
+        e.powerDraw >= active - 1e-9
+      );
     });
   const geometry = getGeometry(state, definition);
   const radiator = data.radiators;
@@ -131,30 +137,39 @@ export function stepThermal(
       thermal[to] = thermal[to]! + energy / capacity[to]!;
     };
     for (const loop of data.thermalLoops) {
-      const pump = isPumping(loop.pumpIds);
+      const hx = equipment['interface-hx'];
+      const broken =
+        loop.id === 'internal-water' && (hx?.condition === 0 || hasFault(hx, 'freeze-rupture'));
+      const pump = isPumping(loop.pumpIds) && !broken && !hasFault(hx, 'regulator-closed');
+      const open = hasFault(hx, 'regulator-open');
       transfer(
         loop.from,
         loop.to,
         pump ? loop.conductance : radiator.passiveConductance,
         loop.maxHeatTransport,
-        pump,
+        pump && !open,
         loop.controlGain,
       );
     }
     for (const link of data.thermalLinks) {
-      const pump = isPumping(EXTERNAL_PUMPS);
+      const hx = equipment['interface-hx'];
+      const pump =
+        isPumping(EXTERNAL_PUMPS) &&
+        hx?.condition !== 0 &&
+        !hasFault(hx, 'freeze-rupture') &&
+        !hasFault(hx, 'regulator-closed');
       transfer(
         link.from,
         link.to,
         pump ? link.conductance : link.passiveConductance,
         link.maxHeatTransport,
-        pump,
+        pump && !hasFault(hx, 'regulator-open'),
         link.controlGain,
       );
     }
     for (const id of ['radiator-left', 'radiator-right']) {
       const e = equipment[id];
-      if (!e || e.condition <= 0) continue;
+      if (!e || e.condition <= 0 || hasFault(e, 'branch-isolated')) continue;
       const deployment = geometry.deployment[id] ?? 0;
       const area =
         radiator.stowedEffectiveAreaPerWing +
@@ -174,12 +189,15 @@ export function stepThermal(
         radiator.louverMaxEmissionFraction,
       );
       const oldFraction = e.values.louverEmission ?? targetFraction;
-      const fraction = bounded(
-        oldFraction +
-          (targetFraction - oldFraction) * (1 - Math.exp(-h / radiator.louverResponseTime)),
-        radiator.louverMinEmissionFraction,
-        radiator.louverMaxEmissionFraction,
-      );
+      const fraction =
+        hasFault(e, 'louver-jam') || !functionAvailable(e, state.t)
+          ? oldFraction
+          : bounded(
+              oldFraction +
+                (targetFraction - oldFraction) * (1 - Math.exp(-h / radiator.louverResponseTime)),
+              radiator.louverMinEmissionFraction,
+              radiator.louverMaxEmissionFraction,
+            );
       const absorbed = ((radiator.solarAbsorptivity * irradiance * area) / 2) * incidence;
       const rate = (emittedFull * fraction - absorbed) * e.condition;
       const energy = Math.min(
@@ -198,6 +216,13 @@ export function stepThermal(
         },
       };
     }
+    const protectedStep = stepThermalProtection(
+      { ...state, t: state.t + iteration * h, thermal, equipment },
+      definition,
+      h,
+    );
+    equipment = { ...protectedStep.state.equipment };
+    events.push(...protectedStep.events);
   }
   for (const spec of definition.equipment) {
     const e = equipment[spec.id];
