@@ -22,7 +22,7 @@ import {
 } from '../contracts/index.ts';
 import type { ModelContext } from './engine.ts';
 import type { ExtensionRecord } from './extensions.ts';
-import type { ForecastDetail, ForecastRequest } from './forecast.ts';
+import type { ForecastRequest, ModelForecastDetail } from './forecast.ts';
 import type { BurnReport, EmpiricalReport, ModelReport } from './report.ts';
 import { dispatch, type RpcRequest, type RpcResponse, type ServiceMethod } from './rpc.ts';
 import { ModelService, type AttemptDelta, type LoadInput } from './service.ts';
@@ -38,7 +38,7 @@ export interface ModelClient {
   /** Builds the forecast in the worker and issues it here (frozen, versioned by model version). */
   forecast(
     req: Omit<ForecastRequest, 'record'> & { attemptId?: AttemptId },
-  ): Promise<{ forecast: Forecast; detail: ForecastDetail }>;
+  ): Promise<{ forecast: Forecast; detail: ModelForecastDetail }>;
   testExtension(
     ext: ExtensionId,
     training: readonly AttemptId[],
@@ -125,7 +125,7 @@ export function createModelClient(opts: { worker?: boolean } = {}): ModelClient 
     endAttempt: (rec) => c('endAttempt', rec),
     refit: () => c('refit'),
     forecast: async (req) => {
-      const r = await c<{ draft: ForecastDraft; detail: ForecastDetail }>('forecast', req);
+      const r = await c<{ draft: ForecastDraft; detail: ModelForecastDetail }>('forecast', req);
       return { forecast: issueForecast(r.draft), detail: r.detail };
     },
     testExtension: (ext, training, heldOut) => c('testExtension', ext, training, heldOut),

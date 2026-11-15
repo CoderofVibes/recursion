@@ -38,8 +38,11 @@ export {
 export {
   buildForecast,
   plannedBurns,
+  recordAsOf,
   type ForecastDetail,
   type ForecastRequest,
+  type ModelForecastDetail,
+  type ModelSigmaBySource,
 } from './forecast.ts';
 export {
   burnReport,
