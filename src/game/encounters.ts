@@ -18,6 +18,7 @@ import {
 } from '../content/gravity-range/index.ts';
 import type { EncounterSetup } from './encounter.ts';
 import { CHAIN_LINK_ENTRY } from '../content/chain-link/index.ts';
+import { INVERSE_WELLS_ENTRY } from '../content/inverse-wells/index.ts';
 
 export interface EncounterEntry {
   readonly id: string;
@@ -42,6 +43,7 @@ export const ENCOUNTERS: readonly EncounterEntry[] = [
     create: (run) => createGravityRange(GRAVITY_RANGE_SEED, { run }),
   },
   CHAIN_LINK_ENTRY,
+  INVERSE_WELLS_ENTRY,
 ];
 
 /** The entry for `id`, or the Gravity range when `id` is absent or unknown. */

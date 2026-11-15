@@ -22,6 +22,7 @@ import type {
   AttemptOutcome,
   AttemptOverlay,
   AttemptRecord,
+  BelievedShip,
   BelievedWorld,
   Chart,
   Command,
@@ -46,6 +47,7 @@ import { buildChart } from './belief/chart.ts';
 import { earlierCoverage, type CoverageReplayOptions } from './belief/coverage.ts';
 import type {
   AttitudeMode,
+  FrameBudget,
   GameControls,
   Phase,
   PlanDraft,
@@ -76,8 +78,16 @@ import {
   type TickResult,
 } from './truth-step.ts';
 import { buildWindowView } from './window.ts';
-import { powerAlerts, type PowerAlert } from './belief/power.ts';
-import { evaluatePower, initialPowerProgress, type PowerProgress } from './power.ts';
+import {
+  bodyWeights,
+  departureProgress,
+  initialDepartureTrack,
+  recordVerdict,
+  trackDeparture,
+  type DepartureProgress,
+  type DepartureTrack,
+} from './belief/departure.ts';
+import { criticalFault, powerAlerts, type PowerAlert } from './belief/power.ts';
 
 export interface SessionOptions {
   readonly model: ModelPort;
@@ -90,6 +100,8 @@ export interface SessionOptions {
   readonly clock?: () => number;
   /** Longest time `advance` may spend stepping in one call, ms. Default 10. */
   readonly frameBudget?: number;
+  /** The same while coasting (A20), ms. Default: `frameBudget`. Settable with `setFrameBudget`. */
+  readonly coastingBudget?: number;
 }
 
 export interface GameSession extends GameControls {
@@ -148,7 +160,12 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
   const dt = stepper.dt;
   const now = options.now ?? (() => new Date().toISOString());
   const clock = options.clock ?? (() => performance.now());
-  const frameBudget = options.frameBudget ?? 10;
+  const clampBudget = (ms: number): number => Math.min(1000, Math.max(1, ms));
+  let budget: FrameBudget = {
+    ms: clampBudget(options.frameBudget ?? 10),
+    coastingMs: clampBudget(options.coastingBudget ?? options.frameBudget ?? 10),
+    coastingFrom: 300,
+  };
   const telemetry = createTelemetryFilter(play.telemetryDeadband, play.telemetryKeepalive);
   const trailEvery = Math.max(1, Math.round(play.trailInterval / dt));
 
@@ -165,10 +182,13 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
   let committing = 0;
   /** What the attitude controller was last told, from executed commands. */
   let attitudeMode: AttitudeMode = 'free';
-  /** TRUTH: how long life support has gone without power (A18 (5)). */
-  let power: PowerProgress = initialPowerProgress;
-  /** What the gauges warn about now, and when they were last read. */
+  /** What the gauges and the ship's fault reports warn about now (belief only). */
   let alerts: readonly PowerAlert[] = [];
+  /** When the ship first reported a critical function short of power, and which, while it is. */
+  let shortSince: number | undefined;
+  let shortReported: string[] = [];
+  /** The believed departure account (S20): gauged Δv, closest approaches, the ship's verdicts. */
+  let departureTrack: DepartureTrack = initialDepartureTrack;
   const checkEvery = Math.max(1, Math.round(setup.play.power.checkEvery / stepper.dt));
   let outcome: AttemptOutcome = { kind: 'in-progress' };
   let queue: Scheduled[] = [];
@@ -192,6 +212,10 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
 
   const time = (): number => tick * dt;
   const running = (): boolean => outcome.kind === 'in-progress';
+  /** A20: high warp and nobody flying by hand. */
+  const coasting = (): boolean =>
+    running() && !paused && warp >= budget.coastingFrom && sameControls(flown, HANDS_ON_NEUTRAL);
+  const sliceNow = (): number => (coasting() ? budget.coastingMs : budget.ms);
 
   /**
    * Which thrusters a hands-on input fires, as designed: the ship's own control law and jet
@@ -261,8 +285,10 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
     planId = undefined;
     flown = HANDS_ON_NEUTRAL;
     attitudeMode = 'free';
-    power = initialPowerProgress;
     alerts = [];
+    shortSince = undefined;
+    shortReported = [];
+    departureTrack = initialDepartureTrack;
     commanded = initialCommandedState;
     drawn = undefined;
     trail = [];
@@ -341,23 +367,6 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
     last = result;
     tick += 1;
 
-    // Running out of power (A18 (5)): judged on truth after the tick, like a collision.
-    const lostEvents: ShipEvent[] = [];
-    if (!truth.lost) {
-      const judged = evaluatePower(
-        power,
-        truth.sim.world.ship.systems,
-        definition.ship,
-        dt,
-        play.power.lossGrace,
-      );
-      power = judged.progress;
-      if (judged.lost) {
-        truth = { ...truth, lost: 'power' };
-        lostEvents.push({ kind: 'ship-lost', t: time(), cause: 'power' });
-      }
-    }
-
     for (const done of result.executed) {
       if (done.status === 'rejected') continue;
       commanded = applyCommanded(commanded, done.t, done.command);
@@ -366,30 +375,31 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
 
     const measurements = telemetry.filter(result.measurements);
     const executed = refused.length > 0 ? [...result.executed, ...refused] : result.executed;
-    const events =
-      refusals.length > 0 || lostEvents.length > 0
-        ? [...refusals, ...result.events, ...lostEvents]
-        : result.events;
+    const events = refusals.length > 0 ? [...refusals, ...result.events] : result.events;
     if (executed.length > 0 || measurements.length > 0 || events.length > 0)
       record({ attemptId, t, executed, measurements, events });
 
     if (tick % trailEvery === 0)
       trail.push({ t: time(), position: model.believedWorld(time()).ship.position });
 
-    // The gauges' cautions (belief only). A new one, or one that worsened, drops warp to 1×
+    // The power alerts (belief only), read every `checkEvery` and at once when the ship reports
+    // a critical function short of power. A new alert, or one that worsened, drops warp to 1×
     // and ends the frame's run of ticks, so the player meets it in real time (A12).
-    if (tick % checkEvery === 0) {
-      const now = powerAlerts(
-        model.believedWorld(time()).ship,
-        definition.ship,
-        play.power.cautionLead,
-      );
-      const before = new Set(alerts.map((a) => `${a.id}:${a.level}`));
-      if (now.some((a) => !before.has(`${a.id}:${a.level}`)) && warp > 1) {
-        warp = 1;
-        debt = Math.min(debt, dt);
-      }
-      alerts = now;
+    let fault: number | undefined;
+    for (const e of result.events) {
+      const group = criticalFault(e, definition.ship);
+      if (group === undefined) continue;
+      fault ??= e.t;
+      if (!shortReported.includes(group)) shortReported.push(group);
+    }
+    for (const e of result.events)
+      if (e.kind === 'objective')
+        departureTrack = recordVerdict(departureTrack, e.objective, e.status);
+    if (fault !== undefined || tick % checkEvery === 0) {
+      const believed = model.believedWorld(time());
+      updateAlerts(believed.ship, fault);
+      if (tick % checkEvery === 0)
+        departureTrack = trackDeparture(departureTrack, believed, definition.ship);
     }
 
     if (truth.lost) {
@@ -398,6 +408,68 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
     } else if (truth.objectives.completed) {
       end({ kind: 'completed', t: time(), objective: truth.objectives.completed });
     }
+  }
+
+  /**
+   * Read the gauges. A fault report starts the critical-service warning at once, before the
+   * gauges' next sample shows it (they are sampled at the recorder's rate); the gauges end it,
+   * once a sample newer than the report shows every critical function served.
+   */
+  function updateAlerts(ship: BelievedShip, fault: number | undefined): void {
+    const now = powerAlerts(ship, definition.ship, play.power.cautionLead);
+    let critical = now.find((a) => a.id === 'critical-service');
+    if (fault !== undefined) shortSince ??= fault;
+    if (!critical && shortSince !== undefined) {
+      // Not yet in the gauges: keep the warning until they have sampled since the report.
+      const sampled = Object.values(ship.telemetry).reduce(
+        (latest, r) => Math.max(latest, r.t),
+        -1,
+      );
+      if (sampled <= shortSince) {
+        const previous = alerts.find((a) => a.id === 'critical-service');
+        const budget = now[0] ?? { stored: 0, demand: 0, drain: 0 };
+        critical = previous ?? {
+          id: 'critical-service',
+          level: 'warning',
+          functions: [...shortReported],
+          stored: budget.stored,
+          demand: budget.demand,
+          drain: budget.drain,
+        };
+      } else {
+        shortSince = undefined;
+        shortReported = [];
+      }
+    }
+    if (critical) {
+      shortSince ??= time();
+      critical = { ...critical, since: shortSince, deadline: shortSince + play.power.lossGrace };
+    }
+    const next = critical ? [critical, ...now.filter((a) => a.id !== 'critical-service')] : now;
+    const before = new Set(alerts.map((a) => `${a.id}:${a.level}`));
+    if (next.some((a) => !before.has(`${a.id}:${a.level}`)) && warp > 1) {
+      warp = 1;
+      debt = Math.min(debt, dt);
+    }
+    alerts = next;
+  }
+
+  /** Each depart objective as believed now (S20). */
+  function departures(): DepartureProgress[] {
+    const objectives = definition.briefing.objectives.filter((o) => o.depart);
+    if (objectives.length === 0) return [];
+    const world = model.believedWorld(time());
+    const estimates = model.state().parameters;
+    const weights = bodyWeights(
+      world,
+      estimates.length > 0 ? estimates : definition.briefing.priors,
+    );
+    const out: DepartureProgress[] = [];
+    for (const o of objectives) {
+      const p = departureProgress(o, world, weights, departureTrack);
+      if (p) out.push(p);
+    }
+    return out;
   }
 
   function toPlan(draft: PlanDraft, epoch: number): Plan {
@@ -478,9 +550,12 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
         warp,
         warpSteps: play.warpSteps,
         saturated,
+        coasting: coasting(),
+        frameBudget: sliceNow(),
         committing: committing > 0,
         attitude: attitudeMode,
         alerts,
+        departure: departures(),
         outcome,
         ...(planId ? { planId } : {}),
         pending: queue.filter((item) => item.source === 'plan').length,
@@ -535,13 +610,16 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
       saturated = false;
       if (paused || !running()) return 0;
       debt += Math.max(0, realSeconds) * warp;
+      // The slice is chosen once per frame: nothing within it can start hands-on flying, and an
+      // alert that drops warp ends the frame's run of ticks anyway.
+      const slice = sliceNow();
       const started = clock();
       let ran = 0;
       while (debt >= dt && running() && !paused) {
         tickOnce();
         debt -= dt;
         ran += 1;
-        if (ran % 8 === 0 && clock() - started > frameBudget) {
+        if (ran % 8 === 0 && clock() - started > slice) {
           // Out of frame time: drop the backlog instead of spiralling.
           saturated = debt >= dt;
           debt = Math.min(debt, dt);
@@ -549,6 +627,19 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
         }
       }
       return ran;
+    },
+
+    setFrameBudget(change) {
+      budget = {
+        ms: change.ms === undefined ? budget.ms : clampBudget(change.ms),
+        coastingMs:
+          change.coastingMs === undefined ? budget.coastingMs : clampBudget(change.coastingMs),
+        coastingFrom:
+          change.coastingFrom === undefined
+            ? budget.coastingFrom
+            : Math.max(1, change.coastingFrom),
+      };
+      return budget;
     },
 
     stepTicks(n) {
