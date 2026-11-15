@@ -82,6 +82,8 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 
 | R21 | 2C → integrator | Forecast contract: `presentBody`, `presentAge`, `stale` and the bodies' share of the envelope | **Done** (this commit): optional fields on `ForecastDetail` and `ForecastSigmaBySource` | 2D can show them |
 
+| R22 | 3C → 2C, 2F | Versioning for the lattice: chain-link save format 2 for the twenty-fence world; old attempts keep their original archive and frame; new channels `lattice.angular-fragments.v2` and `lattice.raw-tile.v1` fit the unchanged `Measurement`/`AttemptRecord` shape. 2C versions its reconstruction caches and says whether the archive store needs a migration; 2F confirms the save side | **Open**: integrator approves the shape; awaiting 2C's and 2F's agreement | 3C changed no IndexedDB or shared save schema |
+
 Add new rows at the bottom with the next ID. Never renumber.
 
 ## Owner decisions still open
@@ -96,7 +98,8 @@ Decided: A15 (S11's queue), A16 (the lattice), A17 (the ending) and A18 (the Gra
 
 | Commit | What |
 |---|---|
-| (this commit) | Forecast contract fields for 2C (R21) |
+| (this commit) | H02 rewritten for A17; R22 |
+| `00b3b9f` | Forecast contract fields for 2C (R21) |
 | `4bf5359` | 2C on the 3D model |
 | `6d11f4d` | A19 (4); ledger R1, R15, R19, R20 |
 | `b3e8406` | A20: faster coasting; ledger |
