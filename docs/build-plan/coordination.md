@@ -4,7 +4,7 @@ The live state of the build between threads: who is running, who holds which sha
 
 **Integrator, after a compaction:** read this file first, then `git log --oneline -15`, then the handoffs of any thread marked running.
 
-**Last updated:** 2026-11-14, A19 after S22 (four of five answered). Unannounced checkpoints sit on 2D, 2C and 3B; merge them when announced.
+**Last updated:** 2026-11-14, A19 complete; R1 blocking on 2F's fields wiring; 3C's scoped contracts exception; R19, R20. Unannounced checkpoints sit on 2D, 2C, 3B and 3C; merge them when announced.
 
 ## Threads
 
@@ -34,12 +34,12 @@ Prompts: Phase 2 in `phase-2/`, Phase 3 in `phase-3.md`, studies in `studies/`. 
 
 | Path | Holder | Until |
 |---|---|---|
-| `src/contracts/` (including `createFieldRegistry`) | Integrator | Always. Threads request changes. |
+| `src/contracts/` (including `createFieldRegistry`) | Integrator | Always. Threads request changes. **Scoped exception (2026-11-14): 3C may add new, additive acquisition and coverage types (R15), changing no existing type; the integrator reviews them at merge.** |
 | `package.json`, Vite/Vitest/TS/ESLint config | Integrator | Always. |
 | `docs/DECISIONS.md`, `docs/build-plan/` | Integrator | Always. |
 | `src/ship/{config,massprops,power,thermal,propulsion}/` | 3A (from 2G, 2026-11-14) | 3A's handoff |
 | `src/game/truth-step.ts` | 2F (from 2G, 2026-11-14) | 2F's handoff. 3B, 3C and S17's subtick acquisition schedule go through 2F |
-| `src/game/` (rest), `src/content/`, `src/app/game.ts` | 2F | 2F's handoff. Encounter subfolders below excepted. |
+| `src/game/` (rest), `src/content/`, `src/app/game.ts` | 2F | 2F's handoff. Encounter subfolders excepted, and 3B and 3C may each add their one registration line in `src/game/encounters.ts` (R1). |
 | `src/model/`, `src/blackbox/` | 2C | 2C's handoff |
 | `src/console/`, `src/view3d/`, `src/theme/`, rest of `src/app/` | 2D | 2D's handoff, then 3F (console and view3d) |
 | `src/sim/fields/wells*`, `src/content/inverse-wells/`, `src/view3d/fields/wells/`, `src/console/encounters/inverse-wells/` | 3B | 3B's handoff |
@@ -53,7 +53,7 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 
 | ID | From → to | What | Status | Notes |
 |---|---|---|---|---|
-| R1 | 3B, 3C → 2F | Loading interface: one line per encounter in `src/game/encounters.ts`, loaded via `?encounter=<id>` with its own save slot; the setup takes `run` and returns an `EncounterSetup` with `fields`; exits use `reach-region`, with an optional speed limit and time window | **Confirmed by 2F**; fields reach the simulation once 2F wires `truth-step.ts`, which it now holds | |
+| R1 | 3B, 3C → 2F | Loading interface: one line per encounter in `src/game/encounters.ts`, loaded via `?encounter=<id>` with its own save slot; the setup takes `run` and returns an `EncounterSetup` with `fields`; exits use `reach-region` | **Confirmed by 2F; 3C has registered `chain-link`. Blocking now: 2F must pass `setup.fields` into `createSimulation`** (main throws "world has fields but no field registry was given" on this route) | Top of 2F's list |
 | R2 | 3E → integrator | `npm run harness` → `node tools/harness/run.mjs` | **Done** `5b94ed2` | |
 | R3 | 2F ↔ 2C | A18 (1): the forecast is computed from the moment of commitment while time keeps running | **Agreed** (both prompted) | Model side is 2C's; game side is 2F's |
 | R4 | 3B, 3C → 2D | Mount points for encounter UI in `src/console/encounters/` and `src/view3d/fields/` | **Open:** 2D told to expect it | |
@@ -70,12 +70,15 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 | R13 | 3B → 2D | The funnels in the window view (A19: wells are visible, with striking visuals). 3B draws them in `src/view3d/fields/wells/`; 2D mounts them in the room's window and FLIGHT | **Open:** to relay | Folds into R4 |
 
 | R14 | S21 → 3C, 3A, 2F | The Gravity range's radiation-cloud crescent uses the lattice's exposure units and damage seam (3C, 3A); 2F places it as content | **Open:** after the owner approves S21 Q1 | |
-| R15 | S17, S21 → integrator | Contract additions: typed acquisition/coverage, field observation and power-loss interfaces; a subtick acquisition schedule in `truth-step.ts`; a save-schema bump | **Open** | Integrator applies to `src/contracts/` when a builder requests them |
+| R15 | 3C → integrator | Typed acquisition and coverage contracts (from `src/ship/sensors/lattice-observations.ts`; 3C's handoff, "A16 update — concrete shared seams"), plus an archive/save schema bump | **Granted to 3C as a scoped exception**: additive types only; 2C (Black Box) and 2F (save) agree the schema bump | Integrator reviews at merge |
 
 | R16 | 3C → integrator | Land 2F's deterministic-clock fix so 3C's full check goes green | **Done** `7b01be8` | |
 | R17 | S20 → 2F, 2C | Expose believed departure/progress, keep command and forecast epochs while time runs, reconcile PLAN's 400 s default with the 480 s turn allowance; make the real-model loop test deterministic; investigate the populated-archive commit wait | **Open**: relay | |
 
 | R18 | Owner → 2F, 2D | Faster coasting on slow machines (A20): at high warp with no hands-on flying, a bigger simulation slice per frame (2F) and fewer frames drawn (2D); results identical | **Agreed** (owner, A20); relay to both | 2F exposes the budget; 2D sets it with its frame cadence |
+
+| R19 | 3B → integrator | S22's forward exit is a disc crossing; `reach-region` takes spheres | **Decided by the integrator:** the prototype uses a destination sphere entirely beyond S22's exit plane; an exact disc waits for playtest evidence | |
+| R20 | 3C → 2F | In `truth-step.ts`: build the environment at every real acquisition state (`createChainLinkEnvironment(setup).at(state)`), not one frozen scene per second; schedule within the 1 s step to the earliest sensor, recorder, dose, trip or failure event, then integrate the rest; keep acquisition time separate from product availability; swept whole-ship admission for physical exits | **Open**: relay | After the fields wiring (R1) and A20 |
 
 Add new rows at the bottom with the next ID. Never renumber.
 
@@ -83,7 +86,6 @@ Add new rows at the bottom with the next ID. Never renumber.
 
 - **Submission:** the summary's opening and the demo format (S12, `docs/studies/s12/`). Taken at the submission switch.
 - **S9:** whether the five-minute target means insight plus a fresh observed forecast (recommended yes); whether to allow a shorter evidence opportunity if the UI fixes miss it (recommended yes). Show the 1–4 view shortcuts: folded into 2D's R1.
-- **S22 Q4:** the precursor's lead time. The owner asked whether 900 s is too long; answered that it's ship time, sized to the ship's ~8-minute turn. Awaiting confirmation. S22's other four are answered (A19).
 - **S10:** keep the four reference pictures out of the release (recommended yes); confirm the live challenge listing and GMAT data eligibility (owner check).
 
 Decided: A15 (S11's queue), A16 (the lattice), A17 (the ending) and A18 (the Gravity range after 3D).
