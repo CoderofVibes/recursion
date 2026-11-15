@@ -263,7 +263,9 @@ describe('depart objective (A6)', () => {
       [9.2e6, 60, 0],
       [9.4e6, 60, 0],
     ]);
-    expect(events).toEqual([{ kind: 'objective', t: 100, objective: 'depart', status: 'missed' }]);
+    expect(events).toEqual([
+      { kind: 'objective', t: 100, objective: 'depart', status: 'missed', reason: 'speed' },
+    ]);
     expect(progress.completed).toBeUndefined();
     expect(progress.missed).toEqual(['depart']);
   });
@@ -275,7 +277,9 @@ describe('depart objective (A6)', () => {
       [9.1e6, 70, 0],
     ]);
     expect(progress.deltaV).toBeCloseTo(16.5, 12);
-    expect(events).toEqual([{ kind: 'objective', t: 300, objective: 'depart', status: 'missed' }]);
+    expect(events).toEqual([
+      { kind: 'objective', t: 300, objective: 'depart', status: 'missed', reason: 'budget' },
+    ]);
     expect(progress.completed).toBeUndefined();
   });
 

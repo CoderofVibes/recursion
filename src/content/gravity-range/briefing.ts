@@ -98,7 +98,12 @@ export const OBJECTIVES: readonly Objective[] = [
     id: 'depart',
     kind: 'depart',
     label: `DEPART ${DEPART.minSpeed} M/S`,
-    depart: { beyond: DEPART.beyond, minSpeed: DEPART.minSpeed },
+    depart: {
+      beyond: DEPART.beyond,
+      minSpeed: DEPART.minSpeed,
+      assist: DEPART.assist,
+      learningFree: true,
+    },
     maxDeltaV: DEPART.maxDeltaV,
   },
 ];

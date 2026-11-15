@@ -10,7 +10,7 @@ import { createStandInModel } from '../../game/belief/standin-model.ts';
 import { createGameSession } from '../../game/session.ts';
 import { createTruthStepper } from '../../game/truth-step.ts';
 import type { Vec3 } from '../../lib/vec3.ts';
-import { binaryAxes, CRESCENT, crescentIntensity } from './clouds.ts';
+import { binaryAxes, cloudWindow, CRESCENT, crescentIntensity } from './clouds.ts';
 import { createGravityRange, LAW } from './index.ts';
 
 const setup = createGravityRange();
@@ -166,4 +166,41 @@ describe('the radiation crescent', () => {
       expect(events.some((e) => e.kind === 'equipment-recovered')).toBe(true);
     },
   );
+
+  it('is seen through the window (R38): glowing patches, directions only, none behind a body', () => {
+    const t0 = performance.now();
+    const [bank] = cloudWindow(w0);
+    const ms = performance.now() - t0;
+    expect(bank?.kind).toBe('cloud-bank');
+    expect(bank!.patches.length).toBeGreaterThan(500);
+    for (const p of bank!.patches) {
+      expect(Math.hypot(p.direction.x, p.direction.y, p.direction.z)).toBeCloseTo(1, 12);
+      expect(p.brightness).toBeGreaterThan(0);
+      expect(p.brightness).toBeLessThanOrEqual(1);
+      expect(p.angularRadius).toBeGreaterThan(0);
+    }
+    // Nearest first: the apparent sizes shrink along the list (one size of patch).
+    const sizes = bank!.patches.map((p) => p.angularRadius);
+    expect(sizes[0]).toBeGreaterThanOrEqual(sizes.at(-1)!);
+    // Light enough to build every frame.
+    expect(ms).toBeLessThan(50);
+    // From the side of Beta away from the bank, Beta hides part of it.
+    const behind = at(w0, 1_500_000, 120);
+    const from = (bodies: TruthWorld['bodies']) =>
+      cloudWindow({
+        ...w0,
+        bodies,
+        ship: { ...w0.ship, kinematics: { ...w0.ship.kinematics, position: behind } },
+      })[0]?.patches.length ?? 0;
+    // The same view with Beta shrunk to a point: nothing hidden.
+    const point = w0.bodies.map((b) => (b.id === 'beta' ? { ...b, radius: 1 } : b));
+    expect(from(w0.bodies)).toBeLessThan(from(point));
+    // Through the session's snapshot.
+    const s = createGameSession(setup, {
+      model: createStandInModel({ referenceRadius: LAW.referenceRadius }),
+      blackBox: createBlackBox(),
+      now: () => 'now',
+    });
+    expect(s.snapshot().window?.fields?.[0]?.kind).toBe('cloud-bank');
+  });
 });

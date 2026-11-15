@@ -32,7 +32,20 @@ export interface Objective {
    * `depart`: leave the encounter, measured as speed relative to its centre of mass once the
    * ship is `beyond` that distance from it in any direction (for example a slingshot exit, A6).
    */
-  readonly depart?: { readonly beyond: Meters; readonly minSpeed: MetersPerSecond };
+  readonly depart?: {
+    readonly beyond: Meters;
+    readonly minSpeed: MetersPerSecond;
+    /**
+     * A real gravity assist must come first (A18 (3)): a visit inside `within` of `body` that
+     * gave the ship at least `minGain` of specific energy from the body's motion, m²/s².
+     */
+    readonly assist?: { readonly body: ObjectId; readonly within: Meters; readonly minGain: number };
+    /**
+     * Burns spent while the ship cannot yet leave the primary's lobe (dives, a low orbit) do
+     * not count against `maxDeltaV` (A18 (3)).
+     */
+    readonly learningFree?: boolean;
+  };
   /** Most propellant the objective allows, as commanded Δv. */
   readonly maxDeltaV?: MetersPerSecond;
 }

@@ -169,7 +169,7 @@ describe('depart after A18 (3)', () => {
     const world = bare({ x: 9_000_001, y: 0, z: 0 }, { x: 51, y: 0, z: 0 });
     const judged = evaluateObjectives(rules, initialObjectiveProgress, world, 0);
     expect(judged.events).toEqual([
-      { kind: 'objective', t: 0, objective: 'depart', status: 'missed' },
+      { kind: 'objective', t: 0, objective: 'depart', status: 'missed', reason: 'assist' },
     ]);
     expect(judged.progress.why?.depart).toBe('assist');
   });

@@ -9,11 +9,13 @@ import type {
   EnvironmentEffects,
   FieldInstanceSpec,
   FieldRegistry,
+  TruthWorld,
 } from '../contracts/truth/index.ts';
 import type { LossCause } from '../contracts/measurements.ts';
 import type { MassProperties } from '../contracts/ship.ts';
 import type { JsonValue } from '../contracts/units.ts';
 import type { Quat } from '../lib/quat.ts';
+import type { WindowField } from '../contracts/view.ts';
 import type { SimState } from '../sim/index.ts';
 import type { Vec3 } from '../lib/vec3.ts';
 import type { BodyId, ObjectiveId, TankId } from '../contracts/ids.ts';
@@ -166,6 +168,12 @@ export interface EncounterSetup {
    * and turned into the world's field specs.
    */
   readonly dynamics?: EncounterDynamics;
+  /**
+   * What the eye sees of the encounter's visible fields through the window (R38: the
+   * radiation clouds, the funnels), from the true world: directions, apparent sizes and
+   * brightness only. Added to `ViewSnapshot.window.fields`.
+   */
+  readonly window?: (world: TruthWorld) => readonly WindowField[];
   /** Structural hazards of the current fields (3B's throats), swept over each tick. */
   readonly hazards?: (fields: readonly FieldInstanceSpec[]) => EncounterHazards;
 }
