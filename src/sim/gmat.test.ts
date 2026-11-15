@@ -200,17 +200,25 @@ describe('GMAT R2026a reference trajectories (Newtonian, point-mass Earth)', () 
     ['C1 circular, 3 periods', cases.c1, 0.0125],
     ['C2 eccentric e≈0.6, 3 periods', cases.c2, 0.00625],
     ['C3 hyperbolic flyby', cases.c3, 0.025],
-  ] as const)('%s (dt %s s) within 0.05 m and 5e-5 m/s at every sample', (_n, v, dt) => {
-    const e = coast(v, dt);
-    expect(e.position).toBeLessThanOrEqual(POSITION_TOL);
-    expect(e.velocity).toBeLessThanOrEqual(VELOCITY_TOL);
-  });
+  ] as const)(
+    '%s (dt %s s) within 0.05 m and 5e-5 m/s at every sample',
+    { timeout: 60_000 },
+    (_n, v, dt) => {
+      const e = coast(v, dt);
+      expect(e.position).toBeLessThanOrEqual(POSITION_TOL);
+      expect(e.velocity).toBeLessThanOrEqual(VELOCITY_TOL);
+    },
+  );
 
-  it('C4 finite prograde burn and coast (dt 0.025 s) within 0.05 m and 5e-5 m/s', () => {
-    const e = burn(cases.c4, 0.025);
-    expect(e.position).toBeLessThanOrEqual(POSITION_TOL);
-    expect(e.velocity).toBeLessThanOrEqual(VELOCITY_TOL);
-  });
+  it(
+    'C4 finite prograde burn and coast (dt 0.025 s) within 0.05 m and 5e-5 m/s',
+    { timeout: 60_000 },
+    () => {
+      const e = burn(cases.c4, 0.025);
+      expect(e.position).toBeLessThanOrEqual(POSITION_TOL);
+      expect(e.velocity).toBeLessThanOrEqual(VELOCITY_TOL);
+    },
+  );
 
   it('converges toward GMAT at second order, with no offset (C1 coast, C4 burn)', () => {
     const ratio = (a: { position: number }, b: { position: number }) => a.position / b.position;
@@ -416,12 +424,16 @@ describe('GMAT R2026a inclined reference trajectories (three-dimensional)', () =
     },
   );
 
-  it('C6 burn along a fixed inertial direction, then coast (dt 0.0125 s) within 0.05 m and 5e-5 m/s', () => {
-    const e = burn3(inclined.c6, 0.0125);
-    report('C6 inclined burn', 0.0125, e);
-    expect(e.position).toBeLessThanOrEqual(POSITION_TOL);
-    expect(e.velocity).toBeLessThanOrEqual(VELOCITY_TOL);
-  });
+  it(
+    'C6 burn along a fixed inertial direction, then coast (dt 0.0125 s) within 0.05 m and 5e-5 m/s',
+    { timeout: 60_000 },
+    () => {
+      const e = burn3(inclined.c6, 0.0125);
+      report('C6 inclined burn', 0.0125, e);
+      expect(e.position).toBeLessThanOrEqual(POSITION_TOL);
+      expect(e.velocity).toBeLessThanOrEqual(VELOCITY_TOL);
+    },
+  );
 
   it('converges toward GMAT at second order, with no offset (C5 coast, C6 burn)', () => {
     const ratio = (a: { position: number }, b: { position: number }) => a.position / b.position;

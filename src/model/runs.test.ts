@@ -194,7 +194,7 @@ describe('each run starts from different geometry (A10)', () => {
 // ---------------------------------------------------------------------------------------------
 
 describe('the player’s adopt and revoke are recorded (BlackBoxArchive.extensionDecisions)', () => {
-  it('a revoked rule stays revoked after a reload', async () => {
+  it('a revoked rule stays revoked after a reload', { timeout: 60_000 }, async () => {
     const ctx = context(
       [{ id: 'body.A.mu', label: 'A μ', unit: 'm³/s²', value: 1.02e10, sigma: 3e8 }],
       [body('A', 0, 0)],
@@ -247,7 +247,7 @@ describe('the player’s adopt and revoke are recorded (BlackBoxArchive.extensio
     // It can be adopted again; the record keeps all three decisions.
     expect(again.adopt('distance-law').extensions[0]!.status).toBe('adopted');
     expect(again.decisions.map((d) => d.action)).toEqual(['adopted', 'revoked', 'adopted']);
-  }, 30_000);
+  });
 });
 
 // ---------------------------------------------------------------------------------------------

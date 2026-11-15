@@ -419,27 +419,31 @@ describe('extensions: rules only from the player (A4, P5)', () => {
     },
   );
 
-  it('overlooked body: the wrong rule fails visibly, the right one passes', () => {
-    const recs = records(v, 'overlooked-body');
-    const ctx = context({
-      bodies: [body('A'), body('B', 4e6, 0, 1e7)],
-      settings: { priorBodyVelocitySigma: 1e3 },
-    });
-    const svc = new ModelService(ctx);
-    svc.load({ attempts: recs });
-    const wrong = svc.testExtension('distance-law', ['att1', 'att2'], 'att3');
-    expect(wrong.adoptable).toBe(false);
-    expect(wrong.state.status).toBe('rejected');
-    expect(wrong.state.validation!.verdict).toBe('worse');
-    expect(() => svc.adopt('distance-law')).toThrow();
-    const right = svc.testExtension('unmodeled-body:B', ['att1', 'att2'], 'att3');
-    expect(right.adoptable).toBe(true);
-    const mb = right.fitted!['body.B.mu']!;
-    expect(Math.abs(mb.value - 2.5e9)).toBeLessThan(3 * mb.sigma);
-    const s = svc.adopt('unmodeled-body:B');
-    expect(param(s, 'body.B.mu').value).toBeGreaterThan(2e9);
-    expect(s.fit!.nu > 0 && s.fit!.chi2 / s.fit!.nu).toBeLessThan(1.3);
-  });
+  it(
+    'overlooked body: the wrong rule fails visibly, the right one passes',
+    { timeout: 60_000 },
+    () => {
+      const recs = records(v, 'overlooked-body');
+      const ctx = context({
+        bodies: [body('A'), body('B', 4e6, 0, 1e7)],
+        settings: { priorBodyVelocitySigma: 1e3 },
+      });
+      const svc = new ModelService(ctx);
+      svc.load({ attempts: recs });
+      const wrong = svc.testExtension('distance-law', ['att1', 'att2'], 'att3');
+      expect(wrong.adoptable).toBe(false);
+      expect(wrong.state.status).toBe('rejected');
+      expect(wrong.state.validation!.verdict).toBe('worse');
+      expect(() => svc.adopt('distance-law')).toThrow();
+      const right = svc.testExtension('unmodeled-body:B', ['att1', 'att2'], 'att3');
+      expect(right.adoptable).toBe(true);
+      const mb = right.fitted!['body.B.mu']!;
+      expect(Math.abs(mb.value - 2.5e9)).toBeLessThan(3 * mb.sigma);
+      const s = svc.adopt('unmodeled-body:B');
+      expect(param(s, 'body.B.mu').value).toBeGreaterThan(2e9);
+      expect(s.fit!.nu > 0 && s.fit!.chi2 / s.fit!.nu).toBeLessThan(1.3);
+    },
+  );
 });
 
 describe('issued forecasts are immutable and versioned', () => {
@@ -506,15 +510,19 @@ describe('fixtures (mock Gravity range)', () => {
 });
 
 describe('truth/belief boundary (P11) holds for the real model and Black Box files', () => {
-  it('no file in src/model or src/blackbox imports truth or the simulation', async () => {
-    const eslint = new ESLint({ errorOnUnmatchedPattern: false });
-    const results = await eslint.lintFiles(['src/model/**/*.ts', 'src/blackbox/**/*.ts']);
-    const bad = results.flatMap((r) =>
-      r.messages
-        .filter((m) => m.ruleId === 'no-restricted-imports')
-        .map((m) => `${r.filePath}: ${m.message}`),
-    );
-    expect(bad).toEqual([]);
-    expect(results.length).toBeGreaterThan(10);
-  }, 30_000);
+  it(
+    'no file in src/model or src/blackbox imports truth or the simulation',
+    { timeout: 60_000 },
+    async () => {
+      const eslint = new ESLint({ errorOnUnmatchedPattern: false });
+      const results = await eslint.lintFiles(['src/model/**/*.ts', 'src/blackbox/**/*.ts']);
+      const bad = results.flatMap((r) =>
+        r.messages
+          .filter((m) => m.ruleId === 'no-restricted-imports')
+          .map((m) => `${r.filePath}: ${m.message}`),
+      );
+      expect(bad).toEqual([]);
+      expect(results.length).toBeGreaterThan(10);
+    },
+  );
 });

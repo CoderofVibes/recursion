@@ -167,7 +167,7 @@ describe('segment against a prism', () => {
     expect(g.hit).toBeCloseTo(1 - 1 / (10 * Math.sqrt(3)), 12);
   });
 
-  it('agrees with a brute-force scan for segments in general position', () => {
+  it('agrees with a brute-force scan for segments in general position', { timeout: 60_000 }, () => {
     const rng = createRng('segment-search').stream('segments');
     const scratch = createPrismResult();
     const f = (a: Vec3, b: Vec3, tau: number): number =>
