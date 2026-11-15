@@ -110,9 +110,8 @@
   font-size: var(--rx-size-small);
 }
 .rx-level__label {
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  /* A name cut short loses its meaning ("CAMERA BEARING …"): wrap to a second line instead. */
+  overflow-wrap: anywhere;
   letter-spacing: var(--rx-tracking-label);
   text-transform: uppercase;
   color: var(--rx-ink-dim);
@@ -446,11 +445,9 @@ button.rx-row:hover {
   color: var(--rx-c);
 }
 .rx-row__name {
-  overflow: hidden;
+  overflow-wrap: anywhere;
   font-weight: var(--rx-weight-strong);
   letter-spacing: var(--rx-tracking-tag);
-  white-space: nowrap;
-  text-overflow: ellipsis;
   text-transform: uppercase;
   color: var(--rx-tone);
 }
