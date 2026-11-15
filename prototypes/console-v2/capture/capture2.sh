@@ -24,7 +24,7 @@ done
 $D click "text=ADOPT" :: wait 9000 :: js "document.querySelector('.cs-foot__note')?.textContent" :: issues
 $X "$S/C.js" "$S/c-model.json"
 echo "=== forecast with the rule ==="
-$D click "text=PLAN" :: wait 500 :: click "text=+ BURN" :: wait 400 :: click ".cs-page select" :: wait 200 :: key ArrowDown :: key Enter \
+$D click "text=PLAN" :: wait 500 :: click "text=+ BURN" :: wait 400 :: click "text=RETROGRADE" :: wait 200 \
    :: fill ".cs-page input[step='0.5']" 16 :: wait 200 :: click "text=PREVIEW" :: wait 9000 :: js "window.__recursion.desk.note" :: issues
 $X "$S/D.js" "$S/d-preview-v3.json"
 echo "=== done ==="

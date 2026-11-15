@@ -849,3 +849,20 @@
 .ci-drag:is([data-status='stale'], [data-status='off']) .ci-drag__value {
   color: var(--rx-ink-dim);
 }
+/* The objective: a target, as the theme marks one (ink), dashed because nothing is there. */
+.ci-chart__region circle {
+  fill: none;
+  stroke: var(--rx-ink);
+  stroke-width: var(--rx-line-rule);
+  stroke-dasharray: var(--rx-dash-connector);
+}
+.ci-chart__region text {
+  fill: var(--rx-ink);
+}
+.ci-chart__pointer path {
+  fill: var(--rx-ink);
+  stroke: none;
+}
+.ci-chart__pointer text {
+  fill: var(--rx-ink);
+}

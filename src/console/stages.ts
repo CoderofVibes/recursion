@@ -237,7 +237,9 @@ export function deskStages(desk: Desk): Stage[] {
       ...(budget.endurance !== undefined ? { endurance: budget.endurance } : {}),
     },
     ...(alert?.id ? { shipAlert: `▲ ${alert.id.replace(/-/g, ' ')}` } : {}),
-    ...(forecastEnded && desk.preview === undefined ? { forecastEnded: true } : {}),
+    ...(forecastEnded && status.phase === 'operate' && desk.preview === undefined
+      ? { forecastEnded: true }
+      : {}),
     draft: desk.draftState(),
     ...(shown && last
       ? {

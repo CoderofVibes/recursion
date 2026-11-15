@@ -24,6 +24,19 @@ export interface ChartBody {
   readonly track?: readonly P2[];
 }
 
+/**
+ * Where an objective is: a region to reach, or the gate a departure must pass (a distance from
+ * the bodies' centre of mass). Drawn as the theme draws a target: a dashed ring in ink.
+ */
+export interface ChartRegion {
+  readonly id: string;
+  readonly name: string;
+  readonly x: number;
+  readonly y: number;
+  readonly radius: number;
+  readonly kind: 'reach' | 'gate';
+}
+
 /** A band of distances around a body: where its pull was measured, or a rule was tested. */
 export interface ChartBand {
   readonly body: string;
@@ -53,6 +66,8 @@ export interface TrajectoryChartProps {
   readonly label: string;
   readonly bodies: readonly ChartBody[];
   readonly bands?: readonly ChartBand[];
+  /** Where the objectives are. Drawn, and held in view only when `fit` names them. */
+  readonly regions?: readonly ChartRegion[];
   /** Small catalogued objects (rocks), as dots where the ship believes they are. */
   readonly rocks?: readonly P2[];
   /** The forecast being read: dotted, with its envelope. */
@@ -90,10 +105,33 @@ const kilometres = (m: number): string =>
     ? `${Math.round(m)} m`
     : `${(m / 1000).toLocaleString('en-US', { maximumFractionDigits: m < 10_000 ? 1 : 0 })} km`;
 
+/**
+ * Where on a chart's edge to point at something outside it: on the line from the chart's middle
+ * to where the thing would be drawn, a margin inside the edge, with the way it points. Null for
+ * something the chart holds.
+ */
+export function edgePointer(
+  px: number,
+  py: number,
+  width: number,
+  height: number,
+  margin = 22,
+): { x: number; y: number; angle: number } | null {
+  if (px >= 0 && px <= width && py >= 0 && py <= height) return null;
+  const dx = px - width / 2;
+  const dy = py - height / 2;
+  const k = Math.min(
+    dx === 0 ? Infinity : (width / 2 - margin) / Math.abs(dx),
+    dy === 0 ? Infinity : (height / 2 - margin) / Math.abs(dy),
+  );
+  return { x: width / 2 + dx * k, y: height / 2 + dy * k, angle: Math.atan2(dy, dx) };
+}
+
 export function TrajectoryChart({
   label,
   bodies,
   bands = [],
+  regions = [],
   rocks = [],
   forecast = [],
   earlier = [],
@@ -205,6 +243,15 @@ export function TrajectoryChart({
             />
           );
         })}
+        {/* The objective: where to get to, or the distance to get beyond. */}
+        {regions.map((r) => (
+          <g key={r.id} className="ci-chart__region" data-kind={r.kind}>
+            <circle cx={sx(r.x)} cy={sy(r.y)} r={Math.max(4, r.radius * scale)} />
+            <text x={sx(r.x)} y={sy(r.y) - Math.max(4, r.radius * scale) - 5} textAnchor="middle">
+              {r.name}
+            </text>
+          </g>
+        ))}
         {bodies.map((b) =>
           b.track && b.track.length > 1 ? (
             <path key={`${b.id}-track`} className="ci-chart__track" d={line(b.track)} />
@@ -313,6 +360,32 @@ export function TrajectoryChart({
           </g>
         ) : null}
       </g>
+
+      {/* A place to reach that lies off the chart: which way, and how far from the ship (or,
+          with no ship drawn, from the chart's middle) to its edge. */}
+      {regions.map((r) => {
+        if (r.kind !== 'reach') return null;
+        const at = edgePointer(sx(r.x), sy(r.y), width, height);
+        if (!at) return null;
+        const from = cursor ?? { x: cx, y: cy };
+        const away = Math.max(0, Math.hypot(r.x - from.x, r.y - from.y) - r.radius);
+        const right = at.x > width / 2;
+        return (
+          <g key={`${r.id}-pointer`} className="ci-chart__pointer">
+            <path
+              transform={`translate(${at.x.toFixed(1)} ${at.y.toFixed(1)}) rotate(${((at.angle * 180) / Math.PI).toFixed(1)})`}
+              d="M9 0L-5 6L-5 -6Z"
+            />
+            <text
+              x={at.x + (right ? -12 : 12)}
+              y={at.y + (at.y > height / 2 ? -10 : 16)}
+              textAnchor={right ? 'end' : 'start'}
+            >
+              {r.name} · {kilometres(away)}
+            </text>
+          </g>
+        );
+      })}
 
       {/* Scale. */}
       <g className="ci-chart__scale">

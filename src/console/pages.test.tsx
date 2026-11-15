@@ -299,6 +299,7 @@ describe('the loop on the console', () => {
       'RETROGRADE',
       'TOWARD',
       'AWAY',
+      'STEER',
       '◂ LEFT',
       'RIGHT ▸',
       '▴ UP',
@@ -322,6 +323,58 @@ describe('the loop on the console', () => {
     expect(tags(html, 'type="number"').map((tag) => /aria-label="([^"]+)"/.exec(tag)?.[1])).toEqual(
       ['Fires in, s', 'Speed change, m/s', 'Throttle, %'],
     );
+  });
+
+  it('steers a burn by a body or by a place the objective says to reach', () => {
+    const snapshot = {
+      ...viewSnapshot,
+      objectives: [
+        {
+          id: 'cross',
+          kind: 'reach-region',
+          label: 'CROSS-TRANSFER',
+          region: { center: { x: 4e8, y: 3e8, z: 1e8 }, radius: 1000 },
+        },
+      ],
+    } as unknown as ViewSnapshot;
+    const { html } = render('plan', { snapshot }, (desk) =>
+      desk.editPlan((e) => ({
+        ...e,
+        burns: [
+          {
+            key: desk.newRowKey(),
+            at: 600,
+            direction: 'steer',
+            target: 'objective:cross',
+            offset: 0,
+            sizing: 'deltaV',
+            amount: 12.5,
+            throttle: 1,
+          },
+        ],
+      })),
+    );
+    expect(html).toMatch(/aria-checked="true"[^>]*>STEER</);
+    expect(html).toContain('turns the path toward it');
+    // What it can be steered by: every body, then every place to reach, the chosen one selected.
+    const select =
+      /<span class="cs-field__label">Steer toward<\/span><select[^>]*>(.*?)<\/select>/.exec(
+        html,
+      )![1]!;
+    const options = [...select.matchAll(/<option value="([^"]+)"( selected="")?>([^<]+)</g)].map(
+      (m) => ({ value: m[1], chosen: m[2] !== undefined, label: m[3] }),
+    );
+    expect(options.map((o) => o.value)).toEqual([
+      ...viewSnapshot.world.bodies.map((b) => b.id),
+      'objective:cross',
+    ]);
+    expect(options.find((o) => o.chosen)).toEqual({
+      value: 'objective:cross',
+      chosen: true,
+      label: 'CROSS-TRANSFER',
+    });
+    // It has a side to steer to, so nothing says otherwise.
+    expect(html).not.toContain('there is no side to steer to');
   });
 
   it('keeps PREVIEW, COMMIT and CUTOFF under the chart, outside the column that scrolls', () => {
@@ -396,6 +449,59 @@ describe('the loop on the console', () => {
     // The questions that cost fits are folded, and still there to ask.
     expect(html).toContain('>CHECK BURNS</button>');
     expect(html).toContain('>FIND UNEXPLAINED PULL</button>');
+  });
+
+  it('reads the plan’s forecast against a place to reach, and points the chart at it (R51)', () => {
+    const end = viewSnapshot.forecasts.at(-1)!.samples.at(-1)!;
+    const objective = (center: { x: number; y: number; z: number }, radius: number) =>
+      ({
+        ...viewSnapshot,
+        objectives: [
+          {
+            id: 'forward',
+            kind: 'reach-region',
+            label: 'FORWARD TRANSIT',
+            region: { center, radius },
+          },
+        ],
+      }) as unknown as ViewSnapshot;
+    // Far off: the forecast says how near it comes, and the chart points the way.
+    const far = render('plan', { snapshot: objective({ x: 4e8, y: 3e8, z: 0 }, 1000) }).html;
+    expect(far).toContain('against the objective');
+    expect(far).toMatch(
+      /forward transit<\/span><span class="cs-line__value">comes within [\d,.]+ km · T\+\d\d:\d\d:\d\d</,
+    );
+    expect(far).toMatch(/class="ci-chart__pointer".*>FORWARD TRANSIT · [\d,.]+ km<\/text>/);
+    // Where the forecast ends inside it, it is said to be reached, as a plain fact.
+    const there = render('plan', {
+      snapshot: objective({ x: end.position.x, y: end.position.y, z: end.position.z ?? 0 }, 5000),
+    }).html;
+    expect(there).toMatch(
+      /forward transit<\/span><span class="cs-line__value">reached T\+\d\d:\d\d:\d\d</,
+    );
+    expect(there).not.toContain('comes within');
+  });
+
+  it('reads a departure where the plan’s forecast ends: how fast, and how far out', () => {
+    const snapshot = {
+      ...viewSnapshot,
+      objectives: [
+        {
+          id: 'depart',
+          kind: 'depart',
+          label: 'DEPART 50 M/S',
+          depart: { beyond: 9_000_000, minSpeed: 50 },
+        },
+      ],
+    } as unknown as ViewSnapshot;
+    const { html } = render('plan', { snapshot });
+    expect(html).toContain('against the objective');
+    expect(html).toMatch(/aria-label="Speed out at its end"[^>]*aria-valuetext="[\d.]+ of 50 m\/s/);
+    expect(html).toMatch(
+      /aria-label="Distance out at its end"[^>]*aria-valuetext="[\d,.]+ km of 9,000 km"/,
+    );
+    // With no objective of either kind, the panel claims nothing about one.
+    expect(render('plan').html).not.toContain('against the objective');
   });
 });
 

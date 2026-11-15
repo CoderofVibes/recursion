@@ -12,7 +12,7 @@ import { goStage } from './ConsoleScreen.tsx';
 import type { Desk } from './desk.ts';
 import { VerdictView, flightChart, leadForecast } from './pages/BlackBoxPage.tsx';
 import { slopeText } from './pages/ModelPage.tsx';
-import { acrossMotion } from './pages/PlanPage.tsx';
+import { STEER_LEAST, acrossMotion, steerToward } from './pages/PlanPage.tsx';
 import { modeFor } from './pages/SystemsPage.tsx';
 import { trackBreaks } from './regionChart.ts';
 import { StrengthPlot, strengthTrend } from './StrengthPlot.tsx';
@@ -69,6 +69,62 @@ describe('a burn across the ship’s motion', () => {
     expect(norm(left)).toBeCloseTo(1, 12);
     expect(left.z).toBeCloseTo(0, 12);
     expect(acrossMotion({ x: 0, y: 0, z: 0 }, 'left')).toBeUndefined();
+  });
+});
+
+describe('steering toward a body or a place to reach', () => {
+  const origin = { x: 0, y: 0, z: 0 };
+
+  it('is across the motion, on the target’s side, in the plane of the motion and the line to it', () => {
+    // Moving along +x; the target is ahead and off to +y: steer along +y.
+    const d = steerToward(origin, { x: 35, y: 0, z: 0 }, { x: 1000, y: 400, z: 0 })!;
+    expect(d.x).toBeCloseTo(0, 12);
+    expect(d.y).toBeCloseTo(1, 12);
+    expect(d.z).toBeCloseTo(0, 12);
+    // Behind and below: still across the motion, on its side.
+    const back = steerToward(origin, { x: 35, y: 0, z: 0 }, { x: -500, y: 0, z: -90 })!;
+    expect(back.x).toBeCloseTo(0, 12);
+    expect(back.z).toBeCloseTo(-1, 12);
+  });
+
+  it('is a unit direction square to the motion, from wherever the ship is', () => {
+    const position = { x: 4e5, y: -2e6, z: 9e5 };
+    const velocity = { x: 17.7, y: 29.3, z: -7.6 };
+    const target = { x: position.x + 1.49e6, y: position.y + 1.3e5, z: position.z + 7.2e5 };
+    const d = steerToward(position, velocity, target)!;
+    expect(norm(d)).toBeCloseTo(1, 12);
+    expect(dot(d, velocity)).toBeCloseTo(0, 9);
+    // On the target's side: the line to it has a positive part along the steer direction.
+    expect(
+      dot(d, { x: target.x - position.x, y: target.y - position.y, z: target.z - position.z }),
+    ).toBeGreaterThan(0);
+  });
+
+  it('gives the Well Garden’s way round: across the arrival motion toward the cross-transfer', () => {
+    // The arrival as the ship believes it (recorded from the build, to three figures): the
+    // motion, and the way to the cross-transfer exit. 2F found the Garden finishable with a
+    // burn along the body axis turned 90° left, which is this direction.
+    const motion = { x: 0.505, y: 0.836, z: -0.216 };
+    const exit = { x: 0.899, y: 0.08, z: 0.431 };
+    const bodyLeft = { x: 0.755, y: -0.307, z: 0.58 };
+    const d = steerToward(origin, motion, exit)!;
+    expect(d.x).toBeCloseTo(bodyLeft.x, 2);
+    expect(d.y).toBeCloseTo(bodyLeft.y, 2);
+    expect(d.z).toBeCloseTo(bodyLeft.z, 2);
+  });
+
+  it('has no side to steer to for a target dead ahead or astern, or a ship not moving', () => {
+    const v = { x: 0, y: 40, z: 0 };
+    expect(steerToward(origin, v, { x: 0, y: 5000, z: 0 })).toBeUndefined();
+    expect(steerToward(origin, v, { x: 0, y: -5000, z: 0 })).toBeUndefined();
+    // Just inside the least angle that counts as a side, and just outside it.
+    const range = 1e6;
+    expect(
+      steerToward(origin, v, { x: 0.9 * STEER_LEAST * range, y: range, z: 0 }),
+    ).toBeUndefined();
+    expect(steerToward(origin, v, { x: 1.2 * STEER_LEAST * range, y: range, z: 0 })).toBeDefined();
+    expect(steerToward(origin, origin, { x: 1, y: 2, z: 3 })).toBeUndefined();
+    expect(steerToward(origin, v, origin)).toBeUndefined();
   });
 });
 

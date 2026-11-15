@@ -885,3 +885,7 @@ svg.cs-plot {
   gap: var(--rx-row-gap);
   min-width: 0;
 }
+.cp-legend [data-key='objective']::before {
+  height: 0;
+  border-top: var(--rx-line-rule) dashed var(--rx-ink);
+}

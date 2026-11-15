@@ -17,7 +17,7 @@ $D open "$BASE" :: wait 2500 :: js "localStorage.setItem('recursion:opening-seen
 dive() { # $1 = delta-v, $2 = tag
   $D click "text=EXPLORATION" :: wait 500 :: click "text=RECORD DESIGN AND SET UP" :: wait 600 \
      :: click "text=PLAN" :: wait 500 :: click "text=+ BURN" :: wait 400 \
-     :: click ".cs-page select" :: wait 200 :: key ArrowDown :: key Enter \
+     :: click "text=RETROGRADE" :: wait 200 \
      :: fill ".cs-page input[step='0.5']" "$1" :: wait 300 :: click "text=COMMIT" :: wait 1000
   $D waitfor "$READY" 240000 :: click "text=ENTER GRAVITY RANGE" :: wait 1200
   node watch.mjs 240 "2000×" "$2" --until 08:20 | tail -2

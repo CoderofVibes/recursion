@@ -19,7 +19,7 @@ $X "$S/helpers.js"
 
 plan() { # $1 = delta-v (retrograde)
   $D click "text=PLAN" :: wait 500 :: click "text=+ BURN" :: wait 400 \
-     :: click ".cs-page select" :: wait 200 :: key ArrowDown :: key Enter \
+     :: click "text=RETROGRADE" :: wait 200 \
      :: fill ".cs-page input[step='0.5']" "$1" :: wait 200
 }
 

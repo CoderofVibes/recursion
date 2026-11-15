@@ -15,11 +15,12 @@ import type {
   Forecast,
   ForecastDraft,
   ModelState,
+  Objective,
 } from '../contracts/index.ts';
-import { validatedSpans } from './data.ts';
+import { believedCentre, validatedSpans } from './data.ts';
 import { CHART_UP, onPlane } from './instruments/chartMath.ts';
 import type { ChartPlane, P2, P3 } from './instruments/chartMath.ts';
-import type { ChartBand, ChartBody } from './instruments/TrajectoryChart.tsx';
+import type { ChartBand, ChartBody, ChartRegion } from './instruments/TrajectoryChart.tsx';
 
 type V = { readonly x: number; readonly y: number; readonly z?: number };
 const p3 = (v: V): P3 => [v.x, v.y, v.z ?? 0];
@@ -63,6 +64,72 @@ export function evidenceBands(model: Pick<ModelState, 'support' | 'extensions'>)
   for (const [body, spans] of validatedSpans(model as ModelState))
     for (const s of spans) bands.push({ body, rMin: s.rMin, rMax: s.rMax, kind: 'validated' });
   return bands;
+}
+
+/**
+ * Where the objectives are, for the chart: a region to reach where it is; a departure's gate as
+ * the distance to pass, about the bodies' centre of mass as the ship believes it (left out
+ * until the model holds a GM for every body, when that centre cannot be placed).
+ */
+export function objectiveRegions(
+  objectives: readonly Objective[],
+  bodies: readonly Pick<BelievedBody, 'id' | 'position' | 'velocity'>[],
+  model: Pick<ModelState, 'parameters'>,
+  plane: ChartPlane = CHART_UP,
+): ChartRegion[] {
+  const out: ChartRegion[] = [];
+  for (const o of objectives) {
+    if (o.kind === 'reach-region' && o.region) {
+      const [x, y] = onPlane(plane, p3(o.region.center));
+      out.push({ id: o.id, name: o.label, x, y, radius: o.region.radius, kind: 'reach' });
+    } else if (o.depart) {
+      const frame = believedCentre(bodies, model);
+      if (!frame) continue;
+      const [x, y] = onPlane(plane, p3(frame.centre));
+      out.push({ id: o.id, name: o.label, x, y, radius: o.depart.beyond, kind: 'gate' });
+    }
+  }
+  return out;
+}
+
+/**
+ * Points that hold a region in view: each body whole, each place to reach whole, and whatever
+ * else is given (paths, rocks). A departure's gate is not among them: it lies far outside what
+ * is flown, and would shrink the flight to a dot.
+ */
+export function wholeFit(
+  bodies: readonly Pick<ChartBody, 'x' | 'y' | 'radius'>[],
+  regions: readonly ChartRegion[],
+  ...more: readonly (readonly P2[])[]
+): P2[] {
+  const out: P2[] = [];
+  for (const c of [...bodies, ...regions.filter((r) => r.kind === 'reach')])
+    out.push([c.x - c.radius, c.y - c.radius], [c.x + c.radius, c.y + c.radius]);
+  for (const list of more) out.push(...list);
+  return out;
+}
+
+/**
+ * How near a forecast comes to a region to reach: the moment it first enters it, or failing
+ * that the moment it is nearest, with the distance from the region's edge then (negative
+ * inside). Undefined for a forecast with no samples.
+ */
+export function forecastReach(
+  forecast: { readonly samples: readonly { readonly t: number; readonly position: V }[] },
+  region: { readonly center: V; readonly radius: number },
+): { t: number; edge: number; reached: boolean } | undefined {
+  let best: { t: number; edge: number } | undefined;
+  for (const s of forecast.samples) {
+    const edge =
+      Math.hypot(
+        s.position.x - region.center.x,
+        s.position.y - region.center.y,
+        (s.position.z ?? 0) - (region.center.z ?? 0),
+      ) - region.radius;
+    if (edge <= 0) return { t: s.t, edge, reached: true };
+    if (!best || edge < best.edge) best = { t: s.t, edge };
+  }
+  return best ? { ...best, reached: false } : undefined;
 }
 
 /** One measured fix: where the ship measured itself to be relative to a body, at a time. */

@@ -23,7 +23,14 @@ import { DragBar } from '../instruments/DragBar.tsx';
 import { TrajectoryChart } from '../instruments/TrajectoryChart.tsx';
 import { APPROACH, EVIDENCE } from '../mission.ts';
 import type { Approach, EvidenceGoal } from '../mission.ts';
-import { chartBodies, chartPath, chartRocks, evidenceBands } from '../regionChart.ts';
+import {
+  chartBodies,
+  chartPath,
+  chartRocks,
+  evidenceBands,
+  objectiveRegions,
+  wholeFit,
+} from '../regionChart.ts';
 import { RegionsPanel } from '../regions.tsx';
 
 export function ExplorationPage({ desk }: { readonly desk: Desk }) {
@@ -50,6 +57,11 @@ export function ExplorationPage({ desk }: { readonly desk: Desk }) {
   );
   const [x, y] = onPlane(CHART_UP, [ship.position.x, ship.position.y, ship.position.z ?? 0]);
   const [vx, vy] = onPlane(CHART_UP, [ship.velocity.x, ship.velocity.y, ship.velocity.z ?? 0]);
+  // Where the objective is, on the chart: a place to reach is held in view with the bodies.
+  const drawn = chartBodies(bodies);
+  const regions = objectiveRegions(snapshot.objectives, bodies, model);
+  const flown = chartPath(snapshot.trail);
+  const rocks = chartRocks(asteroids);
   const archive = desk.archive();
   const here = archive.attempts.filter((a) => a.encounterId === game.briefing.id);
   const finished = here.filter((a) => a.outcome.kind !== 'in-progress');
@@ -70,13 +82,23 @@ export function ExplorationPage({ desk }: { readonly desk: Desk }) {
           <span data-key="forecast">forecast</span>
           <span data-key="measured">pull measured here</span>
           <span data-key="validated">rule tested here</span>
+          {regions.length ? <span data-key="objective">objective</span> : null}
         </p>
         <TrajectoryChart
           label={`${game.briefing.name}: the region as the ship holds it`}
-          bodies={chartBodies(bodies)}
-          rocks={chartRocks(asteroids)}
+          bodies={drawn}
+          rocks={rocks}
           bands={evidenceBands(model)}
-          trail={chartPath(snapshot.trail)}
+          regions={regions}
+          trail={flown}
+          fit={wholeFit(
+            drawn,
+            regions,
+            flown,
+            rocks,
+            reading ? reading.path.map((p): [number, number] => [p.x, p.y]) : [],
+            [[x, y]],
+          )}
           {...(reading ? { forecast: reading.path } : {})}
           cursor={{
             x,

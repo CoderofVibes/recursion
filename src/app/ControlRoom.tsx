@@ -97,7 +97,11 @@ export function ControlRoom({ game, modelError, erase }: ControlRoomProps) {
       seen.current.route = active?.closest<HTMLElement>('.cr-route')?.dataset.pad ?? null;
     if (ui.mode === 'console') {
       if (ui.consoleUp)
-        document.querySelector<HTMLElement>('.cs-tab[aria-current="page"]')?.focus();
+        // The stage in hand on the loop's rail (on CREDITS no stage is: the page itself).
+        (
+          document.querySelector<HTMLElement>('.ci-rail__stage[aria-current="step"]') ??
+          document.querySelector<HTMLElement>('.cs-page')
+        )?.focus();
       return;
     }
     if (was.loss !== null) {

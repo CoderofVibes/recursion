@@ -32,7 +32,8 @@ import type { PlanStep, TurnReadiness } from '../../game/belief/maneuver.ts';
 import { LevelBar, ModeChips, Panel, Readout, ReadoutGrid } from '../../theme/components/index.ts';
 import { holdFromNose } from '../../view3d/adapter.ts';
 import { Actions, Button, Caption, Line, NumberField, SelectField } from '../controls.tsx';
-import { burnDirection, spendable } from '../data.ts';
+import { burnDirection, departForecast, spendable } from '../data.ts';
+import { OBJECTIVE_TARGET } from '../desk.ts';
 import type {
   BurnDirection,
   BurnRow,
@@ -52,7 +53,13 @@ import { StepBar } from '../instruments/StepBar.tsx';
 import { TrajectoryChart } from '../instruments/TrajectoryChart.tsx';
 import type { ChartMark } from '../instruments/TrajectoryChart.tsx';
 import { UncertaintyPanel } from '../instruments/UncertaintyPanel.tsx';
-import { chartPath, evidenceBands } from '../regionChart.ts';
+import {
+  chartPath,
+  evidenceBands,
+  forecastReach,
+  objectiveRegions,
+  wholeFit,
+} from '../regionChart.ts';
 import { followRange } from '../Rehearsal.tsx';
 
 const DIRECTIONS: readonly { value: BurnDirection; label: string }[] = [
@@ -60,6 +67,7 @@ const DIRECTIONS: readonly { value: BurnDirection; label: string }[] = [
   { value: 'retrograde', label: 'RETROGRADE' },
   { value: 'toward', label: 'TOWARD' },
   { value: 'away', label: 'AWAY' },
+  { value: 'steer', label: 'STEER' },
   { value: 'left', label: '◂ LEFT' },
   { value: 'right', label: 'RIGHT ▸' },
   { value: 'up', label: '▴ UP' },
@@ -71,8 +79,10 @@ const DIRECTIONS: readonly { value: BurnDirection; label: string }[] = [
 const DIRECTION_NOTE: Readonly<Record<BurnDirection, string>> = {
   prograde: 'along the ship’s motion: faster',
   retrograde: 'against the ship’s motion: slower',
-  toward: 'at a body',
-  away: 'directly away from a body',
+  toward: 'straight at a body or a place to reach',
+  away: 'directly away from a body or a place to reach',
+  steer:
+    'across the ship’s motion as it is now, on the side of a body or a place to reach: turns the path toward it',
   left: 'across the ship’s motion as it is now: to its left, in the plane of the chart',
   right: 'across the ship’s motion as it is now: to its right, in the plane of the chart',
   up: 'across the ship’s motion as it is now: up, out of the plane of the chart',
@@ -129,6 +139,39 @@ export function acrossMotion(
   return side === 'up' ? { x: ux, y: uy, z: uz } : { x: -ux, y: -uy, z: -uz };
 }
 
+/** The least angle off the line of motion (as its sine) that counts as a side: about 1°. */
+export const STEER_LEAST = 0.02;
+
+/**
+ * Steering: the unit direction across the ship's motion on the side of a target, in the plane
+ * of the motion and the line to it. A burn along it turns the path toward the target and, to
+ * first order, leaves the speed as it is. Undefined when the ship has no motion to be across,
+ * or the target is dead ahead or dead astern (there is then no side to steer to).
+ */
+export function steerToward(
+  position: { readonly x: number; readonly y: number; readonly z?: number },
+  velocity: { readonly x: number; readonly y: number; readonly z?: number },
+  target: { readonly x: number; readonly y: number; readonly z?: number },
+): { x: number; y: number; z: number } | undefined {
+  const v = { x: velocity.x, y: velocity.y, z: velocity.z ?? 0 };
+  const speed = Math.hypot(v.x, v.y, v.z);
+  const to = {
+    x: target.x - position.x,
+    y: target.y - position.y,
+    z: (target.z ?? 0) - (position.z ?? 0),
+  };
+  const range = Math.hypot(to.x, to.y, to.z);
+  if (!(speed > 0) || !(range > 0)) return undefined;
+  // The line to the target, less its part along the motion.
+  const along = (to.x * v.x + to.y * v.y + to.z * v.z) / (speed * speed);
+  const across = { x: to.x - along * v.x, y: to.y - along * v.y, z: to.z - along * v.z };
+  const n = Math.hypot(across.x, across.y, across.z);
+  // Within about a degree of the line of motion there is no side to speak of: what little
+  // there is would be the estimate's noise, not a direction.
+  if (n < STEER_LEAST * range) return undefined;
+  return { x: across.x / n, y: across.y / n, z: across.z / n };
+}
+
 /** A burn's turn: how long it needs, and whether the plan leaves it that long. */
 export function TurnLine({ readiness }: { readonly readiness: TurnReadiness | undefined }) {
   if (!readiness) return null;
@@ -180,14 +223,53 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
     `[data-row="${key}"] :is(input, select, [role="slider"]):not(:disabled)`;
   const edit = (change: (e: PlanEdit) => PlanEdit): void => desk.editPlan(change);
 
+  // What a burn can be aimed by: the bodies, and the places the objectives say to reach.
+  const places = snapshot.objectives.flatMap((o) =>
+    o.kind === 'reach-region' && o.region
+      ? [{ value: `${OBJECTIVE_TARGET}${o.id}`, label: o.label.toUpperCase(), at: o.region.center }]
+      : [],
+  );
+  /** Where a place to reach is; undefined for a body (the ship points at those itself). */
+  const placeOf = (target: string) => places.find((p) => p.value === target)?.at;
+  const whereIs = (target: string) =>
+    placeOf(target) ?? bodies.find((body) => body.id === target)?.position;
+  const steerDirection = (target: string) => {
+    const where = whereIs(target);
+    return where ? steerToward(ship.position, ship.velocity, where) : undefined;
+  };
   const attitudeOf = (b: BurnRow): AttitudeTarget => {
     switch (b.direction) {
       case 'prograde':
       case 'retrograde':
         return { reference: b.direction };
       case 'toward':
-      case 'away':
-        return { reference: b.direction, target: b.target };
+      case 'away': {
+        // A body is the ship's own to point at; a place to reach is a direction, as believed now.
+        const place = placeOf(b.target);
+        if (!place) return { reference: b.direction, target: b.target };
+        const sign = b.direction === 'toward' ? 1 : -1;
+        const to = {
+          x: place.x - ship.position.x,
+          y: place.y - ship.position.y,
+          z: (place.z ?? 0) - (ship.position.z ?? 0),
+        };
+        const range = Math.hypot(to.x, to.y, to.z);
+        return range > 0
+          ? {
+              reference: 'direction',
+              direction: {
+                x: (sign * to.x) / range,
+                y: (sign * to.y) / range,
+                z: (sign * to.z) / range,
+              },
+            }
+          : { reference: 'prograde' };
+      }
+      case 'steer': {
+        // Across the motion on the target's side; with no side to steer to, along the motion.
+        const direction = steerDirection(b.target);
+        return direction ? { reference: 'direction', direction } : { reference: 'prograde' };
+      }
       case 'left':
       case 'right':
       case 'up':
@@ -313,7 +395,19 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
     ...bodies.map((b) => ({ value: b.id, label: b.name.toUpperCase() })),
     ...snapshot.world.asteroids.map((a) => ({ value: a.id, label: a.id.toUpperCase() })),
   ];
-  const bodyOptions = bodies.map((b) => ({ value: b.id, label: b.name.toUpperCase() }));
+  const aimOptions = [
+    ...bodies.map((b) => ({ value: b.id, label: b.name.toUpperCase() })),
+    ...places.map((p) => ({ value: p.value, label: p.label })),
+  ];
+  /**
+   * The target a burn steers by when STEER is chosen: the one it has, if there is a side to
+   * steer to; else the first place to reach, or body, that has one (a target dead ahead has
+   * none).
+   */
+  const steerTarget = (current: string): string =>
+    steerDirection(current)
+      ? current
+      : ([...places, ...aimOptions].find((o) => steerDirection(o.value))?.value ?? current);
 
   // The forecast on show: the draft's, or failing that the one last issued.
   const shown = desk.preview ?? snapshot.forecasts.at(-1);
@@ -359,6 +453,9 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
           Math.hypot(b.x - here.x, b.y - here.y) < Math.hypot(a.x - here.x, a.y - here.y) ? b : a,
         )
     : undefined;
+  // Where the objective is. The plan's own framing does not stretch to hold it (a place a
+  // thousand kilometres off would shrink the plan to a dot): the chart points to it instead.
+  const regions = objectiveRegions(snapshot.objectives, bodies, model);
   const fit: P2[] | undefined =
     reading && near
       ? [
@@ -367,6 +464,23 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
           [near.x + near.radius * 1.3, near.y + near.radius * 1.3],
         ]
       : undefined;
+  const whole: P2[] | undefined = reading
+    ? wholeFit(
+        reading.bodiesAt(t),
+        regions,
+        reading.path.map((p): P2 => [p.x, p.y]),
+        chartPath(snapshot.trail),
+      )
+    : undefined;
+  // The forecast against the objective: how near it comes to a place to reach, and how a
+  // departure stands where the forecast ends.
+  const reaches = shown
+    ? snapshot.objectives.flatMap((o) => {
+        const reach = o.kind === 'reach-region' && o.region ? forecastReach(shown, o.region) : null;
+        return reach ? [{ id: o.id, label: o.label, ...reach }] : [];
+      })
+    : [];
+  const leaving = shown ? departForecast(shown, snapshot, model) : null;
 
   const last = shown?.samples.at(-1);
   const extrapolating = shown ? shown.samples.filter((s) => s.extrapolating).length : 0;
@@ -476,16 +590,27 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
                 label="Direction"
                 options={DIRECTIONS}
                 value={b.direction}
-                onChange={(v) => patchBurn(b.key, { direction: v as BurnDirection })}
+                onChange={(v) =>
+                  patchBurn(b.key, {
+                    direction: v as BurnDirection,
+                    ...(v === 'steer' ? { target: steerTarget(b.target) } : {}),
+                  })
+                }
               />
               <p className="cs-note">{DIRECTION_NOTE[b.direction]}</p>
-              {b.direction === 'toward' || b.direction === 'away' ? (
+              {b.direction === 'toward' || b.direction === 'away' || b.direction === 'steer' ? (
                 <SelectField
-                  label="Body"
+                  label={b.direction === 'steer' ? 'Steer toward' : 'Target'}
                   value={b.target}
-                  options={bodyOptions}
+                  options={aimOptions}
                   onChange={(v) => patchBurn(b.key, { target: v })}
                 />
+              ) : null}
+              {b.direction === 'steer' && !steerDirection(b.target) ? (
+                <Line label="steer" status="caution">
+                  it is dead ahead or astern: there is no side to steer to, so the burn is along the
+                  motion
+                </Line>
               ) : null}
               {b.direction === 'axis' ? (
                 <NumberField
@@ -688,6 +813,7 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
             <span data-key="beyond">beyond the data</span>
             <span data-key="measured">pull measured</span>
             <span data-key="trail">flown</span>
+            {regions.length ? <span data-key="objective">objective</span> : null}
           </p>
         </div>
         {reading && here ? (
@@ -696,6 +822,7 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
               label={`${game.briefing.name}: the plan as the model forecasts it`}
               bodies={reading.bodiesAt(t)}
               bands={evidenceBands(model)}
+              regions={regions}
               forecast={reading.path}
               {...(earlier ? { earlier } : {})}
               trail={chartPath(snapshot.trail)}
@@ -705,7 +832,9 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
                 ? { follow: followRange(here, radii) || 1 }
                 : framing === 'plan' && fit
                   ? { fit }
-                  : {})}
+                  : whole
+                    ? { fit: whole }
+                    : {})}
               onPick={(time) => desk.setChartT(time)}
             />
             <StepBar
@@ -837,6 +966,47 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
                   {dist(c.distance)} ±{dist(c.sigma)} · T+{clock(c.t)}
                 </Line>
               ))}
+              {reaches.length || leaving ? <Caption>against the objective</Caption> : null}
+              {reaches.map((r) => (
+                <Line
+                  key={r.id}
+                  label={r.label.toLowerCase()}
+                  tone="forecast"
+                  status={r.reached ? 'nominal' : 'caution'}
+                >
+                  {r.reached
+                    ? `reached T+${clock(r.t)}`
+                    : `comes within ${dist(r.edge)} · T+${clock(r.t)}`}
+                </Line>
+              ))}
+              {leaving ? (
+                <>
+                  <LevelBar
+                    label="Speed out at its end"
+                    value={leaving.speed}
+                    max={Math.max(leaving.minSpeed * 2.5, leaving.speed * 1.15)}
+                    text={
+                      `${fixed(leaving.speed, 1)} of ${fixed(leaving.minSpeed, 0)} m/s` +
+                      (leaving.outward <= 0 ? ' · inward' : '')
+                    }
+                    tone="forecast"
+                    status={
+                      leaving.outward <= 0 || leaving.speed < leaving.minSpeed
+                        ? 'caution'
+                        : 'nominal'
+                    }
+                    marks={[{ at: leaving.minSpeed, kind: 'target', label: 'needed' }]}
+                  />
+                  <LevelBar
+                    label="Distance out at its end"
+                    value={leaving.distance}
+                    max={leaving.beyond * 1.1}
+                    text={`${dist(leaving.distance)} of ${dist(leaving.beyond)}`}
+                    tone="forecast"
+                    marks={[{ at: leaving.beyond, kind: 'target', label: 'the gate' }]}
+                  />
+                </>
+              ) : null}
               {detail ? (
                 <details className="cs-details">
                   <summary>what it stands on</summary>

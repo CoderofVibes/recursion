@@ -30,12 +30,25 @@ import { doseRate } from './radiation.ts';
 export type PageId = 'exploration' | 'systems' | 'plan' | 'blackbox' | 'model' | 'credits';
 
 /**
- * A burn's direction: along or against the believed velocity, toward or away from a body, across
- * the ship's motion (to its left or right in the reference plane, or up or down out of it), or
- * from the body axis.
+ * A burn's direction: along or against the believed velocity, toward or away from a body or a
+ * place to reach, across the ship's motion (on the side of such a target, which steers the path
+ * toward it; or to its left or right in the reference plane, or up or down out of it), or from
+ * the body axis.
  */
 export type BurnDirection =
-  'prograde' | 'retrograde' | 'toward' | 'away' | 'left' | 'right' | 'up' | 'down' | 'axis';
+  | 'prograde'
+  | 'retrograde'
+  | 'toward'
+  | 'away'
+  | 'steer'
+  | 'left'
+  | 'right'
+  | 'up'
+  | 'down'
+  | 'axis';
+
+/** A burn's target that is a place to reach, not a body: the objective's id after this. */
+export const OBJECTIVE_TARGET = 'objective:';
 
 /** What the PLAN chart holds in view: the plan's path, the ship as it goes, or the whole region. */
 export type ChartFraming = 'plan' | 'follow' | 'region';
@@ -45,7 +58,7 @@ export interface BurnRow {
   readonly key: number;
   readonly at: number;
   readonly direction: BurnDirection;
-  /** Body for toward/away. */
+  /** What toward, away and steer aim by: a body, or a place to reach (`OBJECTIVE_TARGET` + id). */
   readonly target: string;
   /** For `axis`: degrees to turn the nose to the left of where it points now. */
   readonly offset: number;
