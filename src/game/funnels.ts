@@ -21,6 +21,7 @@
 
 import type { FieldInstanceSpec } from '../contracts/truth/index.ts';
 import type { JsonValue } from '../contracts/units.ts';
+import { createFunnelWindow } from './funnel-window.ts';
 import {
   advanceFunnelLifecycle,
   createFunnelHullHazards,
@@ -30,8 +31,25 @@ import {
   type FunnelLifecycleState,
   type InverseWellsSetup,
 } from '../content/inverse-wells/index.ts';
-import { createWellRegistry } from '../sim/fields/wells.ts';
-import type { EncounterDynamics, EncounterHazards, EncounterSetup } from './encounter.ts';
+import {
+  accumulateFunnelWork,
+  createWellRegistry,
+  createWellSpatialIndex,
+  evaluateFunnel,
+  evaluateWell,
+  FUNNEL_PROFILE,
+  funnelSupportBounds,
+  readWellParameters,
+  WELL_KIND,
+  type WellSpatialIndex,
+} from '../sim/fields/wells.ts';
+import type {
+  EncounterDynamics,
+  EncounterHazards,
+  EncounterLedger,
+  EncounterSetup,
+  LedgerStage,
+} from './encounter.ts';
 
 /** The minimum gap 3B's provider builds its registry with, m. */
 const WELL_GAP = 1;
@@ -111,9 +129,132 @@ export function funnelHazards(specs: readonly FieldInstanceSpec[]): EncounterHaz
   };
 }
 
+/**
+ * The work the wells do on the ship over the attempt (3B's request 4), J: the commanded thrust's
+ * own power (`nominalJ`), what a well's response adds to or takes from it (`fieldJ`), and the
+ * funnels' pull (`pullJ`, mass × velocity · pull), each by 3B's trapezoid over the tick from the
+ * ship's actual state at its start and end (`accumulateFunnelWork`). With them the propellant
+ * the ship expelled (`removedKg`) and the kinetic energy it carried away at the tick's mean
+ * speed (`removedKineticJ`): 3B's note that a variable-mass energy balance needs both. Truth
+ * diagnostics, never recorded or shown; plain JSON in the truth state, so they survive a save.
+ */
+export interface PullWork {
+  readonly nominalJ: number;
+  readonly fieldJ: number;
+  readonly pullJ: number;
+  readonly removedKg: number;
+  readonly removedKineticJ: number;
+}
+
+export const NO_WORK: PullWork = {
+  nominalJ: 0,
+  fieldJ: 0,
+  pullJ: 0,
+  removedKg: 0,
+  removedKineticJ: 0,
+};
+
+interface WellLookup {
+  readonly index: WellSpatialIndex;
+  readonly byId: ReadonlyMap<string, FieldInstanceSpec>;
+}
+
+const lookups = new WeakMap<readonly FieldInstanceSpec[], WellLookup>();
+
+/** A broad-phase index over the specs as they are now, built once per set of specs. */
+function lookupFor(specs: readonly FieldInstanceSpec[]): WellLookup {
+  let found = lookups.get(specs);
+  if (found) return found;
+  const wells = specs.filter((s) => s.kind === WELL_KIND);
+  const byId = new Map(wells.map((s) => [s.id, s]));
+  const index = createWellSpatialIndex(
+    wells.map((spec) => {
+      if (isFunnel(spec)) return { id: spec.id, bounds: funnelSupportBounds(spec) };
+      const p = readWellParameters(spec);
+      const r = p.outerRadius;
+      return {
+        id: spec.id,
+        bounds: {
+          min: { x: p.center.x - r, y: p.center.y - r, z: p.center.z - r },
+          max: { x: p.center.x + r, y: p.center.y + r, z: p.center.z + r },
+        },
+      };
+    }),
+  );
+  found = { index, byId };
+  lookups.set(specs, found);
+  return found;
+}
+
+function isFunnel(spec: FieldInstanceSpec): boolean {
+  const params = spec.params as { readonly profile?: JsonValue } | null;
+  return !!params && typeof params === 'object' && params.profile === FUNNEL_PROFILE;
+}
+
+/** The powers at one end of the tick: the first well whose support holds the ship, as the registry dispatches. */
+function powersAt(
+  specs: readonly FieldInstanceSpec[],
+  stage: LedgerStage,
+): { nominalPower: number; fieldPower: number; pullPower: number } {
+  const { index, byId } = lookupFor(specs);
+  for (const id of index.candidatesAt(stage.position)) {
+    const spec = byId.get(id)!;
+    if (isFunnel(spec)) {
+      const e = evaluateFunnel(
+        spec,
+        stage.force,
+        stage.position,
+        stage.velocity,
+        stage.mass,
+        stage.t,
+      );
+      if (e.weight > 0) return e;
+    } else {
+      const p = readWellParameters(spec);
+      const d = Math.hypot(
+        stage.position.x - p.center.x,
+        stage.position.y - p.center.y,
+        stage.position.z - p.center.z,
+      );
+      if (d <= p.outerRadius)
+        return { ...evaluateWell(spec, stage.force, stage.position, stage.velocity), pullPower: 0 };
+    }
+  }
+  const v = stage.velocity;
+  const f = stage.force;
+  return { nominalPower: v.x * f.x + v.y * f.y + v.z * f.z, fieldPower: 0, pullPower: 0 };
+}
+
+export function funnelLedger(): EncounterLedger {
+  return {
+    initial: NO_WORK as unknown as JsonValue,
+    account(state, specs, start, end, dt) {
+      const work = state as unknown as PullWork;
+      const next = accumulateFunnelWork(work, powersAt(specs, start), powersAt(specs, end), dt);
+      const removed = Math.max(0, start.mass - end.mass);
+      const speed2 =
+        ((start.velocity.x + end.velocity.x) ** 2 +
+          (start.velocity.y + end.velocity.y) ** 2 +
+          (start.velocity.z + end.velocity.z) ** 2) /
+        4;
+      return {
+        ...next,
+        removedKg: work.removedKg + removed,
+        removedKineticJ: work.removedKineticJ + 0.5 * removed * speed2,
+      } as unknown as JsonValue;
+    },
+  };
+}
+
 /** 3B's setup with its lifecycle and throats wired into the truth tick. */
 export function withFunnels(setup: InverseWellsSetup): EncounterSetup {
   const lifecycle = setup.funnelLifecycle;
   if (!lifecycle) return setup;
-  return { ...setup, dynamics: funnelDynamics(lifecycle), hazards: funnelHazards };
+  return {
+    ...setup,
+    dynamics: funnelDynamics(lifecycle),
+    hazards: funnelHazards,
+    ledger: funnelLedger(),
+    window: createFunnelWindow(setup),
+  };
 }

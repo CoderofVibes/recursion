@@ -1,0 +1,969 @@
+[
+  {
+    "run": "vx-art-before",
+    "source": {
+      "commit": "01a0947a5dea1cf7d86db763c60f08810ba8a644",
+      "srcTree": "8253959faceda9c8e0c466b65d9886c7498d8c25",
+      "dataTree": "7c28747036fc8aad8939a932d854458a46fe6fe8",
+      "branch": "p3/vx-visuals",
+      "dirtyInputs": ""
+    },
+    "viewport": [
+      1366,
+      768,
+      1
+    ],
+    "profile": {
+      "cpu": 4,
+      "latency": 40,
+      "downloadThroughput": 1250000,
+      "uploadThroughput": 125000,
+      "connectionType": "wifi"
+    },
+    "seconds": 8,
+    "loads": [
+      {
+        "cache": "cold",
+        "repeat": 1,
+        "readyMs": 3292,
+        "interactionPaintMs": 3433
+      },
+      {
+        "cache": "warm",
+        "repeat": 1,
+        "readyMs": 2412.5,
+        "interactionPaintMs": 2571.2000000029802
+      },
+      {
+        "cache": "cold",
+        "repeat": 2,
+        "readyMs": 3036.9000000059605,
+        "interactionPaintMs": 3561.9000000059605
+      },
+      {
+        "cache": "warm",
+        "repeat": 2,
+        "readyMs": 2899.300000011921,
+        "interactionPaintMs": 3127.5
+      }
+    ],
+    "frames": [
+      {
+        "view": "room",
+        "repeat": 1,
+        "warp": 1,
+        "n": 184,
+        "medianMs": 42.5,
+        "p95Ms": 72.69999999999891,
+        "worstMs": 90.90000000000146,
+        "longTasks": {
+          "n": 70,
+          "median": 57,
+          "p95": 79,
+          "worst": 91,
+          "mean": 59.385714285714286
+        },
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "flight",
+        "repeat": 1,
+        "warp": 1,
+        "n": 94,
+        "medianMs": 78.79999999999927,
+        "p95Ms": 175.79999999999927,
+        "worstMs": 242.5,
+        "longTasks": {
+          "n": 77,
+          "median": 89,
+          "p95": 177,
+          "worst": 237,
+          "mean": 95.31168831168831
+        },
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "room",
+        "repeat": 2,
+        "warp": 1,
+        "n": 170,
+        "medianMs": 48.29999999999927,
+        "p95Ms": 72.79999999999927,
+        "worstMs": 115.19999999999982,
+        "longTasks": {
+          "n": 58,
+          "median": 61,
+          "p95": 91,
+          "worst": 114,
+          "mean": 62.94827586206897
+        },
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "flight",
+        "repeat": 2,
+        "warp": 1,
+        "n": 231,
+        "medianMs": 30.299999999999272,
+        "p95Ms": 66.79999999999927,
+        "worstMs": 102.89999999999964,
+        "longTasks": {
+          "n": 31,
+          "median": 57,
+          "p95": 96,
+          "worst": 105,
+          "mean": 65.45161290322581
+        },
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      }
+    ],
+    "profiles": [
+      {
+        "view": "flight",
+        "p95Ms": 96.89999999999964,
+        "functions": [
+          {
+            "name": "(program)",
+            "ms": 2063.546
+          },
+          {
+            "name": "setProgram",
+            "ms": 282.827
+          },
+          {
+            "name": "(anonymous)",
+            "ms": 166.464
+          },
+          {
+            "name": "bindVertexArray",
+            "ms": 127.106
+          },
+          {
+            "name": "(anonymous)",
+            "ms": 114.91
+          },
+          {
+            "name": "renderBufferDirect",
+            "ms": 109.749
+          },
+          {
+            "name": "massProperties",
+            "ms": 92.573
+          },
+          {
+            "name": "(anonymous)",
+            "ms": 86.836
+          },
+          {
+            "name": "getBindingState",
+            "ms": 85.347
+          },
+          {
+            "name": "(garbage collector)",
+            "ms": 82.511
+          },
+          {
+            "name": "drawElements",
+            "ms": 79.063
+          },
+          {
+            "name": "needsUpdate",
+            "ms": 70.699
+          }
+        ]
+      }
+    ],
+    "bundle": [
+      {
+        "file": "assets/index-BMPbcw1Q.js",
+        "bytes": 1453303,
+        "gzipBytes": 431626,
+        "sha256": "f2f95c56d52395fbfe760f4831b64d093634e6ffa04e5117bd81a51fb5699a1a"
+      },
+      {
+        "file": "assets/index-_KCS86fd.css",
+        "bytes": 36484,
+        "gzipBytes": 5911,
+        "sha256": "6da0b834ac02a0d9131ea04423cc249790f9ae61fca03a4faa9a1c7173568a6a"
+      },
+      {
+        "file": "assets/rpc-CziiK21S.js",
+        "bytes": 773,
+        "gzipBytes": 307,
+        "sha256": "662c2d5c95e6e7a0d287467304ac89b1d4ba3698ac950e55a7f91f904d906302"
+      },
+      {
+        "file": "assets/service-Davf78LN.js",
+        "bytes": 135345,
+        "gzipBytes": 49259,
+        "sha256": "5e3326e3ba1dd9387458ed8a3fec84fdac22750e87433a5fd3283bf439af3f44"
+      },
+      {
+        "file": "assets/worker-BjtGItL1.js",
+        "bytes": 140986,
+        "gzipBytes": 50887,
+        "sha256": "cc100f1a5c4cd2071df10df697637ab0b197f672f5a832da936fc6884c7c0438"
+      },
+      {
+        "file": "favicon.svg",
+        "bytes": 420,
+        "gzipBytes": 277,
+        "sha256": "25068945c916e7d281af774354407e8705dd8a9f6748db28e089fd2314e8e3b4"
+      },
+      {
+        "file": "index.html",
+        "bytes": 510,
+        "gzipBytes": 311,
+        "sha256": "d64712516e0752fd6b5c8fa4f398398e0650344e0e148d27a1eb8be62a9ba10a"
+      },
+      {
+        "file": "LICENSE",
+        "bytes": 11357,
+        "gzipBytes": 3928,
+        "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+      },
+      {
+        "file": "NOTICE",
+        "bytes": 362,
+        "gzipBytes": 262,
+        "sha256": "35279566fbe56e61d55c6d08fedc08879314ac6afda357e9ad68b170839b4970"
+      },
+      {
+        "file": "THIRD-PARTY-NOTICES.txt",
+        "bytes": 7698,
+        "gzipBytes": 1292,
+        "sha256": "ddb9535594cee8eb3ab0a0e49bed657ca195181edd74fc2f2b7353cbf4814b12"
+      }
+    ],
+    "errorCount": 0,
+    "caveats": [
+      "S15 logic with the once-per-browser opening acknowledged by a CDP storage marker. Cold refers to HTTP cache, not the first-ever cinematic.",
+      "Shared development host; no real modest-laptop qualification. No VX builds, tests or other browsers overlapped the timed runs."
+    ]
+  },
+  {
+    "run": "vx-art-after",
+    "source": {
+      "commit": "7f43b090fe8c494a75977cf51f5b11239bfd3766",
+      "srcTree": "7c247c23ab7d9a913f0fe0a5cd9fc7425c9052d4",
+      "dataTree": "7c28747036fc8aad8939a932d854458a46fe6fe8",
+      "branch": "p3/vx-visuals",
+      "dirtyInputs": ""
+    },
+    "viewport": [
+      1366,
+      768,
+      1
+    ],
+    "profile": {
+      "cpu": 4,
+      "latency": 40,
+      "downloadThroughput": 1250000,
+      "uploadThroughput": 125000,
+      "connectionType": "wifi"
+    },
+    "seconds": 8,
+    "loads": [
+      {
+        "cache": "cold",
+        "repeat": 1,
+        "readyMs": 3443.2000000029802,
+        "interactionPaintMs": 3569.7999999970198
+      },
+      {
+        "cache": "warm",
+        "repeat": 1,
+        "readyMs": 1759.4000000059605,
+        "interactionPaintMs": 1885.1000000089407
+      },
+      {
+        "cache": "cold",
+        "repeat": 2,
+        "readyMs": 2130,
+        "interactionPaintMs": 2271.2999999970198
+      },
+      {
+        "cache": "warm",
+        "repeat": 2,
+        "readyMs": 2116.7999999970198,
+        "interactionPaintMs": 2253
+      }
+    ],
+    "frames": [
+      {
+        "view": "room",
+        "repeat": 1,
+        "warp": 1,
+        "n": 364,
+        "medianMs": 18.300000000000182,
+        "p95Ms": 30.400000000000546,
+        "worstMs": 109.20000000000073,
+        "longTasks": {
+          "n": 4,
+          "median": 76,
+          "p95": 110,
+          "worst": 110,
+          "mean": 78.75
+        },
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "mission",
+        "repeat": 1,
+        "warp": 1,
+        "n": 1272,
+        "medianMs": 6.099999999999454,
+        "p95Ms": 6.200000000000728,
+        "worstMs": 24.5,
+        "longTasks": {
+          "n": 0,
+          "median": null,
+          "p95": null,
+          "worst": null
+        },
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "plan",
+        "repeat": 1,
+        "warp": 1,
+        "n": 1310,
+        "medianMs": 6.099999999998545,
+        "p95Ms": 6.200000000000728,
+        "worstMs": 18.299999999999272,
+        "longTasks": {
+          "n": 0,
+          "median": null,
+          "p95": null,
+          "worst": null
+        },
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "model",
+        "repeat": 1,
+        "warp": 1,
+        "n": 1303,
+        "medianMs": 6.099999999999454,
+        "p95Ms": 6.200000000000728,
+        "worstMs": 24.30000000000109,
+        "longTasks": {
+          "n": 0,
+          "median": null,
+          "p95": null,
+          "worst": null
+        },
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "blackbox",
+        "repeat": 1,
+        "warp": 1,
+        "n": 1284,
+        "medianMs": 6.099999999999454,
+        "p95Ms": 6.200000000000728,
+        "worstMs": 30.199999999999818,
+        "longTasks": {
+          "n": 0,
+          "median": null,
+          "p95": null,
+          "worst": null
+        },
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "systems",
+        "repeat": 1,
+        "warp": 1,
+        "n": 1249,
+        "medianMs": 6.099999999999454,
+        "p95Ms": 6.299999999999272,
+        "worstMs": 78.69999999999982,
+        "longTasks": {
+          "n": 1,
+          "median": 76,
+          "p95": 76,
+          "worst": 76,
+          "mean": 76
+        },
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "flight",
+        "repeat": 1,
+        "warp": 1,
+        "n": 505,
+        "medianMs": 18,
+        "p95Ms": 24.299999999999272,
+        "worstMs": 36.399999999999636,
+        "longTasks": {
+          "n": 0,
+          "median": null,
+          "p95": null,
+          "worst": null
+        },
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "map",
+        "repeat": 1,
+        "warp": 1,
+        "n": 591,
+        "medianMs": 12.100000000000364,
+        "p95Ms": 18.300000000000182,
+        "worstMs": 30.399999999999636,
+        "longTasks": {
+          "n": 0,
+          "median": null,
+          "p95": null,
+          "worst": null
+        },
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "ship",
+        "repeat": 1,
+        "warp": 1,
+        "n": 545,
+        "medianMs": 12.200000000000728,
+        "p95Ms": 18.399999999999636,
+        "worstMs": 36.399999999999636,
+        "longTasks": {
+          "n": 0,
+          "median": null,
+          "p95": null,
+          "worst": null
+        },
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "room",
+        "repeat": 2,
+        "warp": 1,
+        "n": 486,
+        "medianMs": 18.100000000000364,
+        "p95Ms": 24.199999999999818,
+        "worstMs": 36.399999999999636,
+        "longTasks": {
+          "n": 0,
+          "median": null,
+          "p95": null,
+          "worst": null
+        },
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "mission",
+        "repeat": 2,
+        "warp": 1,
+        "n": 1301,
+        "medianMs": 6.099999999999454,
+        "p95Ms": 6.200000000000728,
+        "worstMs": 18.199999999999818,
+        "longTasks": {
+          "n": 0,
+          "median": null,
+          "p95": null,
+          "worst": null
+        },
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "plan",
+        "repeat": 2,
+        "warp": 1,
+        "n": 1251,
+        "medianMs": 6.099999999999454,
+        "p95Ms": 6.299999999999272,
+        "worstMs": 54.600000000000364,
+        "longTasks": {
+          "n": 2,
+          "median": 51,
+          "p95": 56,
+          "worst": 56,
+          "mean": 53.5
+        },
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "model",
+        "repeat": 2,
+        "warp": 1,
+        "n": 1265,
+        "medianMs": 6.099999999998545,
+        "p95Ms": 6.200000000000728,
+        "worstMs": 60.79999999999927,
+        "longTasks": {
+          "n": 1,
+          "median": 58,
+          "p95": 58,
+          "worst": 58,
+          "mean": 58
+        },
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "blackbox",
+        "repeat": 2,
+        "warp": 1,
+        "n": 1296,
+        "medianMs": 6.099999999999454,
+        "p95Ms": 6.200000000000728,
+        "worstMs": 18.400000000001455,
+        "longTasks": {
+          "n": 0,
+          "median": null,
+          "p95": null,
+          "worst": null
+        },
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "systems",
+        "repeat": 2,
+        "warp": 1,
+        "n": 1297,
+        "medianMs": 6.099999999999454,
+        "p95Ms": 6.200000000000728,
+        "worstMs": 18.19999999999891,
+        "longTasks": {
+          "n": 0,
+          "median": null,
+          "p95": null,
+          "worst": null
+        },
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "flight",
+        "repeat": 2,
+        "warp": 1,
+        "n": 487,
+        "medianMs": 18,
+        "p95Ms": 24.300000000000182,
+        "worstMs": 54.400000000000546,
+        "longTasks": {
+          "n": 1,
+          "median": 51,
+          "p95": 51,
+          "worst": 51,
+          "mean": 51
+        },
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "map",
+        "repeat": 2,
+        "warp": 1,
+        "n": 408,
+        "medianMs": 18.19999999999891,
+        "p95Ms": 36.400000000001455,
+        "worstMs": 66.69999999999982,
+        "longTasks": {
+          "n": 8,
+          "median": 55,
+          "p95": 63,
+          "worst": 63,
+          "mean": 56.5
+        },
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "ship",
+        "repeat": 2,
+        "warp": 1,
+        "n": 350,
+        "medianMs": 18.299999999999272,
+        "p95Ms": 42.399999999999636,
+        "worstMs": 84.80000000000109,
+        "longTasks": {
+          "n": 7,
+          "median": 60,
+          "p95": 83,
+          "worst": 83,
+          "mean": 61.285714285714285
+        },
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      }
+    ],
+    "profiles": [
+      {
+        "view": "ship",
+        "p95Ms": 30.200000000000728,
+        "functions": [
+          {
+            "name": "(program)",
+            "ms": 1911.336
+          },
+          {
+            "name": "setProgram",
+            "ms": 221.403
+          },
+          {
+            "name": "renderBufferDirect",
+            "ms": 170.037
+          },
+          {
+            "name": "bindVertexArray",
+            "ms": 159.948
+          },
+          {
+            "name": "(anonymous)",
+            "ms": 112.522
+          },
+          {
+            "name": "(anonymous)",
+            "ms": 111.446
+          },
+          {
+            "name": "(anonymous)",
+            "ms": 84.24
+          },
+          {
+            "name": "(anonymous)",
+            "ms": 80.687
+          },
+          {
+            "name": "frame",
+            "ms": 75.419
+          },
+          {
+            "name": "getBindingState",
+            "ms": 75.201
+          },
+          {
+            "name": "needsUpdate",
+            "ms": 67.595
+          },
+          {
+            "name": "renderObject",
+            "ms": 67.168
+          }
+        ]
+      }
+    ],
+    "bundle": [
+      {
+        "file": "assets/index-IPXaxGEN.js",
+        "bytes": 1457561,
+        "gzipBytes": 433281,
+        "sha256": "2efa1ed5827920bfb26c5d845b46f443ca1db94a42ee2514a9809b8e39634a0e"
+      },
+      {
+        "file": "assets/index-_KCS86fd.css",
+        "bytes": 36484,
+        "gzipBytes": 5911,
+        "sha256": "6da0b834ac02a0d9131ea04423cc249790f9ae61fca03a4faa9a1c7173568a6a"
+      },
+      {
+        "file": "assets/rpc-CziiK21S.js",
+        "bytes": 773,
+        "gzipBytes": 307,
+        "sha256": "662c2d5c95e6e7a0d287467304ac89b1d4ba3698ac950e55a7f91f904d906302"
+      },
+      {
+        "file": "assets/service-BIBCS8Kp.js",
+        "bytes": 135345,
+        "gzipBytes": 49259,
+        "sha256": "e9fe4ea183fabebb2ade9ab033f55fea63125cb96f835368e7c7b6aa4d79634e"
+      },
+      {
+        "file": "assets/worker-BjtGItL1.js",
+        "bytes": 140986,
+        "gzipBytes": 50887,
+        "sha256": "cc100f1a5c4cd2071df10df697637ab0b197f672f5a832da936fc6884c7c0438"
+      },
+      {
+        "file": "favicon.svg",
+        "bytes": 420,
+        "gzipBytes": 277,
+        "sha256": "25068945c916e7d281af774354407e8705dd8a9f6748db28e089fd2314e8e3b4"
+      },
+      {
+        "file": "index.html",
+        "bytes": 510,
+        "gzipBytes": 313,
+        "sha256": "f43b445923bfbc10b63eb38e9152bbe284bb871631ca438bdd30c64c24aabb8e"
+      },
+      {
+        "file": "LICENSE",
+        "bytes": 11357,
+        "gzipBytes": 3928,
+        "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+      },
+      {
+        "file": "NOTICE",
+        "bytes": 362,
+        "gzipBytes": 262,
+        "sha256": "35279566fbe56e61d55c6d08fedc08879314ac6afda357e9ad68b170839b4970"
+      },
+      {
+        "file": "THIRD-PARTY-NOTICES.txt",
+        "bytes": 7698,
+        "gzipBytes": 1292,
+        "sha256": "ddb9535594cee8eb3ab0a0e49bed657ca195181edd74fc2f2b7353cbf4814b12"
+      }
+    ],
+    "errorCount": 0,
+    "caveats": [
+      "S15 logic with the once-per-browser opening acknowledged by a CDP storage marker. Cold refers to HTTP cache, not the first-ever cinematic.",
+      "Shared development host; no real modest-laptop qualification. No VX builds, tests or other browsers overlapped the timed runs."
+    ]
+  },
+  {
+    "run": "vx-art-final",
+    "source": {
+      "commit": "374bafbeeeaa1942ac483a2ed707500f91690aad",
+      "srcTree": "66ad6e9a9bd22acdb6198d39f9a58f87a2f3fcbf",
+      "dataTree": "7c28747036fc8aad8939a932d854458a46fe6fe8",
+      "branch": "p3/vx-visuals",
+      "dirtyInputs": ""
+    },
+    "viewport": [
+      1366,
+      768,
+      1
+    ],
+    "profile": {
+      "cpu": 4,
+      "latency": 40,
+      "downloadThroughput": 1250000,
+      "uploadThroughput": 125000,
+      "connectionType": "wifi"
+    },
+    "seconds": 8,
+    "loads": [
+      {
+        "cache": "cold",
+        "repeat": 1,
+        "readyMs": 3823.7999999970198,
+        "interactionPaintMs": 3936.1000000089407
+      },
+      {
+        "cache": "warm",
+        "repeat": 1,
+        "readyMs": 1876.2999999970198,
+        "interactionPaintMs": 2026.4000000059605
+      },
+      {
+        "cache": "cold",
+        "repeat": 2,
+        "readyMs": 2586.2000000029802,
+        "interactionPaintMs": 2701.5
+      },
+      {
+        "cache": "warm",
+        "repeat": 2,
+        "readyMs": 2202.5,
+        "interactionPaintMs": 2372
+      }
+    ],
+    "frames": [
+      {
+        "view": "room",
+        "repeat": 1,
+        "warp": 1,
+        "n": 372,
+        "medianMs": 18.299999999999272,
+        "p95Ms": 30.5,
+        "worstMs": 54.69999999999891,
+        "longTasks": {
+          "n": 1,
+          "median": 52,
+          "p95": 52,
+          "worst": 52,
+          "mean": 52
+        },
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "flight",
+        "repeat": 1,
+        "warp": 1,
+        "n": 294,
+        "medianMs": 24.30000000000109,
+        "p95Ms": 42.400000000000546,
+        "worstMs": 66.89999999999964,
+        "longTasks": {
+          "n": 5,
+          "median": 53,
+          "p95": 69,
+          "worst": 69,
+          "mean": 55
+        },
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      }
+    ],
+    "profiles": [
+      {
+        "view": "flight",
+        "p95Ms": 90.90000000000146,
+        "functions": [
+          {
+            "name": "(program)",
+            "ms": 1544.927
+          },
+          {
+            "name": "setProgram",
+            "ms": 266.17
+          },
+          {
+            "name": "renderBufferDirect",
+            "ms": 190.89
+          },
+          {
+            "name": "(anonymous)",
+            "ms": 122.881
+          },
+          {
+            "name": "(anonymous)",
+            "ms": 112.777
+          },
+          {
+            "name": "(anonymous)",
+            "ms": 103.705
+          },
+          {
+            "name": "bindVertexArray",
+            "ms": 100.963
+          },
+          {
+            "name": "massProperties",
+            "ms": 78.745
+          },
+          {
+            "name": "(garbage collector)",
+            "ms": 76.662
+          },
+          {
+            "name": "renderObjects",
+            "ms": 69.152
+          },
+          {
+            "name": "uniformMatrix4fv",
+            "ms": 65.662
+          },
+          {
+            "name": "(anonymous)",
+            "ms": 63.191
+          }
+        ]
+      }
+    ],
+    "bundle": [
+      {
+        "file": "assets/index-DWIsJESp.js",
+        "bytes": 1457638,
+        "gzipBytes": 433294,
+        "sha256": "7c441cfa6bd1ea277a5b27be790b2b1bc3778a46b3ece218a25176379bf2f76b"
+      },
+      {
+        "file": "assets/index-_KCS86fd.css",
+        "bytes": 36484,
+        "gzipBytes": 5911,
+        "sha256": "6da0b834ac02a0d9131ea04423cc249790f9ae61fca03a4faa9a1c7173568a6a"
+      },
+      {
+        "file": "assets/rpc-CziiK21S.js",
+        "bytes": 773,
+        "gzipBytes": 307,
+        "sha256": "662c2d5c95e6e7a0d287467304ac89b1d4ba3698ac950e55a7f91f904d906302"
+      },
+      {
+        "file": "assets/service-21m_7TQA.js",
+        "bytes": 135345,
+        "gzipBytes": 49259,
+        "sha256": "d72804127912bdde30a74d13d413fb27c29cc68fd140b4f58698a7c4562792b4"
+      },
+      {
+        "file": "assets/worker-BjtGItL1.js",
+        "bytes": 140986,
+        "gzipBytes": 50887,
+        "sha256": "cc100f1a5c4cd2071df10df697637ab0b197f672f5a832da936fc6884c7c0438"
+      },
+      {
+        "file": "favicon.svg",
+        "bytes": 420,
+        "gzipBytes": 277,
+        "sha256": "25068945c916e7d281af774354407e8705dd8a9f6748db28e089fd2314e8e3b4"
+      },
+      {
+        "file": "index.html",
+        "bytes": 510,
+        "gzipBytes": 311,
+        "sha256": "afa05568ec7e5fba7367a296643a82217785b63cc904ab0607ca0c35430c17d9"
+      },
+      {
+        "file": "LICENSE",
+        "bytes": 11357,
+        "gzipBytes": 3928,
+        "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+      },
+      {
+        "file": "NOTICE",
+        "bytes": 362,
+        "gzipBytes": 262,
+        "sha256": "35279566fbe56e61d55c6d08fedc08879314ac6afda357e9ad68b170839b4970"
+      },
+      {
+        "file": "THIRD-PARTY-NOTICES.txt",
+        "bytes": 7698,
+        "gzipBytes": 1292,
+        "sha256": "ddb9535594cee8eb3ab0a0e49bed657ca195181edd74fc2f2b7353cbf4814b12"
+      }
+    ],
+    "errorCount": 0,
+    "caveats": [
+      "S15 logic with the once-per-browser opening acknowledged by a CDP storage marker. Cold refers to HTTP cache, not the first-ever cinematic.",
+      "Shared development host; no real modest-laptop qualification. No VX builds, tests or other browsers overlapped the timed runs."
+    ]
+  }
+]

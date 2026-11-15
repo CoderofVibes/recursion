@@ -24,7 +24,7 @@ import type { BelievedShip, ShipDefinition, ShipEvent } from '../../contracts/in
 export type PowerAlertLevel = 'caution' | 'warning';
 
 export interface PowerAlert {
-  readonly id: 'power-low' | 'power-reserve' | 'critical-service' | 'radiation';
+  readonly id: 'power-low' | 'power-reserve' | 'critical-service';
   readonly level: PowerAlertLevel;
   /**
    * Seconds the stored energy lasts at the present demand with no generation (`power-low`), or
@@ -40,8 +40,6 @@ export interface PowerAlert {
   /** `critical-service`: when the shortage began, and when the attempt is lost if it lasts. */
   readonly since?: number;
   readonly deadline?: number;
-  /** `radiation`: the most any equipment item has taken, as the ship reported it, U s. */
-  readonly exposure?: number;
 }
 
 /** [ASSUMED] Nominal fuel-cell numbers when the design does not give them (1C's values). */
@@ -159,13 +157,6 @@ export function criticalFault(event: ShipEvent, definition: ShipDefinition): str
   const spec = definition.equipment.find((e) => e.id === event.equipment);
   return spec && spec.sheddable === false ? spec.redundancyGroup : undefined;
 }
-
-/**
- * [ASSUMED: S21] The radiation caution: once the ship reports this much exposure on any one
- * item, U s. At the clouds' peak it comes 100 s before the first upset; a last-resort cue, not
- * the main chance to plan (S21 `belt.md`).
- */
-export const RADIATION_CAUTION = 1;
 
 /** The power alerts the gauges raise now, most serious first. */
 export function powerAlerts(

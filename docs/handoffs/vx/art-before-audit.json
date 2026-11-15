@@ -1,0 +1,456 @@
+{
+  "label": "before",
+  "source": "01a0947",
+  "scope": "Shipping sky; optical effects are synthetic fixtures, not encounter publication.",
+  "cases": [
+    {
+      "name": "galaxy",
+      "verticalFov": 68,
+      "horizontalFov": 100.3753192062715,
+      "draws": 2,
+      "points": 9600
+    },
+    {
+      "name": "ember-wheel",
+      "verticalFov": 68,
+      "horizontalFov": 100.3753192062715,
+      "draws": 2,
+      "points": 9600
+    },
+    {
+      "name": "needle",
+      "verticalFov": 10,
+      "horizontalFov": 17.689871233241185,
+      "draws": 2,
+      "points": 9600
+    },
+    {
+      "name": "hollow",
+      "verticalFov": 10,
+      "horizontalFov": 17.689871233241185,
+      "draws": 2,
+      "points": 9600
+    },
+    {
+      "name": "eye",
+      "verticalFov": 10,
+      "horizontalFov": 17.689871233241185,
+      "draws": 2,
+      "points": 9600
+    },
+    {
+      "name": "room-sky",
+      "stats": {
+        "offered": 0,
+        "culled": 0,
+        "thinned": 0,
+        "drawn": 0,
+        "segments": 0
+      }
+    },
+    {
+      "name": "room-funnels",
+      "stats": {
+        "offered": 3,
+        "culled": 0,
+        "thinned": 3,
+        "drawn": 3,
+        "segments": 1116
+      }
+    },
+    {
+      "name": "room-precursors",
+      "stats": {
+        "offered": 3,
+        "culled": 0,
+        "thinned": 3,
+        "drawn": 3,
+        "segments": 1116
+      }
+    },
+    {
+      "name": "room-birth",
+      "stats": {
+        "offered": 3,
+        "culled": 0,
+        "thinned": 3,
+        "drawn": 3,
+        "segments": 1116
+      }
+    },
+    {
+      "name": "room-clouds",
+      "stats": {
+        "offered": 0,
+        "culled": 0,
+        "thinned": 0,
+        "drawn": 0,
+        "segments": 0
+      }
+    }
+  ],
+  "errors": [],
+  "atlas": {
+    "cones": [
+      {
+        "cone": 0,
+        "exempt": false,
+        "peak": 0,
+        "mean": 0,
+        "quietFraction": 1,
+        "measuredLineFraction": 0,
+        "hueSeparation": {
+          "forecast": null,
+          "thrust": null,
+          "velocity": null,
+          "blackbox": null,
+          "caution": null,
+          "warning": null
+        }
+      },
+      {
+        "cone": 1,
+        "exempt": false,
+        "peak": 0,
+        "mean": 0,
+        "quietFraction": 1,
+        "measuredLineFraction": 0,
+        "hueSeparation": {
+          "forecast": null,
+          "thrust": null,
+          "velocity": null,
+          "blackbox": null,
+          "caution": null,
+          "warning": null
+        }
+      },
+      {
+        "cone": 2,
+        "exempt": false,
+        "peak": 0,
+        "mean": 0,
+        "quietFraction": 1,
+        "measuredLineFraction": 0,
+        "hueSeparation": {
+          "forecast": null,
+          "thrust": null,
+          "velocity": null,
+          "blackbox": null,
+          "caution": null,
+          "warning": null
+        }
+      },
+      {
+        "cone": 3,
+        "exempt": false,
+        "peak": 114,
+        "mean": 6.290744662250112,
+        "quietFraction": 0.862578439181707,
+        "measuredLineFraction": 0.20639763135876615,
+        "hueSeparation": {
+          "forecast": 26.86171812667877,
+          "thrust": 81.01422036148901,
+          "velocity": 52.451596095907185,
+          "blackbox": 90.2811071690885,
+          "caution": 64.38002086123099,
+          "warning": 107.28220521251677
+        }
+      },
+      {
+        "cone": 4,
+        "exempt": false,
+        "peak": 0,
+        "mean": 0,
+        "quietFraction": 1,
+        "measuredLineFraction": 0,
+        "hueSeparation": {
+          "forecast": null,
+          "thrust": null,
+          "velocity": null,
+          "blackbox": null,
+          "caution": null,
+          "warning": null
+        }
+      },
+      {
+        "cone": 5,
+        "exempt": false,
+        "peak": 0,
+        "mean": 0,
+        "quietFraction": 1,
+        "measuredLineFraction": 0,
+        "hueSeparation": {
+          "forecast": null,
+          "thrust": null,
+          "velocity": null,
+          "blackbox": null,
+          "caution": null,
+          "warning": null
+        }
+      },
+      {
+        "cone": 6,
+        "exempt": false,
+        "peak": 90,
+        "mean": 1.3681881763254522,
+        "quietFraction": 0.9627231752569309,
+        "measuredLineFraction": 0.12486636871478234,
+        "hueSeparation": {
+          "forecast": 26.868401093259035,
+          "thrust": 81.0032034243923,
+          "velocity": 52.46234264591617,
+          "blackbox": 90.28148306435538,
+          "caution": 64.38651237017437,
+          "warning": 107.27742717953764
+        }
+      },
+      {
+        "cone": 7,
+        "exempt": true,
+        "peak": 0,
+        "mean": 0,
+        "quietFraction": 1,
+        "measuredLineFraction": 0,
+        "hueSeparation": {
+          "forecast": null,
+          "thrust": null,
+          "velocity": null,
+          "blackbox": null,
+          "caution": null,
+          "warning": null
+        }
+      },
+      {
+        "cone": 8,
+        "exempt": false,
+        "peak": 48,
+        "mean": 2.044421347114021,
+        "quietFraction": 0.936218988595963,
+        "measuredLineFraction": 0.035729768549369635,
+        "hueSeparation": {
+          "forecast": 26.905935542521604,
+          "thrust": 80.987434959051,
+          "velocity": 52.45897415588861,
+          "blackbox": 90.24132764193757,
+          "caution": 64.35843727923773,
+          "warning": 107.23721592103476
+        }
+      },
+      {
+        "cone": 9,
+        "exempt": false,
+        "peak": 120,
+        "mean": 6.342655372719678,
+        "quietFraction": 0.862563868435879,
+        "measuredLineFraction": 0.2276135178631698,
+        "hueSeparation": {
+          "forecast": 26.79964073200798,
+          "thrust": 80.97040565093147,
+          "velocity": 52.55433974605241,
+          "blackbox": 90.41220046724233,
+          "caution": 64.5249339893798,
+          "warning": 107.36945854093153
+        }
+      },
+      {
+        "cone": 10,
+        "exempt": false,
+        "peak": 0,
+        "mean": 0,
+        "quietFraction": 1,
+        "measuredLineFraction": 0,
+        "hueSeparation": {
+          "forecast": null,
+          "thrust": null,
+          "velocity": null,
+          "blackbox": null,
+          "caution": null,
+          "warning": null
+        }
+      },
+      {
+        "cone": 11,
+        "exempt": false,
+        "peak": 55,
+        "mean": 2.0694587453616458,
+        "quietFraction": 0.9357818662211257,
+        "measuredLineFraction": 0.04622655505920411,
+        "hueSeparation": {
+          "forecast": 26.91923218878993,
+          "thrust": 80.9716968531343,
+          "velocity": 52.47181648231134,
+          "blackbox": 90.2364081727823,
+          "caution": 64.36270586724402,
+          "warning": 107.22591255136624
+        }
+      }
+    ],
+    "landmarks": [
+      {
+        "id": "galaxy",
+        "peak": 128,
+        "mean": 19.37255454315855,
+        "quietFraction": 0.5579090008353894,
+        "measuredLineFraction": 0.2617360406910684,
+        "hueSeparation": {
+          "forecast": 26.845828019903394,
+          "thrust": 80.9804948231601,
+          "velocity": 52.50899441646558,
+          "blackbox": 90.33529128555013,
+          "caution": 64.44861237894382,
+          "warning": 107.31106386878389
+        }
+      },
+      {
+        "id": "ember-wheel",
+        "peak": 90,
+        "mean": 1.2721572474889749,
+        "quietFraction": 0.9653410525906786,
+        "measuredLineFraction": 0.12506927602112458,
+        "hueSeparation": {
+          "forecast": 26.887511674214906,
+          "thrust": 80.98891249883422,
+          "velocity": 52.46927618875308,
+          "blackbox": 90.26677643688568,
+          "caution": 64.38097911198908,
+          "warning": 107.25876892924033
+        }
+      },
+      {
+        "id": "needle",
+        "peak": 55,
+        "mean": 2.180045849280205,
+        "quietFraction": 0.932484020748742,
+        "measuredLineFraction": 0.04622655505920411,
+        "hueSeparation": {
+          "forecast": 26.913675340813615,
+          "thrust": 80.98160650126816,
+          "velocity": 52.46184623562206,
+          "blackbox": 90.23541083816237,
+          "caution": 64.35625891577556,
+          "warning": 107.22967140441166
+        }
+      },
+      {
+        "id": "hollow",
+        "peak": 0,
+        "mean": 0,
+        "quietFraction": 1,
+        "measuredLineFraction": 0,
+        "hueSeparation": {
+          "forecast": null,
+          "thrust": null,
+          "velocity": null,
+          "blackbox": null,
+          "caution": null,
+          "warning": null
+        }
+      },
+      {
+        "id": "eye",
+        "peak": 108,
+        "mean": 7.942659258251899,
+        "quietFraction": 0.8010947487032036,
+        "measuredLineFraction": 0.18376938493853184,
+        "hueSeparation": {
+          "forecast": 26.894819892665208,
+          "thrust": 80.98474649223735,
+          "velocity": 52.470134204593634,
+          "blackbox": 90.25996154125069,
+          "caution": 64.37704599740574,
+          "warning": 107.25125642938883
+        }
+      },
+      {
+        "id": "blue-cloud",
+        "peak": 128,
+        "mean": 16.511778019544227,
+        "quietFraction": 0.6469702562508499,
+        "measuredLineFraction": 0.2617360406910684,
+        "hueSeparation": {
+          "forecast": 26.838768454887205,
+          "thrust": 80.98619131124445,
+          "velocity": 52.50586624389932,
+          "blackbox": 90.34034074068839,
+          "caution": 64.45007639296743,
+          "warning": 107.31783318710585
+        }
+      },
+      {
+        "id": "pair",
+        "peak": 0,
+        "mean": 0,
+        "quietFraction": 1,
+        "measuredLineFraction": 0,
+        "hueSeparation": {
+          "forecast": null,
+          "thrust": null,
+          "velocity": null,
+          "blackbox": null,
+          "caution": null,
+          "warning": null
+        }
+      },
+      {
+        "id": "far-lens",
+        "peak": 0,
+        "mean": 0,
+        "quietFraction": 1,
+        "measuredLineFraction": 0,
+        "hueSeparation": {
+          "forecast": null,
+          "thrust": null,
+          "velocity": null,
+          "blackbox": null,
+          "caution": null,
+          "warning": null
+        }
+      },
+      {
+        "id": "far-north",
+        "peak": 0,
+        "mean": 0,
+        "quietFraction": 1,
+        "measuredLineFraction": 0,
+        "hueSeparation": {
+          "forecast": null,
+          "thrust": null,
+          "velocity": null,
+          "blackbox": null,
+          "caution": null,
+          "warning": null
+        }
+      },
+      {
+        "id": "far-cloud",
+        "peak": 0,
+        "mean": 0,
+        "quietFraction": 1,
+        "measuredLineFraction": 0,
+        "hueSeparation": {
+          "forecast": null,
+          "thrust": null,
+          "velocity": null,
+          "blackbox": null,
+          "caution": null,
+          "warning": null
+        }
+      },
+      {
+        "id": "far-south",
+        "peak": 0,
+        "mean": 0,
+        "quietFraction": 1,
+        "measuredLineFraction": 0,
+        "hueSeparation": {
+          "forecast": null,
+          "thrust": null,
+          "velocity": null,
+          "blackbox": null,
+          "caution": null,
+          "warning": null
+        }
+      }
+    ]
+  }
+}

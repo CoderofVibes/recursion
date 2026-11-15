@@ -20,7 +20,7 @@ import { loadShipDefinition } from '../../ship/index.ts';
 import { DEPART, briefing } from './briefing.ts';
 import { geometryForRun, NOMINAL, type ArrivalGeometry } from './geometry.ts';
 import { ARRIVAL_ANGLE, arrivalWorld } from './world.ts';
-import { cloudEnvironment, cloudWindow } from './clouds.ts';
+import { cloudFields, cloudWindow } from './clouds.ts';
 
 export { DEPART, ENCOUNTER_ID, OBJECTIVES, PRIORS } from './briefing.ts';
 export { GEOMETRIES, NOMINAL, geometryForRun, type ArrivalGeometry } from './geometry.ts';
@@ -144,8 +144,9 @@ export function createGravityRange(
     arrivalMass: world.ship.systems.massProperties.mass,
     objectiveRules: OBJECTIVE_RULES,
     play: PLAY,
-    // The radiation crescent beyond the belt (A18 (2), S21): intensity at each equipment item.
-    environment: cloudEnvironment(ship),
+    // The radiation crescent beyond the belt (A18 (2), S21): intensity at each equipment item
+    // and at the radiation monitor (A24).
+    intensityFields: cloudFields(),
     // And as the eye sees it through the window (R38): once per tick, not once per frame.
     window: lastByWorld(cloudWindow),
   };

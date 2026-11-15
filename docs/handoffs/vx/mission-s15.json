@@ -1,0 +1,87 @@
+{
+  "method": "Existing S15 runner; native GPU, 1366x768, 1x warp, one 4-second sample per view. Returning-player opening marker only. Local port selected independently. Host not controlled; not a release-gate claim.",
+  "reports": [
+    {
+      "label": "before",
+      "source": "002cbde (in-memory source overlay)",
+      "frames": [
+        {
+          "view": "room",
+          "n": 145,
+          "median": 24.399999999999636,
+          "p95": 42.5,
+          "worst": 54.5,
+          "saturationFraction": 0,
+          "achievedShipSecondsPerWallSecond": 0.9953715224222199,
+          "modelError": null,
+          "draws": {
+            "frame": 3756,
+            "calls": 240,
+            "triangles": 22468,
+            "points": 15674,
+            "lines": 3978
+          }
+        },
+        {
+          "view": "flight",
+          "n": 154,
+          "median": 24.300000000000182,
+          "p95": 36.5,
+          "worst": 48.600000000000364,
+          "saturationFraction": 0,
+          "achievedShipSecondsPerWallSecond": 1.0021295252411375,
+          "modelError": null,
+          "draws": {
+            "frame": 3906,
+            "calls": 172,
+            "triangles": 19194,
+            "points": 15674,
+            "lines": 3978
+          }
+        }
+      ],
+      "errors": []
+    },
+    {
+      "label": "after",
+      "source": "e326823",
+      "frames": [
+        {
+          "view": "room",
+          "n": 246,
+          "median": 18.099999999999454,
+          "p95": 24.299999999999272,
+          "worst": 30.5,
+          "saturationFraction": 0,
+          "achievedShipSecondsPerWallSecond": 0.9996501224556509,
+          "modelError": null,
+          "draws": {
+            "frame": 6366,
+            "calls": 240,
+            "triangles": 22468,
+            "points": 15674,
+            "lines": 3978
+          }
+        },
+        {
+          "view": "flight",
+          "n": 271,
+          "median": 12.200000000000728,
+          "p95": 18.399999999999636,
+          "worst": 24.5,
+          "saturationFraction": 0,
+          "achievedShipSecondsPerWallSecond": 1.0027575833542242,
+          "modelError": null,
+          "draws": {
+            "frame": 6966,
+            "calls": 172,
+            "triangles": 19194,
+            "points": 15674,
+            "lines": 3978
+          }
+        }
+      ],
+      "errors": []
+    }
+  ]
+}

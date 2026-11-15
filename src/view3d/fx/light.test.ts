@@ -1,4 +1,13 @@
-import { Group, PerspectiveCamera, Quaternion, Scene, Vector3, type WebGLRenderer } from 'three';
+import {
+  Group,
+  PerspectiveCamera,
+  Quaternion,
+  Scene,
+  Vector3,
+  type LineSegments,
+  type Mesh,
+  type WebGLRenderer,
+} from 'three';
 import { describe, expect, it } from 'vitest';
 import { viewSnapshot } from '../../contracts/fixtures/index.ts';
 import type { ViewSnapshot, WindowFunnel } from '../../contracts/index.ts';
@@ -21,11 +30,35 @@ const funnel: WindowFunnel = {
   phase: 'active',
   brightness: 0.8,
   segments: [
-    { from: ray(-0.1, 0), to: ray(0.1, 0), depth: 0 },
-    { from: ray(0.02, -0.2), to: ray(0, -0.22), depth: 1 },
+    { from: ray(-0.1, 0), to: ray(0.1, 0), depth: 1 },
+    { from: ray(0.02, -0.2), to: ray(0, -0.22), depth: 0 },
   ],
 };
 describe('window light integration', () => {
+  it('preserves a large body’s supplied angular radius, including close passes', () => {
+    const scene = new Scene(),
+      outside = buildOutside(scene);
+    for (const angularRadius of [0.02, 0.5, 1.2]) {
+      outside.update({
+        ...viewSnapshot,
+        window: {
+          sunlit: false,
+          objects: [
+            {
+              id: 'limb',
+              kind: 'body',
+              direction: { x: 1, y: 0, z: 0 },
+              angularRadius,
+              lit: false,
+            },
+          ],
+        },
+      });
+      const body = scene.getObjectByName('window-body:limb') as Mesh;
+      expect(Math.asin(body.scale.x / body.position.length())).toBeCloseTo(angularRadius, 12);
+    }
+    outside.dispose();
+  });
   it('drops malformed optical arcs without throwing or publishing a partial funnel', () => {
     const renderer = makeFunnelLight({
       displayRadius: 100,
@@ -56,6 +89,11 @@ describe('window light integration', () => {
     const stats = renderer.update(fields, 0, new Quaternion(), 0);
     expect(stats.drawn).toBe(1);
     expect(stats.segments).toBe(2);
+    const lines = renderer.object.children.find((c) => c.visible) as LineSegments;
+    const colours = lines.geometry.getAttribute('color');
+    // The published 3B coordinate is 0 at the throat, 1 at the mouth.
+    expect(colours.getX(2)).toBeGreaterThan(colours.getX(0));
+    expect(colours.getY(2)).toBeGreaterThan(colours.getY(0));
     expect(renderer.update(fields, 1, new Quaternion(), 1000).drawn).toBe(0);
     renderer.dispose();
   });
@@ -64,6 +102,13 @@ describe('window light integration', () => {
     expect(precursorCoverage('ramping', 0)).toBe(precursorCoverage('precursor', 0));
     expect(precursorCoverage('ramping', 0.5)).toBeGreaterThan(precursorCoverage('ramping', 0));
     expect(precursorCoverage('ramping', 1)).toBe(precursorCoverage('active', 1));
+    expect(precursorCoverage('ramping', 0.5, 1)).toBe(1);
+    expect(precursorCoverage('ramping', 0.5, 0)).toBe(0.24);
+    for (const depth of [0, 0.25, 0.5, 0.75, 1]) {
+      const ramp = [0, 0.25, 0.5, 0.75, 1].map((b) => precursorCoverage('ramping', b, depth));
+      expect(ramp).toEqual([...ramp].sort((a, b) => a - b));
+      expect(ramp.at(-1)).toBe(1);
+    }
   });
   it('removes absent clouds and rejects non-finite optical patches', () => {
     const clouds = createCloudLight(100);

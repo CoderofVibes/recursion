@@ -137,15 +137,16 @@ describe('the radiation crescent', () => {
       while (s.status().outcome.kind === 'in-progress' && s.status().t < 4_000) {
         s.stepTicks(1);
         for (const a of s.status().alerts) {
-          if (a.id === 'radiation') cautionAt ??= s.status().t;
+          if (a.id === 'radiation-high') cautionAt ??= s.status().t;
           if (a.id === 'critical-service') warning = a;
         }
       }
-      // The radiation caution must come from the radiation monitor (A24, ledger R37), not from
-      // each component's true dose, which 3A removed from the record (R35, P11). Until 2F wires
-      // the monitor's caution, none is raised. This tripwire then fails; restore S21's figure,
-      // a caution 20 s in (1 U s on a standard part at 0.05 U). Integrator, on merging 2F.
-      expect(cautionAt).toBeUndefined();
+      // The radiation caution comes from the radiation monitor (A24, R37), never from each
+      // component's true dose (R35, P11): its first settled reading (0.25 s response) at 1 s reads
+      // about 0.049 U, over the 0.02 U threshold, and the session raises it as that tick ends.
+      // S21's 20 s was its accumulated-dose rule (1 U s on one part), which R35 removed; S21's
+      // claim that the caution comes at least 100 s before the first upset still holds.
+      expect(cautionAt).toBe(2);
       const outcome = s.status().outcome;
       expect(outcome).toMatchObject({ kind: 'lost', cause: 'power' });
       if (outcome.kind !== 'lost') throw new Error('not lost');
@@ -162,8 +163,16 @@ describe('the radiation crescent', () => {
       // The ship warned of it, with the deadline it met.
       expect(warning?.deadline).toBeDefined();
       expect(Math.abs(warning!.deadline! - outcome.t)).toBeLessThanOrEqual(2);
-      // Upsets came and went before (reboots of 5 s, no loss).
+      // Upsets came and went before (reboots of 5 s, no loss), the first of them at least 100 s
+      // after the caution (S21 `belt.md`).
       expect(events.some((e) => e.kind === 'equipment-recovered')).toBe(true);
+      const upset = events.find(
+        (e) => e.kind === 'equipment-fault' && e.fault === 'radiation-upset',
+      );
+      expect(upset!.t - cautionAt!).toBeGreaterThanOrEqual(100);
+      // The monitor's reading is on the status for the screens (SYSTEMS › RADIATION), recorded.
+      expect(s.status().radiation?.source).toBe('flight-cpu-a');
+      expect(s.status().radiation?.threshold).toBe(0.02);
     },
   );
 

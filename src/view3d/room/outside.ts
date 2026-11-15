@@ -9,7 +9,6 @@
  * to the believed world and a display sun.
  */
 import {
-  Color,
   Group,
   IcosahedronGeometry,
   InstancedMesh,
@@ -21,8 +20,9 @@ import {
 } from 'three';
 import type { Camera, Object3D, Scene, ShaderMaterial, WebGLRenderer } from 'three';
 import type { ViewSnapshot, WindowView } from '../../contracts/index.ts';
-import { hex, outsideStyle, render } from '../../theme/index.ts';
-import { bodyMaterial, rockMaterial, setSun } from '../../theme/three/index.ts';
+import { render } from '../../theme/index.ts';
+import { setSun } from '../../theme/three/index.ts';
+import { airlessMaterial } from '../fx/airless.ts';
 import { attitudeToScene, toScene, type WindowField } from '../adapter.ts';
 import { windowViewFor } from '../windowViews.ts';
 import { FUNNEL_KIND, makeFunnelLight } from '../fx/funnels.ts';
@@ -76,9 +76,10 @@ export function buildOutside(scene: Scene): Outside {
   const bodyMesh = (id: string, index: number): Mesh => {
     let m = bodies.get(id);
     if (!m) {
-      const mat = bodyMaterial(index > 0 ? { lit: outsideStyle.bodyLitCool } : {});
+      const mat = airlessMaterial(false, index > 0);
       materials.push(mat);
       m = new Mesh(sphere, mat);
+      m.name = `window-body:${id}`;
       m.rotation.z = 0.3;
       world.add(m);
       bodies.set(id, m);
@@ -95,13 +96,12 @@ export function buildOutside(scene: Scene): Outside {
       const y = p.getY(i);
       const z = p.getZ(i);
       const k =
-        0.78 + 0.42 * Math.abs((Math.sin(x * 12.9898 + y * 78.233 + z * 37.719) * 43758.5453) % 1);
+        0.74 + 0.26 * Math.abs((Math.sin(x * 12.9898 + y * 78.233 + z * 37.719) * 43758.5453) % 1);
       p.setXYZ(i, x * k, y * k, z * k);
     }
     rockGeo.computeVertexNormals();
   }
-  const rockMat = rockMaterial();
-  (rockMat.uniforms.cRock!.value as Color).set(hex(outsideStyle.rock));
+  const rockMat = airlessMaterial(true);
   materials.push(rockMat);
   const rocks = new InstancedMesh(rockGeo, rockMat, MAX_ROCKS);
   rocks.frustumCulled = false;
@@ -137,9 +137,7 @@ export function buildOutside(scene: Scene): Outside {
     const u = (mesh.material as ShaderMaterial).uniforms;
     if (mesh.userData.lit === lit) return;
     mesh.userData.lit = lit;
-    mesh.userData.cLit ??= (u.cLit!.value as Color).clone();
-    (u.cLit!.value as Color).copy(lit ? (mesh.userData.cLit as Color) : (u.cDark!.value as Color));
-    u.uRimStrength!.value = lit ? render.rimStrength : 0;
+    u.uLit!.value = lit ? 1 : 0;
   };
 
   /**
@@ -160,16 +158,17 @@ export function buildOutside(scene: Scene): Outside {
         mesh.visible = true;
         const drawn = NEAR + SPAN * (0.45 + 0.55 / (1 + a * 20));
         mesh.position.copy(d).multiplyScalar(drawn);
-        mesh.scale.setScalar(drawn * Math.tan(Math.min(a, 1.4)));
+        // A sphere subtends asin(radius / centre-distance), unlike a flat sprite.
+        mesh.scale.setScalar(drawn * Math.sin(Math.min(a, Math.PI / 2)));
         setLit(mesh, o.lit);
       } else if (o.lit && n < MAX_ROCKS) {
         // An unlit rock is not seen at all.
         const drawn = NEAR + SPAN * (0.1 + 0.3 / (1 + a * 2000));
-        const r = drawn * Math.tan(Math.min(a, 1.4));
+        const r = drawn * Math.sin(Math.min(a, Math.PI / 2));
         let h = 0;
         for (let k = 0; k < o.id.length; k++) h = (h * 31 + o.id.charCodeAt(k)) % 6283;
         spin.setFromAxisAngle(axis, h / 1000);
-        m4.compose(d.multiplyScalar(drawn), spin, scale.set(r, r * 0.8, r * 1.1));
+        m4.compose(d.multiplyScalar(drawn), spin, scale.set(r, r * 0.8, r));
         rocks.setMatrixAt(n++, m4);
       }
     }
@@ -227,6 +226,8 @@ export function buildOutside(scene: Scene): Outside {
       rot.visible = scenery === null;
     },
     followEye(camera, renderer) {
+      // Optical directions are from the ship's eye; walking must not shift the sky/bodies.
+      rot.position.copy(camera.position);
       deepSky.followEye(camera, renderer);
     },
     update(snapshot) {
