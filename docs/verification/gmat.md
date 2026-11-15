@@ -25,6 +25,53 @@ byte, so the four planar vectors are unchanged.
 The release name comes from the package's own `README.txt` ("Version R2026a"); the
 console prints only the build date. The GUI's Help/About was not opened.
 
+**The game has been compared with all seven cases** (below). Two sections further down,
+[Comparison tolerance for phase 2A](#comparison-tolerance-for-phase-2a-historical) and
+[Comparison tolerance for the game's 3D simulation](#comparison-tolerance-for-the-games-3d-simulation-historical),
+were written before any comparison existed and are kept as the record of how the
+bounds were chosen; where they recommend an RK4 integrator or say that no game
+comparison has been run, they are historical.
+
+## The game comparison (final method and results)
+
+[DEMONSTRATED: `src/sim/gmat.test.ts`; DECISIONS D4 and P17 for C1–C4, thread 2G
+checkpoint 2 (commit `034ce57`) for C5–C7]
+
+**Method.** The game's own propagator (`src/sim`, the fixed-step kick–drift–kick
+velocity Verlet it flies with), not RK4, starting from each vector's first row in the
+vector's own axes, compared at **every** 10 s sample of each full run against P17's
+bounds: **0.05 m, 5×10⁻⁵ m/s and 1×10⁻⁶ kg**, as norms over all components. The error
+falls about 4× per halving of the step with no floor or offset (shown for C1 and C4,
+and for C5 and C6), so the law, units, thrust and mass handling agree with GMAT. For
+the burns the test harness acts as a perfect attitude controller: C4's thrust follows
+the instantaneous velocity, C6's stays along the header's inertial direction with the
+ship at a fixed attitude; the mass is taken at the middle of each step.
+
+| Case | Step | Worst position | Worst velocity |
+|---|---|---|---|
+| C1 circular, 3 periods | 0.0125 s | 13 mm | 1.4×10⁻⁵ m/s |
+| C2 eccentric e ≈ 0.6, 3 periods | 0.00625 s | 22 mm | 1.8×10⁻⁵ m/s |
+| C3 hyperbolic flyby | 0.025 s | 14 mm | 2.4×10⁻⁶ m/s |
+| C4 120 s prograde burn and coast | 0.025 s | 5.7 mm | 5.5×10⁻⁶ m/s |
+| C5 inclined eccentric, 3 periods | 0.025 s | 13 mm | 1.2×10⁻⁵ m/s |
+| C6 200 s burn along a fixed inertial direction, and coast | 0.0125 s | 13 mm (mass within 4.3×10⁻⁷ kg) | 1.3×10⁻⁵ m/s |
+| C7 inclined retrograde hyperbolic flyby | 0.025 s | 14 mm | 2.6×10⁻⁶ m/s |
+
+**Step sizes.** These low Earth orbits turn about ten times faster than the game's
+encounters and the bounds are relative 7×10⁻⁹, hence steps of 6.25–25 ms; at the
+game's 1 s play step they would miss by metres. Accuracy at the play step is shown
+separately, at the game's own scale, by the physics vectors (`tests/vectors/`).
+Quote the steps with any claim made from this table.
+
+**C6 converges to about 10 mm, not to zero.** That is the GMAT reference's own burn
+stop-time residual (10.2 mm in the RK4 check below), not a floor in the game's
+integrator.
+
+**Newtonian only.** Point-mass Earth, no perturbations. Nothing here tests the game's
+fictional inverse-2.5 law, more than one attracting body, the game's length and time
+scales, attitude dynamics, or a thrust direction that follows the velocity out of the
+plane.
+
 ## Model and provenance
 
 [ASSUMED] All four cases model an isolated point-mass Earth, with Cartesian state
@@ -277,7 +324,13 @@ and the `checks` above), followed by:
 t_s,x_m,y_m,vx_mps,vy_mps,mass_kg
 ```
 
-## Comparison tolerance for phase 2A
+## Comparison tolerance for phase 2A (historical)
+
+*Historical: 1D's proposal, written before the game was compared. It recommends a
+fixed-step RK4 and says no game comparison has been run; the game was in fact compared
+with its own Verlet integrator at the steps in
+[The game comparison](#the-game-comparison-final-method-and-results), against these
+same bounds (P17). The reasoning for the bounds below still stands.*
 
 [DEMONSTRATED: `reference.py feasibility`] A plain double-precision fixed-step RK4
 of the stated model (Python, **not the game**) reproduces every sample of all four
@@ -558,7 +611,11 @@ velocity-following frame, mirrored in y, or 1 % too strong; C4's prograde law fl
 in C6; a coast mistimed by 0.01 s; and that the generator still emits 1D's four
 scripts byte for byte.
 
-### Comparison tolerance for the game's 3D simulation
+### Comparison tolerance for the game's 3D simulation (historical)
+
+*Historical: written before the game's 3D simulation was compared. The bounds below
+are the ones the comparison used; the comparison itself has since been run, and its
+results are in [The game comparison](#the-game-comparison-final-method-and-results).*
 
 [DEMONSTRATED: `reference.py feasibility`] A plain double-precision fixed-step RK4 of
 the stated model in three dimensions (Python, **not the game**) reproduces every
@@ -617,7 +674,8 @@ raised the orbit.
 
 They do not show:
 
-- that the game matches them. That test is still to be written and run.
+- that the game matches them: the vectors are GMAT's; the game's agreement is shown by
+  its own test ([The game comparison](#the-game-comparison-final-method-and-results)).
 - anything about a thrust direction that follows the velocity out of the plane: C4
   follows the velocity but is planar, and C6 is three-dimensional but inertially
   fixed. No case combines the two.
@@ -661,16 +719,14 @@ They do not show:
 Measured by 2A in `src/sim/gmat.test.ts` (DECISIONS D4, P17). Keep the step sizes in
 any shortened version of the claim.
 
-**Inclined cases (2G): not part of the claim yet.** The paragraph above covers the
-four planar cases, which is everything the game has been compared with. Do not add
-C5–C7 to the submission until the game's 3D simulation has been tested against them.
-When it has, a sentence of this form can follow, with the bracketed parts taken from
-that test:
+**Inclined cases (2G), ready to follow the paragraph above** (measured in
+`src/sim/gmat.test.ts`, thread 2G checkpoint 2):
 
 > Three further GMAT cases out of the equatorial plane (an inclined eccentric orbit,
 > a retrograde hyperbolic flyby, and a 200-second engine burn in a fixed inertial
 > direction that turns the orbit plane by 2.8°) check the same model in three
-> dimensions; the game's integrator matches them to within [measured error] at
-> [step sizes].
+> dimensions; the game's integrator matches them to within 1.4 cm at 12.5–25
+> millisecond steps.
 
-The GMAT half of that sentence is established here. The bracketed half is not.
+Keep the step sizes, and the limit to ordinary (Newtonian) gravity, in any shortened
+version.
