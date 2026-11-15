@@ -71,6 +71,20 @@ try {
     ['end', length - 1 / 165],
     ['repeat', length / 2],
   ]) {
+    if (name === 'repeat') {
+      // Exercise cross-shot state too: a deterministic seek must survive other shots' ranges,
+      // hologram modes, camera poses and outside scenery sharing this same RoomView.
+      await js(`(async () => {
+        const { sampleForReview } = await import('/src/trailer/rig/index.ts');
+        const { beat } = await import('/src/trailer/timeline.ts');
+        for (const element of document.querySelectorAll('[data-tv-scene]')) {
+          const id = element.dataset.tvScene;
+          if (id === ${JSON.stringify(scene)}) continue;
+          await sampleForReview(id, 0);
+          await sampleForReview(id, beat(id).length - 1 / 165);
+        }
+      })()`);
+    }
     await sample(local);
     const { data } = await send('Page.captureScreenshot', { format: 'png' });
     const bytes = Uint8Array.from(atobNode(data));

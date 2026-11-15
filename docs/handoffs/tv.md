@@ -10,6 +10,7 @@ Review draft under A26: each shot still needs the owner's approval in the traile
 - `src/trailer/scenes/wells/`: real run-0 Garden geometry and optical fixture; prepared window contours and staged FLIGHT reconstruction; display-only yaw after 0.6 s.
 - `src/trailer/scenes/console/`: the real opening's Earth, stars and held standing pose, with a staged slowly turning FLIGHT ship and level disc.
 - `src/trailer/scenes/slingshot/`: a real played Beta pass, packed optical keyframes and a reproducible command tape; lighter staged hull strain.
+- `src/trailer/scenes/lattice/`: the Cathedral's real terminal rock window, its truth-layout FLIGHT diagram staged through 3C's view, and the game's loss animation aligned to 9.0 s.
 - `src/view3d/room/RoomView.ts`: **owner-authorized exception**, one additive `renderScriptedFrame(data, shot, time)` beside the opening's scripted-shot method. Applies camera, frame, light, hologram and `sampleLoss` without advancing the room clock. Existing methods, PF renderer setup and 3F region/range code are untouched. The game never calls it.
 - `src/view3d/sky/`: **no change needed**. These fixtures keep the sun visible; the existing exposure remains at its initialized daylight target. The staged braid also uses a fixed visible sun. No wall-clock exposure transition enters these shots.
 
@@ -67,8 +68,37 @@ Reproduce: evaluate `scenes/slingshot/capture.js` using `rig/capture.mjs` in a d
 
 [DEMONSTRATED: slingshot-review.json] One canvas, zero console errors, exact repeat image. RTX 4050: median 6.1 ms, p95 12.2 ms, worst 30.4 ms; CPU render p95 3.3 ms. The few long intervals still prevent a strict no-hitch 60-fps claim.
 
+## Lattice — 7.3–10.3 s
+
+[Start](tv/lattice-start.png) · [Middle](tv/lattice-middle.png) · [End](tv/lattice-end.png) · [Timing and seek report](tv/lattice-review.json) · Trailer hold: `?still=8.8`
+
+![Looking down into the staged lattice](tv/lattice-start.png)
+
+[DEMONSTRATED: played capture, source build `93b555c`] `chain-link`, run 0, a fresh attempt coasting with no controls, dt 0.1 s, through real `GameSession.stepTicks(5)`. It reaches a real terminal event at **249.5 s, cause `power`**. The recorded telemetry has destroyed batteries, camera, science processor, forward RCS and other equipment. It is not a fabricated collision event or a win. `capture.js` records the last twenty seconds and the real seeded layout; evaluate it via `rig/capture.mjs`, then `node src/trailer/rig/compact.mjs lattice` to reproduce the packed fixture. The committed fixture is 564,858 bytes.
+
+The terminal optical eye is held while the camera looks down, then tilts up from trailer 8.4 to 9.0 s. The window uses only the real rock optics; no lattice is drawn outside. At **9.0 s**, `sampleLoss(local - 1.7, false)` plays the game's damage shake, room dips and hologram death at **1×**, through its first 1.3 seconds. Its later black cut is never sampled. The alarm comes on at 9.0 and holds. World-time compression: **held terminal frame**, not a compressed twenty-second fly-through.
+
+**Every staged element:** the truth-layout reconstruction (R46 is absent on this source build), its full immediate reveal and zero-uncertainty strands, hiding its unresolved-volume hatch and status labels without claiming measured coverage; the look-down/look-up camera; the editorial placement/hold of the real terminal state at trailer 9.0. The fixture retains the actual loss cause. The scene does not claim the model acquired these strands.
+
+### Exact lighting handoff to TR (R43)
+
+The room level starts at 1. From 9.0 it follows the game's continuous sag `1 - 0.86 × smoothstep(0, 1, (t - 9)/1.5)`. Inside each dip, multiply that sag by **0.06**. These are room-light fractions, not whole-window exposure values; no sky or sun pulse is added.
+
+| Absolute start | Duration | Level at start | Level on recovery |
+|---:|---:|---:|---:|
+| 9.14 | 0.08 | 0.058735 | 0.949928 |
+| 9.60 | 0.10 | 0.041837 | 0.612936 |
+| 10.10 | 0.12 | 0.017451 | 0.218711 |
+
+The hologram is off during each dip, returns after the first two and dies permanently at **10.10**. At the 10.3 cut, room light is **0.18178963**, held into the braid. `light.ts` exports `STRIKE`, `DAMAGE_DIPS` (including native levels) and `BRAID_ROOM_LEVEL`. Alarm level is continuously 1 from 9.0 through the braid; no pulses.
+
+[DEMONSTRATED: `light.test.ts`] Counting the room dips **together with** TR's title/braid dips and black transitions gives at most three authored falls and three rises in any closed one-second interval. This schedule test does not replace TR's final rendered-video check of cuts and occupied image area.
+
+[DEMONSTRATED: lattice-review.json] One canvas, zero console errors, exact repeat image **after visiting all four other room shots**. RTX 4050: median 6.1 ms, p95 18.1 ms, worst 30.4 ms; CPU render p95 3.7 ms. Sustained-60 gate remains open.
+
 ## Requests outside TV ownership
 
 - Owner: approve each concrete shot under A26; the review draft is not an approval claim.
+- TR: register the exact 9.14/9.60/10.10 room dips above in the central flash accounting, without drawing a second page veil over them. TV already applies them through `sampleLoss`; `light.test.ts` checks the combined schedule from TV's owned folder. Strike/failure/alarm audio already aligns at 9.0 s, so no cue move is requested.
 - VX/integrator: the owner's approved R54 Twin Deeps and Cathedral arrivals were still an unmerged VX draft when TV began. TV uses this branch's committed sky; no uncommitted region edits were copied. Twin Deeps (Galaxy/warm ivory) and Cathedral (Pair right, Ember Wheel left/pearl) are approved upstream; **Well Garden remains provisional**. Re-review the shots after the approved region work is integrated.
 - PF/TR: any renderer-level performance changes remain outside this exception. TV reports full timings rather than changing PF's setup.
