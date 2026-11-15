@@ -53,3 +53,9 @@ export {
   type ProcedureMatch,
   type SaveProcedureInput,
 } from './procedures.ts';
+export {
+  latticeFunctionLog,
+  latticeRetention,
+  type LatticeFunctionLog,
+  type LatticeRetention,
+} from './lattice.ts';

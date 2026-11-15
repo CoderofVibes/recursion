@@ -47,7 +47,9 @@ const emp = await model.empirical(); // empirical radial, tangential and orbit-n
 
 Every call returns plain JSON. `ModelState` (contract) is the summary the console shows; forecasts come back already passed through `issueForecast` (deep-frozen, never recomputed).
 
-**The entry point (`index.ts`) exports values only from the light modules**: `createModelClient`, `contextFromBriefing` and `contextFor` (`context.ts`), and the settings; everything else is exported as types. Importing it therefore does not put the estimator in the page's bundle: the model runs in its worker, and the in-thread fallback (tests, no `Worker`) imports `service.ts` on its first call (S15 rank 5). Calls on the fallback run in the order they are made, even those made before `init` has resolved, and none runs after `terminate`. Code that runs the model in-thread directly (tests, tools) imports the module it needs (`./service.ts`, `./engine.ts`, …).
+**The entry point (`index.ts`) exports values only from the light modules**: `createModelClient`, `contextFromBriefing` and `contextFor` (`context.ts`), and the settings; everything else is exported as types. Importing it therefore does not put the estimator in the page's bundle: the model runs in its worker, and the in-thread fallback (tests, no `Worker`) imports `service.ts` on its first call (S15 rank 5). Calls run one at a time in the order they are made (worker and fallback alike), even those made before `init` has resolved, and none runs after `terminate`.
+
+**Redundant work (S20).** A `refresh` or `refit` still waiting, with only `append`s queued after it, is superseded by a later `refresh` or `refit`, which rebuilds from everything appended; the earlier caller gets the later result. A refit is superseded only by a refit. Nothing else is merged, dropped or reordered: appends always run, and nothing crosses a forecast, a load or a rule decision. `busy()` says what is running and since when, how many calls wait, and how many were superseded, so a screen can show honest progress during a long refit. Code that runs the model in-thread directly (tests, tools) imports the module it needs (`./service.ts`, `./engine.ts`, …).
 
 ## Client methods (`client.ts` → `service.ts`)
 
@@ -64,8 +66,28 @@ Every call returns plain JSON. `ModelState` (contract) is the summary the consol
 | `adopt(ext, at?)` / `revoke(ext, at?)` | The player's decision, appended to the decision record (`at`: wall-clock ISO time). Only a rule whose latest test passed (`adoptable`) can be adopted; only an adopted one revoked. Test records are never edited | +1 |
 | `state()`, `extensions()`, `decisions()`, `adopted()` | Current `ModelState`; every rule test (`BlackBoxArchive.extensionTests`); every adopt and revoke (`extensionDecisions`); the adopted rules they leave (`adoptedExtensions`). A rule's status in `ModelState.extensions` comes from its last decision, so a revoked rule stays revoked after a reload | — |
 | `report()`, `burns(attempts?)`, `empirical()` | Diagnostics (`report.ts`) | — |
+| `lattice(attemptId?, now?)` | The lattice rebuilt from an attempt's own records (A16): one `BelievedField` per recorded field, `visual` in 3C's `lattice-observations-v1` display schema, for `BelievedWorld.fields`. Default: the attempt in progress. `now`: only frames delivered by then. An earlier attempt comes back in its own frame (an archive view). `ModelService.latticeDetail` gives the full reconstruction | — |
+| `busy()` | What the model is doing (above); synchronous, on the client only | — |
 
 `ModelService` (in-thread, synchronous) has the same methods for code that already runs in a worker; `buildModel(input)` is the pure function underneath.
+
+## The lattice (A16; 3C R9; S17 `docs/studies/s17/black-box.md`)
+
+`lattice/` rebuilds the lattice from recorded `lattice.angular-fragments.v2` frames (3C's channel: anonymous gnomonic image fragments in a measured body-frame camera basis, `field-signal` measurements). Recorded inputs only: no layout, seed, strand or layer identity, true pose or mesh crosses (P11).
+
+- `frames.ts`: a strict decoder of 3C's v2 layout (the same validation as 3C's `decodeLatticeFrame`; anything malformed or unknown is rejected, never guessed) and a reader of raw tiles' identity and times. Frames in canonical acquisition order; a product counts only once delivered.
+- `poses.ts`: the camera's believed pose at each frame's **acquisition** (not product delivery): the star tracker's recorded attitude; the ship's believed path from the arc's solution (Tier G, or the arc's own fit), else the arrival estimate carried forward under the law in force with the executed thrust; position and velocity covariance (× s²), never smaller than the arrival survey's.
+- `reconstruct.ts` (`LATTICE_RECONSTRUCTION_VERSION` 1; settings hashed into every result):
+  1. per frame, coincident fragment endpoints are one node and each fragment an observed edge;
+  2. nodes are linked frame to frame by their inertial rays only when the match is mutual, gated and unambiguous (ratio test): an ambiguous node starts a new track, never settled from a truth mesh;
+  3. each track is triangulated on its earlier observations (a linear ray fit, then Gauss–Newton on its slope residuals), then all are fitted together with the pass's pose error, an offset and a drift held by the believed poses' covariance (bundle adjustment: drifting navigation is estimated from the scene); the later observations test each point (held-out share 10%, at least 3; χ²/n ≤ 1 + 3√(2/n)); tracks that fail are dropped from the pose estimate and the rest refitted;
+  4. a point's covariance is the fit's own (slope noise, the frame-common rotation of the measured basis, the attitude) plus the pose error's share; the common offset the data cannot see stays at its prior and does not average away. With no drift prior this is exactly S17's fit;
+  5. strands are chains of supported points along edges observed in at least two frames: observed connected support only;
+  6. coverage is `unresolved` over the volume the recorded views pointed at, and absent elsewhere (unknown). Nothing is `clear-supported`: that needs an independently calibrated detection model, which does not exist yet.
+- `visual.ts`: the `BelievedField` entries. `frameId` and `attemptId` name the run; `processing` comes from the latest processed frame (none: never live); `enabled` from the science processor's last commanded mode; `reconstruction` (outside 3C's schema, ignored by its reader) records the version, settings hash, model version and what was rejected and why.
+- Never stored: rebuilt from the records (P8), cached in memory per snapshot and record size only. Changing the algorithm bumps the version. Earlier runs are archive views in their own frame, never current obstacles (S17).
+
+[DEMONSTRATED: `src/model/lattice.test.ts`] S17's reference reproduced: four junctions within 1e-6 m of S17's positions, both covariances to 1e-6, held-out RMS to 1e-6, 48 trained and 6 held out; six frames, no parallax, an occluded corner and no records give what S17's do. [DEMONSTRATED: `src/model/lattice-flight.test.ts`] A flight-like fence through the service (fragments made as 3C's sensor makes them, navigation on the arrival survey alone): every supported point within its own covariance (none beyond 5σ, at most 2% beyond 3.76), strands only between real neighbours, σ never below the survey's 0.5 m, rebuild from the archive equal to live, frames counted only once delivered, an earlier run in its own frame, and nothing drawn where association is ambiguous.
 
 ## Context (`ModelContext`, from the briefing)
 
@@ -168,5 +190,6 @@ This scenario is heavier than the table above (two bodies, a 12 h arc): it was a
 - `probes.test.ts`, `runs.test.ts`, `revision2.test.ts` (planar scenarios, in the planar reduction): tracked asteroids as probes of the law, geometry per run (A10) and decisions across reloads, aging and per-attempt engine values, a carried rule in a later encounter.
 - `binary.test.ts` (3D, the Gravity range's binary and survey σ): the present state from Beta after six hours on it, and a plain stale report when nothing was tracked; Beta's track and the ship honest with the wrong law and Beta never looked at; the closest approach to Beta; briefing propagation under the law in force; a forecast asked for at commitment, the same after an hour more of records and the plan's own burn, and honest after a refresh.
 - `s8.test.ts`: S8's states carried by this integrator within S8's tolerances; the model on S8's wrong-law dive (the forecast frozen at commitment, and fresh forecasts down to contact: honest, none claims a safe pass, contact shown ahead) and on its informed ring crossing (rock 140's closest approach and σ).
-- `client.test.ts`: the lazy in-thread client's order and termination.
+- `client.test.ts`: the lazy in-thread client's order and termination; superseded refreshes and refits (every record still arrives, nothing crosses a forecast, a refresh never replaces a refit).
+- `lattice.test.ts`, `lattice-flight.test.ts` (`lattice-harness.ts` writes 3C's v2 layout for test records): above.
 - `short-attempts.test.ts`: the control-room failure and every short or cut-off attempt (planar reduction), and the same rule with six state numbers: one fix cannot give a velocity (z included), bearings without an elevation leave z undetermined and the attempt is left out with the reason, a record ending inside an out-of-plane burn. Nothing throws, nothing is NaN, rebuild = live throughout.
