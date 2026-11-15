@@ -114,6 +114,7 @@ const base: LatticeVisual = {
   updatedAt: 100,
   enabled: true,
   quality: 1,
+  processing: { reportedAt: 100, validUntil: 101, available: true },
   requestedVolume: { center: { x: 70, y: 0, z: 0 }, halfSize: { x: 115, y: 125, z: 125 } },
   strands: [],
   coverage: [],
@@ -122,13 +123,15 @@ const base: LatticeVisual = {
 let mode: ReconstructionMode = 'thread';
 let retained = 0;
 let previousTime = 0;
-const initialFrame = Number(new URLSearchParams(location.search).get('frame') ?? 0);
+const previewParams = new URLSearchParams(location.search);
+const silent = previewParams.has('silent');
+const initialFrame = Number(previewParams.get('frame') ?? 0);
 let activeTime = Number.isFinite(initialFrame) ? Math.max(0, initialFrame) * 0.6 : 0;
 function animate(ms: number): void {
   const seconds = ms / 1000;
   const dt = Math.min(0.1, seconds - previousTime);
   previousTime = seconds;
-  if (mode !== 'off') activeTime += dt;
+  if (mode !== 'off' && !silent) activeTime += dt;
   retained = Math.min(fragments.length, Math.floor(activeTime / 0.6));
   const data = {
     ...base,
@@ -149,7 +152,7 @@ function animate(ms: number): void {
     },
     snapshot: {
       ...viewSnapshot,
-      t: 100,
+      t: silent ? 108 : 100,
       world: {
         ...viewSnapshot.world,
         ship: { ...viewSnapshot.world.ship, position: { x: -45, y: 0, z: 0 } },
@@ -199,18 +202,31 @@ function Preview() {
         <ChainLinkPanel
           state={{
             mode: selected,
+            now: silent ? 108 : 100,
+            readings: {
+              processor: { reportedAt: 100, validUntil: 101, available: true },
+              recorder: { reportedAt: 100, validUntil: 101, available: true },
+              sensors: { reportedAt: 100, validUntil: 101, available: true },
+              thermal: { reportedAt: 100, validUntil: 101, available: true },
+              reconstruction: { reportedAt: 99.4, validUntil: 101, available: selected !== 'off' },
+            },
             discovered: true,
-            recording: selected !== 'off',
+            recording: silent || selected !== 'off',
             optionalBytesRemaining: 7_900_000_000,
             recordingBytesPerSecond: 40_960,
             requestedProcessorW: selected === 'thread' ? 1000 : selected === 'survey' ? 350 : 0,
-            deliveredProcessorW: selected === 'thread' ? 1000 : selected === 'survey' ? 350 : 0,
-            chainHeatW: selected === 'thread' ? 1270 : selected === 'survey' ? 620 : 270,
-            updatesPerSecond: selected === 'thread' ? 5 / 3 : selected === 'survey' ? 0.2 : 0,
+            deliveredProcessorW:
+              silent || selected === 'thread' ? 1000 : selected === 'survey' ? 350 : 0,
+            chainHeatW: silent || selected === 'thread' ? 1270 : selected === 'survey' ? 620 : 270,
+            updatesPerSecond:
+              silent || selected === 'thread' ? 5 / 3 : selected === 'survey' ? 0.2 : 0,
             retainedFrames: count,
+            diagnosticSnapshot:
+              count > 0
+                ? { recordedAt: 99, bytes: 1024, sampleId: 'fixture-diagnostic:99' }
+                : undefined,
             supportedFragments: count,
             coveredPatches: 0,
-            latestEvidenceAgeS: selected === 'off' ? null : 0.6,
             validity: 'Display fixture · no opening clearance certified',
           }}
           onMode={(next) => {

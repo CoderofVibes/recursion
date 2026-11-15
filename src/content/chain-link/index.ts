@@ -15,6 +15,7 @@ import { latticeFieldFactory } from '../../sim/fields/lattice.ts';
 import {
   createChainLinkLayout,
   CONTENT_VERSION,
+  STACK_LENGTH,
   type ChainLinkLayout,
   type ChainLinkExit,
 } from './layout.ts';
@@ -22,7 +23,8 @@ import {
 export { createChainLinkLayout, CONTENT_VERSION } from './layout.ts';
 export const ENCOUNTER_ID = 'chain-link';
 export const SEED = 'unseen-cathedral-1';
-export const SAVE_FORMAT = 1;
+// Twenty fences and diagnostic tiles must not share an archive with the eight-sheet prototype.
+export const SAVE_FORMAT = 2;
 export const LAW = { exponent: 2.5, referenceRadius: 1_000_000 } as const;
 
 /** Ready for 2F's ENCOUNTERS array; run identity comes from its persistent archive. */
@@ -193,11 +195,11 @@ export function createChainLink(
     ],
     // Rocks frame an ordinary-looking gap along +x. The measured centre route and
     // exterior probe remain physically open; nothing changes when the player turns.
-    asteroids: Array.from({ length: 54 }, (_, i) => ({
+    asteroids: Array.from({ length: 160 }, (_, i) => ({
       id: `cathedral-rock-${i}`,
       radius: rocks.range(3, 10),
       position: layout.point({
-        x: rocks.range(-100, 2250),
+        x: rocks.range(-100, STACK_LENGTH + 150),
         y: (i % 2 ? 1 : -1) * rocks.range(100, 190),
         z: rocks.range(-150, 160),
       }),

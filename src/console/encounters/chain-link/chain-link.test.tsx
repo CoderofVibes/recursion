@@ -1,10 +1,18 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { ChainLinkPanel, recordingDuration } from './ChainLinkPanel.tsx';
+import { ChainLinkPanel, channelIsFresh, recordingDuration } from './ChainLinkPanel.tsx';
 import type { ChainLinkPanelState } from './ChainLinkPanel.tsx';
 import { latticeModeCommands } from './commands.ts';
 
 const state: ChainLinkPanelState = {
+  now: 10,
+  readings: {
+    processor: { reportedAt: 10, validUntil: 11, available: true },
+    recorder: { reportedAt: 10, validUntil: 11, available: true },
+    sensors: { reportedAt: 10, validUntil: 11, available: true },
+    thermal: { reportedAt: 10, validUntil: 11, available: true },
+    reconstruction: { reportedAt: 10, validUntil: 11, available: true },
+  },
   mode: 'off',
   discovered: false,
   recording: true,
@@ -17,11 +25,91 @@ const state: ChainLinkPanelState = {
   retainedFrames: 0,
   supportedFragments: 0,
   coveredPatches: 0,
-  latestEvidenceAgeS: null,
   validity: 'Channel available · allocate processing',
 };
 
 describe('Black Box lattice instrument', () => {
+  it('keeps last readings and hardened-console controls when instruments go silent', () => {
+    const dead = {
+      ...state,
+      now: 20,
+      discovered: true,
+      mode: 'thread' as const,
+      deliveredProcessorW: 1000,
+      requestedProcessorW: 1000,
+      updatesPerSecond: 5 / 3,
+      firstThreat: { component: 'Camera', marginM: -2, sigmaM: 0.5 },
+    };
+    const html = renderToStaticMarkup(<ChainLinkPanel state={dead} onMode={() => undefined} />);
+    expect(channelIsFresh(dead, 'processor')).toBe(false);
+    expect(recordingDuration(dead)).toBe('STALE');
+    expect(html).not.toContain('>LIVE<');
+    expect(html).toContain('1000 / 1000 W');
+    expect(html).toContain('1.67');
+    expect(html).toContain('10.0'); // Age advances from the acquisition time, not UI snapshot time.
+    expect(html).toContain('Recorder telemetry stale');
+    expect(html).toContain('Camera earlier exposure estimate');
+    expect(html).toContain('STALE · -2.0 m');
+    expect(html).not.toContain('disabled=""');
+    expect(html).toContain('data-status="stale"');
+  });
+  it('does not call a dead camera live because processor power and recorder telemetry are fresh', () => {
+    const deadCamera = {
+      ...state,
+      discovered: true,
+      mode: 'thread' as const,
+      deliveredProcessorW: 1000,
+      readings: {
+        ...state.readings,
+        sensors: { reportedAt: 10, validUntil: 11, available: false },
+      },
+    };
+    const html = renderToStaticMarkup(
+      <ChainLinkPanel state={deadCamera} onMode={() => undefined} />,
+    );
+    expect(html).not.toContain('>LIVE<');
+    expect(html).toContain('Sensor readings stale');
+    expect(html).toContain('Earlier covered patches');
+    expect(channelIsFresh({ ...state, readings: undefined }, 'processor')).toBe(false);
+    expect(channelIsFresh({ ...state, now: 9 }, 'processor')).toBe(false);
+  });
+  it('does not refresh an earlier threat when unrelated reconstruction telemetry updates', () => {
+    const html = renderToStaticMarkup(
+      <ChainLinkPanel
+        state={{
+          ...state,
+          mode: 'thread',
+          deliveredProcessorW: 1000,
+          firstThreat: {
+            component: 'Radiator tip',
+            marginM: -1,
+            sigmaM: 0.5,
+            reading: { reportedAt: 1, validUntil: 2, available: true },
+          },
+        }}
+        onMode={() => undefined}
+      />,
+    );
+    expect(html).toContain('>LIVE<');
+    expect(html).toContain('Radiator tip earlier exposure estimate');
+    expect(html).toContain('STALE · -1.0 m');
+  });
+  it('shows the retained raw clue without turning it into reconstruction evidence', () => {
+    const html = renderToStaticMarkup(
+      <ChainLinkPanel
+        state={{
+          ...state,
+          diagnosticSnapshot: { recordedAt: 9, bytes: 1024, sampleId: 'retained:raw:9' },
+        }}
+        onMode={() => undefined}
+      />,
+    );
+    expect(html).toContain('Last channel snapshot');
+    expect(html).toContain('1024 B · 1.0 s ago');
+    expect(html).not.toContain('Lattice reconstruction');
+    expect(html).not.toContain('Supported fragments');
+    expect(html).not.toContain('>LIVE<');
+  });
   it('requests real installed sensor-chain commands without changing flight controls', () => {
     for (const mode of ['survey', 'thread'] as const) {
       const commands = latticeModeCommands(mode);

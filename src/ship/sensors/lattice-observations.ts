@@ -1,46 +1,16 @@
 /** Recorded data only. This module deliberately imports no truth or field implementation. */
 import type { Measurement } from '../../contracts/measurements.ts';
 import type { Vec3 } from '../../lib/vec3.ts';
+import type {
+  LatticeAngularFragment,
+  LatticeObservationFrame,
+} from '../../contracts/lattice-acquisition.ts';
+export type {
+  LatticeAngularFragment,
+  LatticeObservationFrame,
+} from '../../contracts/lattice-acquisition.ts';
 
 export const LATTICE_CHANNEL = 'lattice.angular-fragments.v2';
-
-export interface LatticeAngularFragment {
-  /** Observation-local identity, never a truth strand or layer identity. */
-  readonly id: string;
-  /** Gnomonic image slopes in the recorded camera basis, dimensionless. */
-  readonly start: readonly [number, number];
-  readonly end: readonly [number, number];
-  readonly sigma: number;
-}
-
-export interface LatticeObservationFrame {
-  readonly version: 2;
-  readonly id: string;
-  readonly field: string;
-  readonly sequence: number;
-  readonly acquisition: readonly [number, number];
-  /** Processed product completion/availability time; never replaces ray acquisition time. */
-  readonly availableAt: number;
-  readonly source: string;
-  readonly processorPower: number;
-  readonly cameraPower: number;
-  readonly effectiveRate: number;
-  readonly exposure: number;
-  /** Measured body-frame camera basis. A single error rotates all rays in this frame together. */
-  readonly basis: { readonly forward: Vec3; readonly right: Vec3; readonly up: Vec3 };
-  /** Isotropic angular one-sigma, rad; covariance = sigma² I on a COMMON small rotation. */
-  readonly basisSigma: number;
-  readonly basisCorrelation: 'frame-common-rotation';
-  readonly coverage: {
-    /** Angular detections alone do not certify an empty 3D opening. */
-    readonly status: 'unresolved';
-    readonly halfAngle: number;
-    readonly rangeLimit: number;
-    readonly angularResolution: number;
-    readonly truncated: boolean;
-  };
-  readonly fragments: readonly LatticeAngularFragment[];
-}
 
 const vector = (a: readonly number[], i: number): Vec3 => ({
   x: a[i]!,

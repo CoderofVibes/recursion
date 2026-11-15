@@ -5,18 +5,25 @@ import { createRng } from '../../lib/rng.ts';
 import { add, type Vec3 } from '../../lib/vec3.ts';
 import type { LatticeLayer } from '../../sim/fields/lattice.ts';
 
-export const CONTENT_VERSION = 'cathedral-s17-1';
+export const CONTENT_VERSION = 'cathedral-a16-twenty-2';
 export const PROFILE = { pitch: 80, radius: 4, peakIntensity: 20, halfExtent: 200 } as const;
-export const REFERENCE_CENTRES: readonly Vec3[] = [
-  { x: 0, y: 40, z: 40 },
-  { x: 300, y: 68, z: 22 },
-  { x: 600, y: 36, z: 60 },
-  { x: 900, y: 68, z: 40 },
-  { x: 1200, y: 40, z: 12 },
-  { x: 1500, y: 12, z: 40 },
-  { x: 1800, y: 44, z: 68 },
-  { x: 2100, y: 20, z: 40 },
-];
+export const FENCE_COUNT = 20;
+export const FENCE_SPACING = 400;
+export const STACK_LENGTH = (FENCE_COUNT - 1) * FENCE_SPACING;
+export const FORWARD_EXIT_X = STACK_LENGTH + 350;
+/**
+ * [ASSUMED: A16] Twenty cells wind through both transverse axes. A smooth broad loop
+ * retains 64 m of phase variation without paying for nineteen independent reversals.
+ * The production-allocation qualification, not this geometric construction, sets the budget.
+ */
+export const REFERENCE_CENTRES: readonly Vec3[] = Array.from({ length: FENCE_COUNT }, (_, i) => {
+  const phase = (2 * Math.PI * i) / (FENCE_COUNT - 1);
+  return {
+    x: i * FENCE_SPACING,
+    y: i === FENCE_COUNT - 1 ? 40 : 40 + 32 * Math.sin(phase),
+    z: i === FENCE_COUNT - 1 ? 40 : 40 + 32 * (1 - Math.cos(phase)),
+  };
+});
 
 export interface ChainLinkExit {
   readonly id: 'forward' | 'cross-transfer';
@@ -99,7 +106,12 @@ export function createChainLinkLayout(seed: string, catalogueIndex?: number): Ch
     layers,
     openingCentres,
     exits: [
-      { id: 'forward', destination: 'C04', center: point({ x: 2450, y: 20, z: 40 }), radius: 120 },
+      {
+        id: 'forward',
+        destination: 'C04',
+        center: point({ x: FORWARD_EXIT_X, y: 40, z: 40 }),
+        radius: 120,
+      },
       {
         id: 'cross-transfer',
         destination: 'P03',
@@ -110,22 +122,71 @@ export function createChainLinkLayout(seed: string, catalogueIndex?: number): Ch
   };
 }
 
-/** S17 prescribed path, for qualification only. No steering/planning API exposes it. */
-export function referenceDatum(x: number): Vec3 {
-  if (x <= 0) return { x, y: 40, z: 40 };
-  if (x >= 2100) return { x, y: 20, z: 40 };
-  const i = Math.floor(x / 300);
-  const a = REFERENCE_CENTRES[i]!;
-  const b = REFERENCE_CENTRES[i + 1]!;
-  const u = (x - a.x) / 300;
-  const h = u * u * u * (10 - 15 * u + 6 * u * u);
-  return { x, y: a.y + (b.y - a.y) * h, z: a.z + (b.z - a.z) * h };
+export interface ReferencePath {
+  readonly position: Vec3;
+  readonly first: Vec3;
+  readonly second: Vec3;
 }
+/** Quintic Hermite segment: value, d/dx and d²/dx² agree at each boundary. */
+function hermite(
+  x: number,
+  start: number,
+  span: number,
+  a: readonly number[],
+  b: readonly number[],
+): readonly number[] {
+  const u = (x - start) / span;
+  const c0 = a[0]!,
+    c1 = a[1]! * span,
+    c2 = (a[2]! * span * span) / 2;
+  const d = b[0]! - c0 - c1 - c2;
+  const e = b[1]! * span - c1 - 2 * c2;
+  const f = b[2]! * span * span - 2 * c2;
+  const c3 = 10 * d - 4 * e + f / 2,
+    c4 = -15 * d + 7 * e - f,
+    c5 = 6 * d - 3 * e + f / 2;
+  return [
+    c0 + u * (c1 + u * (c2 + u * (c3 + u * (c4 + u * c5)))),
+    (c1 + u * (2 * c2 + u * (3 * c3 + u * (4 * c4 + u * 5 * c5)))) / span,
+    (2 * c2 + u * (6 * c3 + u * (12 * c4 + u * 20 * c5))) / (span * span),
+  ];
+}
+/**
+ * Truth-side qualification only. Continuous curvature keeps lateral momentum between
+ * fences instead of spending propellant stopping and restarting at every opening.
+ * This is an authoring oracle, not an acquired route or a player-facing autopilot.
+ */
+export function referencePath(x: number): ReferencePath {
+  const k = (2 * Math.PI) / STACK_LENGTH;
+  let y: readonly number[], z: readonly number[];
+  if (x <= -500) {
+    y = [0, 0, 0];
+    z = [0, 0, 0];
+  } else if (x < 0) {
+    y = hermite(x, -500, 500, [0, 0, 0], [40, 32 * k, 0]);
+    z = hermite(x, -500, 500, [0, 0, 0], [40, 0, 32 * k * k]);
+  } else if (x <= STACK_LENGTH) {
+    y = [40 + 32 * Math.sin(k * x), 32 * k * Math.cos(k * x), -32 * k * k * Math.sin(k * x)];
+    z = [40 + 32 * (1 - Math.cos(k * x)), 32 * k * Math.sin(k * x), 32 * k * k * Math.cos(k * x)];
+  } else if (x < FORWARD_EXIT_X) {
+    y = hermite(x, STACK_LENGTH, FORWARD_EXIT_X - STACK_LENGTH, [40, 32 * k, 0], [40, 0, 0]);
+    z = hermite(x, STACK_LENGTH, FORWARD_EXIT_X - STACK_LENGTH, [40, 0, 32 * k * k], [40, 0, 0]);
+  } else {
+    y = [40, 0, 0];
+    z = [40, 0, 0];
+  }
+  return {
+    position: { x, y: y[0]!, z: z[0]! },
+    first: { x: 1, y: y[1]!, z: z[1]! },
+    second: { x: 0, y: y[2]!, z: z[2]! },
+  };
+}
+export const referenceDatum = (x: number): Vec3 => referencePath(x).position;
 
 /** Real finite exterior alternative; a truth-side cost probe, not a secret wall. */
 export const EXTERIOR_PROBE: readonly Vec3[] = [
   { x: -500, y: 0, z: 0 },
   { x: -320, y: -350, z: -80 },
-  { x: 2320, y: -350, z: -80 },
-  { x: 2450, y: 20, z: 40 },
+  { x: STACK_LENGTH + 220, y: -350, z: -80 },
+  { x: FORWARD_EXIT_X, y: 40, z: 40 },
 ];

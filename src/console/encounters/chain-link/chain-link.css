@@ -1,6 +1,19 @@
 .cl-instrument {
   display: grid;
   gap: var(--rx-gap);
+  min-width: 0;
+}
+
+.cl-instrument > * {
+  min-width: 0;
+}
+.cl-instrument .rx-alert {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+}
+.cl-instrument .rx-alert__detail {
+  grid-column: 2;
+  white-space: normal;
 }
 
 .cl-legend {

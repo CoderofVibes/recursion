@@ -13,7 +13,15 @@ import { CHAIN_LINK_ENTRY, createChainLink } from './index.ts';
 import { createArrivalSystems } from '../../game/arrival.ts';
 import { evaluateObjectives, initialObjectiveProgress } from '../../game/objectives.ts';
 import { createChainLinkEnvironment, latticePoseFromShip } from './environment.ts';
-import { EXTERIOR_PROBE, referenceDatum } from './layout.ts';
+import {
+  EXTERIOR_PROBE,
+  referenceDatum,
+  FENCE_COUNT,
+  FENCE_SPACING,
+  FORWARD_EXIT_X,
+  STACK_LENGTH,
+  referencePath,
+} from './layout.ts';
 
 describe('Unseen Cathedral content provider', () => {
   it('constructs a finite registered field, ordinary rocks and a clean pre-contact arrival', () => {
@@ -26,7 +34,8 @@ describe('Unseen Cathedral content provider', () => {
     expect(simulation.fields).toHaveLength(1);
     const field = simulation.fields[0]!;
     expect(field.kind).toBe('lattice');
-    expect(setup.layout.layers).toHaveLength(8);
+    expect(FENCE_COUNT).toBe(20);
+    expect(setup.layout.layers).toHaveLength(20);
     expect(setup.layout.layers.every((layer) => layer.strands.length === 12)).toBe(true);
     expect(field.intensity!(setup.layout.point({ x: 0, y: 0, z: 0 }), 0)).toBe(20);
     expect(field.intensity!(setup.layout.point({ x: 0, y: 40, z: 40 }), 0)).toBe(0);
@@ -93,10 +102,10 @@ describe('Unseen Cathedral content provider', () => {
   it('preserves carried damage, dose, heat, fuel, recorder, clock and acquired briefing', () => {
     const original = createChainLink('survivor');
     const arrived = original.definition.world.ship;
-    const systems = {
+    const wornSystems = {
       ...arrived.systems,
       t: 7300,
-      tanks: { ...arrived.systems.tanks, 'rcs-propellant': 79 },
+      tanks: { ...arrived.systems.tanks, 'rcs-left': 39, 'rcs-right': 40 },
       exposure: { camera: 23 },
       recorder: { ...arrived.systems.recorder, bytesUsed: 700_000_000 },
       thermal: { ...arrived.systems.thermal, service: 312 },
@@ -104,6 +113,10 @@ describe('Unseen Cathedral content provider', () => {
         ...arrived.systems.equipment,
         camera: { ...arrived.systems.equipment.camera!, condition: 0.4 },
       },
+    };
+    const systems = {
+      ...wornSystems,
+      massProperties: computeMassProperties(wornSystems, original.definition.ship),
     };
     const ship = { ...arrived, systems };
     const briefing = {
@@ -246,6 +259,39 @@ describe('Unseen Cathedral content provider', () => {
 });
 
 describe('S17 geometry qualification, separate from electrical/controller playability', () => {
+  it('requires transverse navigation on both nominal straight negative-control paths', () => {
+    const setup = createChainLink('straight-negative-controls', { catalogueIndex: 0 });
+    const field = createLatticeField('straight-controls', { layers: setup.layout.layers });
+    const base = latticePoseFromShip(setup.definition.world.ship, setup.definition.ship);
+    const at = (x: number, y: number, z: number) => ({
+      ...base,
+      position: add(
+        setup.layout.point({ x, y, z }),
+        rotate(setup.layout.orientation, base.centerOfMass),
+      ),
+    });
+    expect(field.intensity(setup.layout.point({ x: 0, y: 0, z: 0 }))).toBe(20);
+    const first = at(0, 40, 40);
+    expect(first.components.every((c) => sampleLatticeComponent(field, first, c).upper === 0)).toBe(
+      true,
+    );
+    const hits = Array.from({ length: FENCE_COUNT - 1 }, (_, j) => {
+      const pose = at((j + 1) * FENCE_SPACING, 40, 40);
+      return pose.components.some((c) => sampleLatticeComponent(field, pose, c).lower > 0);
+    });
+    expect(hits.filter(Boolean).length).toBeGreaterThan(0);
+    // Two prescribed negative controls do not prove a probability or rule out every straight line.
+  });
+
+  it('joins the entry, twenty-fence loop and exit with continuous velocity and acceleration', () => {
+    for (const x of [-500, 0, STACK_LENGTH, STACK_LENGTH + 350]) {
+      const a = referencePath(x - 1e-5),
+        b = referencePath(x + 1e-5);
+      expect(distance(a.position, b.position)).toBeLessThan(0.00003);
+      expect(distance(a.first, b.first)).toBeLessThan(1e-8);
+      expect(distance(a.second, b.second)).toBeLessThan(1e-8);
+    }
+  });
   it('matches the independent finite 5 m radiator-chord integral while the COM is clear', () => {
     const setup = createChainLink('s17', { catalogueIndex: 0 });
     const ship = setup.definition.world.ship;
@@ -301,10 +347,19 @@ describe('S17 geometry qualification, separate from electrical/controller playab
         },
         setup.definition.ship,
       );
-      // Lipschitz bound 2.2 m/s includes S17's quintic transverse motion at 2 m/s.
+      // The union retains every occupied component shape. Its minimum clearance equals
+      // the minimum of per-component clearances, with one shared broad-phase search.
+      const occupied = {
+        id: 'whole-production-ship',
+        shapes: base.components.flatMap((c) => c.shapes),
+      };
+      // Lipschitz bound 2.2 m/s includes the smooth loop's transverse motion at 2 m/s.
       // Every sample covers +/-2.5s; all occupied points have the same velocity.
       let minimum = Infinity;
-      const sampledX = [...Array.from({ length: 215 }, (_, i) => -24 + 10 * i), 2124];
+      const sampledX = [
+        ...Array.from({ length: Math.floor((STACK_LENGTH + 48) / 10) + 1 }, (_, i) => -24 + 10 * i),
+        STACK_LENGTH + 24,
+      ];
       for (const x of sampledX) {
         const pose = {
           ...base,
@@ -313,10 +368,8 @@ describe('S17 geometry qualification, separate from electrical/controller playab
             rotate(setup.layout.orientation, base.centerOfMass),
           ),
         };
-        for (const component of pose.components) {
-          const sample = sampleLatticeComponent(field, pose, component);
-          minimum = Math.min(minimum, sample.clearance - 2.2 * 2.5);
-        }
+        const sample = sampleLatticeComponent(field, pose, occupied);
+        minimum = Math.min(minimum, sample.clearance - 2.2 * 2.5);
       }
       expect(minimum).toBeGreaterThan(16);
     }
@@ -335,7 +388,7 @@ describe('S17 geometry qualification, separate from electrical/controller playab
         expect(field.intensity(setup.layout.point(p))).toBe(0);
       }
     }
-    expect(routeLength).toBeGreaterThan(3300);
+    expect(routeLength).toBeGreaterThan(FORWARD_EXIT_X + 500);
     // A sampled point route is not a whole-ship/control/resource success claim.
   });
 });

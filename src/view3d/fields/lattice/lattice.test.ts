@@ -22,6 +22,7 @@ const fixture: LatticeVisual = {
   updatedAt: 4,
   enabled: true,
   quality: 1,
+  processing: { reportedAt: 4, validUntil: 10, available: true },
   requestedVolume: box,
   strands: [
     {
@@ -93,6 +94,11 @@ describe('lattice evidence display boundary', () => {
       ],
     })!;
     expect(unknownHatch(parsed, 5)).toEqual([]);
+    expect(unknownHatch({ ...parsed, processing: undefined }, 5).length).toBeGreaterThan(0);
+    expect(
+      unknownHatch({ ...parsed, processing: { reportedAt: 5, validUntil: 8, available: false } }, 5)
+        .length,
+    ).toBeGreaterThan(0);
     expect(coverageState(parsed.coverage[0]!, 11)).toBe('unresolved');
     expect(unknownHatch(parsed, 11).length).toBeGreaterThan(0);
     expect(unknownHatch(parsed, 3).length).toBeGreaterThan(0);
@@ -127,6 +133,79 @@ class FakeElement {
 
 describe('lattice plugin', () => {
   afterEach(() => vi.unstubAllGlobals());
+  it('re-hatches a silent or expired opening immediately, even before the redraw cadence', () => {
+    vi.stubGlobal('document', { createElement: () => new FakeElement() });
+    const group = new Group();
+    const lines = new LineSet();
+    const view = makeLatticeView({ group, lines });
+    const data: LatticeVisual = {
+      ...fixture,
+      threat: {
+        ...evidence,
+        componentId: 'camera',
+        name: 'Camera',
+        position: { x: 0, y: 0, z: 0 },
+        sigmaM: 0.5,
+        marginM: -2,
+      },
+      coverage: [
+        {
+          ...box,
+          ...evidence,
+          id: 'patch',
+          status: 'clear-supported',
+          certificate: {
+            calibrated: true,
+            confidenceSigmas: 3,
+            resolutionM: 1,
+            undetectedSupportM: 1,
+            sampleIds: ['retained:coverage'],
+          },
+        },
+      ],
+    };
+    const frame = (visual: LatticeVisual, now: number, time: number) => ({
+      field: {
+        id: 'field',
+        kind: 'lattice',
+        detected: true,
+        visual: JSON.parse(JSON.stringify(visual)),
+      },
+      snapshot: {
+        ...viewSnapshot,
+        t: now,
+        world: {
+          ...viewSnapshot.world,
+          ship: { ...viewSnapshot.world.ship, position: { x: 0, y: 0, z: 0 } },
+        },
+      },
+      scale: 1,
+      radius: 100,
+      inside: () => true,
+      dt: 0.001,
+      time,
+    });
+    view.update(frame(data, 5, 0));
+    view.update(frame(data, 5, 1));
+    expect(group.getObjectByName('current-strands')!.visible).toBe(true);
+    expect(group.getObjectByName('unresolved-volume')!.visible).toBe(false);
+    view.update(frame(data, 11, 1.001));
+    expect(group.getObjectByName('unresolved-volume')!.visible).toBe(true);
+    expect(group.getObjectByName('current-coverage')!.visible).toBe(false);
+    expect(group.getObjectByName('current-strands')!.visible).toBe(false);
+    expect(group.getObjectByName('earlier-strands')!.visible).toBe(true);
+    expect(group.getObjectByName('earlier-component-threat')!.visible).toBe(true);
+    // A fresh report of unavailable service also invalidates display clearance immediately.
+    view.update(frame(data, 5, 2));
+    expect(group.getObjectByName('unresolved-volume')!.visible).toBe(false);
+    view.update(
+      frame({ ...data, processing: { reportedAt: 5, validUntil: 10, available: false } }, 5, 2.001),
+    );
+    expect(group.getObjectByName('unresolved-volume')!.visible).toBe(true);
+    expect(group.getObjectByName('current-coverage')!.visible).toBe(false);
+    view.dispose();
+    lines.dispose();
+  });
   it('draws only supplied evidence, ages into uncertainty and disposes its group', () => {
     vi.stubGlobal('document', { createElement: () => new FakeElement() });
     const group = new Group();

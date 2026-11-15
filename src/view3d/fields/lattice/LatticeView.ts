@@ -5,7 +5,7 @@ import { colour, dash, holoLines, line, motion, opacity, render } from '../../..
 import type { LineStyle } from '../../../theme/index.ts';
 import type { FieldView, FieldViewContext, FieldViewFrame } from '../../fieldViews.ts';
 import { label, setFatSegs, setTag, setThin, thin } from '../../gfx.ts';
-import { coverageState, readLatticeVisual } from './data.ts';
+import { coverageState, latticeIsLive, readLatticeVisual } from './data.ts';
 import {
   boxEdges,
   clipSegments,
@@ -44,17 +44,24 @@ export function makeLatticeView({ group, lines }: FieldViewContext): FieldView {
   root.name = 'lattice-evidence';
   group.add(root);
   const core = lines.fatSegs([], CORE, { order: render.renderOrder.abovePlane });
+  core.name = 'current-strands';
   const halo = lines.fatSegs([], HALO, { order: render.renderOrder.envelope });
   const old = lines.fatSegs([], OLD, { order: render.renderOrder.abovePlane });
+  old.name = 'earlier-strands';
   const acquisition = lines.fatSegs([], ACQUISITION, { order: render.renderOrder.abovePlane });
   const unknown = thin([], colour.inkFaint, opacity.unknownHatch, render.renderOrder.envelope);
   unknown.name = 'unresolved-volume';
   const boundary = thin([], colour.inkDim, opacity.coverageEdge, render.renderOrder.onPlane);
   const measured = thin([], colour.coverage, opacity.coverageEdge, render.renderOrder.onPlane);
+  measured.name = 'current-coverage';
   const uncertainty = thin([], colour.lattice, opacity.envelopeEdge, render.renderOrder.envelope);
   const threat = lines.fatSegs([], holoLines.approachRingWarning, {
     order: render.renderOrder.shipMarks,
   });
+  const earlierThreat = lines.fatSegs([], holoLines.relation, {
+    order: render.renderOrder.shipMarks,
+  });
+  earlierThreat.name = 'earlier-component-threat';
   const status = label('UNRESOLVED', 'dim');
   const component = label('', 'dim');
   root.add(
@@ -67,6 +74,7 @@ export function makeLatticeView({ group, lines }: FieldViewContext): FieldView {
     old,
     acquisition,
     threat,
+    earlierThreat,
     status,
     component,
   );
@@ -91,11 +99,18 @@ export function makeLatticeView({ group, lines }: FieldViewContext): FieldView {
       context = key;
     }
     const now = frame.snapshot.t;
+    const live = latticeIsLive(data, now);
     const clip = (flat: readonly number[]) =>
       clipSegments(flat, frame.snapshot.world.ship.position, frame.radius / frame.scale);
     const present = new Set(data.strands.map((strand) => strand.id));
     for (const id of firstSeen.keys()) if (!present.has(id)) firstSeen.delete(id);
-    const currentRevision = `${data.updatedAt}:${data.strands.length}:${data.coverage.length}:${data.enabled}`;
+    // Expiry must repaint on this frame, including a high-warp clock jump. A wall-clock
+    // throttle may never leave a formerly supported opening looking clear after validity ends.
+    const currentRevision =
+      `${data.updatedAt}:${data.enabled}:${live}:` +
+      data.strands.map((s) => `${s.id}/${s.observedTo <= now}/${s.validUntil >= now}`).join(',') +
+      ':' +
+      data.coverage.map((p) => `${p.id}/${coverageState(p, now)}`).join(',');
     let animating = false;
     const fresh: number[] = [];
     const stale: number[] = [];
@@ -113,15 +128,6 @@ export function makeLatticeView({ group, lines }: FieldViewContext): FieldView {
         (frame.time - firstSeen.get(observation)!) / (motion.settle / 1000),
       );
       animating ||= progress < 1;
-      if (strand.validUntil < now) {
-        stale.push(...revealedSegments(strand.points, 1));
-        continue;
-      }
-      supported++;
-      const positions = revealedSegments(strand.points, progress);
-      fresh.push(...positions);
-      halos.push(...positions);
-      if (progress < 1) pulses.push(...positions.slice(-6));
       // S17 joint bound is three sigma, not reduced by how many fragments are displayed.
       for (const point of strand.points) {
         const vertex = `${point.x}/${point.y}/${point.z}/${strand.sigmaM}`;
@@ -130,6 +136,15 @@ export function makeLatticeView({ group, lines }: FieldViewContext): FieldView {
           rings.push(...uncertaintyRings([point], 3 * strand.sigmaM));
         }
       }
+      if (!live || strand.validUntil < now) {
+        stale.push(...revealedSegments(strand.points, 1));
+        continue;
+      }
+      supported++;
+      const positions = revealedSegments(strand.points, progress);
+      fresh.push(...positions);
+      halos.push(...positions);
+      if (progress < 1) pulses.push(...positions.slice(-6));
     }
     // Rebuild on evidence, at a modest cadence for expiry, and through the one-shot reveal.
     if (
@@ -147,7 +162,7 @@ export function makeLatticeView({ group, lines }: FieldViewContext): FieldView {
       setThin(unknown, hatch);
       unknown.visible = hatch.length > 0;
       setThin(boundary, clip(boxEdges(data.requestedVolume)));
-      const patches = data.coverage
+      const patches = (live ? data.coverage : [])
         .filter((p) => coverageState(p, now) === 'clear-supported')
         .flatMap(boxEdges);
       setThin(measured, clip(patches));
@@ -156,33 +171,39 @@ export function makeLatticeView({ group, lines }: FieldViewContext): FieldView {
       lastGeometry = frame.time;
     }
     // Confidence is geometry width; low processing power never makes hazardous space vanish.
-    const current = data.coverage.filter((p) => coverageState(p, now) === 'clear-supported').length;
+    const current = (live ? data.coverage : []).filter(
+      (p) => coverageState(p, now) === 'clear-supported',
+    ).length;
     setTag(
       status,
-      data.limitation ??
-        (supported > 0
-          ? `${supported} FRAGMENTS · ${current > 0 ? `${current} COVERED PATCHES` : 'OPENINGS UNRESOLVED'}`
-          : data.enabled
-            ? 'RECORDING · DEPTH UNRESOLVED'
-            : 'RECORDING STOPPED · SPACE UNRESOLVED'),
+      !live
+        ? `STALE · ${data.enabled ? 'PROCESSING UNAVAILABLE' : 'RECORDING STOPPED'} · OPENINGS UNRESOLVED`
+        : (data.limitation ??
+            (supported > 0
+              ? `${supported} FRAGMENTS · ${current > 0 ? `${current} COVERED PATCHES` : 'OPENINGS UNRESOLVED'}`
+              : data.enabled
+                ? 'RECORDING · DEPTH UNRESOLVED'
+                : 'RECORDING STOPPED · SPACE UNRESOLVED')),
     );
     const c = data.requestedVolume.center;
     const h = data.requestedVolume.halfSize;
     status.position.set(...scenePoint({ x: c.x, y: c.y, z: c.z + h.z }));
     status.visible = frame.inside(status.position);
     const t = data.threat;
-    threat.visible = component.visible =
-      t !== undefined && t.observedTo <= now && t.validUntil >= now;
-    if (t && threat.visible) {
-      set(
-        threat,
-        clip(uncertaintyRings([t.position], Math.max(t.sigmaM * 3, Math.abs(t.marginM)))),
+    const hasThreat = t !== undefined && t.observedTo <= now;
+    const currentThreat = hasThreat && live && t.validUntil >= now;
+    threat.visible = component.visible = currentThreat;
+    earlierThreat.visible = hasThreat && !currentThreat;
+    if (t && hasThreat) {
+      const vertices = clip(
+        uncertaintyRings([t.position], Math.max(t.sigmaM * 3, Math.abs(t.marginM))),
       );
+      set(currentThreat ? threat : earlierThreat, vertices);
       threat.material.color.set(t.marginM <= 0 ? colour.warning : colour.caution);
       component.position.set(...scenePoint(t.position));
       setTag(
         component,
-        `${t.marginM <= 0 ? '■' : '▲'} ${t.name.toUpperCase()} · ${t.marginM.toFixed(1)} m ± ${t.sigmaM.toFixed(1)}`,
+        `${currentThreat ? (t.marginM <= 0 ? '■' : '▲') : 'STALE ·'} ${t.name.toUpperCase()} · ${t.marginM.toFixed(1)} m ± ${t.sigmaM.toFixed(1)}`,
       );
       component.visible = frame.inside(component.position);
     }
@@ -190,7 +211,7 @@ export function makeLatticeView({ group, lines }: FieldViewContext): FieldView {
   return {
     update,
     dispose() {
-      for (const object of [core, halo, old, acquisition, threat]) {
+      for (const object of [core, halo, old, acquisition, threat, earlierThreat]) {
         object.geometry.dispose();
         object.material.dispose();
       }

@@ -28,8 +28,10 @@ import {
   type LatticeAngularFragment,
   type LatticeObservationFrame,
 } from './lattice-observations.ts';
+import { sensorFunctionAvailable } from './function-available.ts';
 
 export const LATTICE_SENSOR_STREAM = 'sensors.camera/lattice';
+export const LATTICE_DIAGNOSTIC_STREAM = 'sensors.camera/lattice-diagnostic';
 
 /** [ASSUMED: S17 black-box.md] Separate channel noise, not ordinary optical precision. */
 export const LATTICE_ACQUISITION = Object.freeze({
@@ -66,8 +68,6 @@ interface Pointing {
 }
 
 const clamp = (x: number, a: number, b: number) => Math.min(b, Math.max(a, x));
-const operational = (e: EquipmentState | undefined) =>
-  !!e && e.condition > 0 && !e.tripped && e.mode !== 'off' && e.powerDraw > 0;
 const jsonBytes = (value: unknown) => new TextEncoder().encode(JSON.stringify(value)).length;
 
 /** Call only at new encounter creation; never reseed during a step/save restoration. */
@@ -75,12 +75,17 @@ export function initializeLatticeSensorStreams(
   state: ShipSystemsState,
   seed: string | number,
 ): ShipSystemsState {
-  if (state.rng[LATTICE_SENSOR_STREAM]) return state;
+  if (state.rng[LATTICE_SENSOR_STREAM] && state.rng[LATTICE_DIAGNOSTIC_STREAM]) return state;
   return {
     ...state,
     rng: {
       ...state.rng,
-      [LATTICE_SENSOR_STREAM]: createRng(seed).stream(LATTICE_SENSOR_STREAM).getState(),
+      [LATTICE_SENSOR_STREAM]:
+        state.rng[LATTICE_SENSOR_STREAM] ??
+        createRng(seed).stream(LATTICE_SENSOR_STREAM).getState(),
+      [LATTICE_DIAGNOSTIC_STREAM]:
+        state.rng[LATTICE_DIAGNOSTIC_STREAM] ??
+        createRng(seed).stream(LATTICE_DIAGNOSTIC_STREAM).getState(),
     },
   };
 }
@@ -101,14 +106,15 @@ export function latticeProcessingRate(
   );
 }
 
-function healthy(
+export function healthy(
   state: ShipSystemsState,
   definition: ShipDefinition,
   id: string,
+  t = state.t,
 ): EquipmentState | undefined {
   const e = state.equipment[id];
   const spec = definition.equipment.find((s) => s.id === id);
-  if (!e || !spec || !operational(e)) return;
+  if (!e || !spec || !sensorFunctionAvailable(e, t) || e.powerDraw <= 0) return;
   const temperature =
     (spec.thermalNode ? state.thermal[spec.thermalNode] : undefined) ?? e.temperature;
   if (
@@ -125,14 +131,14 @@ function healthy(
   return e;
 }
 
-function isScene(value: JsonValue): value is JsonValue & LatticeSensorScene {
+export function isScene(value: JsonValue): value is JsonValue & LatticeSensorScene {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const record = value as Record<string, JsonValue>;
   return record.kind === 'lattice-scene-v1' && Array.isArray(record.segments);
 }
 
 /** Conservatively reject a complete small fragment if any part could lie in an opaque sphere's cone. */
-function shadowed(a: Vec3, b: Vec3, origin: Vec3, env: EnvironmentEffects): boolean {
+export function shadowed(a: Vec3, b: Vec3, origin: Vec3, env: EnvironmentEffects): boolean {
   const middle = scale(add(a, b), 0.5);
   const sight = sub(middle, origin);
   const range = length(sight);
@@ -177,12 +183,14 @@ export function stepLatticeAcquisition(
   let next = { ...memory };
   let packet = Math.max(0, packetBudgetBytes);
   const measurements: Measurement[] = [];
-  const camera = healthy(state, definition, 'camera');
-  const processor = healthy(state, definition, 'science-processor');
-  const recorder = healthy(state, definition, 'black-box');
-  const imu = healthy(state, definition, 'imu-a') ?? healthy(state, definition, 'imu-b');
+  const camera = healthy(state, definition, 'camera', env.t);
+  const processor = healthy(state, definition, 'science-processor', env.t);
+  const recorder = healthy(state, definition, 'black-box', env.t);
+  const imu =
+    healthy(state, definition, 'imu-a', env.t) ?? healthy(state, definition, 'imu-b', env.t);
   const tracker =
-    healthy(state, definition, 'star-tracker-a') ?? healthy(state, definition, 'star-tracker-b');
+    healthy(state, definition, 'star-tracker-a', env.t) ??
+    healthy(state, definition, 'star-tracker-b', env.t);
   const shipScene = env.fieldSignals['ship-environment'] as
     { opticsValid?: boolean; starsVisible?: boolean } | undefined;
   const aim = (state.ext?.sensorPointing as unknown as Record<string, Pointing> | undefined)

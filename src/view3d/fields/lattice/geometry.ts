@@ -1,5 +1,5 @@
 import type { Vec3 } from '../../../contracts/index.ts';
-import { containsVolume, coverageState } from './data.ts';
+import { containsVolume, coverageState, latticeIsLive } from './data.ts';
 import type { LatticeVisual, LatticeVolume } from './data.ts';
 
 /** The same game-to-scene transform as the flight hologram. */
@@ -63,7 +63,9 @@ export function unknownHatch(data: LatticeVisual, now: number): number[] {
     y: volume.halfSize.y / subdivisions,
     z: volume.halfSize.z / subdivisions,
   };
-  const clear = data.coverage.filter((p) => coverageState(p, now) === 'clear-supported');
+  const clear = latticeIsLive(data, now)
+    ? data.coverage.filter((p) => coverageState(p, now) === 'clear-supported')
+    : [];
   // Compare the original bounds before subdivision arithmetic introduces round-off at edges.
   if (clear.some((p) => containsVolume(p, volume))) return out;
   for (let x = 0; x < subdivisions; x++)

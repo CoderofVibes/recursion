@@ -11,6 +11,8 @@ import { createRng, type RngState } from '../../lib/rng.ts';
 import { wrapAngle } from '../../lib/vec2.ts';
 import type { Vec3 } from '../../lib/vec3.ts';
 import { stepLatticeAcquisition } from './lattice.ts';
+import { latticeDiagnosticSchedule, stepLatticeDiagnostic } from './lattice-diagnostic.ts';
+import { sensorFunctionAvailable } from './function-available.ts';
 
 type Sensing = typeof baseline.sensing;
 type Recorder = typeof baseline.recorder;
@@ -32,6 +34,7 @@ interface SensorMemory {
   readonly capacityWarning?: boolean;
   /** Recorder dictionary state: repeated telemetry uses a channel reference, not another payload. */
   readonly packetValues?: Readonly<Record<string, readonly number[]>>;
+  readonly nextPhysicalPacketAt?: number;
 }
 
 const clamp = (n: number, low: number, high: number) => Math.min(high, Math.max(low, n));
@@ -143,8 +146,8 @@ export function apparentRate(
   return Math.sqrt(px * px + py * py + pz * pz);
 }
 
-function available(e: EquipmentState | undefined): e is EquipmentState {
-  return !!e && e.condition > 0 && !e.tripped && e.mode !== 'off' && e.powerDraw > 0;
+function available(e: EquipmentState | undefined, t: number): e is EquipmentState {
+  return sensorFunctionAvailable(e, t) && e.powerDraw > 0;
 }
 
 function nextCadence(previous: number | undefined, t: number, rate: number): number {
@@ -207,9 +210,22 @@ export function stepSensors(
   const measurements: Measurement[] = [];
   const events: ShipEvent[] = [];
   const recording = equipment[recorder.equipmentId];
-  const rate = available(recording)
-    ? Math.min(state.recorder.sampleRate, supportedRecorderRate(recording.powerDraw, definition))
+  const physicalRate = available(recording, env.t)
+    ? supportedRecorderRate(recording.powerDraw, definition)
     : 0;
+  const rate = Math.min(state.recorder.sampleRate, physicalRate);
+  const latticeAvailable = Object.values(env.fieldSignals).some(
+    (signal) =>
+      !!signal &&
+      typeof signal === 'object' &&
+      'kind' in signal &&
+      signal.kind === 'lattice-scene-v1',
+  );
+  const diagnostic = latticeAvailable
+    ? latticeDiagnosticSchedule(state, definition, env)
+    : { due: false, rate: 0 };
+  const physicalPacketReady =
+    !latticeAvailable || env.t + 1e-10 >= (memory.nextPhysicalPacketAt ?? env.t);
   const scienceCapacity = Math.max(0, state.recorder.capacity - recorder.reservedEventCapacity);
   const capacityAvailable = state.recorder.bytesUsed + recorder.bytesPerSample <= scienceCapacity;
   const capacityWarning = !capacityAvailable;
@@ -228,7 +244,10 @@ export function stepSensors(
     if (
       spec.kind === 'optical-tracker' &&
       e &&
-      (!available(e) || e.powerDraw < sensing.camera.minTrackingPower)
+      (e.condition <= 0 ||
+        e.tripped ||
+        e.mode === 'off' ||
+        e.powerDraw < sensing.camera.minTrackingPower)
     ) {
       equipment[spec.id] = {
         ...e,
@@ -239,7 +258,15 @@ export function stepSensors(
       };
     }
   }
-  const due = rate > 0 && capacityAvailable && env.t + 1e-10 >= (memory.nextRecorderAt ?? env.t);
+  const due =
+    rate > 0 &&
+    capacityAvailable &&
+    physicalPacketReady &&
+    env.t + 1e-10 >= (memory.nextRecorderAt ?? env.t);
+  const packetDue =
+    capacityAvailable &&
+    physicalPacketReady &&
+    (due || (diagnostic.due && physicalRate >= diagnostic.rate));
   const attitude = env.kinematics.attitude;
   /** Body rates (what the gyros sense) and the same angular velocity in the inertial frame. */
   const bodyRate = env.kinematics.angularVelocity;
@@ -251,7 +278,7 @@ export function stepSensors(
   if (due) {
     for (const spec of definition.equipment) {
       const e = equipment[spec.id];
-      if (!available(e)) continue;
+      if (!available(e, env.t)) continue;
       const temperature =
         (spec.thermalNode ? state.thermal[spec.thermalNode] : undefined) ?? e.temperature;
       if (
@@ -474,13 +501,6 @@ export function stepSensors(
     telemetry(recorder.equipmentId, 'sample-rate', Math.min(rate, 1 / dt));
   }
 
-  const latticeAvailable = Object.values(env.fieldSignals).some(
-    (signal) =>
-      !!signal &&
-      typeof signal === 'object' &&
-      'kind' in signal &&
-      signal.kind === 'lattice-scene-v1',
-  );
   const packetValues = latticeAvailable ? { ...memory.packetValues } : undefined;
   let ordinaryBytes = 64;
   if (packetValues)
@@ -503,7 +523,7 @@ export function stepSensors(
     rng,
     recorder: {
       ...state.recorder,
-      bytesUsed: state.recorder.bytesUsed + (due ? recorder.bytesPerSample : 0),
+      bytesUsed: state.recorder.bytesUsed + (packetDue ? recorder.bytesPerSample : 0),
     },
     ext: {
       ...state.ext,
@@ -514,22 +534,38 @@ export function stepSensors(
         nextSampleAt,
         capacityWarning,
         ...(packetValues ? { packetValues } : {}),
+        ...(latticeAvailable
+          ? {
+              nextPhysicalPacketAt: packetDue
+                ? env.t + 1 / physicalRate
+                : (memory.nextPhysicalPacketAt ?? env.t),
+            }
+          : {}),
       },
     },
   };
   // Packet dictionaries identify the fixed housekeeping channels. Numeric values/sigmas and
   // a timestamp/source header still consume real capacity before optional frame fragments.
+  const spareBytes = packetDue ? Math.max(0, recorder.bytesPerSample - ordinaryBytes) : 0;
+  const tile =
+    latticeAvailable && packetDue
+      ? stepLatticeDiagnostic(ordinaryState, definition, env, spareBytes)
+      : { state: ordinaryState, measurements: [], bytes: 0 };
   const lattice = latticeAvailable
     ? stepLatticeAcquisition(
-        ordinaryState,
+        tile.state,
         definition,
         env,
         dt,
-        due ? Math.max(0, recorder.bytesPerSample - ordinaryBytes) : 0,
+        Math.max(0, spareBytes - tile.bytes),
         rate,
       )
-    : { state: ordinaryState, measurements: [] };
-  return { state: lattice.state, measurements: [...measurements, ...lattice.measurements], events };
+    : { state: tile.state, measurements: [] };
+  return {
+    state: lattice.state,
+    measurements: [...measurements, ...tile.measurements, ...lattice.measurements],
+    events,
+  };
 }
 
 function modePower(spec: EquipmentSpec, e: EquipmentState, definition: ShipDefinition): number {

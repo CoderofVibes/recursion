@@ -1,63 +1,25 @@
 /** Display-only evidence contract. No field definitions, seed, or truth geometry cross here. */
 import type { Vec3 } from '../../../contracts/index.ts';
-
-export interface LatticeVolume {
-  readonly center: Vec3;
-  readonly halfSize: Vec3;
-}
-
-export interface LatticeEvidence {
-  readonly sampleIds: readonly string[];
-  readonly observedFrom: number;
-  readonly observedTo: number;
-  readonly validUntil: number;
-}
-
-export interface LatticeStrand extends LatticeEvidence {
-  readonly id: string;
-  /** Only connected support actually observed, never a completed periodic grid. */
-  readonly points: readonly Vec3[];
-  readonly sigmaM: number;
-  readonly confidence: number;
-}
-
-export interface LatticeCoverage extends LatticeVolume, LatticeEvidence {
-  readonly id: string;
-  readonly status: 'unobserved' | 'unresolved' | 'clear-supported';
-  readonly reason?: string;
-  /** Required separately from a strand fit: fitted corners cannot certify empty space. */
-  readonly certificate?: {
-    readonly calibrated: true;
-    readonly confidenceSigmas: 3;
-    readonly resolutionM: number;
-    readonly undetectedSupportM: number;
-    readonly sampleIds: readonly string[];
-  };
-}
-
-export interface LatticeThreat extends LatticeEvidence {
-  readonly componentId: string;
-  readonly name: string;
-  readonly position: Vec3;
-  readonly sigmaM: number;
-  readonly marginM: number;
-}
-
-export interface LatticeVisual {
-  readonly schema: 'lattice-observations-v1';
-  /** Explicit current-run relative frame; an archive cannot masquerade as a current map. */
-  readonly frameId: string;
-  readonly attemptId: string;
-  readonly updatedAt: number;
-  readonly enabled: boolean;
-  readonly quality: number;
-  /** Commanded sensing volume, never the true field's bounds. */
-  readonly requestedVolume: LatticeVolume;
-  readonly strands: readonly LatticeStrand[];
-  readonly coverage: readonly LatticeCoverage[];
-  readonly threat?: LatticeThreat;
-  readonly limitation?: string;
-}
+import type {
+  LatticeVolume,
+  LatticeEvidence,
+  LatticeStrand,
+  LatticeCoverage,
+  LatticeThreat,
+  LatticeVisual,
+} from '../../../contracts/lattice-coverage.ts';
+export type {
+  LatticeVolume,
+  LatticeEvidence,
+  LatticeStrand,
+  LatticeCoverage,
+  LatticeThreat,
+  LatticeVisual,
+  LatticeServiceValidity,
+  LatticeClearCoverageCertificate,
+  LatticeCoverageProvenance,
+  LatticeQualifiedCoverageCertificate,
+} from '../../../contracts/lattice-coverage.ts';
 
 const record = (x: unknown): x is Record<string, unknown> =>
   x !== null && typeof x === 'object' && !Array.isArray(x);
@@ -149,6 +111,13 @@ export function readLatticeVisual(input: unknown): LatticeVisual | null {
     });
   }
   const threat = input.threat;
+  const processing = input.processing;
+  const goodProcessing =
+    record(processing) &&
+    finite(processing.reportedAt) &&
+    finite(processing.validUntil) &&
+    processing.reportedAt <= processing.validUntil &&
+    typeof processing.available === 'boolean';
   const goodThreat =
     record(threat) &&
     evidence(threat) &&
@@ -165,12 +134,26 @@ export function readLatticeVisual(input: unknown): LatticeVisual | null {
     updatedAt: input.updatedAt,
     enabled: input.enabled,
     quality: input.quality,
+    ...(goodProcessing
+      ? { processing: processing as unknown as NonNullable<LatticeVisual['processing']> }
+      : {}),
     requestedVolume: input.requestedVolume,
     strands,
     coverage,
     ...(goodThreat ? { threat: threat as unknown as LatticeThreat } : {}),
     ...(typeof input.limitation === 'string' ? { limitation: input.limitation } : {}),
   };
+}
+
+/** An allocation switch is a request. Only a fresh report establishes active processing. */
+export function latticeIsLive(data: LatticeVisual, now: number): boolean {
+  return (
+    data.enabled &&
+    data.processing !== undefined &&
+    data.processing.available &&
+    data.processing.reportedAt <= now &&
+    now <= data.processing.validUntil
+  );
 }
 
 export function coverageState(patch: LatticeCoverage, now: number): LatticeCoverage['status'] {
