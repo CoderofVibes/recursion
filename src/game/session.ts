@@ -445,11 +445,12 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
     for (const e of result.events)
       if (e.kind === 'objective')
         departureTrack = recordVerdict(departureTrack, e.objective, e.status);
-    // The radiation monitor's readings as recorded, in record order (A24, R37; 3C's policy): a
-    // new caution drops warp to 1× and ends the frame's run of ticks at once (A12). Only a fresh
+    // The radiation monitor's readings, in time order (A24, R37; 3C's policy): every one it sensed
+    // on board, recorded or not (R52: the record keeps those at the player's rate and the spikes).
+    // A new caution drops warp to 1× and ends the frame's run of ticks at once (A12). Only a fresh
     // low reading clears it; missing or stale readings keep it.
     const cautionBefore = radiation.caution;
-    for (const m of measurements) {
+    for (const m of result.sensed) {
       const reading = decodeRadiationReading(m);
       if (!reading) continue;
       radiationReading = { ...reading, threshold: RADIATION_MONITOR.hazardThreshold };
