@@ -91,14 +91,14 @@ export function playOpening({
       at.set(...sampled.translation)
         .applyEuler(orientation)
         .add(eye);
-      home.setLensing(sampled.lens);
+      home.setLens(sampled.lens);
       room.renderScriptedShot({
         position: [at.x, at.y, at.z],
         rotation: [HOME_SHOT.rotation[0] + pitch, yaw, roll],
         light: sampled.light,
         console: sampled.console === 'off' ? 0 : HOME_SHOT.console,
         alarm: sampled.alarm,
-        consoleMap: panel.maps[sampled.console],
+        consoleMap: panel.map(sampled.console, sampled.drift),
       });
     }
     audio?.ambience(sampled.ambience);

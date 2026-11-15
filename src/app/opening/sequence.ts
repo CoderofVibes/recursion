@@ -1,11 +1,17 @@
 import { lossSequence } from '../../theme/index.ts';
 
-const TREMOR = 2.8;
-const STUMBLE = 4.1;
-const FAILURE = 5.65;
+/**
+ * Times in seconds. The calm before the tremor is 6.5 s (S23 had 2.8): long enough for the
+ * player to take in Earth while the anomaly shows itself, first in the stars beside one empty
+ * point, then on the console, where the measured track pulls away from the forecast (owner,
+ * 2026-11-15). Every S23 beat after the calm keeps its spacing, 3.7 s later.
+ */
+const TREMOR = 6.5;
+const STUMBLE = 7.8;
+const FAILURE = 9.35;
 const CUT = FAILURE + lossSequence.shakeEnd;
 /** A held black after the cut, then the whole title fades in over 1.5 s (owner, 2026-11-14). */
-const TITLE = 8.25;
+const TITLE = 11.95;
 const TITLE_SHOWN = TITLE + 1.5;
 
 /**
@@ -16,18 +22,18 @@ const TITLE_SHOWN = TITLE + 1.5;
  * flashes. Black then holds for DARK_AFTER_TITLE before the room appears.
  */
 export const TITLE_FLICKERS = [
-  { at: 11.0, length: 0.07, level: 0, after: 1 },
-  { at: 11.42, length: 0.05, level: 0.25, after: 0.85 },
-  { at: 11.82, length: 0.09, level: 0, after: 0.6 },
+  { at: 14.7, length: 0.07, level: 0, after: 1 },
+  { at: 15.12, length: 0.05, level: 0.25, after: 0.85 },
+  { at: 15.52, length: 0.09, level: 0, after: 0.6 },
 ] as const;
-export const TITLE_OUT = 12.2;
+export const TITLE_OUT = 15.9;
 /** Seconds of black after the title goes out, before the room starts to appear (owner). */
 export const DARK_AFTER_TITLE = 2;
 const REVEAL = TITLE_OUT + DARK_AFTER_TITLE;
 /** The new sky goes in under black a little before the reveal (S23's 0.65 s). */
 const ARRIVAL_SKY = REVEAL - 0.65;
 const SETTLED = REVEAL + 1.55;
-export const OPENING_END = 16;
+export const OPENING_END = 19.5;
 
 function titleAt(t: number, reducedMotion: boolean): number {
   if (t < TITLE || t >= TITLE_OUT) return 0;
@@ -42,16 +48,16 @@ function titleAt(t: number, reducedMotion: boolean): number {
 }
 
 /** S23 pulse starts. The envelope stays local to two room strips. */
-export const ALARM_STARTS = [2.9, 4.1, 4.77, 5.65, 6.32] as const;
+export const ALARM_STARTS = [6.6, 7.8, 8.47, 9.35, 10.02] as const;
 export const ALARM_DURATION = 0.24;
 
 const CUES = [
-  { at: 2.8, id: 'opening-rumble' },
-  { at: 2.9, id: 'opening-alarm' },
-  { at: 4.1, id: 'opening-alarm' },
-  { at: 4.77, id: 'opening-alarm' },
-  { at: 5.65, id: 'loss-failure' },
-  { at: 6.95, id: 'black-cut' },
+  { at: 6.5, id: 'opening-rumble' },
+  { at: 6.6, id: 'opening-alarm' },
+  { at: 7.8, id: 'opening-alarm' },
+  { at: 8.47, id: 'opening-alarm' },
+  { at: 9.35, id: 'loss-failure' },
+  { at: 10.65, id: 'black-cut' },
   { at: TITLE, id: 'opening-title' },
   { at: TITLE_OUT, id: 'title-out' },
   { at: REVEAL, id: 'room-wake' },
@@ -66,6 +72,19 @@ const ZERO: Vector = [0, 0, 0];
 export type OpeningBeat =
   'home' | 'alarm' | 'stumble' | 'impact' | 'dark' | 'title' | 'arrival' | 'wake' | 'end';
 
+/**
+ * A point lens in the window: where it sits (degrees of azimuth right of the window's centre and
+ * elevation above the eye), its Einstein angle and the angle of its dark shadow, degrees. Light
+ * from directly behind it reaches the eye as a ring of the Einstein angle; nothing inside the
+ * shadow reaches the eye at all. Presentation values, not a simulated body (S23: no implied mass).
+ */
+export interface Lens {
+  readonly az: number;
+  readonly el: number;
+  readonly einstein: number;
+  readonly shadow: number;
+}
+
 export interface OpeningFrame {
   readonly beat: OpeningBeat;
   readonly blackout: number;
@@ -77,7 +96,10 @@ export interface OpeningFrame {
   readonly translation: Vector;
   /** Pitch, yaw and roll, radians. */
   readonly rotation: Vector;
-  readonly lens: number;
+  /** The anomaly as seen through the window (an invisible lens; it is never named on screen). */
+  readonly lens: Lens;
+  /** How far the console's measured track has pulled away from its forecast, 0 to 1. */
+  readonly drift: number;
   readonly wake: number;
   readonly ambience: number;
 }
@@ -89,10 +111,10 @@ const ease = (u: number) => u * u * (3 - 2 * u);
 const radians = (degrees: number) => (degrees * Math.PI) / 180;
 const STUMBLES = [
   [STUMBLE, ZERO, ZERO],
-  [4.35, [0.1, -0.07, 0.06], [-2.5, -1.5, 2.8]],
-  [4.78, [0.025, -0.015, 0.015], [-0.5, -0.3, 0.5]],
-  [5.02, ZERO, ZERO],
-  [5.22, [-0.08, -0.05, 0.045], [-1.7, 1.2, -2.2]],
+  [8.05, [0.1, -0.07, 0.06], [-2.5, -1.5, 2.8]],
+  [8.48, [0.025, -0.015, 0.015], [-0.5, -0.3, 0.5]],
+  [8.72, ZERO, ZERO],
+  [8.92, [-0.08, -0.05, 0.045], [-1.7, 1.2, -2.2]],
   [FAILURE, ZERO, ZERO],
 ] as const;
 
@@ -124,7 +146,7 @@ function shakeAt(t: number): { translation: Vector; rotation: Vector } {
   const failureTime = Math.max(0, t - FAILURE);
   const failure = ease(range(t, FAILURE, FAILURE + 0.12));
   const decay = 1 - ease(range(t, FAILURE + 0.12, CUT));
-  const rise = range(t, TREMOR, 3.8);
+  const rise = range(t, TREMOR, TREMOR + 1);
   const y = mix(0.012 * rise + 0.026 * stumble, lossSequence.shake, failure) * decay;
   const roll = mix(radians(0.2 * rise + 0.35 * stumble), lossSequence.roll, failure) * decay;
   const cyclesAtFailure = (FAILURE - TREMOR) * 3.2 + (FAILURE - STUMBLE) * 0.65;
@@ -150,6 +172,46 @@ function alarmAt(t: number): number {
   return ease(range(age, 0, 0.06)) * (1 - ease(range(age, 0.14, ALARM_DURATION)));
 }
 
+/**
+ * The lens's path (owner, 2026-11-15). It starts in the left pane, small, and drifts toward Earth
+ * (az +4.7°, el +2.0°): stars it passes brighten, slide and split (calm). It grows as the ship
+ * falls toward it; Earth doubles, then smears into arcs (alarm, stumble), then sits behind it as a
+ * ring (failure). Then the dark at the ring's centre swells until it fills the window, and the
+ * cut to black comes out of it. Each key is [t, az, el, einstein, shadow].
+ */
+export const LENS_KEYS = [
+  [0, -17, 3.4, 0.25, 0],
+  [TREMOR, -5, 2.7, 0.7, 0.02],
+  [8.6, 2.6, 2.15, 1.6, 0.25],
+  [9.6, 4.7, 2.0, 2.2, 0.6],
+  [10.15, 4.7, 2.0, 2.4, 0.9],
+  // Full by the black-cut cue, so the dark has the window for a moment before the cut.
+  [CUT - 0.2, 4.7, 2.0, 2.6, 85],
+] as const;
+/** In reduced motion the dark never swells over the window: the room simply goes black. */
+export const REDUCED_SHADOW = LENS_KEYS[4][4];
+
+function lensAt(t: number, reducedMotion: boolean): Lens {
+  let i = 1;
+  while (i < LENS_KEYS.length - 1 && t > LENS_KEYS[i]![0]) i++;
+  const a = LENS_KEYS[i - 1]!;
+  const b = LENS_KEYS[i]!;
+  const u = range(t, a[0], b[0]);
+  const last = i === LENS_KEYS.length - 1;
+  // The last stretch accelerates: the dark takes the window all at once.
+  const k = last ? u ** 3 : ease(u);
+  const shadow = mix(a[4], b[4], k);
+  return {
+    az: mix(a[1], b[1], k),
+    el: mix(a[2], b[2], k),
+    einstein: mix(a[3], b[3], k),
+    shadow: reducedMotion ? Math.min(shadow, REDUCED_SHADOW) : shadow,
+  };
+}
+
+/** The console's measured track leaves the forecast during the calm and keeps going. */
+const DRIFT_FROM = 2;
+
 /** Sample the authored S23 beat sheet with visible elapsed seconds. */
 export function sampleOpening(t: number, reducedMotion: boolean): OpeningFrame {
   const wake = reducedMotion ? 1 : ease(range(t, REVEAL, SETTLED));
@@ -162,7 +224,8 @@ export function sampleOpening(t: number, reducedMotion: boolean): OpeningFrame {
     console: 'cruise',
     translation: ZERO,
     rotation: ZERO,
-    lens: 0,
+    lens: lensAt(t, reducedMotion),
+    drift: ease(range(t, DRIFT_FROM, FAILURE)),
     wake,
     ambience: 1,
   };
@@ -177,9 +240,8 @@ export function sampleOpening(t: number, reducedMotion: boolean): OpeningFrame {
         t < FAILURE
           ? mix(1, 0.65, range(t, STUMBLE, FAILURE))
           : mix(0.65, 0.1, range(t, FAILURE, CUT)),
-      console: t < 5.02 ? 'caution' : t < FAILURE + lossSequence.hologramEnd ? 'warning' : 'off',
+      console: t < 8.72 ? 'caution' : t < FAILURE + lossSequence.hologramEnd ? 'warning' : 'off',
       alarm: reducedMotion ? (t < FAILURE + lossSequence.hologramEnd ? 1 : 0) : alarmAt(t),
-      lens: reducedMotion ? 0 : ease(range(t, 5.35, 6.35)),
       ambience: 1 - range(t, FAILURE, CUT),
     };
   }
