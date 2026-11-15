@@ -72,6 +72,16 @@ export function raisedAlerts(alerts: readonly object[], t: number): AlertItem[] 
         const detail = [reading, limit].filter(Boolean).join(' · ');
         return { id, level, text: 'Radiation high', ...(detail ? { detail } : {}) };
       }
+      case 'forecast-ended': {
+        // The session's caution that the ship has flown past its forecast (2F, A6, A12).
+        const endedAt = num('endedAt');
+        return {
+          id,
+          level,
+          text: 'Forecast ended',
+          detail: `${endedAt !== undefined ? `T+${clock(endedAt)} · ` : ''}preview or commit to look ahead`,
+        };
+      }
       default: {
         const words = name(kind);
         return { id, level, text: words.charAt(0).toUpperCase() + words.slice(1) };
@@ -177,7 +187,10 @@ export function flightAlerts(desk: Desk): AlertItem[] {
       detail: `${whole(main.value)} kg`,
     });
   const end = snapshot.forecasts.at(-1)?.samples.at(-1);
-  if (end && end.t < status.t)
+  // Where the session raises its own caution for a forecast that has ended, that one stands:
+  // this advisory would say the same thing twice.
+  const sessionSays = status.alerts.some((a) => (a as { id?: unknown }).id === 'forecast-ended');
+  if (end && end.t < status.t && !sessionSays)
     items.push({
       id: 'ended',
       level: 'advisory',

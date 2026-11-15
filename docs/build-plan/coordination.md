@@ -15,7 +15,7 @@ The owner wraps up every thread, then everything is committed and merged, the in
 | # | Thread | What lands | Watch for |
 |---|---|---|---|
 | a | AU | R62: the opening's black-cut at `CUT` (10.85 s), not 10.65 | One line in 3F's `src/app/opening/sequence.ts` |
-| b | 3F | The console rebuilt (A26): EXPLORATION, the level disc, STEER, the Garden's objectives on the charts, the test's plain-words reason on MODEL, R63's variant | Then apply 3F's `docs/handoffs/3f/s15-runner.patch` (S15 clicks the new rail). Keep `AudioMount`, `.cr`, `.cr-black[data-stage]` |
+| b | 3F | **Merged** (this commit, from `64cabb2`): the console rebuilt, EXPLORATION, the level disc, STEER, objectives on the charts, the test's reason on MODEL, R63's variant | Not done: 3F's S15 runner patch (`docs/handoffs/3f/s15-runner.patch`, tooling only, skipped for time); the root `README.md` still says MISSION; PLAN is 24 ms against main's 18 ms (inside the 33 ms gate) with one 0.4–0.7 s frame when a new forecast is first drawn; after a loss in the Well Garden, PLAN's chart places the exits differently than at first arrival (uninvestigated). Owner's calls: the stage names and the stars behind MAP and SHIP |
 | c | 2C | **Merged** (this commit): R61 (incremental rebuilds; 2C's production check passes on the integrator's machine) and R58 (the loss review reads the monitor) | **R32 not built**: 2C held it for the owner, though the owner said yes after R61. Relay the go, or leave it as a known limit. R66 goes to 2F |
 | d | VX | R54 (each region its own sky), if it ran | The arrival shots differ per region |
 | e | TR (with TV) | The trailer page, TV's five shots, the owner's sounds: 7 game files into `public/audio/` | After 3F. TV's scripted-frame method in `RoomView.ts` is never called by the game; PF's renderer code kept |
@@ -238,7 +238,8 @@ Decided: A15 (S11's queue), A16 (the lattice), A17 (the ending) and A18 (the Gra
 
 | Commit | What |
 |---|---|
-| (this commit) | 2C merged (`881ffc6`): R61 (incremental rebuilds; the production check passes here at T+96 s) and R58. Check 1,396 tests + speed test, build, harness smoke, production smoke, Twin Deeps' learning loop (alone: TEST 1.03 against 1.12; ADOPT; a run alongside the Cathedral check failed at the script's fixed waits under load). R66 |
+| (this commit) | 3F merged (`64cabb2`). Check 1,561 tests + speed test, build, production smoke of the opening and all three regions, no page errors. 3F's own cold judge's run (on `5de7239`): Twin Deeps through ADOPT, the Garden completed with STEER, the Cathedral's loss review. Learning loop and S15 patch skipped for time |
+| `651ee00` | 2C merged (`881ffc6`): R61 (incremental rebuilds; the production check passes here at T+96 s) and R58. Check 1,396 tests + speed test, build, harness smoke, production smoke, Twin Deeps' learning loop (alone: TEST 1.03 against 1.12; ADOPT; a run alongside the Cathedral check failed at the script's fixed waits under load). R66 |
 | `d5c8cb6` | Ledger: the final assembly checklist |
 | `2c91380` | Ledger: TR's first session wrapped at `7958c7d` (the owner's 10 sound files in, 12 missing; next-thread prompt); TV done at `7f56cf9`; R65 (the game's opening-alarm take is 3 s) |
 | `febb6bd` | PF's R59 merged (`1830955`, from `main`, no old history, path scan clean): `?quality=full` pins the render scale at 1. Full check: 1,392 passed and 2 timed out at 60 s under load (`clouds.test.ts`, `admission-observer.test.ts`; 105 Node and 40 Chrome processes from other threads); both files pass on their own (6 tests, 20 s); no limit raised. Build, harness smoke, production smoke, and a `?quality=full` load reaching the room in about 1 s |

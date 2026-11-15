@@ -91,6 +91,8 @@ export const opacity = {
   shipFootprint: 0.55,
   hullEdges: 0.8,
   connector: 0.6,
+  /** Attitude jets firing: the thrust colour, drawn quietly beside a commanded burn (A26). */
+  attitudeJet: 0.4,
   /** Forecast envelope inside an adopted rule's validated span (A5): between sampled and extrapolated. */
   validatedBody: 0.08,
   validatedEdge: 0.42,

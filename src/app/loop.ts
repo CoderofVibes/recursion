@@ -222,12 +222,26 @@ export function startControlRoom(
       sinceChart = 0;
       chart = chartView(game.chart());
     }
+    // Stepping through the forecast (the MAP's region view): the plan as previewed, or failing
+    // that the forecast last issued, at the moment the desk holds.
+    const rehearsed = desk.preview ?? snapshot.forecasts.at(-1);
     view.frame(drawDt, {
       snapshot,
+      ...(desk.rehearsal && rehearsed
+        ? { rehearsal: { forecast: rehearsed, t: desk.rehearsal.t, follow: desk.rehearsal.follow } }
+        : {}),
       ...(desk.preview ? { preview: desk.preview } : {}),
       selected: desk.selected,
       clearance: desk.design.clearance,
-      hands: { yaw: hand.input.yaw, pitch: hand.input.pitch },
+      hands: {
+        yaw: hand.input.yaw,
+        pitch: hand.input.pitch,
+        // Jets pushing the ship along an axis the hands hold are a burn the player commanded.
+        translating:
+          hand.input.translate.x !== 0 ||
+          hand.input.translate.y !== 0 ||
+          (hand.input.translate.z ?? 0) !== 0,
+      },
       chart,
       recording: !status.paused && status.phase !== 'ended',
     });
@@ -285,7 +299,7 @@ export function startControlRoom(
       view.go(wanted, true);
     const page = query.get('page');
     if (
-      page === 'mission' ||
+      page === 'exploration' ||
       page === 'plan' ||
       page === 'model' ||
       page === 'blackbox' ||

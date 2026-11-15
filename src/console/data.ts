@@ -23,7 +23,7 @@ import { dist, fixed, whole } from './format.ts';
 const G0 = 9.80665;
 
 /**
- * An objective as MISSION states it: its kind in a word, its name, and its conditions (S20), so
+ * An objective as EXPLORATION states it: its kind in a word, its name, and its conditions (S20), so
  * the player knows what the attempt is asked to do. A region to reach is given by its size and
  * how far its edge is from where the ship believes it is now.
  */
@@ -171,6 +171,127 @@ export function burnDirection(
   }
 }
 
+type Vec = { readonly x: number; readonly y: number; readonly z?: number };
+
+/**
+ * The bodies' centre of mass and how it drifts, as the ship believes them: positions and
+ * velocities weighted by the model's GM for each. Null before the model holds a GM for every
+ * body, or with no body at all.
+ */
+export function believedCentre(
+  bodies: readonly { readonly id: string; readonly position: Vec; readonly velocity: Vec }[],
+  model: Pick<ModelState, 'parameters'>,
+): {
+  centre: { x: number; y: number; z: number };
+  drift: { x: number; y: number; z: number };
+} | null {
+  let mu = 0;
+  const p = { x: 0, y: 0, z: 0 };
+  const v = { x: 0, y: 0, z: 0 };
+  for (const b of bodies) {
+    const gm = model.parameters.find((q) => q.id === `body.${b.id}.mu`)?.value;
+    if (!(gm !== undefined && gm > 0)) return null;
+    mu += gm;
+    p.x += gm * b.position.x;
+    p.y += gm * b.position.y;
+    p.z += gm * (b.position.z ?? 0);
+    v.x += gm * b.velocity.x;
+    v.y += gm * b.velocity.y;
+    v.z += gm * (b.velocity.z ?? 0);
+  }
+  if (!(mu > 0)) return null;
+  return {
+    centre: { x: p.x / mu, y: p.y / mu, z: p.z / mu },
+    drift: { x: v.x / mu, y: v.y / mu, z: v.z / mu },
+  };
+}
+
+/** Where a forecast ends, against a `depart` objective. */
+export interface DepartureForecast {
+  /** When the forecast ends, s. */
+  readonly t: number;
+  /** Speed from the bodies' centre of mass there, m/s, and its part away from that centre. */
+  readonly speed: number;
+  readonly outward: number;
+  /**
+   * From that centre, m, and its one sigma: the forecast's own uncertainty in the ship's
+   * position there, along the line from the centre (null where the forecast gives none). The
+   * forecast carries no uncertainty for velocity, so the speed has none to show.
+   */
+  readonly distance: number;
+  readonly distanceSigma: number | null;
+  readonly minSpeed: number;
+  readonly beyond: number;
+}
+
+/**
+ * A `depart` objective's standing where a forecast ends: the same measure as `departProgress`,
+ * with the ship and the bodies where the forecast puts them at its last sample (a body's
+ * velocity from its last two forecast positions; a body the forecast has no track for stays
+ * where it is believed now). Null without a depart objective, before the model holds a GM for
+ * every body, or for a forecast with no samples.
+ */
+export function departForecast(
+  forecast: Pick<Forecast | ForecastDraft, 'samples' | 'objects'>,
+  snapshot: Pick<ViewSnapshot, 'world' | 'objectives'>,
+  model: Pick<ModelState, 'parameters'>,
+): DepartureForecast | null {
+  const objective = snapshot.objectives.find((o) => o.depart);
+  const last = forecast.samples.at(-1);
+  if (!objective?.depart || !last) return null;
+  const bodies = snapshot.world.bodies.map((b) => {
+    const track = forecast.objects.find((o) => o.id === b.id)?.samples;
+    const end = track?.at(-1);
+    if (!track || !end) return b;
+    const before = track.at(-2);
+    const dt = before ? end.t - before.t : 0;
+    return {
+      id: b.id,
+      position: end.position,
+      velocity:
+        before && dt > 0
+          ? {
+              x: (end.position.x - before.position.x) / dt,
+              y: (end.position.y - before.position.y) / dt,
+              z: ((end.position.z ?? 0) - (before.position.z ?? 0)) / dt,
+            }
+          : b.velocity,
+    };
+  });
+  const frame = believedCentre(bodies, model);
+  if (!frame) return null;
+  const out = {
+    x: last.position.x - frame.centre.x,
+    y: last.position.y - frame.centre.y,
+    z: (last.position.z ?? 0) - frame.centre.z,
+  };
+  const rel = {
+    x: last.velocity.x - frame.drift.x,
+    y: last.velocity.y - frame.drift.y,
+    z: (last.velocity.z ?? 0) - frame.drift.z,
+  };
+  const r = Math.hypot(out.x, out.y, out.z);
+  const c = last.positionCov as readonly number[] | undefined;
+  // Variance along the line from the centre: uᵀ Σ u, with Σ as [xx, xy, xz, yy, yz, zz].
+  const along =
+    c?.length === 6 && r > 0
+      ? (c[0]! * out.x * out.x +
+          c[3]! * out.y * out.y +
+          c[5]! * out.z * out.z +
+          2 * (c[1]! * out.x * out.y + c[2]! * out.x * out.z + c[4]! * out.y * out.z)) /
+        (r * r)
+      : null;
+  return {
+    t: last.t,
+    speed: Math.hypot(rel.x, rel.y, rel.z),
+    outward: r > 0 ? (rel.x * out.x + rel.y * out.y + rel.z * out.z) / r : 0,
+    distance: r,
+    distanceSigma: along === null ? null : Math.sqrt(Math.max(0, along)),
+    minSpeed: objective.depart.minSpeed,
+    beyond: objective.depart.beyond,
+  };
+}
+
 /**
  * Progress toward a `depart` objective (S20: say which frame a speed is in). The objective
  * measures speed from the encounter's centre of mass; this is that frame as the ship believes
@@ -189,24 +310,10 @@ export function departProgress(
 } | null {
   const objective = snapshot.objectives.find((o) => o.depart);
   if (!objective?.depart) return null;
-  let mu = 0;
-  const p = { x: 0, y: 0, z: 0 };
-  const v = { x: 0, y: 0, z: 0 };
-  for (const b of snapshot.world.bodies) {
-    const gm = model.parameters.find((q) => q.id === `body.${b.id}.mu`)?.value;
-    if (!(gm !== undefined && gm > 0)) return null;
-    mu += gm;
-    p.x += gm * b.position.x;
-    p.y += gm * b.position.y;
-    p.z += gm * (b.position.z ?? 0);
-    v.x += gm * b.velocity.x;
-    v.y += gm * b.velocity.y;
-    v.z += gm * (b.velocity.z ?? 0);
-  }
-  if (!(mu > 0)) return null;
+  const frame = believedCentre(snapshot.world.bodies, model);
+  if (!frame) return null;
   const ship = snapshot.world.ship;
-  const centre = { x: p.x / mu, y: p.y / mu, z: p.z / mu };
-  const drift = { x: v.x / mu, y: v.y / mu, z: v.z / mu };
+  const { centre, drift } = frame;
   return {
     speed: distance(ship.velocity, drift),
     distance: distance(ship.position, centre),

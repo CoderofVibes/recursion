@@ -13,6 +13,7 @@ import type { Desk } from './desk.ts';
 import { degrees } from './format.ts';
 import { FramingControls } from './Framing.tsx';
 import type { Framing } from './Framing.tsx';
+import { RehearsalPanel } from './Rehearsal.tsx';
 
 export interface MapPlateProps {
   readonly desk: Desk;
@@ -21,9 +22,27 @@ export interface MapPlateProps {
   readonly onRegion: (on: boolean) => void;
   /** Framing the chart without a pointer. */
   readonly framing?: Framing;
+  /** Set the region view's range, metres: stepping through the forecast follows the ship. */
+  readonly onRange?: (metres: number) => void;
+  /** Go to where the plan is edited. */
+  readonly onPlan?: () => void;
+  /** The region view's range now, metres. */
+  readonly range?: () => number;
+  /** Reduced motion: stepping moves at once instead of gliding. */
+  readonly still?: boolean;
 }
 
-export function MapPlate({ desk, holo, region, onRegion, framing }: MapPlateProps) {
+export function MapPlate({
+  desk,
+  holo,
+  region,
+  onRegion,
+  framing,
+  onRange,
+  onPlan,
+  range,
+  still,
+}: MapPlateProps) {
   const selection = (): ReturnType<MapHolo['selected']> => holo.selected();
   const picked = useSyncExternalStore((listener) => holo.onChange(listener), selection, selection);
   const { game } = desk;
@@ -72,26 +91,47 @@ export function MapPlate({ desk, holo, region, onRegion, framing }: MapPlateProp
   if (id !== here) return null;
   const facts = regionFacts(game, desk.archive(), desk.snapshot());
   return (
-    <aside className="mp-plate">
-      <Panel title={game.briefing.name} aside={region ? 'region view' : 'charted'}>
-        {chooser}
-        {facts.map((f) => (
-          <Line key={f.label} label={f.label} {...(f.tone ? { tone: f.tone } : {})}>
-            {f.value}
-          </Line>
-        ))}
-        <Actions>
-          <Button primary onClick={() => onRegion(!region)}>
-            {region ? 'BACK TO THE CHART' : 'ENTER REGION'}
-          </Button>
-        </Actions>
-        <p className="cs-note">
-          {region
-            ? 'the environment as sensed, chart up'
-            : 'unsurveyed space is not drawn as if known'}
-        </p>
-        {frame ?? zoomOnly}
-      </Panel>
-    </aside>
+    <>
+      {/* In the region's own view: the predictive model, stepped through (the owner). */}
+      {region ? (
+        <aside className="mp-plate mp-left">
+          <RehearsalPanel
+            desk={desk}
+            {...(onRange ? { onRange } : {})}
+            {...(onPlan ? { onPlan } : {})}
+            {...(range ? { range } : {})}
+            {...(still !== undefined ? { still } : {})}
+          />
+        </aside>
+      ) : null}
+      <aside className="mp-plate">
+        <Panel title={game.briefing.name} aside={region ? 'region view' : 'charted'}>
+          {chooser}
+          {facts.map((f) => (
+            <Line key={f.label} label={f.label} {...(f.tone ? { tone: f.tone } : {})}>
+              {f.value}
+            </Line>
+          ))}
+          <Actions>
+            <Button
+              primary
+              onClick={() => {
+                // Leaving the region ends the stepping: the chart shows what is charted, now.
+                if (region) desk.setRehearsal(undefined);
+                onRegion(!region);
+              }}
+            >
+              {region ? 'BACK TO THE CHART' : 'ENTER REGION'}
+            </Button>
+          </Actions>
+          <p className="cs-note">
+            {region
+              ? 'the environment as sensed, chart up'
+              : 'unsurveyed space is not drawn as if known'}
+          </p>
+          {frame ?? zoomOnly}
+        </Panel>
+      </aside>
+    </>
   );
 }

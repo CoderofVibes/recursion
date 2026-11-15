@@ -42,6 +42,8 @@ export const lineStyles = {
   bodyAxis: solid(colour.measured, line.bodyAxis),
   thrustLine: dashed(colour.thrust, line.thrustLine, dash.thrustLine),
   thrustChevron: solid(colour.thrust, line.thrustChevron),
+  /** Attitude jets turning or steadying the ship: chevrons only, quiet, no line of action. */
+  attitudeJet: solid(colour.thrust, line.thrustLine, opacity.attitudeJet),
   velocity: solid(colour.velocity, line.velocity, 0.95),
   shipFootprint: solid(colour.measured, line.shipFootprint, opacity.shipFootprint),
   bodyFootprint: solid(colour.bodyRim, line.bodyFootprint, opacity.bodyFootprint),

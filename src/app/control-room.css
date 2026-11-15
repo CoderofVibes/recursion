@@ -353,6 +353,106 @@ body,
     transparent var(--rx-unit) calc(var(--rx-unit) * 3)
   );
 }
+/* What the ship is doing, above the keys that do it: what is thrusting, and the turn in hand. */
+.fh-action {
+  left: var(--rx-hud-margin);
+  bottom: calc(var(--rx-hud-margin) * 1.6 + var(--rx-hud-key-height) * 2 + var(--rx-row-gap) * 3);
+  width: calc(var(--rx-hud-key) * 5 + var(--rx-row-gap) * 4);
+  display: grid;
+  gap: var(--rx-unit);
+  padding: var(--rx-row-gap) var(--rx-panel-pad-x);
+  border: var(--rx-line-rule) solid var(--rx-panel-edge);
+  border-radius: var(--rx-panel-radius);
+  background: var(--rx-hud-plate-soft);
+  font-size: var(--rx-size-small);
+}
+.fh-action p {
+  display: grid;
+  grid-template-columns: calc(var(--rx-unit) * 26) minmax(0, 1fr);
+  gap: var(--rx-row-gap);
+  margin: 0;
+  color: var(--rx-ink-dim);
+}
+.fh-action p b {
+  font-weight: var(--rx-weight-regular);
+  letter-spacing: var(--rx-tracking-label);
+  color: var(--rx-ink-faint);
+}
+/* A commanded burn is named in the thrust colour, the same as its marks on the hologram. */
+.fh-action p[data-kind='burn'] span {
+  font-weight: var(--rx-weight-strong);
+  color: var(--rx-thrust);
+  text-shadow: var(--rx-hud-glow-thrust);
+}
+.fh-action p[data-on] span {
+  color: var(--rx-ink);
+}
+.fh-rates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--rx-gap);
+}
+.fh-rate {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--rx-row-gap);
+}
+.fh-rate b {
+  font-weight: var(--rx-weight-regular);
+  letter-spacing: var(--rx-tracking-label);
+  text-transform: uppercase;
+  color: var(--rx-ink-faint);
+}
+.fh-rate i {
+  position: relative;
+  height: var(--rx-bar-height);
+  background: var(--rx-wash-hover);
+  /* Zero in the middle. */
+  background-image: linear-gradient(var(--rx-ink-dim), var(--rx-ink-dim));
+  background-size: var(--rx-line-rule) 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+.fh-rate em {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  background: var(--rx-ink);
+}
+/* The margins that change in flight, as a strip between the keys and the right-hand column. */
+.fh-margins {
+  left: calc(var(--rx-hud-margin) * 2 + var(--rx-hud-key) * 5 + var(--rx-row-gap) * 4);
+  right: calc(var(--rx-hud-margin) * 2 + var(--rx-hud-column));
+  bottom: calc(var(--rx-hud-margin) * 1.6);
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+  gap: var(--rx-gap);
+  padding: var(--rx-row-gap) var(--rx-panel-pad-x);
+  border: var(--rx-line-rule) solid var(--rx-panel-edge);
+  border-radius: var(--rx-panel-radius);
+  background: var(--rx-hud-plate-soft);
+}
+/* Each margin in its own narrow cell: its name, its bar, its reading, one under the other. */
+.fh-margins .ci-drag {
+  grid-template-columns: minmax(0, 1fr);
+}
+.fh-margins .ci-drag__track {
+  grid-row: 2;
+  grid-column: 1;
+  height: var(--rx-bar-height);
+}
+.fh-margins .ci-drag__value {
+  grid-row: 3;
+  text-align: left;
+}
+.fh-margins .ci-drag__label,
+.fh-margins .ci-drag__value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .fh-forecast {
   left: 50%;
   bottom: var(--rx-hud-margin);
@@ -373,7 +473,9 @@ body,
   gap: var(--rx-gap);
   overflow-y: auto;
   pointer-events: auto;
-  scrollbar-width: none;
+  /* When an encounter's panel makes the column taller than the view, the scroll is shown. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--rx-panel-edge) transparent;
 }
 .fh-side .rx-panel,
 .sp-col .rx-panel,
@@ -411,7 +513,27 @@ body,
   right: var(--rx-hud-margin);
   top: var(--rx-hud-top);
   width: var(--rx-hud-plate);
+  max-height: calc(100% - var(--rx-hud-top) - var(--rx-hud-margin) * 1.5);
+  overflow-y: auto;
   pointer-events: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--rx-panel-edge) transparent;
+}
+/* The predictive model, stepped through, on the other side of the region from its plate. */
+.mp-plate.mp-left {
+  left: var(--rx-hud-margin);
+  right: auto;
+  width: var(--rx-hud-column);
+}
+.mp-framing {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--rx-unit) * 2);
+}
+.mp-framing .rx-chip[data-on] {
+  color: var(--rx-forecast);
+  border-color: var(--rx-forecast);
+  background: var(--rx-wash-forecast);
 }
 
 /* ---- Loss of the ship: black, then one orange pip that survives --------------------------------- */

@@ -219,12 +219,15 @@ export function TimeControls({
   forecasts = [],
   reason,
   compact,
+  onEnter,
 }: {
   readonly game: GameControls;
   readonly forecasts?: readonly Forecast[];
   /** Why warp last dropped to 1×, kept until the player raises it again (S9 R3b). */
   readonly reason?: string | null;
   readonly compact?: boolean;
+  /** Enter the encounter. Absent: the clock simply starts (`enter`). */
+  readonly onEnter?: () => void;
 }) {
   const status = game.status();
   // ENTER goes away once pressed: if it had the keyboard, the warp steps take it (S9 R9).
@@ -259,7 +262,11 @@ export function TimeControls({
       <div className="cs-time__row">
         <span className="cs-time__met">T+{clock(status.t)}</span>
         {status.phase === 'prepare' ? (
-          <Button primary onClick={() => enter(game)} disabled={status.committing}>
+          <Button
+            primary
+            onClick={() => (onEnter ? onEnter() : enter(game))}
+            disabled={status.committing}
+          >
             ENTER {game.briefing.name}
           </Button>
         ) : (

@@ -36,6 +36,8 @@ function stubGame(
     model?: ModelState;
     snapshot?: ViewSnapshot;
     ended?: boolean;
+    /** Before the encounter is entered: nothing runs, and ship time is zero. */
+    preparing?: boolean;
     alerts?: readonly object[];
     radiation?: object;
   } = {},
@@ -52,7 +54,7 @@ function stubGame(
     },
     rules: { report: pending, test: pending, adopt: pending, revoke: pending },
     status: () => ({
-      phase: options.ended ? 'ended' : 'operate',
+      phase: options.preparing ? 'prepare' : options.ended ? 'ended' : 'operate',
       attemptId: current.id,
       attemptIndex: current.index,
       t: viewSnapshot.t,
@@ -100,7 +102,7 @@ function stubGame(
   return { game, commands };
 }
 
-const PAGES: readonly PageId[] = ['mission', 'plan', 'model', 'blackbox', 'systems', 'credits'];
+const PAGES: readonly PageId[] = ['exploration', 'plan', 'model', 'blackbox', 'systems', 'credits'];
 
 describe('console pages on the fixtures', () => {
   for (const page of PAGES)
@@ -185,10 +187,17 @@ describe('console pages on the fixtures', () => {
     const html = renderToStaticMarkup(<ConsoleScreen desk={desk} visible />);
     const finished = archive.attempts.filter((a) => a.outcome.kind !== 'in-progress');
     expect(html).toContain('finished attempts');
+    // The test as its steps: what it is fitted on, and the attempt held out to check it, which
+    // is never among those it is fitted on.
+    const step = (label: string): string | undefined =>
+      new RegExp(`${label}</span><span class="cp-steps__value">([^<]*)<`).exec(html)?.[1];
     if (finished.length >= 2) {
       const held = finished.at(-1)!;
-      expect(html).toContain(`check on attempt ${held.index}`);
-      expect(html).not.toContain(`attempt${finished.length > 2 ? 's' : ''} ${held.index} ·`);
+      const training = finished.filter((x) => x.id !== held.id);
+      expect(step('Check on')).toBe(`attempt ${held.index}`);
+      expect(step('Fit on')).toBe(
+        `attempt${training.length > 1 ? 's' : ''} ${training.map((x) => x.index).join(', ')}`,
+      );
     } else expect(html).toContain('test unavailable');
     // The data behind the plot can be read without it.
     expect(html).toContain('cs-table');
@@ -225,6 +234,63 @@ describe('console pages on the fixtures', () => {
     });
   });
 
+  it('gives the model’s own reason for a held-out test, where the test carries one (2C)', () => {
+    const base = {
+      state: { id: 'distance-law', status: 'candidate' },
+      training: ['attempt-0001'],
+      heldOut: 'attempt-0002',
+    } as unknown as ExtensionRecord;
+    const why =
+      'Most of the misfit is in the held-out attempt’s burn (T+0:10 to T+0:11): the model can’t explain that burn, so this attempt can’t judge the rule.';
+    const failed = {
+      ...base,
+      adoptable: false,
+      heldOutTest: {
+        pass: false,
+        TperNu: 4.2,
+        threshold: 1.12,
+        diagnosis: { cause: 'burn', why },
+      },
+    } as unknown as ExtensionRecord;
+    // The reason replaces the old words; the result itself stays short.
+    expect(testVerdict(failed, false)).toEqual({
+      text: 'fails its held-out test',
+      status: 'caution',
+      why,
+    });
+    // A pass says why it passed, too; a test saved before the model gave reasons has none.
+    const agrees = 'The held-out attempt agrees with the rule within its measurement noise.';
+    const passed = {
+      ...base,
+      adoptable: true,
+      heldOutTest: {
+        pass: true,
+        TperNu: 1.0,
+        threshold: 1.12,
+        diagnosis: { cause: 'consistent', why: agrees },
+      },
+    } as unknown as ExtensionRecord;
+    expect(testVerdict(passed, false)).toEqual({
+      text: 'passes · not adopted',
+      status: 'nominal',
+      why: agrees,
+    });
+    expect(testVerdict(passed, true)?.why).toBe(agrees);
+    expect(
+      testVerdict({ ...failed, heldOutTest: { pass: false } } as unknown as ExtensionRecord, false),
+    ).toEqual({ text: 'fails: the held-out attempt departs from it', status: 'caution' });
+
+    // On the page: the result in the test's third step, the reason under the steps in full.
+    const { game } = stubGame({ model: models.prior });
+    const desk = new Desk(game);
+    desk.page = 'model';
+    desk.tests.set('distance-law', failed);
+    const html = renderToStaticMarkup(<ConsoleScreen desk={desk} visible />);
+    expect(html).toContain('<span class="cp-steps__value">fails its held-out test</span>');
+    expect(html).toContain(`<p class="cs-why" data-status="caution">${why}</p>`);
+    expect(html).not.toContain('departs from it');
+  });
+
   it('records the design and sets the ship up through commands only', () => {
     const { game, commands } = stubGame();
     const desk = new Desk(game);
@@ -234,6 +300,281 @@ describe('console pages on the fixtures', () => {
     );
     expect(commands.length).toBeGreaterThan(1);
     expect(desk.designedAt).toBe(viewSnapshot.t);
+  });
+});
+
+/** Every element carrying `marker` in its opening tag. */
+const tags = (html: string, marker: string): string[] =>
+  (html.match(/<[a-z]+ [^>]*>/g) ?? []).filter((tag) => tag.includes(marker));
+
+describe('the loop on the console', () => {
+  const render = (
+    page: PageId,
+    options: Parameters<typeof stubGame>[0] = {},
+    prepare?: (desk: Desk) => void,
+  ) => {
+    const stub = stubGame(options);
+    const desk = new Desk(stub.game);
+    desk.page = page;
+    prepare?.(desk);
+    return { html: renderToStaticMarkup(<ConsoleScreen desk={desk} visible />), desk, ...stub };
+  };
+
+  it('names the six stages in order on the rail, each a button saying where it stands (A26)', () => {
+    const { html } = render('plan');
+    const stages = tags(html, 'class="ci-rail__stage"');
+    expect(stages).toHaveLength(6);
+    expect(stages.every((tag) => tag.startsWith('<button type="button"'))).toBe(true);
+    const names = stages.map((tag) => /aria-label="([^":]+): [^"]+"/.exec(tag)?.[1]);
+    expect(names).toEqual(['EXPLORATION', 'SYSTEMS', 'PLAN', 'FLIGHT', 'BLACK BOX', 'MODEL']);
+    // The page in hand is the one stage marked; nothing on the console is called MISSION.
+    expect(stages.filter((tag) => tag.includes('aria-current="step"'))).toHaveLength(1);
+    expect(stages[2]).toContain('aria-current="step"');
+    expect(html).not.toContain('MISSION');
+  });
+
+  it('offers a burn every direction, across the motion among them, on chips the keyboard steps', () => {
+    const { html } = render('plan', {}, (desk) =>
+      desk.editPlan((e) => ({
+        ...e,
+        burns: [
+          {
+            key: desk.newRowKey(),
+            at: 600,
+            direction: 'left',
+            target: briefing.knownBodies[0]!.id,
+            offset: 0,
+            sizing: 'deltaV',
+            amount: 12.5,
+            throttle: 1,
+          },
+        ],
+      })),
+    );
+    for (const label of [
+      'PROGRADE',
+      'RETROGRADE',
+      'TOWARD',
+      'AWAY',
+      'STEER',
+      '◂ LEFT',
+      'RIGHT ▸',
+      '▴ UP',
+      '▾ DOWN',
+      'AXIS',
+    ])
+      expect(html).toContain(`>${label}</button>`);
+    // The direction chosen is the one chip checked, and it is said in words what it means.
+    expect(html).toMatch(/aria-checked="true"[^>]*>◂ LEFT</);
+    expect(html).toContain('across the ship’s motion as it is now: to its left');
+    // Each of a burn's settings is a bar to pull and a figure to type: when it fires, how
+    // much, how hard. All of them take the keyboard.
+    const sliders = tags(html, 'role="slider"');
+    expect(sliders.map((tag) => /aria-label="([^"]+)"/.exec(tag)?.[1])).toEqual([
+      'Fires in',
+      'Speed change',
+      'Throttle',
+    ]);
+    expect(sliders.every((tag) => tag.includes('tabindex="0"'))).toBe(true);
+    expect(html).toContain('aria-valuetext="12.5 m/s"');
+    expect(tags(html, 'type="number"').map((tag) => /aria-label="([^"]+)"/.exec(tag)?.[1])).toEqual(
+      ['Fires in, s', 'Speed change, m/s', 'Throttle, %'],
+    );
+  });
+
+  it('steers a burn by a body or by a place the objective says to reach', () => {
+    const snapshot = {
+      ...viewSnapshot,
+      objectives: [
+        {
+          id: 'cross',
+          kind: 'reach-region',
+          label: 'CROSS-TRANSFER',
+          region: { center: { x: 4e8, y: 3e8, z: 1e8 }, radius: 1000 },
+        },
+      ],
+    } as unknown as ViewSnapshot;
+    const { html } = render('plan', { snapshot }, (desk) =>
+      desk.editPlan((e) => ({
+        ...e,
+        burns: [
+          {
+            key: desk.newRowKey(),
+            at: 600,
+            direction: 'steer',
+            target: 'objective:cross',
+            offset: 0,
+            sizing: 'deltaV',
+            amount: 12.5,
+            throttle: 1,
+          },
+        ],
+      })),
+    );
+    expect(html).toMatch(/aria-checked="true"[^>]*>STEER</);
+    expect(html).toContain('turns the path toward it');
+    // What it can be steered by: every body, then every place to reach, the chosen one selected.
+    const select =
+      /<span class="cs-field__label">Steer toward<\/span><select[^>]*>(.*?)<\/select>/.exec(
+        html,
+      )![1]!;
+    const options = [...select.matchAll(/<option value="([^"]+)"( selected="")?>([^<]+)</g)].map(
+      (m) => ({ value: m[1], chosen: m[2] !== undefined, label: m[3] }),
+    );
+    expect(options.map((o) => o.value)).toEqual([
+      ...viewSnapshot.world.bodies.map((b) => b.id),
+      'objective:cross',
+    ]);
+    expect(options.find((o) => o.chosen)).toEqual({
+      value: 'objective:cross',
+      chosen: true,
+      label: 'CROSS-TRANSFER',
+    });
+    // It has a side to steer to, so nothing says otherwise.
+    expect(html).not.toContain('there is no side to steer to');
+  });
+
+  it('keeps PREVIEW, COMMIT and CUTOFF under the chart, outside the column that scrolls', () => {
+    const { html } = render('plan');
+    const strip = html.indexOf('class="cp-commit"');
+    expect(strip).toBeGreaterThan(html.indexOf('class="cp-hero"'));
+    expect(strip).toBeLessThan(html.lastIndexOf('class="cp-side"'));
+    const after = html.slice(strip, html.lastIndexOf('class="cp-side"'));
+    for (const label of ['PREVIEW', 'COMMIT', 'CUTOFF'])
+      expect(after).toContain(`>${label}</button>`);
+    // Once, each: they are not also down in the burn list.
+    for (const label of ['PREVIEW', 'COMMIT', 'CUTOFF'])
+      expect(html.split(`>${label}</button>`)).toHaveLength(2);
+    // Procedures and Recall stay on the page, folded: a summary the keyboard opens.
+    expect(html).toMatch(
+      /<details class="cp-fold"><summary>procedures · \d+ saved · recall<\/summary>/,
+    );
+  });
+
+  it('before the encounter offers the way in on EXPLORATION, and never once inside', () => {
+    const before = render('exploration', { preparing: true }).html;
+    expect(before).toContain('RECORD DESIGN AND SET UP');
+    // On the page and in the footer.
+    expect(before.split(`ENTER ${briefing.name}`)).toHaveLength(3);
+    expect(before).toContain('the design is recorded when you enter');
+    expect(before).toContain('ci-chart');
+    const inside = render('exploration').html;
+    expect(inside).not.toContain(`ENTER ${briefing.name}`);
+    expect(inside).toContain('RECORD DESIGN AND SET UP');
+  });
+
+  it('before the encounter shows the power as set, on faders the keyboard can pull', () => {
+    const { html, commands } = render('systems', { preparing: true }, (desk) =>
+      desk.setUnit('comms', { mode: 'on' }),
+    );
+    expect(html).toContain('as set: nothing runs until you enter');
+    const faders = tags(html, 'role="slider"');
+    expect(faders.length).toBeGreaterThan(0);
+    expect(faders.every((tag) => tag.includes('tabindex="0"'))).toBe(true);
+    // A setting made here is on the desk, not with the ship.
+    expect(commands).toEqual([]);
+    // Inside, the page says nothing of waiting.
+    expect(render('systems').html).not.toContain('nothing runs until you enter');
+  });
+
+  it('keeps every unit a fold away, and draws that list only once it is opened', () => {
+    const { html } = render('systems');
+    // The fold is there to open, with how many units it holds; closed, none of them is drawn
+    // (the page is redrawn five times a second: S15's views).
+    expect(html).toMatch(
+      /<details class="cp-fold"><summary>every unit · \d+ assemblies · modes, allocation, readings, condition<\/summary><\/details>/,
+    );
+    expect(html).not.toContain('aria-label="Equipment"');
+    // The loads the player sets are still on the board, outside the fold.
+    expect(tags(html, 'role="slider"').length).toBeGreaterThan(0);
+  });
+
+  it('leads BLACK BOX with the flight as measured, over the attempt before, and keeps RECALL in sight', () => {
+    const { html } = render('blackbox');
+    expect(html).toContain('the flight as measured against its forecast, seen from');
+    expect(html).toContain('class="ci-chart__trail"');
+    expect(html).toMatch(/class="ci-chart__trail" data-previous=""/);
+    expect(html).toContain('Predicted against flown');
+    // Recall is not folded away: it comes before the first fold on the page.
+    expect(html.indexOf('>RECALL</button>')).toBeGreaterThan(0);
+    expect(html.indexOf('>RECALL</button>')).toBeLessThan(html.indexOf('<details'));
+    // Compare and the recorder's store are still here.
+    expect(html).toContain('aria-label="Compare"');
+    expect(html).toMatch(/<summary>recorder · /);
+  });
+
+  it('names a body the model has measured nothing of, and draws no empty plot for it', () => {
+    const model: ModelState = {
+      ...models.distanceLaw,
+      calibration: [
+        ...models.distanceLaw.calibration,
+        { ...models.distanceLaw.calibration[0]!, body: 'beta', windows: [] },
+      ],
+    };
+    const { html } = render('model', { model });
+    expect(html.split('<figure')).toHaveLength(2);
+    expect(html).toContain('nothing measured yet of Beta');
+    expect(html).not.toContain('nothing measured, nothing drawn');
+    // The questions that cost fits are folded, and still there to ask.
+    expect(html).toContain('>CHECK BURNS</button>');
+    expect(html).toContain('>FIND UNEXPLAINED PULL</button>');
+  });
+
+  it('reads the plan’s forecast against a place to reach, and points the chart at it (R51)', () => {
+    const end = viewSnapshot.forecasts.at(-1)!.samples.at(-1)!;
+    const objective = (center: { x: number; y: number; z: number }, radius: number) =>
+      ({
+        ...viewSnapshot,
+        objectives: [
+          {
+            id: 'forward',
+            kind: 'reach-region',
+            label: 'FORWARD TRANSIT',
+            region: { center, radius },
+          },
+        ],
+      }) as unknown as ViewSnapshot;
+    // Far off: the forecast says how near it comes, and the chart points the way.
+    const far = render('plan', { snapshot: objective({ x: 4e8, y: 3e8, z: 0 }, 1000) }).html;
+    expect(far).toContain('against the objective');
+    expect(far).toMatch(
+      /forward transit<\/span><span class="cs-line__value">comes within [\d,.]+ km ±[\d,.]+ k?m · T\+\d\d:\d\d:\d\d</,
+    );
+    expect(far).toMatch(/class="ci-chart__pointer".*>FORWARD TRANSIT · [\d,.]+ km<\/text>/);
+    // Where the forecast ends inside it, it is said to be reached, as a plain fact.
+    const there = render('plan', {
+      snapshot: objective({ x: end.position.x, y: end.position.y, z: end.position.z ?? 0 }, 5000),
+    }).html;
+    expect(there).toMatch(
+      /forward transit<\/span><span class="cs-line__value">reached T\+\d\d:\d\d:\d\d · position ±[\d,.]+ k?m</,
+    );
+    expect(there).not.toContain('comes within');
+  });
+
+  it('reads a departure where the plan’s forecast ends: how fast, and how far out', () => {
+    const snapshot = {
+      ...viewSnapshot,
+      objectives: [
+        {
+          id: 'depart',
+          kind: 'depart',
+          label: 'DEPART 50 M/S',
+          depart: { beyond: 9_000_000, minSpeed: 50 },
+        },
+      ],
+    } as unknown as ViewSnapshot;
+    const { html } = render('plan', { snapshot });
+    expect(html).toContain('against the objective');
+    expect(html).toContain('against the objective · where the forecast ends');
+    // What the objective needs is said once; each bar then carries only its own figure.
+    expect(html).toContain('50 m/s outward, beyond 9,000 km');
+    // (A ship heading back in, or short of the speed, is a caution, and the bar says so.)
+    expect(html).toMatch(
+      /aria-label="Speed out"[^>]*aria-valuetext="[\d,.]+ m\/s( · inward)?(, caution)?"/,
+    );
+    expect(html).toMatch(/aria-label="Distance out"[^>]*aria-valuetext="[\d,.]+ km ±[\d,.]+ k?m"/);
+    // With no objective of either kind, the panel claims nothing about one.
+    expect(render('plan').html).not.toContain('against the objective');
   });
 });
 
