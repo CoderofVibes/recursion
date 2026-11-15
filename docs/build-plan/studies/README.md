@@ -24,6 +24,7 @@ Design and physics studies that run in parallel with the build. Each one answers
 | S18 | The tether's gate and run configurations (A15 Q11–Q18) | [S18-tether-gate.md](S18-tether-gate.md) |
 | S19 | Tidal Orchard: is the effect real? (A15 Q21) | [S19-tidal-check.md](S19-tidal-check.md) |
 | S20 | The 3D release, rechecked: S9's first five minutes, S12's claims and demo, S15's speed | [S20-3d-recheck.md](S20-3d-recheck.md) |
+| S21 | The Gravity range's belt and power (A18): corral the player, make power a real constraint | [S21-belt-power.md](S21-belt-power.md) |
 
 ## Rules for every study
 1. **Read first:**
