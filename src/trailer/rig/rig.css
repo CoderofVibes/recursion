@@ -1,0 +1,22 @@
+.tv-rig {
+  position: absolute;
+  inset: 0;
+  width: var(--tv-width, 100vw);
+  height: var(--tv-height, 100vh);
+}
+.tv-rig canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.tv-labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.tv-rig.tv-preparing {
+  position: fixed;
+  left: -200vw;
+  right: auto;
+  visibility: hidden;
+}
