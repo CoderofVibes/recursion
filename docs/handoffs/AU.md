@@ -19,11 +19,12 @@ Thread: GPT/Codex · Branch: `p3/au-audio` · Date (Pacific): 2026-11-15
 - [DEMONSTRATED: NIGHT driver, production build with temporary MP3 tones] The build served from a subdirectory. The opening made zero audio requests before the gesture, then created one audio context. Sixteen clips decoded, the absent clip was never requested, and an invalid MP3 caused no page error. Instrumented Web Audio started the room bed, rumble, three separate alarm beats, failure, cut, title and wake in order. The room bed returned at the wake.
 - [DEMONSTRATED: NIGHT driver, production build with temporary MP3 tones] Well Garden button clicks, W and Q started the console, main engine and RCS clips. Both propulsion loops stopped when their inputs were released. M changed master gain from 0.65 to 0 and back. Well precursors played the caution and well hum alongside the game's existing drop to 1×.
 - [DEMONSTRATED: NIGHT driver, production build with temporary MP3 tones] A Well Garden coast reached a fatal loss and restarted. Web Audio played failure, the cut to black, the Black Box pip and the wake in order. The room hum stopped under black and returned when the new attempt faded in.
+- [DEMONSTRATED: `src/audio/room.test.ts`] R55 verifies that the Twin Deeps radiation texture clears with the monitor caution, an ended forecast plays the game's caution once, and an equipment-damage cue gives way to the loss cue on a fatal step.
 
 ## Open questions and uncertainty
 
 - The owner still needs to generate, install and audition the ElevenLabs exports. The temporary tones exercised playback and failure handling. Evaluate the production balance and loop seams with the real files.
-- The Well Garden bed uses visible precursors and the optical funnel data when supplied by VX (R50). The Cathedral texture depends on the reported A24 radiation caution (R37). The Earth reveal cue is prepared for 4D's H02; the three submission regions do not contain that sequence.
+- The Well Garden bed uses visible precursors and VX's optical funnel data (R50). The radiation texture follows the reported A24 caution in any region (R55). The Earth reveal cue is prepared for 4D's H02. The three submission regions do not contain that sequence.
 - The lighter bar used the browser smoke above. S15's modest-laptop timing gate with the final assets is outstanding.
 
 ## Requests outside my ownership
@@ -35,3 +36,4 @@ Thread: GPT/Codex · Branch: `p3/au-audio` · Date (Pacific): 2026-11-15
 ## Notes for the next phase
 
 - **Credit ElevenLabs for the generated sound effects** in game and README credits, the submission and the AI-use disclosure (A22, S12, S13). The owner generates the final audio assets.
+- **R55 / R56, TR via the integrator:** use `public/audio/equipment-damage.mp3` for the trailer's lattice strike. The game's cue draws on equipment faults and breaker trips in Black Box's live batches. Reports from the final step of a lost attempt go to the ordinary loss presentation. Forecast ending uses the session's existing caution.
