@@ -22,7 +22,8 @@ The live state of the build between threads: who is running, who holds which sha
 | 3F console v2 | Claude | — | **Gated** | After 2D hands off | — |
 | S16 Well Garden layout | GPT/Codex | `.worktrees/s16` · `st/s16-well-garden` | **Done**: three-well prototype, 25-entry catalogue, garden budget (A15 Q05) | — | `e6eb51d` |
 | S23 the opening | GPT/Codex | `.worktrees/s23` · `st/s23-the-opening` | Ready to launch | Feeds OP and AU | — |
-| OP the opening | Opus 5.5 | `.worktrees/op` · `p3/op-opening` | Ready to launch | S23's beats when they land; room hooks via R23 | — |
+| OP the opening | GPT (base) then Opus 5.5 | `.worktrees/op` · `p3/op-opening` | **Merged** (`6ac2397`): the 19.5 s opening, replay and Skip, reduced motion, room hooks (R23), the home window shared with the ending. Not yet in the game: only the dev preview plays it (R41). Its dev server and launch entry are removed | Gate once per browser (A25) | `6ac2397` |
+| VX window and sky visuals | GPT/Codex (GPT-6 Astra) | `.worktrees/vx` · `p3/vx-visuals` | Ready to launch: a shared sky, the opening's look, shader helpers for funnels, clouds and precursors | The art bible (`docs/art/`) as it lands; takes over `src/view3d/opening/` from OP | — |
 | AU basic audio | GPT/Codex | `.worktrees/au` · `p3/au-audio` | Ready to launch | Cue list first, so the owner can generate in ElevenLabs; mount via R24 | — |
 | ART window references | Owner's choice (Claude or GPT) | `.worktrees/art` · `art/window-references` | Ready: MidJourney prompt library for the window views, worked through with the owner. **References only (A23): no image ships or is committed** | Outputs `docs/art/`; feeds 2D, 3B, OP | — |
 | S22 well field (real funnels) | GPT/Codex | `.worktrees/s22` · `st/s22-big-well-field` | **Done**: funnels 120 km long, 20 km mouth, 1 km throat, pull 0.02–0.10 m/s²; 2,601 sites, 650 appearing; owner questions open | Feeds 3B (R12) | `15171df` |
@@ -88,7 +89,7 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 
 | R22 | 3C → 2C, 2F | Versioning for the lattice: chain-link save format 2 for the twenty-fence world; old attempts keep their original archive and frame; new channels `lattice.angular-fragments.v2` and `lattice.raw-tile.v1` fit the unchanged `Measurement`/`AttemptRecord` shape. 2C versions its reconstruction caches and says whether the archive store needs a migration; 2F confirms the save side | **Open**: integrator approves the shape; awaiting 2C's and 2F's agreement | 3C changed no IndexedDB or shared save schema |
 
-| R23 | OP → 2D | A small additive hook API in the room (window sky, lighting cues, camera shake, fade, title card) under a scoped exception; no change to existing behaviour | **Open**: OP tells 2D before committing | |
+| R23 | OP → 2D | The room hooks (window scenery, scripted shots, alarm lighting) in `RoomView.ts`, `outside.ts` and `shell.ts` | **Merged** `6ac2397`; 2D to accept them. Merging main will conflict with 2D's funnels-in-window work in `outside.ts`: keep both | |
 | R24 | AU → 2D | One mount line in `src/app/` for the audio module, plus a mute control | **Open** | |
 | R25 | AU → owner | The cue list in `docs/audio/cues.md` with ElevenLabs prompts; the owner generates the files into `public/audio/` | **Open**: waits on AU's first checkpoint | Credit ElevenLabs (A22) |
 
@@ -114,6 +115,11 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 
 | R40 | Owner → 2D (OP, integrator) | The region picker (A25): Twin Deeps, Well Garden, Unseen Cathedral, through 2F's `?encounter=` loader, labelled as previews with the route between them not yet built. **OP:** the opening plays once per browser, not per region. **Integrator:** the judge README explains the picker once it lands | **Open**: relay; top of 2D's list | |
 
+| R41 | OP → 2D, OP | Put the opening in the game: 2D mounts `OpeningGate` in the app entry (`src/app/App.tsx`) ahead of the room, waking into the Gravity range. OP changes its gate (`src/app/opening/launch.ts`) from once per save to once per browser (A25) | **Open**: relay; with the picker (R40) | The owner wants judges to see it first |
+| R42 | OP → AU | Cue times moved with the 19.5 s opening: opening-rumble 6.5 s, alarms 6.6/7.8/8.47, loss-failure 9.35, black-cut 10.65, opening-title 11.95, **new** title-out 15.9, room-wake 17.9 | **Open**: relay | |
+| R43 | OP → 2D | **Photosensitivity:** the ordinary loss sequence (A8) flickers faster than 3 times a second. Fix it before the ending (A17) reuses it. Also: Earth and title-size tokens | **Open**: relay, high priority | It's in the live game |
+| R44 | Integrator | Reduced motion in the opening keeps the slow star bending but not the swelling dark. Integrator's call: a fully still sky with the alarm light and a plain fade to black, the safer choice for motion sensitivity. The owner may overrule | **Open**: relay to VX with the opening | |
+
 Add new rows at the bottom with the next ID. Never renumber.
 
 ## Owner decisions still open
@@ -128,7 +134,9 @@ Decided: A15 (S11's queue), A16 (the lattice), A17 (the ending) and A18 (the Gra
 
 | Commit | What |
 |---|---|
-| (this commit) | Tripwire for the radiation caution (R39); 30 s default test time limit; ledger |
+| (this commit) | A21 as built; VX written; ledger R41–R44 |
+| `6ac2397` | OP: the opening |
+| `b877e53` | Tripwire for the radiation caution (R39); 30 s default test time limit; ledger |
 | `920a9ed` | 2F: wells, lattice environment, 3A wiring, clouds, A20 budget |
 | `cac0ea4` | 3A's fixes merged; ledger R34–R37 |
 | `246248c` | 3A: reported condition, no true-dose events |
