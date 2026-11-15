@@ -79,7 +79,7 @@ export function replay(recording: Recording) {
     to: last.t,
     frame(t: number): RoomFrame {
       let i = 0;
-      while (i < frames.length - 2 && frames[i + 1]!.t < t) i++;
+      while (i < frames.length - 1 && frames[i + 1]!.t <= t) i++;
       const a = frames[i]!,
         b = frames[i + 1] ?? a;
       const u = Math.max(0, Math.min(1, (t - a.t) / Math.max(b.t - a.t, Number.EPSILON)));

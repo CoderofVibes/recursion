@@ -52,6 +52,11 @@ if (scene === 'slingshot' && !packed.provenance.lookDirection)
   packed.provenance.lookDirection = packed.provenance.inputs.find(
     (i) => i.t === 95000,
   ).command.target.direction;
+if (scene === 'slingshot') {
+  packed.provenance.interval = 1200;
+  packed.provenance.packing =
+    'Nine significant digits; 1200 s keyframes, plus final 600 s interval. Source captured every 600 s.';
+}
 writeFileSync(
   path,
   JSON.stringify(packed, (_key, value) => (typeof value === 'number' ? round(value) : value)) +
