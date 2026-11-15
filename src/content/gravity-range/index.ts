@@ -17,9 +17,11 @@ import {
 } from '../../game/encounter.ts';
 import { loadShipDefinition } from '../../ship/index.ts';
 import { DEPART, briefing } from './briefing.ts';
-import { arrivalWorld } from './world.ts';
+import { geometryForRun, NOMINAL, type ArrivalGeometry } from './geometry.ts';
+import { ARRIVAL_ANGLE, arrivalWorld } from './world.ts';
 
 export { DEPART, ENCOUNTER_ID, OBJECTIVES, PRIORS } from './briefing.ts';
+export { GEOMETRIES, NOMINAL, geometryForRun, type ArrivalGeometry } from './geometry.ts';
 export {
   ALPHA,
   ALPHA_FIELD,
@@ -95,6 +97,8 @@ export const OBJECTIVE_RULES: readonly ObjectiveRule[] = [
     beyond: DEPART.beyond,
     minSpeed: DEPART.minSpeed,
     maxDeltaV: DEPART.maxDeltaV,
+    learningFree: true,
+    assist: DEPART.assist,
   },
 ];
 
@@ -105,11 +109,26 @@ export const OBJECTIVE_RULES: readonly ObjectiveRule[] = [
  */
 export const PLAY: PlayValues = { ...DEFAULT_PLAY, forecastSpan: 48 * 3600 };
 
-export function createGravityRange(seed: string = SEED): EncounterSetup {
+/**
+ * The Gravity range.
+ * - `createGravityRange()`, or with another `seed` for another rock layout: the reference
+ *   geometry, the same for every attempt (tests and studies).
+ * - `{ run }`: run `run` of a save (A10, A18 (4)): its arrival geometry from the validated
+ *   catalogue (`geometryForRun`), and its own seed for sensor noise and survey error, so no two
+ *   runs repeat a measurement. The briefing it gives is recorded with the attempt.
+ * - `{ geometry }`: a catalogue geometry by hand.
+ */
+export function createGravityRange(
+  seed: string = SEED,
+  options: { readonly run?: number; readonly geometry?: ArrivalGeometry } = {},
+): EncounterSetup {
   const ship = rangeShip();
-  const world = arrivalWorld(ship, seed);
+  const geometry =
+    options.geometry ?? (options.run === undefined ? NOMINAL : geometryForRun(seed, options.run));
+  const noise = options.run === undefined ? seed : `${seed}/run-${options.run}`;
+  const world = arrivalWorld(ship, seed, { noise, arrivalAngle: ARRIVAL_ANGLE + geometry.offset });
   return {
-    definition: { briefing: briefing(world, seed), ship, world, seed, dt: DT },
+    definition: { briefing: briefing(world, noise), ship, world, seed: noise, dt: DT },
     arrivalCommands: ARRIVAL_COMMANDS,
     arrivalMass: world.ship.systems.massProperties.mass,
     objectiveRules: OBJECTIVE_RULES,

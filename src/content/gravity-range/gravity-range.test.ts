@@ -357,7 +357,15 @@ describe('Gravity range: what the ship is told', () => {
       },
     ]);
     expect(setup.objectiveRules).toEqual([
-      { kind: 'depart', objective: 'depart', beyond: 9_000_000, minSpeed: 50, maxDeltaV: 16 },
+      {
+        kind: 'depart',
+        objective: 'depart',
+        beyond: 9_000_000,
+        minSpeed: 50,
+        maxDeltaV: 16,
+        learningFree: true,
+        assist: { body: 'beta', within: 2_000_000, minGain: 1_000 },
+      },
     ]);
     // Every ring rock is big enough to be seen on arrival; Alpha's smallest are not.
     const known = briefing.knownAsteroids;
