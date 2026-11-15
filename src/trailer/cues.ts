@@ -171,14 +171,21 @@ export const CUES: readonly SoundCue[] = [
     file: 'well-groan',
     at: start('wells'),
     until: end('wells'),
-    gain: 0.55 * UNDER,
+    // The owner's take: 0.13 s of silence, then the groan to 2.3 s (owner's note: cut the last
+    // 0.1 s), peak -24 dBFS. Skip the silence, slow it to fill the wells' 2.5 s so the end is
+    // never reached, and lift it to the level the sheet's gains assume (peaks near -3 dBFS).
+    offset: 0.13,
+    rate: 0.87,
+    fadeOut: 0.15,
+    gain: 5.9 * UNDER,
   },
   {
     from: 'trailer',
     file: 'ship-creak',
     at: start('wells') + 0.6,
     until: end('wells'),
-    gain: 0.5 * UNDER,
+    // The owner's take peaks at -9 dBFS: lifted to the sheet's level.
+    gain: 1 * UNDER,
   },
 
   // The lattice: the cabin's quiet hum while the camera looks down at FLIGHT and up at the empty
@@ -205,7 +212,19 @@ export const CUES: readonly SoundCue[] = [
     gain: 8 * UNDER,
   },
   ...alarms,
-  { from: 'trailer', file: 'braid-rush', at: start('braid'), until: SNAP, gain: 0.6 * UNDER },
+  {
+    from: 'trailer',
+    file: 'braid-rush',
+    at: start('braid'),
+    // The owner's take: 0.1 s of silence, then the rush; its last half second is not usable
+    // (owner's note). Skip the silence and slow it a little, and fade out before the bad tail:
+    // 1.8 s of the take fills the braid to 12.55 s, just before the snap.
+    until: Math.round((start('braid') + 1.8 / 0.8) * 1000) / 1000,
+    offset: 0.1,
+    rate: 0.8,
+    fadeOut: 0.25,
+    gain: 0.6 * UNDER,
+  },
 
   // The snap: dead silence but the game's own cut.
   { from: 'game', file: 'black-cut', at: SNAP, until: start('montage-flight'), gain: 0.6 },
