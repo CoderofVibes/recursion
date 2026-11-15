@@ -31,7 +31,8 @@ import type {
   EnvironmentField,
   TruthWorld,
 } from '../../contracts/truth/index.ts';
-import { fieldIntensity } from '../../game/environment.ts';
+import type { WindowCloudBank } from '../../contracts/view.ts';
+import { fieldIntensity, occluded } from '../../game/environment.ts';
 import type { Vec3 } from '../../lib/vec3.ts';
 import type { SimState } from '../../sim/index.ts';
 
@@ -168,4 +169,89 @@ export function cloudEnvironment(
     for (const id in clouds) intensity[id] = (intensity[id] ?? 0) + clouds[id]!;
     return { ...effects, intensity };
   };
+}
+
+/**
+ * The crescent's sample points in its own frame, fixed: radii, azimuths and elevations across
+ * its support and a little beyond its edges, and the polar caps. Each point with the volume it
+ * stands for (the patch's size).
+ */
+interface LocalPatch {
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+  readonly size: number;
+}
+
+function localPatches(spec: CrescentSpec): readonly LocalPatch[] {
+  const out: LocalPatch[] = [];
+  const DEG = Math.PI / 180;
+  const dr = 150_000;
+  for (let r = spec.inner + dr / 2; r < spec.outer; r += dr) {
+    for (let a = spec.from + 2.5; a < spec.to; a += 5)
+      for (let e = -75; e <= 75; e += 15) {
+        const c = Math.cos(e * DEG);
+        out.push({
+          x: r * c * Math.cos(a * DEG),
+          y: r * c * Math.sin(a * DEG),
+          z: r * Math.sin(e * DEG),
+          size: dr / 2,
+        });
+      }
+    // The caps, all round.
+    for (const e of [-84, 84])
+      for (let a = 0; a < 360; a += 30) {
+        const c = Math.cos(e * DEG);
+        out.push({
+          x: r * c * Math.cos(a * DEG),
+          y: r * c * Math.sin(a * DEG),
+          z: r * Math.sin(e * DEG),
+          size: dr / 2,
+        });
+      }
+  }
+  return out;
+}
+
+const patchCache = new WeakMap<CrescentSpec, readonly LocalPatch[]>();
+
+/**
+ * The crescent as the eye sees it from the ship (R38, `WindowView.fields`): glowing patches,
+ * each a direction, an apparent radius and a brightness (the field's intensity there against its
+ * peak), nearest first, those behind a body left out. [FICTIONAL] The glow is fiction (S21).
+ */
+export function cloudWindow(world: TruthWorld, spec: CrescentSpec = CRESCENT): WindowCloudBank[] {
+  let local = patchCache.get(spec);
+  if (!local) {
+    local = localPatches(spec);
+    patchCache.set(spec, local);
+  }
+  const axes = binaryAxes(world, spec);
+  const ship = world.ship.kinematics.position;
+  const seen: { range: number; patch: WindowCloudBank['patches'][number] }[] = [];
+  for (const q of local) {
+    const p = {
+      x: axes.origin.x + q.x * axes.x.x + q.y * axes.y.x + q.z * axes.z.x,
+      y: axes.origin.y + q.x * axes.x.y + q.y * axes.y.y + q.z * axes.z.y,
+      z: axes.origin.z + q.x * axes.x.z + q.y * axes.y.z + q.z * axes.z.z,
+    };
+    const brightness = crescentIntensity(p, axes, spec) / spec.peak;
+    if (!(brightness > 0)) continue;
+    const dx = p.x - ship.x;
+    const dy = p.y - ship.y;
+    const dz = p.z - ship.z;
+    const range = Math.hypot(dx, dy, dz);
+    if (!(range > 0) || occluded(ship, p, world.bodies)) continue;
+    seen.push({
+      range,
+      patch: {
+        direction: { x: dx / range, y: dy / range, z: dz / range },
+        angularRadius: range > q.size ? Math.asin(q.size / range) : Math.PI / 2,
+        brightness: Math.min(1, brightness),
+      },
+    });
+  }
+  if (seen.length === 0) return [];
+  seen.sort((a, b) => a.range - b.range);
+  return [{ kind: 'cloud-bank', id: 'beta-crescent', patches: seen.map((s) => s.patch) }];
 }

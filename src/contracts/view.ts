@@ -11,7 +11,7 @@ import type { Vec3 } from '../lib/vec3.ts';
 import type { BelievedWorld } from './belief.ts';
 import type { Objective } from './encounter.ts';
 import type { Forecast } from './forecast.ts';
-import type { AttemptId, EquipmentId, ObjectId } from './ids.ts';
+import type { AttemptId, EquipmentId, FieldId, ObjectId } from './ids.ts';
 import type { Hull } from './ship.ts';
 import type { Fraction, Meters, Newtons, Radians, Seconds } from './units.ts';
 
@@ -99,10 +99,50 @@ export interface WindowObject {
 }
 
 /**
+ * A visible bank of radiation clouds (A18 (2): the crescent beyond the Gravity range's belt).
+ * [FICTIONAL] Its glow is fiction: ordinary radiation does not shine (S21). As the eye sees it:
+ * patches of glow on the sky, each a direction, an apparent radius and a brightness, sampled
+ * through the bank's volume, nearest first. Never a range or a dose. Patches hidden behind a
+ * body are left out.
+ */
+export interface WindowCloudBank {
+  readonly kind: 'cloud-bank';
+  readonly id: FieldId;
+  readonly patches: readonly {
+    /** Inertial unit vector from the ship. */
+    readonly direction: Vec3;
+    readonly angularRadius: Radians;
+    /** 0 to 1: the glow there against the bank's brightest. */
+    readonly brightness: Fraction;
+  }[];
+}
+
+/**
+ * A funnel (A19) as the eye sees it: 3B's optical projection (`well-optical-v1`,
+ * `src/view3d/fields/wells/funnel.ts` `WindowFunnelVisual`), the visible arcs as inertial unit
+ * rays from the eye. Filled by 3B's encounter through `EncounterSetup.window`.
+ */
+export interface WindowFunnel {
+  readonly kind: 'funnel';
+  readonly id: FieldId;
+  readonly schema: 'well-optical-v1';
+  readonly observedAt: Seconds;
+  readonly visible: boolean;
+  readonly phase: 'precursor' | 'ramping' | 'active' | 'fading';
+  /** Observed brightness, 0 to 1. */
+  readonly brightness: Fraction;
+  /** Visible arcs: inertial unit rays from the eye; depth is a colour coordinate, not a range. */
+  readonly segments: readonly { readonly from: Vec3; readonly to: Vec3; readonly depth: number }[];
+}
+
+/** A field the eye can see through the window. */
+export type WindowField = WindowCloudBank | WindowFunnel;
+
+/**
  * What is outside the window right now, as the eye sees it. Built by the game layer each
- * frame; it holds no field and nothing that needs an instrument. Objects too small or too faint
- * to see are absent, whether or not the ship has catalogued them, and an object the ship has
- * never catalogued can be here.
+ * frame; it holds nothing that needs an instrument. Objects too small or too faint to see are
+ * absent, whether or not the ship has catalogued them, and an object the ship has never
+ * catalogued can be here. A field is here only when it can be seen (`fields`).
  */
 export interface WindowView {
   /**
@@ -113,6 +153,8 @@ export interface WindowView {
   /** Sunlight reaches the ship (it is not in a body's shadow). */
   readonly sunlit: boolean;
   readonly objects: readonly WindowObject[];
+  /** Visible fields (R38): the radiation clouds, the funnels. Absent: none in view. */
+  readonly fields?: readonly WindowField[];
 }
 
 export type Selection =

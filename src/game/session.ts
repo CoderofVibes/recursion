@@ -40,6 +40,7 @@ import type {
   ThrustTick,
   TrailPoint,
   ViewSnapshot,
+  WindowView,
 } from '../contracts/index.ts';
 import { HANDS_ON_NEUTRAL, isHandsOnNeutral, issueForecast } from '../contracts/index.ts';
 import { handsOnBodyRate, handsOnFirings } from '../ship/index.ts';
@@ -504,6 +505,14 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
     alerts = next;
   }
 
+  /** What the eye sees through the window: bodies and rocks, and the encounter's visible fields. */
+  function windowView(): WindowView {
+    const world = truth.sim.world;
+    const base = buildWindowView(world, play.windowMinAngularRadius);
+    const fields = setup.window?.(world);
+    return fields && fields.length > 0 ? { ...base, fields } : base;
+  }
+
   /** Each depart objective as believed now (S20). */
   function departures(): DepartureProgress[] {
     const objectives = definition.briefing.objectives.filter((o) => o.depart);
@@ -631,7 +640,7 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
         ...(first && second ? { compare: [first, second] as const } : {}),
         ...(selection ? { selection } : {}),
         // The one place truth reaches the view without an instrument: what the eye can see.
-        window: buildWindowView(truth.sim.world, play.windowMinAngularRadius),
+        window: windowView(),
         coverageEarlier: (earlierLooks ??= earlierCoverage(
           earlierRecords,
           attemptId,

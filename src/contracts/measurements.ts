@@ -136,6 +136,11 @@ export type ShipEvent =
       readonly t: Seconds;
       readonly objective: ObjectiveId;
       readonly status: 'reached' | 'missed';
+      /**
+       * Why a `depart` was missed (R38): it crossed the gate going `inward`, too slow
+       * (`speed`), over the Δv cap (`budget`), or with no real gravity assist first (`assist`).
+       */
+      readonly reason?: 'inward' | 'speed' | 'budget' | 'assist';
     }
   | { readonly kind: 'recall'; readonly t: Seconds }
   | { readonly kind: 'ship-lost'; readonly t: Seconds; readonly cause: LossCause };

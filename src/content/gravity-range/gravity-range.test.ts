@@ -352,7 +352,13 @@ describe('Gravity range: what the ship is told', () => {
         id: 'depart',
         kind: 'depart',
         label: 'DEPART 50 M/S',
-        depart: { beyond: 9_000_000, minSpeed: 50 },
+        depart: {
+          beyond: 9_000_000,
+          minSpeed: 50,
+          // The conditions the screens show (R38), as the rule judges them.
+          assist: { body: 'beta', within: 2_000_000, minGain: 1_000 },
+          learningFree: true,
+        },
         maxDeltaV: 16,
       },
     ]);
