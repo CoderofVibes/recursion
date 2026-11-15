@@ -17,6 +17,7 @@ import {
   SEED as GRAVITY_RANGE_SEED,
 } from '../content/gravity-range/index.ts';
 import type { EncounterSetup } from './encounter.ts';
+import { CHAIN_LINK_ENTRY } from '../content/chain-link/index.ts';
 
 export interface EncounterEntry {
   readonly id: string;
@@ -40,6 +41,7 @@ export const ENCOUNTERS: readonly EncounterEntry[] = [
     saveFormat: GRAVITY_RANGE_FORMAT,
     create: (run) => createGravityRange(GRAVITY_RANGE_SEED, { run }),
   },
+  CHAIN_LINK_ENTRY,
 ];
 
 /** The entry for `id`, or the Gravity range when `id` is absent or unknown. */
