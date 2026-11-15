@@ -1,0 +1,21 @@
+{
+  "label": "before",
+  "cases": [
+    {
+      "name": "deep-sky",
+      "mode": "room",
+      "modelError": null
+    },
+    {
+      "name": "funnels",
+      "mode": "room",
+      "modelError": null
+    },
+    {
+      "name": "cathedral",
+      "mode": "room",
+      "modelError": null
+    }
+  ],
+  "errors": []
+}

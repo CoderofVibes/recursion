@@ -12,9 +12,12 @@ import {
   type IUniform,
 } from 'three';
 import { createRng } from '../../lib/rng.ts';
-import { colour, outsideStyle, render, roomSurface } from '../../theme/index.ts';
+import { outsideStyle, render, roomSurface } from '../../theme/index.ts';
 import { CON, ROOM, VIEW } from '../room/layout.ts';
 import type { RoomShot } from './shot.ts';
+import { skyStyle } from '../sky/style.ts';
+import { skyNoise } from '../sky/noise.ts';
+import './title.css';
 
 /** A21/A17 share this standing position and the same Earth, just right of the forward mullion. */
 export const HOME_SHOT: RoomShot = {
@@ -154,14 +157,14 @@ const COASTS: readonly (readonly (readonly [number, number])[])[] = [
 
 function earthMap(): CanvasTexture {
   const canvas = document.createElement('canvas');
-  canvas.width = 512;
-  canvas.height = 256;
+  canvas.width = 1024;
+  canvas.height = 512;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Earth map requires a canvas 2D context');
   const { width, height } = canvas;
-  ctx.fillStyle = outsideStyle.bodyLitCool;
+  ctx.fillStyle = skyStyle.ocean.getStyle();
   ctx.fillRect(0, 0, width, height);
-  ctx.fillStyle = colour.bodyLit;
+  ctx.fillStyle = skyStyle.land.getStyle();
   for (const coast of COASTS) {
     ctx.beginPath();
     for (const [lon, lat] of coast) {
@@ -180,13 +183,17 @@ function earthMap(): CanvasTexture {
     ctx.rotate(clouds.range(-0.4, 0.4));
     ctx.scale(clouds.range(7, 38), clouds.range(1, 5));
     const cloud = ctx.createRadialGradient(0, 0, 0, 0, 0, 1);
-    cloud.addColorStop(0, colour.ink);
+    cloud.addColorStop(0, skyStyle.white.getStyle());
     cloud.addColorStop(1, 'transparent');
     ctx.globalAlpha = clouds.range(0.17, 0.64);
     ctx.fillStyle = cloud;
     ctx.fillRect(-1, -1, 2, 2);
     ctx.restore();
   }
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = skyStyle.white.getStyle();
+  ctx.fillRect(0, 0, width, height * 0.025);
+  ctx.fillRect(0, height * 0.94, width, height * 0.06);
   return new CanvasTexture(canvas);
 }
 
@@ -250,7 +257,9 @@ export function createHomeWindow() {
         value: sunAlongLimb.multiplyScalar(Math.sin(phase)).addScaledVector(toEye, Math.cos(phase)),
       },
       night: { value: new Color(roomSurface.void) },
-      air: { value: new Color(outsideStyle.bodyLitCool) },
+      air: { value: skyStyle.air },
+      starCold: { value: skyStyle.cold },
+      starWhite: { value: skyStyle.white },
       rimPower: { value: render.rimPower },
       rimStrength: { value: render.rimStrength },
       earthDir: { value: bearing },
@@ -278,7 +287,8 @@ export function createHomeWindow() {
     `,
     fragmentShader: /* glsl */ `
       uniform sampler2D surfaceMap;
-      uniform vec3 sun, night, air, earthDir, lensDir;
+      uniform vec3 sun, night, air, earthDir, lensDir, starCold, starWhite;
+      ${skyNoise}
       uniform float rimPower, rimStrength, earthRadius, earthTurn, einstein, shadow, starMin;
       uniform vec2 starWarm;
       uniform vec4 pathStars[${PATH_STARS.length}];
@@ -320,6 +330,7 @@ export function createHomeWindow() {
               starWarm.x + warm * (1.0 - starWarm.x - 0.02),
               starWarm.y + warm * (1.0 - starWarm.y - 0.02)
             );
+            tint = mix(tint, starCold, smoothstep(0.48,0.8,warm));
             light += tint * starLight(length(off), b, spread);
           }
         }
@@ -335,7 +346,7 @@ export function createHomeWindow() {
         float c = dot(s, earthDir);
         float g = acos(clamp(c, -1.0, 1.0));
         float cover = 1.0 - smoothstep(earthRadius - spread, earthRadius + spread, g);
-        if (cover <= 0.0) return vec4(0.0);
+        if (g > earthRadius * 1.04 + spread) return vec4(0.0);
         vec3 across = s - earthDir * c;
         float len = length(across);
         across = len > 1e-7 ? across / len : vec3(0.0);
@@ -348,10 +359,14 @@ export function createHomeWindow() {
         vec3 o = vec3(n.x * ct + n.z * st, n.y, -n.x * st + n.z * ct);
         float u = fract(atan(o.z, -o.x) / 6.28318530718);
         vec2 uv = vec2(u, 1.0 - acos(clamp(o.y, -1.0, 1.0)) / 3.14159265359);
-        float light = smoothstep(-0.025, 0.38, dot(n, sun));
+        float day = dot(n, sun);
+        float light = smoothstep(-0.025, 0.1, day) * (0.25 + 0.75 * sqrt(max(day, 0.0)));
         float rim = pow(1.0 - max(dot(n, v), 0.0), rimPower);
         vec3 surface = pow(texture2D(surfaceMap, uv).rgb, vec3(2.2));
-        return vec4(mix(night, surface + air * rim * rimStrength, light), cover);
+        float glow = exp(-abs(g-earthRadius)/max(spread, earthRadius*0.014));
+        glow *= smoothstep(-0.06,0.25,dot(across,sun))*0.3;
+        vec3 earthLight = mix(night, surface + air * rim * rimStrength * 0.6, light);
+        return vec4(mix(air*glow,earthLight,cover), max(cover,glow));
       }
 
       void main() {
@@ -379,8 +394,12 @@ export function createHomeWindow() {
             spread = pixel * 0.5 * stretch;
           }
         }
-        vec3 col = night + stars(s, spread);
-        vec4 planet = earth(s, spread);
+        // At home the familiar inside-galaxy band is deliberately different from the atlas.
+        float latitude = dot(s,normalize(vec3(-0.28,0.94,0.20)));
+        float cloud = dust(s*16.0+vec3(7.0));
+        float band = exp(-latitude*latitude/0.008)*(0.3+cloud*0.7);
+        vec3 col = night + stars(s, spread) + starWhite*band*0.016;
+        vec4 planet = earth(d, pixel * 0.5);
         col = mix(col, planet.rgb, planet.a);
         gl_FragColor = vec4(mix(night, col, lit), 1.0);
         #include <tonemapping_fragment>
@@ -392,6 +411,10 @@ export function createHomeWindow() {
   const geometry = new SphereGeometry(SKY_DEPTH, 64, 32);
   const dome = new Mesh(geometry, material);
   dome.position.copy(eye);
+  dome.onBeforeRender = (_renderer, _scene, camera) => {
+    dome.position.copy(camera.position);
+    dome.updateMatrixWorld();
+  };
   dome.renderOrder = -10;
   dome.frustumCulled = false;
   const scenery = new Group();
