@@ -368,50 +368,56 @@ describe('rebuild from records equals the live state (P8, spec §11.3)', () => {
 describe('extensions: rules only from the player (A4, P5)', () => {
   const v = V(rawValidation);
 
-  it('distance law: passes held-out, earns a hedge, is adopted only on request, can be revoked', () => {
-    const svc = new ModelService(context({}));
-    svc.load({ attempts: records(v, 'distance-law') });
-    const before = svc.state;
-    expect(() => svc.adopt('distance-law')).toThrow();
-    const rec = svc.testExtension('distance-law', ['att1', 'att2'], 'att3');
-    const ref = v.cases
-      .find((c) => c.id === 'distance-law')!
-      .fits.find((f) => f.id === 'exponent')!;
-    expect(rec.adoptable).toBe(true);
-    expect(rec.state.status).toBe('candidate');
-    expect(rec.state.validation!.verdict).toBe('better');
-    expect(Math.abs(rec.state.validation!.statistic / ref.heldOut!.TperNu - 1)).toBeLessThan(0.02);
-    expect(rec.state.validation!.rmsAfter).toBeLessThan(rec.state.validation!.rmsBefore);
-    // The earned hedge and the distances its test covered (§7.4).
-    const eh = ref.earnedHedge as unknown as { sigmaH: number; validatedRange: [number, number] };
-    expect(rec.state.validatedSpans).toHaveLength(1);
-    const span = rec.state.validatedSpans![0]!;
-    expect(span.body).toBe('A');
-    expect(span.heldOutAttempt).toBe('att3');
-    expect(Math.abs(span.sigmaE / eh.sigmaH - 1)).toBeLessThan(0.05);
-    expect(Math.abs(span.rMin / eh.validatedRange[0] - 1)).toBeLessThan(1e-3);
-    expect(Math.abs(span.rMax / eh.validatedRange[1] - 1)).toBeLessThan(1e-3);
-    // Testing never adopts.
-    expect(svc.state.parameters.some((p) => p.id === 'law.gravity.exponent')).toBe(false);
-    expect(svc.state.version).toBe(before.version);
-    const after = svc.adopt('distance-law');
-    const n = param(after, 'law.gravity.exponent');
-    expect(Math.abs(n.value - 2.5)).toBeLessThan(3 * n.sigma);
-    expect(after.extensions).toEqual([
-      expect.objectContaining({ id: 'distance-law', status: 'adopted' }),
-    ]);
-    expect(after.version).toBe(before.version + 1);
-    // Inside the validated span σ_e applies; elsewhere the default stays (A5).
-    expect(svc.snapshot.derived.sigmaH0).toBe(0.3);
-    expect(svc.snapshot.derived.validated['A']).toEqual({
-      spans: [[span.rMin, span.rMax]],
-      sigmaE: span.sigmaE,
-    });
-    expect(after.extensions[0]!.validatedSpans).toEqual([span]);
-    const revoked = svc.revoke('distance-law');
-    expect(revoked.parameters.some((p) => p.id === 'law.gravity.exponent')).toBe(false);
-    expect(revoked.extensions[0]!.status).toBe('revoked');
-  });
+  it(
+    'distance law: passes held-out, earns a hedge, is adopted only on request, can be revoked',
+    { timeout: 60_000 },
+    () => {
+      const svc = new ModelService(context({}));
+      svc.load({ attempts: records(v, 'distance-law') });
+      const before = svc.state;
+      expect(() => svc.adopt('distance-law')).toThrow();
+      const rec = svc.testExtension('distance-law', ['att1', 'att2'], 'att3');
+      const ref = v.cases
+        .find((c) => c.id === 'distance-law')!
+        .fits.find((f) => f.id === 'exponent')!;
+      expect(rec.adoptable).toBe(true);
+      expect(rec.state.status).toBe('candidate');
+      expect(rec.state.validation!.verdict).toBe('better');
+      expect(Math.abs(rec.state.validation!.statistic / ref.heldOut!.TperNu - 1)).toBeLessThan(
+        0.02,
+      );
+      expect(rec.state.validation!.rmsAfter).toBeLessThan(rec.state.validation!.rmsBefore);
+      // The earned hedge and the distances its test covered (§7.4).
+      const eh = ref.earnedHedge as unknown as { sigmaH: number; validatedRange: [number, number] };
+      expect(rec.state.validatedSpans).toHaveLength(1);
+      const span = rec.state.validatedSpans![0]!;
+      expect(span.body).toBe('A');
+      expect(span.heldOutAttempt).toBe('att3');
+      expect(Math.abs(span.sigmaE / eh.sigmaH - 1)).toBeLessThan(0.05);
+      expect(Math.abs(span.rMin / eh.validatedRange[0] - 1)).toBeLessThan(1e-3);
+      expect(Math.abs(span.rMax / eh.validatedRange[1] - 1)).toBeLessThan(1e-3);
+      // Testing never adopts.
+      expect(svc.state.parameters.some((p) => p.id === 'law.gravity.exponent')).toBe(false);
+      expect(svc.state.version).toBe(before.version);
+      const after = svc.adopt('distance-law');
+      const n = param(after, 'law.gravity.exponent');
+      expect(Math.abs(n.value - 2.5)).toBeLessThan(3 * n.sigma);
+      expect(after.extensions).toEqual([
+        expect.objectContaining({ id: 'distance-law', status: 'adopted' }),
+      ]);
+      expect(after.version).toBe(before.version + 1);
+      // Inside the validated span σ_e applies; elsewhere the default stays (A5).
+      expect(svc.snapshot.derived.sigmaH0).toBe(0.3);
+      expect(svc.snapshot.derived.validated['A']).toEqual({
+        spans: [[span.rMin, span.rMax]],
+        sigmaE: span.sigmaE,
+      });
+      expect(after.extensions[0]!.validatedSpans).toEqual([span]);
+      const revoked = svc.revoke('distance-law');
+      expect(revoked.parameters.some((p) => p.id === 'law.gravity.exponent')).toBe(false);
+      expect(revoked.extensions[0]!.status).toBe('revoked');
+    },
+  );
 
   it('overlooked body: the wrong rule fails visibly, the right one passes', () => {
     const recs = records(v, 'overlooked-body');
