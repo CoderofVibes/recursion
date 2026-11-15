@@ -24,8 +24,8 @@ export interface SimOptions {
   readonly restitution?: number;
   /**
    * Objects whose surface is farther than this beyond the hull's reach (m) have their clearance
-   * measured from the ship's centre of mass instead of the hull polygon (cheaper; the error is at
-   * most the hull's size). Default 5000.
+   * measured from the ship's centre of mass instead of the hull's prisms (cheaper; the error is
+   * at most the hull's size). Default 5000.
    */
   readonly hullClearanceRange?: Meters;
 }
@@ -53,11 +53,10 @@ export interface SimState {
   /** Whole steps since the simulation's start; world.t = t0 + tick × dt (no float drift). */
   readonly tick: number;
   /**
-   * Non-gravitational acceleration over the last step at the centre of mass, body frame, m/s²:
-   * thrust after any field modified it, plus contact impulses. Feeds
+   * Non-gravitational acceleration over the last step at the centre of mass, body frame (all
+   * three axes), m/s²: thrust after any field modified it, plus contact impulses. Feeds
    * EnvironmentEffects.specificForce for the next ship-systems step (what accelerometers sense).
    */
-  // LIFT(2G): specificForce is planar; z is always 0.
   readonly specificForce: Vec3;
   /** Objects the hull is touching. */
   readonly contacts: readonly ObjectId[];
@@ -71,10 +70,9 @@ export interface ContactDetail {
   readonly with: ObjectId;
   /** Impulse magnitude on the ship, N·s (0 if it was already separating). */
   readonly impulse: NewtonSeconds;
-  // LIFT(2G): contact point and normal are planar (hull outline against a circle); z is always 0.
-  /** Contact point on the hull, body frame. */
+  /** Contact point on the hull surface (a side wall, a cap, an edge or a corner), body frame. */
   readonly point: Vec3;
-  /** Unit normal from the hull toward the object, body frame. */
+  /** Unit normal from the hull toward the object's centre, body frame. */
   readonly normal: Vec3;
   /** Speed of the hull point relative to the object at contact, m/s. */
   readonly relativeSpeed: MetersPerSecond;
