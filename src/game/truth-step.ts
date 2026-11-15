@@ -21,6 +21,15 @@ import type { SimEvent } from '../contracts/truth/index.ts';
 import { addSym3, fromPrincipal, principalAxes, scaleSym3 } from '../lib/sym3.ts';
 import { createSimulation, type SimState, type Simulation } from '../sim/index.ts';
 import { stepShipSystems } from '../ship/index.ts';
+import { radiationProfiles, type Exposure } from '../ship/condition/index.ts';
+import { integrateConditionedInterval } from '../ship/condition/integrate.ts';
+import { energizedEquipment } from '../ship/power/service.ts';
+import type { ShipDefinition } from '../contracts/ship.ts';
+import type {
+  EnvironmentEffects,
+  ShipStepResult,
+  ShipSystemsState,
+} from '../contracts/truth/index.ts';
 import type { EncounterSetup } from './encounter.ts';
 import { buildEnvironment, type EnvironmentOptions } from './environment.ts';
 import {
@@ -113,6 +122,130 @@ export function midStepMassProperties(
   };
 }
 
+/**
+ * The ship-systems step over one tick, split at every condition boundary inside it (3A, R26):
+ * a dose failure, a protection latch, an upset, the end of a reboot. Each piece runs the
+ * existing ship step from the state the last one left, the environment carried to its start
+ * (the ship's position moved on along its velocity), and 3A's condition step applies the
+ * piece's dose and its ending fault before the next one is dispatched. Commands take effect
+ * in the first piece. The simulation gets each piece's thrust as the impulse it gave: a
+ * thruster that dies part way contributes only up to its death.
+ *
+ * Without field intensity and with no reboot pending, nothing can happen inside the tick, and
+ * this is the plain ship step: the same result to the bit.
+ */
+export function conditionedShipStep(
+  systems: ShipSystemsState,
+  definition: ShipDefinition,
+  commands: readonly Command[],
+  env: EnvironmentEffects,
+  dt: number,
+): ShipStepResult {
+  const intensity = env.intensity;
+  const exposed = Object.keys(intensity).length > 0;
+  const rebooting = Object.values(systems.equipment).some(
+    (e) => (e.values.radiationRestartUntil ?? 0) > systems.t,
+  );
+  if (!exposed && !rebooting) return stepShipSystems(systems, definition, commands, env, dt);
+
+  const profiles = radiationProfiles(definition);
+  // The intensity holds over the tick (sampled at its start), so a piece's dose is its length
+  // times the intensity; above burnout when strictly over the profile's threshold.
+  const sample = (d: number): Exposure => {
+    const out: Record<string, { rawDose: number; aboveBurnout: boolean }> = {};
+    for (const id in intensity) {
+      const i = intensity[id]!;
+      out[id] = {
+        rawDose: i * d,
+        aboveBurnout: i > (profiles.get(id)?.burnoutIntensity ?? Infinity),
+      };
+    }
+    return out;
+  };
+  const pieces: { result: ShipStepResult; dt: number }[] = [];
+  const t0 = systems.t;
+  const done = integrateConditionedInterval(
+    systems,
+    definition,
+    dt,
+    (state, remaining) => ({
+      energized: energizedEquipment(state, definition),
+      duration: remaining,
+      sample,
+    }),
+    (state, d) => {
+      const offset = state.t - t0;
+      const k = env.kinematics;
+      const at =
+        offset === 0
+          ? env
+          : {
+              ...env,
+              t: state.t,
+              kinematics: {
+                ...k,
+                position: {
+                  x: k.position.x + k.velocity.x * offset,
+                  y: k.position.y + k.velocity.y * offset,
+                  z: k.position.z + k.velocity.z * offset,
+                },
+              },
+            };
+      const result = stepShipSystems(state, definition, pieces.length === 0 ? commands : [], at, d);
+      pieces.push({ result, dt: d });
+      return { state: result.state, events: result.events };
+    },
+  );
+  if (pieces.length === 1) return { ...pieces[0]!.result, state: done.state, events: done.events };
+  // Each piece's thrust, as the share of the tick's impulse it gave.
+  const thrusts = pieces.flatMap(({ result, dt: d }) =>
+    result.actuators.thrusts.map((thrust) => ({
+      ...thrust,
+      force: {
+        x: (thrust.force.x * d) / dt,
+        y: (thrust.force.y * d) / dt,
+        z: (thrust.force.z * d) / dt,
+      },
+    })),
+  );
+  const torque = { x: 0, y: 0, z: 0 };
+  for (const { result, dt: d } of pieces) {
+    torque.x += (result.actuators.torque.x * d) / dt;
+    torque.y += (result.actuators.torque.y * d) / dt;
+    torque.z += (result.actuators.torque.z * d) / dt;
+  }
+  return {
+    state: done.state,
+    actuators: { thrusts, torque, massProperties: pieces.at(-1)!.result.actuators.massProperties },
+    measurements: pieces.flatMap((p) => p.result.measurements),
+    events: done.events,
+  };
+}
+
+/**
+ * The arrival state as recurrence restarts from it (3A, R26): an overtemperature indication
+ * the unit has cooled from is cleared (the fault, and the trip it caused), and everything
+ * physical stays: condition, damage, freeze rupture, exposure.
+ */
+export function clearCooledOvertemperature(
+  systems: ShipSystemsState,
+  definition: ShipDefinition,
+): ShipSystemsState {
+  let equipment: Record<string, ShipSystemsState['equipment'][string]> | undefined;
+  for (const spec of definition.equipment) {
+    const e = systems.equipment[spec.id];
+    if (!e || !e.faults.includes('overtemperature')) continue;
+    const max = spec.params.tempMax ?? Infinity;
+    if (e.temperature !== undefined && e.temperature >= max) continue;
+    const faults = e.faults.filter((f) => f !== 'overtemperature');
+    // The trip goes too, unless something else (an overcurrent) holds it.
+    const tripped = e.tripped && faults.includes('overcurrent');
+    equipment ??= { ...systems.equipment };
+    equipment[spec.id] = { ...e, faults, tripped };
+  }
+  return equipment ? { ...systems, equipment } : systems;
+}
+
 export function createTruthStepper(setup: EncounterSetup): TruthStepper {
   const { definition, objectiveRules, play } = setup;
   const simulation = createSimulation(definition.world, {
@@ -136,8 +269,19 @@ export function createTruthStepper(setup: EncounterSetup): TruthStepper {
   };
   const hook = setup.environment;
   const sun = definition.world.sun;
+  const arrivalSystems = simulation.initial.world.ship.systems;
+  const cleared = clearCooledOvertemperature(arrivalSystems, definition.ship);
   const initial: GameTruthState = {
-    sim: simulation.initial,
+    sim:
+      cleared === arrivalSystems
+        ? simulation.initial
+        : {
+            ...simulation.initial,
+            world: {
+              ...simulation.initial.world,
+              ship: { ...simulation.initial.world.ship, systems: cleared },
+            },
+          },
     objectives: initialObjectiveProgress,
   };
 
@@ -163,7 +307,7 @@ export function createTruthStepper(setup: EncounterSetup): TruthStepper {
       }
 
       // 2. Ship systems over [t, t + dt].
-      const ship = stepShipSystems(
+      const ship = conditionedShipStep(
         before.world.ship.systems,
         definition.ship,
         commands.map((c) => c.command),
@@ -230,12 +374,22 @@ export function createTruthStepper(setup: EncounterSetup): TruthStepper {
       // this tick comes first; a power loss this tick comes before any objective it would meet.
       let power = state.power;
       if (!lost) {
+        // An outage that begins with a fault part way through the tick counts from the fault.
+        let onset = 0;
+        if ((power?.functions.length ?? 0) === 0) {
+          let first = Infinity;
+          for (const e of ship.events)
+            if ((e.kind === 'equipment-fault' || e.kind === 'breaker-trip') && e.t < first)
+              first = e.t;
+          if (Number.isFinite(first)) onset = Math.min(definition.dt, Math.max(0, first - t));
+        }
         const judged = evaluatePower(
           power ?? initialPowerProgress,
           ship.state,
           definition.ship,
           definition.dt,
           play.power.lossGrace,
+          onset,
         );
         if (judged.progress !== (power ?? initialPowerProgress)) power = judged.progress;
         if (judged.lost) lost = 'power';

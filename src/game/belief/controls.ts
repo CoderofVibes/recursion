@@ -60,7 +60,8 @@ export interface FrameBudget {
   readonly ms: number;
   /**
    * While coasting (`SessionStatus.coasting`), ms: the bigger slice a loop that draws fewer
-   * frames while coasting gives the simulation. Default: the same as `ms`.
+   * frames while coasting gives the simulation. Default 14 (2D draws 12 frames a second while
+   * coasting; the integrator approved 14 ms).
    */
   readonly coastingMs: number;
   /** The lowest warp that counts as coasting. Default 300. */

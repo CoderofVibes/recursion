@@ -16,7 +16,9 @@ import { createGameSession } from './session.ts';
 describe('Gravity range with the real model', () => {
   it(
     'learns the distance law from two dives and forecasts a third it has never flown',
-    { timeout: 300_000 },
+    // About 150 s alone (S20); under the full suite's load it has run past 300 s. Its clock is
+    // pinned (the bridge's wall clock), so only its pace depends on the machine.
+    { timeout: 900_000 },
     async () => {
       // The dives at Alpha are judged over one low point each, so this test keeps the 16 h
       // look-ahead it was written with. The encounter's own is 48 h, for the slingshot, and a
