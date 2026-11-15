@@ -5,7 +5,8 @@
  */
 
 import type { Command } from '../contracts/commands.ts';
-import type { FieldRegistry } from '../contracts/truth/index.ts';
+import type { EnvironmentEffects, FieldRegistry } from '../contracts/truth/index.ts';
+import type { SimState } from '../sim/index.ts';
 import type { Vec3 } from '../lib/vec3.ts';
 import type { BodyId, ObjectiveId, TankId } from '../contracts/ids.ts';
 import type { EncounterDefinition } from '../contracts/truth/index.ts';
@@ -112,9 +113,11 @@ export interface PlayValues {
    */
   readonly windowMinAngularRadius: Radians;
   /**
-   * Power (A18 (5)): a caution when the stored energy will run out within `cautionLead` at the
-   * present drain; loss when life support has gone `lossGrace` without power. Study S21 sets
-   * the values; how often the gauges are read for the caution is `checkEvery`.
+   * Power (A18 (5), after S21): a caution when the gauges' no-generation endurance (stored
+   * energy over the present demand, as if the arrays gave nothing) falls below `cautionLead`;
+   * loss when a critical function has gone `lossGrace` without the power it needs (`power.ts`).
+   * The gauges are read every `checkEvery` of ship time, and at once when the ship reports a
+   * power fault.
    */
   readonly power: {
     readonly cautionLead: Seconds;
@@ -142,6 +145,13 @@ export interface EncounterSetup {
    * any (Inverse Wells, the lattice). The truth step passes it to the simulation.
    */
   readonly fields?: FieldRegistry;
+  /**
+   * For fields that need more than the game's point sampling (3C's lattice sweeps each item's
+   * whole occupied geometry): given the state at the start of the tick and the effects the game
+   * built, return the effects the ship receives. Pure; called once per tick before the ship
+   * systems step.
+   */
+  readonly environment?: (state: SimState, effects: EnvironmentEffects) => EnvironmentEffects;
 }
 
 /**
@@ -162,6 +172,6 @@ export const DEFAULT_PLAY: PlayValues = {
   recorderRate: 0.05,
   forecastSpan: 16 * 3600,
   windowMinAngularRadius: 2e-4,
-  // [ASSUMED] until S21: six hours' warning, half an hour without life support.
-  power: { cautionLead: 6 * 3600, lossGrace: 1800, checkEvery: 60 },
+  // S21, approved by the owner (A18 (5)): the caution four hours ahead, the loss after 120 s.
+  power: { cautionLead: 4 * 3600, lossGrace: 120, checkEvery: 60 },
 };

@@ -76,8 +76,7 @@ import {
   type TickResult,
 } from './truth-step.ts';
 import { buildWindowView } from './window.ts';
-import { powerAlerts, type PowerAlert } from './belief/power.ts';
-import { evaluatePower, initialPowerProgress, type PowerProgress } from './power.ts';
+import { criticalFault, powerAlerts, type PowerAlert } from './belief/power.ts';
 
 export interface SessionOptions {
   readonly model: ModelPort;
@@ -165,10 +164,11 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
   let committing = 0;
   /** What the attitude controller was last told, from executed commands. */
   let attitudeMode: AttitudeMode = 'free';
-  /** TRUTH: how long life support has gone without power (A18 (5)). */
-  let power: PowerProgress = initialPowerProgress;
-  /** What the gauges warn about now, and when they were last read. */
+  /** What the gauges and the ship's fault reports warn about now (belief only). */
   let alerts: readonly PowerAlert[] = [];
+  /** When the ship first reported a critical function short of power, and which, while it is. */
+  let shortSince: number | undefined;
+  let shortReported: string[] = [];
   const checkEvery = Math.max(1, Math.round(setup.play.power.checkEvery / stepper.dt));
   let outcome: AttemptOutcome = { kind: 'in-progress' };
   let queue: Scheduled[] = [];
@@ -261,8 +261,9 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
     planId = undefined;
     flown = HANDS_ON_NEUTRAL;
     attitudeMode = 'free';
-    power = initialPowerProgress;
     alerts = [];
+    shortSince = undefined;
+    shortReported = [];
     commanded = initialCommandedState;
     drawn = undefined;
     trail = [];
@@ -341,23 +342,6 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
     last = result;
     tick += 1;
 
-    // Running out of power (A18 (5)): judged on truth after the tick, like a collision.
-    const lostEvents: ShipEvent[] = [];
-    if (!truth.lost) {
-      const judged = evaluatePower(
-        power,
-        truth.sim.world.ship.systems,
-        definition.ship,
-        dt,
-        play.power.lossGrace,
-      );
-      power = judged.progress;
-      if (judged.lost) {
-        truth = { ...truth, lost: 'power' };
-        lostEvents.push({ kind: 'ship-lost', t: time(), cause: 'power' });
-      }
-    }
-
     for (const done of result.executed) {
       if (done.status === 'rejected') continue;
       commanded = applyCommanded(commanded, done.t, done.command);
@@ -366,31 +350,24 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
 
     const measurements = telemetry.filter(result.measurements);
     const executed = refused.length > 0 ? [...result.executed, ...refused] : result.executed;
-    const events =
-      refusals.length > 0 || lostEvents.length > 0
-        ? [...refusals, ...result.events, ...lostEvents]
-        : result.events;
+    const events = refusals.length > 0 ? [...refusals, ...result.events] : result.events;
     if (executed.length > 0 || measurements.length > 0 || events.length > 0)
       record({ attemptId, t, executed, measurements, events });
 
     if (tick % trailEvery === 0)
       trail.push({ t: time(), position: model.believedWorld(time()).ship.position });
 
-    // The gauges' cautions (belief only). A new one, or one that worsened, drops warp to 1×
+    // The power alerts (belief only), read every `checkEvery` and at once when the ship reports
+    // a critical function short of power. A new alert, or one that worsened, drops warp to 1×
     // and ends the frame's run of ticks, so the player meets it in real time (A12).
-    if (tick % checkEvery === 0) {
-      const now = powerAlerts(
-        model.believedWorld(time()).ship,
-        definition.ship,
-        play.power.cautionLead,
-      );
-      const before = new Set(alerts.map((a) => `${a.id}:${a.level}`));
-      if (now.some((a) => !before.has(`${a.id}:${a.level}`)) && warp > 1) {
-        warp = 1;
-        debt = Math.min(debt, dt);
-      }
-      alerts = now;
+    let fault: number | undefined;
+    for (const e of result.events) {
+      const group = criticalFault(e, definition.ship);
+      if (group === undefined) continue;
+      fault ??= e.t;
+      if (!shortReported.includes(group)) shortReported.push(group);
     }
+    if (fault !== undefined || tick % checkEvery === 0) updateAlerts(fault);
 
     if (truth.lost) {
       const lost = result.events.find((e) => e.kind === 'ship-lost');
@@ -398,6 +375,51 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
     } else if (truth.objectives.completed) {
       end({ kind: 'completed', t: time(), objective: truth.objectives.completed });
     }
+  }
+
+  /**
+   * Read the gauges. A fault report starts the critical-service warning at once, before the
+   * gauges' next sample shows it (they are sampled at the recorder's rate); the gauges end it,
+   * once a sample newer than the report shows every critical function served.
+   */
+  function updateAlerts(fault: number | undefined): void {
+    const ship = model.believedWorld(time()).ship;
+    const now = powerAlerts(ship, definition.ship, play.power.cautionLead);
+    let critical = now.find((a) => a.id === 'critical-service');
+    if (fault !== undefined) shortSince ??= fault;
+    if (!critical && shortSince !== undefined) {
+      // Not yet in the gauges: keep the warning until they have sampled since the report.
+      const sampled = Object.values(ship.telemetry).reduce(
+        (latest, r) => Math.max(latest, r.t),
+        -1,
+      );
+      if (sampled <= shortSince) {
+        const previous = alerts.find((a) => a.id === 'critical-service');
+        const budget = now[0] ?? { stored: 0, demand: 0, drain: 0 };
+        critical = previous ?? {
+          id: 'critical-service',
+          level: 'warning',
+          functions: [...shortReported],
+          stored: budget.stored,
+          demand: budget.demand,
+          drain: budget.drain,
+        };
+      } else {
+        shortSince = undefined;
+        shortReported = [];
+      }
+    }
+    if (critical) {
+      shortSince ??= time();
+      critical = { ...critical, since: shortSince, deadline: shortSince + play.power.lossGrace };
+    }
+    const next = critical ? [critical, ...now.filter((a) => a.id !== 'critical-service')] : now;
+    const before = new Set(alerts.map((a) => `${a.id}:${a.level}`));
+    if (next.some((a) => !before.has(`${a.id}:${a.level}`)) && warp > 1) {
+      warp = 1;
+      debt = Math.min(debt, dt);
+    }
+    alerts = next;
   }
 
   function toPlan(draft: PlanDraft, epoch: number): Plan {
