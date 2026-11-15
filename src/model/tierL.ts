@@ -30,7 +30,7 @@ import {
   type ThrustSegment,
 } from './dynamics.ts';
 import { fromRows, inverse, lstsq, sandwich, solve, symEig, zeros, type Matrix } from './linalg.ts';
-import { Problem, fitChi2Nu, fitGet, type Param } from './solve.ts';
+import { Problem, fitChi2Nu, fitGet, type FullPrior, type Param } from './solve.ts';
 
 export type { Fix } from './dynamics.ts';
 
@@ -754,6 +754,11 @@ export interface Anchor {
  * prior at the reference law's values: the unknown orientation of the picture is then part of
  * the state covariance (11 parameters in all). Without it the misalignment is held fixed, as in
  * the planar reduction.
+ *
+ * `bodyPriors` does the same for the other bodies (2F request 13): each named body's state at the
+ * first fix joins the fit, held by a prior at its believed state with that 6×6 covariance, so
+ * where the model is unsure the second body is (moved under a law it has not sampled there) is
+ * part of the present state's covariance and not a hidden bias.
  */
 export function anchorState(
   ref: ReferenceLaw,
@@ -767,6 +772,7 @@ export function anchorState(
     slopeSigma?: number;
     extraProfiles?: readonly ProfileFit[];
     camSigma?: Vec3T | null;
+    bodyPriors?: Readonly<Record<string, Matrix>>;
   } = {},
 ): Anchor {
   const h = opts.h ?? 1e-3;
@@ -790,9 +796,34 @@ export function anchorState(
   });
   const camSigma = opts.camSigma ?? null;
   const camKeys = ['x', 'y', 'z'] as const;
+  // Other bodies' states as prior-held parameters (components with no variance stay fixed).
+  const bodyParams: Param[] = [];
+  const fullPriors: FullPrior[] = [];
+  const bodies = base.bodies.map((b): BodyDef => {
+    const C = opts.bodyPriors?.[b.id];
+    if (!C || b.state === 'gauge') return b;
+    const mean = b.state as State6;
+    const use = [0, 1, 2, 3, 4, 5].filter((c) => C.data[c * 6 + c]! > 0);
+    if (use.length === 0) return b;
+    const names = use.map((c) => `${aid}.st.${b.id}.${STATE_KEYS[c]!}`);
+    use.forEach((c, k) =>
+      bodyParams.push({ name: names[k]!, init: mean[c]!, scale: BODY_SCALE[c]!, group: aid }),
+    );
+    const blk = zeros(use.length, use.length);
+    use.forEach((a, i) =>
+      use.forEach((c, j) => (blk.data[i * use.length + j] = C.data[a * 6 + c]!)),
+    );
+    fullPriors.push({ names, mean: Float64Array.from(use, (c) => mean[c]!), info: inverse(blk) });
+    const state = mean.map((v, c) => {
+      const k = use.indexOf(c);
+      return k >= 0 ? names[k]! : v;
+    }) as unknown as BodyDef['state'];
+    return { ...b, state };
+  });
+  const withBodies: Structure = bodyParams.length > 0 ? { ...base, bodies } : base;
   const st: Structure = camSigma
-    ? { ...base, camBias: ['{att}.cam.x', '{att}.cam.y', '{att}.cam.z'] }
-    : base;
+    ? { ...withBodies, camBias: ['{att}.cam.x', '{att}.cam.y', '{att}.cam.z'] }
+    : withBodies;
   const params: Param[] = [
     ...shipParams(aid, quadGuess(fixes, tFirst), ref.planar),
     {
@@ -814,8 +845,12 @@ export function anchorState(
           group: aid,
         }))
       : []),
+    ...bodyParams,
   ];
-  const prob = new Problem(st, [sub], params, { dt });
+  const prob = new Problem(st, [sub], params, {
+    dt,
+    ...(fullPriors.length > 0 ? { fullPriors } : {}),
+  });
   const res = prob.solve(params.map((p) => p.init));
   const q = res.x.length;
   const ca = compileArc(st, sub, prob.idx);

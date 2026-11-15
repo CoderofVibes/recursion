@@ -1262,6 +1262,13 @@ export function presentState(
   // arrival prior. The planar reduction holds it fixed, as revision 2 did.
   const camera = d.spec.planar ? null : cameraInForce(d, arc.id, rec, wins);
   const ref: ReferenceLaw = camera ? { ...base, cam: camera.value } : base;
+  // The other bodies join the fit the same way, held by what the model knows of them at the
+  // first fix (2F request 13): a second body moved under a law not sampled out there would
+  // otherwise bias the present state with nothing in its covariance to say so.
+  const tFirst = wins[0]!.fixes[0]!.t;
+  const bodyPriors = d.spec.dynamic
+    ? bodyCovariances(d, bodiesAt(d, ctx, arc.id, body, tFirst, asOf))
+    : undefined;
   // A present-state fit that cannot be solved leaves the arrival state, the best state the
   // model then has: a forecast is always available.
   let anc: Anchor;
@@ -1272,6 +1279,7 @@ export function presentState(
       slopeSigma: s.anchorSlopePriorSigma,
       extraProfiles: extra,
       camSigma: camera?.sigma ?? null,
+      ...(bodyPriors ? { bodyPriors } : {}),
     });
   } catch {
     return arrivalState(actx, d.spec);
@@ -1462,12 +1470,43 @@ export function bodiesAt(
       briefed,
     );
   }
-  // The hedge on the bodies' mutual pulls since each was last fixed.
+  // The hedge on the bodies' mutual pulls since the pair was last fixed. A body is fixed relative
+  // to the ship at its last range fix (up to asOf), else at the briefing (0); the body pulling
+  // hardest on the ship is fixed by the ship's own motion for as long as anything is tracked
+  // (orbit determination), so its last fix is the last fix on any body.
   const covered = new Map([...d.profiles, ...d.flatProfiles].map((p) => [p.body, p]));
   const arc = d.problem.arcs.find((a) => a.id === shipArcOf(arcId));
+  const lastFix = (b: string) =>
+    arc
+      ? rangeFixes(arc, b)
+          .filter((m) => m.t <= asOf)
+          .at(-1)?.t
+      : undefined;
+  const anyLast = Math.max(-Infinity, ...spec.bodies.map((b) => lastFix(b) ?? -Infinity));
+  let dominant: string | null = null;
+  if (sol && Number.isFinite(anyLast)) {
+    const tq = Math.max(sol.arc.epoch, Math.min(t, anyLast));
+    const ca = compileArc(sol.structure, sol.arc, sol.idx);
+    const P = simulate(ca, sol.x, [tq], s.dt).pos[0]!;
+    const sh = 3 * ca.nb;
+    let best = -Infinity;
+    for (const b of spec.bodies) {
+      const j = 3 * ca.bodyIndex.get(b)!;
+      const r = Math.hypot(P[sh]! - P[j]!, P[sh + 1]! - P[j + 1]!, P[sh + 2]! - P[j + 2]!);
+      const pull = law.mu(b) / Math.pow(r, law.n);
+      if (pull > best) {
+        best = pull;
+        dominant = b;
+      }
+    }
+  }
+  const fixedAt = (b: string) => {
+    if (b !== ref && !trusted(b)) return 0;
+    const own = lastFix(b) ?? 0;
+    return b === dominant ? Math.max(own, anyLast) : own;
+  };
   for (const o of others) {
-    const fixes = arc && trusted(o) ? rangeFixes(arc, o).filter((m) => m.t <= asOf) : [];
-    const t0 = fixes.length > 0 ? Math.min(fixes[fixes.length - 1]!.t, t) : 0;
+    const t0 = Math.min(fixedAt(o), fixedAt(ref), t);
     since[o] = t0;
     if (!(t > t0)) continue;
     const names: string[] = [];
@@ -1521,6 +1560,29 @@ export function bodiesAt(
     });
   }
   return { state, cov, eta, since };
+}
+
+/**
+ * The bodies' full 6×6 covariances at one time: the fits' part plus the hedge's, each hedge
+ * exponent at its σ (σ_h0, or σ_e for an earned one), as used where the hedge exponents are not
+ * carried on as shared sources (the present-state fit).
+ */
+export function bodyCovariances(
+  d: Pick<ModelDerived, 'sigmaH0' | 'validated'>,
+  b: BodiesAt,
+): Record<string, Matrix> {
+  const out: Record<string, Matrix> = {};
+  for (const [id, c] of Object.entries(b.cov)) {
+    const m: Matrix = { rows: 6, cols: 6, data: Float64Array.from(c.data) };
+    for (const [name, J] of Object.entries(b.eta[id] ?? {})) {
+      const body = name.slice(name.indexOf(':') + 1);
+      const sig = name.startsWith('etaE:') ? (d.validated[body]?.sigmaE ?? 0) : d.sigmaH0;
+      for (let u = 0; u < 6; u++)
+        for (let w = 0; w < 6; w++) m.data[u * 6 + w]! += sig * sig * J[u]! * J[w]!;
+    }
+    out[id] = m;
+  }
+  return out;
 }
 
 /**
