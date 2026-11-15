@@ -184,6 +184,17 @@ describe('Gravity range: the slingshot flown by hand', () => {
       expect(spent).toBeLessThanOrEqual(DEPART.maxDeltaV);
       // Not a lattice-unit second of the radiation crescent on any equipment item.
       expect(session.truth().exposure).toBeUndefined();
+      // What the screens show (S20): the ship's verdict, and believed numbers that explain it.
+      const [believed] = session.status().departure;
+      expect(believed).toMatchObject({ objective: 'depart', status: 'reached' });
+      expect(believed!.distance).toBeGreaterThan(DEPART.beyond);
+      expect(believed!.outward).toBeGreaterThan(DEPART.minSpeed);
+      // Belief, not truth: the stand-in navigator propagates the briefing's inverse-square
+      // prior between fixes, so its pass past Beta came out some 700 km wide of the true one.
+      // That gap is the game's to close, not this account's.
+      expect(believed!.closest.beta! / 1e3).toBeGreaterThan(500);
+      // The gauges' Δv includes the learning part and the turns' RCS: more than counted.
+      expect(believed!.gaugedDeltaV).toBeGreaterThan(spent);
 
       // What Black Box kept: the objective reached, no contact, and one coasting forecast per
       // release of the controls, frozen, each from the moment of release.

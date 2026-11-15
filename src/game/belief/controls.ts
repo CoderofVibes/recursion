@@ -23,6 +23,7 @@ import type {
   ViewSnapshot,
 } from '../../contracts/index.ts';
 import type { PlanStep } from './maneuver.ts';
+import type { DepartureProgress } from './departure.ts';
 import type { PowerAlert } from './power.ts';
 import type { BlackBoxPort, ModelPort, RuleControls } from './ports.ts';
 
@@ -98,6 +99,12 @@ export interface SessionStatus {
    * support unpowered. A new one drops warp to 1× (A12); the screen shows them.
    */
   readonly alerts: readonly PowerAlert[];
+  /**
+   * How each `depart` objective stands, as the ship believes it (S20, R17): distance and outward
+   * speed relative to the bodies' believed centre of mass against the gate, Δv by the gauges
+   * against the cap, closest approaches, and the ship's verdict once judged (`departure.ts`).
+   */
+  readonly departure: readonly DepartureProgress[];
   readonly outcome: AttemptOutcome;
   /** The plan whose items are still scheduled, if any, and how many remain. */
   readonly planId?: PlanId;

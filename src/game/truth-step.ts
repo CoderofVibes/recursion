@@ -257,7 +257,13 @@ export function createTruthStepper(setup: EncounterSetup): TruthStepper {
           0.5 *
           (before.world.ship.systems.massProperties.mass + ship.actuators.massProperties.mass);
         const spent = (Math.hypot(fx, fy, fz) / midMass) * definition.dt;
-        const judged = evaluateObjectives(objectiveRules, objectives, sim.world, spent);
+        const judged = evaluateObjectives(
+          objectiveRules,
+          objectives,
+          sim.world,
+          spent,
+          before.world,
+        );
         objectives = judged.progress;
         events.push(...judged.events);
       }

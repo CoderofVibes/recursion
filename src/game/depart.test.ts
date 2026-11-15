@@ -6,6 +6,7 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import { hullReach } from '../contracts/ship.ts';
 import type { TruthWorld } from '../contracts/truth/index.ts';
 import { createGravityRange, DEPART } from '../content/gravity-range/index.ts';
 import type { Vec3 } from '../lib/vec3.ts';
@@ -302,5 +303,46 @@ describe('reach-region (3B, 3C)', () => {
       world({ x: 0, y: 0, z: 0 }, { x: 1, y: 0, z: 0 }, 700),
     );
     expect(again.events).toEqual([]);
+  });
+
+  it('swept whole-ship admission (3C, R20): the hull must fit, and a pass within a tick counts', () => {
+    const w = world({ x: 0, y: 0, z: 0 });
+    const mp = w.ship.systems.massProperties;
+    const reach = hullReach(mp.hull, mp.centerOfMass);
+    expect(reach).toBeGreaterThan(1);
+    const sphere = (radius: number): ObjectiveRule[] => [
+      { kind: 'reach-region', objective: 'exit', center: { x: 0, y: 0, z: 0 }, radius },
+    ];
+    // The centre of mass at the sphere's centre, but the hull pokes out: not yet.
+    expect(
+      evaluateObjectives(sphere(reach * 0.9), initialObjectiveProgress, w).progress.completed,
+    ).toBeUndefined();
+    // The centre of mass inside, the hull's far corner just outside: not yet; a little deeper, in.
+    const near = (x: number) => world({ x, y: 0, z: 0 });
+    expect(
+      evaluateObjectives(sphere(100), initialObjectiveProgress, near(100 - reach + 0.5)).progress
+        .completed,
+    ).toBeUndefined();
+    expect(
+      evaluateObjectives(sphere(100), initialObjectiveProgress, near(100 - reach - 0.5)).progress
+        .completed,
+    ).toBe('exit');
+    // Through a 50 m sphere at 200 m/s: in and out between two ticks, a second apart. The sweep
+    // finds it, and says when.
+    const before = world({ x: -100, y: 0, z: 0 }, { x: 200, y: 0, z: 0 }, 99);
+    const after = world({ x: 100, y: 0, z: 0 }, { x: 200, y: 0, z: 0 }, 100);
+    expect(
+      evaluateObjectives(sphere(50), initialObjectiveProgress, after).progress.completed,
+    ).toBeUndefined();
+    const swept = evaluateObjectives(sphere(50), initialObjectiveProgress, after, 0, before);
+    expect(swept.progress.completed).toBe('exit');
+    const entry = swept.events[0]!.t;
+    // In when the centre of mass is (50 − reach) short of the centre: 99 + (100 − (50 − reach)) / 200.
+    expect(entry).toBeCloseTo(99 + (100 - (50 - reach)) / 200, 9);
+    // The same pass with a speed limit below 200 m/s is not admitted.
+    const limited: ObjectiveRule[] = [{ ...sphere(50)[0]!, maxSpeed: 150 } as ObjectiveRule];
+    expect(
+      evaluateObjectives(limited, initialObjectiveProgress, after, 0, before).progress.completed,
+    ).toBeUndefined();
   });
 });

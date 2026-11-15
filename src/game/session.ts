@@ -22,6 +22,7 @@ import type {
   AttemptOutcome,
   AttemptOverlay,
   AttemptRecord,
+  BelievedShip,
   BelievedWorld,
   Chart,
   Command,
@@ -77,6 +78,15 @@ import {
   type TickResult,
 } from './truth-step.ts';
 import { buildWindowView } from './window.ts';
+import {
+  bodyWeights,
+  departureProgress,
+  initialDepartureTrack,
+  recordVerdict,
+  trackDeparture,
+  type DepartureProgress,
+  type DepartureTrack,
+} from './belief/departure.ts';
 import { criticalFault, powerAlerts, type PowerAlert } from './belief/power.ts';
 
 export interface SessionOptions {
@@ -177,6 +187,8 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
   /** When the ship first reported a critical function short of power, and which, while it is. */
   let shortSince: number | undefined;
   let shortReported: string[] = [];
+  /** The believed departure account (S20): gauged Δv, closest approaches, the ship's verdicts. */
+  let departureTrack: DepartureTrack = initialDepartureTrack;
   const checkEvery = Math.max(1, Math.round(setup.play.power.checkEvery / stepper.dt));
   let outcome: AttemptOutcome = { kind: 'in-progress' };
   let queue: Scheduled[] = [];
@@ -276,6 +288,7 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
     alerts = [];
     shortSince = undefined;
     shortReported = [];
+    departureTrack = initialDepartureTrack;
     commanded = initialCommandedState;
     drawn = undefined;
     trail = [];
@@ -379,7 +392,15 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
       fault ??= e.t;
       if (!shortReported.includes(group)) shortReported.push(group);
     }
-    if (fault !== undefined || tick % checkEvery === 0) updateAlerts(fault);
+    for (const e of result.events)
+      if (e.kind === 'objective')
+        departureTrack = recordVerdict(departureTrack, e.objective, e.status);
+    if (fault !== undefined || tick % checkEvery === 0) {
+      const believed = model.believedWorld(time());
+      updateAlerts(believed.ship, fault);
+      if (tick % checkEvery === 0)
+        departureTrack = trackDeparture(departureTrack, believed, definition.ship);
+    }
 
     if (truth.lost) {
       const lost = result.events.find((e) => e.kind === 'ship-lost');
@@ -394,8 +415,7 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
    * gauges' next sample shows it (they are sampled at the recorder's rate); the gauges end it,
    * once a sample newer than the report shows every critical function served.
    */
-  function updateAlerts(fault: number | undefined): void {
-    const ship = model.believedWorld(time()).ship;
+  function updateAlerts(ship: BelievedShip, fault: number | undefined): void {
     const now = powerAlerts(ship, definition.ship, play.power.cautionLead);
     let critical = now.find((a) => a.id === 'critical-service');
     if (fault !== undefined) shortSince ??= fault;
@@ -432,6 +452,24 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
       debt = Math.min(debt, dt);
     }
     alerts = next;
+  }
+
+  /** Each depart objective as believed now (S20). */
+  function departures(): DepartureProgress[] {
+    const objectives = definition.briefing.objectives.filter((o) => o.depart);
+    if (objectives.length === 0) return [];
+    const world = model.believedWorld(time());
+    const estimates = model.state().parameters;
+    const weights = bodyWeights(
+      world,
+      estimates.length > 0 ? estimates : definition.briefing.priors,
+    );
+    const out: DepartureProgress[] = [];
+    for (const o of objectives) {
+      const p = departureProgress(o, world, weights, departureTrack);
+      if (p) out.push(p);
+    }
+    return out;
   }
 
   function toPlan(draft: PlanDraft, epoch: number): Plan {
@@ -517,6 +555,7 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
         committing: committing > 0,
         attitude: attitudeMode,
         alerts,
+        departure: departures(),
         outcome,
         ...(planId ? { planId } : {}),
         pending: queue.filter((item) => item.source === 'plan').length,
