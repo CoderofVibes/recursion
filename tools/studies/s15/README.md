@@ -15,6 +15,31 @@ The fixed scenario order and inputs make the procedure reproducible; timing valu
 
 ## Settings and meaning
 
+PF update: room/game trials inject `recursion:opening-seen=1` with
+`Page.addScriptToEvaluateOnNewDocument`, before application scripts. Add `--opening`
+to also measure fresh-opening cold/warm loads (storage is cleared between them),
+the first draw to the opening canvas plus its next paint opportunity, and the
+19.5-second sequence's handoff to the room. These are separate from room readiness;
+the authored sequence duration is never counted as a cold-load failure.
+
+Use `--regions gravity-range,inverse-wells,chain-link` for the three-region matrix;
+the default remains `gravity-range`. `--output docs/handoffs/pf` keeps PF evidence
+and profiles together. The matching summary command is
+`node tools/studies/s15/summarize.mjs RUN docs/handoffs/pf`.
+`--profile-case REGION:PROFILE:VIEW:WARP` selects a region explicitly (the older
+three-part form still works). Each trial records a one-second host CPU occupancy
+sample before navigation. Aggregate occupancy >=20% flags possible contention;
+even low occupancy is not evidence of a quiet GPU or scheduler. Other threads
+are uncontrolled, so compare repeats and report their spread. The release gate
+is **33 ms**, not a rounded 30 Hz interval. JSON and compressed diagnostics are
+scrubbed of local account/workspace paths before being written.
+
+Use `--phase profile --profile-startup opening --profile-label opening-startup`
+for a separate instrumented cold load through the opening handoff, or
+`--profile-startup room` for direct room setup. These profiles include startup,
+shader setup and scene replacement; their instrumented timings are not substituted
+for uninstrumented load or frame trials. CPU profiles do not measure GPU execution.
+
 - Native: CPU 1×, no network throttle.
 - Modest proxy: `Emulation.setCPUThrottlingRate` rate 4; `Network.emulateNetworkConditions` 40 ms latency, 1,250,000 bytes/s down, 125,000 bytes/s up, no packet loss. The broadband values are an assumed test profile, not a claim about all judges' connections. GPU speed is unchanged.
 - Both: 1366×768 CSS pixels, DPR 1, installed headless Chrome with GPU enabled. Actual renderer, GPU details, OS, CPU, RAM, Chrome flags and versions are recorded in JSON. No software-renderer or physical-laptop claim is inferred from CPU throttling.

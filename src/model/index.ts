@@ -21,6 +21,7 @@ export type {
   PresentState,
 } from './engine.ts';
 export type { ExtensionRecord, ValidatedHedge } from './extensions.ts';
+export type { HeldOutCause, HeldOutDiagnosis } from './verdict.ts';
 export type {
   ForecastDetail,
   ForecastRequest,

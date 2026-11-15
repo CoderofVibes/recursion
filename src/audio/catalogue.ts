@@ -15,6 +15,7 @@ export type Shot =
   | 'advisory'
   | 'caution'
   | 'warning'
+  | 'equipment-damage'
   | 'black-box-record'
   | 'home-reveal';
 
@@ -30,6 +31,7 @@ const shots: readonly Shot[] = [
   'advisory',
   'caution',
   'warning',
+  'equipment-damage',
   'black-box-record',
   'home-reveal',
 ];

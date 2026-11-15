@@ -61,11 +61,24 @@ calibrations requires a new channel version; old records must keep their origina
 Each reading consumes 88 bytes of the existing onboard packet format: an 8-byte
 channel header and ten Float64 values/sigmas. It is admitted after ordinary
 instrument/housekeeping data and before optional imagery, only if it fits a real
-charged packet. No sample is drawn or retained without recorder service, available
-storage and capacity. A positive selected recorder rate permits a monitor packet
-at the recorder's actual physical cadence, capped by the monitor's native cadence;
-selected rate zero disables recording. Standby's 1 Hz fits its 100 B/s data budget.
-The reading may share a packet with other data; coincident schedules charge once.
+charged packet. No sample is drawn without recorder service, available storage and
+capacity. Selected rate zero disables sensing and recording. Standby's 1 Hz fits its
+100 B/s data budget. The reading may share a packet with other data; coincident
+schedules charge once.
+
+**Sensing and recording are separate (R52, owner, 2026-11-15; 2F under a scoped
+exception).** The monitor *senses* on board as before: whenever it is due and a
+physical packet could take the reading, at the recorder's actual physical cadence
+capped by the monitor's native cadence (`senseRadiationMonitor`). Every sensed
+reading is the flight computer's: the game's caution reads them all
+(`latestRadiationReading`), so the caution is unchanged. The Black Box *records* only
+some (`radiationRecorded`): those at the player's chosen recorder rate, riding in the
+ordinary packet; every reading above the hazard threshold or saturated; and the first
+reading back below it. So the spike before a failure is in the record in full, and
+clear space costs nothing beyond the player's rate. Only a recorded reading charges a
+packet. In the Gravity range this takes the record from 6.1 MB back to 2.6 MB per
+5.6 h of coasting (2.4 MB without the monitor). The monitor's lines in `index.ts`
+`stepSensors` call these; nothing else there changed.
 
 ## Owner integration
 
@@ -79,8 +92,8 @@ The reading may share a packet with other data; coincident schedules charge once
    fields, or pass the complete combined list. The owned standalone Chain Link
    environment already supplies this point input.
 2. **2F scheduling / A12:** run the sensor pipeline at actual physics/acquisition
-   deadlines, with fresh point inputs (at most 0.1 s for 10 Hz). After retaining each
-   measurement batch, call `radiationCaution(measurement, now, previousState)` from the
+   deadlines, with fresh point inputs (at most 0.1 s for 10 Hz). For each reading sensed
+   on board (recorded or not, R52), call `radiationCaution(measurement, now, previousState)` from the
    belief-safe `radiation-observations.ts`, starting with `{}`. Retain the returned
    `RadiationCautionState` including `latestReadingAt` even after `caution` clears.
    Save this policy state, or rebuild it in record order using each record's own

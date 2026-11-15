@@ -1,0 +1,29 @@
+--- a/src/view3d/room/RoomView.ts
++++ b/src/view3d/room/RoomView.ts
+@@ -544,8 +544,24 @@
+     }
+ 
+     this.outside.followEye(this.camera, this.renderer);
+-    this.composer.render();
+-    this.labels.render(this.scene, camera);
++    // A8: settled MAP/SHIP cover the room with an opaque veil. Keep hologram lights,
++    // but omit room/window draw submission until a transition or another view needs it.
++    const covered = (mode === 'map' || mode === 'ship') && !this.trans && !this.death && cur.veil > 0.999;
++    const hidden: Object3D[] = [];
++    if (covered) {
++      for (const child of this.scene.children) {
++        if (child !== this.holoRoot && child !== this.veil && !('isLight' in child) && child.visible) {
++          child.visible = false;
++          hidden.push(child);
++        }
++      }
++    }
++    try {
++      this.composer.render();
++      this.labels.render(this.scene, camera);
++    } finally {
++      for (const child of hidden) child.visible = true;
++    }
+   }
+ 
+   dispose(): void {

@@ -17,7 +17,7 @@ import { functionalPower } from './functional-power.ts';
 import {
   advanceRadiationMonitor,
   radiationMonitorDue,
-  recordRadiationMonitor,
+  senseRadiationMonitor,
 } from './radiation.ts';
 import { RADIATION_MONITOR } from './radiation-spec.ts';
 import { isWellsSensorScene, stepWellAcquisition, WELL_CAMERA_STREAM } from './wells.ts';
@@ -286,12 +286,26 @@ export function stepSensors(
     capacityAvailable &&
     physicalPacketReady &&
     env.t + 1e-10 >= (memory.nextRecorderAt ?? env.t);
+  // The radiation monitor (A24, R52): sensed on board when it is due and a packet could take the
+  // reading, no faster than the recorder's physical cadence (as before R52, so its caution is
+  // unchanged); recorded only at the player's rate (riding in the ordinary packet), above the
+  // caution threshold, and where it crosses back below. The rest stays on board.
+  let monitor: ReturnType<typeof senseRadiationMonitor> | undefined;
+  if (
+    monitorDue &&
+    capacityAvailable &&
+    physicalPacketReady &&
+    state.recorder.sampleRate > 0 &&
+    physicalRate > 0
+  ) {
+    monitor = senseRadiationMonitor(state, env.t, due, 1 / physicalRate);
+    state = monitor.state;
+    rng[RADIATION_MONITOR.stream] = monitor.state.rng[RADIATION_MONITOR.stream]!;
+  }
   const packetDue =
     capacityAvailable &&
     physicalPacketReady &&
-    (due ||
-      (diagnostic.due && physicalRate >= diagnostic.rate) ||
-      (monitorDue && state.recorder.sampleRate > 0 && physicalRate > 0));
+    (due || (diagnostic.due && physicalRate >= diagnostic.rate) || monitor?.record === true);
   const attitude = env.kinematics.attitude;
   /** Body rates (what the gyros sense) and the same angular velocity in the inertial frame. */
   const bodyRate = env.kinematics.angularVelocity;
@@ -544,14 +558,11 @@ export function stepSensors(
     }
   if (
     packetDue &&
-    monitorDue &&
+    monitor?.record &&
+    monitor.reading &&
     ordinaryBytes + RADIATION_MONITOR.bytesPerReading <= recorder.bytesPerSample
   ) {
-    const monitor = recordRadiationMonitor(state, env.t);
-    state = monitor.state;
-    // Preserve the ordinary instruments' draws already made this step.
-    rng[RADIATION_MONITOR.stream] = monitor.state.rng[RADIATION_MONITOR.stream]!;
-    measurements.push(...monitor.measurements);
+    measurements.push(monitor.reading);
     ordinaryBytes += RADIATION_MONITOR.bytesPerReading;
   }
   const ordinaryState: ShipSystemsState = {

@@ -26,6 +26,7 @@ import { radiationProfiles, type Exposure } from '../ship/condition/index.ts';
 import { integrateConditionedInterval } from '../ship/condition/integrate.ts';
 import { energizedEquipment } from '../ship/power/service.ts';
 import { withRadiationMonitorInput } from '../ship/sensors/radiation-environment.ts';
+import { latestRadiationReading } from '../ship/sensors/radiation.ts';
 import type { ShipDefinition } from '../contracts/ship.ts';
 import type {
   EnvironmentEffects,
@@ -79,6 +80,12 @@ export interface TickResult {
   readonly executed: readonly ExecutedCommand[];
   /** Measurements the ship acquired and recorded this tick (valid at the tick's start time). */
   readonly measurements: readonly Measurement[];
+  /**
+   * The radiation monitor's readings sensed on board this tick, recorded or not (A24, R52): what
+   * the flight computer's caution reads. Instrument readings, belief-safe; only those also in
+   * `measurements` reach Black Box.
+   */
+  readonly sensed: readonly Measurement[];
   /** What the ship noticed this tick, in time order. */
   readonly events: readonly ShipEvent[];
   /** Truth-only events (true clearances, impacts). For tests and tuning; never forwarded. */
@@ -160,13 +167,16 @@ export function conditionedShipStep(
   env: EnvironmentEffects,
   dt: number,
   refresh?: (env: EnvironmentEffects, systems: ShipSystemsState) => EnvironmentEffects,
-): ShipStepResult {
+): ConditionedStep {
   const intensity = env.intensity;
   const exposed = Object.keys(intensity).length > 0;
   const rebooting = Object.values(systems.equipment).some(
     (e) => (e.values.radiationRestartUntil ?? 0) > systems.t,
   );
-  if (!exposed && !rebooting) return stepShipSystems(systems, definition, commands, env, dt);
+  if (!exposed && !rebooting) {
+    const plain = stepShipSystems(systems, definition, commands, env, dt);
+    return { ...plain, sensed: sensedSince(plain.state, systems.t) };
+  }
 
   const profiles = radiationProfiles(definition);
   // The intensity holds over the tick (sampled at its start), so a piece's dose is its length
@@ -182,7 +192,7 @@ export function conditionedShipStep(
     }
     return out;
   };
-  const pieces: { result: ShipStepResult; dt: number }[] = [];
+  const pieces: { result: ShipStepResult; dt: number; start: number }[] = [];
   const t0 = systems.t;
   const done = integrateConditionedInterval(
     systems,
@@ -210,11 +220,14 @@ export function conditionedShipStep(
       };
       const at = offset === 0 ? env : refresh ? refresh(carried, state) : carried;
       const result = stepShipSystems(state, definition, pieces.length === 0 ? commands : [], at, d);
-      pieces.push({ result, dt: d });
+      pieces.push({ result, dt: d, start: state.t });
       return { state: result.state, events: result.events };
     },
   );
-  if (pieces.length === 1) return { ...pieces[0]!.result, state: done.state, events: done.events };
+  // What the radiation monitor sensed on board in each piece (R52), recorded or not.
+  const sensed = pieces.flatMap((p) => sensedSince(p.result.state, p.start));
+  if (pieces.length === 1)
+    return { ...pieces[0]!.result, state: done.state, events: done.events, sensed };
   // Each piece's thrust, as the share of the tick's impulse it gave.
   const thrusts = pieces.flatMap(({ result, dt: d }) =>
     result.actuators.thrusts.map((thrust) => ({
@@ -237,7 +250,17 @@ export function conditionedShipStep(
     actuators: { thrusts, torque, massProperties: pieces.at(-1)!.result.actuators.massProperties },
     measurements: pieces.flatMap((p) => p.result.measurements),
     events: done.events,
+    sensed,
   };
+}
+
+/** The ship step, with what the radiation monitor sensed on board over it (R52). */
+export type ConditionedStep = ShipStepResult & { readonly sensed: readonly Measurement[] };
+
+/** The monitor's on-board reading, if it was sensed at or after `from`. */
+function sensedSince(state: ShipSystemsState, from: number): Measurement[] {
+  const reading = latestRadiationReading(state);
+  return reading && reading.t >= from ? [reading] : [];
 }
 
 /**
@@ -569,6 +592,7 @@ export function createTruthStepper(given: EncounterSetup): TruthStepper {
         },
         executed,
         measurements: ship.measurements,
+        sensed: ship.sensed,
         events,
         simEvents: stepped.events,
         ...(happened.length > 0 ? { dynamics: happened } : {}),

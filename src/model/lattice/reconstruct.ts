@@ -37,17 +37,31 @@ import type { Quat } from '../../lib/quat.ts';
 import type { AngularFrame } from './frames.ts';
 
 /** Bump when anything that changes a reconstruction's numbers changes. */
-export const LATTICE_RECONSTRUCTION_VERSION = 1;
+export const LATTICE_RECONSTRUCTION_VERSION = 2;
 
 export interface LatticeSettings {
   /** Endpoints of one frame within this many σ of each other are one node. */
   readonly nodeMergeSigmas: number;
-  /** Largest angle a node may move between linked frames, rad. */
+  /** Largest angle between two rays that may be one node seen twice, rad (its parallax). */
   readonly associationGate: number;
-  /** A match must be at most this fraction of the next-best one, both ways. */
+  /**
+   * Two sightings may be one node only within this many σ of each other's epipolar line, and
+   * two depths agree within this many σ (see `associate`).
+   */
+  readonly associationSigmas: number;
+  /** A depth in conflict with the chosen one may have at most this share of its support. */
   readonly associationRatio: number;
-  /** Frames a track may miss and still be linked. */
-  readonly maxFrameGap: number;
+  /** Sightings this many seconds apart or less are compared directly, s. */
+  readonly associationWindow: number;
+  /** A node takes a depth only when at least this many other frames agree on it. */
+  readonly associationVotes: number;
+  /**
+   * A pair votes on a depth only when its rays fix it to this fraction (1σ): one with less
+   * parallax agrees with any depth and cannot tell the true point from a neighbour.
+   */
+  readonly associationDepthPrecision: number;
+  /** Two depths agree within this many σ of their difference. */
+  readonly associationDepthSigmas: number;
   /** Training observations a node needs. */
   readonly minTraining: number;
   /** The later share of a track's observations held out to test its fit. */
@@ -60,6 +74,8 @@ export interface LatticeSettings {
   readonly maxPointSigma: number;
   /** Frames an edge needs to count as observed. */
   readonly minEdgeFrames: number;
+  /** An edge longer than this many times the field's median supported edge is not drawn. */
+  readonly maxEdgeOverTypical: number;
   /** How long reconstructed geometry counts as fresh after its last observation, s. */
   readonly validity: number;
 }
@@ -73,14 +89,19 @@ export interface LatticeSettings {
 export const LATTICE_SETTINGS: LatticeSettings = {
   nodeMergeSigmas: 6,
   associationGate: 0.05,
+  associationSigmas: 4,
   associationRatio: 0.5,
-  maxFrameGap: 3,
+  associationWindow: 30,
+  associationVotes: 2,
+  associationDepthPrecision: 0.15,
+  associationDepthSigmas: 2,
   minTraining: 12,
   heldOutFraction: 0.1,
   minHeldOut: 3,
   heldOutK: 3,
   maxPointSigma: 3,
   minEdgeFrames: 2,
+  maxEdgeOverTypical: 3,
   validity: 120,
 };
 
@@ -256,14 +277,24 @@ interface Obs {
   readonly velocityCov: Cov3;
   readonly sampleId: string;
   readonly t: number;
+  /** The frame's stated range limit, m: nothing farther is in it. */
+  readonly rangeLimit: number;
 }
 
 interface FrameNodes {
+  /** One per fragment endpoint: fragment i's start is 2i, its end 2i + 1. */
   readonly nodes: Obs[];
+  /** Each fragment: an observed edge between its endpoints. */
   readonly edges: [number, number][];
+  /**
+   * Endpoints that coincide in the image (within `nodeMergeSigmas`) share a root: adjacent
+   * fragments of one strand share their endpoint, but so may two points far apart in depth
+   * that happen to line up. Which it is, the depths decide (`associate`).
+   */
+  readonly twin: number[];
 }
 
-/** One frame's nodes and edges in the believed inertial frame. */
+/** One frame's fragment endpoints and edges in the believed inertial frame. */
 function frameNodes(pf: PosedFrame, index: number, s: LatticeSettings): FrameNodes {
   const pose = pf.pose!;
   const f = pf.frame;
@@ -274,7 +305,6 @@ function frameNodes(pf: PosedFrame, index: number, s: LatticeSettings): FrameNod
     { s: g.start, sigma: g.sigma },
     { s: g.end, sigma: g.sigma },
   ]);
-  // Union of coincident endpoints (adjacent fragments of one strand share theirs).
   const parent = ends.map((_, i) => i);
   const find = (i: number): number => (parent[i] === i ? i : (parent[i] = find(parent[i]!)));
   for (let i = 0; i < ends.length; i++)
@@ -284,24 +314,8 @@ function frameNodes(pf: PosedFrame, index: number, s: LatticeSettings): FrameNod
       const d = Math.hypot(a.s[0] - b.s[0], a.s[1] - b.s[1]);
       if (d <= s.nodeMergeSigmas * Math.max(a.sigma, b.sigma)) parent[find(i)] = find(j);
     }
-  const roots = new Map<number, number>();
-  const groups: number[][] = [];
-  ends.forEach((_, i) => {
-    const r = find(i);
-    let g = roots.get(r);
-    if (g === undefined) {
-      g = groups.length;
-      roots.set(r, g);
-      groups.push([]);
-    }
-    groups[g]!.push(i);
-  });
   const rot2 = pose.attitudeSigma ** 2 + f.basisSigma ** 2;
-  const nodes: Obs[] = groups.map((g) => {
-    const sx = g.reduce((acc, i) => acc + ends[i]!.s[0], 0) / g.length;
-    const sy = g.reduce((acc, i) => acc + ends[i]!.s[1], 0) / g.length;
-    // Coincident copies are not assumed independent: σ is not reduced by averaging them.
-    const sig = Math.max(...g.map((i) => ends[i]!.sigma));
+  const at = (sx: number, sy: number, sig: number): Obs => {
     const k = 1 + sx * sx + sy * sy;
     return {
       frame: index,
@@ -316,77 +330,307 @@ function frameNodes(pf: PosedFrame, index: number, s: LatticeSettings): FrameNod
       velocityCov: pose.velocityCov ?? [0, 0, 0, 0, 0, 0],
       sampleId: pf.sampleId,
       t: 0.5 * (f.acquisition[0] + f.acquisition[1]),
+      rangeLimit: f.coverage?.rangeLimit ?? Infinity,
     };
-  });
-  const edges: [number, number][] = [];
-  f.fragments.forEach((_, i) => {
-    const a = roots.get(find(2 * i))!;
-    const b = roots.get(find(2 * i + 1))!;
-    if (a !== b) edges.push(a < b ? [a, b] : [b, a]);
-  });
-  return { nodes, edges };
+  };
+  return {
+    nodes: ends.map((e) => at(e.s[0], e.s[1], e.sigma)),
+    edges: f.fragments.map((_, i) => [2 * i, 2 * i + 1] as [number, number]),
+    twin: ends.map((_, i) => find(i)),
+  };
+}
+
+/**
+ * Endpoints of one frame that are one point (twins the depths agree on), as one observation:
+ * their mean slopes. Coincident copies are not assumed independent: σ is not reduced.
+ */
+function combined(obs: readonly Obs[]): Obs {
+  if (obs.length === 1) return obs[0]!;
+  const o = obs[0]!;
+  const sx = obs.reduce((acc, q) => acc + q.s[0], 0) / obs.length;
+  const sy = obs.reduce((acc, q) => acc + q.s[1], 0) / obs.length;
+  return {
+    ...o,
+    ray: unit(addV(addV(o.fI, scaleV(o.rI, sx)), scaleV(o.uI, sy))),
+    s: [sx, sy] as const,
+    sigma: Math.max(...obs.map((q) => q.sigma)),
+  };
 }
 
 interface Track {
   readonly id: string;
   readonly obs: Obs[];
-  last: Obs;
 }
 
-/** Link nodes frame to frame: mutual, gated and unambiguous matches only. */
-function associate(frames: FrameNodes[], frameIds: string[], s: LatticeSettings) {
-  const tracks: Track[] = [];
-  /** Per frame, per node: its track index. */
-  const trackOf: number[][] = [];
-  const cosGate = Math.cos(s.associationGate);
-  frames.forEach((fr, k) => {
-    const active = tracks
-      .map((t, i) => [t, i] as const)
-      .filter(([t]) => k - t.last.frame <= s.maxFrameGap + 1);
-    const n = fr.nodes.length;
-    const m = active.length;
-    // Angles as 1 − cos, monotone in the angle.
-    const d = new Float64Array(n * m);
-    for (let a = 0; a < n; a++)
-      for (let b = 0; b < m; b++) d[a * m + b] = 1 - dotV(fr.nodes[a]!.ray, active[b]![0].last.ray);
-    const best = (vals: (j: number) => number, len: number) => {
-      let i1 = -1;
-      let d1 = Infinity;
-      let d2 = Infinity;
-      for (let j = 0; j < len; j++) {
-        const x = vals(j);
-        if (x < d1) {
-          d2 = d1;
-          d1 = x;
-          i1 = j;
-        } else if (x < d2) d2 = x;
+/** Slopes beyond this are not in any camera's view (a 30° half-angle is 0.58); keys stay small. */
+const GRID_SPAN = 1e4;
+
+/** A frame's nodes bucketed by slope, for lookups by distance. */
+class SlopeGrid {
+  private readonly cells = new Map<number, number[]>();
+  private readonly lo: [number, number] = [Infinity, Infinity];
+  private readonly hi: [number, number] = [-Infinity, -Infinity];
+  private readonly nodes: readonly Obs[];
+  private readonly cell: number;
+  constructor(nodes: readonly Obs[], cell: number) {
+    this.nodes = nodes;
+    this.cell = cell;
+    nodes.forEach((n, i) => {
+      const k = Math.floor(n.s[0] / cell) * GRID_SPAN + Math.floor(n.s[1] / cell);
+      const list = this.cells.get(k);
+      if (list) list.push(i);
+      else this.cells.set(k, [i]);
+      for (const d of [0, 1] as const) {
+        this.lo[d] = Math.min(this.lo[d], n.s[d]);
+        this.hi[d] = Math.max(this.hi[d], n.s[d]);
       }
-      return { i1, d1, d2 };
-    };
-    // In angle terms the ratio test is θ1 ≤ ρ θ2, i.e. (1 − cos) scales as θ²: ρ².
-    const r2 = s.associationRatio * s.associationRatio;
-    const assigned: number[] = new Array<number>(n).fill(-1);
-    for (let a = 0; a < n; a++) {
-      const nb = best((j) => d[a * m + j]!, m);
-      if (nb.i1 < 0 || 1 - nb.d1 < cosGate || nb.d1 > r2 * nb.d2) continue;
-      const tb = best((j) => d[j * m + nb.i1]!, n);
-      if (tb.i1 !== a || tb.d1 > r2 * tb.d2) continue;
-      assigned[a] = active[nb.i1]![1];
-    }
-    trackOf.push(
-      fr.nodes.map((node, a) => {
-        let ti = assigned[a]!;
-        if (ti < 0) {
-          ti = tracks.length;
-          tracks.push({ id: `${frameIds[k]}:node:${a}`, obs: [], last: node });
+    });
+  }
+  near(p: readonly [number, number], radius: number): number[] {
+    const out: number[] = [];
+    if (
+      p[0] + radius < this.lo[0] ||
+      p[0] - radius > this.hi[0] ||
+      p[1] + radius < this.lo[1] ||
+      p[1] - radius > this.hi[1]
+    )
+      return out;
+    // Only the cells that hold nodes: a ray far off the frame's axis has a very wide query.
+    const c = this.cell;
+    const i0 = Math.floor(Math.max(p[0] - radius, this.lo[0]) / c);
+    const i1 = Math.floor(Math.min(p[0] + radius, this.hi[0]) / c);
+    const j0 = Math.floor(Math.max(p[1] - radius, this.lo[1]) / c);
+    const j1 = Math.floor(Math.min(p[1] + radius, this.hi[1]) / c);
+    for (let i = i0; i <= i1; i++)
+      for (let j = j0; j <= j1; j++)
+        for (const n of this.cells.get(i * GRID_SPAN + j) ?? []) {
+          const q = this.nodes[n]!.s;
+          if (Math.hypot(q[0] - p[0], q[1] - p[1]) <= radius) out.push(n);
         }
-        const t = tracks[ti]!;
-        t.obs.push(node);
-        t.last = node;
-        return ti;
-      }),
-    );
+    return out;
+  }
+}
+
+/** Where a frame sees an inertial direction, in its slopes; null behind it. */
+function slopesOf(d: Vec3, o: Obs): [number, number] | null {
+  const a = dotV(d, o.fI);
+  if (!(a > 0)) return null;
+  return [dotV(d, o.rI) / a, dotV(d, o.uI) / a];
+}
+
+/** A candidate partner of an observation: frame, node, and the depth their rays give it, ±σ. */
+interface Partner {
+  readonly k: number;
+  readonly a: number;
+  readonly lam: number;
+  readonly sig: number;
+}
+
+/**
+ * Link the frames' nodes into tracks by voting on depth.
+ *
+ * 3C's sensor rasters a share of its candidates in each frame (96 of several hundred on the
+ * Cathedral's twenty fences), so a node returns only every several frames, meanwhile moved by
+ * parallax, and the lattice is regular: along the line a node may have moved on (its epipolar
+ * line) lie its neighbours on the same strand. Matching each frame to the last (S17's case) made
+ * nearly every return a new track (R46).
+ *
+ * 1. Partners. For each node, the nodes of the frames in the last `associationWindow` seconds
+ *    that lie within `associationGate` of its ray and within `associationSigmas` of its epipolar
+ *    line (with the believed path's drift between them), crossing it in front of both cameras
+ *    and within range. Each gives a depth along its ray.
+ * 2. Votes. Only the true point gives the same depth from frame after frame; a neighbour gives a
+ *    different depth with each baseline. A node takes the depth the most other frames agree on
+ *    (within `associationSigmas`), if at least `associationVotes` do and any depth in conflict
+ *    with it has at most `associationRatio` of its support. Otherwise it stays unresolved.
+ *    Pairs with no parallax to speak of (depth σ over half the depth) neither vote nor object.
+ * 3. Links. Two nodes are linked when each supports the depth the other took; the tracks are
+ *    the linked groups. A group that would hold two nodes of one frame is not one point: those
+ *    frames' nodes leave it. Competing associations are never settled from a truth mesh.
+ */
+function associate(frames: FrameNodes[], frameIds: string[], s: LatticeSettings) {
+  const grids = frames.map((fr) => {
+    const sigMax = Math.max(0, ...fr.nodes.map((o) => o.sigma));
+    return new SlopeGrid(fr.nodes, Math.max(Math.min(s.associationGate, 0.02), 4 * sigMax, 1e-3));
   });
+  const partners: Partner[][][] = frames.map((fr) => fr.nodes.map(() => []));
+  const cosGate = Math.cos(s.associationGate);
+  const g = s.associationSigmas;
+  frames.forEach((fr, k) => {
+    if (fr.nodes.length === 0) return;
+    for (let k2 = k - 1; k2 >= 0; k2--) {
+      const other = frames[k2]!;
+      const ref = other.nodes[0];
+      if (!ref) continue;
+      if (fr.nodes[0]!.t - ref.t > s.associationWindow) break;
+      for (let a = 0; a < fr.nodes.length; a++) {
+        const na = fr.nodes[a]!;
+        const p = slopesOf(na.ray, ref);
+        if (!p) continue;
+        const stretch = 1 + p[0] * p[0] + p[1] * p[1];
+        const base = subV(na.origin, ref.origin);
+        const nrm = v(
+          base.y * na.ray.z - base.z * na.ray.y,
+          base.z * na.ray.x - base.x * na.ray.z,
+          base.x * na.ray.y - base.y * na.ray.x,
+        );
+        const nLen = lenV(nrm);
+        if (!(nLen > 1e-9 * (1 + lenV(base)))) continue;
+        for (const b of grids[k2]!.near(p, s.associationGate * stretch)) {
+          const nb = other.nodes[b]!;
+          const cos = dotV(na.ray, nb.ray);
+          if (cos < cosGate) continue;
+          const den = 1 - cos * cos;
+          if (!(den > 1e-14)) continue;
+          // Closest approach: depth λ along a's ray, μ along b's.
+          const w0 = subV(nb.origin, na.origin);
+          const dd = dotV(na.ray, w0);
+          const ee = dotV(nb.ray, w0);
+          const lam = (dd - cos * ee) / den;
+          const mu = (cos * dd - ee) / den;
+          const limit = Math.min(na.rangeLimit, nb.rangeLimit);
+          if (!(lam > 0 && mu > 0 && lam <= limit && mu <= limit)) continue;
+          // Out of the epipolar plane, in angle at b, against the slopes' σ and the drift.
+          const e = dotV(nb.ray, nrm) / nLen;
+          const drift = (Math.sqrt(trace3(na.velocityCov)) * Math.abs(na.t - nb.t)) / mu;
+          const var0 = na.sigma * na.sigma + nb.sigma * nb.sigma + drift * drift;
+          if (e * e > g * g * var0) continue;
+          const sinG = Math.sqrt(den);
+          const spread = Math.sqrt(var0);
+          partners[k]![a]!.push({ k: k2, a: b, lam, sig: (lam * spread) / sinG });
+          partners[k2]![b]!.push({ k, a, lam: mu, sig: (mu * spread) / sinG });
+        }
+      }
+    }
+  });
+  // Votes. Distinct frames are counted with stamps, not sets: each node compares its partners
+  // with each other (tens of them), and there are tens of thousands of nodes.
+  const chosen: (Set<string> | null)[][] = frames.map((fr) => fr.nodes.map(() => null));
+  const key = (k: number, a: number) => `${k}:${a}`;
+  const stamp = new Int32Array(frames.length);
+  let tick = 0;
+  const ag = s.associationDepthSigmas;
+  frames.forEach((fr, k) =>
+    fr.nodes.forEach((_, a) => {
+      const C = partners[k]![a]!
+        .filter((c) => c.sig <= s.associationDepthPrecision * c.lam)
+        .sort((x, y) => x.lam - y.lam);
+      const n = C.length;
+      if (n < s.associationVotes) return;
+      const lam = Float64Array.from(C, (c) => c.lam);
+      const sig2 = Float64Array.from(C, (c) => c.sig * c.sig);
+      const fk = Int32Array.from(C, (c) => c.k);
+      const sigMax = Math.sqrt(Math.max(...sig2));
+      const agree = (i: number, j: number) => {
+        const d = lam[i]! - lam[j]!;
+        return d * d <= ag * ag * (sig2[i]! + sig2[j]!);
+      };
+      /** The partners whose depth could agree with j's (sorted by depth): [from, to). */
+      const span = (j: number): [number, number] => {
+        const reach = ag * (Math.sqrt(sig2[j]!) + sigMax);
+        let lo = j;
+        while (lo > 0 && lam[j]! - lam[lo - 1]! <= reach) lo--;
+        let hi = j + 1;
+        while (hi < n && lam[hi]! - lam[j]! <= reach) hi++;
+        return [lo, hi];
+      };
+      let best = -1;
+      let bestFrames = 0;
+      for (let j = 0; j < n; j++) {
+        tick++;
+        let count = 0;
+        const [lo, hi] = span(j);
+        for (let i = lo; i < hi; i++)
+          if (stamp[fk[i]!] !== tick && agree(i, j)) {
+            stamp[fk[i]!] = tick;
+            count++;
+          }
+        if (count > bestFrames || (count === bestFrames && best >= 0 && sig2[j]! < sig2[best]!)) {
+          best = j;
+          bestFrames = count;
+        }
+      }
+      if (best < 0 || bestFrames < s.associationVotes) return;
+      let rival = 0;
+      for (let j = 0; j < n; j++) {
+        if (agree(j, best)) continue;
+        tick++;
+        let count = 0;
+        const [lo, hi] = span(j);
+        for (let i = lo; i < hi; i++)
+          if (stamp[fk[i]!] !== tick && agree(i, j) && !agree(i, best)) {
+            stamp[fk[i]!] = tick;
+            count++;
+          }
+        rival = Math.max(rival, count);
+      }
+      if (rival > s.associationRatio * bestFrames) return;
+      const sup = new Set<string>();
+      for (let i = 0; i < n; i++) if (agree(i, best)) sup.add(key(C[i]!.k, C[i]!.a));
+      chosen[k]![a] = sup;
+    }),
+  );
+  // Links: mutual support. Union–find over every node.
+  const offset: number[] = [];
+  let total = 0;
+  for (const fr of frames) {
+    offset.push(total);
+    total += fr.nodes.length;
+  }
+  const parent = Array.from({ length: total }, (_, i) => i);
+  const find = (i: number): number => (parent[i] === i ? i : (parent[i] = find(parent[i]!)));
+  frames.forEach((fr, k) =>
+    fr.nodes.forEach((_, a) => {
+      const sup = chosen[k]![a];
+      if (!sup) return;
+      for (const p of partners[k]![a]!) {
+        if (!sup.has(key(p.k, p.a))) continue;
+        if (!chosen[p.k]![p.a]?.has(key(k, a))) continue;
+        parent[find(offset[k]! + a)] = find(offset[p.k]! + p.a);
+      }
+    }),
+  );
+  const groups = new Map<number, { k: number; a: number }[]>();
+  frames.forEach((fr, k) =>
+    fr.nodes.forEach((_, a) => {
+      const r = find(offset[k]! + a);
+      const list = groups.get(r);
+      if (list) list.push({ k, a });
+      else groups.set(r, [{ k, a }]);
+    }),
+  );
+  const tracks: Track[] = [];
+  const trackOf: Track[][] = frames.map(() => []);
+  const add = (members: { k: number; a: number }[]) => {
+    const first = members[0]!;
+    const byFrame = new Map<number, Obs[]>();
+    for (const m of members) {
+      const list = byFrame.get(m.k);
+      const o = frames[m.k]!.nodes[m.a]!;
+      if (list) list.push(o);
+      else byFrame.set(m.k, [o]);
+    }
+    const track: Track = {
+      id: `${frameIds[first.k]}:node:${first.a}`,
+      obs: [...byFrame.values()].map(combined),
+    };
+    tracks.push(track);
+    for (const m of members) trackOf[m.k]![m.a] = track;
+  };
+  for (const members of groups.values()) {
+    members.sort((x, y) => x.k - y.k || x.a - y.a);
+    // One point per frame: several endpoints of a frame in one group must be twins (one point
+    // drawn twice). Otherwise that frame's endpoints are not this point: they leave it.
+    const roots = new Map<number, Set<number>>();
+    for (const m of members) {
+      const set = roots.get(m.k) ?? new Set<number>();
+      set.add(frames[m.k]!.twin[m.a]!);
+      roots.set(m.k, set);
+    }
+    const kept = members.filter((m) => roots.get(m.k)!.size === 1);
+    if (kept.length > 0) add(kept);
+    for (const m of members) if (roots.get(m.k)!.size > 1) add([m]);
+  }
   return { tracks, trackOf };
 }
 
@@ -780,14 +1024,46 @@ function strands(
   prefix: string,
 ): ReconstructedStrand[] {
   const byId = new Map(nodes.filter((q) => q.supported).map((q) => [q.id, q]));
-  const adj = new Map<string, string[]>();
+  const seen = new Map<string, { other: string; count: number }[]>();
   for (const [key, count] of edgeFrames) {
     if (count < s.minEdgeFrames) continue;
     const [a, b] = key.split('|') as [string, string];
     if (!byId.has(a) || !byId.has(b)) continue;
-    adj.set(a, [...(adj.get(a) ?? []), b]);
-    adj.set(b, [...(adj.get(b) ?? []), a]);
+    seen.set(a, [...(seen.get(a) ?? []), { other: b, count }]);
+    seen.set(b, [...(seen.get(b) ?? []), { other: a, count }]);
   }
+  // A strand point has a fragment on each side. A third edge at a node is a point that lined up
+  // with it in some frames (another strand, another fence): seen in far fewer frames than its
+  // own two. At a node with three or more, an edge needs `associationRatio` of the frames of the
+  // node's second-best edge, at both its ends. Ambiguity draws less, never more.
+  const strong = (a: string, count: number) => {
+    const list = seen.get(a)!;
+    if (list.length < 3) return true;
+    const second = list.map((e) => e.count).sort((x, y) => y - x)[1]!;
+    return count >= s.associationRatio * second;
+  };
+  // [ASSUMED] One processor cuts strands into fragments of comparable length, so an edge far
+  // longer than the field's typical one is not one fragment: its ends lined up in some frames
+  // (points on two fences, R46). The scale is the data's own: the median supported edge.
+  const length = (a: string, b: string) => {
+    const p = byId.get(a)!.position;
+    const q = byId.get(b)!.position;
+    return lenV(subV(p, q));
+  };
+  const lengths = [...seen].flatMap(([a, list]) =>
+    list.filter((e) => a < e.other).map((e) => length(a, e.other)),
+  );
+  lengths.sort((x, y) => x - y);
+  const typical = lengths.length > 0 ? lengths[Math.floor(lengths.length / 2)]! : Infinity;
+  const adj = new Map<string, string[]>();
+  for (const [a, list] of seen)
+    for (const { other: b, count } of list)
+      if (
+        strong(a, count) &&
+        strong(b, count) &&
+        length(a, b) <= s.maxEdgeOverTypical * typical
+      )
+        adj.set(a, [...(adj.get(a) ?? []), b]);
   for (const list of adj.values()) list.sort();
   const used = new Set<string>();
   const key = (a: string, b: string) => (a < b ? `${a}|${b}` : `${b}|${a}`);
@@ -896,8 +1172,8 @@ export function reconstructLattice(
     fn.forEach((fr, k) => {
       const seen = new Set<string>();
       for (const [a, b] of fr.edges) {
-        const ta = tracks[trackOf[k]![a]!]!.id;
-        const tb = tracks[trackOf[k]![b]!]!.id;
+        const ta = trackOf[k]![a]!.id;
+        const tb = trackOf[k]![b]!.id;
         if (ta === tb) continue;
         const key = ta < tb ? `${ta}|${tb}` : `${tb}|${ta}`;
         if (seen.has(key)) continue;

@@ -6,12 +6,12 @@ import type { Mixer } from './mixer.ts';
 
 const ROOM_GAIN = 0.27;
 const ALERT_GAP_MS = 850;
-const ALERTS = ['advisory', 'caution', 'warning'] as const;
+const ALERTS = ['caution', 'warning'] as const;
 type Alert = (typeof ALERTS)[number];
 
 export function playRoom(mixer: Mixer, encounter: string, maxMainThrust: number) {
   let previousAlertKeys: Set<string> | undefined;
-  let lastAlert: Alert = 'advisory';
+  let lastAlert: Alert = 'caution';
   let lastAlertAt = -Infinity;
   let previousStage: LossStage | undefined;
   let failure = false;
@@ -31,7 +31,7 @@ export function playRoom(mixer: Mixer, encounter: string, maxMainThrust: number)
     }
   }
 
-  function playAlert(status: SessionStatus, snapshot: ViewSnapshot): void {
+  function playAlert(status: SessionStatus): void {
     const keys = new Set<string>();
     let fresh: Alert | undefined;
     const add = (key: string, level: Alert): void => {
@@ -48,8 +48,6 @@ export function playRoom(mixer: Mixer, encounter: string, maxMainThrust: number)
 
     for (const alert of status.alerts) add(alert.id, alert.level);
     for (const sighting of status.sightings) add(`sighting:${sighting.field}`, 'caution');
-    const horizon = snapshot.forecasts.at(-1)?.samples.at(-1)?.t;
-    if (horizon !== undefined && horizon < status.t) add('forecast-ended', 'advisory');
 
     previousAlertKeys = keys;
     const now = performance.now();
@@ -63,7 +61,12 @@ export function playRoom(mixer: Mixer, encounter: string, maxMainThrust: number)
     }
   }
 
-  return (status: SessionStatus, snapshot: ViewSnapshot, overlay: HTMLElement): void => {
+  return (
+    status: SessionStatus,
+    snapshot: ViewSnapshot,
+    overlay: HTMLElement,
+    damaged: boolean,
+  ): void => {
     const stage = overlay.dataset.stage as LossStage | undefined;
     if (stage) {
       if (stage !== previousStage) {
@@ -87,8 +90,10 @@ export function playRoom(mixer: Mixer, encounter: string, maxMainThrust: number)
     mixer.bed('room-hum', ROOM_GAIN);
 
     const operating = status.phase === 'operate' && !status.paused;
-    if (operating) playAlert(status, snapshot);
-    else previousAlertKeys = undefined;
+    if (operating) {
+      playAlert(status);
+      if (damaged) mixer.shot('equipment-damage');
+    } else previousAlertKeys = undefined;
 
     let main = 0;
     let rcs = 0;
@@ -112,10 +117,7 @@ export function playRoom(mixer: Mixer, encounter: string, maxMainThrust: number)
     }
     mixer.bed('well-hum', well);
 
-    const radiation =
-      operating &&
-      encounter === 'chain-link' &&
-      status.alerts.some((alert) => String(alert.id) === 'radiation-high');
+    const radiation = operating && status.alerts.some((alert) => alert.id === 'radiation-high');
     mixer.bed('lattice-radiation', radiation ? 0.17 : 0);
   };
 }

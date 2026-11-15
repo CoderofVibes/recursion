@@ -195,6 +195,9 @@ try {
     await send('Emulation.setCPUThrottlingRate', { rate: profiles[p].cpu });
     const { cpu, ...network } = profiles[p];
     await send('Network.emulateNetworkConditions', { offline: false, ...network });
+    await send('Page.addScriptToEvaluateOnNewDocument', {
+      source: "try { localStorage.setItem('recursion:opening-seen', '1'); } catch {}",
+    });
     await send('Page.addScriptToEvaluateOnNewDocument', { source: readFileSync(join(here, '../s15/page-probe.js'), 'utf8') });
     await send('Page.bringToFront');
   }

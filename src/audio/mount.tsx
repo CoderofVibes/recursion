@@ -3,8 +3,9 @@ import { ControlRoom, type ControlRoomProps } from '../app/ControlRoom.tsx';
 import { OpeningGate } from '../app/opening/OpeningGate.tsx';
 import type { appOpening } from '../app/opening/launch.ts';
 import type { OpeningAudio } from '../app/opening/play.ts';
-import type { ViewSnapshot } from '../contracts/index.ts';
+import type { AttemptId, ViewSnapshot } from '../contracts/index.ts';
 import type { GameControls, SessionStatus } from '../game/belief/controls.ts';
+import { sources } from './catalogue.ts';
 import { soundAvailable } from './index.ts';
 import { startMixer, type Mixer } from './mixer.ts';
 import { openingRoomGain, playRoom } from './room.ts';
@@ -40,6 +41,21 @@ function audioBridge(base: GameControls) {
     mixer = audio;
     const engine = base.ship.equipment.find((item) => item.id === 'main-engine');
     const live = playRoom(audio, base.briefing.id, engine?.params.thrust || 1);
+    const { blackBox } = base;
+    const record = blackBox.record;
+    let damagedAttempt: AttemptId | undefined;
+    // Use the live batches the ship already reports. Reading the growing archive here would
+    // copy its measurement history during warp; one pending cue coalesces faults and trips.
+    const recordWithDamage: typeof record = (batch) => {
+      record.call(blackBox, batch);
+      if (
+        !document.hidden &&
+        batch.events.some((e) => e.kind === 'equipment-fault' || e.kind === 'breaker-trip')
+      ) {
+        damagedAttempt = batch.attemptId;
+      }
+    };
+    if (sources.has('equipment-damage')) blackBox.record = recordWithDamage;
     const click = (event: MouseEvent): void => {
       if (!(event.target instanceof Element) || !event.isTrusted) return;
       if (event.target.closest('.cr button:not(:disabled)')) audio.shot('console-click');
@@ -49,14 +65,17 @@ function audioBridge(base: GameControls) {
     // The loss overlay exposes the same authored stages the player sees. Audio consumes those
     // edges, so an obscured tab or a stalled frame cannot advance a second cinematic clock.
     const timer = window.setInterval(() => {
+      const damaged = damagedAttempt !== undefined && damagedAttempt === status?.attemptId;
+      damagedAttempt = undefined;
       if (document.hidden || !status || !snapshot) return;
       const overlay = document.querySelector<HTMLElement>('.cr-black');
-      if (overlay) live(status, snapshot, overlay);
+      if (overlay) live(status, snapshot, overlay, damaged);
     }, 50);
 
     return () => {
       clearInterval(timer);
       document.removeEventListener('click', click);
+      if (blackBox.record === recordWithDamage) blackBox.record = record;
       audio.dispose();
       mixer = undefined;
     };

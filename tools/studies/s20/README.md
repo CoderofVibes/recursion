@@ -1,5 +1,10 @@
 # S20 local performance recheck
 
+PF/R48: room trials now set `recursion:opening-seen=1` through
+`Page.addScriptToEvaluateOnNewDocument` before application scripts run. Use S15's
+`--opening` option for separate first-opening and handoff measurements; S20's
+historical load numbers continue to mean direct room readiness.
+
 From the S20 worktree, with the repository's existing dependencies and installed Chrome:
 
 ```powershell
