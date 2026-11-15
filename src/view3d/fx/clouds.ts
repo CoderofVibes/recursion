@@ -11,7 +11,7 @@ import {
   type Quaternion,
 } from 'three';
 import type { WindowCloudBank } from '../../contracts/index.ts';
-import { colour } from '../../theme/index.ts';
+import { colour, render } from '../../theme/index.ts';
 import { toScene } from '../adapter.ts';
 import { skyNoise } from '../sky/noise.ts';
 
@@ -86,9 +86,19 @@ export function createCloudLight(displayRadius: number) {
   object.renderOrder = 3;
   const d = new Vector3(),
     room = new Vector3();
+  let rebuiltAt = -Infinity;
   return {
     object,
-    update(banks: readonly WindowCloudBank[], rotation: Quaternion) {
+    update(banks: readonly WindowCloudBank[], rotation: Quaternion, now = performance.now()) {
+      // The inertial buffer turns with the ship between uploads. Bound the observed S15
+      // patch-transform cost at the same real-time cadence as the funnel buffers.
+      if (
+        banks.length &&
+        object.visible &&
+        now - rebuiltAt < 1000 / render.windowFunnels.rebuildRate
+      )
+        return;
+      rebuiltAt = now;
       let count = 0;
       for (const bank of banks)
         for (const patch of bank.patches) {

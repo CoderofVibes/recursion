@@ -273,12 +273,19 @@ export function makeFunnelLight(options: FunnelSkyOptions): FunnelSky {
       // Never bridge a gap introduced by truth-side occlusion clipping.
       for (let j = 1; j < step && i < segments.length && q; j++) {
         const next = segments[i];
-        if (!next || Math.hypot(q.x - next.from.x, q.y - next.from.y, q.z - next.from.z) > 1e-8)
+        if (
+          !next?.from ||
+          !next.to ||
+          Math.hypot(q.x - next.from.x, q.y - next.from.y, q.z - next.from.z) > 1e-8
+        )
           break;
         q = next.to;
         i++;
       }
-      if (n >= maxSegments) break;
+      if (n >= maxSegments) {
+        b.culled++;
+        return;
+      }
       const d = s?.depth ?? NaN;
       if (!p || !q || !(d >= 0 && d <= 1)) {
         b.culled++;

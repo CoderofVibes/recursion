@@ -2,13 +2,18 @@ import {
   AdditiveBlending,
   BackSide,
   BufferGeometry,
+  CubeCamera,
   Float32BufferAttribute,
   Group,
+  HalfFloatType,
+  LinearFilter,
   Mesh,
   Points,
+  Scene,
   ShaderMaterial,
   SphereGeometry,
   Vector3,
+  WebGLCubeRenderTarget,
   type Camera,
   type WebGLRenderer,
 } from 'three';
@@ -100,6 +105,56 @@ export function createDeepSky(seed = 'recursion-celestial-atlas-v1') {
   // Render after opaque room/bodies so their depth rejects hidden sky fragments.
   dome.renderOrder = 1;
   object.add(dome);
+  let atlas: WebGLCubeRenderTarget | undefined;
+  let cachedMaterial: ShaderMaterial | undefined;
+  const prepareAtlas = (renderer: WebGLRenderer) => {
+    if (atlas || typeof renderer.getContext !== 'function' || object.parent?.visible === false)
+      return;
+    // Galaxies never move inside the celestial frame. Evaluate their fractal dust once,
+    // in linear HDR, rather than ten noise octaves for every window pixel every frame.
+    atlas = new WebGLCubeRenderTarget(512, {
+      type: HalfFloatType,
+      minFilter: LinearFilter,
+      magFilter: LinearFilter,
+      generateMipmaps: false,
+      depthBuffer: false,
+    });
+    const bakeMaterial = galaxyMaterial.clone();
+    bakeMaterial.uniforms.sunVisible!.value = 0;
+    bakeMaterial.fragmentShader = bakeMaterial.fragmentShader
+      .replace('#include <tonemapping_fragment>', '')
+      .replace('#include <colorspace_fragment>', '');
+    const bakeScene = new Scene();
+    bakeScene.add(new Mesh(geometry, bakeMaterial));
+    const cube = new CubeCamera(1, 9000, atlas);
+    cube.update(renderer, bakeScene);
+    bakeMaterial.dispose();
+    cachedMaterial = new ShaderMaterial({
+      side: BackSide,
+      depthWrite: false,
+      uniforms: { ...uniforms, atlas: { value: atlas.texture } },
+      vertexShader: galaxyMaterial.vertexShader,
+      fragmentShader: /* glsl */ `
+        varying vec3 ray;
+        uniform samplerCube atlas;
+        uniform vec3 cWhite, sunDir;
+        uniform float sunVisible;
+        void main() {
+          vec3 d=normalize(ray);
+          vec3 light=textureCube(atlas,d).rgb;
+          float a=acos(clamp(dot(d,sunDir),-1.0,1.0));
+          float px=max(length(fwidth(d)),0.00005);
+          float disc=1.0-smoothstep(0.00131-px*0.5,0.00131+px*0.5,a);
+          light+=cWhite*(disc*2.0+exp(-a*a/0.000018)*0.13)*sunVisible;
+          gl_FragColor=vec4(light,1.0);
+          #include <tonemapping_fragment>
+          #include <colorspace_fragment>
+        }
+      `,
+    });
+    dome.material = cachedMaterial;
+    galaxyMaterial.dispose();
+  };
   const rng = createRng(seed).stream('stars');
   const positions: number[] = [],
     colours: number[] = [],
@@ -175,6 +230,7 @@ export function createDeepSky(seed = 'recursion-celestial-atlas-v1') {
     },
     /** Eye-centred dome: walking never introduces celestial parallax. Parent owns attitude. */
     followEye(camera: Camera, renderer: WebGLRenderer) {
+      prepareAtlas(renderer);
       object.parent?.updateWorldMatrix(true, false);
       object.position.copy(camera.position);
       if (object.parent) object.parent.worldToLocal(object.position);
@@ -184,6 +240,8 @@ export function createDeepSky(seed = 'recursion-celestial-atlas-v1') {
       object.removeFromParent();
       geometry.dispose();
       galaxyMaterial.dispose();
+      cachedMaterial?.dispose();
+      atlas?.dispose();
       starsGeometry.dispose();
       starMaterial.dispose();
     },

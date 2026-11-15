@@ -4,7 +4,7 @@ Thread: GPT/Codex · Branch: `p3/vx-visuals` · Worktree: `.worktrees/vx` · Dat
 
 ## Delivered
 
-- `src/view3d/sky/`: a fixed celestial atlas with an edge-on galaxy, torn dust lane, dim emission knots, a cold star cloud, the tilted Ember Wheel, seeded point stars with a steep brightness distribution, and a small sun driven by `WindowView.sun`. No downloaded or generated images. The sky follows the eye without walking parallax and turns with the ship.
+- `src/view3d/sky/`: a fixed celestial atlas with an edge-on galaxy, torn dust lane, dim emission knots, a cold star cloud, the tilted Ember Wheel, seeded point stars with a steep brightness distribution, and a small sun driven by `WindowView.sun`. The static galaxy shader is baked once to a 512-pixel-per-face HDR cubemap; gameplay samples that cache. No downloaded or generated images. The sky follows the eye without walking parallax and turns with the ship.
 - `src/view3d/fx/`: pooled cloud-bank sprites, luminous funnel contours with white throats, and static dotted precursors that join continuously as reported birth brightness increases. All geometry comes from optical directions; no true ranges, radiation intensity, field catalogue, or guessed forces enter the renderer.
 - `outside.ts`: mounts the sky and both optical effects. Bridges R38's typed `funnel` entry to the earlier `inverse-well` plugin envelope; consumes `cloud-bank` patches directly. Custom opening scenery replaces the entire arrival sky. Missing channels retire their visuals.
 - `RoomView.ts`: two window-only calls keep the dome centred on the live/scripted camera. No changes to controls, loss sequences, lighting, or the other overnight lanes.
@@ -14,11 +14,11 @@ The ART files are not yet on this branch's main base. This pass read ART's curre
 
 ## Verification
 
-- `npm run check`: typecheck, lint, 1,238 passing tests / one skipped, plus the separate passing performance test. Re-run after the final rendering refinements is recorded below when complete.
+- `npm run check`: typecheck, lint, 1,239 passing tests / one skipped, plus the separate passing performance test (final cache/refinement run recorded below).
 - `npm run build`: passes. Existing Vite chunk-size / ineffective-dynamic-import warnings remain.
 - `node docs/handoffs/vx/capture.mjs after`: serves the actual production build on 4186; audits browser exceptions, `console.error`, browser log errors, and the model error in Twin Deeps, Well Garden and Unseen Cathedral. [Console evidence](vx/after-console.json).
 - `node docs/handoffs/vx/capture-optics.mjs before` and `after`: compile the actual room and optical renderers with controlled light-only fixtures on 4187. The before variant loads the three replaced renderers from `0ee3d1c`; the after variant uses this branch. It covers active/end-on/precursor funnels, clouds, Earth, lens and title; title fits 360 px. [Fixture console evidence](vx/after-optics-console.json).
-- Five integration tests in `src/view3d/fx/light.test.ts` exercise the promoted optical contract, stale observations, precursor joining, invalid/absent cloud patches, complete scenery replacement/disposal, and eye-centred placement under a rotated parent. The existing funnel/window and opening tests also pass.
+- Six integration tests in `src/view3d/fx/light.test.ts` exercise the promoted optical contract, stale/malformed observations, precursor joining, invalid/absent cloud patches, complete scenery replacement/disposal, and eye-centred placement under a rotated parent. The existing funnel/window and opening tests also pass.
 
 Performance measurements with S15's modest profile follow in the final checkpoint. Port 4175 is reserved for that runner; nothing was installed.
 
@@ -46,7 +46,7 @@ Controlled optical fixtures below use the production-compiled room and window re
 - [DEMONSTRATED: controlled optical fixture] All three supplied funnels render (side-on, end-on, precursor), with 1,116 segments in the chosen test view. The old typed-channel input displayed none. This is a rendering test, not a navigation or admission result.
 - [ASSUMED] The atlas orientation and local theme-derived optical palette are presentation choices. Nothing in the sky adds a simulated nearby body, force or collision shape. `sky/style.ts` collects the local extensions for adoption by the theme owner.
 - [FICTIONAL] Violet light from funnels and radiation clouds follows the approved art direction, not ordinary radiation physics. The renderer does not reveal dose or a safe route.
-- [DEMONSTRATED: tests and code] The funnel renderer keeps 2D's bounded double-buffer scheduler and 60,000-segment ceiling. Its decimation joins only connected optical segments, never gaps removed by upstream occlusion clipping. Clouds use one draw, a fixed 4,096-patch buffer, rear-hemisphere culling and no time-dependent shimmer. Neither effect accelerates with warp.
+- [DEMONSTRATED: tests and code] The funnel renderer keeps 2D's bounded double-buffer scheduler and 60,000-segment ceiling. Its decimation joins only connected optical segments, never gaps removed by upstream occlusion clipping. Clouds use one draw, a fixed 4,096-patch buffer, rear-hemisphere culling, at most 15 buffer uploads per real second, and no time-dependent shimmer. Neither effect accelerates with warp.
 
 ## Requests outside VX's ownership
 

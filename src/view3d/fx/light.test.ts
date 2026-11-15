@@ -26,6 +26,29 @@ const funnel: WindowFunnel = {
   ],
 };
 describe('window light integration', () => {
+  it('drops malformed optical arcs without throwing or publishing a partial funnel', () => {
+    const renderer = makeFunnelLight({
+      displayRadius: 100,
+      sliceMs: 100,
+      minSegments: 1,
+      segmentsPerDegree: 1,
+    });
+    const malformed = {
+      ...funnel,
+      segments: [
+        funnel.segments[0],
+        { from: null },
+        ...Array.from({ length: 80 }, () => funnel.segments[0]),
+      ],
+    };
+    expect(() =>
+      renderer.update(opticalFields({ fields: [malformed] }), 0, new Quaternion(), 0),
+    ).not.toThrow();
+    expect(
+      renderer.update(opticalFields({ fields: [malformed] }), 0, new Quaternion(), 1000).drawn,
+    ).toBe(0);
+    renderer.dispose();
+  });
   it('renders the promoted contract without using a believed or truth field', () => {
     const renderer = makeFunnelLight({ displayRadius: 100, sliceMs: 100 });
     const fields = opticalFields({ fields: [funnel] });
