@@ -104,8 +104,10 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 | R33 | Integrator | Fixes on merging 3B: its acquisition test imports `ModelService` from `src/model/service.ts` (2C's index exports the type only); the field-view registry moved onto a hoisted function (Vite's eager glob put plugin registration ahead of the const) | **Done** (this commit) | Tell 2D (its `fieldViews.ts`) and 3B |
 
 | R34 | 2C → 3A | `condition-changed` must carry the reported condition: emit `values.reportedCondition ?? condition` in `src/ship/condition/index.ts` and `src/ship/thermal/protection.ts`, or true damage reaches the record once the two differ | **Open**: relay | |
-| R35 | 2C → integrator | `exposure` events put each component's true absorbed dose into the Black Box. The ship has no instrument that measures it, so it's truth in the archive (P11) | **Integrator ruling:** true per-component dose stays out of recorded events (3A). Owner decision open: add a real ship radiation monitor? | |
+| R35 | 2C → integrator | `exposure` events put each component's true absorbed dose into the Black Box. The ship has no instrument that measures it, so it's truth in the archive (P11) | **Integrator ruling:** true per-component dose stays out of recorded events (3A). **Owner: yes, a real radiation monitor (A24)**, see R37 | |
 | R36 | 2C → integrator | Who builds the funnel camera channel R32 needs | **Integrator ruling:** 3B, as 3C did for the lattice (scoped exception for `src/ship/sensors/wells*` plus additive contract types); then 2C infers geometry, pull and reversal | R32 after it; behind playability work |
+
+| R37 | Owner → 3C, 2C, 2D, 3A | The radiation monitor (A24): 3C builds the sensor and its recorded channel (`src/ship/sensors/`, additive contract type), folded into an existing avionics unit if possible; 2C records it and shows it in the Black Box's loss review; 2D shows the dose rate and its caution; 3A only if a new unit needs power or heat | **Open**: relay | A baseline change, if needed, goes through the integrator |
 
 Add new rows at the bottom with the next ID. Never renumber.
 
