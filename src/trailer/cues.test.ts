@@ -44,7 +44,7 @@ describe("the trailer's sound", () => {
     expect(at('lattice-radiation')).toEqual([LATTICE_STRIKE]);
     expect(at('loss-failure')).toEqual([LATTICE_STRIKE]);
     expect(at('black-cut')).toEqual([...SNAPS]);
-    expect(at('room-hum')).toEqual([beat('console').start]);
+    expect(at('room-hum')).toEqual([beat('lattice').start, beat('console').start]);
     expect(at('home-reveal')).toEqual([beat('console').start]);
   });
 });

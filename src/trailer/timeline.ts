@@ -42,15 +42,18 @@ interface Row {
   readonly caption?: string;
 }
 
-/** The montage's screens: FLIGHT opens with the owner's first caption; the rest are proposals. */
+/**
+ * The montage's screens and captions, as the owner chose them (2026-11-15). Each is short enough
+ * to read in its 1.35 s (about 27 characters at most).
+ */
 export const MONTAGE: readonly { shot: string; label: string; caption: string }[] = [
   { shot: 'flight', label: 'FLIGHT', caption: 'Engineer your way home.' },
   { shot: 'map', label: 'MAP', caption: 'Chart an unknown universe.' },
-  { shot: 'region', label: 'Region view', caption: 'Each region has its own physics.' },
-  { shot: 'explore', label: 'EXPLORE', caption: 'Find the way out.' },
-  { shot: 'model', label: 'MODEL', caption: 'Fit the laws from what you measured.' },
-  { shot: 'plan', label: 'PLAN', caption: 'Plan each burn against the forecast.' },
-  { shot: 'blackbox', label: 'BLACK BOX', caption: 'Every loss leaves a record.' },
+  { shot: 'region', label: 'Region view', caption: 'Every region is a clue.' },
+  { shot: 'explore', label: 'EXPLORE', caption: 'Search for the way home.' },
+  { shot: 'model', label: 'MODEL', caption: 'Measure. Fit. Test. Adopt.' },
+  { shot: 'plan', label: 'PLAN', caption: 'Forecast. Plan. Burn.' },
+  { shot: 'blackbox', label: 'BLACK BOX', caption: 'Adapt from every failure.' },
   { shot: 'ship', label: 'SHIP with SYSTEMS', caption: 'Every watt and kilogram counts.' },
 ];
 /** Seconds each montage screen holds: 8 × 1.35 = 10.8 s, the sheet's montage. */

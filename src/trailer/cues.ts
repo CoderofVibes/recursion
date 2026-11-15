@@ -107,7 +107,17 @@ export const CUES: readonly SoundCue[] = [
   { from: 'trailer', file: 'well-groan', at: start('wells'), until: end('wells'), gain: 0.55 },
   { from: 'trailer', file: 'ship-creak', at: start('wells') + 0.6, until: end('wells'), gain: 0.5 },
 
-  // The lattice's strike, its damage and the alarm, through the braid to the snap.
+  // The lattice: the cabin's quiet hum while the camera looks down at FLIGHT and up at the empty
+  // window (silence mid-action would read as a snap), cut by the strike.
+  {
+    from: 'game',
+    file: 'room-hum',
+    at: start('lattice'),
+    until: LATTICE_STRIKE,
+    loop: true,
+    gain: 0.35,
+  },
+  // The strike, its damage and the alarm, through the braid to the snap.
   { from: 'trailer', file: 'lattice-strike', at: LATTICE_STRIKE, until: SNAP, gain: 0.7 },
   { from: 'game', file: 'loss-failure', at: LATTICE_STRIKE, until: SNAP, gain: 0.55 },
   {

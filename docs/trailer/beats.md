@@ -33,17 +33,19 @@ Flashes, counted the way the game's loss test counts them (falls and rises each 
 
 ## Montage shots and captions
 
-TR's reading of update 2: FLIGHT opens the montage and carries "Engineer your way home."; the seven screens the owner named follow in the owner's order. Captions other than the first are **TR's proposals**, for the owner to approve or rewrite (one line each in `src/trailer/timeline.ts`).
+FLIGHT opens the montage and carries "Engineer your way home."; the seven screens the owner named follow in the owner's order. **The owner chose every caption (2026-11-15).** Each fits its 1.35 s (about 27 characters at most). One line each in `src/trailer/timeline.ts`.
 
 | # | Shot | Caption |
 |---:|---|---|
 | 1 | FLIGHT | Engineer your way home. |
-| 2 | MAP | Chart an unknown universe. *(proposed)* |
-| 3 | Region view | Each region has its own physics. *(proposed)* |
-| 4 | EXPLORE | Find the way out. *(proposed; A26)* |
-| 5 | MODEL | Fit the laws from what you measured. *(proposed)* |
-| 6 | PLAN | Plan each burn against the forecast. *(proposed)* |
-| 7 | BLACK BOX | Every loss leaves a record. *(proposed)* |
-| 8 | SHIP with SYSTEMS | Every watt and kilogram counts. *(proposed)* |
+| 2 | MAP | Chart an unknown universe. |
+| 3 | Region view | Every region is a clue. *(one universe, one set of laws; each region adds a piece: A5, A10)* |
+| 4 | EXPLORE | Search for the way home. |
+| 5 | MODEL | Measure. Fit. Test. Adopt. |
+| 6 | PLAN | Forecast. Plan. Burn. *(P6: the model forecasts, the player plans)* |
+| 7 | BLACK BOX | Adapt from every failure. *(the owner's alternative: "Learn from every failure.")* |
+| 8 | SHIP with SYSTEMS | Every watt and kilogram counts. |
+
+The montage has **one sound under all eight screens**, the montage's bed: nothing changes on the cuts between screens (owner, 2026-11-15).
 
 "EXPLORE" follows the sheet; 3F named the tab EXPLORATION (A26). The shot shows whichever the game says.
