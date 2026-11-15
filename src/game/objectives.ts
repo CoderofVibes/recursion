@@ -248,7 +248,13 @@ export function evaluateObjectives(
   const miss = (objective: ObjectiveId, reason?: DepartMiss): void => {
     missed = [...(missed ?? []), objective];
     if (reason) why = { ...why, [objective]: reason };
-    events.push({ kind: 'objective', t: world.t, objective, status: 'missed' });
+    events.push({
+      kind: 'objective',
+      t: world.t,
+      objective,
+      status: 'missed',
+      ...(reason ? { reason } : {}),
+    });
   };
   const departs = rules.filter(
     (r): r is Extract<ObjectiveRule, { kind: 'depart' }> => r.kind === 'depart',

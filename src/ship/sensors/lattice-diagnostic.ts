@@ -1,5 +1,6 @@
 /** A16's <=1KiB uninterpreted image. This is acquisition, not lattice reconstruction. */
 import baseline from '../../../data/ship-baseline.json';
+import { functionalPower } from './functional-power.ts';
 import type { Measurement } from '../../contracts/measurements.ts';
 import type { ShipDefinition } from '../../contracts/ship.ts';
 import type { EnvironmentEffects, ShipSystemsState } from '../../contracts/truth/ship.ts';
@@ -72,17 +73,17 @@ export function latticeDiagnosticSchedule(
     camera &&
     processor &&
     recorder &&
-    recorder.powerDraw >= baseline.recorder.powerMinimum &&
+    functionalPower(recorder) >= baseline.recorder.powerMinimum &&
     state.recorder.sampleRate > 0 &&
     length(env.kinematics.angularVelocity) * exposure <= baseline.sensing.camera.maxSmearAngle &&
-    processor.powerDraw >= 40 &&
-    camera.powerDraw >= baseline.sensing.camera.minTrackingPower &&
+    functionalPower(processor) >= 40 &&
+    functionalPower(camera) >= baseline.sensing.camera.minTrackingPower &&
     env.t >= (camera.values.readyAt ?? 0) &&
     env.t >= (aim?.settleUntil ?? 0) &&
     scene?.opticsValid !== false &&
     Object.values(env.fieldSignals).some((signal) => isScene(signal) && signal.valid !== false);
   const rate = ready
-    ? Math.min(1, camera.powerDraw / baseline.sensing.camera.referenceTrackingPower)
+    ? Math.min(1, functionalPower(camera) / baseline.sensing.camera.referenceTrackingPower)
     : 0;
   return { due: rate > 0 && env.t + 1e-10 >= memoryOf(state, env.t).nextAt, rate };
 }
@@ -99,7 +100,7 @@ export function stepLatticeDiagnostic(
   if (
     !schedule.due ||
     !recorder ||
-    recorder.powerDraw < baseline.recorder.powerMinimum ||
+    functionalPower(recorder) < baseline.recorder.powerMinimum ||
     state.recorder.sampleRate <= 0
   )
     return { state, measurements: [], bytes: 0 };

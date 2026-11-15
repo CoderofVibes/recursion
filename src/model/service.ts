@@ -14,6 +14,7 @@
  */
 
 import type {
+  BelievedField,
   AttemptId,
   AttemptRecord,
   ExecutedCommand,
@@ -42,6 +43,8 @@ import {
   type ExtensionRecord,
 } from './extensions.ts';
 import { buildForecast, type ForecastRequest, type ModelForecastDetail } from './forecast.ts';
+import type { LatticeReconstruction } from './lattice/reconstruct.ts';
+import { latticeFields, type LatticeFields } from './lattice/visual.ts';
 import {
   burnReport,
   empiricalReport,
@@ -82,6 +85,7 @@ export class ModelService {
   private snap: ModelSnapshot;
   private version = 0;
   private readonly cache: TierLCache = new Map();
+  private readonly latticeCache = new WeakMap<ModelSnapshot, Map<string, LatticeFields>>();
 
   constructor(ctx: ModelContext) {
     this.ctx = ctx;
@@ -267,6 +271,38 @@ export class ModelService {
 
   burns(attempts?: readonly AttemptId[]): BurnReport[] {
     return burnReport(this.snap, this.ctx, attempts);
+  }
+
+  /**
+   * The lattice rebuilt from an attempt's own records (A16): one believed field per recorded
+   * lattice field, for `BelievedWorld.fields`. Default: the attempt in progress, else the latest.
+   * An earlier attempt's lattice comes back in that attempt's own frame (an archive view, never
+   * the current map). `now`: only frames delivered by then. Cached per snapshot and record size.
+   */
+  lattice(attemptId?: AttemptId, now?: number): BelievedField[] {
+    return [...(this.latticeOf(attemptId, now)?.fields ?? [])];
+  }
+
+  /** The full reconstruction behind `lattice` (every fitted feature, supported or not, and why). */
+  latticeDetail(attemptId?: AttemptId, now?: number): LatticeReconstruction | null {
+    return this.latticeOf(attemptId, now)?.reconstruction ?? null;
+  }
+
+  private latticeOf(attemptId?: AttemptId, now?: number): LatticeFields | null {
+    const all = this.allAttempts();
+    const rec = attemptId ? all.find((a) => a.id === attemptId) : (this.current ?? all.at(-1));
+    if (!rec) return null;
+    const key = `${rec.id}|${rec.measurements.length}|${rec.executed.length}|${now ?? 'all'}`;
+    let byKey = this.latticeCache.get(this.snap);
+    if (!byKey) {
+      byKey = new Map();
+      this.latticeCache.set(this.snap, byKey);
+    }
+    const hit = byKey.get(key);
+    if (hit) return hit;
+    const result = latticeFields(this.snap, this.ctx, rec, now ?? Infinity);
+    byKey.set(key, result);
+    return result;
   }
 
   empirical(): EmpiricalReport | null {

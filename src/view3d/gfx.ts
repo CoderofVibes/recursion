@@ -56,7 +56,24 @@ export class LineSet {
     m.resolution.set(this.width, this.height);
     m.dashScale = this.scale;
     this.materials.add(m);
+    // A plugin that disposes its own material (a field that stops being detected) leaves the
+    // set with it, so repeated appearances never grow it (3B's request).
+    const forget = (): void => {
+      this.materials.delete(m);
+      m.removeEventListener('dispose', forget);
+    };
+    m.addEventListener('dispose', forget);
     return m;
+  }
+
+  /** Remove a material from the set and dispose it. */
+  release(material: LineMaterial): void {
+    if (this.materials.has(material)) material.dispose();
+  }
+
+  /** How many live materials the set keeps in step (resolution, dash scale). */
+  get size(): number {
+    return this.materials.size;
   }
 
   /** A polyline through `flat` (x, y, z, x, y, z...). */
@@ -94,7 +111,7 @@ export class LineSet {
   }
 
   dispose(): void {
-    for (const m of this.materials) m.dispose();
+    for (const m of [...this.materials]) m.dispose();
     this.materials.clear();
   }
 }

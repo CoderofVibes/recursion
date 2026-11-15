@@ -57,6 +57,30 @@ export function chartView(chart: Chart): HoloChart {
   };
 }
 
+/** One phenomenon the eye can see through the window, in its own optical schema. */
+export interface WindowField {
+  readonly id: string;
+  readonly kind: string;
+  readonly visual: unknown;
+}
+
+/**
+ * The window channel's visible phenomena (A19's glowing funnels). Proposed to the integrator as
+ * an optional `WindowView.fields` of `{ id, kind, visual }` (the shape of `BelievedField`);
+ * until the contract carries it, this reads it if present and otherwise finds none.
+ */
+export function windowFields(view: object | undefined): readonly WindowField[] {
+  const fields = (view as { fields?: unknown } | undefined)?.fields;
+  if (!Array.isArray(fields)) return [];
+  return fields.filter(
+    (f): f is WindowField =>
+      typeof f === 'object' &&
+      f !== null &&
+      typeof (f as WindowField).id === 'string' &&
+      typeof (f as WindowField).kind === 'string',
+  );
+}
+
 /** Game position → scene, appended to a flat point list. */
 export function pushScene(flat: number[], v: GameVec): void {
   flat.push(v.x, v.z ?? 0, -v.y);
@@ -167,6 +191,14 @@ export function heading(attitude: unknown): number {
     return Math.atan2(2 * (w * z + x * y), 1 - 2 * (y * y + z * z));
   }
   return 0;
+}
+
+/** Elevation of the nose (body +x) above the reference plane, rad. Planar: 0. */
+export function pitch(attitude: unknown): number {
+  if (!isQuaternion(attitude)) return 0;
+  const { w, x, y, z } = attitude;
+  // The z component of body +x after rotation: 2(xz − wy).
+  return Math.asin(Math.max(-1, Math.min(1, 2 * (x * z - w * y))));
 }
 
 /** Moment of inertia about the body's up axis, kg·m². Planar: the one scalar. */

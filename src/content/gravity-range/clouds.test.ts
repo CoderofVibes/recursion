@@ -5,10 +5,13 @@
 
 import { describe, expect, it } from 'vitest';
 import type { TruthWorld } from '../../contracts/truth/index.ts';
+import { createBlackBox } from '../../game/belief/blackbox.ts';
+import { createStandInModel } from '../../game/belief/standin-model.ts';
+import { createGameSession } from '../../game/session.ts';
 import { createTruthStepper } from '../../game/truth-step.ts';
 import type { Vec3 } from '../../lib/vec3.ts';
-import { binaryAxes, CRESCENT, crescentIntensity } from './clouds.ts';
-import { createGravityRange } from './index.ts';
+import { binaryAxes, cloudWindow, CRESCENT, crescentIntensity } from './clouds.ts';
+import { createGravityRange, LAW } from './index.ts';
 
 const setup = createGravityRange();
 const w0 = setup.definition.world;
@@ -99,5 +102,105 @@ describe('the radiation crescent', () => {
     // At arrival, 1,000 km from Alpha and far from Beta: no clouds.
     const home = createTruthStepper(setup);
     expect(home.step(home.initial).state.exposure).toBeUndefined();
+  });
+
+  it(
+    'harms the ship (3A): the caution first, a latch trips the cooling pumps, lost 120 s later',
+    { timeout: 120_000 },
+    () => {
+      const beta = w0.bodies[1]!;
+      const placed = {
+        ...setup,
+        definition: {
+          ...setup.definition,
+          world: {
+            ...w0,
+            ship: {
+              ...w0.ship,
+              kinematics: {
+                ...w0.ship.kinematics,
+                position: at(w0, 1_500_000, -60),
+                velocity: beta.velocity,
+              },
+            },
+          },
+        },
+      };
+      const blackBox = createBlackBox();
+      const s = createGameSession(placed, {
+        model: createStandInModel({ referenceRadius: LAW.referenceRadius }),
+        blackBox,
+        now: () => 'now',
+      });
+      let cautionAt: number | undefined;
+      let warning: { since?: number; deadline?: number } | undefined;
+      while (s.status().outcome.kind === 'in-progress' && s.status().t < 4_000) {
+        s.stepTicks(1);
+        for (const a of s.status().alerts) {
+          if (a.id === 'radiation') cautionAt ??= s.status().t;
+          if (a.id === 'critical-service') warning = a;
+        }
+      }
+      // The radiation caution must come from the radiation monitor (A24, ledger R37), not from
+      // each component's true dose, which 3A removed from the record (R35, P11). Until 2F wires
+      // the monitor's caution, none is raised. This tripwire then fails; restore S21's figure,
+      // a caution 20 s in (1 U s on a standard part at 0.05 U). Integrator, on merging 2F.
+      expect(cautionAt).toBeUndefined();
+      const outcome = s.status().outcome;
+      expect(outcome).toMatchObject({ kind: 'lost', cause: 'power' });
+      if (outcome.kind !== 'lost') throw new Error('not lost');
+      // The latch bucket (20 U s) trips the active pumps at 400 s; nothing serves the cooling
+      // for 120 s.
+      const events = blackBox.attempt(s.status().attemptId)!.events;
+      const trip = events.find(
+        (e) =>
+          e.kind === 'equipment-fault' && e.fault === 'overcurrent' && /pump-a$/.test(e.equipment),
+      );
+      expect(trip?.t).toBeCloseTo(400, 0);
+      expect(outcome.t).toBeGreaterThanOrEqual(trip!.t + 120);
+      expect(outcome.t).toBeLessThanOrEqual(trip!.t + 121);
+      // The ship warned of it, with the deadline it met.
+      expect(warning?.deadline).toBeDefined();
+      expect(Math.abs(warning!.deadline! - outcome.t)).toBeLessThanOrEqual(2);
+      // Upsets came and went before (reboots of 5 s, no loss).
+      expect(events.some((e) => e.kind === 'equipment-recovered')).toBe(true);
+    },
+  );
+
+  it('is seen through the window (R38): glowing patches, directions only, none behind a body', () => {
+    const t0 = performance.now();
+    const [bank] = cloudWindow(w0);
+    const ms = performance.now() - t0;
+    expect(bank?.kind).toBe('cloud-bank');
+    expect(bank!.patches.length).toBeGreaterThan(500);
+    for (const p of bank!.patches) {
+      expect(Math.hypot(p.direction.x, p.direction.y, p.direction.z)).toBeCloseTo(1, 12);
+      expect(p.brightness).toBeGreaterThan(0);
+      expect(p.brightness).toBeLessThanOrEqual(1);
+      expect(p.angularRadius).toBeGreaterThan(0);
+    }
+    // Nearest first: the apparent sizes shrink along the list (one size of patch).
+    const sizes = bank!.patches.map((p) => p.angularRadius);
+    expect(sizes[0]).toBeGreaterThanOrEqual(sizes.at(-1)!);
+    // Light enough to build every frame.
+    expect(ms).toBeLessThan(50);
+    // From the side of Beta away from the bank, Beta hides part of it.
+    const behind = at(w0, 1_500_000, 120);
+    const from = (bodies: TruthWorld['bodies']) =>
+      cloudWindow({
+        ...w0,
+        bodies,
+        ship: { ...w0.ship, kinematics: { ...w0.ship.kinematics, position: behind } },
+      })[0]?.patches.length ?? 0;
+    // The same view with Beta shrunk to a point: nothing hidden.
+    const point = w0.bodies.map((b) => (b.id === 'beta' ? { ...b, radius: 1 } : b));
+    expect(from(w0.bodies)).toBeLessThan(from(point));
+    // Through the session's snapshot.
+    const s = createGameSession(setup, {
+      model: createStandInModel({ referenceRadius: LAW.referenceRadius }),
+      blackBox: createBlackBox(),
+      now: () => 'now',
+    });
+    expect(s.snapshot().window?.fields?.[0]?.kind).toBe('cloud-bank');
   });
 });

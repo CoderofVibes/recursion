@@ -8,7 +8,12 @@
  * adopted rules do not age. Rates are [ASSUMED] play values (settings.ts).
  */
 
-import type { AttemptRecord, ParameterId, TransitRecord } from '../contracts/index.ts';
+import type {
+  AttemptRecord,
+  ParameterId,
+  ShipDefinition,
+  TransitRecord,
+} from '../contracts/index.ts';
 import { RCS_GROUP } from './adapt.ts';
 import type { ThrustSegment } from './dynamics.ts';
 import type { ModelSettings } from './settings.ts';
@@ -103,8 +108,24 @@ export function agingOf(
   return null;
 }
 
+/**
+ * The equipment ids a calibration's equipment stands for (R27: the ship's own ids). The RCS
+ * group is the ship's `rcs-thruster` equipment, the four pods, and not everything named `rcs-…`
+ * (the RCS tanks are not thrusters); anything else is itself. Undefined when the ship does not
+ * say: the group is then matched by name, as before.
+ */
+export function groupMembers(
+  ship: Pick<ShipDefinition, 'equipment'> | undefined,
+  equipment: string,
+): ReadonlySet<string> | undefined {
+  if (equipment !== RCS_GROUP) return new Set([equipment]);
+  const pods = (ship?.equipment ?? []).filter((e) => e.kind === 'rcs-thruster').map((e) => e.id);
+  return pods.length > 0 ? new Set(pods) : undefined;
+}
+
 /** Does a record about `equipment` concern the equipment (or group) a calibration ages with? */
-function concerns(group: string, equipment: string): boolean {
+function concerns(group: string, equipment: string, members?: ReadonlySet<string>): boolean {
+  if (members) return members.has(equipment);
   return group === RCS_GROUP
     ? equipment === RCS_GROUP || equipment.startsWith(`${RCS_GROUP}-`)
     : equipment === group;
@@ -147,19 +168,24 @@ export function powerCycles(rec: AttemptRecord, camera: string, t0: number, t1: 
   return n;
 }
 
-/** Drops in reported condition of `equipment` over (t0, t1] (condition-changed events). */
+/**
+ * Drops in reported condition of `equipment` over (t0, t1] (condition-changed events, whose
+ * `condition` is the reported condition by contract: nothing else of an event is read).
+ * `members`: the ids the equipment stands for (`groupMembers`).
+ */
 export function conditionDrops(
   rec: AttemptRecord,
   equipment: string,
   t0: number,
   t1: number,
+  members?: ReadonlySet<string>,
 ): number[] {
   let last: number;
   const drops: number[] = [];
   // For a group (the RCS pods) each member's condition is followed on its own.
   const lastOf = new Map<string, number>();
   for (const e of rec.events) {
-    if (e.kind !== 'condition-changed' || !concerns(equipment, e.equipment)) continue;
+    if (e.kind !== 'condition-changed' || !concerns(equipment, e.equipment, members)) continue;
     last = lastOf.get(e.equipment) ?? 1;
     if (e.condition < last && e.t > t0 && e.t <= t1) drops.push(last - e.condition);
     lastOf.set(e.equipment, e.condition);
@@ -182,13 +208,14 @@ export function historyIn(
   equipment: string,
   t0: number,
   t1: number,
+  members?: ReadonlySet<string>,
 ): AgingHistory {
   const engine = cls === 'engineScale' || cls === 'engineMisalignment' || cls === 'rcsScale';
   return {
     shipTime: Math.max(0, t1 - t0),
     deltaV: engine ? commandedDv(segments, equipment, t0, t1) : 0,
     powerCycles: cls === 'cameraBias' ? powerCycles(rec, equipment, t0, t1) : 0,
-    drops: conditionDrops(rec, equipment, t0, t1),
+    drops: conditionDrops(rec, equipment, t0, t1, members),
   };
 }
 
@@ -206,19 +233,40 @@ export function conditionAtEnd(rec: AttemptRecord | undefined, equipment: string
 }
 
 /**
+ * Reported condition of each piece of equipment `equipment` stands for at the end of an
+ * attempt (each pod of the RCS group on its own; 1 for any never reported).
+ */
+export function conditionsAtEnd(
+  rec: AttemptRecord | undefined,
+  equipment: string,
+  members?: ReadonlySet<string>,
+): Map<string, number> {
+  const out = new Map<string, number>();
+  for (const id of members ?? []) out.set(id, 1);
+  for (const e of rec?.events ?? [])
+    if (e.kind === 'condition-changed' && concerns(equipment, e.equipment, members))
+      out.set(e.equipment, e.condition);
+  return out;
+}
+
+/**
  * A transit between encounters as an aging history (spec §3.7 item 3, §11.5). Drops count from
- * `startCondition`, the condition when the carrying attempt ended (default 1, which errs wide).
+ * `startCondition`, the condition when the carrying attempt ended: one number, or each member's
+ * own (`conditionsAtEnd`; default 1, which errs wide).
  */
 export function transitHistory(
   t: TransitRecord,
   equipment: string,
-  startCondition = 1,
+  startCondition: number | ReadonlyMap<string, number> = 1,
+  members?: ReadonlySet<string>,
 ): AgingHistory {
   const drops: number[] = [];
   const lastOf = new Map<string, number>();
+  const startOf = (id: string) =>
+    typeof startCondition === 'number' ? startCondition : (startCondition.get(id) ?? 1);
   for (const e of t.conditionChanges) {
-    if (!concerns(equipment, e.equipment)) continue;
-    const last = lastOf.get(e.equipment) ?? startCondition;
+    if (!concerns(equipment, e.equipment, members)) continue;
+    const last = lastOf.get(e.equipment) ?? startOf(e.equipment);
     if (e.condition < last) drops.push(last - e.condition);
     lastOf.set(e.equipment, e.condition);
   }

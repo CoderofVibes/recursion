@@ -12,6 +12,7 @@ import {
   distance,
   heading,
   hullOutline,
+  pitch,
   sigmaMajor,
   toScene,
   turnRates,
@@ -39,6 +40,14 @@ describe('positions', () => {
     close(bodyToDrawing({ x: 8, y: 0 }), [0, 0, -8]);
     close(bodyToDrawing({ x: 0, y: 2.5 }), [-2.5, 0, 0]);
     close(bodyToDrawing({ x: 0, y: 0, z: 1 }), [0, 1, 0]);
+  });
+
+  it('reads the nose pitched up or down, and none for a planar attitude', () => {
+    const up = 0.5;
+    // Body +x turned toward +z: a rotation about −y.
+    expect(pitch({ w: Math.cos(up / 2), x: 0, y: -Math.sin(up / 2), z: 0 })).toBeCloseTo(up, 12);
+    expect(pitch(fromYaw(1.2))).toBeCloseTo(0, 12);
+    expect(pitch(0.7)).toBe(0);
   });
 
   it("draws the game's chart on the same axes as everything else", () => {

@@ -82,5 +82,8 @@ export function wellLineMaterial(): LineBasicMaterial {
  */
 export function wellColour(depth: number, out: Color = new Color()): Color {
   const k = 1 - render.well.depthFalloff * Math.min(1, Math.max(0, depth));
-  return out.set(hex(colour.well)).multiplyScalar(k);
+  return out.copy(WELL).multiplyScalar(k);
 }
+
+/** Parsed once: the window draws tens of thousands of funnel segments a frame (2D). */
+const WELL = new Color(hex(colour.well));

@@ -7,6 +7,8 @@ import type { EnvironmentEffects, ShipSystemsState } from '../../contracts/truth
 import { fromYaw } from '../../lib/quat.ts';
 import { createSimulation } from '../../sim/index.ts';
 import { createShipSystemsState, loadShipDefinition, stepShipSystems } from '../index.ts';
+import { radiationProfiles, stepCondition } from '../condition/index.ts';
+import { stepThermalProtection } from '../thermal/protection.ts';
 import { stepSensors } from './index.ts';
 import {
   decodeLatticeDiagnostic,
@@ -198,6 +200,93 @@ describe('A16 first-pass raw diagnostic channel', () => {
     expect(during.measurements.some((m) => m.channel === 'service.temperature')).toBe(true);
     const resumed = stepSensors(during.state, definition, scene(101), 0.1);
     expect(resumed.measurements.some((m) => decodeLatticeDiagnostic(m))).toBe(true);
+  });
+
+  it.each(['camera', 'science-processor', 'black-box'] as const)(
+    'honors an actual 3A %s upset and recovery without erasing retained images',
+    (id) => {
+      const first = stepSensors(initial(), definition, scene(), 0.1);
+      const archive = recorder();
+      archive.recordMeasurements(first.measurements);
+      const profile = radiationProfiles(definition).get(id)!;
+      // End at the first weighted upset bucket, below the raw burnout threshold
+      // throughout this four-second fixture. 3A applies susceptibility exactly once.
+      const upset = stepCondition(
+        first.state,
+        definition,
+        { [id]: { rawDose: profile.upsetInterval / profile.susceptibility, aboveBurnout: false } },
+        { [id]: true },
+        4,
+      );
+      expect(upset.events).toContainEqual({
+        kind: 'equipment-fault',
+        t: 104,
+        equipment: id,
+        fault: 'radiation-upset',
+      });
+      expect(upset.state.equipment[id]!.powerDraw).toBe(first.state.equipment[id]!.powerDraw);
+      const restartAt = upset.state.equipment[id]!.values.radiationRestartUntil!;
+      const during = stepSensors({ ...upset.state, t: 104 }, definition, scene(104), 0.1);
+      expect(during.measurements.some((m) => decodeLatticeDiagnostic(m))).toBe(false);
+      expect(during.state.equipment.camera!.values.readyAt).toBe(0);
+      const beforeRecovery = stepSensors(during.state, definition, scene(restartAt - 0.001), 0.001);
+      expect(beforeRecovery.measurements.some((m) => decodeLatticeDiagnostic(m))).toBe(false);
+      const recovered = stepCondition(
+        during.state,
+        definition,
+        {},
+        { [id]: true },
+        restartAt - during.state.t,
+      );
+      expect(recovered.events).toContainEqual({
+        kind: 'equipment-recovered',
+        t: restartAt,
+        equipment: id,
+      });
+      const resumed = stepSensors(
+        { ...recovered.state, t: restartAt },
+        definition,
+        scene(restartAt),
+        0.1,
+      );
+      archive.recordMeasurements(resumed.measurements);
+      expect(
+        archive
+          .snapshot()
+          .measurements.map(decodeLatticeDiagnostic)
+          .filter((tile) => tile !== undefined)
+          .map((tile) => tile.acquisition),
+      ).toEqual([
+        [100, 100],
+        [restartAt, restartAt],
+      ]);
+      expect(resumed.state.exposure[id]).toBe(profile.upsetInterval);
+    },
+  );
+
+  it('keeps a thermally inhibited camera unavailable until 3A clears the inhibition', () => {
+    const start = initial();
+    const min = definition.equipment.find((e) => e.id === 'camera')!.params.tempMin!;
+    const cold = stepThermalProtection(
+      { ...start, thermal: { ...start.thermal, service: min - 1 } },
+      definition,
+      0.1,
+    ).state;
+    expect(cold.equipment.camera!.values.thermalInhibited).toBe(1);
+    // Even a now-warm temperature reading cannot bypass the condition owner's flag.
+    const warming = { ...cold, thermal: start.thermal };
+    expect(
+      stepSensors(warming, definition, scene(), 0.1).measurements.some((m) =>
+        decodeLatticeDiagnostic(m),
+      ),
+    ).toBe(false);
+    const recovered = stepThermalProtection(warming, definition, 0.1).state;
+    expect(recovered.equipment.camera!.values.thermalInhibited).toBe(0);
+    expect(
+      stepSensors(recovered, definition, scene(), 0.1).measurements.some((m) =>
+        decodeLatticeDiagnostic(m),
+      ),
+    ).toBe(true);
   });
 
   it.each(['camera', 'imu-a', 'star-tracker-a'] as const)(

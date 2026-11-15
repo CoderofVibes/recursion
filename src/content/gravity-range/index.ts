@@ -9,6 +9,7 @@
 import type { Command } from '../../contracts/commands.ts';
 import type { ShipDefinition } from '../../contracts/ship.ts';
 import type { JsonValue } from '../../contracts/units.ts';
+import type { TruthWorld } from '../../contracts/truth/index.ts';
 import {
   DEFAULT_PLAY,
   type EncounterSetup,
@@ -19,7 +20,7 @@ import { loadShipDefinition } from '../../ship/index.ts';
 import { DEPART, briefing } from './briefing.ts';
 import { geometryForRun, NOMINAL, type ArrivalGeometry } from './geometry.ts';
 import { ARRIVAL_ANGLE, arrivalWorld } from './world.ts';
-import { cloudEnvironment } from './clouds.ts';
+import { cloudEnvironment, cloudWindow } from './clouds.ts';
 
 export { DEPART, ENCOUNTER_ID, OBJECTIVES, PRIORS } from './briefing.ts';
 export { GEOMETRIES, NOMINAL, geometryForRun, type ArrivalGeometry } from './geometry.ts';
@@ -110,6 +111,15 @@ export const OBJECTIVE_RULES: readonly ObjectiveRule[] = [
  */
 export const PLAY: PlayValues = { ...DEFAULT_PLAY, forecastSpan: 48 * 3600 };
 
+/** One result per world: frames between ticks see the same world, and reuse it. */
+function lastByWorld<T>(f: (world: TruthWorld) => T): (world: TruthWorld) => T {
+  let last: { world: TruthWorld; value: T } | undefined;
+  return (world) => {
+    if (last?.world !== world) last = { world, value: f(world) };
+    return last.value;
+  };
+}
+
 /**
  * The Gravity range.
  * - `createGravityRange()`, or with another `seed` for another rock layout: the reference
@@ -136,5 +146,7 @@ export function createGravityRange(
     play: PLAY,
     // The radiation crescent beyond the belt (A18 (2), S21): intensity at each equipment item.
     environment: cloudEnvironment(ship),
+    // And as the eye sees it through the window (R38): once per tick, not once per frame.
+    window: lastByWorld(cloudWindow),
   };
 }

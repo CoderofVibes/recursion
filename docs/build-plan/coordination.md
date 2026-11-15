@@ -12,18 +12,20 @@ The live state of the build between threads: who is running, who holds which sha
 |---|---|---|---|---|---|
 | 2D control room | Opus 5.5 | `.worktrees/2d` · `p2/2d-control-room` | Running. Merged: S9 R1–R15, S15 console fixes, 2G's screen data, 2C's forecast fields, S20 items, encounter panel mount and 120 m zoom (R4), A20 frame cadence (12 fps while coasting at 60×+), credits tab, elliptical envelopes | Next: OP's hooks (R23), AU's mount (R24), funnels in the window (R13); re-measure SYSTEMS | `635245f` |
 | 2G speed pass | Opus 5.5 | `.worktrees/2g` · `p2/2g-3d-flight` | **Done**, evidence and handoff merged. Next per-tick target: the environment step (rock visibility); a quiet-machine rebaseline is still to run (R11) | — | `bc292a9` |
-| 2F game loop | Opus 5.5 | `.worktrees/2f` · `p2/2f-game` | Running. Merged: fields reach the simulation (R1), S21's 120 s power rule in the tick, swept whole-ship exits, believed departure progress and turn allowance | Next, in order: wells crush loss and lifecycle (R30), A20 budget (R18), 3A wiring (R26), the cloud crescent (R14), R20's acquisition scheduling, R29 | `82f906b` |
-| 2C model and Black Box | Opus 5.5 | `.worktrees/2c` · `p2/2c-model` | Round done and merged: bodies' track uncertainty, two moving bodies, forecast as of its issue time (A18 (1)), S8 checks with two fixes, lazy fallback | Next: 3C's reconstruction and Black Box function (R9), S17's requests, S20's (R17); 5% range-noise robustness still open | `4bf5359` |
+| 2F game loop | Opus 5.5 | `.worktrees/2f` · `p2/2f-game` | Running. Merged: wells in the tick (crush, pop-ups with a precursor warp drop), lattice environment per 0.1 s tick, ChainLinkPanel data, 3A's conditioned step and one power-loss watch, the clouds harm, A20 budget (14 ms coasting), S20's departure status, swept exits | Next: the radiation monitor's caution (R37), sensors acquiring within the tick (R20 remainder), the wells' save seam | `920a9ed` |
+| 2C model and Black Box | Opus 5.5 | `.worktrees/2c` · `p2/2c-model` | Running. Merged: the lattice rebuilt from recorded frames (R9), the Black Box lattice function, condition events by the ship's own ids (R27), coalesced model work (S20) | R32 (funnels) waits on a funnel camera channel (R36) | `e4df230` |
 | 3B Inverse Wells | GPT/Codex | `.worktrees/3b` · `p3/3b-wells` | **Merged**: S22's funnels as an indexed field, the 900 s precursor lifecycle, the downstream exit sphere, registration (`?encounter=inverse-wells`) | Playable needs: crush loss, lifecycle in the tick, window funnels (R30, R31) | `91a666a` |
-| 3C Chain Link Fence | GPT/Codex (GPT-6 Astra) | `.worktrees/3c` · `p3/3c-lattice` | **Done**: twenty fences qualified (≤25.5 kg RCS of 100 kg, ≥21.6 m clearance), recorded reveal, raw diagnostics, stale readings, additive contracts, registration, save format 2. Integrator gave one slow test a 30 s timeout | Playable in the app once 2F wires fields (R1, R20) and 2C reconstructs (R9) | `acc648d` |
+| 3C Chain Link Fence | GPT/Codex (GPT-6 Astra) | `.worktrees/3c` · `p3/3c-lattice` | **Done**: twenty fences qualified; sensors on 3A's shared availability; leakage heat no longer boosts sensing or recording; 13 integration tests | Playable in the app once 2F (R20 acquisition scheduling, panel data) and 2C (R9 reconstruction) land | `43e18d9` |
 | 3E playability harness | GPT/Codex | `.worktrees/3e` · `p3/3e-harness` | **Done**: `npm run harness` (smoke, reference, learning, routes, all); its pending-acceptance list names the gaps | — | `44db2fc` |
 | 3A power and thermal | GPT/Codex | `.worktrees/3a` · `p3/3a-power-thermal` | **Done**: causal radiation and thermal faults, heaters, physical service signals (`electricalService`, `energizedEquipment`); command tape identical; 72 h transit sustainable | Its wiring is 2F's (R26) | `767100b` |
 | 3D expedition | Opus 5.5 | not created yet · `p3/3d-expedition` | **Gated** | After 2F's and 2C's first checkpoints merge | — |
 | 3F console v2 | Claude | — | **Gated** | After 2D hands off | — |
 | S16 Well Garden layout | GPT/Codex | `.worktrees/s16` · `st/s16-well-garden` | **Done**: three-well prototype, 25-entry catalogue, garden budget (A15 Q05) | — | `e6eb51d` |
 | S23 the opening | GPT/Codex | `.worktrees/s23` · `st/s23-the-opening` | Ready to launch | Feeds OP and AU | — |
-| OP the opening | Opus 5.5 | `.worktrees/op` · `p3/op-opening` | Ready to launch | S23's beats when they land; room hooks via R23 | — |
+| OP the opening | GPT (base) then Opus 5.5 | `.worktrees/op` · `p3/op-opening` | **Merged** (`6ac2397`): the 19.5 s opening, replay and Skip, reduced motion, room hooks (R23), the home window shared with the ending. Not yet in the game: only the dev preview plays it (R41). Its dev server and launch entry are removed | Gate once per browser (A25) | `6ac2397` |
+| VX window and sky visuals | GPT/Codex (GPT-6 Astra) | `.worktrees/vx` · `p3/vx-visuals` | Ready to launch: a shared sky, the opening's look, shader helpers for funnels, clouds and precursors | The art bible (`docs/art/`) as it lands; takes over `src/view3d/opening/` from OP | — |
 | AU basic audio | GPT/Codex | `.worktrees/au` · `p3/au-audio` | Ready to launch | Cue list first, so the owner can generate in ElevenLabs; mount via R24 | — |
+| ART window references | Owner's choice (Claude or GPT) | `.worktrees/art` · `art/window-references` | Ready: MidJourney prompt library for the window views, worked through with the owner. **References only (A23): no image ships or is committed** | Outputs `docs/art/`; feeds 2D, 3B, OP | — |
 | S22 well field (real funnels) | GPT/Codex | `.worktrees/s22` · `st/s22-big-well-field` | **Done**: funnels 120 km long, 20 km mouth, 1 km throat, pull 0.02–0.10 m/s²; 2,601 sites, 650 appearing; owner questions open | Feeds 3B (R12) | `15171df` |
 | S17 lattice first contact | GPT/Codex | `.worktrees/s17` · `st/s17-lattice-first-contact` | **Done**; five owner questions open | Feeds 3C (R8), 3A, 2C | `ba7568e` |
 | S18 tether gate | GPT/Codex | `.worktrees/s18` · `st/s18-tether-gate` | **Done**: the load gate passes as a slower turning manoeuvre; four owner questions open | Future tether work | `32a8b67` |
@@ -32,6 +34,17 @@ The live state of the build between threads: who is running, who holds which sha
 | S21 belt and power | GPT/Codex | `.worktrees/s21` · `st/s21-belt-power` | **Done**; two owner questions open | Values go to 2F (R6), 3A; cloud seam R14 | `d9e986c` |
 
 Prompts: Phase 2 in `phase-2/`, Phase 3 in `phase-3.md`, studies in `studies/`. The resume notes for 2D, 2G, 2F and 2C were sent through the owner on 2026-11-14 and are summarised in the Status column.
+
+## Overnight (2026-11-15, while the owner sleeps)
+
+Owner's plan, to remove copy-and-paste relays overnight. Claude threads 2D, 2F and 2C commit a checkpoint and **pause**. Every thread below is self-contained, with no relays needed.
+- **NIGHT** (Claude Fable, long): holds 2D's, 2F's and 2C's lanes for fixes (see `phase-3-extras.md` §NIGHT). Does the photosensitivity fix, the picker, the opening's mount, then the judge's run.
+- **VX** (GPT): visuals, **and** wires them into the window itself tonight. Scoped exception: `src/view3d/room/outside.ts` and the window parts of `RoomView.ts`.
+- **3C** (GPT): takes over `src/ship/sensors/wells*` from 3B tonight. It fixes 3B's channel (3A's `functionAvailable` and the shared `functionalPower`; total draw only in telemetry) and wires it into the dispatcher (R36).
+- **3B** (GPT): hands its channel to 3C, then continues the harness admission runs in its own lane.
+- **AU** (GPT): audio, in its own lane.
+
+In the morning the integrator merges in this order: the paused threads' checkpoints, NIGHT, VX, 3C, 3B, AU. It smoke-tests each, and the owner reviews before anything else resumes.
 
 ## Shared files: who holds them now
 
@@ -64,7 +77,7 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 | R6 | S21 → 2F, 3A | Belt size (A18 (2)) and power values (A18 (5)) | **Landed** `d9e986c`; relay once the owner answers S21's two questions | Radiation-cloud crescent, ~830 km pass target, 120 s critical-power rule, 4 h endurance caution |
 | R7 | S16 → 3B | Well Garden layout, seeds and vectors | **Done** `e6eb51d`: the three-well prototype for 3B's mechanics | The owner then asked for a big field (R12) |
 | R8 | S17 → 3C | First-contact numbers: dose, failure order, Black Box function cost, reconstruction | **Landed** `ba7568e`; relay with the owner's answers to S17's five questions | Also asks 3A (causal failures), 2C (reconstruction and retention), integrator (subtick acquisition schedule in `truth-step.ts`, contracts) |
-| R9 | 3C → 2C | The Black Box function in A16 (records sensors; FLIGHT shows the rebuilt lattice) | **Open:** 3C running | |
+| R9 | 3C → 2C | The lattice reconstruction and the Black Box function (A16) | **Done** `e4df230` | |
 | R10 | 3C ↔ 3A | Component faults from radiation: electrics and instruments (A16) | **Agreed and published**: 3A's `nextConditionBoundary`, `stepCondition` and `functionAvailable` are on main; 3C's sensor adapter merges with them | Raw thresholds 8/10/20 U (power switch/standard/hardened) |
 | R11 | 2G → integrator | Release check from A18 (7): achieved warp on the modest profile | **Measured; the limit is frames, not the ship.** Each frame runs exactly 8 ticks (the 10 ms budget is checked every 8 ticks, and 8 ticks already exceed it), so achieved warp = 8 ÷ frame interval: 67–264 ship-s per wall-s at best, under S15's pre-3D 270–490. 2G's cut saves about 2.7 ms per frame. See R18 | Rebaseline on a quiet machine; a real-laptop check |
 
@@ -72,13 +85,13 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 
 | R13 | 3B → 2D | The funnels in the window view (A19: wells are visible, with striking visuals). 3B draws them in `src/view3d/fields/wells/`; 2D mounts them in the room's window and FLIGHT | **Open:** to relay | Folds into R4 |
 
-| R14 | S21 → 3C, 3A, 2F | The Gravity range's radiation-cloud crescent uses the lattice's exposure units and damage seam (3C, 3A); 2F places it as content | **Open:** after the owner approves S21 Q1 | |
+| R14 | S21 → 3C, 3A, 2F | The radiation-cloud crescent | **Done** `920a9ed`: the clouds harm through 3A's condition model; the arrival targets 830 km. Not yet visible in the window (R38) | |
 | R15 | 3C → integrator | Typed acquisition and coverage contracts (from `src/ship/sensors/lattice-observations.ts`; 3C's handoff, "A16 update — concrete shared seams"), plus an archive/save schema bump | **Granted to 3C as a scoped exception**: additive types only; 2C (Black Box) and 2F (save) agree the schema bump | Integrator reviews at merge |
 
 | R16 | 3C → integrator | Land 2F's deterministic-clock fix so 3C's full check goes green | **Done** `7b01be8` | |
 | R17 | S20 → 2F, 2C | Expose believed departure/progress, keep command and forecast epochs while time runs, reconcile PLAN's 400 s default with the 480 s turn allowance; make the real-model loop test deterministic; investigate the populated-archive commit wait | **Open**: relay | |
 
-| R18 | Owner → 2F, 2D | Faster coasting on slow machines (A20) | **2D's half done** (12 frames/s while coasting at 60×+, full rate on input or 1×). 2D proposes a **14 ms simulation budget while coasting** (10 ms otherwise); the integrator approves; 2F exposes it | 2D measures with S15's runner once 2F lands (port 4175) |
+| R18 | Owner → 2F, 2D | Faster coasting (A20) | **Both halves merged**: 2F's budget (10 ms, 14 ms coasting, `setFrameBudget`), 2D's 12 frames/s cadence. With a 40 ms stand-in slice, modest-profile warp went from 84–141× to 212–220×; the combined setting is still to be measured | 2D measures with S15's runner |
 
 | R19 | 3B → integrator | S22's forward exit is a disc crossing; `reach-region` takes spheres | **Decided by the integrator:** the prototype uses a destination sphere entirely beyond S22's exit plane; an exact disc waits for playtest evidence | |
 | R20 | 3C → 2F | In `truth-step.ts`: build the environment at every real acquisition state (`createChainLinkEnvironment(setup).at(state)`), not one frozen scene per second; schedule within the 1 s step to the earliest sensor, recorder, dose, trip or failure event, then integrate the rest; keep acquisition time separate from product availability; swept whole-ship admission for physical exits | **Open**: relay | After the fields wiring (R1) and A20 |
@@ -87,20 +100,38 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 
 | R22 | 3C → 2C, 2F | Versioning for the lattice: chain-link save format 2 for the twenty-fence world; old attempts keep their original archive and frame; new channels `lattice.angular-fragments.v2` and `lattice.raw-tile.v1` fit the unchanged `Measurement`/`AttemptRecord` shape. 2C versions its reconstruction caches and says whether the archive store needs a migration; 2F confirms the save side | **Open**: integrator approves the shape; awaiting 2C's and 2F's agreement | 3C changed no IndexedDB or shared save schema |
 
-| R23 | OP → 2D | A small additive hook API in the room (window sky, lighting cues, camera shake, fade, title card) under a scoped exception; no change to existing behaviour | **Open**: OP tells 2D before committing | |
+| R23 | OP → 2D | The room hooks (window scenery, scripted shots, alarm lighting) in `RoomView.ts`, `outside.ts` and `shell.ts` | **Merged** `6ac2397`; 2D to accept them. Merging main will conflict with 2D's funnels-in-window work in `outside.ts`: keep both | |
 | R24 | AU → 2D | One mount line in `src/app/` for the audio module, plus a mute control | **Open** | |
 | R25 | AU → owner | The cue list in `docs/audio/cues.md` with ElevenLabs prompts; the owner generates the files into `public/audio/` | **Open**: waits on AU's first checkpoint | Credit ElevenLabs (A22) |
 
-| R26 | 3A → 2F | Wrap the ship step with `integrateConditionedInterval`, capping intervals at electrical, resource and intensity edges, and re-dispatching after every fault; drive A16's dual-PDU loss and A18's 120 s rule from `electricalService`; extend `unservedFunctions` with reboot and cold inhibition; on recurrence, clear an overtemperature indication but keep damage, freeze rupture and exposure | **Open**: relay | One loss watch, not two |
-| R27 | 3A → 2C | Consume `condition-changed` events with existing equipment IDs; no truth into the model or Black Box | **Open**: relay | |
+| R26 | 3A → 2F | 3A's wiring | **Done** `920a9ed` | |
+| R27 | 3A → 2C | Consume `condition-changed` events | **Done** `e4df230`; found that 3A emits true, not reported, condition (R34) | |
 | R28 | 3A → integrator | Console set to the `hardened` radiation profile (A16) | **Done** (this commit) | Save/field chronology versioning when the encounters land |
 
-| R29 | 2D → 2F | `src/game/model-loop.test.ts` failed once under the full suite and passes alone; give it an explicit timeout if it's load-sensitive | **Open**: relay | |
+| R29 | 2D → 2F | `model-loop` test under load | **Done**: timeout 900 s; the integrator also set a 30 s default per test (`vitest.config.ts`) | |
 
-| R30 | 3B → 2F (with integrator for `src/sim`) | Wells in the tick: structural loss at the earliest contact of any ship part with an active throat (3B's `createFunnelCrushIndex`, `createFunnelHullHazards`); the funnel lifecycle split at its events, with a newly seen precursor ending the warp batch and dropping to 1× (time keeps running); field snapshots rebuilt when activation changes; then the lifecycle in saves and the pull/correction work ledger | **Open**: relay | `docs/handoffs/3B.md` requests 2–4; 2F may touch the field-instance code in `src/sim/` it needs, telling the integrator |
+| R30 | 3B → 2F | Wells in the tick | **Done** `920a9ed`: crush loss at any hull contact with an active throat; the lifecycle advances with the ship's real state; a new precursor drops warp to 1×. Save seam and work ledger still open | |
 | R31 | 3B → 2D | Funnels in the window and FLIGHT: `projectFunnelOptics` / `makeOpticalFunnelView` with LOD and culling across ~2,600 sites; exact segment clipping in `FieldViewContext`; release disposed materials from `LineSet` | **Open**: relay | Folds R13. The registration cycle is already fixed by the integrator |
 | R32 | 3B → 2C | Acquire contour bearings and phase through the real camera; fit funnel geometry, pull and reversal separately from motion and IMU evidence; no catalogue coordinates as belief | **Open**: relay | After R9 |
 | R33 | Integrator | Fixes on merging 3B: its acquisition test imports `ModelService` from `src/model/service.ts` (2C's index exports the type only); the field-view registry moved onto a hoisted function (Vite's eager glob put plugin registration ahead of the const) | **Done** (this commit) | Tell 2D (its `fieldViews.ts`) and 3B |
+
+| R34 | 2C → 3A | `condition-changed` carries the reported condition | **Done** `246248c` | |
+| R35 | 2C → integrator | True per-component dose in the Black Box | **Done** `246248c`: 3A removed true-dose `exposure` events; the radiation monitor (A24) supplies the honest reading | |
+| R36 | 2C → integrator | The funnel camera channel R32 needs | **3B builds the channel and contract** in `src/ship/sensors/wells*`; **3C wires it into the dispatcher and recorder-packet budget** in `src/ship/sensors/index.ts` (3C's file, where it's already working), using 3B's published API | R32 after it |
+
+| R37 | Owner → 3C, 2F, 2C, 2D | The radiation monitor (A24). 3C: the sensor, a point-sampling helper and a decoded radiation caution in `src/ship/sensors/`. **2F:** the environment supplies the monitor's point signal from all active fields, including the Gravity range's clouds; `session.ts` consumes the recorded caution at once, drops warp to 1× and stops that frame's remaining ticks. 2C records it and shows it in the loss review; 2D shows the dose rate and caution | **Open**: 3C building; relay to 2F | 3C publishes the exact APIs in its handoff |
+
+| R38 | 2F → integrator | Additive contract fields: a `WindowView` slot so the clouds (and, with 3B, the funnels) can be drawn; the departure's assist condition and why a departure missed | **Granted to 2F as a scoped exception**: additive fields only, reviewed at merge; 2D draws them | |
+| R39 | Integrator | On merging 2F: its radiation caution was driven by true per-component dose (removed in R35). `clouds.test.ts` now asserts no caution until the monitor's caution (R37) lands; that tripwire then fails and 2F restores the 20 s figure | **Done** (this commit) | |
+
+| R40 | Owner → 2D (OP, integrator) | The region picker (A25): Twin Deeps, Well Garden, Unseen Cathedral, through 2F's `?encounter=` loader, labelled as previews with the route between them not yet built. **OP:** the opening plays once per browser, not per region. **Integrator:** the judge README explains the picker once it lands | **Open**: relay; top of 2D's list | |
+
+| R41 | OP → 2D, OP | Put the opening in the game: 2D mounts `OpeningGate` in the app entry (`src/app/App.tsx`) ahead of the room, waking into the Gravity range. OP changes its gate (`src/app/opening/launch.ts`) from once per save to once per browser (A25) | **Open**: relay; with the picker (R40) | The owner wants judges to see it first |
+| R42 | OP → AU | Cue times moved with the 19.5 s opening: opening-rumble 6.5 s, alarms 6.6/7.8/8.47, loss-failure 9.35, black-cut 10.65, opening-title 11.95, **new** title-out 15.9, room-wake 17.9 | **Open**: relay | |
+| R43 | OP → 2D | **Photosensitivity:** the ordinary loss sequence (A8) flickers faster than 3 times a second. Fix it before the ending (A17) reuses it. Also: Earth and title-size tokens | **Open**: relay, high priority | It's in the live game |
+| R44 | Integrator | Reduced motion in the opening keeps the slow star bending but not the swelling dark. Integrator's call: a fully still sky with the alarm light and a plain fade to black, the safer choice for motion sensitivity. The owner may overrule | **Open**: relay to VX with the opening | |
+
+| R45 | 3C → 3B | 3B's funnel channel (`4692625`) imports the removed `sensorFunctionAvailable` and counts leakage heat as camera power | **Overnight: 3C takes `src/ship/sensors/wells*` and fixes it**, then wires it (R36). Not merged until fixed | Main has no `sensorFunctionAvailable` |
 
 Add new rows at the bottom with the next ID. Never renumber.
 
@@ -116,7 +147,16 @@ Decided: A15 (S11's queue), A16 (the lattice), A17 (the ending) and A18 (the Gra
 
 | Commit | What |
 |---|---|
-| (this commit) | Integrator fixes on merging 3B (R33); ledger R30–R33 |
+| (this commit) | A21 as built; VX written; ledger R41–R44 |
+| `6ac2397` | OP: the opening |
+| `b877e53` | Tripwire for the radiation caution (R39); 30 s default test time limit; ledger |
+| `920a9ed` | 2F: wells, lattice environment, 3A wiring, clouds, A20 budget |
+| `cac0ea4` | 3A's fixes merged; ledger R34–R37 |
+| `246248c` | 3A: reported condition, no true-dose events |
+| `5542b25` | 2C merged; ledger R34–R36 |
+| `e4df230` | 2C: lattice reconstruction (R9), condition events (R27) |
+| `43e18d9` | 3C follow-up: shared availability, leakage fix, integration tests |
+| `1f0dfef` | Integrator fixes on merging 3B (R33); ledger R30–R33 |
 | `91a666a`, `82f906b` | 3B (Inverse Wells); 2F (fields wired, power rule, swept exits) |
 | `1d000f9` | Chain-link abort test gets a 30 s timeout (load); ledger |
 | `635245f`, `acc648d` | 2D (S9, S15 fixes, screens, A20 half); 3C (Chain Link Fence) |

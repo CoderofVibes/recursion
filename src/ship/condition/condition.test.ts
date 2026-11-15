@@ -10,6 +10,44 @@ const definition = loadShipDefinition();
 const initial = () => createShipSystemsState(definition);
 
 describe('causal cumulative component condition', () => {
+  it.each([0, 0.85, undefined])(
+    'records reported radiation condition (%s), preserving physical damage',
+    (reportedCondition) => {
+      const state = initial();
+      const engine = state.equipment['main-engine']!;
+      const values =
+        reportedCondition === undefined ? engine.values : { ...engine.values, reportedCondition };
+      const result = stepCondition(
+        { ...state, equipment: { ...state.equipment, 'main-engine': { ...engine, values } } },
+        definition,
+        { 'main-engine': { rawDose: 35, aboveBurnout: false } },
+        {},
+        35,
+      );
+      expect(result.state.equipment['main-engine']!.condition).toBe(0.75);
+      expect(result.events).toEqual([
+        {
+          kind: 'condition-changed',
+          t: 35,
+          equipment: 'main-engine',
+          condition: reportedCondition ?? 0.75,
+        },
+      ]);
+      const record = { ...buildFixtures().attempts[0], events: result.events };
+      expect(conditionDrops(record, 'main-engine', 0, 35)).toEqual([
+        1 - (reportedCondition ?? 0.75),
+      ]);
+    },
+  );
+
+  it('keeps different unobserved component doses out of recorded events (P11/A24)', () => {
+    const results = [1, 5].map((rawDose) =>
+      stepCondition(initial(), definition, { camera: { rawDose, aboveBurnout: false } }, {}, 5),
+    );
+    expect(results.map((result) => result.state.exposure.camera)).toEqual([1, 5]);
+    expect(results.map((result) => result.events)).toEqual([[], []]);
+  });
+
   it('preserves exact save/resume state and feeds real equipment IDs into model aging', () => {
     let state = initial();
     for (let i = 0; i < 5; i++)
@@ -55,6 +93,7 @@ describe('causal cumulative component condition', () => {
     expect(result.state.exposure['imu-a']).toBe(75);
     expect(result.state.exposure.crew).toBeUndefined();
     expect(result.state.equipment['pdu-a']!.condition).toBe(0);
+    expect(result.events.some((e) => e.kind === 'exposure')).toBe(false);
     expect(result.events.some((e) => e.kind === 'breaker-trip')).toBe(false);
     expect(state.exposure).toEqual({});
   });

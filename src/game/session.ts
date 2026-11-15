@@ -40,6 +40,7 @@ import type {
   ThrustTick,
   TrailPoint,
   ViewSnapshot,
+  WindowView,
 } from '../contracts/index.ts';
 import { HANDS_ON_NEUTRAL, isHandsOnNeutral, issueForecast } from '../contracts/index.ts';
 import { handsOnBodyRate, handsOnFirings } from '../ship/index.ts';
@@ -49,6 +50,7 @@ import type {
   AttitudeMode,
   FrameBudget,
   GameControls,
+  Sighting,
   Phase,
   PlanDraft,
   SessionStatus,
@@ -87,7 +89,7 @@ import {
   type DepartureProgress,
   type DepartureTrack,
 } from './belief/departure.ts';
-import { criticalFault, powerAlerts, type PowerAlert } from './belief/power.ts';
+import { criticalFault, powerAlerts, RADIATION_CAUTION, type PowerAlert } from './belief/power.ts';
 
 export interface SessionOptions {
   readonly model: ModelPort;
@@ -100,7 +102,7 @@ export interface SessionOptions {
   readonly clock?: () => number;
   /** Longest time `advance` may spend stepping in one call, ms. Default 10. */
   readonly frameBudget?: number;
-  /** The same while coasting (A20), ms. Default: `frameBudget`. Settable with `setFrameBudget`. */
+  /** The same while coasting (A20), ms. Default 14 (2D's cadence, approved). Settable with `setFrameBudget`. */
   readonly coastingBudget?: number;
 }
 
@@ -163,7 +165,7 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
   const clampBudget = (ms: number): number => Math.min(1000, Math.max(1, ms));
   let budget: FrameBudget = {
     ms: clampBudget(options.frameBudget ?? 10),
-    coastingMs: clampBudget(options.coastingBudget ?? options.frameBudget ?? 10),
+    coastingMs: clampBudget(options.coastingBudget ?? 14),
     coastingFrom: 300,
   };
   const telemetry = createTelemetryFilter(play.telemetryDeadband, play.telemetryKeepalive);
@@ -187,6 +189,13 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
   /** When the ship first reported a critical function short of power, and which, while it is. */
   let shortSince: number | undefined;
   let shortReported: string[] = [];
+  /** The latest such report: the gauges end the warning only with a sample newer than it. */
+  let lastFault = -Infinity;
+  /** Exposure the ship has reported per item this attempt (its `exposure` events), U s. */
+  let exposureReported: Record<string, number> = {};
+  let exposureMost = 0;
+  /** What the eye has seen through the window, until it is due (a well's precursor). */
+  let sightings: Sighting[] = [];
   /** The believed departure account (S20): gauged Δv, closest approaches, the ship's verdicts. */
   let departureTrack: DepartureTrack = initialDepartureTrack;
   const checkEvery = Math.max(1, Math.round(setup.play.power.checkEvery / stepper.dt));
@@ -288,6 +297,10 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
     alerts = [];
     shortSince = undefined;
     shortReported = [];
+    lastFault = -Infinity;
+    exposureReported = {};
+    exposureMost = 0;
+    sightings = [];
     departureTrack = initialDepartureTrack;
     commanded = initialCommandedState;
     drawn = undefined;
@@ -386,16 +399,43 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
     // a critical function short of power. A new alert, or one that worsened, drops warp to 1×
     // and ends the frame's run of ticks, so the player meets it in real time (A12).
     let fault: number | undefined;
+    let cautioned = false;
     for (const e of result.events) {
+      if (e.kind === 'exposure') {
+        const total = (exposureReported[e.equipment] ?? 0) + e.amount;
+        exposureReported[e.equipment] = total;
+        if (exposureMost < RADIATION_CAUTION && total >= RADIATION_CAUTION) cautioned = true;
+        if (total > exposureMost) exposureMost = total;
+        continue;
+      }
       const group = criticalFault(e, definition.ship);
       if (group === undefined) continue;
       fault ??= e.t;
+      if (e.t > lastFault) lastFault = e.t;
       if (!shortReported.includes(group)) shortReported.push(group);
+    }
+    // What the eye saw this tick (A19): a well's precursor. A new one drops warp to 1× and ends
+    // the frame's run of ticks; time keeps running (A12).
+    if (sightings.length > 0)
+      sightings = sightings.filter((s) => s.until === undefined || s.until > time());
+    for (const e of result.dynamics ?? []) {
+      if (!e.seen) continue;
+      sightings.push({
+        kind: e.kind,
+        field: e.id,
+        seenAt: e.t,
+        ...(e.until !== undefined ? { until: e.until } : {}),
+      });
+      if (warp > 1) {
+        warp = 1;
+        debt = Math.min(debt, dt);
+      }
     }
     for (const e of result.events)
       if (e.kind === 'objective')
         departureTrack = recordVerdict(departureTrack, e.objective, e.status);
-    if (fault !== undefined || tick % checkEvery === 0) {
+    // While a critical warning stands the gauges are read every tick, so it ends with them.
+    if (fault !== undefined || cautioned || shortSince !== undefined || tick % checkEvery === 0) {
       const believed = model.believedWorld(time());
       updateAlerts(believed.ship, fault);
       if (tick % checkEvery === 0)
@@ -413,7 +453,7 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
   /**
    * Read the gauges. A fault report starts the critical-service warning at once, before the
    * gauges' next sample shows it (they are sampled at the recorder's rate); the gauges end it,
-   * once a sample newer than the report shows every critical function served.
+   * once a sample newer than the latest report shows every critical function served.
    */
   function updateAlerts(ship: BelievedShip, fault: number | undefined): void {
     const now = powerAlerts(ship, definition.ship, play.power.cautionLead);
@@ -425,7 +465,7 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
         (latest, r) => Math.max(latest, r.t),
         -1,
       );
-      if (sampled <= shortSince) {
+      if (sampled <= lastFault) {
         const previous = alerts.find((a) => a.id === 'critical-service');
         const budget = now[0] ?? { stored: 0, demand: 0, drain: 0 };
         critical = previous ?? {
@@ -446,12 +486,31 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
       critical = { ...critical, since: shortSince, deadline: shortSince + play.power.lossGrace };
     }
     const next = critical ? [critical, ...now.filter((a) => a.id !== 'critical-service')] : now;
+    if (exposureMost >= RADIATION_CAUTION) {
+      const budget = now[0] ?? { stored: 0, demand: 0, drain: 0 };
+      next.push({
+        id: 'radiation',
+        level: 'caution',
+        exposure: exposureMost,
+        stored: budget.stored,
+        demand: budget.demand,
+        drain: budget.drain,
+      });
+    }
     const before = new Set(alerts.map((a) => `${a.id}:${a.level}`));
     if (next.some((a) => !before.has(`${a.id}:${a.level}`)) && warp > 1) {
       warp = 1;
       debt = Math.min(debt, dt);
     }
     alerts = next;
+  }
+
+  /** What the eye sees through the window: bodies and rocks, and the encounter's visible fields. */
+  function windowView(): WindowView {
+    const world = truth.sim.world;
+    const base = buildWindowView(world, play.windowMinAngularRadius);
+    const fields = setup.window?.(world);
+    return fields && fields.length > 0 ? { ...base, fields } : base;
   }
 
   /** Each depart objective as believed now (S20). */
@@ -556,6 +615,7 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
         attitude: attitudeMode,
         alerts,
         departure: departures(),
+        sightings,
         outcome,
         ...(planId ? { planId } : {}),
         pending: queue.filter((item) => item.source === 'plan').length,
@@ -580,7 +640,7 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
         ...(first && second ? { compare: [first, second] as const } : {}),
         ...(selection ? { selection } : {}),
         // The one place truth reaches the view without an instrument: what the eye can see.
-        window: buildWindowView(truth.sim.world, play.windowMinAngularRadius),
+        window: windowView(),
         coverageEarlier: (earlierLooks ??= earlierCoverage(
           earlierRecords,
           attemptId,

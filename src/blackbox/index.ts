@@ -53,3 +53,25 @@ export {
   type ProcedureMatch,
   type SaveProcedureInput,
 } from './procedures.ts';
+export {
+  latticeFunctionLog,
+  latticeRetention,
+  type LatticeFunctionLog,
+  type LatticeRetention,
+} from './lattice.ts';
+export {
+  equipmentTimeline,
+  failureOrder,
+  type EquipmentEntry,
+  type EquipmentTimeline,
+} from './condition.ts';
+export {
+  DOSE_RATE_CHANNEL,
+  doseRateReadings,
+  lossReview,
+  readDoseRate,
+  type DoseRateReading,
+  type LossReview,
+  type LossReviewOptions,
+  type RadiationReview,
+} from './radiation.ts';

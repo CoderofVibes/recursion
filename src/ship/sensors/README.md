@@ -101,9 +101,14 @@ recorder throughput. The existing 8 GB store and optional 1 MB/s raw-capture cos
 
 3A's agreed `radiationRestartUntil` and `thermalInhibited` values inhibit fresh output
 from cameras, IMUs, star heads, processors and recorders even when electrical draw stays
-positive. `function-available.ts` mirrors the owner's `functionAvailable(e,t)` until
-`src/ship/condition/index.ts` is merged. Power/thermal housekeeping may still be recorded
+positive. Acquisition uses the merged `src/ship/condition/index.ts` owner's
+`functionAvailable(e,t)` directly. Power/thermal housekeeping may still be recorded
 by the working recorder. A powered reboot does not reset the camera's electrical warmup.
+
+3A's dispatched `powerDraw` includes radiation leakage, which produces heat rather than
+instrument work. `functionalPower` removes that multiplier for camera/processor quality,
+cadence and availability, IMU/star-head minimum delivery, and recorder throughput. Recorded
+electrical watts remain the full measured draw; leakage never buys better observations.
 
 Every angular-only coverage state is **unresolved**. Blank, occluded, low-power,
 truncated or stale observations never certify an empty opening. `latticeFrameFreshness`
@@ -148,3 +153,11 @@ The production ship/environment warms cold optics, retains the authored field's 
 and never enables reconstruction. Tests retain prior tiles after camera failure,
 reject camera/processor/recorder reboot output, preserve housekeeping, enforce power,
 occlusion, storage and 1 KiB bounds, and replay the actual archived measurements exactly.
+Actual 3A upset/recovery and thermal-protection outputs also exercise the adapter;
+retained images survive the outage, with no fabricated readings during recovery.
+
+[DEMONSTRATED: `lattice-power.test.ts`, `lattice.test.ts`] Real power dispatch with
+radiation leakage cannot cross camera/processor/recorder thresholds, raise cadence or
+improve angular uncertainty. An actual processor upset discards an unfinished frame;
+a recorder-only upset pauses retention while powered processing memory preserves the
+original acquisition. Recovery and archive replay keep acquisition and availability distinct.
