@@ -79,13 +79,16 @@ export class QualityGovernor {
  * One hook at the start of RoomView.frame. Use the wall clock, not the loop's capped dt.
  * Ignore the opaque console, transitions, loss, hidden tabs and deliberately thinned warp
  * frames. Only render targets change; CSS labels and console instruments stay native size.
+ * Load with ?quality=full to pin scale 1 for this hook's lifetime, including scripted shots.
  */
 export function createQualityHook(
-  renderer: WebGLRenderer,
-  composer: EffectComposer,
+  renderer: Pick<WebGLRenderer, 'getPixelRatio'>,
+  composer: Pick<EffectComposer, 'setPixelRatio'>,
   scripted = false,
 ) {
   const governor = new QualityGovernor();
+  const fullQuality = new URLSearchParams(window.location.search).get('quality') === 'full';
+  if (fullQuality) composer.setPixelRatio(renderer.getPixelRatio());
   let previous: number | undefined;
   let eligibleBefore = false;
   let view = scripted ? 'opening' : 'room';
@@ -103,7 +106,7 @@ export function createQualityHook(
     currentWarp = warp;
     shipTime = t;
     const now = performance.now();
-    const active = eligible && warp === 1 && !document.hidden;
+    const active = !fullQuality && eligible && warp === 1 && !document.hidden;
     if (previous !== undefined && active && eligibleBefore) {
       if (governor.observe(now - previous))
         composer.setPixelRatio(renderer.getPixelRatio() * governor.scale);
