@@ -4,7 +4,7 @@ The live state of the build between threads: who is running, who holds which sha
 
 **Integrator, after a compaction:** read this file first, then `git log --oneline -15`, then the handoffs of any thread marked running.
 
-**Last updated:** 2026-11-14, A19 (wells are real funnels); S22 rewritten.
+**Last updated:** 2026-11-14, 3E, S17 and S21 merged. Unannounced checkpoints sit on 2D, 2F, 2C, 2G (its speed pass) and 3B; merge them when announced.
 
 ## Threads
 
@@ -16,17 +16,17 @@ The live state of the build between threads: who is running, who holds which sha
 | 2C model and Black Box | Opus 5.5 | `.worktrees/2c` · `p2/2c-model` | Running: WIP committed, then redone on the 3D model; bodies' track uncertainty; A18 (1) with 2F | — | before 2G |
 | 3B Inverse Wells | GPT/Codex | `.worktrees/3b` · `p3/3b-wells` | Running: field mechanics first | Layout from S16; loading via R1 | — |
 | 3C Chain Link Fence | GPT/Codex (GPT-6 Astra), reassigned by the owner | `.worktrees/3c` · `p3/3c-lattice` | Running: field and exposure mechanics first | S17's numbers when they land (R8) | — |
-| 3E playability harness | GPT/Codex | `.worktrees/3e` · `p3/3e-harness` | Running | — | — |
+| 3E playability harness | GPT/Codex | `.worktrees/3e` · `p3/3e-harness` | **Done**: `npm run harness` (smoke, reference, learning, routes, all); its pending-acceptance list names the gaps | — | `44db2fc` |
 | 3A power and thermal | GPT/Codex | not created yet · `p3/3a-power-thermal` | **Gated** | After 2G's speed pass merges; integrator creates the worktree then | — |
 | 3D expedition | Opus 5.5 | not created yet · `p3/3d-expedition` | **Gated** | After 2F's and 2C's first checkpoints merge | — |
 | 3F console v2 | Claude | — | **Gated** | After 2D hands off | — |
 | S16 Well Garden layout | GPT/Codex | `.worktrees/s16` · `st/s16-well-garden` | **Done**: three-well prototype, 25-entry catalogue, garden budget (A15 Q05) | — | `e6eb51d` |
 | S22 well field (real funnels) | GPT/Codex | `.worktrees/s22` · `st/s22-big-well-field` | Ready to launch (rewritten for A19) | Feeds 3B (R12) | — |
-| S17 lattice first contact | GPT/Codex | `.worktrees/s17` · `st/s17-lattice-first-contact` | Running | Feeds 3C; its landing starts 3C | — |
+| S17 lattice first contact | GPT/Codex | `.worktrees/s17` · `st/s17-lattice-first-contact` | **Done**; five owner questions open | Feeds 3C (R8), 3A, 2C | `ba7568e` |
 | S18 tether gate | GPT/Codex | `.worktrees/s18` · `st/s18-tether-gate` | Running | Future tether work | — |
 | S19 tidal check | GPT/Codex | `.worktrees/s19` · `st/s19-tidal-check` | **Done**: Tidal Orchard deferred (A15 Q21) | — | merged, see log |
 | S20 3D recheck | GPT/Codex | `.worktrees/s20` · `st/s20-3d-recheck` | Running | Findings go to 2D (R5) and the submission | — |
-| S21 belt and power | GPT/Codex | `.worktrees/s21` · `st/s21-belt-power` | Running | Values go to 2F (R6) and 3A | — |
+| S21 belt and power | GPT/Codex | `.worktrees/s21` · `st/s21-belt-power` | **Done**; two owner questions open | Values go to 2F (R6), 3A; cloud seam R14 | `d9e986c` |
 
 Prompts: Phase 2 in `phase-2/`, Phase 3 in `phase-3.md`, studies in `studies/`. The resume notes for 2D, 2G, 2F and 2C were sent through the owner on 2026-11-14 and are summarised in the Status column.
 
@@ -58,9 +58,9 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 | R3 | 2F ↔ 2C | A18 (1): the forecast is computed from the moment of commitment while time keeps running | **Agreed** (both prompted) | Model side is 2C's; game side is 2F's |
 | R4 | 3B, 3C → 2D | Mount points for encounter UI in `src/console/encounters/` and `src/view3d/fields/` | **Open:** 2D told to expect it | |
 | R5 | S20 → 2D | S9 replayed on the 3D build: fixed, still there or new | **Open:** waits on S20 | Integrator forwards |
-| R6 | S21 → 2F, 3A | Belt size (A18 (2)) and power values (A18 (5)) | **Open:** waits on S21 | 2F builds the mechanisms first |
+| R6 | S21 → 2F, 3A | Belt size (A18 (2)) and power values (A18 (5)) | **Landed** `d9e986c`; relay once the owner answers S21's two questions | Radiation-cloud crescent, ~830 km pass target, 120 s critical-power rule, 4 h endurance caution |
 | R7 | S16 → 3B | Well Garden layout, seeds and vectors | **Done** `e6eb51d`: the three-well prototype for 3B's mechanics | The owner then asked for a big field (R12) |
-| R8 | S17 → 3C | First-contact numbers: dose, failure order, Black Box function cost, reconstruction | **Open:** waits on S17 | Its landing starts 3C |
+| R8 | S17 → 3C | First-contact numbers: dose, failure order, Black Box function cost, reconstruction | **Landed** `ba7568e`; relay with the owner's answers to S17's five questions | Also asks 3A (causal failures), 2C (reconstruction and retention), integrator (subtick acquisition schedule in `truth-step.ts`, contracts) |
 | R9 | 3C → 2C | The Black Box function in A16 (records sensors; FLIGHT shows the rebuilt lattice) | **Open:** 3C running | |
 | R10 | 3C ↔ 3A | Component faults from radiation: electrics and instruments (A16) | **Open:** 3C running; 3A gated | |
 | R11 | 2G → integrator | Release check from A18 (7) on 2G's speed pass: rerun S15's script, modest profile | **Open:** with 2G's merge | |
@@ -69,12 +69,17 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 
 | R13 | 3B → 2D | The funnels in the window view (A19: wells are visible, with striking visuals). 3B draws them in `src/view3d/fields/wells/`; 2D mounts them in the room's window and FLIGHT | **Open:** to relay | Folds into R4 |
 
+| R14 | S21 → 3C, 3A, 2F | The Gravity range's radiation-cloud crescent uses the lattice's exposure units and damage seam (3C, 3A); 2F places it as content | **Open:** after the owner approves S21 Q1 | |
+| R15 | S17, S21 → integrator | Contract additions: typed acquisition/coverage, field observation and power-loss interfaces; a subtick acquisition schedule in `truth-step.ts`; a save-schema bump | **Open** | Integrator applies to `src/contracts/` when a builder requests them |
+
 Add new rows at the bottom with the next ID. Never renumber.
 
 ## Owner decisions still open
 
 - **Submission:** the summary's opening and the demo format (S12, `docs/studies/s12/`). Taken at the submission switch.
 - **S9:** whether the five-minute target means insight plus a fresh observed forecast (recommended yes); whether to allow a shorter evidence opportunity if the UI fixes miss it (recommended yes). Show the 1–4 view shortcuts: folded into 2D's R1.
+- **S17 (lattice):** harden the console; end the attempt on losing both PDUs; a 1 KiB channel tile at 1 Hz in the diagnostic packet; an eight-layer prototype at 1.4 m/s with a 125 kg RCS test budget; keep 8 GB with optional raw capture. All recommended yes.
+- **S21 (Gravity range):** the visible radiation-cloud crescent and ~830 km pass target; the 120 s critical-power loss rule with a 4 h endurance caution. Both recommended yes. (Its third question is already A18 (3).)
 - **S10:** keep the four reference pictures out of the release (recommended yes); confirm the live challenge listing and GMAT data eligibility (owner check).
 
 Decided: A15 (S11's queue), A16 (the lattice), A17 (the ending) and A18 (the Gravity range after 3D).
@@ -83,7 +88,9 @@ Decided: A15 (S11's queue), A16 (the lattice), A17 (the ending) and A18 (the Gra
 
 | Commit | What |
 |---|---|
-| (this commit) | A19: wells are real funnels; brief §7 clarified; S22 rewritten |
+| (this commit) | Ledger after 3E, S17, S21 |
+| `d9e986c`, `ba7568e`, `44db2fc` | S21; S17; 3E (`npm run harness`) |
+| `b3ecb2d`, `636c2f4` | A19: wells are real funnels, visible; brief §7 clarified; S22 rewritten |
 | `303d268` | S16 merged (`e6eb51d`); owner's S16 answers in A15 Q05; S22 written |
 | `108f4fc` | S19 merged; Tidal Orchard deferred (A15 Q21) |
 | `ae562fe` | 3C reassigned to GPT/Codex and launched |
