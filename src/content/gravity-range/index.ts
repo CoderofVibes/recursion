@@ -24,7 +24,7 @@ export const SEED = 'gravity-range-1';
  * Bump whenever a change here would make earlier Black Box records describe a different world
  * or ship (law, bodies, field, sensors). The app keeps one save slot per value.
  */
-export const SAVE_FORMAT = 2;
+export const SAVE_FORMAT = 3;
 
 /**
  * [ASSUMED] 1 s suits the P16 scale (2A: orbits of hours; worst error 11 mm over 20,000 s).
