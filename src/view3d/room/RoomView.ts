@@ -52,6 +52,7 @@ import type { RoomShot } from '../opening/shot.ts';
 import { makeShipHolo } from '../ship/ShipHolo.ts';
 import type { ShipHolo } from '../ship/ShipHolo.ts';
 import { CON, DOOR, HOLO, REACH, ROOM, VIEW } from './layout.ts';
+import { sampleLoss } from './loss.ts';
 import type { Hotspot, ViewMode } from './layout.ts';
 import { buildOutside } from './outside.ts';
 import type { Outside } from './outside.ts';
@@ -133,7 +134,7 @@ export class RoomView {
     lift: VIEW.room.lift,
     fov: VIEW.room.fov,
   };
-  private death: { t: number; shake: boolean; stage: LossStage } | null = null;
+  private death: { t: number; shake: boolean; still: boolean; stage: LossStage } | null = null;
   private readonly mouse = new Vector2();
   private readonly ray = new Raycaster();
   private drag: { x: number; y: number; moved: boolean } | null = null;
@@ -150,16 +151,22 @@ export class RoomView {
   private readonly cleanup: (() => void)[] = [];
   private readonly canvas: HTMLCanvasElement;
   private readonly events: RoomEvents;
+  private readonly reduceMotion: () => boolean;
 
   constructor(
     canvas: HTMLCanvasElement,
     labels: HTMLElement,
     definition: ShipDefinition,
     events: RoomEvents,
-    options?: { readonly scripted?: boolean },
+    options?: {
+      readonly scripted?: boolean;
+      /** Whether the player asked for less motion: the loss then neither shakes nor flickers. */
+      readonly reduceMotion?: () => boolean;
+    },
   ) {
     this.canvas = canvas;
     this.events = events;
+    this.reduceMotion = options?.reduceMotion ?? (() => false);
     this.renderer = new WebGLRenderer({
       canvas,
       antialias: true,
@@ -362,12 +369,21 @@ export class RoomView {
    */
   lose(shake = true): void {
     if (this.death) return;
-    this.death = { t: shake ? 0 : lossSequence.shakeEnd, shake, stage: 'start' };
+    this.death = {
+      t: shake ? 0 : lossSequence.shakeEnd,
+      shake,
+      still: this.reduceMotion(),
+      stage: 'start',
+    };
     if (document.pointerLockElement) document.exitPointerLock();
     this.events.loss('start');
   }
 
-  frame(dt: number, data: RoomFrame, cameraOverride?: Pick<RoomShot, 'position' | 'rotation'>): void {
+  frame(
+    dt: number,
+    data: RoomFrame,
+    cameraOverride?: Pick<RoomShot, 'position' | 'rotation'>,
+  ): void {
     this.time += dt;
     this.resize();
     if (this.width === 0 || this.height === 0) return;
@@ -492,6 +508,15 @@ export class RoomView {
 
     if (this.death) this.stepDeath(dt);
 
+    // Cut to black: the canvas itself goes dark on this frame, so the lit room never shows for
+    // a frame between the last of the shake and the overlay's curtain arriving (R43).
+    const black = this.death?.stage === 'black' || this.death?.stage === 'pip';
+    this.labels.domElement.style.visibility = black ? 'hidden' : '';
+    if (black) {
+      this.renderer.setRenderTarget(null);
+      this.renderer.clear();
+      return;
+    }
     this.composer.render();
     this.labels.render(this.scene, camera);
   }
@@ -601,15 +626,14 @@ export class RoomView {
       this.events.loss(s);
     };
     if (t < L.shakeEnd) {
-      // Shake up and down, lights and hologram flickering out.
-      const k = 1 - t / (L.shakeEnd * 1.27);
-      this.camera.position.y += Math.sin(t * 41) * L.shake * k + Math.sin(t * 17) * L.shake * 0.4;
-      this.camera.rotateZ(Math.sin(t * 29 + 1) * L.roll * k);
-      this.shell.setLevel(
-        this.cur.level *
-          (Math.sin(t * 53) > -0.2 ? 0.35 + 0.65 * Math.abs(Math.sin(t * 23)) : 0.05),
-      );
-      this.holoRoot.visible = Math.sin(t * 61) > -0.3 && t < L.hologramEnd;
+      // Shake up and down while the lights and the hologram fail, in the theme's authored dips
+      // (R43: never more than three flashes in a second; see loss.ts).
+      const now = sampleLoss(t, d.still);
+      this.camera.position.y += now.lift;
+      this.camera.rotateZ(now.roll);
+      this.shell.setLevel(this.cur.level * now.light);
+      this.holoRoot.visible &&= now.hologram;
+      if (!now.hologram) this.shell.setHologramLight(0);
       return;
     }
     if (t < L.pipAt) stage('black');
