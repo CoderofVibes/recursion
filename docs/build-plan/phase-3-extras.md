@@ -169,6 +169,13 @@ GPT threads keep their own lanes: VX (visuals), AU (audio), 3C (sensors, includi
 
 **Owns:** `src/audio/`, `public/audio/` and `docs/audio/`.
 
+**Relaunch (owner, 2026-11-15).** AU's first launch left no work on the branch, so it starts again from current `main`: the opening is in the game, and the console and room now belong to 3F. What changed since the prompt above:
+- **The mute control already exists.** `src/app/sound.ts` keeps the player's choice (`soundMuted()`, `setSoundMuted()`, `onSoundMuted()`), and the room shows "M ▸ SOUND ON" and answers the `M` key. Read it; don't build another.
+- **The mount line** (R24) goes in 3F's `src/app/App.tsx`, still one line under your scoped exception; tell 3F through the integrator before committing it. 3F hides the sound switch until audio exists: export a way to tell (for example `soundAvailable()` from `src/audio/`) and name it in your checkpoint.
+- **The opening's cue times** moved with the 19.5 s opening (R42): opening-rumble 6.5 s, alarms 6.6, 7.8 and 8.47 s, loss-failure 9.35 s, black-cut 10.65 s, opening-title 11.95 s, **new** title-out 15.9 s, room-wake 17.9 s. With reduced motion the opening is a still sky and a plain fade (R44); the loss holds at most three flashes a second (R43), so its sounds follow NIGHT's schedule in `src/view3d/room/loss.ts`.
+- **The cue list comes first, as before**, because the owner generates every file in ElevenLabs from it. Commit `docs/audio/cues.md` as your first checkpoint and say so in one line.
+- **The lighter bar applies** (A26, below): done means a judge hears the game respond to what happens, and nothing breaks without the files. Keep check and build green; never loosen a test.
+
 ---
 
 # The morning threads (2026-11-15, A26)
@@ -208,7 +215,7 @@ This replaces 3F in [phase-3.md](phase-3.md), which extended the console for an 
    - the radiation monitor's reading and caution on SYSTEMS (R37; it reads "no reading" today);
    - the loss review's radiation block on the debrief (2C's update 7 request);
    - MODEL's truncated readouts at laptop width, and FLIGHT's right column below the fold (NIGHT's finding 10);
-   - the "M ▸ SOUND ON" switch, shown while the game has no audio: hide it until audio exists (AU).
+   - the "M ▸ SOUND ON" switch, shown while the game has no audio: hide it until audio exists. AU is relaunched and will tell you how to know (for example `soundAvailable()` from `src/audio/`), and it adds one mount line to `App.tsx` under its scoped exception (R24).
 6. **Keep every capability** the console has today: planning burns and pointing; PREVIEW, COMMIT and CUTOFF; procedures and RECALL; records, debrief and compare; the model's TEST and ADOPT; the encounter panels; systems and configuration. Redesign how they are found and read, not whether they exist.
 
 **Owns** (2D hands over its whole lane; it is paused and does not resume on these paths):

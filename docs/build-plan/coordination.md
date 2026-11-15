@@ -25,7 +25,7 @@ The live state of the build between threads: who is running, who holds which sha
 | OP the opening | GPT (base) then Opus 5.5 | `.worktrees/op` · `p3/op-opening` | **Merged** (`6ac2397`): the 19.5 s opening, replay and Skip, reduced motion, room hooks (R23), the home window shared with the ending. Not yet in the game: only the dev preview plays it (R41). Its dev server and launch entry are removed | Gate once per browser (A25) | `6ac2397` |
 | VX window and sky visuals | GPT/Codex (GPT-6 Astra) | `.worktrees/vx` · `p3/vx-visuals` | **Running**: first pass merged (`01a0947`); now on the atlas pass (`7f43b09` on its branch, unmerged). **Next** (A26; relay text in `phase-3-extras.md` § VX — next; lighter bar): each mission's whole view, and the wells' optical producer (R50) | S15 gate fails (R49). Theme owner (now 3F) may adopt `sky/style.ts` | `01a0947` |
 | NIGHT judge's run | Claude (Fable 5.2) | `.worktrees/night` · `p3/night-hardening` | **Done, merged** (`42b5c36`, from `cb1ace1`); report `docs/handoffs/night.md`; judge-run driver in `docs/handoffs/night/judge-run/` | Its found-not-fixed list feeds R46–R48 | `42b5c36` |
-| AU basic audio | GPT/Codex | `.worktrees/au` · `p3/au-audio` | **No work on the branch**: 0 ahead of main, worktree clean at `b5f84ac` | Ask the owner whether AU ran, or where its work is | — |
+| AU basic audio | GPT/Codex | `.worktrees/au` · `p3/au-audio` | **Relaunching** (owner, 2026-11-15): its first launch left no work; the branch is brought up to main. Prompt `phase-3-extras.md` § AU with its relaunch notes; lighter bar | First checkpoint: the cue list (R25), then the owner generates the files | — |
 | ART window references | Owner's choice (Claude or GPT) | `.worktrees/art` · `art/window-references` | **Merged** (`0e9bf1b`, from `49cfd09`; through round 7 prompts): `docs/art/` only, no images (checked). **References only (A23): no image ships or is committed** | If it runs again, merge docs only | `0e9bf1b` |
 | S22 well field (real funnels) | GPT/Codex | `.worktrees/s22` · `st/s22-big-well-field` | **Done**: funnels 120 km long, 20 km mouth, 1 km throat, pull 0.02–0.10 m/s²; 2,601 sites, 650 appearing; owner questions open | Feeds 3B (R12) | `15171df` |
 | S17 lattice first contact | GPT/Codex | `.worktrees/s17` · `st/s17-lattice-first-contact` | **Done**; five owner questions open | Feeds 3C (R8), 3A, 2C | `ba7568e` |
@@ -69,7 +69,7 @@ In the morning the integrator merges in this order: the paused threads' checkpoi
 - **Decided (A26):** VX builds the producer (R50). Was: **Wells in the window:** who builds the optical-data producer VX needs (2D or 3B), or leave the Garden as a preview.
 - **S15's release check fails after VX:** tune VX's level of detail, or accept with a note.
 - **The judge's README:** the picker and the Twin Deeps recipe.
-- **AU:** did it run? Without it the game ships silent.
+- **Decided:** AU relaunched (it never ran). Was: **AU:** did it run? Without it the game ships silent.
 - **Submission:** S12's opening line, demo format and capture, `docs/submission/`, the portal, and when the owner calls the switch (a couple of hours before 5 pm Pacific).
 - Still open from before: credits or a debrief after the ending; the loss audio at the reveal; reduced motion (R44, integrator chose a still sky).
 
@@ -129,7 +129,7 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 | R22 | 3C → 2C, 2F | Versioning for the lattice: chain-link save format 2 for the twenty-fence world; old attempts keep their original archive and frame; new channels `lattice.angular-fragments.v2` and `lattice.raw-tile.v1` fit the unchanged `Measurement`/`AttemptRecord` shape. 2C versions its reconstruction caches and says whether the archive store needs a migration; 2F confirms the save side | **Open**: integrator approves the shape; awaiting 2C's and 2F's agreement | 3C changed no IndexedDB or shared save schema |
 
 | R23 | OP → 2D | The room hooks (window scenery, scripted shots, alarm lighting) in `RoomView.ts`, `outside.ts` and `shell.ts` | **Merged** `6ac2397`; 2D to accept them. Merging main will conflict with 2D's funnels-in-window work in `outside.ts`: keep both | |
-| R24 | AU → 2D | One mount line in `src/app/` for the audio module, plus a mute control | **Open** | |
+| R24 | AU → 2D, now 3F | One mount line in `src/app/` for the audio module, plus a mute control | **Open**: the mute control exists (`src/app/sound.ts`, 2D); the mount line goes in 3F's `App.tsx` under AU's scoped exception | 3F hides the switch until AU says audio exists |
 | R25 | AU → owner | The cue list in `docs/audio/cues.md` with ElevenLabs prompts; the owner generates the files into `public/audio/` | **Open**: waits on AU's first checkpoint | Credit ElevenLabs (A22) |
 
 | R26 | 3A → 2F | 3A's wiring | **Done** `920a9ed` | |
@@ -155,7 +155,7 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 | R40 | Owner → 2D | The region picker (A25) | **Done** `0ee3d1c`: a Regions panel at the top of MISSION, with the owner's label | NIGHT: item 2 is already done |
 
 | R41 | OP → 2D, OP | Put the opening in the game: 2D mounts `OpeningGate` in the app entry (`src/app/App.tsx`) ahead of the room, waking into the Gravity range. OP changes its gate (`src/app/opening/launch.ts`) from once per save to once per browser (A25) | **Done** (NIGHT, merged with this ledger): once per browser; `?opening=replay` replays with Skip; a region opened by its own address leaves the marker alone | Owner's call if the opening should precede whichever region a browser opens first: one line, `appOpening` in `launch.ts` |
-| R42 | OP → AU | Cue times moved with the 19.5 s opening: opening-rumble 6.5 s, alarms 6.6/7.8/8.47, loss-failure 9.35, black-cut 10.65, opening-title 11.95, **new** title-out 15.9, room-wake 17.9 | **Open**: relay | |
+| R42 | OP → AU | Cue times moved with the 19.5 s opening: opening-rumble 6.5 s, alarms 6.6/7.8/8.47, loss-failure 9.35, black-cut 10.65, opening-title 11.95, **new** title-out 15.9, room-wake 17.9 | **In AU's relaunch notes** | |
 | R43 | OP → 2D | **Photosensitivity:** the ordinary loss sequence (A8) flickers faster than 3 times a second. Fix it before the ending (A17) reuses it. Also: Earth and title-size tokens | **Done** (NIGHT): an authored schedule, at most three flashes in any second, tested at 24–144 frames/s; reduced motion neither shakes nor flickers. Earth and title tokens: VX | `motion.flicker` is defined and unused; gate it if anything adopts it |
 | R44 | Integrator | Reduced motion in the opening keeps the slow star bending but not the swelling dark. Integrator's call: a fully still sky with the alarm light and a plain fade to black, the safer choice for motion sensitivity. The owner may overrule | **Done** (NIGHT): still sky, steady alarm light, plain fade | The owner may still overrule |
 
@@ -181,7 +181,8 @@ Decided: A15 (S11's queue), A16 (the lattice), A17 (the ending) and A18 (the Gra
 
 | Commit | What |
 |---|---|
-| (this commit) | A26 (the owner's morning playtest) recorded; prompts for the morning threads in `phase-3-extras.md`: 3F (console v2, full bar), VX's next pass, 2C and 2F resuming (lighter bar); 2D retired into 3F; R50 |
+| (this commit) | AU relaunched (notes in its prompt: the existing mute seam, the mount line via 3F, R42's cue times); 3F told to hide the sound switch until audio exists |
+| `3690c4b` | A26 (the owner's morning playtest) recorded; prompts for the morning threads in `phase-3-extras.md`: 3F (console v2, full bar), VX's next pass, 2C and 2F resuming (lighter bar); 2D retired into 3F; R50 |
 | `65d3185` | S23 merged for the record (`3d93895`): the opening's study, reference script and vectors. Check 1,356 tests + speed test, build, production smoke of the opening and all three regions, no page errors. **All overnight branches now merged** |
 | `0e9bf1b` | ART merged (`49cfd09`): `docs/art/` (art bible, references, selections, window prompts and views, VX brief), no images. Check 1,356 tests + speed test, build, production smoke of the opening and all three regions, no page errors |
 | `5c442ce` | 3B merged (`a6887f0`): live-field admission evidence (`src/content/inverse-wells/admission-reports/`, 8.5 MB of JSON, not imported by the app). Check 1,356 tests + speed test, build, harness smoke (3 pass), production smoke of the opening and all three regions, a Well Garden flight to its designed loss, and **Twin Deeps' full learning loop** (two dives, TEST passes 1.02 against 1.11, exponent 2.5001, RMS 543 m → 26 m, ADOPT), no page errors |
