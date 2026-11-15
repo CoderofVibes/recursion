@@ -50,4 +50,23 @@ For the disclosure: MidJourney was used to make reference images that guided the
 | X02 | `5713ccd3-fe23-432d-a58a-c9387779c031` | 2 | chosen | Moving holes in the stars | Two small black fragments that are only holes in a dense star field. Subtle and true. |
 | E01 | `aa82d708-9179-4094-8f6d-1a8e4cc7c16f` | 0 | dropped | | A ground again and a green cast. Earth's size is about right (about 1.5 % of the width). The owner: Earth is about five seconds of the game, and OP already draws a procedural Earth, so the Earth prompts stop here. |
 
+## Round 3 (2026-11-15): W01c, L01b, L02b, X04b
+
+| Prompt | Job ID | # | Verdict | Use | Why |
+|---|---|---|---|---|---|
+| L02b | `c3c1278a-9785-4e33-ac54-8ce7b8fc423e` | 0 | **chosen** | The hairline (C06's first sight) | Black sky, and one impossibly thin line of white light with fine fibres hanging from its edge. Minimal, unsettling, exactly the moment. Correction: its glow fringe is teal; make it violet. |
+| L02b | `2adef2fe-0f39-4513-b047-0ce369f38640` | 1 | **chosen** | The hairline tearing open | The next moment: the bright arc thickens and splits along part of its length into a sliver with fibrous edges and a warm glimpse inside. Together with `c3c1278a` #0 it gives the opening's first two stages. |
+| L02b | `2adef2fe-0f39-4513-b047-0ce369f38640` | 0 | partial, for X13 | A bead of light on a dark limb | Not a hairline: a dark body's edge with one brilliant bead where a sun slips behind it. That's X13 (Back of the World's eclipse). The saturated orange galaxy behind it is too strong. |
+| L02b | `2adef2fe-0f39-4513-b047-0ce369f38640` | 3 | dropped | | A planet's atmosphere at the top. |
+| L01b | `836473b2-3ce2-4d8a-9a0e-d4d45899ca25` | 1 | **chosen** | Radiation crescent placement and material | Close to the physics: a dark body, a ring around it, and a curtain of violet light with fine vertical striations standing just outside the ring on one side only. Dark, elegant, violet-white. Ignore the rock "ground" in front and the ring drawn as a solid band; the belt is sparks. |
+| L01b | `be1613bb-f7ad-4602-b8c5-287e53c53e97` | 0 | partial | The curtain as a separate arc | A small body inside a ring of sparks, and an aurora-like curtain arcing away on one side, separate from the rocks. The foreground ground and the pink tint are wrong. |
+| L01b | `be1613bb-f7ad-4602-b8c5-287e53c53e97` | 3 | dropped | | A pink ribbon over a glowing horizon. |
+| L01b | `c64f50b4-3047-4867-81ce-423e78fd7611` | 2 | dropped | | A body half-sunk in a sea of rocks: ground again. Beautiful backlight, but nothing here is the crescent. |
+| W01c | `bce5f206-49df-4618-8f7f-416f67cbbab1` | 1 | partial | One funnel side-on; far funnels as threads | The left funnel is the best side view yet: wire rings tapering to a single brilliant point. Across the frame, distant funnels are thin threads each ending in a spark, which is the field-at-distance look. Drop the violet web of nebula filling the right half: the sky stays black and natural. |
+| W01c | `a5aac057-b5da-41ef-880c-e5c40ed7d69f` | 0 | partial, for W04 | Dotted rings | A funnel seen end-on as rings of fine dots closing on a bright point: exactly how a precursor (W04) should look before its rings join up. Drop the shooting stars (streaks imply air or motion that isn't there) and the blue cast. |
+| X04b | `79f27860-084f-45b7-bd51-f39ab9b0f10d` | 3 | partial | Red Wall surface | A magnificent layered cliff in warm raking light, with a small edge-on galaxy in the black sky beside it. But it stands on a planet with an atmosphere and a horizon; the wall must hang in open space. |
+| X04b | `5e3a2582-f079-4992-8147-226431c25e6e` | 0 | dropped | | A split image: two pictures side by side. |
+
+**Pattern after three rounds:** MidJourney adds a ground, a horizon or an atmosphere whenever a prompt has a large body or many rocks. Round 4 prompts say "seen from far out in open space" and put `ground, horizon, atmosphere, planet surface, landscape` in `--no`.
+
 Images shipped as textures: **none** (A23).

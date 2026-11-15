@@ -69,34 +69,66 @@ W03 (a funnel end-on), L01 (the radiation crescent), X02 (Shadow Observatory) an
 Round 2 verdicts are in [selections.md](selections.md). Style references are named by job ID and grid position.
 
 ### W01c — The Well Garden, floating free
-- **Fixes:** MidJourney keeps putting funnels on a floor. **Style refs:** `130bc062` #0 and `c29febbf` #1. **Status:** to try.
+- **Fixes:** MidJourney keeps putting funnels on a floor. **Style refs:** `130bc062` #0 and `c29febbf` #1. **Status:** tried (round 3; see selections.md).
 
 ```
 ultra-wide panoramic view of empty deep space with no ground, no floor and no horizon, hundreds of long narrow funnels floating freely in every direction like scattered needles, each drawn in thin crisp dim violet wireframe rings and lines that taper to a single brilliant white point at the narrow end, one large funnel nearby seen from the side, several pointing straight at the viewer as ring webs around a bright point, many far away as thin threads each ending in a tiny white spark, black vacuum between them, a few dark rocks, unfamiliar stars, cinematic, high dynamic range --ar 3:1 --style raw --no text, letters, people, spaceship interior, frame, ground, floor, surface, horizon, landscape, rain, spiral, swirl, tornado, solid funnels, pink, lightning, smoke, fire
 ```
 
 ### L01b — The radiation crescent, as a crescent
-- **Fixes:** a partial arc beside the belt, not a ring wrapped round it. **Style ref:** `0a7953fe` #3. **Status:** to try.
+- **Fixes:** a partial arc beside the belt, not a ring wrapped round it. **Style ref:** `0a7953fe` #3. **Status:** tried (round 3; see selections.md).
 
 ```
 ultra-wide panoramic view of deep space, a dark rocky sphere at the centre circled by a thin flat ring of sunlit asteroids, and beyond the ring on one side only a single curved crescent of soft streaming violet veils like a slow aurora, the crescent covering only a short arc of the circle, separated from the rocks by a gap of dark space, translucent with stars showing through, black vacuum elsewhere, quiet and menacing, cinematic, high dynamic range --ar 3:1 --style raw --no text, letters, people, spaceship interior, frame, full ring, flames, fire, lightning, ground, surface, plate, pink, green aurora
 ```
 
 ### L02b — The hairline opens
-- **New:** the Turning Rim's first moment, the hairline starting to widen. **Style ref:** `9dcfe97b` #0 (and #1 for the arc). **Status:** to try.
+- **New:** the Turning Rim's first moment, the hairline starting to widen. **Style ref:** `9dcfe97b` #0 (and #1 for the arc). **Status:** tried (round 3; see selections.md).
 
 ```
 ultra-wide panoramic view of deep space, high in the sky a hair-thin arc of white light with a faint violet fringe, along part of it the arc has begun to split open into a very narrow sliver of a different sky, a glimpse of a rich warm galactic band inside the sliver, its edge frayed into fine luminous fibres, the rest of the sky dark and unfamiliar with sparse stars, subtle and unsettling, cinematic, high dynamic range --ar 21:9 --style raw --no text, letters, people, spaceship interior, frame, smoke, clouds, snow, vortex, swirl, tunnel, laser, beam, pink
 ```
 
 ### X04b — The Red Wall
-- **New place:** R01. **Style ref:** `ca1c5c59` #2 (the proposed hero). **Status:** to try.
+- **New place:** R01. **Style ref:** `ca1c5c59` #2 (the proposed hero). **Status:** tried (round 3; see selections.md).
 
 ```
 ultra-wide panoramic view of deep space, a sheer vast face of rust red and garnet rock filling the right third of the view, layered and fractured, lit low and warm by a small distant sun so every ledge casts a long black shadow, above and below it cold black space with sparse unfamiliar stars, far off the faint edge-on lens of a distant galaxy, stark warm against cold, realistic, cinematic, high dynamic range --ar 21:9 --style raw --no text, letters, people, spaceship interior, frame, purple, violet, lens flare, lava, fire, glow, atmosphere, ground, bright red
 ```
 
 ---
+
+## Round 4: four new places
+
+Round 3 verdicts are in [selections.md](selections.md). MidJourney keeps adding a ground, horizon or atmosphere under large bodies and rocks, so these prompts say "seen from far out in open space" and exclude them.
+
+### X04c — The Red Wall, hanging in space
+- **Fixes:** no planet under it. **Style ref:** `79f27860` #3. **Status:** to try.
+
+```
+ultra-wide panoramic view seen from far out in open space, a sheer vast slab of rust red and garnet rock hanging alone in black vacuum, filling the right third of the view, its face layered and fractured, lit low and warm by a small distant sun so every ledge casts a long black shadow, nothing beneath it but black space and sparse unfamiliar stars, a small faint edge-on galaxy far off in the black, stark warm against cold, realistic, cinematic, high dynamic range --ar 21:9 --style raw --no text, letters, people, spaceship interior, frame, ground, horizon, atmosphere, planet surface, landscape, mountains, purple, violet, lens flare, lava, fire, glow, bright red
+```
+
+### X03b — Borrowed Spin: the abandoned structure
+- **New place:** A03. **Style ref:** `ca1c5c59` #2. **Status:** to try.
+
+```
+ultra-wide panoramic view seen from far out in open space, a vast abandoned rotating structure spanning the view, long dark girder arms sweeping slowly above and below a central hub, weathered metal lit edge-on by a small distant sun so only thin bright edges show, no lights anywhere, its scale impossible to judge, behind it the faint edge-on lens of a distant galaxy, silent and ancient, realistic, cinematic, high dynamic range --ar 21:9 --style raw --no text, letters, people, spaceship interior, frame, ground, horizon, atmosphere, planet surface, purple, violet, lens flare, glowing lights, windows, sci-fi spaceship
+```
+
+### X06b — Beta's shadow across the belt
+- **New place:** C02 Twin Deeps. **Style ref:** `ca1c5c59` #2. **Status:** to try.
+
+```
+ultra-wide panoramic view seen from far out in open space, a near-black rocky sphere with a hair-thin warm crescent, a thin flat ring of tiny sunlit rocks circling it like sparks, and a clean band of darkness cutting across the ring behind the sphere where its shadow falls, the rocks bright on either side and dark inside the shadow, black vacuum, sparse unfamiliar stars, realistic, cinematic, high dynamic range --ar 3:1 --style raw --no text, letters, people, spaceship interior, frame, ground, horizon, atmosphere, planet surface, solid rings, purple, violet, lens flare, god rays, light beams
+```
+
+### L06b — Petal Gallery
+- **New place:** N04. **Style ref:** `9dcfe97b` #0. **Status:** to try.
+
+```
+ultra-wide panoramic view of deep space, a dozen small oval holes in the sky scattered at different distances and angles through the dark, each with a thin fibrous white rim with a faint violet fringe, and inside every one the same small bright edge-on galaxy seen turned to a different angle, near holes larger and far holes tiny, sparse unfamiliar stars around them, black vacuum, a quiet puzzle, cinematic, high dynamic range --ar 3:1 --style raw --no text, letters, people, spaceship interior, frame, ground, horizon, mirrors, picture frames, bubbles, vortex, swirl, tunnel, pink
+```
 
 ## 1. The deep sky (sky targets)
 
@@ -502,7 +534,7 @@ ultra-wide panoramic view of deep space, a long knife-thin ridge of dark rock hi
 ```
 
 #### X13 — Back of the World: the far sun at the limb
-- **Region:** P04 Back of the World, entering or leaving the eclipse chord. **Use:** look reference. **For:** 2D. **Status:** to try.
+- **Region:** P04 Back of the World, entering or leaving the eclipse chord. **Use:** look reference. **For:** 2D. **Status:** covered by round 3 (`2adef2fe` #0 shows the bead on the limb).
 - **Why:** real eclipse physics. As the small far sun slips behind the dark body, a brilliant bead of light sits on the limb and the stars come up around it.
 
 ```

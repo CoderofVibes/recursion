@@ -48,26 +48,39 @@ Lit rocks read as **sparks**: tiny warm points, brightest where the sun is behin
 - **Taper.** Rings sparse at the mouth (S22's 20 km), crowding steadily toward the 1 km throat along a quadratic taper; the last third of the length is nearly a single bright line. Ring brightness rises toward the throat.
 - **End-on.** Seen down its axis, a funnel is concentric rings (never a spiral) closing on a brilliant point, with the meridians as faint spokes.
 - **Mouth face-on.** A funnel opening toward the viewer is a web of rings and spokes closing on the bright throat point.
+- **Side-on** (W01c `bce5f206…` #1). Wire rings stepping down a long taper to a single brilliant point, like a horn of light drawn in a few strokes.
+- **Far away** (same image). A distant funnel is a thin violet thread with a small white spark at its throat end, so the field reads as thousands of sparks on threads pointing every which way.
 - **Field.** Funnels at random orientations through a 3D volume: sideways, toward, away, above and below. A few near ones large and detailed; many far ones reduced to single threads of light with a brighter point at the throat. Not parallel, not in a plane, not evenly spaced, and never standing on a floor or surface: MidJourney kept adding one, and there isn't one.
 - **Glow.** A narrow bloom on the lines only (Night Watch: glow is for bright lines, never a haze). No solid fill, no swirl, no lightning, no moving matter.
-- **Precursor.** The same rings and meridians, broken into dotted arcs and fragments, brightening steadily over S22's 900 s; birth joins them into continuous lines over 120 s. No flashing.
+- **Precursor** (W01c `a5aac057…` #0). The same rings and meridians drawn as **rings of fine dots**, brightening steadily over S22's 900 s; the throat point is already faintly there. Birth joins the dots into continuous lines over 120 s. No flashing.
 
 ### Openings (4D, 2D) — rim from L03b `9dcfe97b…` #0 and L03 `0384aeb7…` #2; first opening from `9dcfe97b…` #1
 
 - **Shape.** An oval seen obliquely (a long tilted ellipse), moving and turning. A hole in the sky: no tunnel depth, no swirl, no smoke, no frame.
 - **Rim.** Luminous white with a violet fringe, made of **fine fibres**: thousands of short hair-thin luminous filaments along the edge, curling outward a little way, like frayed paper or fibre lit from behind. The solid edge is thin relative to the opening (a few percent of its width); the fibres extend a little beyond it and fade. White and violet only, never pink.
-- **First opening (C06).** It begins as a hair-thin bright arc (L02's hairline). As the opening widens, the arc thickens into the fibrous rim along one edge first, then all the way round.
+- **First opening (C06), in stages.**
+  1. **Hairline** (L02b `c3c1278a…` #0): one impossibly thin line of white light across black sky, fine fibres hanging from one edge, a faint violet fringe (not teal).
+  2. **Tear** (L02b `2adef2fe…` #1): the line thickens into a bright arc and splits along part of its length into a sliver with fibrous edges and a warm glimpse of home's sky inside.
+  3. **Oval** (L03b `9dcfe97b…` #0): the sliver widens into the full tilted ellipse with its fibrous rim all the way round.
 - **Far side.** Home's sky, which is our real one: a rich, warm Milky Way with dense star clouds and red-brown dust, visibly denser and warmer than this universe's sky around it, and oriented differently. It shows only along clear sight lines through the opening (C06). Earth, if geometry permits, as a tiny blue point.
 
-### Radiation crescent (3C, 2D) — material from L01 `0a7953fe…` #3; geometry from S21
+### Radiation crescent (3C, 2D) — L01b `836473b2…` #1 (chosen), material from L01 `0a7953fe…` #3; geometry from S21
 
-- **Material.** Soft streaming veils of violet light, like a slow aurora with no planet: long smooth sheets with fine parallel striations, brighter along their folds, translucent so stars and rocks show through. Never flames, never lightning, never a hard edge.
+- **Material.** A **curtain** of violet-white light, like an aurora with no planet: a tall translucent sheet with fine striations running across the sheet, perpendicular to the belt's plane, brightest along its base nearest the belt and fading upward and outward into soft veils. Stars and rocks show through. Never flames, never lightning, never a hard edge, never pink.
 - **Geometry (S21, A18).** A crescent, not a ring: it spans about 60° of azimuth on the belt's outer side (−90° to −30° in S21's frame), 1,000–2,600 km from the binary, co-rotating with it, clear of the rocks. Brightest along its inner edge facing the belt, fading outward.
 - **Brightness.** Faint enough that the belt's sparks still read through it.
 
 ### Shadow Observatory (2D) — X02 `8bbe8eef…` #2, `5713ccd3…` #1 and #2
 
 An unlit body is known only by the stars it hides: a sharp boundary where the star field and the galaxy's light simply stop, with nothing drawn on the body itself. Small fragments crossing the band are moving black holes in the stars. The scene works only where the sky behind is dense, so it faces the galaxy. The current renderer already draws unlit bodies as black discs; this scene needs the sky behind them to be rich enough to show it.
+
+### Red Wall (2D) — surface from X04b `79f27860…` #3
+
+A sheer face of layered, fractured rock in rust and garnet, lit low and warm so each ledge throws a long black shadow, deep vertical clefts in near-black. It hangs in open space, with cold black sky and sparse stars above and below: no horizon, no atmosphere, no ground beneath it. A small distant edge-on galaxy in the black beside it is a good touch (the Galaxy's far tip).
+
+### Eclipse at the limb (2D) — X13, from L02b `2adef2fe…` #0
+
+When the far sun slips behind a dark body: a black limb traced by a thin bright edge, and one brilliant bead of light where the sun is going. The rest of the sky comes up as the eye adapts (window-views.md, layer 2).
 
 ### Earth (OP)
 
