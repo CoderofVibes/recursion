@@ -23,7 +23,7 @@ import {
   SphereGeometry,
   Vector3,
 } from 'three';
-import type { Scene, ShaderMaterial } from 'three';
+import type { Object3D, Scene, ShaderMaterial } from 'three';
 import type { ViewSnapshot, WindowView } from '../../contracts/index.ts';
 import { colour, hex, outsideStyle, render } from '../../theme/index.ts';
 import { bodyMaterial, rockMaterial, setSun } from '../../theme/three/index.ts';
@@ -48,6 +48,7 @@ const compress = (d: number): number => NEAR + (SPAN * d) / (d + HALF);
 
 export interface Outside {
   update(snapshot: ViewSnapshot): void;
+  setScenery(scenery: Object3D | null): void;
   dispose(): void;
 }
 
@@ -55,6 +56,9 @@ export function buildOutside(scene: Scene): Outside {
   const rot = new Group();
   rot.position.set(0, HORIZON_Y, 0);
   scene.add(rot);
+  const world = new Group();
+  rot.add(world);
+  let scenery: Object3D | null = null;
 
   const sunEnv = new Vector3(...render.keyLight).normalize();
   const sunWorld = new Vector3();
@@ -70,7 +74,7 @@ export function buildOutside(scene: Scene): Outside {
       materials.push(mat);
       m = new Mesh(sphere, mat);
       m.rotation.z = 0.3;
-      rot.add(m);
+      world.add(m);
       bodies.set(id, m);
     }
     return m;
@@ -96,7 +100,7 @@ export function buildOutside(scene: Scene): Outside {
   const rocks = new InstancedMesh(rockGeo, rockMat, MAX_ROCKS);
   rocks.frustumCulled = false;
   rocks.count = 0;
-  rot.add(rocks);
+  world.add(rocks);
 
   // Stars.
   {
@@ -197,7 +201,17 @@ export function buildOutside(scene: Scene): Outside {
   };
 
   return {
+    setScenery(next) {
+      if (scenery) scene.remove(scenery);
+      scenery = next;
+      if (scenery) {
+        scene.add(scenery);
+        rot.quaternion.identity();
+      }
+      world.visible = scenery === null;
+    },
     update(snapshot) {
+      if (scenery) return;
       const ship = snapshot.world.ship;
       // The room is the ship: bring the ship's nose onto the room's -z, the window.
       rot.quaternion.copy(attitudeToScene(ship.attitude, q)).invert();
@@ -233,6 +247,7 @@ export function buildOutside(scene: Scene): Outside {
       rocks.instanceMatrix.needsUpdate = true;
     },
     dispose() {
+      if (scenery) scene.remove(scenery);
       sphere.dispose();
       rockGeo.dispose();
       for (const m of materials) m.dispose();

@@ -45,9 +45,10 @@ export interface RoomShell {
   /** Objects the cursor can find; `userData.hot` names what each one opens. */
   readonly hotspots: Object3D[];
   /** Set the room's light level, 0 dark to 1 lit. */
-  setLevel(k: number): void;
+  setLevel(k: number, alarm?: number): void;
   /** Brightness of the console's screen, ring and pads; `hot` is the pad under the cursor. */
   setConsole(screen: number, hot: Hotspot | null): void;
+  setConsoleMap(map?: Texture): void;
   /** Black Box's lamp: 0 dim to 1 bright. */
   setRecorderLamp(k: number): void;
   setHologramLight(k: number): void;
@@ -388,12 +389,17 @@ export function buildRoom(scene: Scene): RoomShell {
 
   const ink = tint(colour.ink);
   const orange = tint(colour.blackbox);
+  const amberStrip = tint(roomLights.strip);
   return {
     hotspots,
-    setLevel(k) {
+    setLevel(k, alarm = 0) {
       for (const o of lights) o.l.intensity = o.base * k;
       for (const o of glows) o.m.color.copy(o.base).multiplyScalar(k);
       for (const o of emissives) o.m.emissiveIntensity = o.base * k;
+      if (alarm > 0) {
+        sillGlow.color.lerp(amberStrip, alarm);
+        under.color.lerp(amberStrip, alarm);
+      }
     },
     setConsole(level, hot) {
       screenMat.color.setScalar(level);
@@ -404,6 +410,9 @@ export function buildRoom(scene: Scene): RoomShell {
     },
     setRecorderLamp(k) {
       lampMat.color.copy(orange).multiplyScalar(k);
+    },
+    setConsoleMap(map) {
+      screenMat.map = map ?? topTex;
     },
     setHologramLight(k) {
       holoLight.intensity = roomLights.intensity.hologram * k;

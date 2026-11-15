@@ -29,6 +29,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import type { Object3D } from 'three';
 import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 import type { ShipDefinition } from '../../contracts/index.ts';
 import {
@@ -47,6 +48,7 @@ import type { FlightFrame, FlightHolo } from '../flight/FlightHolo.ts';
 import { clamp, ease, thin } from '../gfx.ts';
 import { makeMapHolo } from '../map/MapHolo.ts';
 import type { Chart, MapHolo } from '../map/MapHolo.ts';
+import type { RoomShot } from '../opening/shot.ts';
 import { makeShipHolo } from '../ship/ShipHolo.ts';
 import type { ShipHolo } from '../ship/ShipHolo.ts';
 import { CON, DOOR, HOLO, REACH, ROOM, VIEW } from './layout.ts';
@@ -153,6 +155,7 @@ export class RoomView {
     labels: HTMLElement,
     definition: ShipDefinition,
     events: RoomEvents,
+    options?: { readonly scripted?: boolean },
   ) {
     this.canvas = canvas;
     this.events = events;
@@ -218,7 +221,7 @@ export class RoomView {
       ship: this.ship.spin.quaternion.clone(),
     };
 
-    this.bind();
+    if (!options?.scripted) this.bind();
     // The canvas's size, from an observer: reading clientWidth every frame forced a layout of
     // the whole page (the console included) inside the frame (S15).
     this.observed = { w: canvas.clientWidth, h: canvas.clientHeight };
@@ -235,6 +238,32 @@ export class RoomView {
     this.camera.position.copy(pose.pos);
     this.camera.quaternion.copy(pose.quat);
     this.syncVisibility();
+  }
+
+  /** Replace the snapshot-driven window objects with a caller-owned set piece. */
+  setWindowScenery(scenery: Object3D | null): void {
+    this.outside.setScenery(scenery);
+  }
+
+  /** Draw one scripted frame without advancing the room clock, walking or updating a hologram. */
+  renderScriptedShot(shot: RoomShot): void {
+    this.resize();
+    if (this.width === 0 || this.height === 0) return;
+    const { camera } = this;
+    camera.position.set(...shot.position);
+    camera.rotation.set(...shot.rotation, 'YXZ');
+    this.shell.setLevel(shot.light, shot.alarm);
+    this.shell.setConsole(shot.console, null);
+    this.shell.setConsoleMap(shot.consoleMap);
+    this.shell.setHologramLight(0);
+    const hadHologram = this.holoRoot.visible;
+    const hadCone = this.cone.visible;
+    this.holoRoot.visible = false;
+    this.cone.visible = false;
+    this.composer.render();
+    this.shell.setConsoleMap();
+    this.holoRoot.visible = hadHologram;
+    this.cone.visible = hadCone;
   }
 
   mode(): ViewMode {
@@ -333,7 +362,7 @@ export class RoomView {
     this.events.loss('start');
   }
 
-  frame(dt: number, data: RoomFrame): void {
+  frame(dt: number, data: RoomFrame, cameraOverride?: Pick<RoomShot, 'position' | 'rotation'>): void {
     this.time += dt;
     this.resize();
     if (this.width === 0 || this.height === 0) return;
@@ -372,7 +401,10 @@ export class RoomView {
     }
 
     // Camera.
-    if (this.trans) {
+    if (cameraOverride) {
+      camera.position.set(...cameraOverride.position);
+      camera.rotation.set(...cameraOverride.rotation, 'YXZ');
+    } else if (this.trans) {
       const tr = this.trans;
       tr.t = Math.min(1, tr.t + dt / roomMotion.travel);
       const e = ease(tr.t);
