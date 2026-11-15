@@ -40,6 +40,7 @@ The title's flicker; the slingshot's shake; the wells' turn and the wells on FLI
 
 - **Integrator:** fold the owner's beat updates (`docs/trailer/beats.md`) into `docs/submission/video.md`; record thread TV in the ledger (worktree `.worktrees/tv` on `p3/tr-visuals` from `p3/tr-trailer`).
 - **Integrator (optional):** `vite.config.ts` `optimizeDeps.entries` could add `src/trailer/*.html`, so the first dev load of the trailer doesn't trigger a dependency re-scan. Not needed today.
+- **Integrator: TV's scoped exception (owner authorized, 2026-11-15).** TV may add one additive scripted-frame method to `src/view3d/room/RoomView.ts` for the trailer (holograms visible, frame data and lights at a given time, no clock advance; every existing method unchanged; the game never calls it), placed apart from PF's renderer setup and 3F's region-range code, both unmerged in that file. If needed, an optional explicit time step for the sky's exposure adaptation in `src/view3d/sky/` (VX's), defaulting to today's behaviour. Record it in the ledger and tell 3F, PF and VX.
 
 ## Credit
 
