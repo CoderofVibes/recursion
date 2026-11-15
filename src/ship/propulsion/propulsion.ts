@@ -12,6 +12,7 @@ import { normalize } from '../../lib/quat.ts';
 import type { Vec3 } from '../../lib/vec3.ts';
 import { getGeometry } from '../config/configuration.ts';
 import { computeMassProperties, massDetail } from '../massprops/massprops.ts';
+import { thermalOperatingFactor } from '../thermal/protection.ts';
 import { allocateJets, type AllocatorJet } from './allocator.ts';
 import { attitudeTorque, controlSettings, handsOnForce, ratesNulled } from './control.ts';
 import {
@@ -113,7 +114,14 @@ function podAvailable(
   data: typeof baseline,
 ): boolean {
   const current = state.equipment[spec.id];
-  if (!current || current.tripped || current.condition <= 0) return false;
+  if (
+    !current ||
+    current.tripped ||
+    current.condition <= 0 ||
+    (current.values.radiationRestartUntil ?? 0) > state.t ||
+    current.values.thermalInhibited
+  )
+    return false;
   if (current.values.controlInhibited === 1 || ['off', 'heater'].includes(current.mode))
     return false;
   // A manual burn has the pod (manual burns override control per pod).
@@ -316,6 +324,8 @@ export function stepPropulsion(
       equipment[spec.id]?.mode === 'active' &&
       (equipment[spec.id]?.powerDraw ?? 0) >= power - 1e-9 &&
       !equipment[spec.id]?.tripped &&
+      (equipment[spec.id]?.values.radiationRestartUntil ?? 0) <= state.t &&
+      !equipment[spec.id]?.values.thermalInhibited &&
       (equipment[spec.id]?.condition ?? 0) > 0,
   );
   for (const { spec, isRcs, modePower } of tables.thrusters) {
@@ -336,6 +346,8 @@ export function stepPropulsion(
       !current.tripped &&
       current.condition > 0 &&
       current.mode !== 'off' &&
+      (current.values.radiationRestartUntil ?? 0) <= state.t &&
+      !current.values.thermalInhibited &&
       temperature >= (spec.params.tempMin ?? 0) &&
       temperature < (spec.params.tempMax ?? Infinity);
     if (isRcs) {
@@ -364,7 +376,15 @@ export function stepPropulsion(
           : current.powerDraw >= modePower('fire-one') - 1e-9
             ? 1
             : 0;
-    const thrustScale = Math.max(0, values.thrustScale ?? 1) * clamp(current.condition);
+    const thrustScale =
+      Math.max(0, values.thrustScale ?? 1) *
+      clamp(current.condition) *
+      thermalOperatingFactor(
+        current,
+        spec.params.tempMin ?? 0,
+        spec.params.tempMax ?? Infinity,
+        data.thermalProtection.derateMargin,
+      );
     const point = geometry.positions[spec.id] ?? spec.mount?.position ?? spec.position;
     const misalignment =
       values.misalignment ??
