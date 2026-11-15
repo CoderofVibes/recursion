@@ -8,7 +8,12 @@ import { shipDefinition, viewSnapshot } from '../../../contracts/fixtures/index.
 import type { Command } from '../../../contracts/index.ts';
 import type { GameControls } from '../../../game/belief/controls.ts';
 import { encounterPanelFor } from '../../encounterPanels.ts';
-import { ChainLinkInstrument, latticeModeCommands, withReconstruction } from './index.ts';
+import {
+  ChainLinkInstrument,
+  cameraAhead,
+  latticeModeCommands,
+  withReconstruction,
+} from './index.ts';
 import type { ChainLinkPanelProps, ChainLinkPanelState } from './index.ts';
 
 describe('the Chain Link instrument beside FLIGHT', () => {
@@ -125,7 +130,18 @@ describe('the Chain Link instrument beside FLIGHT', () => {
     expect(reads.mock.calls.length).toBeLessThanOrEqual(1);
     panel.props.onMode('survey');
     panel.props.onMode('off');
-    expect(sent).toEqual([latticeModeCommands('survey'), latticeModeCommands('off')]);
+    // R67: switching the function on also holds the camera along the nose, by the attitude the
+    // ship believes; switching it off leaves the camera where it is.
+    const ahead = cameraAhead(shipDefinition, viewSnapshot.world.ship.attitude);
+    expect(sent).toEqual([latticeModeCommands('survey', ahead), latticeModeCommands('off')]);
+    expect(sent[0]).toContainEqual({
+      kind: 'point',
+      sensor: 'camera',
+      target: null,
+      direction: ahead,
+    });
+    expect(sent[1]!.some((c) => c.kind === 'point')).toBe(false);
+    expect(Math.hypot(ahead.x, ahead.y, ahead.z)).toBeCloseTo(1, 12);
     expect(panel.props.state.mode).toBe('off');
     expect(panel.props.state.now).toBe(viewSnapshot.t);
   });

@@ -11,6 +11,9 @@
 
 import { describe, expect, it } from 'vitest';
 import { latticeModeCommands } from '../console/encounters/chain-link/commands.ts';
+import { cameraAhead } from '../console/encounters/chain-link/index.ts';
+import { defaultDesign, setupCommands } from '../console/mission.ts';
+import { decodeLatticeFrame } from '../ship/sensors/lattice-observations.ts';
 import { readLatticeVisual } from '../view3d/fields/lattice/data.ts';
 import { createModelClient } from '../model/index.ts';
 import { createBlackBox } from './belief/blackbox.ts';
@@ -19,6 +22,73 @@ import { encounterEntry } from './encounters.ts';
 import { createGameSession } from './session.ts';
 
 const FRAGMENTS = 'lattice.angular-fragments.v2';
+
+/**
+ * The console's ENTER sets the ship up as designed, and the design's default points the camera
+ * at the first charted body: in the Cathedral, the Survey rock, which falls behind the ship. The
+ * Black Box function images what lies ahead, so its own commands must take the camera back.
+ */
+describe('the Black Box function after the design has pointed the camera elsewhere', () => {
+  it(
+    'records strands only once its commands hold the camera along the nose',
+    { timeout: 120_000 },
+    async () => {
+      const setup = encounterEntry('chain-link').create(0);
+      const ship = setup.definition.ship;
+      let ms = 0;
+      const client = createModelClient({ worker: false });
+      const model = createModelBridge(client, {
+        referenceRadius: setup.definition.briefing.referenceRadius ?? 1e6,
+        clock: () => ms,
+      });
+      const blackBox = createBlackBox();
+      const s = createGameSession(setup, {
+        model,
+        blackBox,
+        rules: model.rules,
+        now: () => 'test',
+      });
+      const fly = (seconds: number) => {
+        for (let i = 0; i < seconds; i++) {
+          s.stepTicks(10);
+          ms += 1000;
+        }
+      };
+      /** Fragments in the frames recorded after ship time `since`. */
+      const fragmentsSince = (since: number) =>
+        blackBox
+          .attempt(s.status().attemptId)!
+          .measurements.filter(
+            (m) => m.kind === 'field-signal' && m.channel === FRAGMENTS && m.t > since,
+          )
+          .map((m) => decodeLatticeFrame(m)?.fragments.length ?? 0);
+
+      // As ENTER leaves it: the design recorded and sent, the camera on the Survey rock.
+      const design = defaultDesign(ship, setup.definition.briefing.knownBodies[0]!.id);
+      expect(design.setup.cameraTarget).toBe('cathedral-reference');
+      for (const c of setupCommands(design, ship)) s.command(c);
+      fly(5);
+
+      // The function switched on without taking the camera: frames arrive, with nothing in them.
+      // (The first frame comes some seconds after the switch: the processor and camera change mode.)
+      for (const c of latticeModeCommands('thread')) s.command(c);
+      fly(40);
+      const blind = fragmentsSince(5);
+      expect(blind.length).toBeGreaterThan(3);
+      expect(Math.max(...blind)).toBe(0);
+
+      // As the panel sends it: the camera held along the nose, by the attitude the ship believes.
+      const from = s.status().t;
+      const ahead = cameraAhead(ship, s.snapshot().world.ship.attitude);
+      for (const c of latticeModeCommands('thread', ahead)) s.command(c);
+      fly(25);
+      const seeing = fragmentsSince(from + 6); // after the camera's 5 s settle
+      expect(seeing.length).toBeGreaterThan(3);
+      expect(Math.min(...seeing)).toBeGreaterThan(0);
+      await model.settled();
+    },
+  );
+});
 
 describe('the Chain Link with the real model', () => {
   it(

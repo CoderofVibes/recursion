@@ -30,11 +30,11 @@ Keep each dive to a few hours: a clean, short record makes the fairest test.
 
 ### The Well Garden: one steered burn
 
-Coasting falls into a throat at about T+0:29, and the debrief says why. To cross: in PLAN choose **+ BURN**, then **STEER** (it points at CROSS-TRANSFER), **12.5 m/s** at **600 s**, **COMMIT**, **ENTER**, and warp. The attempt completes at about T+4:28.
+Coasting falls into a throat at about T+0:29, and the debrief says why. To cross: in PLAN choose **+ BURN**, then **STEER** (it points at CROSS-TRANSFER), **12.5 m/s** at **600 s**, **COMMIT**, **ENTER**, and warp, raising it again each time a caution drops it. The attempt completes after a few hours of ship time: about T+7:08 on a first attempt (about T+4:28 after a coasting loss).
 
 ### The Unseen Cathedral: see the lattice before it kills you
 
-An invisible lattice destroys a coasting ship at about T+4:10 to T+4:30, and the loss review lists what failed first. To see it: **ENTER**, press **4** for FLIGHT, and set the Black Box channel to **Thread · 1,000 W**. Stay at 1×. After a minute or two the strands the model can support from the recorded data appear on FLIGHT.
+An invisible lattice destroys a coasting ship at about T+4:10 to T+4:30, and the loss review lists what failed first. To see it: **ENTER**, press **4** for FLIGHT, and set the Black Box channel to **Thread · 1,000 W**. Stay at 1×. Choosing Thread turns the camera to look ahead. After a minute or two (about T+1:45) the strands the model can support from the recorded data appear on FLIGHT.
 
 ## What we verified
 

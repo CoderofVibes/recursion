@@ -1,8 +1,14 @@
-# Sounds to make: 12 files, most important first
+# Sounds to make: 10 files, most important first
 
 For the owner, in ElevenLabs **Sound Effects**. For each one: set the duration, set Loop as shown, paste the prompt, pick the take that starts right away, and download it as MP3.
 
 **Save each file under the exact name shown and leave it in Downloads.** Say "sounds in" (or name the ones you made) and FINAL copies each into place, checks it decodes, plays it where it belongs and tells you it's in. A partial set works: a missing file plays as silence, so make them in this order and stop whenever you have to.
+
+**`title-out` is dropped** (owner, 2026-11-15): right after the title's hit it would be one sound effect up against another, so the title goes out in silence in the video and in the game's opening.
+
+**`home-reveal` is dropped too** (owner, 2026-11-15): the console with Earth keeps the room hum, the cabin sound the video already has.
+
+**In so far (4 of 10):** `warning`, `main-engine`, `well-hum`, `lattice-radiation`. **Still to make (6):** `montage-bed`, `final-hit`, `lattice-strike`, `braid-rush`, `well-groan`, `ship-creak`.
 
 You don't need to redo `opening-alarm` (R65): the game will play only its first double pip, and the video keeps the long take.
 
@@ -42,27 +48,11 @@ Plays while the ship reports Radiation high; from the lattice's strike in the vi
 Create a seamless loop lasting 3 seconds. Seamless radiation monitor texture over a compact spacecraft speaker, irregular but restrained dry ticks and low filtered electrical grit, steady average level, smooth edges. No high whistle, voice, sweeping alarm or music.
 ```
 
-### 5. `title-out.mp3` · one-shot · 0.5 s (the shortest setting; the sound itself is about 0.2 s) · Loop off
-
-The title going out, in the game's opening and the video.
-
-```text
-Create a one-shot sound effect lasting 0.22 seconds. One soft dry phosphor discharge as a display turns off, a muted low-mid electrical tick dropping immediately to silence. No rise, flourish, voice or reverb.
-```
-
-### 6. `home-reveal.mp3` · one-shot · 1.1 s · Loop off
-
-The console with Earth, in the video (the game keeps it for the ending).
-
-```text
-Create a one-shot sound effect lasting 1.10 seconds. A close cabin relay and familiar ventilation returning after a blackout. Add one barely audible warm metallic resonance that settles into air in about one second. No victory sting, fanfare, chord, narration or music.
-```
-
 ## The video's own
 
 `montage-bed` and `final-hit` come first: the bed covers 11 of the video's 30 seconds, and the hit ends it.
 
-### 7. `montage-bed.mp3` · one-shot · 11 s · Loop off
+### 5. `montage-bed.mp3` · one-shot · 11 s · Loop off
 
 Under the eight console shots, 13.1–23.9 s.
 
@@ -72,7 +62,7 @@ Low, steady pulsing synth drone, calm and determined.
 
 If you'd rather have music here, use ElevenLabs **Music** instead, 11 s, same file name: `Minimal dark ambient electronic underscore, 90 BPM, steady and determined.`
 
-### 8. `final-hit.mp3` · one-shot · 3.5 s · Loop off
+### 6. `final-hit.mp3` · one-shot · 3.5 s · Loop off
 
 The final card, 26.5 s to the end.
 
@@ -80,7 +70,7 @@ The final card, 26.5 s to the end.
 Huge deep cinematic boom with a long dark tail.
 ```
 
-### 9. `lattice-strike.mp3` · one-shot · 1.2 s · Loop off
+### 7. `lattice-strike.mp3` · one-shot · 1.2 s · Loop off
 
 The lattice's strike at 9.0 s.
 
@@ -88,7 +78,7 @@ The lattice's strike at 9.0 s.
 Sudden electrical impact hitting a metal spaceship hull.
 ```
 
-### 10. `braid-rush.mp3` · one-shot · 2.5 s · Loop off
+### 8. `braid-rush.mp3` · one-shot · 2.5 s · Loop off
 
 The braid, 10.3–12.8 s.
 
@@ -96,7 +86,7 @@ The braid, 10.3–12.8 s.
 Fast whoosh of debris streaking past on both sides.
 ```
 
-### 11. `well-groan.mp3` · one-shot · 2.5 s · Loop off
+### 9. `well-groan.mp3` · one-shot · 2.5 s · Loop off
 
 The wells, 4.8–7.3 s.
 
@@ -104,7 +94,7 @@ The wells, 4.8–7.3 s.
 Deep, slow, otherworldly groan of a huge force pulling.
 ```
 
-### 12. `ship-creak.mp3` · one-shot · 1.8 s · Loop off
+### 10. `ship-creak.mp3` · one-shot · 1.8 s · Loop off
 
 Over the wells, from 5.4 s.
 
@@ -114,4 +104,4 @@ Spaceship metal frame creaking as it twists.
 
 ## Where each goes (FINAL does this)
 
-Numbers 1–6 into `public/audio/`, 7–12 into `src/trailer/audio/`, all on the trailer branch (`p3/tr-trailer`); they reach `main` and the public game when the trailer merges. Credit: ElevenLabs, AI-generated (A22).
+Numbers 1–4 into `public/audio/`, 5–10 into `src/trailer/audio/`, all on the trailer branch (`p3/tr-trailer`); they reach `main` and the public game when the trailer merges. Credit: ElevenLabs, AI-generated (A22).

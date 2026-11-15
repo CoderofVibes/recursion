@@ -81,7 +81,7 @@ Recursion opens in a browser with nothing to install and no account. After a sho
 6. MODEL: the ship's model of the physics. The player can test a different rule against an attempt held out of the fit, and adopt it if the test passes.
 
 Three regions can be chosen from a picker:
-- Twin Deeps. Two massive bodies, where gravity falls with distance to the power 2.5 (fiction). The ship's model starts with Newton's inverse square, so its forecasts miss. Two short dives, each ended with RECALL, give the model enough data: TEST, then ADOPT, and the next forecast reaches further and is tighter. In our recorded run on the release build the fitted exponent was 2.5000 and the held-out misfit fell from 1,138 m to 26 m.
+- Twin Deeps. Two massive bodies, where gravity falls with distance to the power 2.5 (fiction). The ship's model starts with Newton's inverse square, so its forecasts miss. Two short dives, each ended with RECALL, give the model enough data: TEST, then ADOPT, and the next forecast reaches further and is tighter. In our recorded run on the release build the fitted exponent was 2.5001 and the held-out misfit fell from 1,436 m to 26 m.
 - The Well Garden. Funnel-shaped gravity wells. A coasting ship is drawn into a throat in about half an hour of ship time; one steered burn of about 12.5 m/s crosses the region.
 - The Unseen Cathedral. A lattice of radiation the window cannot show. A coasting ship loses power in about four minutes. A Black Box function records the lattice at a cost of 350 or 1,000 W, and the model rebuilds its strands from that record and draws them on FLIGHT after a minute or two.
 

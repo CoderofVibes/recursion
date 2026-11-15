@@ -7,6 +7,8 @@
 import { createElement } from 'react';
 import type { AttemptRecord } from '../../../contracts/index.ts';
 import { chainLinkPanelData } from '../../../game/belief/chain-link-panel.ts';
+import { quat } from '../../../lib/index.ts';
+import type { Vec3 } from '../../../lib/index.ts';
 import { readLatticeVisual } from '../../../view3d/fields/lattice/data.ts';
 import { registerEncounterPanel } from '../../encounterPanels.ts';
 import type { EncounterPanelProps } from '../../encounterPanels.ts';
@@ -85,11 +87,24 @@ export function withReconstruction(
   };
 }
 
+/**
+ * Where the camera's mount looks, in the inertial frame, by the attitude the ship believes: the
+ * direction the Black Box function holds the camera along (see `latticeModeCommands`).
+ */
+export function cameraAhead(
+  ship: EncounterPanelProps['game']['ship'],
+  attitude: EncounterPanelProps['snapshot']['world']['ship']['attitude'],
+): Vec3 {
+  const mount = ship.equipment.find((e) => e.id === 'camera')?.mount?.direction;
+  return quat.rotate(attitude, mount ?? { x: 1, y: 0, z: 0 });
+}
+
 export function ChainLinkInstrument({ snapshot, game, command }: EncounterPanelProps) {
   const data = chainLinkPanelData(snapshot.t, snapshot.world.ship, game.ship, recordOf(game));
   return createElement(ChainLinkPanel, {
     state: withReconstruction(data, snapshot, game.status().attemptId),
-    onMode: (mode: ReconstructionMode) => command(latticeModeCommands(mode)),
+    onMode: (mode: ReconstructionMode) =>
+      command(latticeModeCommands(mode, cameraAhead(game.ship, snapshot.world.ship.attitude))),
   });
 }
 
