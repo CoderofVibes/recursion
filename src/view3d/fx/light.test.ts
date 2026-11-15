@@ -64,6 +64,13 @@ describe('window light integration', () => {
     expect(precursorCoverage('ramping', 0)).toBe(precursorCoverage('precursor', 0));
     expect(precursorCoverage('ramping', 0.5)).toBeGreaterThan(precursorCoverage('ramping', 0));
     expect(precursorCoverage('ramping', 1)).toBe(precursorCoverage('active', 1));
+    expect(precursorCoverage('ramping', 0.5, 1)).toBe(1);
+    expect(precursorCoverage('ramping', 0.5, 0)).toBe(0.24);
+    for (const depth of [0, 0.25, 0.5, 0.75, 1]) {
+      const ramp = [0, 0.25, 0.5, 0.75, 1].map((b) => precursorCoverage('ramping', b, depth));
+      expect(ramp).toEqual([...ramp].sort((a, b) => a - b));
+      expect(ramp.at(-1)).toBe(1);
+    }
   });
   it('removes absent clouds and rejects non-finite optical patches', () => {
     const clouds = createCloudLight(100);

@@ -9,7 +9,7 @@ import { RoomView } from '../room/RoomView.ts';
 import '../../app/opening/opening.css';
 
 applyTheme(document.documentElement);
-document.querySelector<HTMLElement>('#labels')!.style.visibility = 'hidden';
+document.querySelector<HTMLElement>('#labels')!.style.display = 'none';
 const ignore = () => {};
 const room = new RoomView(
   document.querySelector<HTMLCanvasElement>('#view')!,
@@ -73,7 +73,7 @@ function funnel(
     observedAt: 0,
     visible: true,
     phase,
-    brightness: phase === 'precursor' ? 0.4 : 0.8,
+    brightness: phase === 'precursor' ? 0.4 : phase === 'ramping' ? 0.5 : 0.8,
     segments,
   };
 }
@@ -97,7 +97,7 @@ const funnels = [
     new Vector3(-0.04, 0.16, -1),
     new Vector3(0.48, -0.8, -0.4).normalize(),
     0.5,
-    'precursor',
+    'ramping',
   ),
 ];
 const patches: WindowCloudBank['patches'][number][] = [];
@@ -142,7 +142,18 @@ function draw() {
       window: {
         objects: [],
         sunlit: true,
-        fields: mode === 'funnels' ? funnels : mode === 'clouds' ? [clouds] : [],
+        fields:
+          mode === 'funnels'
+            ? funnels
+            : mode === 'precursors' || mode === 'birth'
+              ? funnels.map((f) => ({
+                  ...f,
+                  phase: mode === 'birth' ? 'ramping' : 'precursor',
+                  brightness: 0.5,
+                }))
+              : mode === 'clouds'
+                ? [clouds]
+                : [],
       },
     };
     room.frame(

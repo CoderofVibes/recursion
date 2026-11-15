@@ -301,8 +301,8 @@ export function makeFunnelLight(options: FunnelSkyOptions): FunnelSky {
         b.culled++;
         return;
       }
-      into.coverage.setX(n * 2, precursorCoverage(v.phase, v.brightness));
-      into.coverage.setX(n * 2 + 1, precursorCoverage(v.phase, v.brightness));
+      into.coverage.setX(n * 2, precursorCoverage(v.phase, v.brightness, d));
+      into.coverage.setX(n * 2 + 1, precursorCoverage(v.phase, v.brightness, d));
       const o = n * 6;
       positions[o] = px * radius;
       positions[o + 1] = pz * radius;
@@ -402,11 +402,12 @@ export function makeFunnelLight(options: FunnelSkyOptions): FunnelSky {
 }
 
 /** Birth joins static dots. Brightness is observed light, never a guessed lifecycle clock. */
-export function precursorCoverage(phase: string, brightness: number): number {
+export function precursorCoverage(phase: string, brightness: number, depth = 0.5): number {
   return phase === 'precursor'
     ? 0.24
     : phase === 'ramping'
-      ? 0.24 + 0.76 * Math.max(0, Math.min(1, brightness))
+      ? // The throat becomes continuous first; the wide mouth stays dotted until late birth.
+        0.24 + 0.76 * Math.max(0, Math.min(1, (brightness - (1 - depth) * 0.65) / 0.35))
       : 1;
 }
 
