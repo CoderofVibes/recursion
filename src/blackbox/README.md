@@ -46,6 +46,12 @@ Once the player switches the function on (3C's `latticeModeCommands`: the scienc
 
 `equipmentTimeline(record, now?, knownIds?)`: per equipment id as the ship names it, its reported condition changes (`condition-changed`, whose `condition` is the reported condition by contract), faults, breaker trips, recoveries and load sheds in time order; the condition last reported; when it was first reported failed; its first fault; and `unknown` for an id the ship does not have. Ordered by when each one's trouble started. `failureOrder(record, now?)`: the first failure or fault of each, in order, which is what a loss review leads with (S17: the global failure is read through the first few local ones). Doses (`exposure` events) are not read.
 
+## The radiation monitor and the loss review (`radiation.ts`, A24, R37)
+
+The ship's radiation monitor measures the dose rate where it sits (A24); the recorder keeps its readings like any measurement, and the store returns them unchanged. A reading is the contracts' `lattice-intensity` measurement ([I] in lattice units: the dose rate in U, at the equipment that carries the monitor), or a `telemetry` reading on the channel `dose-rate`; `readDoseRate` is the one place that decides, so 3C's sensor (R37) plugs in there. `doseRateReadings(record, now?, saturation?)` gives them in time order, flagged `saturated` at the monitor's limit.
+
+`lossReview(record, { threshold?, saturation?, window?, riseSigmas?, knownEquipment? })` gathers what a loss review leads with, from the record alone: the monitor's readings in the window before the loss (600 s), the peak, the spike's onset (the first reading at or above the hazard threshold, or without one the first reading more than 5 of its own σ above the median of those before it), how many seconds before the first failure it came (`leadBeforeFirstFailure`), the last reading and its age at the loss, the first failures in order, each piece of equipment's history and the lattice data retained. Plain notes say what is absent (no monitor reading; nothing reached the threshold). Per-component doses are never read (R35).
+
 ## Comparing two attempts (`compare.ts`)
 
 ```ts
@@ -78,6 +84,8 @@ Saved items are the commands that reached the ship between `from` and `to` (not 
 In the game a procedure is kept with `GameControls.blackBox.saveProcedure(p)` (and forgotten with `removeProcedure(id)`): it goes into the archive's `procedures` and to the store (`putProcedure`, `deleteProcedure`), so it is there in the next attempt and after a reload (`src/game/belief/blackbox.ts`).
 
 ## Tests
+
+`radiation.test.ts`: a first lattice contact: the monitor's rise through its response time to saturation and 3A's real failures 7.8 s later; the onset 7.3 s before the first failure, the saturated peak flagged, the threshold rule, the telemetry form, a record with no monitor, readings through the recorder and the store unchanged.
 
 `condition.test.ts`: 3A's real condition events on the baseline ship: per-equipment timelines, failure order, the as-of cutoff, unknown ids.
 

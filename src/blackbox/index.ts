@@ -65,3 +65,13 @@ export {
   type EquipmentEntry,
   type EquipmentTimeline,
 } from './condition.ts';
+export {
+  DOSE_RATE_CHANNEL,
+  doseRateReadings,
+  lossReview,
+  readDoseRate,
+  type DoseRateReading,
+  type LossReview,
+  type LossReviewOptions,
+  type RadiationReview,
+} from './radiation.ts';
