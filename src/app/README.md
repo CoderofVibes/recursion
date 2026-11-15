@@ -21,6 +21,8 @@ Run it with `npm run dev`.
 4. **CONSOLE › BLACK BOX:** RECALL ends the attempt. Its debrief is there when you walk back in. Fly a different dive, then choose A and B in Compare, and SET FLIGHT OVERLAY.
 5. **CONSOLE › MODEL:** strength against distance shows the pull departing from the model's law. Hold out an attempt, TEST the distance law, ADOPT it if it holds. The next forecast reaches further.
 
+**Other regions (A25):** the Regions panel at the top of **CONSOLE › MISSION** goes to the Well Garden or the Unseen Cathedral and back to Twin Deeps (the Gravity range, the default), by 2F's `?encounter=<id>`. They are previews: the route between them isn't built yet, each starts with a fresh ship, and each keeps its own records. Switching reloads the page.
+
 Time (A12): before entering, nothing is dangerous and the clock waits. Inside the encounter there is no pause: every adjustment happens in real time, and the warp steps compress long coasts, never slower than 1×. Hiding the page holds the game; a new caution or warning drops warp to 1×, and the reason stays beside the time controls until you raise warp again.
 
 Keyboard (S9): the scene canvas, the console's page tabs and every control are reachable with Tab; focus follows the view; a focused control keeps Space, Enter and the arrows, every other key still reaches the scene; Escape in a field leaves the field first.

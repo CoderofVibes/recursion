@@ -12,6 +12,7 @@ import { departProgress, fixRate, recorder, recorderEstimate, spendable, stores 
 import type { Desk } from '../desk.ts';
 import { clock, dist, duration, fixed, whole } from '../format.ts';
 import { APPROACH, EVIDENCE } from '../mission.ts';
+import { RegionsPanel } from '../regions.tsx';
 import type { Approach, EvidenceGoal } from '../mission.ts';
 
 const RECORDER_RATES = [0.05, 0.2, 1, 10];
@@ -48,6 +49,7 @@ export function MissionPage({ desk }: { readonly desk: Desk }) {
 
   return (
     <Columns>
+      <RegionsPanel current={game.briefing.id} currentName={game.briefing.name} />
       <Panel title="Objective" aside={game.briefing.name}>
         {snapshot.objectives.map((o, i) => (
           <Line key={o.id} label={o.kind === 'custom' ? `objective ${i + 1}` : o.kind}>
