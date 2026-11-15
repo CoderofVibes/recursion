@@ -40,29 +40,61 @@ Round 1 ran on 2026-11-14; verdicts are in [selections.md](selections.md).
 Each fixes what round 1 got wrong. `<…>` marks the URL of a round-1 image in MidJourney (open the image, copy its link).
 
 ### S01b — The unfamiliar sky, corrected
-- **Fixes:** no ground, no fisheye, no teal cast; two crossing bands. **Status:** to try.
+- **Fixes:** no ground, no fisheye, no teal cast; two crossing bands. **Status:** tried (round 2; see selections.md).
 
 ```
 ultra-wide panoramic view of deep space seen from open space with no ground and no horizon, an unfamiliar star sky with two galactic bands crossing in a shallow X, one bright band with a broad near-white bulge torn by black filamentary dust lanes and tiny deep red knots, one fainter thinner band crossing it, neutral grey starlight, stars mostly deep red and blue-white, pinpoint stars, large areas of true black, restrained and quiet, true colour astrophotography, high dynamic range --ar 21:9 --style raw --sref <S01 f2d993f6 #2> --sw 60 --no text, letters, people, spaceship interior, frame, purple, violet, teal, green tint, ground, horizon, landscape, fisheye, diffraction spikes, lens flare, planets
 ```
 
 ### W01b — The Well Garden in three dimensions
-- **Fixes:** funnels at random orientations through a volume, not parallel in a plane; keeps round 1's wireframe line language. **Status:** to try.
+- **Fixes:** funnels at random orientations through a volume, not parallel in a plane; keeps round 1's wireframe line language. **Status:** tried (round 2; see selections.md).
 
 ```
 ultra-wide panoramic view in deep space, a vast three-dimensional field of long narrow funnels drawn as glowing violet wireframe, thin contour rings sparse at each wide mouth and crowding toward a long needle-thin bright throat, faint lines running along each funnel, every funnel pointing a different direction, some toward the viewer, some away, some above, some below, some sideways, one huge funnel close by, dozens at middle distance, hundreds far away as single threads of light, scattered dark rocks, black vacuum, unfamiliar stars visible through the funnels, cinematic, high dynamic range --ar 3:1 --style raw --sref <W01 8dcf1d92 #2> --sw 80 --no text, letters, people, spaceship interior, frame, parallel lines, ground, horizon, surface, swirl, spiral, solid funnels, lightning, smoke, fire
 ```
 
 ### L03b — The Turning Rim, oblique
-- **Fixes:** tilted, as C06 asks; round 1's ragged rim kept; no smoke. **Status:** to try.
+- **Fixes:** tilted, as C06 asks; round 1's ragged rim kept; no smoke. **Status:** tried (round 2; see selections.md).
 
 ```
 ultra-wide panoramic view of deep space, a large oval hole in the sky seen at a steep oblique angle so it appears as a tilted narrow ellipse, its rim a thin ragged luminous white edge with a violet fringe and fine tendrils curling outward like frayed paper lit from behind, through it a rich warm Milky Way with dense star clouds and red-brown dust, outside it a sparse cold unfamiliar star field, black vacuum, no tunnel, quiet and impossible, cinematic, high dynamic range --ar 21:9 --style raw --sref <L03 0384aeb7 #2> --sw 80 --no text, letters, people, spaceship interior, frame, smoke, clouds, fog, vortex, swirl, tunnel, wormhole, sparks
 ```
 
-### Next to try after these
+### Then (run in round 2)
 
 W03 (a funnel end-on), L01 (the radiation crescent), X02 (Shadow Observatory) and E01 (Earth). Each with `--sref <B01 ca1c5c59 #2>` once the owner confirms it as the hero.
+
+## Round 3: refinements and new places
+
+Round 2 verdicts are in [selections.md](selections.md). Style references are named by job ID and grid position.
+
+### W01c — The Well Garden, floating free
+- **Fixes:** MidJourney keeps putting funnels on a floor. **Style refs:** `130bc062` #0 and `c29febbf` #1. **Status:** to try.
+
+```
+ultra-wide panoramic view of empty deep space with no ground, no floor and no horizon, hundreds of long narrow funnels floating freely in every direction like scattered needles, each drawn in thin crisp dim violet wireframe rings and lines that taper to a single brilliant white point at the narrow end, one large funnel nearby seen from the side, several pointing straight at the viewer as ring webs around a bright point, many far away as thin threads each ending in a tiny white spark, black vacuum between them, a few dark rocks, unfamiliar stars, cinematic, high dynamic range --ar 3:1 --style raw --no text, letters, people, spaceship interior, frame, ground, floor, surface, horizon, landscape, rain, spiral, swirl, tornado, solid funnels, pink, lightning, smoke, fire
+```
+
+### L01b — The radiation crescent, as a crescent
+- **Fixes:** a partial arc beside the belt, not a ring wrapped round it. **Style ref:** `0a7953fe` #3. **Status:** to try.
+
+```
+ultra-wide panoramic view of deep space, a dark rocky sphere at the centre circled by a thin flat ring of sunlit asteroids, and beyond the ring on one side only a single curved crescent of soft streaming violet veils like a slow aurora, the crescent covering only a short arc of the circle, separated from the rocks by a gap of dark space, translucent with stars showing through, black vacuum elsewhere, quiet and menacing, cinematic, high dynamic range --ar 3:1 --style raw --no text, letters, people, spaceship interior, frame, full ring, flames, fire, lightning, ground, surface, plate, pink, green aurora
+```
+
+### L02b — The hairline opens
+- **New:** the Turning Rim's first moment, the hairline starting to widen. **Style ref:** `9dcfe97b` #0 (and #1 for the arc). **Status:** to try.
+
+```
+ultra-wide panoramic view of deep space, high in the sky a hair-thin arc of white light with a faint violet fringe, along part of it the arc has begun to split open into a very narrow sliver of a different sky, a glimpse of a rich warm galactic band inside the sliver, its edge frayed into fine luminous fibres, the rest of the sky dark and unfamiliar with sparse stars, subtle and unsettling, cinematic, high dynamic range --ar 21:9 --style raw --no text, letters, people, spaceship interior, frame, smoke, clouds, snow, vortex, swirl, tunnel, laser, beam, pink
+```
+
+### X04b — The Red Wall
+- **New place:** R01. **Style ref:** `ca1c5c59` #2 (the proposed hero). **Status:** to try.
+
+```
+ultra-wide panoramic view of deep space, a sheer vast face of rust red and garnet rock filling the right third of the view, layered and fractured, lit low and warm by a small distant sun so every ledge casts a long black shadow, above and below it cold black space with sparse unfamiliar stars, far off the faint edge-on lens of a distant galaxy, stark warm against cold, realistic, cinematic, high dynamic range --ar 21:9 --style raw --no text, letters, people, spaceship interior, frame, purple, violet, lens flare, lava, fire, glow, atmosphere, ground, bright red
+```
 
 ---
 
@@ -198,7 +230,7 @@ ultra-wide panoramic view of a single colossal luminous funnel in deep space see
 ```
 
 ### W03 — Looking down the throat (end-on)
-- **Region:** P03, the view along a funnel's axis. **Use:** look reference. **For:** 3B. **Status:** to try.
+- **Region:** P03, the view along a funnel's axis. **Use:** look reference. **For:** 3B. **Status:** tried (round 2; see selections.md).
 - **Intent:** end-on, a funnel becomes concentric rings around a bright point: an eye or a target. A strange, readable silhouette.
 
 ```
@@ -239,7 +271,7 @@ ultra-wide panoramic view of deep space, far in the distance near the horizon a 
 ## 4. Light displays
 
 ### L01 — The radiation crescent at Twin Deeps
-- **Region:** C02 Twin Deeps, the cloud crescent on the belt's outer edge (A18 after S21: 1,000–2,600 km from the binary, co-rotating). **Use:** look reference. **For:** 3C, 2D. **Status:** to try.
+- **Region:** C02 Twin Deeps, the cloud crescent on the belt's outer edge (A18 after S21: 1,000–2,600 km from the binary, co-rotating). **Use:** look reference. **For:** 3C, 2D. **Status:** tried (round 2; see selections.md).
 - **Honesty:** fictional, so violet is allowed. It is diffuse glow, not lightning, and it should read as dangerous by its placement, not by drama.
 
 ```
@@ -341,14 +373,14 @@ ultra-wide panoramic view of deep space, a small distant star cluster wrapped in
 **Honesty:** MidJourney will draw Earth far too large in a wide frame. E01 asks for tiny; E02 is a close crop for the surface only. No accretion disc for the black hole: nothing in A21 or OP models one, and a ship near one would be destroyed. OP's anomaly is three stars bending locally just before the cut.
 
 ### E01 — Earth in the distance (the opening and the ending)
-- **Region:** A21 opening, A17 ending. **Use:** look reference for scale and mood. **For:** OP. **Status:** to try.
+- **Region:** A21 opening, A17 ending. **Use:** look reference for scale and mood. **For:** OP. **Status:** tried (round 2), then stopped: Earth is about five seconds of the game and OP already draws it (owner).
 
 ```
 ultra-wide panoramic view of deep space from a spacecraft returning from Mars, far away a tiny Earth, a small blue and white disc just over half lit by the sun, very small in the frame, the familiar Milky Way and real constellations around it, black vacuum, quiet longing, realistic, NASA photography realism, high dynamic range --ar 21:9 --style raw --no text, letters, people, spaceship interior, frame, purple, violet, lens flare, large earth, moon close up, atmosphere glow
 ```
 
 ### E02 — Earth's face (surface crop)
-- **Region:** the same Earth, cropped. **Use:** look reference for OP's procedural surface (ocean, land, clouds, terminator). **For:** OP. **Status:** to try.
+- **Region:** the same Earth, cropped. **Use:** look reference for OP's procedural surface (ocean, land, clouds, terminator). **For:** OP. **Status:** dropped (owner: Earth is about five seconds of the game; OP draws it).
 - **Note:** a crop, so a squarer frame is fine here.
 
 ```
@@ -356,14 +388,14 @@ Earth seen from deep space at a phase just over half lit, sharp day-night termin
 ```
 
 ### E03 — The pull
-- **Region:** A21, the moment before dark. **Use:** look reference. **For:** OP. **Status:** to try.
+- **Region:** A21, the moment before dark. **Use:** look reference. **For:** OP. **Status:** dropped (owner: Earth is about five seconds of the game; OP draws it).
 
 ```
 ultra-wide panoramic view of deep space, the familiar starry sky with a tiny distant Earth, but near the centre of the view a few stars are subtly bent and smeared into short arcs around an invisible point, a faint distortion like heat haze in vacuum, no visible black hole, no disc, the moment before something terrible, cinematic, high dynamic range, realistic gravitational lensing --ar 21:9 --style raw --no text, letters, people, spaceship interior, frame, purple, violet, accretion disk, black sphere, vortex, swirl, lightning, large earth
 ```
 
 ### E04 — Home, framed
-- **Region:** A17's last moment: Earth in the distance beneath familiar stars. **Use:** look reference for mood. **For:** OP. **Status:** to try.
+- **Region:** A17's last moment: Earth in the distance beneath familiar stars. **Use:** look reference for mood. **For:** OP. **Status:** dropped (owner: Earth is about five seconds of the game; OP draws it).
 - **Note:** the ending is the same shot as E01. This prompt only explores the emotional register (warmer, a touch more light).
 
 ```
@@ -385,7 +417,7 @@ ultra-wide panoramic view of deep space, a small oval opening with a thin violet
 ```
 
 #### X02 — Shadow Observatory: bodies seen only by the stars they hide
-- **Region:** N01 Shadow Observatory: "the overhang occupies the upper window while fragments move below and beyond it". **Use:** look reference. **For:** 2D. **Status:** to try.
+- **Region:** N01 Shadow Observatory: "the overhang occupies the upper window while fragments move below and beyond it". **Use:** look reference. **For:** 2D. **Status:** tried (round 2; see selections.md).
 
 ```
 ultra-wide panoramic view of deep space, the upper half of the sky an enormous starless black shape, an unlit overhang visible only because it hides the stars, its edge traced only by where the star field stops, below it small black fragments drifting across a dense star field, each one a moving hole in the stars, no light on any of them, eerie, cinematic, high dynamic range --ar 21:9 --style raw --no text, letters, people, spaceship interior, frame, purple, violet, lens flare, glow, rim light

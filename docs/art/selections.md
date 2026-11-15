@@ -26,4 +26,28 @@ For the disclosure: MidJourney was used to make reference images that guided the
 | L03 | `5f42fb14-5321-4dea-8df7-3e5c24a6f801` | 0 | partial | Oblique perspective only | The tilted oval is how the Turning Rim should sit (C06: "oblique oval"). Drop the thick smoke around it: it implies gas the game doesn't have. |
 | L03 | `5f42fb14-5321-4dea-8df7-3e5c24a6f801` | 1 | dropped | | A hexagonal slab flooded with violet. It reads as a screen, not a hole in the sky. |
 
+## Round 2 (2026-11-15): S01b, W01b, L03b, W03, L01, X02, E01
+
+| Prompt | Job ID | # | Verdict | Use | Why |
+|---|---|---|---|---|---|
+| S01b | `57c10c4c-4de0-4110-80d5-45e6c3e6d353` | 2 | **chosen by the owner** ("I like this one") | This universe's sky: its great landmark | A vast galaxy seen edge-on from outside its disc: blazing white core, a torn dust lane full of red knots, black sky around it. Stronger wrongness than the crossed bands: from Earth we see our galaxy from inside, as a band; here the ship sees one whole, from outside. Correction: its reds are saturated warning-red; in the game they must be dim, deep and desaturated so nothing behind the hologram looks like an alert. |
+| S01b | `57c10c4c-4de0-4110-80d5-45e6c3e6d353` | 0 | partial | Restraint and colour | The quieter version: warm band, soft core, small red knots, lots of black. Use its colour level for the knots. |
+| W01b | `130bc062-a826-4893-91ff-4faf4ba4cc42` | 0 | **chosen** (top half only) | Funnel field in 3D | The upper half finally has it: wireframe funnels floating at every angle, near ones large, far ones small, black space and stars between. The lower half puts funnels on a floor; ignore it. |
+| W01b | `dccfb118-1a0c-4eb8-ba43-dfd0f52cca45` | 3 | partial | Mouths seen face-on | Funnel mouths facing the viewer as ring-and-spoke webs closing on a bright throat point. The curved "ground" they sit on is wrong. |
+| W01b | `dccfb118-1a0c-4eb8-ba43-dfd0f52cca45` | 1 | dropped | | Mouths on a floor, and violet rain falling: reads as weather. |
+| W01b | `130bc062-a826-4893-91ff-4faf4ba4cc42` | 1, 3 | dropped | | Floors, tornado shapes and spirals. |
+| W03 | `c29febbf-4e02-4f88-84d6-fa0b65546a9c` | 1 | **chosen** (line quality) | Funnel lines | The cleanest image in the set: crisp, even, dim violet rings in black, one brilliant white throat point. Exactly Night Watch's "glow on bright lines only". The rings spread out flat into a sheet, which a funnel with a finite 20 km mouth doesn't; take the lines, not the shape. |
+| W03 | `02828825-645e-4eee-8cb9-b32bc0107706` | 0 | partial | End-on ring spacing | Perfect concentric spacing toward a bright point. But filled solid lavender and crossed by reticle lines that read as a UI crosshair. |
+| W03 | `02828825-645e-4eee-8cb9-b32bc0107706` | 2 | dropped | | Pink and teal: the teal clashes with forecasts, the pink with thrust. |
+| W03 | `c29febbf-4e02-4f88-84d6-fa0b65546a9c` | 2 | dropped | | A spiral with a fin. |
+| L03b | `9dcfe97b-09e2-4cd8-96e0-c91949b4aa92` | 0 | **chosen** | Opening rim | The best opening so far: a long tilted ellipse, the rim a fringe of fine luminous fibres, and home's Milky Way glowing inside. Correction: the rim drifts pink, close to thrust magenta; keep it white with a violet fringe. |
+| L03b | `9dcfe97b-09e2-4cd8-96e0-c91949b4aa92` | 1 | partial | The hairline becoming a rim | Its upper-left edge is a hair-thin bright arc thickening into a rim: exactly how the Turning Rim should first open (C06's hairline). The heavy white mass on the right reads as snow or cloth; drop it. |
+| L01 | `0a7953fe-ea07-4576-9c8a-2def5e74badf` | 3 | partial | Cloud texture | Soft streaming violet veils, a slow aurora with no planet: the right material. Wrong geometry: it wraps the whole belt and touches it. The crescent spans about 60° of the belt's outer side, 1,000–2,600 km from the binary (S21), clear of the rocks. The central body should be a sphere. |
+| L01 | `d4113e33-a969-410a-b579-23dc64900ca8` | 3 | dropped | | Flames licking the belt: reads as fire, and a full ring. |
+| L01 | `10a4913e-09f6-420c-af62-ab0a88dbd768` | 1 | dropped | | A glowing rim around a flat plate with a ground. |
+| X02 | `8bbe8eef-88fd-4a31-82f6-fbae586ac875` | 2 | **chosen** | Shadow Observatory | A vast black overhang known only by where the stars stop, the galaxy band glowing below it. Honest, eerie, and exactly N01. |
+| X02 | `5713ccd3-fe23-432d-a58a-c9387779c031` | 1 | chosen | Fragments against the band | Dark rocks silhouetted along a low band, the rest of the sky near black. The band's teal cast must go. |
+| X02 | `5713ccd3-fe23-432d-a58a-c9387779c031` | 2 | chosen | Moving holes in the stars | Two small black fragments that are only holes in a dense star field. Subtle and true. |
+| E01 | `aa82d708-9179-4094-8f6d-1a8e4cc7c16f` | 0 | dropped | | A ground again and a green cast. Earth's size is about right (about 1.5 % of the width). The owner: Earth is about five seconds of the game, and OP already draws a procedural Earth, so the Earth prompts stop here. |
+
 Images shipped as textures: **none** (A23).

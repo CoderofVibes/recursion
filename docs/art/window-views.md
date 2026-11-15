@@ -14,7 +14,7 @@ The looks are defined in [art-bible.md](art-bible.md); this brief says how many 
 
 The window is the eye's view (P11, A8): it may show only what light shows. Variety therefore comes from four honest sources, not from painting a different backdrop per region.
 
-1. **One rich sky, many faces.** This universe gets one fixed celestial sphere (the *sky atlas*) with real structure: two crossing bands, a bulge, dust lanes, star clouds, galaxies, a starless dark cloud. Distant things don't move between encounters, so the sky must be the same everywhere, but it's anything but uniform, so **where the ship points decides what the player sees**. Each region's arrival heading faces a different part of it, and every turn of the ship shows another. A sky that is the same everywhere is also honest navigation: a player can learn its landmarks.
+1. **One rich sky, many faces.** This universe gets one fixed celestial sphere (the *sky atlas*) with real structure: a vast galaxy seen edge-on from outside, with its blazing core and torn dust lane, plus star clouds, far galaxies and a starless dark cloud. Distant things don't move between encounters, so the sky must be the same everywhere, but it's anything but uniform, so **where the ship points decides what the player sees**. Each region's arrival heading faces a different part of it, and every turn of the ship shows another. A sky that is the same everywhere is also honest navigation: a player can learn its landmarks.
 2. **The local scene, from data.** Bodies, rocks, the sun's direction, shadows and eclipses all come from the window channel. The art bible makes them beautiful: near-black bodies with hair-thin crescents, rocks as sparks.
 3. **The fictional phenomena, from their systems.** Funnels (3B), radiation clouds (3C) and openings (4D) each come from their own simulation product, drawn in the bible's style.
 4. **Light that changes.** The eye adapts: with the sun in view the sky near it dims, and when the sun goes behind a body the stars come up (P04's eclipse becomes a show). Rocks flare at opposition. Shadows sweep across the belt. Precursors brighten. Openings turn.
@@ -25,14 +25,15 @@ Internal names only. Nothing is ever labelled on screen (Night Watch §8).
 
 | Landmark | What it is | Rough look |
 |---|---|---|
-| **Bulge** | The primary band's bright core | Broad near-white oval glow about 25° across, torn by dust lanes, tiny red knots |
-| **Crossing** | Where the two bands cross at about 25° | An X of faint light with a dark knot of overlapping dust at its centre: the sky's signature wrongness |
-| **Scar** | A long dark dust lane along the primary band | A torn black river with lit edges, 40–60° long |
+| **Galaxy** | A vast spiral seen edge-on from outside its disc, 90–110° long (owner's pick, S01b `57c10c4c` #2) | A long lens of light: the sky's signature wrongness, since at home we only ever see our galaxy from inside |
+| **Bulge** | The Galaxy's core | Blazing near-white oval about 30° by 15°, torn by the lane, dense with dim garnet knots |
+| **Scar** | The Galaxy's dust lane, away from the core | A torn black river with lit edges and trailing filaments |
+| **Tips** | The Galaxy's two thin ends | Fine needles of light fading into black |
 | **Blue Cloud** | A cold blue-white star cloud beside the bulge | Dense patch of blue-white stars about 8° across |
 | **Pair** | Two interacting galaxies | Small, faint, joined by a thin tidal tail; 1–2° in all |
 | **Ember** | One bright deep-red star | The brightest star in the sky, unmistakably red |
 | **Hollow** | A starless dark cloud | A soft-edged patch of near-black about 15° across, few stars in front of it |
-| **Deep pole** | The primary band's poles | Very sparse stars, many faint galaxies (S03 style), the darkest sky |
+| **Deep pole** | The sky farthest from the Galaxy's disc | Very sparse stars, many faint galaxies (S03 style), the darkest sky |
 
 ## The views, region by region
 
@@ -40,7 +41,7 @@ Internal names only. Nothing is ever labelled on screen (Night Watch §8).
 
 | Region | The window shows (from data) | Faces | Why | References |
 |---|---|---|---|---|
-| C01 Unfamiliar Sky | A dark limb below, fragments above and aside, one "star" that's really a nearby rock | **Crossing** | The first view after the black hole: the wrongness right ahead | S01, B03 |
+| C01 Unfamiliar Sky | A dark limb below, fragments above and aside, one "star" that's really a nearby rock | **Galaxy**, whole | The first view after the black hole: the wrongness right ahead | S01, B03 |
 | Transit legs | Open sky; the next region's bodies as small discs or points if the window channel has them | Whatever the heading gives | The quiet sky while preparing (A12) | S02 |
 | C02 Twin Deeps | Alpha upper left, Beta lower right, the belt a thin ring of sparks, the radiation crescent | **Deep pole** | Dark sky makes the crescents and sparks the whole picture | B01 (hero), B02, L01, X06, X07 |
 | C03 Lantern Field | A rim brightening high to port, lit rocks like lanterns, a repeated silhouette astern | **Deep pole**, galaxy-rich side | Lanterns against a deep field | L07, X08 |
@@ -54,12 +55,12 @@ Internal names only. Nothing is ever labelled on screen (Night Watch §8).
 | P02 Sunward | A large lit limb rising, silhouettes above and below, the sun in view | Toward the sun | The bright scene: sky dimmed by the sun | B07, S04 |
 | R01 Red Wall | A warm rust-red face on one side, cold dark above and below | Away from the **Bulge** | Warm against the coldest sky | X04 |
 | P03 Well Garden | The funnel field through 3D, dark landmarks at depth | **Hollow** or **Deep pole** | Violet threads need the darkest sky | W01–W07 |
-| R02 Hinge | A knife-thin ridge above, isolated rocks | **Crossing** | The ridge's crest against the X | X12 |
+| R02 Hinge | A knife-thin ridge above, isolated rocks | A **Tip** | The ridge's crest pointing along the Galaxy's needle | X12 |
 | P04 Back of the World | A dark body blocking one side, a sliver of limb, the sun going behind it | **Bulge**, rising as the sun sets | The eclipse: the stars and the Bulge come up as the eye adapts | B06, X13 |
 | A01 Countercurrent | A dark moon below (a streamer only if gas is approved) | **Ember** | A single red point above the dark moon | B05, G02 |
 | C04 Stillwater | A massive limb to one side, a few still rocks, a far glimmer | **Deep pole** | Stillness | X16 |
 | R04 Crooked Ship | Rocks around a roomy central volume | **Blue Cloud** | Open and clear, a place to drill | — |
-| C05 Braided Crossing | Debris streams crossing at angles, separate funnels beyond | **Crossing** | Braids against the sky's own crossing | X14 |
+| C05 Braided Crossing | Debris streams crossing at angles, separate funnels beyond | **Scar** | Braids against the torn lane | X14 |
 | C06 Turning Rim | A hairline that opens into a tilted oval; home's warm Milky Way inside, Earth possibly a blue point | **Deep pole** | The inside must outshine the outside | L02, L03, X15 |
 | H01 Passage | The opening filling the forward view, strange stars around its rim | **Deep pole** | Same | L05 |
 | Opening and ending | Earth in the distance under our real sky (OP's `HOME_SHOT`) | Our sky | The bookends | E01–E04, S06 |
@@ -68,7 +69,7 @@ Internal names only. Nothing is ever labelled on screen (Night Watch §8).
 
 Each layer stands alone and can merge alone. Tokens go in `src/theme/` (Convention 11), in `outsideStyle`.
 
-1. **Sky atlas (2D).** Generate the sky once at load from a **fixed seed** (never the run seed: the sky is not geometry, like Earth in H02). Bake the diffuse light (bands, bulge, dust lanes, knots, star clouds, galaxies) into a cube map in one fragment-shader pass; 512 px per face is enough for soft light (about 0.18° per pixel). Keep resolved stars as point sprites, raised from 6,000 to roughly 15,000–20,000, with density following the bands (about 8× at a band's centre) and the bible's colour mix. Cost: one pass at load, then one textured sphere and one points draw per frame.
+1. **Sky atlas (2D).** Generate the sky once at load from a **fixed seed** (never the run seed: the sky is not geometry, like Earth in H02). Bake the diffuse light (the Galaxy's disc, bulge, dust lane, knots, star clouds, galaxies) into a cube map in one fragment-shader pass; 512 px per face is enough for soft light (about 0.18° per pixel). Keep resolved stars as point sprites, raised from 6,000 to roughly 15,000–20,000, with density following the bands (about 8× at a band's centre) and the bible's colour mix. Cost: one pass at load, then one textured sphere and one points draw per frame.
 2. **Sun and eye adaptation (2D).** A small hard warm disc with a tight halo and no flare. A soft dimming of stars and sky within about 10° of a visible sun, and a slow global adaptation (several seconds) that dims the sky while the sun is in view and lets it come back when the sun is hidden. Driven by `WindowView.sun.visible`; no new data needed.
 3. **Bodies (2D).** Extend `bodyMaterial`: very low albedo, terminator-only relief (procedural crater and regolith noise that shows only under raking light), a hair-thin warm crescent following the real phase. Unlit bodies stay black discs that hide the stars.
 4. **Rocks as sparks (2D).** Extend `rockMaterial` with an opposition brightening term, and give lit rocks a minimum on-screen size of one bright pixel so distant lit rocks read as sparks instead of vanishing. Unlit rocks stay invisible.
@@ -78,7 +79,7 @@ Each layer stands alone and can merge alone. Tokens go in `src/theme/` (Conventi
 
 ## Checks
 
-- **Hologram contrast.** A theme test in the style of `theme.test.ts`: the sky's brightest band pixel stays below a set fraction of the hologram's line brightness, and the sky's mean hue keeps ΔE76 > 20 from `forecast`, `thrust`, `velocity`, `blackbox`, `caution` and `warning`.
+- **Hologram contrast.** A theme test in the style of `theme.test.ts`: the sky's brightest pixel (the Bulge) stays below a set fraction of the hologram's line brightness, and the sky's mean hue keeps ΔE76 > 20 from `forecast`, `thrust`, `velocity`, `blackbox`, `caution` and `warning`.
 - **Determinism.** The atlas is identical on every run and every machine (fixed seed, no `Math.random`).
 - **Modest laptop (A18 item 7).** Cold load still within 2.5 s with the bake included; frame p95 unchanged within noise.
 - **Honesty.** Nothing drawn that the window channel or a phenomenon's own product doesn't supply, apart from the fixed distant sky. No lattice in N03.

@@ -9,16 +9,21 @@ For the threads that build the window's visuals: 2D (window and sky), 3B (funnel
 3. **The hologram must read on top.** The flight hologram is drawn in front of the window. Keep the sky dim and low in saturation, and keep it clear of the instrument hues: forecast teal, thrust magenta, velocity lime, Black Box orange, caution yellow and warning red. Nebulae stay faint and small.
 4. **Warm room, cold outside, warm light.** The room is warm near-black (Night Watch). Space is neutral black. The far sun's light is warm, so lit edges carry a faint warm tone, which ties the outside to the room.
 5. **Show only what is true.** Nothing the physics contradicts: no big nearby planet that isn't in the data, no ground, no lattice (A16), no visible effect of a well beyond its shape and light, no gas without an approved optical model, no accretion disc. Bodies appear at their data's angular sizes and lighting.
-6. **Subtly wrong.** This universe's sky is not ours: two galactic bands cross instead of one, and star colours lean to deep red and blue-white. Our real sky appears only at Earth (opening and ending) and through the openings to home.
-7. **Darkness is the canvas.** Most of the window is true black. Beauty comes from a few precise lights: crescents, sparks, threads, a bright bulge at the edge of the sky. Never fill the frame.
+6. **Wrong in a way you feel.** At home we see our galaxy from inside, as a band across the sky. Here the ship sees a whole galaxy from outside: a vast edge-on disc with a blazing core. Star colours lean to deep red and blue-white. Our real sky appears only at Earth (opening and ending) and through the openings to home, where the familiar band, seen from inside, is the sign of home.
+7. **No red that looks like an alert, no pink that looks like thrust.** Natural reds stay dim, deep and desaturated (rust and garnet, never `warning` crimson). Fictional light is white with a violet fringe, never pink or magenta.
+8. **Darkness is the canvas.** Most of the window is true black. Beauty comes from a few precise lights: crescents, sparks, threads, a bright core at the edge of the sky. Never fill the frame. **No ground, ever:** MidJourney kept adding planet surfaces and floors, and space has none.
 
 ## Per scene
 
-### The sky of this universe (2D) — from S01 `f2d993f6…` #2, corrected
+### The sky of this universe (2D) — the owner's pick, S01b `57c10c4c…` #2, with #0's colour level
 
-- **Structure.** One fixed celestial sphere for the whole expedition (see window-views.md for why). A **primary band**: a soft river of unresolved starlight about 12–18° wide, brightest at a **bulge** (a broad oval glow about 25° across, near-white with the faintest warm tint) and fading to almost nothing on the opposite side of the sky. Torn **dust lanes** run along the band's centre: dark, fractal, filamentary (several octaves of noise, sharp-edged, ridged), opaque enough to hide the band behind them. Scattered along the lanes, a few dozen **tiny red knots** (emission regions) no larger than 0.3°, deep red, low saturation.
-- **The wrongness.** A **secondary band** crosses the primary at about 25°, a third as bright, narrower (6–8°), with no bulge and its own thinner lanes. Where they cross, the dust from both overlaps into a dark knot. This is the "X" that no Earth sky has.
-- **Colour.** Band light is neutral grey-white, never teal or green (the reference's teal cast is the one thing to remove). Stars: deep red (about 35 %), blue-white (about 35 %), white (25 %), yellow (5 % at most).
+- **Structure.** One fixed celestial sphere for the whole expedition (see window-views.md for why). Its great landmark is **the Galaxy**: a vast spiral seen almost exactly edge-on from outside its disc, a long lens of light spanning about 90–110° of sky and about 15–25° thick at its middle, tapering to fine points at both ends.
+- **Its core.** A blazing **bulge**, an elongated oval about 30° by 15° along the disc, near-white with the faintest warm tint. It's the brightest thing in the sky after the sun, but still well below the hologram's line brightness.
+- **Its dust lane.** A dark, torn **dust lane** runs the length of the disc, offset slightly below centre so the bulge bulges above it: dark, fractal, filamentary (several octaves of ridged noise, sharp-edged), opaque enough to hide the light behind it. Ragged dark filaments trail off it at the edges.
+- **Its red knots.** Dozens of **emission knots** sit along and inside the lane, clustered most densely where the lane crosses the core. Each is 0.1–1° across. They're deep, dim garnet (low saturation), never bright crimson: they must not look like a warning behind the hologram.
+- **Halo.** A faint grey glow of unresolved stars surrounds the disc, fading over 20–30°.
+- **Beyond the galaxy.** Mostly black sky with sparse field stars, a few faint distant galaxies, and the other landmarks in window-views.md.
+- **Colour.** Galaxy light is neutral white-grey toward warm, never teal or green. Field stars: deep red (about 35 %), blue-white (about 35 %), white (25 %), yellow (5 % at most).
 - **Stars.** Point sprites, never blurred discs. Brightness follows a steep power law: almost all faint, a handful bright. Density rises sharply inside the bands (about 8× at a band's centre) and is lowest at the poles of the primary band. Faint stars should be one or two pixels wide.
 - **Landmarks.** A few distant galaxies (S03 style) at fixed places: small, elliptical smudges, edge-on spirals, one interacting pair; and one cold blue-white star cloud (from S01 `6afb7728…` #3) beside the bulge.
 - **Overall brightness.** The band at its brightest stays well below the hologram's line brightness. Large parts of the sky are almost black.
@@ -37,21 +42,37 @@ A small, hard, warm-white disc, about 0.15° across, with a tight soft halo (a f
 
 Lit rocks read as **sparks**: tiny warm points, brightest where the sun is behind the viewer's line of sight (strong opposition brightening) and where they're nearest. Rocks larger than a few pixels show flat-shaded faces with one hard lit side and black shadow. Unlit rocks are invisible except where they hide a star. Never a continuous dust glow: only rocks the simulation has.
 
-### Funnels (3B, 2D) — line language from W01 `8dcf1d92…` #2, taper from #3, end-on from `ecaada3d…` #2
+### Funnels (3B, 2D) — lines from W03 `c29febbf…` #1, field from W01b `130bc062…` #0 (top half), mouths from `dccfb118…` #3
 
-- **Drawing.** Wireframe light, not a surface: **contour rings** across the funnel plus **meridians** along it (about 12–16), all thin additive lines in `well` violet, with the throat's last few rings and the throat line itself running toward `latticeCore` near-white. Stars stay visible through a funnel.
+- **Drawing.** Wireframe light, not a surface: **contour rings** across the funnel plus **meridians** along it (about 12–16), all thin additive lines in `well` violet, with the throat's last few rings and the throat line itself running toward `latticeCore` near-white. Lines are crisp, even and dim; the **throat point** is the one brilliant thing, a small white star at the narrow end. Stars stay visible through a funnel.
 - **Taper.** Rings sparse at the mouth (S22's 20 km), crowding steadily toward the 1 km throat along a quadratic taper; the last third of the length is nearly a single bright line. Ring brightness rises toward the throat.
 - **End-on.** Seen down its axis, a funnel is concentric rings (never a spiral) closing on a brilliant point, with the meridians as faint spokes.
-- **Field.** Funnels at random orientations through a 3D volume: sideways, toward, away, above and below. A few near ones large and detailed; many far ones reduced to single threads of light with a brighter point at the throat. Not parallel, not in a plane, not evenly spaced.
+- **Mouth face-on.** A funnel opening toward the viewer is a web of rings and spokes closing on the bright throat point.
+- **Field.** Funnels at random orientations through a 3D volume: sideways, toward, away, above and below. A few near ones large and detailed; many far ones reduced to single threads of light with a brighter point at the throat. Not parallel, not in a plane, not evenly spaced, and never standing on a floor or surface: MidJourney kept adding one, and there isn't one.
 - **Glow.** A narrow bloom on the lines only (Night Watch: glow is for bright lines, never a haze). No solid fill, no swirl, no lightning, no moving matter.
 - **Precursor.** The same rings and meridians, broken into dotted arcs and fragments, brightening steadily over S22's 900 s; birth joins them into continuous lines over 120 s. No flashing.
 
-### Openings (4D, 2D) — rim and far side from L03 `0384aeb7…` #2, attitude from `5f42fb14…` #0
+### Openings (4D, 2D) — rim from L03b `9dcfe97b…` #0 and L03 `0384aeb7…` #2; first opening from `9dcfe97b…` #1
 
-- **Shape.** An oval seen obliquely (a tilted ellipse), moving and turning. A hole in the sky: no tunnel depth, no swirl, no smoke, no frame.
-- **Rim.** Luminous white with a violet edge, **ragged at fine scale**: a torn, irregular line with short tendrils curling outward a little way, like frayed paper lit from behind. The rim is thin relative to the opening (a few percent of its width). Faint violet glow just outside the rim, fading over a short distance.
+- **Shape.** An oval seen obliquely (a long tilted ellipse), moving and turning. A hole in the sky: no tunnel depth, no swirl, no smoke, no frame.
+- **Rim.** Luminous white with a violet fringe, made of **fine fibres**: thousands of short hair-thin luminous filaments along the edge, curling outward a little way, like frayed paper or fibre lit from behind. The solid edge is thin relative to the opening (a few percent of its width); the fibres extend a little beyond it and fade. White and violet only, never pink.
+- **First opening (C06).** It begins as a hair-thin bright arc (L02's hairline). As the opening widens, the arc thickens into the fibrous rim along one edge first, then all the way round.
 - **Far side.** Home's sky, which is our real one: a rich, warm Milky Way with dense star clouds and red-brown dust, visibly denser and warmer than this universe's sky around it, and oriented differently. It shows only along clear sight lines through the opening (C06). Earth, if geometry permits, as a tiny blue point.
+
+### Radiation crescent (3C, 2D) — material from L01 `0a7953fe…` #3; geometry from S21
+
+- **Material.** Soft streaming veils of violet light, like a slow aurora with no planet: long smooth sheets with fine parallel striations, brighter along their folds, translucent so stars and rocks show through. Never flames, never lightning, never a hard edge.
+- **Geometry (S21, A18).** A crescent, not a ring: it spans about 60° of azimuth on the belt's outer side (−90° to −30° in S21's frame), 1,000–2,600 km from the binary, co-rotating with it, clear of the rocks. Brightest along its inner edge facing the belt, fading outward.
+- **Brightness.** Faint enough that the belt's sparks still read through it.
+
+### Shadow Observatory (2D) — X02 `8bbe8eef…` #2, `5713ccd3…` #1 and #2
+
+An unlit body is known only by the stars it hides: a sharp boundary where the star field and the galaxy's light simply stop, with nothing drawn on the body itself. Small fragments crossing the band are moving black holes in the stars. The scene works only where the sky behind is dense, so it faces the galaxy. The current renderer already draws unlit bodies as black discs; this scene needs the sky behind them to be rich enough to show it.
+
+### Earth (OP)
+
+Not pursued. Earth is about five seconds of the game (owner), and OP already draws a procedural Earth at the right size (2.92°, 56 % lit).
 
 ### Still to be chosen
 
-Radiation crescent (3C), Petal Gallery (4D), Earth (OP), and every look in groups 4–7 not named above.
+Petal Gallery (4D) and every look in groups 2–7 not named above.
