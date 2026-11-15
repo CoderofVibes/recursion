@@ -40,7 +40,7 @@ For every section:
 
 ## 3B — Inverse Wells
 
-**Thread:** Claude · **Branch:** `p3/3b-wells`
+**Thread:** GPT/Codex (reassigned from Claude by the owner, 2026-11-14) · **Branch:** `p3/3b-wells`
 
 **Owns:** `src/sim/fields/wells.ts`, `src/sim/fields/wells.test.ts`, `src/content/inverse-wells/`, `src/view3d/fields/wells/`, `src/console/encounters/inverse-wells/`.
 
