@@ -108,13 +108,23 @@ function serialize(
     if (!job) return;
     running = job;
     since = clock();
-    call(job.method, job.args)
-      .then(job.resolve, job.reject)
-      .finally(() => {
-        running = null;
-        since = null;
+    // Free the slot before the caller hears back, so `busy()` is right the moment it does.
+    const settle = () => {
+      running = null;
+      since = null;
+    };
+    call(job.method, job.args).then(
+      (v) => {
+        settle();
+        job.resolve(v);
         pump();
-      });
+      },
+      (e: unknown) => {
+        settle();
+        job.reject(e);
+        pump();
+      },
+    );
   };
   const enqueue: Call = (method, args) =>
     new Promise((resolve, reject) => {

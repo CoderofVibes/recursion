@@ -59,7 +59,7 @@ describe('redundant work behind a long call (S20)', () => {
     await direct.beginAttempt({ ...start, measurements: [...full.measurements] });
     await direct.refresh();
     expect(coverage).toEqual((await direct.report()).coverage.find((q) => q.attempt === full.id));
-    expect(c.busy()).toMatchObject({ running: null, queued: 0 });
+    expect(c.busy()).toMatchObject({ running: null, since: null, queued: 0 });
     c.terminate();
     direct.terminate();
   });
