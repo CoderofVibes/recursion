@@ -1,0 +1,651 @@
+{
+  "baseline3DLimitation": "Inherited 2G step-1 total isotropic yaw inertia; replace after the physical 3D baseline lands. Kit tensor and rotations are 3D.",
+  "checks": [
+    "eight unique, new assembly IDs",
+    "tether-frame baseline assembly shape",
+    "tether-frame references",
+    "tether-frame modes nonnegative",
+    "tether-winch baseline assembly shape",
+    "tether-winch references",
+    "tether-winch modes nonnegative",
+    "tether-cassette baseline assembly shape",
+    "tether-cassette references",
+    "tether-cassette modes nonnegative",
+    "tether-grapple baseline assembly shape",
+    "tether-grapple references",
+    "tether-grapple modes nonnegative",
+    "tether-brake baseline assembly shape",
+    "tether-brake references",
+    "tether-brake modes nonnegative",
+    "tether-release baseline assembly shape",
+    "tether-release references",
+    "tether-release modes nonnegative",
+    "tether-sensors baseline assembly shape",
+    "tether-sensors references",
+    "tether-sensors modes nonnegative",
+    "tether-controller baseline assembly shape",
+    "tether-controller references",
+    "tether-controller modes nonnegative",
+    "255 kg kit mass",
+    "line cassette partition",
+    "spring launch energy",
+    "50 m deployment conserves total mass",
+    "500 m deployment conserves total mass",
+    "release loses only 40 kg kit inventory",
+    "partial payout release partitions 17 kg remote plus 23 kg cassette",
+    "wet-stowed-mast-0 tensor physically admissible",
+    "wet-stowed-mast-1 tensor physically admissible",
+    "wet-radiators-mast-0 tensor physically admissible",
+    "wet-radiators-mast-1 tensor physically admissible",
+    "wet-solar-mast-0 tensor physically admissible",
+    "wet-solar-mast-1 tensor physically admissible",
+    "wet-allDeployed-mast-0 tensor physically admissible",
+    "wet-allDeployed-mast-1 tensor physically admissible",
+    "paid-50 tensor physically admissible",
+    "paid-500 tensor physically admissible",
+    "released tensor physically admissible",
+    "released-at-50 tensor physically admissible",
+    "main-empty tensor physically admissible",
+    "3D rigid rotation covariance",
+    "wet-radiators-mast-1 force through COM no torque",
+    "main-empty force through COM no torque",
+    "reel power ledger",
+    "brake ledger",
+    "isolated B bus shortage exposed",
+    "wear monotonic and modest normal deployment",
+    "launch momentum closes",
+    "launch spring ledger including finite carrier",
+    "arming includes jaw spring",
+    "low drag 50 m throw energy screen",
+    "largest rail rejects fast transverse pass in dwell screen",
+    "release ejection momentum ledger",
+    "release ejection energy ledger",
+    "tether IMU signal meaningful",
+    "500 m fixed-point 6 kN swing exceeds inherited hands-on rate"
+  ],
+  "derived": {
+    "brake60sAdiabaticRise": 3.0,
+    "brake60sHeat": 180000.0,
+    "brakePassiveTimeConstant": 12000.0,
+    "brakeSteadyHeatToServiceAt330K": 875,
+    "brakeTimeToWarnAt4kWNoCooling": 525.0,
+    "elasticLineSpeedEnergyBound500m": 30.0,
+    "elasticShipSpeedEnergyBound500m": 0.7668146477719582,
+    "fiftyMeterThrowResidualEnergyScreen": 20.985308041398675,
+    "fixedPointAngularRateAt500m6kN": 0.019799069069658004,
+    "fixedPointCircularSpeedAt500m6kN": 9.899534534829002,
+    "fixedPointRadiusAt6kNInheritedHandsonRate": 1960.0156801254407,
+    "fixedPointTensionAt500mInheritedHandsonRate": 1530.6000000000001,
+    "kitMassFraction": 0.008395338118127345,
+    "largestRailTransverseDwellSpeedCeiling": 1.2499999999999998,
+    "launchKineticEnergy": 29.985308041398675,
+    "launchRecoil": -0.0009794639067550362,
+    "launchSpringLoss": 0.014691958601325439,
+    "lineWaveSpeed": 5000.0,
+    "loadedSnagTwoMetersWear": {
+      "abrasion": 0.00140625,
+      "bending": 0.0005,
+      "creep": 5.6953125e-06,
+      "snag": 0.2,
+      "total": 0.2019119453125
+    },
+    "newMainDeltaV": 684.1830207769252,
+    "normalWearExample": {
+      "abrasion": 0.00140625,
+      "bending": 0.0005,
+      "creep": 5.6953125e-06,
+      "snag": 0.0,
+      "total": 0.0019119453125
+    },
+    "oldMainDeltaV": 690.6077941480168,
+    "partialReleaseEjectRelativeSpeed": 0.29499475371596107,
+    "partialReleaseEjectShipRecoil": -0.0002216411647545768,
+    "reelDrumTorqueAt6kN": 1200.0,
+    "reelHeat": 700.0,
+    "reelInput": 2500.0,
+    "reelSpeedAt6kNInputMax": 0.3625,
+    "tetherSpecificForceAt6kN": 0.1960015680125441,
+    "waveTravel500m": 0.1
+  },
+  "elasticScreening": [
+    {
+      "closingSpeed": 0.5,
+      "elasticEnergyAt6kN": 900.0,
+      "extensionAt6kN": 0.3,
+      "idealConstant6kNStoppingDistance": 0.63775,
+      "idealConstant6kNStoppingTime": 2.551,
+      "initialBrakePowerAt6kN": 3000.0,
+      "length": 50,
+      "lockedUndampedPeak": 12371.741995369932,
+      "radialKineticEnergyInfiniteTarget": 3826.5,
+      "stiffness": 20000.0
+    },
+    {
+      "closingSpeed": 2.0,
+      "elasticEnergyAt6kN": 900.0,
+      "extensionAt6kN": 0.3,
+      "idealConstant6kNStoppingDistance": 10.204,
+      "idealConstant6kNStoppingTime": 10.204,
+      "initialBrakePowerAt6kN": 12000.0,
+      "length": 50,
+      "lockedUndampedPeak": 49486.96798147973,
+      "radialKineticEnergyInfiniteTarget": 61224.0,
+      "stiffness": 20000.0
+    },
+    {
+      "closingSpeed": 0.5,
+      "elasticEnergyAt6kN": 9000.0,
+      "extensionAt6kN": 3.0,
+      "idealConstant6kNStoppingDistance": 0.63775,
+      "idealConstant6kNStoppingTime": 2.551,
+      "initialBrakePowerAt6kN": 3000.0,
+      "length": 500,
+      "lockedUndampedPeak": 3912.2883329325305,
+      "radialKineticEnergyInfiniteTarget": 3826.5,
+      "stiffness": 2000.0
+    },
+    {
+      "closingSpeed": 2.0,
+      "elasticEnergyAt6kN": 9000.0,
+      "extensionAt6kN": 3.0,
+      "idealConstant6kNStoppingDistance": 10.204,
+      "idealConstant6kNStoppingTime": 10.204,
+      "initialBrakePowerAt6kN": 12000.0,
+      "length": 500,
+      "lockedUndampedPeak": 15649.153331730122,
+      "radialKineticEnergyInfiniteTarget": 61224.0,
+      "stiffness": 2000.0
+    }
+  ],
+  "inputSha256": {
+    "data/ship-baseline.json": "faf9dc50f6f3631520bbc93a579e15b6aca7e5eb16c35c5901659d9d112d003b",
+    "docs/studies/s2/hardware-fragment.json": "a984dd71026cf58f43ef810417a0e22579fce3abff9ae2d8ecc576f180b3f65f"
+  },
+  "label": "DEMONSTRATED: arithmetic and invariants only, with ASSUMED inputs; not a route or flexible-line simulation",
+  "massCases": {
+    "main-empty": {
+      "center": [
+        0.07311502700069025,
+        0.00255796012830403,
+        0.024333103252263594
+      ],
+      "mass": 24629.0,
+      "principalMoments": [
+        298335.94648098195,
+        299820.1586116624,
+        299821.6216348614
+      ],
+      "tensor": [
+        [
+          299775.49231496546,
+          -0.27887679120235015,
+          253.57283568151365
+        ],
+        [
+          -0.27887679120235015,
+          299821.6199488997,
+          1.5329855048926049
+        ],
+        [
+          253.57283568151365,
+          1.5329855048926049,
+          298380.61446364044
+        ]
+      ]
+    },
+    "paid-50": {
+      "center": [
+        -0.33298379720371096,
+        0.002058016464131711,
+        0.01792107670194695
+      ],
+      "flexibleLineAndHeadMass": 17.0,
+      "mass": 30612.0,
+      "principalMoments": [
+        325113.5703539743,
+        326406.4251698274,
+        326406.42724510457
+      ],
+      "tensor": [
+        [
+          326406.3577919497,
+          -0.008399978426534435,
+          9.335088854044145
+        ],
+        [
+          -0.008399978426534435,
+          326406.42622917314,
+          1.1290278322226568
+        ],
+        [
+          9.335088854044145,
+          1.1290278322226568,
+          325113.6387477832
+        ]
+      ]
+    },
+    "paid-500": {
+      "center": [
+        -0.3329737857096163,
+        0.0020592272994704825,
+        0.016696084199516244
+      ],
+      "flexibleLineAndHeadMass": 35.0,
+      "mass": 30594.0,
+      "principalMoments": [
+        325111.4102776003,
+        326326.183097801,
+        326326.1850967043
+      ],
+      "tensor": [
+        [
+          326326.1208585365,
+          -0.007769254298568437,
+          8.696990259527988
+        ],
+        [
+          -0.007769254298568437,
+          326326.18415705557,
+          1.0518533045695226
+        ],
+        [
+          8.696990259527988,
+          1.0518533045695226,
+          325111.47345651337
+        ]
+      ]
+    },
+    "released": {
+      "center": [
+        -0.3329710026480107,
+        0.0020595638955179948,
+        0.016355552649645298
+      ],
+      "mass": 30589,
+      "principalMoments": [
+        325110.81025459344,
+        326303.8773267239,
+        326303.87930262025
+      ],
+      "tensor": [
+        [
+          326303.81651414954,
+          -0.007593921417419306,
+          8.519607375200215
+        ],
+        [
+          -0.007593921417419306,
+          326303.8783841773,
+          1.030399816927653
+        ],
+        [
+          8.519607375200215,
+          1.030399816927653,
+          325110.871985611
+        ]
+      ]
+    },
+    "released-at-50": {
+      "center": [
+        -0.3329710026480107,
+        0.0020595638955179948,
+        0.016355552649645298
+      ],
+      "mass": 30589,
+      "principalMoments": [
+        325110.81025459344,
+        326303.8773267239,
+        326303.87930262025
+      ],
+      "tensor": [
+        [
+          326303.81651414954,
+          -0.007593921417419306,
+          8.519607375200215
+        ],
+        [
+          -0.007593921417419306,
+          326303.8783841773,
+          1.030399816927653
+        ],
+        [
+          8.519607375200215,
+          1.030399816927653,
+          325110.871985611
+        ]
+      ]
+    },
+    "wet-allDeployed-mast-0": {
+      "center": [
+        -0.3329932416990434,
+        0.002056874204185574,
+        0.01806784419994123
+      ],
+      "mass": 30629.0,
+      "principalMoments": [
+        357715.9516551476,
+        358915.2673322384,
+        358915.267851546
+      ],
+      "tensor": [
+        [
+          358915.19347875344,
+          -0.008994981632477349,
+          9.411540043749365
+        ],
+        [
+          -0.008994981632477349,
+          358915.2667636522,
+          1.1382741845962965
+        ],
+        [
+          9.411540043749365,
+          1.1382741845962965,
+          357716.0265965262
+        ]
+      ]
+    },
+    "wet-allDeployed-mast-1": {
+      "center": [
+        -0.3329932416990434,
+        0.002056874204185574,
+        0.01956642397727644
+      ],
+      "mass": 30629.0,
+      "principalMoments": [
+        357715.95359821786,
+        359159.8879762588,
+        359159.8904386366
+      ],
+      "tensor": [
+        [
+          359159.8160658441,
+          -0.008994981632477349,
+          10.192150249763271
+        ],
+        [
+          -0.008994981632477349,
+          359159.88935074286,
+          1.2326847105684144
+        ],
+        [
+          10.192150249763271,
+          1.2326847105684144,
+          357716.0265965262
+        ]
+      ]
+    },
+    "wet-radiators-mast-0": {
+      "center": [
+        -0.3329932416990434,
+        0.002056874204185574,
+        0.01806784419994123
+      ],
+      "mass": 30629.0,
+      "principalMoments": [
+        325115.95165514736,
+        326315.26733223826,
+        326315.26785154577
+      ],
+      "tensor": [
+        [
+          326315.1934787533,
+          -0.008994981632477349,
+          9.411540043749365
+        ],
+        [
+          -0.008994981632477349,
+          326315.2667636521,
+          1.1382741845962965
+        ],
+        [
+          9.411540043749365,
+          1.1382741845962965,
+          325116.0265965261
+        ]
+      ]
+    },
+    "wet-radiators-mast-1": {
+      "center": [
+        -0.3329932416990434,
+        0.002056874204185574,
+        0.01956642397727644
+      ],
+      "mass": 30629.0,
+      "principalMoments": [
+        325115.95359821775,
+        326559.8879762587,
+        326559.8904386365
+      ],
+      "tensor": [
+        [
+          326559.816065844,
+          -0.008994981632477349,
+          10.192150249763271
+        ],
+        [
+          -0.008994981632477349,
+          326559.88935074274,
+          1.2326847105684144
+        ],
+        [
+          10.192150249763271,
+          1.2326847105684144,
+          325116.0265965261
+        ]
+      ]
+    },
+    "wet-solar-mast-0": {
+      "center": [
+        -0.3329932416990434,
+        0.002056874204185574,
+        0.01806784419994123
+      ],
+      "mass": 30629.0,
+      "principalMoments": [
+        337715.9516551475,
+        338915.2673322383,
+        338915.267851546
+      ],
+      "tensor": [
+        [
+          338915.1934787534,
+          -0.008994981632477349,
+          9.411540043749365
+        ],
+        [
+          -0.008994981632477349,
+          338915.26676365215,
+          1.1382741845962965
+        ],
+        [
+          9.411540043749365,
+          1.1382741845962965,
+          337716.02659652615
+        ]
+      ]
+    },
+    "wet-solar-mast-1": {
+      "center": [
+        -0.3329932416990434,
+        0.002056874204185574,
+        0.01956642397727644
+      ],
+      "mass": 30629.0,
+      "principalMoments": [
+        337715.9535982178,
+        339159.88797625876,
+        339159.89043863665
+      ],
+      "tensor": [
+        [
+          339159.81606584403,
+          -0.008994981632477349,
+          10.192150249763271
+        ],
+        [
+          -0.008994981632477349,
+          339159.8893507428,
+          1.2326847105684144
+        ],
+        [
+          10.192150249763271,
+          1.2326847105684144,
+          337716.02659652615
+        ]
+      ]
+    },
+    "wet-stowed-mast-0": {
+      "center": [
+        -0.3329932416990434,
+        0.002056874204185574,
+        0.01806784419994123
+      ],
+      "mass": 30629.0,
+      "principalMoments": [
+        305115.9516551475,
+        306315.26733223826,
+        306315.2678515459
+      ],
+      "tensor": [
+        [
+          306315.1934787533,
+          -0.008994981632477349,
+          9.411540043749365
+        ],
+        [
+          -0.008994981632477349,
+          306315.2667636521,
+          1.1382741845962965
+        ],
+        [
+          9.411540043749365,
+          1.1382741845962965,
+          305116.0265965261
+        ]
+      ]
+    },
+    "wet-stowed-mast-1": {
+      "center": [
+        -0.3329932416990434,
+        0.002056874204185574,
+        0.01956642397727644
+      ],
+      "mass": 30629.0,
+      "principalMoments": [
+        305115.95359821775,
+        306559.8879762587,
+        306559.8904386365
+      ],
+      "tensor": [
+        [
+          306559.816065844,
+          -0.008994981632477349,
+          10.192150249763271
+        ],
+        [
+          -0.008994981632477349,
+          306559.88935074274,
+          1.2326847105684144
+        ],
+        [
+          10.192150249763271,
+          1.2326847105684144,
+          305116.0265965261
+        ]
+      ]
+    }
+  },
+  "powerCases": {
+    "arrival": {
+      "baselineEquipmentHeat": 3285.0,
+      "batteryRequiredA": 0.0,
+      "batteryRequiredB": 0.0,
+      "converterLoss": 139.2105263157893,
+      "essential": 2645.0,
+      "mainA": 2814.2105263157896,
+      "mainB": 210.0,
+      "total": 3024.2105263157896
+    },
+    "observing": {
+      "baselineEquipmentHeat": 3285.0,
+      "batteryRequiredA": 0.0,
+      "batteryRequiredB": 0.0,
+      "converterLoss": 141.0526315789472,
+      "essential": 2680.0,
+      "mainA": 2851.0526315789475,
+      "mainB": 240.0,
+      "total": 3091.0526315789475
+    },
+    "reel6kN03mps": {
+      "baselineEquipmentHeat": 3285.0,
+      "batteryRequiredA": 0.0,
+      "batteryRequiredB": 0.0,
+      "converterLoss": 141.0526315789472,
+      "essential": 2680.0,
+      "mainA": 2851.0526315789475,
+      "mainB": 2740.0,
+      "total": 5591.0526315789475
+    },
+    "reelHighRecorder": {
+      "baselineEquipmentHeat": 3350.0,
+      "batteryRequiredA": 0.0,
+      "batteryRequiredB": 0.0,
+      "converterLoss": 144.47368421052616,
+      "essential": 2745.0,
+      "mainA": 2919.4736842105262,
+      "mainB": 2740.0,
+      "total": 5659.473684210527
+    },
+    "reelMaxPlusIon": {
+      "baselineEquipmentHeat": 5585.0,
+      "batteryRequiredA": 0.0,
+      "batteryRequiredB": 4460.0,
+      "converterLoss": 141.0526315789472,
+      "essential": 2680.0,
+      "mainA": 2851.0526315789475,
+      "mainB": 10460.0,
+      "total": 13311.052631578947
+    }
+  },
+  "torqueCases": {
+    "main-empty": {
+      "alignedDirection": [
+        -0.1320694561307266,
+        -0.0007984315880812376,
+        0.9912401430855862
+      ],
+      "arm": [
+        -0.42311502700069026,
+        -0.00255796012830403,
+        3.1756668967477366
+      ],
+      "fifteenDegreeTorque": 4975.119780085223,
+      "normalTorque": [
+        -15.347760769824179,
+        2538.6901620041417,
+        0.0
+      ],
+      "twoDegreeTorque": 670.8516225722701
+    },
+    "wet-radiators-mast-1": {
+      "alignedDirection": [
+        -0.005347230558384873,
+        -0.0006467182284089976,
+        0.9999854943352371
+      ],
+      "arm": [
+        -0.017006758300956604,
+        -0.002056874204185574,
+        3.1804335760227236
+      ],
+      "fifteenDegreeTorque": 4939.012330606308,
+      "normalTorque": [
+        -12.341245225113445,
+        102.04054980573962,
+        0.0
+      ],
+      "twoDegreeTorque": 665.9828471174886
+    }
+  }
+}
