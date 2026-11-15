@@ -135,31 +135,105 @@ ultra-wide panoramic view of deep space, a dozen small oval holes in the sky sca
 The owner raised MidJourney's weirdness in round 4 and it paid off; keep it raised. Strangeness belongs in the sky and the fictional phenomena. Bodies and rocks stay physically lit (art bible rule 0).
 
 ### B03b — C01 Unfamiliar Sky: waking up here
-- **New place:** the first view after the black hole. **Style ref:** `57c10c4c` #2 (the sky) or `cb93a8bc` #0. **Status:** to try.
+- **New place:** the first view after the black hole. **Style ref:** `57c10c4c` #2 (the sky) or `cb93a8bc` #0. **Status:** tried (round 5; see selections.md).
 
 ```
 ultra-wide panoramic view seen from far out in open space, the vast dark curved limb of a distant world along the bottom edge with a hair-thin warm sunlit rim, small rock fragments floating above and beside at depths impossible to judge, one of them so small and bright it passes for a star, beyond them an enormous edge-on galaxy hanging across the sky with a blazing core and a torn dark lane of dim garnet knots, unfamiliar, beautiful and wrong, realistic, cinematic, high dynamic range --ar 21:9 --style raw --no text, letters, people, spaceship interior, frame, ground, horizon, atmosphere, planet surface, landscape, purple, violet, lens flare, bright red
 ```
 
 ### X05b — The Listening Shelf
-- **New place:** P01. **Style ref:** `6042ea07` #3 (the pale slab). **Status:** to try.
+- **New place:** P01. **Style ref:** `6042ea07` #3 (the pale slab). **Status:** tried (round 5; see selections.md).
 
 ```
 ultra-wide panoramic view seen from far out in open space, an immense pale rock shelf hanging overhead across the top of the view, its underside carved by nature into rows of smooth shallow hollows like great ears all turned the same way, lit faintly by a small distant sun, below it rock fragments adrift at different depths, far past its shoulder one tiny glint of reflected light, black vacuum, uncanny attentive stillness, realistic, cinematic, high dynamic range --ar 21:9 --style raw --no text, letters, people, spaceship interior, frame, ground, horizon, atmosphere, planet surface, landscape, purple, violet, lens flare, satellite dishes, machinery, faces
 ```
 
 ### X14b — Braided Crossing
-- **New place:** C05, where the wells meet the debris. **Style refs:** `cb93a8bc` #0 for rocks, `bce5f206` #1 for funnels. **Status:** to try.
+- **New place:** C05, where the wells meet the debris. **Style refs:** `cb93a8bc` #0 for rocks, `bce5f206` #1 for funnels. **Status:** tried (round 5; see selections.md).
 
 ```
 ultra-wide panoramic view seen from far out in open space, several long streams of sparkling rock debris crossing above and below at steep different angles like loose braids, the gaps between them never lining up, beyond and between them a few separate long narrow funnels of thin violet wire rings each ending in a brilliant white point, black vacuum, a small distant sun lighting the rocks warm, complex and threatening, cinematic, high dynamic range --ar 3:1 --style raw --no text, letters, people, spaceship interior, frame, ground, horizon, atmosphere, planet surface, grid, lattice, nebula, fog, pink, lightning
 ```
 
 ### W05b — A well being born
-- **The precursor becoming a funnel** (S22: dotted rings join into lines over 120 s). **Style refs:** `a5aac057` #0 (dots), `c29febbf` #1 (lines). **Status:** to try.
+- **The precursor becoming a funnel** (S22: dotted rings join into lines over 120 s). **Style refs:** `a5aac057` #0 (dots), `c29febbf` #1 (lines). **Status:** tried (round 5; see selections.md).
 
 ```
 ultra-wide panoramic view in black deep space, a long narrow funnel in the moment of forming, at its wide mouth the rings are still made of faint scattered dots like frost, toward the middle the dots are joining into thin continuous violet lines, and at the narrow end the lines are complete and converge on a brilliant white point that has just ignited, calm and inevitable, unfamiliar sparse stars, no ground, cinematic, high dynamic range --ar 21:9 --style raw --no text, letters, people, spaceship interior, frame, ground, horizon, surface, floor, spiral, swirl, explosion, shockwave, lightning, smoke, fire, pink, nebula
+```
+
+## Round 6: filling the reference library's gaps
+
+Each prompt fills a scene with no reference yet; see [reference-library.md](reference-library.md). Keep weirdness raised for places and sky, low for funnels.
+
+### S02b — Transit: the quiet sky
+- **Gap:** the sky while preparing between encounters. **Style ref:** `57c10c4c` #0. **Status:** to try.
+
+```
+ultra-wide panoramic view of deep space, mostly pure black with sparse faint stars in deep red and blue-white, low along one edge the faint far tip of an enormous edge-on galaxy fading into darkness, one tiny distant galaxy alone in the black, nothing else, profound stillness and loneliness, true colour astrophotography, high dynamic range --ar 21:9 --style raw --no text, letters, people, spaceship interior, frame, ground, horizon, atmosphere, planet surface, landscape, purple, violet, nebula, planets, lens flare, diffraction spikes
+```
+
+### S07 — The Ember Wheel, alternates
+- **Gap:** only one reference for the second galaxy. **Style ref:** `027eec67` #0. **Status:** to try.
+
+```
+ultra-wide panoramic view of deep space, a large spiral galaxy tilted steeply so it appears as a broad oval, soft near-white disc with fine warm dust spirals and a small bright core, its outer rim lined with brilliant points of star formation like scattered embers, densest along the near edge, surrounded by black sky with sparse unfamiliar stars, majestic and strange, astrophotography, high dynamic range --ar 21:9 --style raw --no text, letters, people, spaceship interior, frame, ground, horizon, atmosphere, planet surface, landscape, purple, violet, lens flare, diffraction spikes, planets, black hole
+```
+
+### W05c — A well being born, with weirdness low
+- **Gap:** W05b drifted into galaxies. Run with weirdness low or off. **Style refs:** `c29febbf` #1 and `a5aac057` #0. **Status:** to try.
+
+```
+ultra-wide panoramic view in black deep space, one long narrow funnel drawn in thin violet wire lines seen from the side, its wide end still only faint dotted rings like frost, its middle where the dots are joining into thin continuous rings, its narrow end complete with crowded rings converging on a brilliant white point just ignited, black vacuum all around, a few sparse stars, clean and precise, cinematic --ar 21:9 --style raw --no text, letters, people, spaceship interior, frame, ground, horizon, atmosphere, planet surface, landscape, galaxy, spiral, swirl, comet, nebula, explosion, smoke, fire, pink, lightning
+```
+
+### L05b — The Passage
+- **Gap:** H01, the opening filling the forward view. **Style ref:** `9dcfe97b` #0. **Status:** to try.
+
+```
+ultra-wide panoramic view of deep space, an enormous tilted oval opening filling most of the view, its rim a fringe of fine luminous white fibres with a faint violet glow, through it a rich warm familiar Milky Way seen from inside, dense star clouds and red-brown dust, around the rim a narrow strip of strange black sky where the far edge of an enormous edge-on galaxy still shows, the opening slowly turning, tense and hopeful, cinematic, high dynamic range --ar 21:9 --style raw --no text, letters, people, spaceship interior, frame, ground, horizon, atmosphere, planet surface, landscape, vortex, swirl, tunnel, wormhole, smoke, clouds, pink, large earth
+```
+
+### L07b — Lantern Field
+- **Gap:** C03, lit rocks like lanterns before the Ember Wheel. **Style refs:** `cb93a8bc` #0 and `027eec67` #0. **Status:** to try.
+
+```
+ultra-wide panoramic view seen from far out in open space, a scattering of small rocks at many depths each lit warm on one side by a small distant sun so they glow softly like lanterns hanging in the dark, high on the left the edge of an unseen dark body catching a thin arc of dawn light, beyond them a large tilted spiral galaxy whose rim is lined with ember-like points, one pale point of light slipping behind a rock, calm and inviting, cinematic, high dynamic range --ar 21:9 --style raw --no text, letters, people, spaceship interior, frame, ground, horizon, atmosphere, planet surface, landscape, purple, violet, lens flare, lanterns, fire, flames, paper lanterns
+```
+
+### X09b — Far Aperture
+- **Gap:** N02, two dark edges and a flicker between them. **Style ref:** `8bbe8eef` #2. **Status:** to try.
+
+```
+ultra-wide panoramic view seen from far out in open space, the dark curved edge of a huge unlit body crossing the top of the view, its outline known only because it hides the stars, a second smaller dark body receding far below, between them in a dense band of stars a single small point of light caught in the act of vanishing behind one edge, depth impossible to judge, eerie, cinematic, high dynamic range --ar 21:9 --style raw --no text, letters, people, spaceship interior, frame, ground, horizon, atmosphere, planet surface, landscape, purple, violet, lens flare, glow, rim light
+```
+
+### X10b — Unseen Cathedral: the calm trap
+- **Gap:** N03. The lattice is invisible to the eye (A16): nothing may hint at it. **Style ref:** `4bef5e21` #0. **Status:** to try.
+
+```
+ultra-wide panoramic view seen from far out in open space, a sparse peaceful field of ordinary dark rocks drifting above and below with wide clear gaps between them, each rock softly lit on one side by a small distant sun, the far edge of an enormous edge-on galaxy glowing low in the black, plenty of open dark space, completely calm and inviting, realistic, cinematic, high dynamic range --ar 21:9 --style raw --no text, letters, people, spaceship interior, frame, ground, horizon, atmosphere, planet surface, landscape, purple, violet, lens flare, glow, grid, lines, beams, fog, lattice, web
+```
+
+### B07b — Sunward
+- **Gap:** P02, the one bright scene. **Style ref:** `ca1c5c59` #2. **Status:** to try.
+
+```
+ultra-wide panoramic view seen from far out in open space, the brilliant sunlit limb of a large airless rocky world rising across the right side, its surface harshly lit by a small distant sun just beyond it, every crater rim sharp, overlapping dark silhouettes of rock above and below, light only where it falls on surfaces and black vacuum everywhere else, stars washed out near the sun, realistic, cinematic, high dynamic range --ar 21:9 --style raw --no text, letters, people, spaceship interior, frame, ground, horizon, atmosphere, planet surface, landscape, purple, violet, lens flare, god rays, light beams, glow, airglow
+```
+
+### X12b — The Hinge
+- **Gap:** R02, a knife-thin ridge. **Style ref:** `6042ea07` #3. **Status:** to try.
+
+```
+ultra-wide panoramic view seen from far out in open space, a long knife-thin ridge of dark rock hanging high above and far beyond, only its razor crest catching a sliver of warm light from a small distant sun, a few isolated rocks at different distances below for scale, black vacuum, the faint far lens of an edge-on galaxy behind, vast and precise, realistic, cinematic, high dynamic range --ar 21:9 --style raw --no text, letters, people, spaceship interior, frame, ground, horizon, atmosphere, planet surface, landscape, purple, violet, lens flare, glow, mountains, snow
+```
+
+### X16b — Stillwater
+- **Gap:** C04, calm before Braided Crossing, facing the Ember Wheel. **Style refs:** `02429124` #0 and `027eec67` #0. **Status:** to try.
+
+```
+ultra-wide panoramic view seen from far out in open space, the massive dark limb of an airless world along the left side with a soft thin warm rim, a few distant rocks hanging perfectly still, low beyond them a large tilted spiral galaxy with an ember-lined rim, far below one faint point of light, very few stars, a deep calm like still water at night, realistic, cinematic, high dynamic range --ar 21:9 --style raw --no text, letters, people, spaceship interior, frame, ground, horizon, atmosphere, planet surface, landscape, purple, violet, lens flare, water, reflection, airglow
 ```
 
 ## 1. The deep sky (sky targets)

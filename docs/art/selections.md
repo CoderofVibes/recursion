@@ -87,4 +87,24 @@ For the disclosure: MidJourney was used to make reference images that guided the
 | L06b | `b3495a44-cbba-4b9b-b3df-a10feb866733` | 2 | partial | More petals, more variety | Many openings of many sizes, each with the landmark inside. Rims too orange and blue; keep them white and violet. |
 | L06b | `7ac3af06-b35f-4042-9867-e53fc61f2bc8` | 1 | partial | Rim texture | Rims like burning paper with smoky veils: striking, but it reads as fire. Take the ragged inner edge only. |
 
+## Round 5 (2026-11-15): B03b, X05b, X14b, W05b
+
+| Prompt | Job ID | # | Verdict | Use | Why |
+|---|---|---|---|---|---|
+| B03b | `02429124-0d11-4bfd-84bc-e89275408add` | 0 | **chosen** | C01 Unfamiliar Sky | The first view after the black hole: a dark limb along the bottom with a warm hairline rim, the edge-on Galaxy hanging above with its dark lane and knots, a small far sun, two fragments catching light. Calm, huge and wrong. Keep the limb's rim sharp: the soft glow above it reads as air. |
+| B03b | `16145e4e-cf94-4de5-bb95-b93a1f11a98d` | 3 | partial | Depth ambiguity | Near rocks drift in front of the Galaxy's lane until you can't tell rock from dust lane: C01's "fragments make depth ambiguous", made visual. |
+| B03b | `16145e4e-cf94-4de5-bb95-b93a1f11a98d` | 1, 2 | partial | Same idea, stronger | The Galaxy's lane turns into a river of rocks. Too literal for the sky (the lane is far away and the rocks near), but a good reference for C01's confusion. |
+| X05b | `99085f82-4f64-4696-aa58-5d8a76251625` | 2 | **chosen** | Listening Shelf | A long pale slab adrift with a row of smooth hollows running along its face like ears, fragments below, a small warm sun: uncanny and attentive, exactly P01. |
+| X05b | `6c6048f9-b310-4631-86a6-4427f5e4c0d4` | 0 | partial | Fluted underside | Vertical flutes and hollows on a hanging slab. Drop the rubble floor beneath it. |
+| X14b | `4bef5e21-9c1f-41c8-bf7a-b4e81d5af8c6` | 0 | **chosen** | Braided Crossing debris | Streams of sparkling debris crossing at shallow angles like loose braids, black between them, a small warm sun. Minimal and beautiful. The funnels come from 3B's look, added beyond the braids. |
+| X14b | `27c82348-b133-418f-859b-72b4faa5bd53` | 0 | partial | Funnels among debris | A debris stream with two funnels seen end-on as fine rings around bright points. The way they sit in the stream is right; the rings should be violet, not grey-blue. |
+| X14b | `27c82348-b133-418f-859b-72b4faa5bd53` | 1 | partial | Dense version | The same idea, much denser and drenched in orange. Too much, but it shows how funnels read inside a crowded field. |
+| W05b | `a4516a95-035b-47a2-88c6-2f56b3e9e658` | 3 | **proposed sky oddity** | A needle galaxy | Not a funnel: a spiral galaxy stretched into a long needle with a blazing star at its tip. A strange distant object. Owner to decide. |
+| W05b | `a4516a95-035b-47a2-88c6-2f56b3e9e658` | 0 | **proposed sky oddity** | A hollow galaxy | A thin, tilted galaxy with a dark empty oval in its middle and a bright knot on its rim. Owner to decide. |
+| W05b | `2050f52c-4a02-40f2-9253-9a068550f4a7` | 0 | **proposed sky oddity** | The Eye | A spiral galaxy wrapped around a black hollow, like the thing that swallowed the ship, seen far away. A recursion motif in the sky. Owner to decide. |
+| W05b | `a4516a95-035b-47a2-88c6-2f56b3e9e658` | 1 | partial | Funnel brightness gradient | A long cone of light concentrating into a brilliant point: how a funnel's light should build toward the throat. Not the wireframe look. |
+| W05b | `2050f52c-4a02-40f2-9253-9a068550f4a7` | 3 | dropped | | A dome of streaked light over a ground. |
+
+**Note on weirdness:** raised weirdness made the places stranger and better, but on W05b it pulled the funnel away from the wireframe look entirely. For funnel prompts, keep weirdness low and lean on the style references.
+
 Images shipped as textures: **none** (A23).

@@ -1,6 +1,6 @@
 # Art bible: the view through the window
 
-For the threads that build the window's visuals: 2D (window and sky), 3B (funnels), OP (opening and Earth), 4D (openings), 3C (radiation clouds). It describes the chosen look in words precise enough to build procedurally. The reference images are not in the repository (A23); their job IDs and verdicts are in [selections.md](selections.md). The prompts are in [window-prompts.md](window-prompts.md). The plan for many different views is in [window-views.md](window-views.md).
+For the threads that build the window's visuals: 2D (window and sky), 3B (funnels), OP (opening and Earth), 4D (openings), 3C (radiation clouds). It describes the chosen look in words precise enough to build procedurally. The reference images are not in the repository (A23); their job IDs and verdicts are in [selections.md](selections.md). The prompts are in [window-prompts.md](window-prompts.md). The plan for many different views is in [window-views.md](window-views.md). Every reference grouped by scene, with the gaps, is in [reference-library.md](reference-library.md).
 
 ## General rules
 
@@ -50,6 +50,7 @@ Lit rocks read as **sparks**: tiny warm points, brightest where the sun is behin
 - **Taper.** Rings sparse at the mouth (S22's 20 km), crowding steadily toward the 1 km throat along a quadratic taper; the last third of the length is nearly a single bright line. Ring brightness rises toward the throat.
 - **End-on.** Seen down its axis, a funnel is concentric rings (never a spiral) closing on a brilliant point, with the meridians as faint spokes.
 - **Mouth face-on.** A funnel opening toward the viewer is a web of rings and spokes closing on the bright throat point.
+- **Brightness along the funnel** (`a4516a95…` #1): light builds steadily along the taper and concentrates into the brilliant throat point, like a cone of light converging on a star.
 - **Side-on** (W01c `bce5f206…` #1). Wire rings stepping down a long taper to a single brilliant point, like a horn of light drawn in a few strokes.
 - **Far away** (same image). A distant funnel is a thin violet thread with a small white spark at its throat end, so the field reads as thousands of sparks on threads pointing every which way.
 - **Field.** Funnels at random orientations through a 3D volume: sideways, toward, away, above and below. A few near ones large and detailed; many far ones reduced to single threads of light with a brighter point at the throat. Not parallel, not in a plane, not evenly spaced, and never standing on a floor or surface: MidJourney kept adding one, and there isn't one.
@@ -95,6 +96,26 @@ A sheer face of layered, fractured rock in rust and garnet, lit low and warm so 
 ### Eclipse at the limb (2D) — X13, from L02b `2adef2fe…` #0
 
 When the far sun slips behind a dark body: a black limb traced by a thin bright edge, and one brilliant bead of light where the sun is going. The rest of the sky comes up as the eye adapts (window-views.md, layer 2).
+
+### C01 Unfamiliar Sky, the first view (2D) — B03b `02429124…` #0; depth ambiguity from `16145e4e…` #3
+
+A dark airless limb across the bottom of the window, its rim a hairline of warm light (sharp, with no airglow above it). Above, the edge-on Galaxy fills the sky with its blazing core and torn lane. A small far sun sits off to one side. A few near fragments catch the light, and one of them is so small and bright it passes for a star. Nearby rocks overlap the Galaxy's lane, so at first the eye can't tell near from far: the player's first lesson, given by the view itself.
+
+### Listening Shelf (2D) — X05b `99085f82…` #2; fluting from `6c6048f9…` #0
+
+A long pale slab of rock adrift overhead, cream and bone white with rusty stains. Along its face runs a row of smooth, deep, rounded hollows, all alike and all facing the same way, like ears. The rest of the slab is fractured and layered. Small fragments drift beneath it at different depths, and a small warm sun sits beyond its end. (The slab shape raises the collision-shape question in window-views.md.)
+
+### Braided Crossing (2D, 3B) — X14b `4bef5e21…` #0; funnels in the stream from `27c82348…` #0
+
+Several long streams of fine sparkling debris crossing at shallow, different angles, like loose braids, with black space between them and gaps that never line up. Beyond and between the braids hang a few separate funnels, mostly seen near end-on as fine violet rings around bright throat points. Lit warm by a small far sun.
+
+### Proposed sky oddities (2D) — owner to decide
+
+Raised weirdness in round 5 produced three strange distant objects. Each could sit somewhere in the sky atlas as a small landmark (a few degrees across), far from the two great galaxies:
+
+- **Needle** (`a4516a95…` #3): a spiral galaxy stretched into a long thin needle with a blazing star at its tip.
+- **Hollow** (`a4516a95…` #0): a thin tilted galaxy with a dark empty oval at its centre and one bright knot on its rim.
+- **Eye** (`2050f52c…` #0): a spiral wrapped round a black hollow, like the black hole that brought the ship here, seen far away. A recursion motif.
 
 ### Earth (OP)
 
