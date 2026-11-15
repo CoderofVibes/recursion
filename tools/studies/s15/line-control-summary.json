@@ -1,0 +1,132 @@
+{
+  "run": "line-control",
+  "source": {
+    "commit": "cdbaa751b988334b4c7efb530ac0cf17208ea932",
+    "srcTree": "f48dbf0c75035230c8b3a5eda4f8b7d19fa3dbcd",
+    "dataTree": "8fe01542697fc8afeaf876544328e382de722b86",
+    "branch": "st/s15-modest-laptop",
+    "dirtyInputs": ""
+  },
+  "totalBytes": 1398671,
+  "gzipBytes": 403824,
+  "loads": [],
+  "frames": [
+    {
+      "key": "modest/room/1",
+      "profile": "modest",
+      "view": "room",
+      "warp": 1,
+      "n": 1104,
+      "median": 12.200000000000728,
+      "p95": 18.30000000000109,
+      "worst": 30.5,
+      "wall": 15.97960000000149,
+      "ship": 16,
+      "shipPerWall": 1.0012766277002245,
+      "saturationPercent": 0,
+      "saturated": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "worst": null,
+        "shipPerWall": null
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        18.300000000000182,
+        18.30000000000109
+      ]
+    },
+    {
+      "key": "modest/flight/1",
+      "profile": "modest",
+      "view": "flight",
+      "warp": 1,
+      "n": 896,
+      "median": 18.100000000000364,
+      "p95": 30.200000000000728,
+      "worst": 48.5,
+      "wall": 15.98860000000149,
+      "ship": 16,
+      "shipPerWall": 1.0007130080181197,
+      "saturationPercent": 0,
+      "saturated": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "worst": null,
+        "shipPerWall": null
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        30.399999999999636,
+        18.400000000000546
+      ]
+    },
+    {
+      "key": "modest/room/2000",
+      "profile": "modest",
+      "view": "room",
+      "warp": 2000,
+      "n": 496,
+      "median": 30.30000000000109,
+      "p95": 48.29999999999927,
+      "worst": 66.5,
+      "wall": 15.957100000001489,
+      "ship": 4720,
+      "shipPerWall": 295.79309523657554,
+      "saturationPercent": 100,
+      "saturated": {
+        "n": 496,
+        "median": 30.30000000000109,
+        "p95": 48.29999999999927,
+        "worst": 66.5,
+        "shipPerWall": 295.4820050206901
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        48.600000000000364,
+        42.19999999999982
+      ]
+    },
+    {
+      "key": "modest/flight/2000",
+      "profile": "modest",
+      "view": "flight",
+      "warp": 2000,
+      "n": 501,
+      "median": 30.30000000000109,
+      "p95": 42.5,
+      "worst": 72.70000000000073,
+      "wall": 15.98379999999702,
+      "ship": 4376,
+      "shipPerWall": 273.77719941445815,
+      "saturationPercent": 100,
+      "saturated": {
+        "n": 501,
+        "median": 30.30000000000109,
+        "p95": 42.5,
+        "worst": 72.70000000000073,
+        "shipPerWall": 273.53419177397205
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        42.399999999999636,
+        48.30000000000018
+      ]
+    }
+  ],
+  "cpu": [],
+  "trace": [],
+  "validity": {
+    "browserExceptions": 0,
+    "frames": 8,
+    "invalid": [],
+    "modelErrors": 0,
+    "maxObserverMsPerFrame": 0.05647382936530205
+  }
+}

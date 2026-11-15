@@ -14,14 +14,19 @@ import { describe, expect, it } from 'vitest';
 import rawValidation from '../../tests/vectors/estimator/extension-validation.json?raw';
 import { emptyArchive, withExtensionDecision, withExtensionTest } from '../blackbox/archive.ts';
 import { MemoryBlackBoxStore } from '../blackbox/store.ts';
-import type {
-  AttemptRecord,
-  BelievedBody,
-  EncounterBriefing,
-  MassProperties,
-  Measurement,
-  ParameterPrior,
+import {
+  cov3FromPlanar,
+  isotropicInertia,
+  prismHull,
+  type AttemptRecord,
+  type BelievedBody,
+  type EncounterBriefing,
+  type MassProperties,
+  type Measurement,
+  type ParameterPrior,
+  type ShipEstimate,
 } from '../contracts/index.ts';
+import * as quat from '../lib/quat.ts';
 import { createRng } from '../lib/rng.ts';
 import { compileArc, simulate } from './dynamics.ts';
 import type { ModelContext } from './engine.ts';
@@ -33,34 +38,40 @@ const R0 = 1e6;
 const v = JSON.parse(rawValidation) as VectorJson;
 const lawCase = v.cases.find((c) => c.id === 'distance-law')!;
 const binaryCase = v.cases.find((c) => c.id === 'overlooked-body')!;
+// The scenarios in this file are planar (z = 0, yaw-only attitude, flat hull): the model runs
+// them in the planar reduction (`planar: 1`, spec Appendix A.3), as the planar model did.
 const massProperties: MassProperties = {
   mass: MASS,
-  centerOfMass: { x: 0, y: 0 },
-  inertia: 1e5,
-  footprint: [
-    { x: -5, y: -2 },
-    { x: 5, y: -2 },
-    { x: 5, y: 2 },
-    { x: -5, y: 2 },
-  ],
+  centerOfMass: { x: 0, y: 0, z: 0 },
+  inertia: isotropicInertia(1e5),
+  hull: prismHull(
+    [
+      { x: -5, y: -2 },
+      { x: 5, y: -2 },
+      { x: 5, y: 2 },
+      { x: -5, y: 2 },
+    ],
+    0,
+    0,
+  ),
 };
-const arrival = {
+const arrival: ShipEstimate = {
   t: 0,
-  position: { x: 1e6, y: 0 },
-  velocity: { x: 0, y: 100 },
-  positionCov: [1e8, 0, 1e8] as const,
-  velocityCov: [100, 0, 100] as const,
-  attitude: 0,
+  position: { x: 1e6, y: 0, z: 0 },
+  velocity: { x: 0, y: 100, z: 0 },
+  positionCov: cov3FromPlanar([1e8, 0, 1e8]),
+  velocityCov: cov3FromPlanar([100, 0, 100]),
+  attitude: quat.fromYaw(0),
   attitudeSigma: 1e-3,
-  angularRate: 0,
+  angularVelocity: { x: 0, y: 0, z: 0 },
 };
 
 const body = (id: string, x: number, y: number, vx = 0, vy = 0, sigma = 1e3): BelievedBody => ({
   id,
   name: id,
-  position: { x, y },
-  velocity: { x: vx, y: vy },
-  positionCov: [sigma ** 2, 0, sigma ** 2],
+  position: { x, y, z: 0 },
+  velocity: { x: vx, y: vy, z: 0 },
+  positionCov: cov3FromPlanar([sigma ** 2, 0, sigma ** 2]),
   radius: id === 'A' ? 2.5e5 : 1.6e5,
   tracked: true,
 });
@@ -76,7 +87,7 @@ function context(
     bodies,
     ship: testShip(MASS, 150),
     arrival,
-    settings: { dt: 60 },
+    settings: { dt: 60, planar: 1 },
     ...extra,
   };
 }
@@ -113,7 +124,7 @@ describe('each run starts from different geometry (A10)', () => {
     objectives: [],
     arrivalEstimate: {
       ...arrival,
-      position: { x: arrival.position.x + shift.x, y: arrival.position.y + shift.y },
+      position: { x: arrival.position.x + shift.x, y: arrival.position.y + shift.y, z: 0 },
     },
     arrivalConfiguration: 'stowed',
     priors,
@@ -128,17 +139,25 @@ describe('each run starts from different geometry (A10)', () => {
   const ctx = context(priors, bodiesOf('att1'));
   const plain = records(binaryCase);
 
-  it('fits attempts at different binary phases together when each carries its briefing', () => {
-    const svc = new ModelService(ctx);
-    const s = svc.load({ attempts: plain.map((r) => withBriefing(r)) });
-    expect(s.fit!.converged).toBe(true);
-    expect(s.fit!.chi2 / s.fit!.nu).toBeLessThan(1.2);
-    const mb = s.parameters.find((p) => p.id === 'body.B.mu')!;
-    expect(Math.abs(mb.value - tv['truth.muB']!)).toBeLessThan(3 * mb.sigma);
-    // Without per-attempt geometry, attempts 2 and 3 are fitted against attempt 1's B.
-    const blind = new ModelService(ctx).load({ attempts: plain });
-    expect(blind.fit!.chi2 / blind.fit!.nu).toBeGreaterThan(5);
-  });
+  // About 4 s alone (two rebuilds of three 16 h binary arcs; the 3D code propagates nine numbers
+  // per particle where the planar one had six): past the 5 s default under the whole suite.
+  it(
+    'fits attempts at different binary phases together when each carries its briefing',
+    {
+      timeout: 60_000,
+    },
+    () => {
+      const svc = new ModelService(ctx);
+      const s = svc.load({ attempts: plain.map((r) => withBriefing(r)) });
+      expect(s.fit!.converged).toBe(true);
+      expect(s.fit!.chi2 / s.fit!.nu).toBeLessThan(1.2);
+      const mb = s.parameters.find((p) => p.id === 'body.B.mu')!;
+      expect(Math.abs(mb.value - tv['truth.muB']!)).toBeLessThan(3 * mb.sigma);
+      // Without per-attempt geometry, attempts 2 and 3 are fitted against attempt 1's B.
+      const blind = new ModelService(ctx).load({ attempts: plain });
+      expect(blind.fit!.chi2 / blind.fit!.nu).toBeGreaterThan(5);
+    },
+  );
 
   it('places each attempt’s forecast in that attempt’s geometry', () => {
     const shift = { x: 5e5, y: -2e5 };
@@ -175,7 +194,7 @@ describe('each run starts from different geometry (A10)', () => {
 // ---------------------------------------------------------------------------------------------
 
 describe('the player’s adopt and revoke are recorded (BlackBoxArchive.extensionDecisions)', () => {
-  it('a revoked rule stays revoked after a reload', async () => {
+  it('a revoked rule stays revoked after a reload', { timeout: 60_000 }, async () => {
     const ctx = context(
       [{ id: 'body.A.mu', label: 'A μ', unit: 'm³/s²', value: 1.02e10, sigma: 3e8 }],
       [body('A', 0, 0)],
@@ -228,7 +247,7 @@ describe('the player’s adopt and revoke are recorded (BlackBoxArchive.extensio
     // It can be adopted again; the record keeps all three decisions.
     expect(again.adopt('distance-law').extensions[0]!.status).toBe('adopted');
     expect(again.decisions.map((d) => d.action)).toEqual(['adopted', 'revoked', 'adopted']);
-  }, 30_000);
+  });
 });
 
 // ---------------------------------------------------------------------------------------------
@@ -242,22 +261,23 @@ describe('asteroid fixes a passing test fits widen its validated span (A5)', () 
   const apsisSpeed = (rFrom: number, rTo: number) =>
     Math.sqrt((2 * (potential(rTo) - potential(rFrom))) / (1 - (rFrom / rTo) ** 2));
   const truthAt = (state: readonly number[], times: readonly number[]) => {
+    const [x, y, vx, vy] = state as [number, number, number, number];
     const st = {
       r0: R0,
       n: N,
       bodies: [{ id: 'A', mu: MU, state: 'gauge' as const }],
-      ship: state as unknown as readonly [number, number, number, number],
+      ship: [x, y, 0, vx, vy, 0] as const,
       dynamicBodies: false,
-      engine: { kE: 1, dE: 0 },
+      engine: { kE: 1, dE: 0, dP: 0 },
       kA: 1,
-      camBias: 0,
+      camBias: [0, 0, 0] as const,
     };
     return simulate(
       compileArc(st, { id: 'truth', epoch: 0, commands: [] }, new Map()),
       [],
       times,
       15,
-    ).pos.map((p) => [p[2]!, p[3]!] as const);
+    ).pos.map((p) => [p[3]!, p[4]!] as const);
   };
   const tv = lawCase.truth.values;
   /** Add an asteroid seen with the ship's camera at every fix time of the attempt. */
@@ -298,8 +318,8 @@ describe('asteroid fixes a passing test fits widen its validated span (A5)', () 
           t,
           source: 'cam',
           target: id,
-          value: [Math.atan2(dy, dx) + rng.normal(0, sb)],
-          sigma: [sb],
+          value: [Math.atan2(dy, dx) + rng.normal(0, sb), 0],
+          sigma: [sb, sb],
         },
         {
           kind: 'range',
@@ -323,9 +343,9 @@ describe('asteroid fixes a passing test fits widen its validated span (A5)', () 
     {
       asteroids: ['ast-far', 'ast-near'].map((id) => ({
         id,
-        position: { x: 0, y: 0 },
-        velocity: { x: 0, y: 0 },
-        positionCov: [1e10, 0, 1e10] as const,
+        position: { x: 0, y: 0, z: 0 },
+        velocity: { x: 0, y: 0, z: 0 },
+        positionCov: cov3FromPlanar([1e10, 0, 1e10]),
         radius: 5e3,
         tracked: true,
       })),

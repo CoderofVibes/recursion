@@ -1,19 +1,22 @@
 /**
  * Aging of ship calibrations (1G spec §3.7; DECISIONS A5 item 4).
  *
- * Each ship calibration (engine scale and misalignment, accelerometer scale, camera bias) is a
- * random walk on the ship's own clock. Its variance grows with ship time, with use, and at each
+ * Each ship calibration (engine scale and its two misalignment angles, the RCS translation
+ * scale, accelerometer scale, the three components of the camera misalignment) is a random walk
+ * on the ship's own clock. Its variance grows with ship time, with use, and at each
  * drop in the equipment's reported condition. The world (body masses, the law, profiles) and
  * adopted rules do not age. Rates are [ASSUMED] play values (settings.ts).
  */
 
 import type { AttemptRecord, ParameterId, TransitRecord } from '../contracts/index.ts';
+import { RCS_GROUP } from './adapt.ts';
 import type { ThrustSegment } from './dynamics.ts';
 import type { ModelSettings } from './settings.ts';
 
 export const DAY = 86400;
 
-export type AgingClassId = 'engineScale' | 'engineMisalignment' | 'accelScale' | 'cameraBias';
+export type AgingClassId =
+  'engineScale' | 'engineMisalignment' | 'rcsScale' | 'accelScale' | 'cameraBias';
 
 export interface AgingClass {
   /** σ added per √(day of ship time). */
@@ -40,6 +43,13 @@ export function agingClass(s: ModelSettings, id: AgingClassId): AgingClass {
         perRootUse: s.agingMisalignmentUse,
         useRef: s.agingEngineUseRef,
         perCondition: s.agingMisalignmentCondition,
+      };
+    case 'rcsScale':
+      return {
+        perRootDay: s.agingRcsScaleDay,
+        perRootUse: s.agingRcsScaleUse,
+        useRef: s.agingRcsUseRef,
+        perCondition: s.agingRcsScaleCondition,
       };
     case 'accelScale':
       return {
@@ -71,23 +81,39 @@ export function accruedVariance(
   return v;
 }
 
-/** Which ship calibration a parameter is, and the equipment whose use and damage age it. */
+/**
+ * Which ship calibration a parameter is, and the equipment whose use and damage age it. The
+ * pitch misalignment ages with the rates of the yaw one (the same thrust line, the other axis)
+ * and each camera component with the planar camera bias's (spec §3.7). For the RCS scale the
+ * equipment is the group `rcs`: every RCS pod's damage counts.
+ */
 export function agingOf(
   id: ParameterId,
   cameraId: string,
 ): { cls: AgingClassId; equipment: string } | null {
+  if (id === `thruster.${RCS_GROUP}.scale`) return { cls: 'rcsScale', equipment: RCS_GROUP };
   let m = /^thruster\.(.+)\.scale$/.exec(id);
   if (m) return { cls: 'engineScale', equipment: m[1]! };
-  m = /^thruster\.(.+)\.misalignment$/.exec(id);
+  m = /^thruster\.(.+)\.misalignment(-pitch)?$/.exec(id);
   if (m) return { cls: 'engineMisalignment', equipment: m[1]! };
   m = /^sensor\.(.+)\.scale$/.exec(id);
   if (m) return { cls: 'accelScale', equipment: m[1]! };
-  m = /^sensor\.(.+)\.bias$/.exec(id);
+  m = /^sensor\.(.+)\.bias(-x|-y)?$/.exec(id);
   if (m && m[1] === cameraId) return { cls: 'cameraBias', equipment: m[1] };
   return null;
 }
 
-/** Commanded Δv (m/s) of one thruster's segments over [t0, t1): Σ u · overlap. */
+/** Does a record about `equipment` concern the equipment (or group) a calibration ages with? */
+function concerns(group: string, equipment: string): boolean {
+  return group === RCS_GROUP
+    ? equipment === RCS_GROUP || equipment.startsWith(`${RCS_GROUP}-`)
+    : equipment === group;
+}
+
+/**
+ * Commanded Δv (m/s) of one thruster's segments over [t0, t1): Σ u · overlap for an engine,
+ * Σ |a_rcs| · overlap for the RCS group.
+ */
 export function commandedDv(
   segments: readonly ThrustSegment[],
   thruster: string | null,
@@ -97,7 +123,9 @@ export function commandedDv(
   let dv = 0;
   for (const c of segments) {
     if (thruster !== null && c.thruster !== thruster) continue;
-    dv += c.u * Math.max(0, Math.min(c.t1, t1) - Math.max(c.t0, t0));
+    const a =
+      thruster === RCS_GROUP ? Math.hypot(c.rcs?.[0] ?? 0, c.rcs?.[1] ?? 0, c.rcs?.[2] ?? 0) : c.u;
+    dv += a * Math.max(0, Math.min(c.t1, t1) - Math.max(c.t0, t0));
   }
   return dv;
 }
@@ -126,12 +154,15 @@ export function conditionDrops(
   t0: number,
   t1: number,
 ): number[] {
-  let last = 1;
+  let last: number;
   const drops: number[] = [];
+  // For a group (the RCS pods) each member's condition is followed on its own.
+  const lastOf = new Map<string, number>();
   for (const e of rec.events) {
-    if (e.kind !== 'condition-changed' || e.equipment !== equipment) continue;
+    if (e.kind !== 'condition-changed' || !concerns(equipment, e.equipment)) continue;
+    last = lastOf.get(e.equipment) ?? 1;
     if (e.condition < last && e.t > t0 && e.t <= t1) drops.push(last - e.condition);
-    last = e.condition;
+    lastOf.set(e.equipment, e.condition);
   }
   return drops;
 }
@@ -152,7 +183,7 @@ export function historyIn(
   t0: number,
   t1: number,
 ): AgingHistory {
-  const engine = cls === 'engineScale' || cls === 'engineMisalignment';
+  const engine = cls === 'engineScale' || cls === 'engineMisalignment' || cls === 'rcsScale';
   return {
     shipTime: Math.max(0, t1 - t0),
     deltaV: engine ? commandedDv(segments, equipment, t0, t1) : 0,
@@ -184,13 +215,16 @@ export function transitHistory(
   startCondition = 1,
 ): AgingHistory {
   const drops: number[] = [];
-  let last = startCondition;
+  const lastOf = new Map<string, number>();
   for (const e of t.conditionChanges) {
-    if (e.equipment !== equipment) continue;
+    if (!concerns(equipment, e.equipment)) continue;
+    const last = lastOf.get(e.equipment) ?? startCondition;
     if (e.condition < last) drops.push(last - e.condition);
-    last = e.condition;
+    lastOf.set(e.equipment, e.condition);
   }
-  return { shipTime: t.shipTime, deltaV: t.deltaV, powerCycles: t.powerCycles, drops };
+  // A transit records the main engine's commanded Δv, not the jets': no RCS use is known.
+  const deltaV = equipment === RCS_GROUP ? 0 : t.deltaV;
+  return { shipTime: t.shipTime, deltaV, powerCycles: t.powerCycles, drops };
 }
 
 export function addHistories(a: AgingHistory, b: AgingHistory): AgingHistory {

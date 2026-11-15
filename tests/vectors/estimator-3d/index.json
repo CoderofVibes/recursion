@@ -1,0 +1,68 @@
+{
+ "schema": "recursion.estimator-vector-3d-index/1",
+ "generator": "python tools/estimator-ref/generate.py --3d",
+ "assumptions": "tools/estimator-ref/assumptions.json and tools/estimator-ref/assumptions-3d.json",
+ "assumptionsHash": "dadbff266233f5dd",
+ "assumptions3dHash": "494b6cc324e42be5",
+ "spec": "docs/model/estimator-spec.md (revision 3)",
+ "planarSet": "tests/vectors/estimator/ (unchanged; the planar regression). rotation-invariance reads newton-recovers-gm.json and forecast-envelope.json from it.",
+ "claims": 104,
+ "vectors": [
+  {
+   "id": "inclined-newton-recovers-gm",
+   "file": "inclined-newton-recovers-gm.json",
+   "title": "Newtonian truth and model on an inclined orbit: recovers GM and the 6-state",
+   "claims": 9,
+   "cases": ["single-inclined-arc"]
+  },
+  {
+   "id": "inv25-two-planes",
+   "file": "inv25-two-planes.json",
+   "title": "Inverse-2.5 truth, Newtonian model, two distances in two planes",
+   "claims": 7,
+   "cases": ["two-circular-arcs-two-planes"]
+  },
+  {
+   "id": "inv25-exponent-planes",
+   "file": "inv25-exponent-planes.json",
+   "title": "Inverse-2.5 truth with the exponent extension, arcs in different planes",
+   "claims": 17,
+   "cases": ["narrow", "wide", "held-out-other-plane"]
+  },
+  {
+   "id": "offplane-body-signature",
+   "file": "offplane-body-signature.json",
+   "title": "Missing second body off the ship's orbit plane: direction-dependent signature in 3D",
+   "claims": 13,
+   "cases": ["binary-A-only-model"]
+  },
+  {
+   "id": "thrust-3d-confounded",
+   "file": "thrust-3d-confounded.json",
+   "title": "Powered flight in 3D: two misalignment angles, three-axis accelerometer, confounding",
+   "claims": 21,
+   "cases": ["burn-only", "burn-plus-coast", "burn-plus-accel", "out-of-plane-burn", "hands-on"]
+  },
+  {
+   "id": "forecast-envelope-3d",
+   "file": "forecast-envelope-3d.json",
+   "title": "Forecast envelope in 3D: an ellipsoid, confident where sampled, honest elsewhere",
+   "claims": 15,
+   "cases": ["sampled-and-unsampled-3d"]
+  },
+  {
+   "id": "carried-rule-other-plane",
+   "file": "carried-rule-other-plane.json",
+   "title": "A carried rule's validated span applies to a dive in a plane never sampled",
+   "claims": 10,
+   "cases": ["later-encounter-dive-other-plane"]
+  },
+  {
+   "id": "rotation-invariance",
+   "file": "rotation-invariance.json",
+   "title": "Rotation invariance: a planar scenario turned bodily gives the planar results turned",
+   "claims": 12,
+   "cases": ["tier-g-flat", "tier-g-rotated", "tier-g-pole", "forecast-flat", "forecast-rotated"]
+  }
+ ]
+}

@@ -1,18 +1,32 @@
-# src/app — app shell and screen routing
+# src/app — app shell
 
-Owner: integrator (1A, 2F, 5A).
+Owner: 2D (control room), except `game.ts`, which belongs to the game loop (2F; 2G during the 3D conversion).
 
 | File | Holds |
 |---|---|
-| `App.tsx` | The shell: creates the game once and hands its belief-side `GameControls` to the screen |
-| `game.ts` | Composition root: the encounter; 2C's model client (Web Worker) behind the model bridge; 2C's Black Box saved to IndexedDB, one slot per encounter build; a saved archive restored on start and the model rebuilt from it |
-| `bench/` | **Temporary** integration bench (2F): a 2D plot of the `ViewSnapshot`, readouts, and time, plan, ship, rule and recurrence controls. Replaced by the console (2D) and 3D view (2E). Placeholder styling in `app.css`; it does not use `src/theme` and is not a design |
+| `App.tsx` | Creates the game once and mounts the control room |
+| `game.ts` | Composition root: the encounter; the model client (Web Worker) behind the model bridge; Black Box saved to IndexedDB; a saved archive restored on start |
+| `ControlRoom.tsx` | The one screen (DECISIONS A8): the room's canvas with the instruments laid over it |
+| `loop.ts` | The frame loop: advance the game, take `snapshot()`, fly from the keys, hand the room what to draw; the walk back to the door when an attempt ends |
+| `hands.ts` | Flying by hand from the keys, through the commands the game offers today (see below) |
+| `control-room.css`, `app.css` | Overlay layout. Tokens only |
 
 Run it with `npm run dev`.
 
-1. Commit the default plan (retrograde, 9.85 m/s), choose 1000×, Run. The solid measured trail leaves the dotted forecast as the ship dives, and the forecast ends early.
-2. Recall. Commit a different dive (say 5 m/s) and fly it. `Strength` now shows Alpha pulling about 1.4 times harder at 500 km than at 1,000 km against the model's law.
-3. Recall. Under `Rule`, hold out attempt 1 and press Test. If it holds, Adopt.
-4. Commit a dive deeper than before and watch the forecast against the trail.
+## Playing the Gravity range
 
-`Erase records` clears the saved Black Box for this encounter and reloads.
+1. Walk to the console (WASD; click to look) and aim at a pad, or press `1` MAP, `2` SHIP, `3` CONSOLE, `4` FLIGHT. `Esc` steps back.
+2. **CONSOLE › MISSION:** choose what the attempt is for and its margins, then RECORD DESIGN AND SET UP. Prepare as long as you like: the encounter clock waits at arrival. ENTER starts it.
+3. **FLIGHT:** hold `W` for the main engine, `Q` / `E` to yaw, `↑` / `↓` to pitch, `A` `D` `R` `F` `S` to translate. When the hands come off, a coasting forecast is issued: dotted, frozen. Or plan a timed burn in **CONSOLE › PLAN** and COMMIT. Choose a warp and watch the solid trail against the dotted forecast.
+4. **CONSOLE › BLACK BOX:** RECALL ends the attempt. Its debrief is there when you walk back in. Fly a different dive, then choose two attempts to compare, and OVERLAY IN FLIGHT.
+5. **CONSOLE › MODEL:** strength against distance shows the pull departing from the model's law. Hold out an attempt, TEST the distance law, ADOPT it if it holds. The next forecast reaches further.
+
+Time (A12): before entering, nothing is dangerous and the clock waits. Inside the encounter there is no pause: every adjustment happens in real time, and the warp steps compress long coasts, never slower than 1×. Hiding the page holds the game; a new caution or warning drops warp to 1×.
+
+## Hands-on flying
+
+`hands.ts` turns the flight keys into `HandsOnInput` and sends it through `GameControls.fly` (2G): `W` main engine (`Shift` for a quarter throttle), `S` retro, `A` / `D` lateral, `R` / `F` vertical, `Q` / `E` yaw, `↑` / `↓` pitch, `X` cut. The game flies the input until the next one and issues the coasting forecast when the controls are released.
+
+## Development handle
+
+In the dev build only, `window.__recursion` holds `{ game, desk, view, step }`, and `?view=flight` or `?view=console&page=model` opens straight into a view. `step(frames, seconds)` runs frames by hand when the page is in the background and the browser holds its animation frames.

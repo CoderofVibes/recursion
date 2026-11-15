@@ -1,0 +1,136 @@
+{
+  "run": "line-buffers",
+  "source": {
+    "commit": "cdbaa751b988334b4c7efb530ac0cf17208ea932",
+    "srcTree": "f48dbf0c75035230c8b3a5eda4f8b7d19fa3dbcd",
+    "dataTree": "8fe01542697fc8afeaf876544328e382de722b86",
+    "branch": "st/s15-modest-laptop",
+    "dirtyInputs": "",
+    "patch": {
+      "path": "docs/studies/s15/reuse-line-buffers.patch",
+      "sha256": "9d8fe19e6733051d4ba968529a8bf41552bc435e1a55697cb84aca805ca5ce10"
+    }
+  },
+  "totalBytes": 1399187,
+  "gzipBytes": 403971,
+  "loads": [],
+  "frames": [
+    {
+      "key": "modest/room/1",
+      "profile": "modest",
+      "view": "room",
+      "warp": 1,
+      "n": 1051,
+      "median": 12.299999999999272,
+      "p95": 24.19999999999891,
+      "worst": 30.300000000000182,
+      "wall": 15.982,
+      "ship": 16,
+      "shipPerWall": 1.0011262670504317,
+      "saturationPercent": 0,
+      "saturated": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "worst": null,
+        "shipPerWall": null
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        24.200000000000728,
+        18.399999999999636
+      ]
+    },
+    {
+      "key": "modest/flight/1",
+      "profile": "modest",
+      "view": "flight",
+      "warp": 1,
+      "n": 1030,
+      "median": 12.399999999999636,
+      "p95": 24.200000000000728,
+      "worst": 36.29999999999927,
+      "wall": 15.99739999999851,
+      "ship": 16,
+      "shipPerWall": 1.0001625264106349,
+      "saturationPercent": 0,
+      "saturated": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "worst": null,
+        "shipPerWall": null
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        24.200000000000728,
+        24.19999999999891
+      ]
+    },
+    {
+      "key": "modest/room/2000",
+      "profile": "modest",
+      "view": "room",
+      "warp": 2000,
+      "n": 443,
+      "median": 36.19999999999891,
+      "p95": 54.5,
+      "worst": 78.89999999999964,
+      "wall": 15.95329999999702,
+      "ship": 3864,
+      "shipPerWall": 242.20694151057913,
+      "saturationPercent": 100,
+      "saturated": {
+        "n": 443,
+        "median": 36.19999999999891,
+        "p95": 54.5,
+        "worst": 78.89999999999964,
+        "shipPerWall": 241.89307624890435
+      },
+      "warningDrops": 1,
+      "modelErrors": [],
+      "perRunP95": [
+        60.600000000000364,
+        42.19999999999982
+      ]
+    },
+    {
+      "key": "modest/flight/2000",
+      "profile": "modest",
+      "view": "flight",
+      "warp": 2000,
+      "n": 503,
+      "median": 30.299999999999272,
+      "p95": 48.399999999999636,
+      "worst": 66.70000000000073,
+      "wall": 15.952399999998509,
+      "ship": 4344,
+      "shipPerWall": 272.3101226148044,
+      "saturationPercent": 100,
+      "saturated": {
+        "n": 503,
+        "median": 30.299999999999272,
+        "p95": 48.399999999999636,
+        "worst": 66.70000000000073,
+        "shipPerWall": 271.8415008854876
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        48.69999999999891,
+        42.399999999999636
+      ]
+    }
+  ],
+  "cpu": [],
+  "trace": [],
+  "validity": {
+    "browserExceptions": 0,
+    "frames": 8,
+    "invalid": [],
+    "modelErrors": 0,
+    "maxObserverMsPerFrame": 0.05806451623318016
+  }
+}

@@ -4,12 +4,43 @@ import type { ShipEvent } from '../contracts/measurements.ts';
 import type { ShipDefinition } from '../contracts/ship.ts';
 import type { EquipmentState, ShipSystemsState } from '../contracts/truth/ship.ts';
 import type { JsonValue } from '../contracts/units.ts';
+import { isFiniteQuat } from '../lib/quat.ts';
+import { isFinite3, type Vec3 } from '../lib/vec3.ts';
+import { handsOnRate } from './propulsion/control.ts';
+import { clearJetPulses, jetsOf } from './propulsion/jets.ts';
+import { HANDS_ON_HOLD_KEY } from './propulsion/propulsion.ts';
+
+/**
+ * [ASSUMED] Play value: the body rate a full yaw or pitch deflection asks for, rad/s
+ * (`propulsion.attitudeControl.handsOnTurnRate`). It is the attitude controller's slew rate,
+ * 80% of the star trackers' rate limit, so a full-rate turn keeps the attitude fix with room
+ * for the ripple of the jets' minimum pulses.
+ */
+export const HANDS_ON_TURN_RATE = baseline.propulsion.attitudeControl.handsOnTurnRate;
+/**
+ * A hands-on burn has no planned end: it lasts until the next `fly` command replaces or removes
+ * it. Finite, not Infinity, so the state stays JSON-serialisable.
+ */
+const HANDS_ON_BURN_HOLD = 1e7;
 
 const finite = (value: number) => Number.isFinite(value);
+/** −0 becomes +0, so a stored value is unchanged by a JSON round trip (replays stay exact). */
+const unsigned = (value: number) => value + 0;
+const plain = (v: Vec3) => ({ x: unsigned(v.x), y: unsigned(v.y), z: unsigned(v.z) });
+const unitRange = (value: number) => finite(value) && value >= -1 && value <= 1;
+/** A direction to look along: finite and not the zero vector (any length will do). */
+const usableDirection = (v: Vec3) => isFinite3(v) && (v.x !== 0 || v.y !== 0 || v.z !== 0);
+/** The ship holds only these; the game layer resolves every other target to one of them first. */
 const supportedAttitude = (target: AttitudeTarget) =>
   target.reference === 'free' ||
-  (target.reference === 'inertial' && finite(target.angle)) ||
-  (target.reference === 'rate' && finite(target.rate));
+  (target.reference === 'inertial' &&
+    isFiniteQuat(target.attitude) &&
+    (target.attitude.w !== 0 ||
+      target.attitude.x !== 0 ||
+      target.attitude.y !== 0 ||
+      target.attitude.z !== 0)) ||
+  (target.reference === 'rate' && isFinite3(target.rate));
+const NEUTRAL_HANDS_ON = { translate: { x: 0, y: 0, z: 0 }, yaw: 0, pitch: 0, throttle: 0 };
 
 /** Ordered, immutable command application. Invalid commands produce sensed rejections. */
 export function applyCommands(
@@ -25,6 +56,24 @@ export function applyCommands(
       ...state,
       equipment: { ...state.equipment, [id]: { ...state.equipment[id]!, ...changes } },
     };
+  };
+  /** Hand the RCS pods back to the attitude controller (undoes an individual cutoff). */
+  const releaseRcsControl = () => {
+    for (const spec of definition.equipment.filter((e) => e.kind === 'rcs-thruster')) {
+      const current = state.equipment[spec.id]!;
+      update(spec.id, { values: { ...current.values, controlInhibited: 0 } });
+    }
+  };
+  /** Thrust no longer wanted from a thruster must not be fired late: forget its queued pulses. */
+  const clearPulses = (id: string) => {
+    const current = state.equipment[id]!;
+    update(id, { values: { ...current.values, pendingImpulse: 0, pulseRemaining: 0 } });
+    state = clearJetPulses(state, definition, id);
+  };
+  /** A commanded attitude replaces whatever the hands-on controls were holding. */
+  const endHandsOnHold = () => {
+    if (state.ext?.[HANDS_ON_HOLD_KEY] != null)
+      state = { ...state, ext: { ...state.ext, [HANDS_ON_HOLD_KEY]: null } };
   };
   const activeChain = (id: string) => {
     const spec = definition.equipment.find((e) => e.id === id)!;
@@ -54,12 +103,80 @@ export function applyCommands(
           reason = 'Resolve belief-relative attitude to a finite inertial angle in the game layer.';
         else {
           state = { ...state, attitudeTarget: command.target };
-          for (const spec of definition.equipment.filter((e) => e.kind === 'rcs-thruster')) {
-            const current = state.equipment[spec.id]!;
-            update(spec.id, { values: { ...current.values, controlInhibited: 0 } });
-          }
+          endHandsOnHold();
+          releaseRcsControl();
         }
         break;
+      case 'fly': {
+        const input = command.input;
+        if (
+          !unitRange(input.translate.x) ||
+          !unitRange(input.translate.y) ||
+          !unitRange(input.translate.z) ||
+          !unitRange(input.yaw) ||
+          !unitRange(input.pitch) ||
+          !finite(input.throttle) ||
+          input.throttle < 0 ||
+          input.throttle > 1
+        )
+          reason = 'Hands-on input needs every axis within -1..1 and throttle within 0..1.';
+        else {
+          // Hands-on flying (A8, A11). The input stays in force until the next `fly`:
+          //  - translate: the RCS pushes along the body axes (the controller reads `ext.handsOn`);
+          //  - yaw, pitch: body rates about +z and −y, with the roll rate held at zero
+          //    (`handsOnRate`: both together never exceed the turn rate);
+          //  - sticks centred: the rates are nulled, then the attitude the ship has at that
+          //    moment is held (`ext.handsOnHold`: 'pending', then 'held');
+          //  - throttle: a main-engine burn with no planned end.
+          const settings = data.propulsion.attitudeControl;
+          const mainId = data.propulsion.main.equipmentId;
+          const main = state.equipment[mainId];
+          // Same availability rule as a timed burn: a throttle cannot wake an engine that is off.
+          const firing =
+            input.throttle > 0 &&
+            !!main &&
+            main.condition > 0 &&
+            !main.tripped &&
+            main.mode !== 'off' &&
+            main.mode !== 'heater';
+          // The burn an earlier `fly` started is known by its end time, so releasing the
+          // throttle never cancels a timed burn commanded since.
+          const heldUntil = state.ext?.handsOnBurnUntil;
+          const burns = state.burns.filter(
+            (b) => b.thruster !== mainId || (!firing && b.until !== heldUntil),
+          );
+          const until = state.t + HANDS_ON_BURN_HOLD;
+          const turning = input.yaw !== 0 || input.pitch !== 0;
+          // Sticks centred while already holding the attitude they were released at: keep it.
+          const holding =
+            !turning &&
+            state.ext?.[HANDS_ON_HOLD_KEY] === 'held' &&
+            state.attitudeTarget.reference === 'inertial';
+          state = {
+            ...state,
+            attitudeTarget: holding
+              ? state.attitudeTarget
+              : { reference: 'rate', rate: handsOnRate(input, settings) },
+            burns: firing
+              ? [...burns, { thruster: mainId, throttle: input.throttle, until }]
+              : burns,
+            ext: {
+              ...state.ext,
+              handsOn: {
+                translate: plain(input.translate),
+                yaw: unsigned(input.yaw),
+                pitch: unsigned(input.pitch),
+                throttle: unsigned(input.throttle),
+              },
+              handsOnBurnUntil: firing ? until : null,
+              [HANDS_ON_HOLD_KEY]: turning ? null : holding ? 'held' : 'pending',
+            },
+          };
+          releaseRcsControl();
+          if (firing) update(mainId, { values: { ...main.values, controlInhibited: 0 } });
+        }
+        break;
+      }
       case 'burn': {
         const spec = definition.equipment.find((e) => e.id === command.thruster);
         const actual = state.equipment[command.thruster];
@@ -104,10 +221,8 @@ export function applyCommands(
           };
           update(spec.id, { values: { ...actual.values, controlInhibited: 0 } });
           if (command.attitude) {
-            for (const pod of definition.equipment.filter((e) => e.kind === 'rcs-thruster')) {
-              const current = state.equipment[pod.id]!;
-              update(pod.id, { values: { ...current.values, controlInhibited: 0 } });
-            }
+            endHandsOnHold();
+            releaseRcsControl();
           }
         }
         break;
@@ -133,15 +248,18 @@ export function applyCommands(
             ['main-engine', 'rcs-thruster'].includes(e.kind),
           )) {
             if (command.thruster !== 'all' && command.thruster !== spec.id) continue;
+            clearPulses(spec.id);
             const current = state.equipment[spec.id]!;
-            update(spec.id, {
-              values: {
-                ...current.values,
-                pendingImpulse: 0,
-                pulseRemaining: 0,
-                controlInhibited: 1,
-              },
-            });
+            update(spec.id, { values: { ...current.values, controlInhibited: 1 } });
+          }
+          if (command.thruster === 'all') {
+            // Everything stops, the hands-on translation included, and nothing holds attitude.
+            if (state.ext?.handsOn !== undefined)
+              state = {
+                ...state,
+                ext: { ...state.ext, handsOn: NEUTRAL_HANDS_ON, handsOnBurnUntil: null },
+              };
+            endHandsOnHold();
           }
         }
         break;
@@ -172,22 +290,25 @@ export function applyCommands(
           }
         } else if (
           spec.kind === 'rcs-thruster' &&
-          ['bank-a', 'bank-b', 'jet-0', 'jet-1'].includes(command.mode)
+          (command.mode === 'bank-a' ||
+            command.mode === 'bank-b' ||
+            jetsOf(definition).some(
+              (jet) => jet.pod === spec.id && `jet-${jet.index}` === command.mode,
+            ))
         ) {
           const bankCommand = command.mode.startsWith('bank');
           const bank = command.mode === 'bank-b' ? 1 : 0;
+          clearPulses(spec.id);
           update(spec.id, {
             mode: 'ready',
             values: {
-              ...current.values,
-              pendingImpulse: 0,
-              pulseRemaining: 0,
+              ...state.equipment[spec.id]!.values,
               ...(bankCommand
                 ? {
                     bank,
                     readyTime: current.values.bank === bank ? (current.values.readyTime ?? 0) : 0,
                   }
-                : { selectedJet: command.mode === 'jet-1' ? 1 : 0 }),
+                : { selectedJet: Number(command.mode.slice('jet-'.length)) }),
             },
           });
           state = { ...state, burns: state.burns.filter((b) => b.thruster !== spec.id) };
@@ -202,9 +323,7 @@ export function applyCommands(
         else {
           update(spec.id, { mode: command.mode });
           if (command.mode === 'off' || command.mode === 'heater') {
-            update(spec.id, {
-              values: { ...current.values, pendingImpulse: 0, pulseRemaining: 0 },
-            });
+            clearPulses(spec.id);
             state = { ...state, burns: state.burns.filter((b) => b.thruster !== spec.id) };
           }
           if (spec.kind === 'recorder')
@@ -245,10 +364,10 @@ export function applyCommands(
         if (!spec || !['optical-tracker', 'star-tracker'].includes(spec.kind))
           reason = 'Unknown pointing instrument.';
         else if (
-          (command.angle !== undefined && !finite(command.angle)) ||
-          (command.target === null && command.angle === undefined)
+          (command.direction !== undefined && !usableDirection(command.direction)) ||
+          (command.target === null && command.direction === undefined)
         )
-          reason = 'Inertial pointing requires a finite angle.';
+          reason = 'Inertial pointing requires a finite, non-zero direction.';
         else {
           const prior = (state.ext?.sensorPointing ?? {}) as Record<string, JsonValue>;
           state = {
@@ -259,7 +378,9 @@ export function applyCommands(
                 ...prior,
                 [command.sensor]: {
                   target: command.target,
-                  ...(command.angle !== undefined ? { angle: command.angle } : {}),
+                  ...(command.direction !== undefined
+                    ? { direction: plain(command.direction) }
+                    : {}),
                   settleUntil: state.t + data.sensing.camera.settleTime,
                 },
               },

@@ -22,14 +22,42 @@ import type {
   Forecast,
   ForecastDraft,
   ForecastId,
+  HandsOnInput,
+  MassProperties,
   Measurement,
   ModelState,
   Plan,
+  Procedure,
+  ProcedureId,
   Seconds,
   ShipDefinition,
   ShipEvent,
+  ThrustTick,
+  Vec3,
 } from '../../contracts/index.ts';
-import type { ExtensionRecord, ModelReport } from '../../model/index.ts';
+import type {
+  BurnReport,
+  EmpiricalReport,
+  ExtensionRecord,
+  ModelReport,
+} from '../../model/index.ts';
+
+/**
+ * The thrust a hands-on input asks of the ship as designed: one entry per thruster that fires,
+ * at its point of application, body frame. It uses the nominal design and the mass properties
+ * it is given (the believed ones) and nothing else, so it is safe on the believed side. The
+ * session supplies it from the ship's own jet allocator (src/ship README § Drawing thrust).
+ */
+export type HandsOnThrust = (
+  input: HandsOnInput,
+  massProperties: MassProperties,
+) => readonly ThrustTick[];
+
+/**
+ * The body rate (rad/s) the ship's flight software turns at for a hands-on yaw and pitch
+ * demand, as designed (src/ship `handsOnBodyRate`). Body frame; roll is always zero.
+ */
+export type HandsOnTurn = (input: Pick<HandsOnInput, 'yaw' | 'pitch'>) => Vec3;
 
 /** A new attempt: at arrival, or after recurrence (P8). */
 export interface AttemptStartInfo {
@@ -42,6 +70,16 @@ export interface AttemptStartInfo {
   readonly arrivalMass?: number;
   /** Wall-clock ISO time, for the record list only. */
   readonly startedAt: string;
+  /**
+   * Which thrusters a hands-on input fires, as designed. With it the navigator follows RCS
+   * translation flown by hand; without it, only the main-engine throttle.
+   */
+  readonly handsOnThrust?: HandsOnThrust;
+  /**
+   * The turn a hands-on yaw and pitch demand asks for, as designed. With it the believed
+   * attitude follows a stick the moment it moves; without it, from the next gyro reading.
+   */
+  readonly handsOnTurn?: HandsOnTurn;
 }
 
 /** What Black Box recorded for one tick, in acquisition order. */
@@ -102,6 +140,10 @@ export interface RuleControls {
   revoke(extension: ExtensionId): Promise<ModelState>;
   /** Strength against distance, residuals, confounding, coverage (src/model report.ts). */
   report(): Promise<ModelReport>;
+  /** Each recorded burn against what the model expected of it, for the given attempts or all. */
+  burns(attempts?: readonly AttemptId[]): Promise<BurnReport[]>;
+  /** The unexplained acceleration the model has fitted, or null when it has fitted none. */
+  empirical(): Promise<EmpiricalReport | null>;
 }
 
 /** Black Box (P8): keeps every attempt across recurrence. */
@@ -119,5 +161,12 @@ export interface BlackBoxPort {
   ): AttemptRecord;
   /** A finished attempt's record, or the record so far of the one in progress. */
   attempt(attemptId: AttemptId): AttemptRecord | undefined;
+  /**
+   * Keep a procedure (P9), replacing one with the same id. It is in `archive().procedures`
+   * from now on: in later attempts, and after a reload when Black Box has a store.
+   */
+  saveProcedure(procedure: Procedure): void;
+  /** Forget a saved procedure. Unknown ids are ignored. */
+  removeProcedure(id: ProcedureId): void;
   archive(): BlackBoxArchive;
 }

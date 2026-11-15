@@ -1,12 +1,12 @@
 {
-  "version": 1,
+  "version": 2,
   "status": "proposal-for-owner",
   "units": "SI",
   "label": "ASSUMED",
   "provenance": {
     "inheritance": "Every numeric leaf, including array elements and metadata, inherits the nearest ancestor label and source, unless its object overrides them. ASSUMED is the root default. mechanismSources justify mechanisms only, never a hardware rating.",
     "derived": "Calculated values retain ASSUMED when any sizing input is assumed. Validation demonstrates arithmetic only, never playability or flight qualification.",
-    "unitConventions": "mass kg; position/footprints m; intrinsicInertia kg m^2; power/heat/generatedPower W; energy J; time/delay s; temperature K; angle rad; thrust N; minimumImpulse N s; Isp s; dataRate byte/s; storage byte; sampleRate Hz; thermalCapacity J/K; conductance W/K; exposure fictional lattice-unit s. Counts, fractions and schema version are dimensionless. Suffixes override these conventions."
+    "unitConventions": "mass kg; position/outline/zMin/zMax m (body frame x forward, y left, z up); intrinsicInertia* kg m^2 (about the part centre: intrinsicInertia about body z (yaw), intrinsicInertiaRoll about x, intrinsicInertiaPitch about y); power/heat/generatedPower W; energy J; time/delay s; temperature K; angle rad; thrust N; minimumImpulse N s; Isp s; dataRate byte/s; storage byte; sampleRate Hz; thermalCapacity J/K; conductance W/K; exposure fictional lattice-unit s. Counts, fractions and schema version are dimensionless. Suffixes override these conventions."
   },
   "constants": {
     "g0": {
@@ -16,7 +16,7 @@
       "note": "Conventional standard gravity adopted for Isp; never substitute local gravity."
     },
     "sigma": {
-      "value": 5.670374419e-08,
+      "value": 5.670374419e-8,
       "label": "ESTABLISHED",
       "source": "S23",
       "unit": "W/(m^2 K^4)",
@@ -29,10 +29,17 @@
     "dryMass": 24000,
     "initialWetMass": 30374,
     "initialConfiguration": "radiators",
-    "bodyFrame": "x forward, y left; origin fixed to structure; positive yaw counterclockwise; positions are not COM-relative",
+    "configurations": [
+      "stowed",
+      "radiators",
+      "solar",
+      "allDeployed"
+    ],
+    "bodyFrame": "x forward, y left, z up (right-handed); origin fixed to structure on the hull axis; positive yaw counterclockwise seen from +z, positive pitch raises the nose; positions are not COM-relative",
     "dryMassDefinition": "Sum equipment, including crew, retained cabin consumables and tank dry hardware. Excludes propellant and fuel-cell reactants/product. Waste stays aboard; no silent mass loss.",
-    "footprints": {
-      "stowed": [
+    "hull": {
+      "part": "habitat-structure",
+      "outline": [
         [
           -8,
           -2.5
@@ -50,118 +57,11 @@
           2.5
         ]
       ],
-      "radiators": [
-        [
-          -8,
-          -2.5
-        ],
-        [
-          -4,
-          -10
-        ],
-        [
-          1,
-          -10
-        ],
-        [
-          8,
-          -2.5
-        ],
-        [
-          8,
-          2.5
-        ],
-        [
-          1,
-          10
-        ],
-        [
-          -4,
-          10
-        ],
-        [
-          -8,
-          2.5
-        ]
-      ],
-      "solar": [
-        [
-          -8,
-          -2.5
-        ],
-        [
-          0,
-          -12
-        ],
-        [
-          6,
-          -12
-        ],
-        [
-          8,
-          -2.5
-        ],
-        [
-          8,
-          2.5
-        ],
-        [
-          6,
-          12
-        ],
-        [
-          0,
-          12
-        ],
-        [
-          -8,
-          2.5
-        ]
-      ],
-      "allDeployed": [
-        [
-          -8,
-          -2.5
-        ],
-        [
-          -4,
-          -10
-        ],
-        [
-          0,
-          -12
-        ],
-        [
-          6,
-          -12
-        ],
-        [
-          8,
-          -2.5
-        ],
-        [
-          8,
-          2.5
-        ],
-        [
-          6,
-          12
-        ],
-        [
-          0,
-          12
-        ],
-        [
-          -4,
-          10
-        ],
-        [
-          -8,
-          2.5
-        ]
-      ]
+      "zMin": -2.5,
+      "zMax": 2.5
     },
-    "footprintPolicy": "Conservative occupied envelopes, not emitting areas. For asymmetric or intermediate deployment use convex hull of hull and each appendage polygon; continuous swept envelope during motion. Do not interpolate only endpoint COMs."
+    "hullPolicy": "Occupied volume is a union of convex prisms: the pressure hull (this outline, extruded over the 5 m body diameter) plus one thin prism per radiator and solar wing, whose outline is the appendage polygon at its current extension (configuration.appendages). No space between the parts is included. The antenna mast, camera, engine bell beyond x = -8 and RCS nozzles are not in the envelope.",
+    "inertiaShapes": "Intrinsic inertia about the centre of each part, body axes. intrinsicInertia is the 1C yaw (z) term, unchanged. habitat-structure: uniform solid cylinder of radius 2.5 m about x, so pitch = yaw and roll = m R^2 / 2. Radiator and solar wings: thin flat plates in the body x-y plane, so yaw = roll + pitch, split in the ratio span^2 : chord^2 of the stowed and deployed polygons and interpolated with extension. Every other assembly and every propellant: isotropic (sphere or compact box), roll = pitch = yaw."
   },
   "equipment": [
     {
@@ -170,9 +70,12 @@
       "mass": 17438,
       "position": [
         0,
+        0,
         0
       ],
       "intrinsicInertia": 180000,
+      "intrinsicInertiaRoll": 54500,
+      "intrinsicInertiaPitch": 180000,
       "modes": {
         "off": {
           "power": 0,
@@ -202,9 +105,12 @@
       "mass": 320,
       "position": [
         3,
-        0
+        0,
+        -0.2
       ],
       "intrinsicInertia": 320,
+      "intrinsicInertiaRoll": 320,
+      "intrinsicInertiaPitch": 320,
       "modes": {
         "off": {
           "power": 0,
@@ -240,9 +146,12 @@
       "mass": 800,
       "position": [
         3,
-        0
+        0,
+        -1.62
       ],
       "intrinsicInertia": 800,
+      "intrinsicInertiaRoll": 800,
+      "intrinsicInertiaPitch": 800,
       "modes": {
         "off": {
           "power": 0,
@@ -272,9 +181,12 @@
       "mass": 800,
       "position": [
         -2,
+        0,
         0
       ],
       "intrinsicInertia": 800,
+      "intrinsicInertiaRoll": 800,
+      "intrinsicInertiaPitch": 800,
       "modes": {
         "off": {
           "power": 0,
@@ -305,9 +217,12 @@
       "mass": 100,
       "position": [
         -1,
-        0
+        0,
+        1.6
       ],
       "intrinsicInertia": 100,
+      "intrinsicInertiaRoll": 100,
+      "intrinsicInertiaPitch": 100,
       "modes": {
         "off": {
           "power": 0,
@@ -338,9 +253,12 @@
       "mass": 40,
       "position": [
         -3,
-        0
+        0,
+        -1.9
       ],
       "intrinsicInertia": 40,
+      "intrinsicInertiaRoll": 40,
+      "intrinsicInertiaPitch": 40,
       "modes": {
         "off": {
           "power": 0,
@@ -371,9 +289,12 @@
       "mass": 80,
       "position": [
         1,
-        0
+        0,
+        -1.68
       ],
       "intrinsicInertia": 80,
+      "intrinsicInertiaRoll": 80,
+      "intrinsicInertiaPitch": 80,
       "modes": {
         "off": {
           "power": 0,
@@ -404,9 +325,12 @@
       "mass": 20,
       "position": [
         2,
-        0
+        0,
+        -1.7
       ],
       "intrinsicInertia": 20,
+      "intrinsicInertiaRoll": 20,
+      "intrinsicInertiaPitch": 20,
       "modes": {
         "off": {
           "power": 0,
@@ -437,9 +361,12 @@
       "mass": 300,
       "position": [
         3,
-        2
+        2,
+        0
       ],
       "intrinsicInertia": 700,
+      "intrinsicInertiaRoll": 19,
+      "intrinsicInertiaPitch": 681,
       "modes": {
         "off": {
           "power": 0,
@@ -488,9 +415,12 @@
       "mass": 250,
       "position": [
         -2,
-        2
+        2,
+        0
       ],
       "intrinsicInertia": 500,
+      "intrinsicInertiaRoll": 19,
+      "intrinsicInertiaPitch": 481,
       "modes": {
         "off": {
           "power": 0,
@@ -533,9 +463,12 @@
       "mass": 300,
       "position": [
         3,
-        -2
+        -2,
+        0
       ],
       "intrinsicInertia": 700,
+      "intrinsicInertiaRoll": 19,
+      "intrinsicInertiaPitch": 681,
       "modes": {
         "off": {
           "power": 0,
@@ -584,9 +517,12 @@
       "mass": 250,
       "position": [
         -2,
-        -2
+        -2,
+        0
       ],
       "intrinsicInertia": 500,
+      "intrinsicInertiaRoll": 19,
+      "intrinsicInertiaPitch": 481,
       "modes": {
         "off": {
           "power": 0,
@@ -629,9 +565,12 @@
       "mass": 180,
       "position": [
         -1,
-        1
+        1,
+        0.95
       ],
       "intrinsicInertia": 180,
+      "intrinsicInertiaRoll": 180,
+      "intrinsicInertiaPitch": 180,
       "modes": {
         "off": {
           "power": 0,
@@ -667,9 +606,12 @@
       "mass": 200,
       "position": [
         1,
-        1
+        1,
+        -1.62
       ],
       "intrinsicInertia": 200,
+      "intrinsicInertiaRoll": 200,
+      "intrinsicInertiaPitch": 200,
       "modes": {
         "off": {
           "power": 0,
@@ -717,9 +659,12 @@
       "mass": 70,
       "position": [
         0,
-        1
+        1,
+        -1.6
       ],
       "intrinsicInertia": 70,
+      "intrinsicInertiaRoll": 70,
+      "intrinsicInertiaPitch": 70,
       "modes": {
         "off": {
           "power": 0,
@@ -756,9 +701,12 @@
       "mass": 450,
       "position": [
         4,
-        1
+        1,
+        -1.62
       ],
       "intrinsicInertia": 450,
+      "intrinsicInertiaRoll": 450,
+      "intrinsicInertiaPitch": 450,
       "modes": {
         "off": {
           "power": 0,
@@ -802,9 +750,12 @@
       "mass": 30,
       "position": [
         2,
-        1
+        1,
+        -1.62
       ],
       "intrinsicInertia": 30,
+      "intrinsicInertiaRoll": 30,
+      "intrinsicInertiaPitch": 30,
       "modes": {
         "off": {
           "power": 0,
@@ -847,9 +798,12 @@
       "mass": 40,
       "position": [
         -2,
+        1,
         1
       ],
       "intrinsicInertia": 40,
+      "intrinsicInertiaRoll": 40,
+      "intrinsicInertiaPitch": 40,
       "modes": {
         "off": {
           "power": 0,
@@ -891,9 +845,12 @@
       "mass": 25,
       "position": [
         2,
-        0.5
+        0.5,
+        1
       ],
       "intrinsicInertia": 25,
+      "intrinsicInertiaRoll": 25,
+      "intrinsicInertiaPitch": 25,
       "modes": {
         "off": {
           "power": 0,
@@ -936,9 +893,12 @@
       "mass": 8,
       "position": [
         0,
-        0.1
+        0.1,
+        1.25
       ],
       "intrinsicInertia": 2,
+      "intrinsicInertiaRoll": 2,
+      "intrinsicInertiaPitch": 2,
       "modes": {
         "off": {
           "power": 0,
@@ -975,9 +935,12 @@
       "mass": 8,
       "position": [
         6,
-        1
+        1,
+        2.5
       ],
       "intrinsicInertia": 3,
+      "intrinsicInertiaRoll": 3,
+      "intrinsicInertiaPitch": 3,
       "modes": {
         "off": {
           "power": 0,
@@ -1013,9 +976,12 @@
       "mass": 180,
       "position": [
         -1,
-        -1
+        -1,
+        0.95
       ],
       "intrinsicInertia": 180,
+      "intrinsicInertiaRoll": 180,
+      "intrinsicInertiaPitch": 180,
       "modes": {
         "off": {
           "power": 0,
@@ -1051,9 +1017,12 @@
       "mass": 200,
       "position": [
         1,
-        -1
+        -1,
+        -1.62
       ],
       "intrinsicInertia": 200,
+      "intrinsicInertiaRoll": 200,
+      "intrinsicInertiaPitch": 200,
       "modes": {
         "off": {
           "power": 0,
@@ -1101,9 +1070,12 @@
       "mass": 70,
       "position": [
         0,
-        -1
+        -1,
+        -1.6
       ],
       "intrinsicInertia": 70,
+      "intrinsicInertiaRoll": 70,
+      "intrinsicInertiaPitch": 70,
       "modes": {
         "off": {
           "power": 0,
@@ -1140,9 +1112,12 @@
       "mass": 450,
       "position": [
         4,
-        -1
+        -1,
+        -1.62
       ],
       "intrinsicInertia": 450,
+      "intrinsicInertiaRoll": 450,
+      "intrinsicInertiaPitch": 450,
       "modes": {
         "off": {
           "power": 0,
@@ -1186,9 +1161,12 @@
       "mass": 30,
       "position": [
         2,
-        -1
+        -1,
+        -1.62
       ],
       "intrinsicInertia": 30,
+      "intrinsicInertiaRoll": 30,
+      "intrinsicInertiaPitch": 30,
       "modes": {
         "off": {
           "power": 0,
@@ -1231,9 +1209,12 @@
       "mass": 40,
       "position": [
         -2,
-        -1
+        -1,
+        1
       ],
       "intrinsicInertia": 40,
+      "intrinsicInertiaRoll": 40,
+      "intrinsicInertiaPitch": 40,
       "modes": {
         "off": {
           "power": 0,
@@ -1275,9 +1256,12 @@
       "mass": 25,
       "position": [
         2,
-        -0.5
+        -0.5,
+        1
       ],
       "intrinsicInertia": 25,
+      "intrinsicInertiaRoll": 25,
+      "intrinsicInertiaPitch": 25,
       "modes": {
         "off": {
           "power": 0,
@@ -1320,9 +1304,12 @@
       "mass": 8,
       "position": [
         0,
-        -0.1
+        -0.1,
+        1.25
       ],
       "intrinsicInertia": 2,
+      "intrinsicInertiaRoll": 2,
+      "intrinsicInertiaPitch": 2,
       "modes": {
         "off": {
           "power": 0,
@@ -1359,9 +1346,12 @@
       "mass": 8,
       "position": [
         6,
-        -1
+        -1,
+        2.5
       ],
       "intrinsicInertia": 3,
+      "intrinsicInertiaRoll": 3,
+      "intrinsicInertiaPitch": 3,
       "modes": {
         "off": {
           "power": 0,
@@ -1397,9 +1387,12 @@
       "mass": 150,
       "position": [
         0,
-        0
+        0,
+        -1.72
       ],
       "intrinsicInertia": 150,
+      "intrinsicInertiaRoll": 150,
+      "intrinsicInertiaPitch": 150,
       "modes": {
         "off": {
           "power": 0,
@@ -1441,9 +1434,12 @@
       "mass": 600,
       "position": [
         -7,
-        0.08
+        0.08,
+        0
       ],
       "intrinsicInertia": 300,
+      "intrinsicInertiaRoll": 300,
+      "intrinsicInertiaPitch": 300,
       "modes": {
         "off": {
           "power": 0,
@@ -1491,9 +1487,12 @@
       "mass": 60,
       "position": [
         5,
-        2
+        2,
+        0
       ],
       "intrinsicInertia": 20,
+      "intrinsicInertiaRoll": 20,
+      "intrinsicInertiaPitch": 20,
       "modes": {
         "off": {
           "power": 0,
@@ -1549,9 +1548,12 @@
       "mass": 60,
       "position": [
         5,
-        -2
+        -2,
+        0
       ],
       "intrinsicInertia": 20,
+      "intrinsicInertiaRoll": 20,
+      "intrinsicInertiaPitch": 20,
       "modes": {
         "off": {
           "power": 0,
@@ -1607,9 +1609,12 @@
       "mass": 60,
       "position": [
         -5,
-        2
+        2,
+        0
       ],
       "intrinsicInertia": 20,
+      "intrinsicInertiaRoll": 20,
+      "intrinsicInertiaPitch": 20,
       "modes": {
         "off": {
           "power": 0,
@@ -1665,9 +1670,12 @@
       "mass": 60,
       "position": [
         -5,
-        -2
+        -2,
+        0
       ],
       "intrinsicInertia": 20,
+      "intrinsicInertiaRoll": 20,
+      "intrinsicInertiaPitch": 20,
       "modes": {
         "off": {
           "power": 0,
@@ -1723,9 +1731,12 @@
       "mass": 100,
       "position": [
         -7,
-        0
+        0,
+        -1.5
       ],
       "intrinsicInertia": 50,
+      "intrinsicInertiaRoll": 50,
+      "intrinsicInertiaPitch": 50,
       "modes": {
         "off": {
           "power": 0,
@@ -1767,9 +1778,12 @@
       "mass": 30,
       "position": [
         7,
-        0
+        0,
+        -2.2
       ],
       "intrinsicInertia": 10,
+      "intrinsicInertiaRoll": 10,
+      "intrinsicInertiaPitch": 10,
       "modes": {
         "off": {
           "power": 0,
@@ -1818,9 +1832,12 @@
       "mass": 30,
       "position": [
         1,
-        0.5
+        0.5,
+        1
       ],
       "intrinsicInertia": 15,
+      "intrinsicInertiaRoll": 15,
+      "intrinsicInertiaPitch": 15,
       "modes": {
         "off": {
           "power": 0,
@@ -1868,9 +1885,12 @@
       "mass": 20,
       "position": [
         2,
-        0
+        0,
+        1.6
       ],
       "intrinsicInertia": 10,
+      "intrinsicInertiaRoll": 10,
+      "intrinsicInertiaPitch": 10,
       "modes": {
         "off": {
           "power": 0,
@@ -1918,9 +1938,12 @@
       "mass": 60,
       "position": [
         6,
-        0
+        0,
+        3.6
       ],
       "intrinsicInertia": 30,
+      "intrinsicInertiaRoll": 30,
+      "intrinsicInertiaPitch": 30,
       "modes": {
         "off": {
           "power": 0,
@@ -1963,9 +1986,12 @@
       "mass": 50,
       "position": [
         4,
-        0
+        0,
+        0.1
       ],
       "intrinsicInertia": 25,
+      "intrinsicInertiaRoll": 25,
+      "intrinsicInertiaPitch": 25,
       "modes": {
         "off": {
           "power": 0,
@@ -2009,6 +2035,7 @@
       "capacity": 6000,
       "position": [
         -2,
+        0,
         0
       ],
       "intrinsicInertiaPerKg": 1,
@@ -2026,7 +2053,8 @@
       "capacity": 150,
       "position": [
         -1,
-        1
+        1,
+        1.6
       ],
       "intrinsicInertiaPerKg": 1,
       "Isp": 220,
@@ -2043,7 +2071,8 @@
       "capacity": 150,
       "position": [
         -1,
-        -1
+        -1,
+        1.6
       ],
       "intrinsicInertiaPerKg": 1,
       "Isp": 220,
@@ -2060,7 +2089,8 @@
       "capacity": 20,
       "position": [
         -3,
-        0
+        0,
+        -1.9
       ],
       "intrinsicInertiaPerKg": 1,
       "Isp": 4190,
@@ -2079,7 +2109,8 @@
       "capacity": 6,
       "position": [
         1,
-        0
+        0,
+        -1.68
       ],
       "intrinsicInertiaPerKg": 1,
       "label": "ASSUMED",
@@ -2093,7 +2124,8 @@
       "capacity": 48,
       "position": [
         1,
-        0
+        0,
+        -1.68
       ],
       "intrinsicInertiaPerKg": 1,
       "label": "ASSUMED",
@@ -2107,7 +2139,8 @@
       "capacity": 54,
       "position": [
         2,
-        0
+        0,
+        -1.7
       ],
       "intrinsicInertiaPerKg": 1,
       "label": "ASSUMED",
@@ -2209,8 +2242,13 @@
       "efficiency": 0.22,
       "areaPerWing": 40,
       "maxPowerPerWing": 12000,
+      "arrayNormal": [
+        1,
+        0,
+        0
+      ],
       "initialIrradiance": 0,
-      "formula": "min(maxPower, irradiance * area * efficiency * max(0, normal dot lightDirection) * deployment * condition); zero in shadow. Irradiance is measured environment input, not inferred from fictional gravity.",
+      "formula": "min(maxPower, irradiance * area * efficiency * max(0, arrayNormal dot lightDirection) * deployment * condition); zero in shadow. arrayNormal is a body-frame unit vector: the wings are feathered about their span (body y) to face forward, as the planar model assumed. Irradiance is measured environment input, not inferred from fictional gravity.",
       "initialPolicy": "Unknown illumination is conservatively zero until measured; arrays stowed initially."
     },
     "fuelCell": {
@@ -2342,7 +2380,7 @@
     "deploymentTime": 20,
     "maxPointingRate": 0.02,
     "initialPointingAngle": 0,
-    "formula": "Q=epsilon*sigma*A_emit*viewFactor*(T^4-T_sink^4)-alpha*irradiance*A_projected; A_emit includes both emitting faces. A_projected is one-sided geometric planform. Pointing changes absorbed light and obstruction/view factors, not an arbitrary cosine to empty space.",
+    "formula": "Q=epsilon*sigma*A_emit*viewFactor*(T^4-T_sink^4)-alpha*irradiance*A_projected; A_emit includes both emitting faces. A_projected is one-sided geometric planform times max(0, arrayNormal dot lightDirection), the same incidence as the solar wings. Pointing changes absorbed light and obstruction/view factors, not an arbitrary cosine to empty space.",
     "statePolicy": "Deployment and pointing are distinct continuous states. Stalled motor freezes geometry. No heat rejection from cabin/service through a stalled pump except declared passive conductance.",
     "passiveConductance": 10,
     "louverMinEmissionFraction": 0.05,
@@ -2362,14 +2400,22 @@
         "id": "radiator-left",
         "stowedPosition": [
           -2,
-          2
+          2,
+          0
         ],
         "deployedPosition": [
           -2,
-          6
+          6,
+          0
         ],
         "stowedInertia": 500,
+        "stowedInertiaRoll": 19,
+        "stowedInertiaPitch": 481,
         "deployedInertia": 2500,
+        "deployedInertiaRoll": 1798,
+        "deployedInertiaPitch": 702,
+        "zMin": -0.1,
+        "zMax": 0.1,
         "stowedPolygon": [
           [
             -4,
@@ -2411,14 +2457,22 @@
         "id": "radiator-right",
         "stowedPosition": [
           -2,
-          -2
+          -2,
+          0
         ],
         "deployedPosition": [
           -2,
-          -6
+          -6,
+          0
         ],
         "stowedInertia": 500,
+        "stowedInertiaRoll": 19,
+        "stowedInertiaPitch": 481,
         "deployedInertia": 2500,
+        "deployedInertiaRoll": 1798,
+        "deployedInertiaPitch": 702,
+        "zMin": -0.1,
+        "zMax": 0.1,
         "stowedPolygon": [
           [
             -4,
@@ -2460,14 +2514,22 @@
         "id": "solar-left",
         "stowedPosition": [
           3,
-          2
+          2,
+          0
         ],
         "deployedPosition": [
           3,
-          7
+          7,
+          0
         ],
         "stowedInertia": 700,
+        "stowedInertiaRoll": 19,
+        "stowedInertiaPitch": 681,
         "deployedInertia": 3500,
+        "deployedInertiaRoll": 2574,
+        "deployedInertiaPitch": 926,
+        "zMin": -0.05,
+        "zMax": 0.05,
         "stowedPolygon": [
           [
             0,
@@ -2509,14 +2571,22 @@
         "id": "solar-right",
         "stowedPosition": [
           3,
-          -2
+          -2,
+          0
         ],
         "deployedPosition": [
           3,
-          -7
+          -7,
+          0
         ],
         "stowedInertia": 700,
+        "stowedInertiaRoll": 19,
+        "stowedInertiaPitch": 681,
         "deployedInertia": 3500,
+        "deployedInertiaRoll": 2574,
+        "deployedInertiaPitch": 926,
+        "zMin": -0.05,
+        "zMax": 0.05,
         "stowedPolygon": [
           [
             0,
@@ -2555,7 +2625,7 @@
         ]
       }
     ],
-    "interpolation": "Linear extension of centroid and polygon vertices; intrinsic inertia interpolated as a simplified rail deployment, not a detailed hinge model. Preserve angular momentum as I changes; actuator energy is charged. Pointing tilts out of the flight plane: use conservative in-plane envelope."
+    "interpolation": "Linear extension of centroid and polygon vertices; the three intrinsic inertia terms interpolated as a simplified rail deployment, not a detailed hinge model. Each wing is a thin prism (zMin..zMax) over its current polygon. Preserve angular momentum as I changes; actuator energy is charged."
   },
   "propulsion": {
     "mechanismSources": [
@@ -2576,12 +2646,14 @@
       "Isp": 320,
       "minimumImpulse": 2400,
       "mountMisalignment": 0.003,
+      "mountMisalignmentPitch": 0,
       "gimbalLimit": 0.035,
       "gimbalRate": 0.02,
       "chemicalHeatAtFullThrust": 4000,
-      "policy": "Pressure-fed storable bipropellant represented by one mixture-locked tank; on/off or pulse train, no arbitrary deep throttle. Gimbal aims through current COM if in range; output force at mount. Exhaust carries most chemical energy, not bus power.",
+      "policy": "Pressure-fed storable bipropellant represented by one mixture-locked tank; on/off or pulse train, no arbitrary deep throttle. Two-axis gimbal (yaw about body z, pitch about body -y; gimbalLimit and gimbalRate apply to each axis) aims through current COM if in range; output force at mount. mountMisalignment is about body +z (tilts thrust toward +y), mountMisalignmentPitch about body -y (tilts thrust toward +z). Exhaust carries most chemical energy, not bus power.",
       "direction": [
         1,
+        0,
         0
       ]
     },
@@ -2594,14 +2666,16 @@
       "warmupTemperature": 285,
       "maxSimultaneousJetsPerPod": 2,
       "chemicalHeatPerFiringJet": 100,
-      "bankPolicy": "A active initially, B isolated unpowered spare. Each bank contains the same eight directions; share propellant/cooling/structure. Switching requires power, warm state and calibration; never restores dose or clogs.",
+      "bankPolicy": "A active initially, B isolated unpowered spare. Each bank contains the same twenty directions (five per pod: nozzles fore, aft, up, down and outboard; the force on the ship is opposite the nozzle); share propellant/cooling/structure. Switching requires power, warm state and calibration; never restores dose or clogs.",
       "jets": [
         {
           "id": "rcs-forward-left-a-0",
           "equipmentId": "rcs-forward-left",
           "bank": "a",
+          "nozzle": "aft",
           "direction": [
             1,
+            0,
             0
           ],
           "resourceIds": [
@@ -2613,9 +2687,56 @@
           "id": "rcs-forward-left-a-1",
           "equipmentId": "rcs-forward-left",
           "bank": "a",
+          "nozzle": "outboard",
           "direction": [
             0,
+            -1,
+            0
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-forward-left-a-2",
+          "equipmentId": "rcs-forward-left",
+          "bank": "a",
+          "nozzle": "fore",
+          "direction": [
+            -1,
+            0,
+            0
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-forward-left-a-3",
+          "equipmentId": "rcs-forward-left",
+          "bank": "a",
+          "nozzle": "down",
+          "direction": [
+            0,
+            0,
             1
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-forward-left-a-4",
+          "equipmentId": "rcs-forward-left",
+          "bank": "a",
+          "nozzle": "up",
+          "direction": [
+            0,
+            0,
+            -1
           ],
           "resourceIds": [
             "rcs-left",
@@ -2626,8 +2747,10 @@
           "id": "rcs-forward-left-b-0",
           "equipmentId": "rcs-forward-left",
           "bank": "b",
+          "nozzle": "aft",
           "direction": [
             1,
+            0,
             0
           ],
           "resourceIds": [
@@ -2639,9 +2762,56 @@
           "id": "rcs-forward-left-b-1",
           "equipmentId": "rcs-forward-left",
           "bank": "b",
+          "nozzle": "outboard",
           "direction": [
             0,
+            -1,
+            0
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-forward-left-b-2",
+          "equipmentId": "rcs-forward-left",
+          "bank": "b",
+          "nozzle": "fore",
+          "direction": [
+            -1,
+            0,
+            0
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-forward-left-b-3",
+          "equipmentId": "rcs-forward-left",
+          "bank": "b",
+          "nozzle": "down",
+          "direction": [
+            0,
+            0,
             1
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-forward-left-b-4",
+          "equipmentId": "rcs-forward-left",
+          "bank": "b",
+          "nozzle": "up",
+          "direction": [
+            0,
+            0,
+            -1
           ],
           "resourceIds": [
             "rcs-left",
@@ -2652,8 +2822,10 @@
           "id": "rcs-forward-right-a-0",
           "equipmentId": "rcs-forward-right",
           "bank": "a",
+          "nozzle": "fore",
           "direction": [
             -1,
+            0,
             0
           ],
           "resourceIds": [
@@ -2665,9 +2837,56 @@
           "id": "rcs-forward-right-a-1",
           "equipmentId": "rcs-forward-right",
           "bank": "a",
+          "nozzle": "outboard",
           "direction": [
             0,
+            1,
+            0
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-forward-right-a-2",
+          "equipmentId": "rcs-forward-right",
+          "bank": "a",
+          "nozzle": "aft",
+          "direction": [
+            1,
+            0,
+            0
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-forward-right-a-3",
+          "equipmentId": "rcs-forward-right",
+          "bank": "a",
+          "nozzle": "down",
+          "direction": [
+            0,
+            0,
             1
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-forward-right-a-4",
+          "equipmentId": "rcs-forward-right",
+          "bank": "a",
+          "nozzle": "up",
+          "direction": [
+            0,
+            0,
+            -1
           ],
           "resourceIds": [
             "rcs-left",
@@ -2678,8 +2897,10 @@
           "id": "rcs-forward-right-b-0",
           "equipmentId": "rcs-forward-right",
           "bank": "b",
+          "nozzle": "fore",
           "direction": [
             -1,
+            0,
             0
           ],
           "resourceIds": [
@@ -2691,9 +2912,56 @@
           "id": "rcs-forward-right-b-1",
           "equipmentId": "rcs-forward-right",
           "bank": "b",
+          "nozzle": "outboard",
           "direction": [
             0,
+            1,
+            0
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-forward-right-b-2",
+          "equipmentId": "rcs-forward-right",
+          "bank": "b",
+          "nozzle": "aft",
+          "direction": [
+            1,
+            0,
+            0
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-forward-right-b-3",
+          "equipmentId": "rcs-forward-right",
+          "bank": "b",
+          "nozzle": "down",
+          "direction": [
+            0,
+            0,
             1
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-forward-right-b-4",
+          "equipmentId": "rcs-forward-right",
+          "bank": "b",
+          "nozzle": "up",
+          "direction": [
+            0,
+            0,
+            -1
           ],
           "resourceIds": [
             "rcs-left",
@@ -2704,8 +2972,10 @@
           "id": "rcs-aft-left-a-0",
           "equipmentId": "rcs-aft-left",
           "bank": "a",
+          "nozzle": "aft",
           "direction": [
             1,
+            0,
             0
           ],
           "resourceIds": [
@@ -2717,7 +2987,54 @@
           "id": "rcs-aft-left-a-1",
           "equipmentId": "rcs-aft-left",
           "bank": "a",
+          "nozzle": "outboard",
           "direction": [
+            0,
+            -1,
+            0
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-aft-left-a-2",
+          "equipmentId": "rcs-aft-left",
+          "bank": "a",
+          "nozzle": "fore",
+          "direction": [
+            -1,
+            0,
+            0
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-aft-left-a-3",
+          "equipmentId": "rcs-aft-left",
+          "bank": "a",
+          "nozzle": "down",
+          "direction": [
+            0,
+            0,
+            1
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-aft-left-a-4",
+          "equipmentId": "rcs-aft-left",
+          "bank": "a",
+          "nozzle": "up",
+          "direction": [
+            0,
             0,
             -1
           ],
@@ -2730,8 +3047,10 @@
           "id": "rcs-aft-left-b-0",
           "equipmentId": "rcs-aft-left",
           "bank": "b",
+          "nozzle": "aft",
           "direction": [
             1,
+            0,
             0
           ],
           "resourceIds": [
@@ -2743,7 +3062,54 @@
           "id": "rcs-aft-left-b-1",
           "equipmentId": "rcs-aft-left",
           "bank": "b",
+          "nozzle": "outboard",
           "direction": [
+            0,
+            -1,
+            0
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-aft-left-b-2",
+          "equipmentId": "rcs-aft-left",
+          "bank": "b",
+          "nozzle": "fore",
+          "direction": [
+            -1,
+            0,
+            0
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-aft-left-b-3",
+          "equipmentId": "rcs-aft-left",
+          "bank": "b",
+          "nozzle": "down",
+          "direction": [
+            0,
+            0,
+            1
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-aft-left-b-4",
+          "equipmentId": "rcs-aft-left",
+          "bank": "b",
+          "nozzle": "up",
+          "direction": [
+            0,
             0,
             -1
           ],
@@ -2756,8 +3122,10 @@
           "id": "rcs-aft-right-a-0",
           "equipmentId": "rcs-aft-right",
           "bank": "a",
+          "nozzle": "fore",
           "direction": [
             -1,
+            0,
             0
           ],
           "resourceIds": [
@@ -2769,7 +3137,54 @@
           "id": "rcs-aft-right-a-1",
           "equipmentId": "rcs-aft-right",
           "bank": "a",
+          "nozzle": "outboard",
           "direction": [
+            0,
+            1,
+            0
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-aft-right-a-2",
+          "equipmentId": "rcs-aft-right",
+          "bank": "a",
+          "nozzle": "aft",
+          "direction": [
+            1,
+            0,
+            0
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-aft-right-a-3",
+          "equipmentId": "rcs-aft-right",
+          "bank": "a",
+          "nozzle": "down",
+          "direction": [
+            0,
+            0,
+            1
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-aft-right-a-4",
+          "equipmentId": "rcs-aft-right",
+          "bank": "a",
+          "nozzle": "up",
+          "direction": [
+            0,
             0,
             -1
           ],
@@ -2782,8 +3197,10 @@
           "id": "rcs-aft-right-b-0",
           "equipmentId": "rcs-aft-right",
           "bank": "b",
+          "nozzle": "fore",
           "direction": [
             -1,
+            0,
             0
           ],
           "resourceIds": [
@@ -2795,7 +3212,54 @@
           "id": "rcs-aft-right-b-1",
           "equipmentId": "rcs-aft-right",
           "bank": "b",
+          "nozzle": "outboard",
           "direction": [
+            0,
+            1,
+            0
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-aft-right-b-2",
+          "equipmentId": "rcs-aft-right",
+          "bank": "b",
+          "nozzle": "aft",
+          "direction": [
+            1,
+            0,
+            0
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-aft-right-b-3",
+          "equipmentId": "rcs-aft-right",
+          "bank": "b",
+          "nozzle": "down",
+          "direction": [
+            0,
+            0,
+            1
+          ],
+          "resourceIds": [
+            "rcs-left",
+            "rcs-right"
+          ]
+        },
+        {
+          "id": "rcs-aft-right-b-4",
+          "equipmentId": "rcs-aft-right",
+          "bank": "b",
+          "nozzle": "up",
+          "direction": [
+            0,
             0,
             -1
           ],
@@ -2805,11 +3269,46 @@
           ]
         }
       ],
-      "zeroNetForceYawTorquePerBank": [
-        -1600,
-        4000
-      ],
+      "zeroNetForceTorquePerBank": {
+        "roll": [
+          -1600,
+          1600
+        ],
+        "pitch": [
+          -4000,
+          4000
+        ],
+        "yaw": [
+          -3600,
+          3600
+        ]
+      },
+      "translationForcePerBank": {
+        "x": [
+          -800,
+          800
+        ],
+        "y": [
+          -400,
+          400
+        ],
+        "z": [
+          -800,
+          800
+        ]
+      },
       "bankThermalApproximation": "In the initial node model, both banks share their pod's service-node temperature. Minimum readiness time is a valve/ignition checkout, with heating only when below warmupTemperature. An unpowered spare is not assumed physically cold when its surroundings are warm. Independent cold nozzle behavior requires local thermal states in Phase3; do not invent a cold temperature in the stub."
+    },
+    "attitudeControl": {
+      "label": "ASSUMED",
+      "rateGain": 0.4,
+      "attitudeGain": 0.1,
+      "slewRate": 0.008,
+      "attitudeDeadband": 0.002,
+      "rateDeadband": 0.0004,
+      "handsOnTurnRate": 0.008,
+      "torquePriority": 10,
+      "policy": "Flight-software play values. Per body axis: commanded rate = attitudeGain * (attitude error beyond attitudeDeadband), its magnitude limited to slewRate; no torque is asked while the rate error is inside rateDeadband; otherwise angular acceleration = rateGain * rate error, turned into torque with the full inertia tensor and into jet firings by the allocator (least propellant, at most maxSimultaneousJetsPerPod per pod, whole minimum impulse bits). handsOnTurnRate is the body rate a full yaw or pitch deflection asks for. torquePriority weights a missed torque against a missed force when both cannot be met."
     },
     "ion": {
       "equipmentId": "ion-drive",
@@ -2825,6 +3324,7 @@
       "policy": "Optional full-power/off long-coast capability. Force and Isp retain S08 reference operating point; no encounter-scale boost. Heat is a conservative assumed allocation, not source-measured bus dissipation.",
       "direction": [
         1,
+        0,
         0
       ]
     }
@@ -2840,34 +3340,41 @@
       "warmupTime": 20,
       "calibrationTime": 10,
       "settleTime": 5,
+      "boresight": [
+        1,
+        0,
+        0
+      ],
+      "fovHalfAngle": 0.5235987755982988,
       "referenceRange": 10000,
       "referenceExposure": 0.05,
       "minExposure": 0.005,
       "maxExposure": 0.5,
-      "nominalAngularSigma": 5e-05,
-      "angularFloor": 2e-05,
+      "nominalAngularSigma": 0.00005,
+      "angularFloor": 0.00002,
       "referenceTrackingPower": 120,
       "minTrackingPower": 60,
       "maxUsefulPower": 200,
       "maxSmearAngle": 0.0001,
       "rangePriorFraction": 0.05,
       "rangeFloor": 10,
-      "formula": "sigmaAngle=max(floor, nominal*sqrt(referencePower/clamp(P,min,max))*sqrt(referenceExposure/exposure))/condition; transverse sigma=range*sigmaAngle. Reject when abs(angularRate)*exposure exceeds maxSmearAngle, target absent, or optics invalid. No measurement below minimum power. Range sigma=max(rangeFloor,rangePriorFraction*range) only for a declared known-size/shape target; otherwise bearing-only until triangulation. Reject condition<=0; otherwise condition must be clamped to (0,1]. sigma is only for valid targets with adequate signal; low-light invalidity is separate. Clamp commanded exposure to [minExposure,maxExposure] before evaluating quality or smear.",
+      "formula": "sigmaAngle=max(floor, nominal*sqrt(referencePower/clamp(P,min,max))*sqrt(referenceExposure/exposure))/condition; transverse sigma=range*sigmaAngle. The pointing error is isotropic: elevation sigma=sigmaAngle, azimuth sigma=sigmaAngle/cos(elevation). The field of view is a cone of half-angle fovHalfAngle about the boresight. Reject when abs(angularRate)*exposure exceeds maxSmearAngle, target absent, or optics invalid. No measurement below minimum power. Range sigma=max(rangeFloor,rangePriorFraction*range) only for a declared known-size/shape target; otherwise bearing-only until triangulation. Reject condition<=0; otherwise condition must be clamped to (0,1]. sigma is only for valid targets with adequate signal; low-light invalidity is separate. Clamp commanded exposure to [minExposure,maxExposure] before evaluating quality or smear.",
       "policy": "Power changes frame processing/exposure duty; never grants target identity, absolute range or visibility through an occluder. Dark scenes can fail even at full power. Camera raw frames optional, no truth-state storage."
     },
     "starTracker": {
-      "angularSigma": 4e-05,
+      "angularSigma": 0.00004,
       "sampleRate": 2,
       "maxAngularRate": 0.01,
-      "catalogPolicy": "No assumed Earth-catalog match. Bootstrap a local relative star map if stars visible; choose arbitrary inertial yaw origin. Lost solutions increase covariance, no perfect attitude fallback."
+      "catalogPolicy": "No assumed Earth-catalog match. Bootstrap a local relative star map if stars visible; choose an arbitrary inertial frame. Lost solutions increase covariance, no perfect attitude fallback.",
+      "fixPolicy": "A fix is the body-to-inertial attitude with an independent error of angularSigma about each body axis, reported as a rotation vector. No fix while the magnitude of the angular velocity exceeds maxAngularRate."
     },
     "imu": {
       "sampleRate": 50,
       "accelerationSigma": 0.0001,
-      "accelerationBias": 5e-05,
-      "gyroSigma": 1e-05,
-      "gyroBias": 2e-06,
-      "policy": "Specific force only (P7); gravity comes from tracking. Correct lever-arm angular acceleration/centripetal terms to COM using measured attitude rates; keep correction uncertainty. Bias and noise are measured-model assumptions, seeded streams only."
+      "accelerationBias": 0.00005,
+      "gyroSigma": 0.00001,
+      "gyroBias": 0.000002,
+      "policy": "Specific force only (P7), three body axes, each with its own bias (accelerationBias) and noise; three-axis rate gyro likewise (gyroBias, gyroSigma). Gravity comes from tracking. Correct lever-arm angular acceleration/centripetal terms to COM using measured attitude rates; keep correction uncertainty. Bias and noise are measured-model assumptions, seeded streams only."
     },
     "latticeProcessing": {
       "label": "FICTIONAL",
@@ -2929,10 +3436,10 @@
     "crewHeat": 400,
     "initialCabinCO2": 0,
     "CO2HazardBudget": 2,
-    "oxygenRatePerCrew": 9.722222222222223e-06,
-    "foodRatePerCrew": 7.175925925925926e-06,
-    "waterRatePerCrew": 4.074074074074074e-05,
-    "CO2RatePerCrew": 1.1574074074074073e-05,
+    "oxygenRatePerCrew": 0.000009722222222222223,
+    "foodRatePerCrew": 0.000007175925925925926,
+    "waterRatePerCrew": 0.00004074074074074074,
+    "CO2RatePerCrew": 0.000011574074074074073,
     "policy": "Stored-gas and replaceable sorbent survival mode; no oxygen electrolyser or water recycler simulated. Consumables are subsets of cabin-stores equipment mass, not extra dry mass. Consumed mass becomes retained atmosphere/waste. Active scrubber consumes finite sorbent capacity; loss accumulates cabin CO2. Hazard budget is an assumed simplified inventory alarm, not medical physiology. Fuel-cell oxygen is separate, not available to crew by default."
   },
   "radiation": {
@@ -3008,7 +3515,7 @@
       "Isp": 4190,
       "busPower": 7220,
       "systemEfficiency": 0.67,
-      "reportedMassFlow": 5.76e-06,
+      "reportedMassFlow": 0.00000576,
       "note": "Rounded measured/reference tuple; Isp equation yields slightly different mass flow. Adopt equation for mass conservation."
     },
     {

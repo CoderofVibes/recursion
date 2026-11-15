@@ -8,13 +8,17 @@
 import { describe, expect, it } from 'vitest';
 import rawCarried from '../../tests/vectors/estimator/carried-rule-forecast.json?raw';
 import rawAging from '../../tests/vectors/estimator/parameter-aging.json?raw';
-import type {
-  AttemptRecord,
-  MassProperties,
-  ModelState,
-  ParameterPrior,
-  Plan,
+import {
+  cov3FromPlanar,
+  isotropicInertia,
+  prismHull,
+  type AttemptRecord,
+  type MassProperties,
+  type ModelState,
+  type ParameterPrior,
+  type Plan,
 } from '../contracts/index.ts';
+import * as quat from '../lib/quat.ts';
 import { carriedCalibration, type ModelContext } from './engine.ts';
 import type { ExtensionRecord } from './extensions.ts';
 import { fromRows } from './linalg.ts';
@@ -29,16 +33,22 @@ import {
 
 const MASS = 30000;
 const V = (raw: string) => JSON.parse(raw) as VectorJson;
+// The scenarios in this file are planar (z = 0, yaw-only attitude, flat hull): the model runs
+// them in the planar reduction (`planar: 1`, spec Appendix A.3), as the planar model did.
 const massProperties: MassProperties = {
   mass: MASS,
-  centerOfMass: { x: 0, y: 0 },
-  inertia: 1e5,
-  footprint: [
-    { x: -5, y: -2 },
-    { x: 5, y: -2 },
-    { x: 5, y: 2 },
-    { x: -5, y: 2 },
-  ],
+  centerOfMass: { x: 0, y: 0, z: 0 },
+  inertia: isotropicInertia(1e5),
+  hull: prismHull(
+    [
+      { x: -5, y: -2 },
+      { x: 5, y: -2 },
+      { x: 5, y: 2 },
+      { x: -5, y: 2 },
+    ],
+    0,
+    0,
+  ),
 };
 
 function context(
@@ -53,9 +63,9 @@ function context(
       {
         id: 'A',
         name: 'A',
-        position: { x: 0, y: 0 },
-        velocity: { x: 0, y: 0 },
-        positionCov: [1e6, 0, 1e6],
+        position: { x: 0, y: 0, z: 0 },
+        velocity: { x: 0, y: 0, z: 0 },
+        positionCov: cov3FromPlanar([1e6, 0, 1e6]),
         radius: 2.5e5,
         tracked: true,
       },
@@ -63,15 +73,15 @@ function context(
     ship: testShip(MASS, thrust),
     arrival: {
       t: 0,
-      position: { x: 1e6, y: 0 },
-      velocity: { x: 0, y: 100 },
-      positionCov: [1e8, 0, 1e8],
-      velocityCov: [100, 0, 100],
-      attitude: 0,
+      position: { x: 1e6, y: 0, z: 0 },
+      velocity: { x: 0, y: 100, z: 0 },
+      positionCov: cov3FromPlanar([1e8, 0, 1e8]),
+      velocityCov: cov3FromPlanar([100, 0, 100]),
+      attitude: quat.fromYaw(0),
       attitudeSigma: 1e-3,
-      angularRate: 0,
+      angularVelocity: { x: 0, y: 0, z: 0 },
     },
-    settings: { dt: 60, ...settings },
+    settings: { dt: 60, planar: 1, ...settings },
   };
 }
 
@@ -155,7 +165,7 @@ describe('ship calibrations age and are fitted per attempt (spec §3.7)', () => 
             thruster: 'main',
             throttle: 1,
             duration: 60,
-            attitude: { reference: 'inertial', angle: 0 },
+            attitude: { reference: 'inertial', attitude: quat.fromYaw(0) },
           },
         },
       ],
@@ -278,7 +288,7 @@ describe('a carried rule in a later encounter (carried-rule-forecast through the
           thruster: 'main',
           throttle: 1,
           duration: q.t1 - q.t0,
-          attitude: { reference: 'inertial', angle: q.theta },
+          attitude: { reference: 'inertial', attitude: quat.fromYaw(q.theta) },
         },
       })),
     };
@@ -311,7 +321,7 @@ describe('a carried rule in a later encounter (carried-rule-forecast through the
       }
       const cov = fromRows([
         [s.positionCov[0], s.positionCov[1]],
-        [s.positionCov[1], s.positionCov[2]],
+        [s.positionCov[1], s.positionCov[3]],
       ]);
       expect(
         mahalanobis([p.truth[0] - s.position.x, p.truth[1] - s.position.y], cov),

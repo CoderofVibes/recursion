@@ -10,7 +10,16 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import type { AttemptRecord, MassProperties, Measurement, Plan } from '../contracts/index.ts';
+import {
+  cov3FromPlanar,
+  isotropicInertia,
+  prismHull,
+  type AttemptRecord,
+  type MassProperties,
+  type Measurement,
+  type Plan,
+} from '../contracts/index.ts';
+import * as quat from '../lib/quat.ts';
 import { createRng } from '../lib/rng.ts';
 import { compileArc, simulate, type Structure, type ThrustSegment } from './dynamics.ts';
 import type { ModelContext } from './engine.ts';
@@ -37,15 +46,16 @@ function truthAt(
   times: readonly number[],
   commands: readonly ThrustSegment[] = [],
 ) {
+  const [x, y, vx, vy] = state as [number, number, number, number];
   const st: Structure = {
     r0: R0,
     n: N,
     bodies: [{ id: 'A', mu: MU, state: 'gauge' }],
-    ship: state as unknown as readonly [number, number, number, number],
+    ship: [x, y, 0, vx, vy, 0],
     dynamicBodies: false,
-    engine: { kE: KE, dE: DE },
+    engine: { kE: KE, dE: DE, dP: 0 },
     kA: 1,
-    camBias: 0,
+    camBias: [0, 0, 0],
   };
   const tr = simulate(
     compileArc(st, { id: 'truth', epoch: 0, commands }, new Map()),
@@ -53,7 +63,7 @@ function truthAt(
     times,
     15,
   );
-  return tr.pos.map((p, k) => [p[2]!, p[3]!, tr.vel[k]![2]!, tr.vel[k]![3]!] as const);
+  return tr.pos.map((p, k) => [p[3]!, p[4]!, tr.vel[k]![3]!, tr.vel[k]![4]!] as const);
 }
 
 // Ship from pericentre at 1.0 r0 toward apocentre at 1.3 r0; asteroid on a 0.55–0.7 r0 orbit.
@@ -85,8 +95,8 @@ function record(withAsteroid: boolean): AttemptRecord {
         t,
         source: 'cam',
         target: id,
-        value: [Math.atan2(dy, dx) + rng.normal(0, sb)],
-        sigma: [sb],
+        value: [Math.atan2(dy, dx) + rng.normal(0, sb), 0],
+        sigma: [sb, sb],
       });
       ms.push({
         kind: 'range',
@@ -109,13 +119,13 @@ function record(withAsteroid: boolean): AttemptRecord {
     start: {
       estimate: {
         t: 0,
-        position: { x: R0, y: 0 },
-        velocity: { x: 0, y: SHIP0[3]! },
-        positionCov: [1e8, 0, 1e8],
-        velocityCov: [1, 0, 1],
-        attitude: 0,
+        position: { x: R0, y: 0, z: 0 },
+        velocity: { x: 0, y: SHIP0[3]!, z: 0 },
+        positionCov: cov3FromPlanar([1e8, 0, 1e8]),
+        velocityCov: cov3FromPlanar([1, 0, 1]),
+        attitude: quat.fromYaw(0),
         attitudeSigma: 1e-3,
-        angularRate: 0,
+        angularVelocity: { x: 0, y: 0, z: 0 },
       },
       configuration: 'stowed',
       modelVersion: 0,
@@ -141,9 +151,9 @@ const ctx: ModelContext = {
     {
       id: 'A',
       name: 'A',
-      position: { x: 0, y: 0 },
-      velocity: { x: 0, y: 0 },
-      positionCov: [1e6, 0, 1e6],
+      position: { x: 0, y: 0, z: 0 },
+      velocity: { x: 0, y: 0, z: 0 },
+      positionCov: cov3FromPlanar([1e6, 0, 1e6]),
       radius: 2.5e5,
       tracked: true,
     },
@@ -151,28 +161,34 @@ const ctx: ModelContext = {
   asteroids: [
     {
       id: 'ast-1',
-      position: { x: 0, y: 0 },
-      velocity: { x: 0, y: 0 },
-      positionCov: [1e10, 0, 1e10],
+      position: { x: 0, y: 0, z: 0 },
+      velocity: { x: 0, y: 0, z: 0 },
+      positionCov: cov3FromPlanar([1e10, 0, 1e10]),
       radius: 5e3,
       tracked: true,
     },
   ],
   ship: testShip(MASS, THRUST),
   arrival: record(false).start.estimate,
-  settings: { dt: 60 },
+  settings: { dt: 60, planar: 1 },
 };
 
+// The scenarios in this file are planar (z = 0, yaw-only attitude, flat hull): the model runs
+// them in the planar reduction (`planar: 1`, spec Appendix A.3), as the planar model did.
 const massProperties: MassProperties = {
   mass: MASS,
-  centerOfMass: { x: 0, y: 0 },
-  inertia: 1e5,
-  footprint: [
-    { x: -5, y: -2 },
-    { x: 5, y: -2 },
-    { x: 5, y: 2 },
-    { x: -5, y: 2 },
-  ],
+  centerOfMass: { x: 0, y: 0, z: 0 },
+  inertia: isotropicInertia(1e5),
+  hull: prismHull(
+    [
+      { x: -5, y: -2 },
+      { x: 5, y: -2 },
+      { x: 5, y: 2 },
+      { x: -5, y: 2 },
+    ],
+    0,
+    0,
+  ),
 };
 
 // A retrograde burn at apocentre that drops pericentre to 0.6 r0: below every distance the ship flew.
@@ -194,7 +210,7 @@ const dive: Plan = {
         thruster: 'main',
         throttle: 1,
         duration: burnTime,
-        attitude: { reference: 'inertial', angle: theta },
+        attitude: { reference: 'inertial', attitude: quat.fromYaw(theta) },
       },
     },
   ],
@@ -202,7 +218,7 @@ const dive: Plan = {
 const HOURS = 10;
 const truthDiveTimes = Array.from({ length: (HOURS * 3600) / 600 + 1 }, (_, i) => NOW + i * 600);
 const truthDive = truthAt(SHIP0, truthDiveTimes, [
-  { t0: NOW, t1: NOW + burnTime, u: 0.15, theta, thruster: 'main' },
+  { t0: NOW, t1: NOW + burnTime, u: 0.15, q: quat.fromYaw(theta), thruster: 'main' },
 ]);
 const truthAst = truthAt(AST0, truthDiveTimes);
 
@@ -269,7 +285,7 @@ describe('tracked asteroids probe the law where the ship has not flown (spec §1
       const truth = truthAst[k]!;
       const cov = fromRows([
         [s.positionCov[0], s.positionCov[1]],
-        [s.positionCov[1], s.positionCov[2]],
+        [s.positionCov[1], s.positionCov[3]],
       ]);
       expect(
         mahalanobis([truth[0] - s.position.x, truth[1] - s.position.y], cov),
@@ -331,7 +347,7 @@ describe('tracked asteroids probe the law where the ship has not flown (spec §1
       const truth = truthDive[truthDiveTimes.indexOf(q.t)]!;
       const cov = fromRows([
         [q.positionCov[0], q.positionCov[1]],
-        [q.positionCov[1], q.positionCov[2]],
+        [q.positionCov[1], q.positionCov[3]],
       ]);
       expect(
         mahalanobis([truth[0] - q.position.x, truth[1] - q.position.y], cov),

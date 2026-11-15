@@ -28,6 +28,46 @@ describe('hidden calibration mapping', () => {
     });
   });
 
+  it('maps the values the 3D ship reads: pitch mount error, z bias, gyro x and y', () => {
+    expect(
+      hiddenEquipmentValues(definition, {
+        'thruster.main-engine.misalignment-pitch': -0.002,
+        'sensor.imu-a.bias-z': 3e-5,
+        'sensor.imu-a.rate-bias-x': 1e-6,
+        'sensor.imu-a.rate-bias-y': -2e-6,
+      }),
+    ).toEqual({
+      'main-engine': { misalignmentPitch: -0.002 },
+      'imu-a': { biasZ: 3e-5, gyroBiasX: 1e-6, gyroBiasY: -2e-6 },
+    });
+  });
+
+  it('sets the shared RCS scale on every pod, a pod of its own overriding it', () => {
+    const pods = definition.equipment.filter((e) => e.kind === 'rcs-thruster').map((e) => e.id);
+    expect(pods).toHaveLength(4);
+    const values = hiddenEquipmentValues(definition, {
+      'thruster.rcs-aft-left.scale': 0.9,
+      'thruster.rcs.scale': 0.95,
+    });
+    expect(Object.keys(values).sort()).toEqual([...pods].sort());
+    for (const pod of pods)
+      expect(values[pod]).toEqual({ thrustScale: pod === 'rcs-aft-left' ? 0.9 : 0.95 });
+    // `rcs` is a group: it has a scale and nothing else.
+    expect(() =>
+      hiddenEquipmentValues(definition, { 'thruster.rcs.misalignment': 0.01 }),
+    ).toThrow();
+  });
+
+  it('reaches the ship: the arrival state carries the 3D values the ship step reads', () => {
+    const state = createArrivalSystems(
+      definition,
+      { 'thruster.main-engine.misalignment-pitch': 0.004, 'sensor.imu-b.rate-bias-y': 5e-6 },
+      'seed',
+    );
+    expect(state.equipment['main-engine']!.values.misalignmentPitch).toBe(0.004);
+    expect(state.equipment['imu-b']!.values.gyroBiasY).toBe(5e-6);
+  });
+
   it('refuses hardware it does not know', () => {
     expect(() => hiddenEquipmentValues(definition, { 'thruster.warp-drive.scale': 2 })).toThrow();
     expect(() => hiddenEquipmentValues(definition, { 'thruster.main-engine.colour': 2 })).toThrow();

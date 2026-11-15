@@ -4,6 +4,10 @@
 This is an offline reference, deliberately independent of the future browser
 integrator. No randomness, external packages, installation, or network is used.
 See README.md for the schema, methods, and interpretation of tolerances.
+
+With --3d the same modes act on tests/vectors/physics-3d.json instead (vectors3d.py,
+DECISIONS A11). Without it this file behaves exactly as 1B wrote it: the planar
+path and tests/vectors/physics.json are unchanged.
 """
 
 from __future__ import annotations
@@ -468,7 +472,19 @@ def main():
     modes.add_argument("--check", action="store_true", help="validate and compare existing JSON byte-for-byte; never write")
     modes.add_argument("--validate-only", action="store_true", help="run mathematical/reference checks; never read or write JSON")
     modes.add_argument("--report", action="store_true", help="print proposed-scale and forecast-error tables; never read or write JSON")
+    modes.add_argument("--consumer-probe", action="store_true", help="with --3d only: read physics-3d.json as a consumer and fly it with simple second-order schemes")
+    parser.add_argument("--3d", dest="three_d", action="store_true",
+                        help="work on tests/vectors/physics-3d.json (vectors3d.py) instead of the planar file; combines with the modes above")
     args = parser.parse_args()
+    if args.three_d:
+        # The three-dimensional reference (DECISIONS A11) lives in vectors3d.py. Nothing on
+        # this path reads or writes the planar file.
+        import vectors3d
+        vectors3d.run("check" if args.check else "validate-only" if args.validate_only
+                      else "report" if args.report else "consumer-probe" if args.consumer_probe else "write")
+        return
+    if args.consumer_probe:
+        parser.error("--consumer-probe needs --3d")
     if args.report:
         report()
         return

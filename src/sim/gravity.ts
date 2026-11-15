@@ -1,7 +1,8 @@
 /**
  * The gravity law (DECISIONS P4 as clarified by 1B), derived here independently of 1B's tools.
  *
- * Every massive body is a point source. Its pull on anything at distance r is
+ * Every massive body is a point source. Its pull on anything at distance r (in three
+ * dimensions, A11) is
  *
  *   a = (gm / r0²) · (r0 / r)^n  =  K / r^n,   K = gm · r0^(n−2)   [K in m^(n+1) s⁻²]
  *
@@ -16,6 +17,7 @@
  */
 
 import type { GravityLaw } from '../contracts/truth/index.ts';
+import type { Vec3 } from '../lib/vec3.ts';
 
 /** Source coupling K = gm · r0^(n−2), m^(n+1)/s². Exact (no pow) for n = 2 and n = 2.5. */
 export function coupling(gm: number, law: GravityLaw): number {
@@ -38,7 +40,9 @@ export function inverseDistancePower(r2: number, n: number): number {
   return Math.pow(r2, -0.5 * (n + 1));
 }
 
-/** Gravitational acceleration at `(x, y)` from one point source, m/s². */
+/** Gravitational acceleration at `at` from one point source at `source`, m/s². */
+export function accelerationFrom(k: number, n: number, source: Vec3, at: Vec3): Vec3;
+/** The same for a source and a point in the x–y plane (z = 0), given as four numbers. */
 export function accelerationFrom(
   k: number,
   n: number,
@@ -46,11 +50,26 @@ export function accelerationFrom(
   sourceY: number,
   x: number,
   y: number,
-): { x: number; y: number } {
-  const dx = sourceX - x;
-  const dy = sourceY - y;
-  const s = k * inverseDistancePower(dx * dx + dy * dy, n);
-  return { x: dx * s, y: dy * s };
+): { x: number; y: number };
+export function accelerationFrom(
+  k: number,
+  n: number,
+  source: Vec3 | number,
+  at: Vec3 | number,
+  x = 0,
+  y = 0,
+): Vec3 | { x: number; y: number } {
+  if (typeof source === 'number' || typeof at === 'number') {
+    const dx = (source as number) - x;
+    const dy = (at as number) - y;
+    const s = k * inverseDistancePower(dx * dx + dy * dy, n);
+    return { x: dx * s, y: dy * s };
+  }
+  const dx = source.x - at.x;
+  const dy = source.y - at.y;
+  const dz = source.z - at.z;
+  const s = k * inverseDistancePower(dx * dx + dy * dy + dz * dz, n);
+  return { x: dx * s, y: dy * s, z: dz * s };
 }
 
 /** Specific potential of one source at distance r, m²/s² (zero at infinity; needs n > 1). */

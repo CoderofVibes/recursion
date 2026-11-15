@@ -1,31 +1,25 @@
 # Recursion
 
-A spacecraft engineering roguelike for NASA Space Apps 2026. A crewed ship returning from Mars is caught in recurrence in an unfamiliar universe; the player learns its rules, engineers solutions and finds a way home. The ship never gets stronger, only better understood.
+**[Play Recursion in your browser](https://coderofvibes.github.io/recursion/)**
 
-Status: Phase 1 (foundation, research and design). See [docs/build-plan/README.md](docs/build-plan/README.md).
+A ship returning from Mars gets caught in recurrence in an unfamiliar universe. In this spacecraft engineering roguelike, finding a way home starts with learning what your ship can do.
 
-## Run
+## Fly the Gravity range
 
-Requires Node 22.12 or later.
+Click to look, walk with **WASD**, then aim at the console and click. Set your goals and margins in **MISSION**. Preview and commit a burn in **PLAN**, then compare the forecast with the measured track. **BLACK BOX** keeps the evidence when the ship restarts.
 
-```bash
-npm install
-npm run dev        # local dev server
-npm test           # unit tests (Vitest)
-npm run build      # typecheck and production build into dist/
-npm run lint       # ESLint, including the truth/belief boundary
-npm run check      # typecheck + lint + tests
-```
+The return expedition is still in development. Not yet shown in this build: full 3D flight, adopting a learned law in play, and three more GMAT cases, all being integrated now. [Claim ledger](docs/studies/s12/claim-ledger.md)
 
-## Where things are
+## What we verified
 
-| Path | What |
-|---|---|
-| [docs/CREATIVE_BRIEF.md](docs/CREATIVE_BRIEF.md) | The owner's creative direction (authoritative) |
-| [docs/DECISIONS.md](docs/DECISIONS.md) | Approved, proposed and demonstrated implementation decisions |
-| [docs/build-plan/](docs/build-plan/README.md) | Phases, section prompts, file ownership, conventions |
-| [src/contracts/](src/contracts/README.md) | Shared types between every part of the game, and mock fixtures |
-| [src/lib/](src/lib/README.md) | Vectors, seeded RNG, fixed-step clock, state hashing |
-| `src/*/README.md` | Each folder names the section that owns it |
-| [References/](References/README.md) | Public research references and bibliography |
-| [WORKING_PREFERENCES.md](WORKING_PREFERENCES.md) | How the team works |
+The simulator matched four planar NASA GMAT R2026a trajectories within **2.2 cm** at **6.25–25 ms** test steps for Newtonian gravity and idealized propulsion. The fictional gravity law and live forecast have separate game tests. Run `npm run check` for typechecking, lint and tests. [GMAT method](docs/verification/gmat.md) · [Regression tests](src/sim/gmat.test.ts)
+
+## Credits and licence
+
+The owner led creative direction. Claude and OpenAI Codex assisted with research, code, tests, procedural visuals and documentation. NASA and JPL publications informed the engineering design. [AI disclosure](docs/studies/s12/drafts.md#ai-use-disclosure) · [NASA source register](docs/studies/s10/nasa-evidence.md)
+
+Original project material is Apache-2.0. Third-party code, data and media retain their own terms. [Licence](LICENSE) · [Notice](NOTICE) · [Browser dependency credits and licences](public/THIRD-PARTY-NOTICES.txt)
+
+## Run locally
+
+With Node.js 22.12 or later, run `npm ci` and `npm run dev`. Run `npm run build` to produce `dist/`.

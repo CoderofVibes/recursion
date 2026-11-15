@@ -1,0 +1,110 @@
+{
+  "version": 1,
+  "status": "S2 proposal only; not a patch to the baseline and not approved hardware",
+  "units": "SI",
+  "label": "ASSUMED",
+  "provenance": {
+    "inheritance": "All ratings and numeric leaves inherit ASSUMED. mechanismSources support mechanisms, not these ratings. S2 source IDs resolve in precedents.md; others in References/BIBLIOGRAPHY.md.",
+    "format": "equipment uses the existing 1C assembly keys, planar position and scalar intrinsicInertia (Izz). tetherProposal holds explicit proposed 3D and dynamic extensions; current loader cannot consume those extensions unchanged.",
+    "massPolicy": "Add 255 kg; do not silently subtract it from habitat-structure. All line, head, bobbin, electronics, stored-energy devices and thermal ballast are within these masses. No spare head or line."
+  },
+  "equipment": [
+    {
+      "id": "tether-frame", "subsystem": "structure", "mass": 70, "position": [-0.35, 0], "intrinsicInertia": 35,
+      "modes": {"off": {"power": 0, "heat": 0, "dataRate": 0, "generatedPower": 0}, "deploying": {"power": 120, "heat": 120, "dataRate": 0, "generatedPower": 0}},
+      "limits": {"tempMin": 250, "tempMax": 360}, "thermalNode": "tether-brake", "bus": "payload", "initialMode": "off",
+      "redundancy": "One dorsal load frame tied into pressure-hull structural rings; not an appendage hinge",
+      "failureProtection": "Retain actual extension on motor loss. Rated sacrificial tensile link protects the hull load path; not a random failure roll.",
+      "radiationProfile": "passive", "label": "ASSUMED", "mechanismSources": ["S21", "S2-TSS1"]
+    },
+    {
+      "id": "tether-winch", "subsystem": "mechanism", "mass": 65, "position": [-0.35, 0], "intrinsicInertia": 18,
+      "modes": {"off": {"power": 0, "heat": 0, "dataRate": 0, "generatedPower": 0}, "reel": {"power": 3000, "heat": 825, "dataRate": 0, "generatedPower": 0}},
+      "limits": {"tempMin": 263, "tempMax": 333}, "thermalNode": "tether-drive", "bus": "payload", "initialMode": "off",
+      "redundancy": "One geared motor, capstan and level-wind; separate mechanical brake remains on electrical failure",
+      "failureProtection": "Current limit and thermal trip; stall converts actual supplied power to heat, never to fictitious line motion. Mechanical jam may defeat payout.",
+      "radiationProfile": "power-switch", "label": "ASSUMED", "mechanismSources": ["S21", "S2-TSS1"]
+    },
+    {
+      "id": "tether-cassette", "subsystem": "mechanism", "mass": 25, "position": [-0.35, 0], "intrinsicInertia": 3,
+      "modes": {"off": {"power": 0, "heat": 0, "dataRate": 0, "generatedPower": 0}},
+      "limits": {"tempMin": 250, "tempMax": 360}, "thermalNode": "service", "bus": null, "initialMode": "off",
+      "redundancy": "20 kg line plus 5 kg detachable bobbin/carrier, one cassette",
+      "failureProtection": "Track remaining line and worn material coordinates; no replenishment on region change.",
+      "radiationProfile": "passive", "label": "ASSUMED", "mechanismSources": ["S21", "S2-SEDS"]
+    },
+    {
+      "id": "tether-grapple", "subsystem": "mechanism", "mass": 35, "position": [-0.35, 0], "intrinsicInertia": 5,
+      "modes": {"off": {"power": 0, "heat": 0, "dataRate": 0, "generatedPower": 0}, "arm": {"power": 100, "heat": 96.8, "dataRate": 0, "generatedPower": 0}, "fire": {"power": 20, "heat": 20, "dataRate": 0, "generatedPower": 0}},
+      "limits": {"tempMin": 263, "tempMax": 333}, "thermalNode": "service", "bus": "payload", "initialMode": "off",
+      "redundancy": "20 kg launcher plus one 15 kg enclosing, spring-closing grapple; passive visual latch witness",
+      "failureProtection": "Mechanical safing and closure geometry; no adhesion to arbitrary surfaces and no remote powered unlatch.",
+      "radiationProfile": "standard", "label": "ASSUMED", "mechanismSources": ["S21", "S2-EDEORBIT-PLAN"]
+    },
+    {
+      "id": "tether-brake", "subsystem": "mechanism", "mass": 30, "position": [-0.35, 0], "intrinsicInertia": 5,
+      "modes": {"off": {"power": 0, "heat": 0, "dataRate": 0, "generatedPower": 0}},
+      "limits": {"tempMin": 250, "tempMax": 360}, "thermalNode": "tether-brake", "bus": null, "initialMode": "off",
+      "redundancy": "Passive friction brake and mechanical slip setting; actuator power included in controller",
+      "failureProtection": "Off means no electricity, not disengaged brake. Actual friction work heats this node. Brake fade changes torque; ratings never cap collision force by magic.",
+      "radiationProfile": "passive", "label": "ASSUMED", "mechanismSources": ["S21", "S2-SEDS"]
+    },
+    {
+      "id": "tether-release", "subsystem": "mechanism", "mass": 12, "position": [-0.35, 0], "intrinsicInertia": 0.5,
+      "modes": {"off": {"power": 0, "heat": 0, "dataRate": 0, "generatedPower": 0}, "charge": {"power": 50, "heat": 10, "dataRate": 0, "generatedPower": 0}},
+      "limits": {"tempMin": 263, "tempMax": 333}, "thermalNode": "service", "bus": "essential", "initialMode": "off",
+      "redundancy": "Ship-side openable fairlead/cassette latch, two independent cutter initiators, one charged energy store and essential command path",
+      "failureProtection": "Stored energy operates release through payload loss; common essential decoder/store failure remains possible. Cutters do not restore spent line or head.",
+      "radiationProfile": "hardened", "label": "ASSUMED", "mechanismSources": ["S06", "S21", "S2-YES2"]
+    },
+    {
+      "id": "tether-sensors", "subsystem": "sensing", "mass": 8, "position": [-0.35, 0], "intrinsicInertia": 0.2,
+      "modes": {"off": {"power": 0, "heat": 0, "dataRate": 0, "generatedPower": 0}, "observe": {"power": 30, "heat": 30, "dataRate": 16000, "generatedPower": 0}},
+      "limits": {"tempMin": 263, "tempMax": 323}, "thermalNode": "service", "bus": "payload", "initialMode": "off",
+      "redundancy": "Fairlead load cell, metering-wheel payout counter, shaft counter and local camera; existing IMUs are an independent consistency check",
+      "failureProtection": "Expose saturation, disagreement, missing power and stale observations; a shaft counter does not prove actual line motion.",
+      "radiationProfile": "standard", "label": "ASSUMED", "mechanismSources": ["S04", "S2-YES2"]
+    },
+    {
+      "id": "tether-controller", "subsystem": "avionics", "mass": 10, "position": [-0.35, 0], "intrinsicInertia": 0.5,
+      "modes": {"off": {"power": 0, "heat": 0, "dataRate": 0, "generatedPower": 0}, "active": {"power": 35, "heat": 35, "dataRate": 2000, "generatedPower": 0}},
+      "limits": {"tempMin": 263, "tempMax": 323}, "thermalNode": "service", "bus": "essential", "initialMode": "off",
+      "redundancy": "Local measured-tension servo, brake-setting actuator and essential release decoder; no autonomous trajectory planner",
+      "failureProtection": "Power loss freezes the mechanical brake setting; unknown sensors inhibit powered retrieval but do not generate a true tension reading.",
+      "radiationProfile": "hardened", "label": "ASSUMED", "mechanismSources": ["S20", "S2-YES2"]
+    }
+  ],
+  "thermalNodes": [
+    {"id": "tether-drive", "capacity": 32500, "initialTemperature": 295, "warnTemperature": 323, "failureTemperature": 343, "label": "ASSUMED"},
+    {"id": "tether-brake", "capacity": 60000, "initialTemperature": 295, "warnTemperature": 330, "failureTemperature": 360, "label": "ASSUMED"}
+  ],
+  "tetherProposal": {
+    "label": "ASSUMED",
+    "frame": "Right-handed body frame, +x nose, +y left, +z dorsal; all coordinates relative to structural datum",
+    "assemblyZ": {"tether-frame": 2.2, "tether-winch": 2.1, "tether-cassette": 2.1, "tether-grapple": 2.4, "tether-brake": 2.1, "tether-release": 2.4, "tether-sensors": 2.45, "tether-controller": 1.5},
+    "deployedDeltaZ": {"tether-frame": 0.1, "tether-grapple": 0.7, "tether-release": 0.7, "tether-sensors": 0.75},
+    "intrinsicTensorPolicy": "For study arithmetic only, new assemblies use diag(intrinsicInertia) at their centroid. Replace with measured CAD tensors on adoption.",
+    "geometry": {
+      "fairleadStowed": [-0.35, 0, 2.45], "fairleadDeployed": [-0.35, 0, 3.2],
+      "stowedBounds": {"min": [-1.1, -0.65, 1.7], "max": [0.4, 0.65, 2.8]},
+      "deployedBounds": {"min": [-1.1, -0.65, 1.7], "max": [0.4, 0.65, 3.5]},
+      "launcherBore": [0, 0, 1], "fairleadConeHalfAngle": 0.6108652381980153,
+      "deploymentTime": 8, "lineCollisionRadius": 0.003, "headBoundingRadius": 0.3, "headContactEnergy": 60,
+      "railDiameterMin": 0.08, "railDiameterMax": 0.25, "railClearLength": 0.6, "jawAperture": 0.3, "latchClosingTime": 0.04,
+      "captureRangeMin": 20, "captureRangeMax": 50, "headContactSpeedMax": 2.5,
+      "captureRadialSpeedMax": 0.5, "normalAlignmentTolerance": 0.03490658503988659
+    },
+    "line": {
+      "length": 500, "linearDensity": 0.04, "diameter": 0.006, "axialRigidity": 1000000,
+      "workingTension": 8000, "nominalTension": 6000, "newMinimumBreak": 40000,
+      "weakLinkBreak": 16000, "frameProof": 12000, "frameFailure": 24000,
+      "carrierMass": 5, "headMass": 15,
+      "material": "Nonconductive braided aramid-class rope with abrasion jacket; effective packaged mass, axial rigidity and termination strength are assumed, not a named qualified product."
+    },
+    "drive": {"inputMax": 3000, "overhead": 100, "efficiency": 0.75, "speedMax": 1, "freePayoutOperatingSpeed": 3, "freePayoutDrag": 0.1, "effectiveDrumRadius": 0.2, "brakePowerOperating": 4000, "brakeSlipTension": 8000, "brakeWarningTemperature": 330, "brakeFadeEndTemperature": 360, "brakePassiveConductance": 5, "brakePumpedConductance": 25, "drivePumpedConductance": 20},
+    "storedEnergy": {"launchSpring": 30, "jawSpring": 2, "launchSpeed": 2, "armDuration": 10, "fireDuration": 0.2, "releaseCapacitor": 200, "chargeDuration": 5, "releaseEnergy": 40, "releaseEjectionEnergy": 1, "releaseDuration": 0.2, "cutEnergy": 100, "cutDuration": 0.1, "cutters": 2},
+    "wear": {"bendingBudget": 2000000, "abrasionBudget": 400000, "creepRate": 0.00000001, "healthFloorForOperations": 0.5, "driveWearEnergy": 2000000000, "snagDamagePerMeter": 0.1},
+    "releasePolicy": "Only after the head is launched: release opens the ship fairlead and disconnects the cassette with remaining wound line. All 40 kg of head+line+carrier is then outside the rigid inventory (some already deployed). Preserve existing momentum and apply a 1 J relative ejection from the 40 J capacitor actuation with opposite ship recoil. Cut removes the head and paid-out line only; residual line+carrier remain aboard. No remote head unlatch, new equipment or free rewind.",
+    "runtimeAccounting": "Listed motor and charge modes are rated endpoints, not constant power/heat. Heat=actual electrical input-minus mechanical/stored export plus friction work. Passive brake heat T*dL/dt is additional even when electrical mode is off. Line/head mass transfers out of the rigid ship as paid/launched; never count it in both rigid inertia and flexible dynamics."
+  }
+}

@@ -15,6 +15,7 @@ import type { PlanId, PlanItemId } from '../contracts/ids.ts';
 import type { LossCause, Measurement, ShipEvent } from '../contracts/measurements.ts';
 import type { MassProperties } from '../contracts/ship.ts';
 import type { SimEvent } from '../contracts/truth/index.ts';
+import { addSym3, fromPrincipal, principalAxes, scaleSym3 } from '../lib/sym3.ts';
 import { createSimulation, type SimState, type Simulation } from '../sim/index.ts';
 import { stepShipSystems } from '../ship/index.ts';
 import type { EncounterSetup } from './encounter.ts';
@@ -62,25 +63,57 @@ export interface TruthStepper {
   step(state: GameTruthState, commands?: readonly DueCommand[]): TickResult;
 }
 
-/** Mean of two mass-property sets; the footprint is the newer one. */
-function midStepMassProperties(before: MassProperties, after: MassProperties): MassProperties {
+/**
+ * Mean of two mass-property sets; the hull is the newer one. The inertia is the mean of the two
+ * tensors in the body frame, given back as its own principal moments and axes, so it is right
+ * also when the principal axes turn within the step (propellant leaving a tank off the axes).
+ */
+export function midStepMassProperties(
+  before: MassProperties,
+  after: MassProperties,
+): MassProperties {
+  // Nothing changed (coasting): the ship hands back the same properties, and so do we.
+  if (before === after) return after;
+  const a = before.inertia;
+  const b = after.inertia;
+  const sameInertia =
+    a.moments.x === b.moments.x &&
+    a.moments.y === b.moments.y &&
+    a.moments.z === b.moments.z &&
+    a.axes.w === b.axes.w &&
+    a.axes.x === b.axes.x &&
+    a.axes.y === b.axes.y &&
+    a.axes.z === b.axes.z;
+  const mean = sameInertia
+    ? undefined
+    : principalAxes(
+        scaleSym3(addSym3(fromPrincipal(a.moments, a.axes), fromPrincipal(b.moments, b.axes)), 0.5),
+      );
   return {
     mass: 0.5 * (before.mass + after.mass),
     centerOfMass: {
       x: 0.5 * (before.centerOfMass.x + after.centerOfMass.x),
       y: 0.5 * (before.centerOfMass.y + after.centerOfMass.y),
+      z: 0.5 * (before.centerOfMass.z + after.centerOfMass.z),
     },
-    inertia: 0.5 * (before.inertia + after.inertia),
-    footprint: after.footprint,
+    inertia: mean ? { moments: mean.values, axes: mean.axes } : b,
+    hull: after.hull,
   };
 }
 
 export function createTruthStepper(setup: EncounterSetup): TruthStepper {
   const { definition, objectiveRules, play } = setup;
   const simulation = createSimulation(definition.world, { dt: definition.dt });
+  // What the briefing told the ship about: it knows where these bodies are, and how big they
+  // and the surveyed asteroids are.
+  const briefedBodies = new Set(definition.briefing.knownBodies.map((b) => b.id));
   const environment: EnvironmentOptions = {
-    // The camera can range the bodies whose radius the briefing gives.
-    knownSizeTargets: definition.briefing.knownBodies.map((b) => b.id),
+    // The camera can range anything whose radius the briefing gives: the bodies and every
+    // surveyed asteroid.
+    knownSizeTargets: [
+      ...definition.briefing.knownBodies.map((b) => b.id),
+      ...definition.briefing.knownAsteroids.map((a) => a.id),
+    ],
     sunExclusionAngle: play.sunExclusionAngle,
   };
   const sun = definition.world.sun;
@@ -154,8 +187,11 @@ export function createTruthStepper(setup: EncounterSetup): TruthStepper {
         events.push({
           kind: 'contact',
           t: contact.t,
-          // The ship can name what it hit only if the camera could see it this tick.
-          ...(isVisible(env, contact.with) ? { with: contact.with } : {}),
+          // The ship can name what it hit if it is a body it was briefed about (it knows where
+          // those are, looking or not), or anything the camera could see this tick.
+          ...(briefedBodies.has(contact.with) || isVisible(env, contact.with)
+            ? { with: contact.with }
+            : {}),
           impulse: contact.impulse,
         });
         if (contact.relativeSpeed >= play.lossSpeed && !lost) {
@@ -167,7 +203,20 @@ export function createTruthStepper(setup: EncounterSetup): TruthStepper {
       if (lost) {
         events.push({ kind: 'ship-lost', t: lostAt, cause: lost });
       } else {
-        const judged = evaluateObjectives(objectiveRules, objectives, sim.world);
+        // Δv spent this tick: the net thrust force over the mid-step mass (couples cancel).
+        let fx = 0;
+        let fy = 0;
+        let fz = 0;
+        for (const thrust of ship.actuators.thrusts) {
+          fx += thrust.force.x;
+          fy += thrust.force.y;
+          fz += thrust.force.z;
+        }
+        const midMass =
+          0.5 *
+          (before.world.ship.systems.massProperties.mass + ship.actuators.massProperties.mass);
+        const spent = (Math.hypot(fx, fy, fz) / midMass) * definition.dt;
+        const judged = evaluateObjectives(objectiveRules, objectives, sim.world, spent);
         objectives = judged.progress;
         events.push(...judged.events);
       }

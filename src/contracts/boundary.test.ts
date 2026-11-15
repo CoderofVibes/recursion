@@ -31,21 +31,25 @@ describe('truth/belief boundary (P11)', () => {
   const allowed = ['../contracts/index.ts', '../contracts/fixtures/index.ts', '../lib/index.ts'];
 
   for (const file of beliefFiles) {
-    it(`blocks truth imports in ${file}`, async () => {
+    it(`blocks truth imports in ${file}`, { timeout: 60_000 }, async () => {
       for (const path of forbidden) expect(await violations(file, path), path).toBe(1);
     });
-    it(`allows shared imports in ${file}`, async () => {
+    it(`allows shared imports in ${file}`, { timeout: 60_000 }, async () => {
       for (const path of allowed) expect(await violations(file, path), path).toBe(0);
     });
   }
 
-  it('lets the game layer, simulation and ship systems use truth', async () => {
-    expect(await violations('src/game/probe.ts', '../contracts/truth/index.ts')).toBe(0);
-    expect(await violations('src/sim/probe.ts', '../contracts/truth/index.ts')).toBe(0);
-    expect(await violations('src/ship/probe.ts', '../contracts/truth/index.ts')).toBe(0);
-  });
+  it(
+    'lets the game layer, simulation and ship systems use truth',
+    { timeout: 60_000 },
+    async () => {
+      expect(await violations('src/game/probe.ts', '../contracts/truth/index.ts')).toBe(0);
+      expect(await violations('src/sim/probe.ts', '../contracts/truth/index.ts')).toBe(0);
+      expect(await violations('src/ship/probe.ts', '../contracts/truth/index.ts')).toBe(0);
+    },
+  );
 
-  it('does not mistake similarly named modules for truth', async () => {
+  it('does not mistake similarly named modules for truth', { timeout: 60_000 }, async () => {
     expect(await violations('src/model/probe.ts', './simulate-forecast.ts')).toBe(0);
     expect(await violations('src/model/probe.ts', './truthiness.ts')).toBe(0);
   });

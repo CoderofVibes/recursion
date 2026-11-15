@@ -1,0 +1,6448 @@
+{
+  "representative": {
+    "beta_peri_m": 981455.586707101,
+    "beta_peri_t": 108233.95896035907,
+    "beta_peri_relative_speed": 65.12052144737098,
+    "alpha_min_m": 1000000.0,
+    "exit_t": 230088.74305696227,
+    "exit_speed": 66.30919685946148,
+    "exit_position": [
+      -4931953.241513505,
+      7528335.621072422,
+      0.0
+    ],
+    "exit_velocity": [
+      -61.75483535305962,
+      24.150567253447974,
+      0.0
+    ],
+    "qualifies": true,
+    "beta_peri_z": 0.0
+  },
+  "representative_deltas": {
+    "beta_peri_m": 1455.5867071009707,
+    "beta_peri_t_s": -126.04103964092792,
+    "beta_peri_speed": 0.12052144737097592,
+    "exit_speed": 0.3091968594614798,
+    "exit_t_s": -311.25694303773344
+  },
+  "convergence_60_vs_30": {
+    "beta_peri_m": 0.000580215360969305,
+    "beta_peri_t": 0.006140846773632802,
+    "beta_peri_relative_speed": 5.773114395424273e-07,
+    "exit_t": 1.5171244740486145e-05,
+    "exit_speed": 2.8505979798865155e-09
+  },
+  "jacobi_range_m2_s2": 2.132082954631187e-09,
+  "finite_main": {
+    "duration_s": 18.132002784159774,
+    "propellant_kg": 135.2044483683708,
+    "summary": {
+      "beta_peri_m": 983977.5916767926,
+      "beta_peri_t": 108248.52607785598,
+      "beta_peri_relative_speed": 65.02507268628031,
+      "alpha_min_m": 1000248.3958072991,
+      "exit_t": 230048.1790622893,
+      "exit_speed": 66.2944111559087,
+      "exit_position": [
+        -4906526.806235064,
+        7544931.722667423,
+        0.0
+      ],
+      "exit_velocity": [
+        -61.65838582766449,
+        24.35554162065658,
+        0.0
+      ],
+      "qualifies": true,
+      "beta_peri_z": 0.0
+    }
+  },
+  "vertical": [
+    {
+      "kick_m_s": 0.3,
+      "kick_t": 3960,
+      "peri_z_m": -2406.192763894959,
+      "max_abs_z_before_peri": 3832.106912626659,
+      "zero_crossings_before_peri": [
+        78630.0
+      ],
+      "exit_speed": 66.3080998171088
+    },
+    {
+      "kick_m_s": 0.6,
+      "kick_t": 3960,
+      "peri_z_m": -4813.412951174122,
+      "max_abs_z_before_peri": 7664.44810824952,
+      "zero_crossings_before_peri": [
+        78660.0
+      ],
+      "exit_speed": 66.30470862017756
+    },
+    {
+      "kick_m_s": 1,
+      "kick_t": 79433.95896035907,
+      "peri_z_m": 22339.26127104827,
+      "max_abs_z_before_peri": 22342.418394476485,
+      "zero_crossings_before_peri": [],
+      "exit_speed": 66.30766104432949
+    },
+    {
+      "kick_m_s": 1,
+      "kick_t": 93833.95896035907,
+      "peri_z_m": 13255.808070702615,
+      "max_abs_z_before_peri": 13261.96580001014,
+      "zero_crossings_before_peri": [],
+      "exit_speed": 66.31387367121168
+    }
+  ],
+  "same_burn_newton": {
+    "position_error_at_true_peri_m": 2787305.3823051983,
+    "forecast_beta_min_before_true_peri_m": 1791094.9545752178,
+    "command_time": 3960,
+    "command_inertial_delta_v": [
+      5.383712858312752,
+      -12.923452938717189,
+      0.0
+    ],
+    "assumption": "Same initial state and identical inertial command, fixed GM at r0; supplied true binary ephemeris in both, ship force exponent2 versus2.5. No estimator or horizon claim."
+  },
+  "fuel": {
+    "main_14_kg": 135.2044483683708,
+    "main_remaining_kg": 5864.795551631629,
+    "rcs_1_kg": 14.012656848326017
+  },
+  "checkpoints": [
+    {
+      "t": 0,
+      "position": [
+        -1800000.0,
+        1.2246467991473533e-10,
+        0.0
+      ],
+      "velocity": [
+        -1.2246467991473532e-14,
+        -107.90569415042094,
+        0.0
+      ]
+    },
+    {
+      "t": 3960,
+      "position": [
+        -1722267.3957920112,
+        -417027.32250452775,
+        0.0
+      ],
+      "velocity": [
+        44.127422899663046,
+        -113.08383598497653,
+        0.0
+      ]
+    },
+    {
+      "t": 21600,
+      "position": [
+        -210508.74138939576,
+        -1398656.5178657942,
+        0.0
+      ],
+      "velocity": [
+        91.03594999035086,
+        -1.1041188065618337,
+        0.0
+      ]
+    },
+    {
+      "t": 64800,
+      "position": [
+        2070703.625160368,
+        77242.06741916074,
+        0.0
+      ],
+      "velocity": [
+        27.70875992522645,
+        46.282707636364016,
+        0.0
+      ]
+    },
+    {
+      "t": 108000,
+      "position": [
+        2523769.176426688,
+        2743560.041483572,
+        0.0
+      ],
+      "velocity": [
+        -24.16284003408039,
+        80.25844380553282,
+        0.0
+      ]
+    },
+    {
+      "t": 172800,
+      "position": [
+        -1322405.8483967518,
+        5998467.39922614,
+        0.0
+      ],
+      "velocity": [
+        -64.5858991358328,
+        30.863849798894833,
+        0.0
+      ]
+    },
+    {
+      "t": 230000,
+      "position": [
+        -4926472.796972575,
+        7526192.212589054,
+        0.0
+      ],
+      "velocity": [
+        -61.75780336321465,
+        24.15537629498788,
+        0.0
+      ]
+    },
+    {
+      "t": 259200,
+      "position": [
+        -6717170.735815051,
+        8212377.009821062,
+        0.0
+      ],
+      "velocity": [
+        -60.94273288976233,
+        22.957172029991856,
+        0.0
+      ]
+    }
+  ],
+  "route_grid": {
+    "count": 689,
+    "horizon_h": 160,
+    "dt_s": 60,
+    "left": 260,
+    "hit_alpha": 72,
+    "hit_beta": 188,
+    "not_exited_by_horizon": 169,
+    "qualifying": 19,
+    "at_90_hours": {
+      "left": 120,
+      "hit_alpha": 26,
+      "hit_beta": 154,
+      "qualifying": 14,
+      "qualifying_peri_range_m": [
+        782133.4459110163,
+        1659387.6381455003
+      ]
+    },
+    "qualifying_peri_range_m": [
+      441939.72558334016,
+      1659387.6381455003
+    ],
+    "flights": [
+      {
+        "burn": 10.0,
+        "time": 0.0,
+        "status": 3,
+        "beta_min": 148757.86432911482,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 103560.0
+      },
+      {
+        "burn": 10.0,
+        "time": 1200.0,
+        "status": 3,
+        "beta_min": 158261.38982629697,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 98760.0
+      },
+      {
+        "burn": 10.0,
+        "time": 2400.0,
+        "status": 3,
+        "beta_min": 153059.20626350705,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 96060.0
+      },
+      {
+        "burn": 10.0,
+        "time": 3600.0,
+        "status": 3,
+        "beta_min": 155189.11915619706,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 95400.0
+      },
+      {
+        "burn": 10.0,
+        "time": 4800.0,
+        "status": 3,
+        "beta_min": 156749.07455685752,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 97020.0
+      },
+      {
+        "burn": 10.0,
+        "time": 6000.0,
+        "status": 3,
+        "beta_min": 159347.74263890457,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 101280.0
+      },
+      {
+        "burn": 10.0,
+        "time": 7200.0,
+        "status": 3,
+        "beta_min": 151352.79920461835,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 108720.0
+      },
+      {
+        "burn": 10.0,
+        "time": 8400.0,
+        "status": 3,
+        "beta_min": 155231.17445226558,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 119940.0
+      },
+      {
+        "burn": 10.0,
+        "time": 9600.0,
+        "status": 3,
+        "beta_min": 156497.32535950554,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 136740.0
+      },
+      {
+        "burn": 10.0,
+        "time": 10800.0,
+        "status": 2,
+        "beta_min": 223901.73592705122,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 240480.0
+      },
+      {
+        "burn": 10.0,
+        "time": 12000.0,
+        "status": 2,
+        "beta_min": 2037208.333754453,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 208380.0
+      },
+      {
+        "burn": 10.0,
+        "time": 13200.0,
+        "status": 2,
+        "beta_min": 2379092.627818875,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 204960.0
+      },
+      {
+        "burn": 10.0,
+        "time": 14400.0,
+        "status": 0,
+        "beta_min": 2468577.005862943,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.0,
+        "time": 15600.0,
+        "status": 0,
+        "beta_min": 1910194.7258186082,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.0,
+        "time": 16800.0,
+        "status": 0,
+        "beta_min": 2614289.1960567473,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.0,
+        "time": 18000.0,
+        "status": 3,
+        "beta_min": 148318.04842732995,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 385080.0
+      },
+      {
+        "burn": 10.0,
+        "time": 19200.0,
+        "status": 3,
+        "beta_min": 150141.596064492,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 376260.0
+      },
+      {
+        "burn": 10.0,
+        "time": 20400.0,
+        "status": 3,
+        "beta_min": 155912.3635938866,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 443280.0
+      },
+      {
+        "burn": 10.0,
+        "time": 21600.0,
+        "status": 0,
+        "beta_min": 2469619.719667037,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.0,
+        "time": 22800.0,
+        "status": 0,
+        "beta_min": 2852417.4828928933,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.0,
+        "time": 24000.0,
+        "status": 0,
+        "beta_min": 2884372.607289368,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.0,
+        "time": 25200.0,
+        "status": 0,
+        "beta_min": 2912132.6031987467,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.0,
+        "time": 26400.0,
+        "status": 0,
+        "beta_min": 2935989.3776384853,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.0,
+        "time": 27600.0,
+        "status": 0,
+        "beta_min": 2956186.2788936603,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.0,
+        "time": 28800.0,
+        "status": 0,
+        "beta_min": 2972931.1208558837,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.0,
+        "time": 30000.0,
+        "status": 0,
+        "beta_min": 2986391.0335012386,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.0,
+        "time": 31200.0,
+        "status": 0,
+        "beta_min": 2996698.5875779884,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.0,
+        "time": 32400.0,
+        "status": 0,
+        "beta_min": 3003953.433321639,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.0,
+        "time": 33600.0,
+        "status": 0,
+        "beta_min": 3008234.279225952,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.0,
+        "time": 34800.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.0,
+        "time": 36000.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.0,
+        "time": 37200.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.0,
+        "time": 38400.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.0,
+        "time": 39600.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.0,
+        "time": 40800.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.0,
+        "time": 42000.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.0,
+        "time": 43200.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 541680.0
+      },
+      {
+        "burn": 10.0,
+        "time": 44400.0,
+        "status": 0,
+        "beta_min": 1286316.5676307597,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.0,
+        "time": 45600.0,
+        "status": 0,
+        "beta_min": 2516329.0859565046,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.0,
+        "time": 46800.0,
+        "status": 3,
+        "beta_min": 158041.31918680685,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 544140.0
+      },
+      {
+        "burn": 10.0,
+        "time": 48000.0,
+        "status": 3,
+        "beta_min": 147857.13202189904,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 487260.0
+      },
+      {
+        "burn": 10.0,
+        "time": 49200.0,
+        "status": 3,
+        "beta_min": 158455.56413644613,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 470340.0
+      },
+      {
+        "burn": 10.0,
+        "time": 50400.0,
+        "status": 3,
+        "beta_min": 159815.3307563263,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 461100.0
+      },
+      {
+        "burn": 10.0,
+        "time": 51600.0,
+        "status": 3,
+        "beta_min": 155558.8089469152,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 459600.0
+      },
+      {
+        "burn": 10.0,
+        "time": 52800.0,
+        "status": 3,
+        "beta_min": 147061.21388401874,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 472020.0
+      },
+      {
+        "burn": 10.0,
+        "time": 54000.0,
+        "status": 0,
+        "beta_min": 2096373.275425681,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.0,
+        "time": 55200.0,
+        "status": 0,
+        "beta_min": 2748052.2597583686,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.0,
+        "time": 56400.0,
+        "status": 0,
+        "beta_min": 2609438.728093638,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.0,
+        "time": 57600.0,
+        "status": 0,
+        "beta_min": 2357437.431338393,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.0,
+        "time": 58800.0,
+        "status": 0,
+        "beta_min": 2000987.0350081252,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.0,
+        "time": 60000.0,
+        "status": 3,
+        "beta_min": 154505.22987961659,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 285120.0
+      },
+      {
+        "burn": 10.0,
+        "time": 61200.0,
+        "status": 3,
+        "beta_min": 159407.8640014558,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 256320.0
+      },
+      {
+        "burn": 10.0,
+        "time": 62400.0,
+        "status": 3,
+        "beta_min": 154266.39044749844,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 240120.0
+      },
+      {
+        "burn": 10.5,
+        "time": 0.0,
+        "status": 3,
+        "beta_min": 156985.1807070996,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 106980.0
+      },
+      {
+        "burn": 10.5,
+        "time": 1200.0,
+        "status": 3,
+        "beta_min": 157063.4403168514,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 99720.0
+      },
+      {
+        "burn": 10.5,
+        "time": 2400.0,
+        "status": 3,
+        "beta_min": 151885.98228061025,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 95040.0
+      },
+      {
+        "burn": 10.5,
+        "time": 3600.0,
+        "status": 3,
+        "beta_min": 155964.8985698666,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 92580.0
+      },
+      {
+        "burn": 10.5,
+        "time": 4800.0,
+        "status": 3,
+        "beta_min": 146681.07035537055,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 92400.0
+      },
+      {
+        "burn": 10.5,
+        "time": 6000.0,
+        "status": 3,
+        "beta_min": 157909.3209443067,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 94560.0
+      },
+      {
+        "burn": 10.5,
+        "time": 7200.0,
+        "status": 3,
+        "beta_min": 157955.14781602554,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 99600.0
+      },
+      {
+        "burn": 10.5,
+        "time": 8400.0,
+        "status": 3,
+        "beta_min": 149167.3624913358,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 108000.0
+      },
+      {
+        "burn": 10.5,
+        "time": 9600.0,
+        "status": 3,
+        "beta_min": 155869.58353728947,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 120300.0
+      },
+      {
+        "burn": 10.5,
+        "time": 10800.0,
+        "status": 3,
+        "beta_min": 147383.3377773936,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 138300.0
+      },
+      {
+        "burn": 10.5,
+        "time": 12000.0,
+        "status": 2,
+        "beta_min": 230062.77080861843,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 250080.0
+      },
+      {
+        "burn": 10.5,
+        "time": 13200.0,
+        "status": 2,
+        "beta_min": 2012880.188110526,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 213960.0
+      },
+      {
+        "burn": 10.5,
+        "time": 14400.0,
+        "status": 2,
+        "beta_min": 2420785.5740768663,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 213060.0
+      },
+      {
+        "burn": 10.5,
+        "time": 15600.0,
+        "status": 0,
+        "beta_min": 2508693.945362514,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.5,
+        "time": 16800.0,
+        "status": 0,
+        "beta_min": 2152774.1551261786,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.5,
+        "time": 18000.0,
+        "status": 3,
+        "beta_min": 148858.64543905543,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 391260.0
+      },
+      {
+        "burn": 10.5,
+        "time": 19200.0,
+        "status": 3,
+        "beta_min": 156235.84958294567,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 380520.0
+      },
+      {
+        "burn": 10.5,
+        "time": 20400.0,
+        "status": 3,
+        "beta_min": 149878.25085547726,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 564720.0
+      },
+      {
+        "burn": 10.5,
+        "time": 21600.0,
+        "status": 0,
+        "beta_min": 2804014.879600199,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.5,
+        "time": 22800.0,
+        "status": 0,
+        "beta_min": 2843111.9530319613,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.5,
+        "time": 24000.0,
+        "status": 0,
+        "beta_min": 2877195.851136003,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.5,
+        "time": 25200.0,
+        "status": 0,
+        "beta_min": 2906700.883086292,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.5,
+        "time": 26400.0,
+        "status": 0,
+        "beta_min": 2931988.2032684945,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.5,
+        "time": 27600.0,
+        "status": 0,
+        "beta_min": 2953347.0200503822,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.5,
+        "time": 28800.0,
+        "status": 0,
+        "beta_min": 2971018.7344106087,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.5,
+        "time": 30000.0,
+        "status": 0,
+        "beta_min": 2985199.179941584,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.5,
+        "time": 31200.0,
+        "status": 0,
+        "beta_min": 2996041.2548892335,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.5,
+        "time": 32400.0,
+        "status": 0,
+        "beta_min": 3003669.4026040384,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.5,
+        "time": 33600.0,
+        "status": 0,
+        "beta_min": 3008166.558673301,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.5,
+        "time": 34800.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.5,
+        "time": 36000.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.5,
+        "time": 37200.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.5,
+        "time": 38400.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.5,
+        "time": 39600.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.5,
+        "time": 40800.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.5,
+        "time": 42000.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.5,
+        "time": 43200.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.5,
+        "time": 44400.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.5,
+        "time": 45600.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 568020.0
+      },
+      {
+        "burn": 10.5,
+        "time": 46800.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 363360.0
+      },
+      {
+        "burn": 10.5,
+        "time": 48000.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 341460.0
+      },
+      {
+        "burn": 10.5,
+        "time": 49200.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 324960.0
+      },
+      {
+        "burn": 10.5,
+        "time": 50400.0,
+        "status": 0,
+        "beta_min": 1080750.2718866742,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.5,
+        "time": 51600.0,
+        "status": 0,
+        "beta_min": 1065939.523429005,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.5,
+        "time": 52800.0,
+        "status": 0,
+        "beta_min": 856191.5291307919,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.5,
+        "time": 54000.0,
+        "status": 0,
+        "beta_min": 182395.54786086848,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.5,
+        "time": 55200.0,
+        "status": 3,
+        "beta_min": 159899.48798965185,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 512700.0
+      },
+      {
+        "burn": 10.5,
+        "time": 56400.0,
+        "status": 0,
+        "beta_min": 2759136.753393259,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.5,
+        "time": 57600.0,
+        "status": 0,
+        "beta_min": 2643562.05146376,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.5,
+        "time": 58800.0,
+        "status": 0,
+        "beta_min": 2331472.948448898,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 10.5,
+        "time": 60000.0,
+        "status": 3,
+        "beta_min": 159035.03999669064,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 366780.0
+      },
+      {
+        "burn": 10.5,
+        "time": 61200.0,
+        "status": 3,
+        "beta_min": 154416.22624798396,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 284580.0
+      },
+      {
+        "burn": 10.5,
+        "time": 62400.0,
+        "status": 3,
+        "beta_min": 158506.11222951062,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 265260.0
+      },
+      {
+        "burn": 11.0,
+        "time": 0.0,
+        "status": 3,
+        "beta_min": 155868.0679689949,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 114720.0
+      },
+      {
+        "burn": 11.0,
+        "time": 1200.0,
+        "status": 3,
+        "beta_min": 151986.229571863,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 103140.0
+      },
+      {
+        "burn": 11.0,
+        "time": 2400.0,
+        "status": 3,
+        "beta_min": 148350.0568543974,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 95880.0
+      },
+      {
+        "burn": 11.0,
+        "time": 3600.0,
+        "status": 3,
+        "beta_min": 159970.8600089046,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 91500.0
+      },
+      {
+        "burn": 11.0,
+        "time": 4800.0,
+        "status": 3,
+        "beta_min": 152173.06705035112,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 89640.0
+      },
+      {
+        "burn": 11.0,
+        "time": 6000.0,
+        "status": 3,
+        "beta_min": 149130.89606751196,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 90120.0
+      },
+      {
+        "burn": 11.0,
+        "time": 7200.0,
+        "status": 3,
+        "beta_min": 153576.42341755517,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 93180.0
+      },
+      {
+        "burn": 11.0,
+        "time": 8400.0,
+        "status": 3,
+        "beta_min": 158098.99602103763,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 99300.0
+      },
+      {
+        "burn": 11.0,
+        "time": 9600.0,
+        "status": 3,
+        "beta_min": 149679.46769491344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 109020.0
+      },
+      {
+        "burn": 11.0,
+        "time": 10800.0,
+        "status": 3,
+        "beta_min": 156785.49532101152,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 122820.0
+      },
+      {
+        "burn": 11.0,
+        "time": 12000.0,
+        "status": 3,
+        "beta_min": 157815.35455088306,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 142560.0
+      },
+      {
+        "burn": 11.0,
+        "time": 13200.0,
+        "status": 2,
+        "beta_min": 336744.87413563556,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 419580.0
+      },
+      {
+        "burn": 11.0,
+        "time": 14400.0,
+        "status": 2,
+        "beta_min": 2064647.2317469674,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 220020.0
+      },
+      {
+        "burn": 11.0,
+        "time": 15600.0,
+        "status": 2,
+        "beta_min": 2468272.32895809,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 223200.0
+      },
+      {
+        "burn": 11.0,
+        "time": 16800.0,
+        "status": 0,
+        "beta_min": 2552959.9342772304,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.0,
+        "time": 18000.0,
+        "status": 2,
+        "beta_min": 2583003.730814512,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 456960.0
+      },
+      {
+        "burn": 11.0,
+        "time": 19200.0,
+        "status": 3,
+        "beta_min": 158246.69781047472,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 375720.0
+      },
+      {
+        "burn": 11.0,
+        "time": 20400.0,
+        "status": 0,
+        "beta_min": 2690917.0801540515,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.0,
+        "time": 21600.0,
+        "status": 0,
+        "beta_min": 2791828.1419267613,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.0,
+        "time": 22800.0,
+        "status": 0,
+        "beta_min": 2833626.3242468373,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.0,
+        "time": 24000.0,
+        "status": 0,
+        "beta_min": 2869911.457507611,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.0,
+        "time": 25200.0,
+        "status": 0,
+        "beta_min": 2901209.892946228,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.0,
+        "time": 26400.0,
+        "status": 0,
+        "beta_min": 2927951.962209729,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.0,
+        "time": 27600.0,
+        "status": 0,
+        "beta_min": 2950484.949130582,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.0,
+        "time": 28800.0,
+        "status": 0,
+        "beta_min": 2969090.313293078,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.0,
+        "time": 30000.0,
+        "status": 1,
+        "beta_min": 2983998.303396111,
+        "exit_speed": 23.972612428971598,
+        "exit_time": 571620.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.0,
+        "time": 31200.0,
+        "status": 1,
+        "beta_min": 2995384.8357727895,
+        "exit_speed": 24.200877309666524,
+        "exit_time": 549240.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.0,
+        "time": 32400.0,
+        "status": 1,
+        "beta_min": 3003385.835902304,
+        "exit_speed": 24.404755155373774,
+        "exit_time": 531240.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.0,
+        "time": 33600.0,
+        "status": 1,
+        "beta_min": 3008098.061585451,
+        "exit_speed": 24.510573923145994,
+        "exit_time": 518520.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.0,
+        "time": 34800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 24.477888499338203,
+        "exit_time": 511620.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.0,
+        "time": 36000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 24.278661696251962,
+        "exit_time": 511200.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.0,
+        "time": 37200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 23.884466044427484,
+        "exit_time": 518640.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.0,
+        "time": 38400.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 23.258814683346504,
+        "exit_time": 536940.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.0,
+        "time": 39600.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 22.33050985059942,
+        "exit_time": 573180.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.0,
+        "time": 40800.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.0,
+        "time": 42000.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.0,
+        "time": 43200.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.0,
+        "time": 44400.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.0,
+        "time": 45600.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.0,
+        "time": 46800.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.0,
+        "time": 48000.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 411660.0
+      },
+      {
+        "burn": 11.0,
+        "time": 49200.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 376620.0
+      },
+      {
+        "burn": 11.0,
+        "time": 50400.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 352140.0
+      },
+      {
+        "burn": 11.0,
+        "time": 51600.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 334140.0
+      },
+      {
+        "burn": 11.0,
+        "time": 52800.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 320880.0
+      },
+      {
+        "burn": 11.0,
+        "time": 54000.0,
+        "status": 0,
+        "beta_min": 1210370.4624979359,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.0,
+        "time": 55200.0,
+        "status": 0,
+        "beta_min": 1502576.3672114792,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.0,
+        "time": 56400.0,
+        "status": 0,
+        "beta_min": 214047.5999265388,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.0,
+        "time": 57600.0,
+        "status": 0,
+        "beta_min": 2616303.0108129005,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.0,
+        "time": 58800.0,
+        "status": 2,
+        "beta_min": 2702315.503509058,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 570300.0
+      },
+      {
+        "burn": 11.0,
+        "time": 60000.0,
+        "status": 0,
+        "beta_min": 2325637.175997624,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.0,
+        "time": 61200.0,
+        "status": 3,
+        "beta_min": 153162.70349432976,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 342660.0
+      },
+      {
+        "burn": 11.0,
+        "time": 62400.0,
+        "status": 3,
+        "beta_min": 153547.7124030926,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 298680.0
+      },
+      {
+        "burn": 11.5,
+        "time": 0.0,
+        "status": 2,
+        "beta_min": 437657.6227295152,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 196560.0
+      },
+      {
+        "burn": 11.5,
+        "time": 1200.0,
+        "status": 0,
+        "beta_min": 165304.96481353993,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.5,
+        "time": 2400.0,
+        "status": 3,
+        "beta_min": 157106.90581679455,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 98700.0
+      },
+      {
+        "burn": 11.5,
+        "time": 3600.0,
+        "status": 3,
+        "beta_min": 159625.0323573681,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 91920.0
+      },
+      {
+        "burn": 11.5,
+        "time": 4800.0,
+        "status": 3,
+        "beta_min": 155746.68749920372,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 88320.0
+      },
+      {
+        "burn": 11.5,
+        "time": 6000.0,
+        "status": 3,
+        "beta_min": 152874.2717849431,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 87240.0
+      },
+      {
+        "burn": 11.5,
+        "time": 7200.0,
+        "status": 3,
+        "beta_min": 159108.9426945467,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 88620.0
+      },
+      {
+        "burn": 11.5,
+        "time": 8400.0,
+        "status": 3,
+        "beta_min": 157200.3968505346,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 92880.0
+      },
+      {
+        "burn": 11.5,
+        "time": 9600.0,
+        "status": 3,
+        "beta_min": 151043.87666341246,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 100500.0
+      },
+      {
+        "burn": 11.5,
+        "time": 10800.0,
+        "status": 3,
+        "beta_min": 151999.41289506666,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 111840.0
+      },
+      {
+        "burn": 11.5,
+        "time": 12000.0,
+        "status": 3,
+        "beta_min": 146306.4648740793,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 127560.0
+      },
+      {
+        "burn": 11.5,
+        "time": 13200.0,
+        "status": 3,
+        "beta_min": 150864.73293567883,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 149640.0
+      },
+      {
+        "burn": 11.5,
+        "time": 14400.0,
+        "status": 1,
+        "beta_min": 585289.8272035975,
+        "exit_speed": 55.97653846451302,
+        "exit_time": 346020.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.5,
+        "time": 15600.0,
+        "status": 2,
+        "beta_min": 2159482.5702678165,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 227880.0
+      },
+      {
+        "burn": 11.5,
+        "time": 16800.0,
+        "status": 2,
+        "beta_min": 2519357.66437602,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 236460.0
+      },
+      {
+        "burn": 11.5,
+        "time": 18000.0,
+        "status": 0,
+        "beta_min": 2599621.7466261503,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.5,
+        "time": 19200.0,
+        "status": 3,
+        "beta_min": 158611.26977819376,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 374040.0
+      },
+      {
+        "burn": 11.5,
+        "time": 20400.0,
+        "status": 0,
+        "beta_min": 2470702.8256728128,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.5,
+        "time": 21600.0,
+        "status": 0,
+        "beta_min": 2779335.1918053045,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.5,
+        "time": 22800.0,
+        "status": 0,
+        "beta_min": 2823952.84400313,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.5,
+        "time": 24000.0,
+        "status": 0,
+        "beta_min": 2862512.218615887,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.5,
+        "time": 25200.0,
+        "status": 0,
+        "beta_min": 2895651.9365375503,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.5,
+        "time": 26400.0,
+        "status": 0,
+        "beta_min": 2923880.4370212145,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.5,
+        "time": 27600.0,
+        "status": 0,
+        "beta_min": 2947606.016266446,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.5,
+        "time": 28800.0,
+        "status": 0,
+        "beta_min": 2967160.645610555,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.5,
+        "time": 30000.0,
+        "status": 1,
+        "beta_min": 2982795.729888204,
+        "exit_speed": 22.124581655313374,
+        "exit_time": 555600.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.5,
+        "time": 31200.0,
+        "status": 1,
+        "beta_min": 2994729.078655109,
+        "exit_speed": 23.27610374041869,
+        "exit_time": 516420.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.5,
+        "time": 32400.0,
+        "status": 1,
+        "beta_min": 3003102.733415762,
+        "exit_speed": 24.121470607184335,
+        "exit_time": 488400.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.5,
+        "time": 33600.0,
+        "status": 1,
+        "beta_min": 3008029.4968334027,
+        "exit_speed": 24.71633840465729,
+        "exit_time": 468360.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.5,
+        "time": 34800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 25.097173894792494,
+        "exit_time": 454620.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.5,
+        "time": 36000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 25.277789873048384,
+        "exit_time": 446220.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.5,
+        "time": 37200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 25.25123863372369,
+        "exit_time": 442920.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.5,
+        "time": 38400.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 25.009472601925378,
+        "exit_time": 444720.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.5,
+        "time": 39600.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 24.52837948832755,
+        "exit_time": 452640.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.5,
+        "time": 40800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 23.787359242244552,
+        "exit_time": 468600.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.5,
+        "time": 42000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 22.75246228988248,
+        "exit_time": 497460.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.5,
+        "time": 43200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 21.337906773550177,
+        "exit_time": 552780.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.5,
+        "time": 44400.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.5,
+        "time": 45600.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.5,
+        "time": 46800.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.5,
+        "time": 48000.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.5,
+        "time": 49200.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.5,
+        "time": 50400.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 424800.0
+      },
+      {
+        "burn": 11.5,
+        "time": 51600.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 386820.0
+      },
+      {
+        "burn": 11.5,
+        "time": 52800.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 361140.0
+      },
+      {
+        "burn": 11.5,
+        "time": 54000.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 342840.0
+      },
+      {
+        "burn": 11.5,
+        "time": 55200.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 329880.0
+      },
+      {
+        "burn": 11.5,
+        "time": 56400.0,
+        "status": 1,
+        "beta_min": 1014520.4092483696,
+        "exit_speed": 60.017796955032196,
+        "exit_time": 572460.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.5,
+        "time": 57600.0,
+        "status": 0,
+        "beta_min": 1929204.8935390308,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.5,
+        "time": 58800.0,
+        "status": 0,
+        "beta_min": 1959696.2435922853,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.5,
+        "time": 60000.0,
+        "status": 0,
+        "beta_min": 2792458.2318819575,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.5,
+        "time": 61200.0,
+        "status": 0,
+        "beta_min": 2358330.399356191,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 11.5,
+        "time": 62400.0,
+        "status": 3,
+        "beta_min": 156941.38110465603,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 350400.0
+      },
+      {
+        "burn": 12.0,
+        "time": 0.0,
+        "status": 1,
+        "beta_min": 1051831.3570018446,
+        "exit_speed": 62.18494234848221,
+        "exit_time": 278520.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.0,
+        "time": 1200.0,
+        "status": 3,
+        "beta_min": 159034.9108354678,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 309240.0
+      },
+      {
+        "burn": 12.0,
+        "time": 2400.0,
+        "status": 2,
+        "beta_min": 175080.98661285886,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 416460.0
+      },
+      {
+        "burn": 12.0,
+        "time": 3600.0,
+        "status": 3,
+        "beta_min": 155813.29135568993,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 93960.0
+      },
+      {
+        "burn": 12.0,
+        "time": 4800.0,
+        "status": 3,
+        "beta_min": 156918.53605954032,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 88200.0
+      },
+      {
+        "burn": 12.0,
+        "time": 6000.0,
+        "status": 3,
+        "beta_min": 158687.52741945683,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 85560.0
+      },
+      {
+        "burn": 12.0,
+        "time": 7200.0,
+        "status": 3,
+        "beta_min": 158658.32334068362,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 85500.0
+      },
+      {
+        "burn": 12.0,
+        "time": 8400.0,
+        "status": 3,
+        "beta_min": 153976.51061727686,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 88140.0
+      },
+      {
+        "burn": 12.0,
+        "time": 9600.0,
+        "status": 3,
+        "beta_min": 154114.7581643339,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 93900.0
+      },
+      {
+        "burn": 12.0,
+        "time": 10800.0,
+        "status": 3,
+        "beta_min": 159382.0546591021,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 103260.0
+      },
+      {
+        "burn": 12.0,
+        "time": 12000.0,
+        "status": 3,
+        "beta_min": 159966.39622693765,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 116580.0
+      },
+      {
+        "burn": 12.0,
+        "time": 13200.0,
+        "status": 3,
+        "beta_min": 147356.30943682473,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 134520.0
+      },
+      {
+        "burn": 12.0,
+        "time": 14400.0,
+        "status": 3,
+        "beta_min": 153891.64738071346,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 159540.0
+      },
+      {
+        "burn": 12.0,
+        "time": 15600.0,
+        "status": 1,
+        "beta_min": 926328.5808415704,
+        "exit_speed": 26.617186219474338,
+        "exit_time": 554280.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.0,
+        "time": 16800.0,
+        "status": 2,
+        "beta_min": 2262156.8321189224,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 238860.0
+      },
+      {
+        "burn": 12.0,
+        "time": 18000.0,
+        "status": 2,
+        "beta_min": 2572110.3796891454,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 254040.0
+      },
+      {
+        "burn": 12.0,
+        "time": 19200.0,
+        "status": 0,
+        "beta_min": 2647141.303411382,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.0,
+        "time": 20400.0,
+        "status": 0,
+        "beta_min": 953790.5551237519,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.0,
+        "time": 21600.0,
+        "status": 0,
+        "beta_min": 2766523.49319217,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.0,
+        "time": 22800.0,
+        "status": 0,
+        "beta_min": 2814084.2215398764,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.0,
+        "time": 24000.0,
+        "status": 0,
+        "beta_min": 2854997.6896310374,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.0,
+        "time": 25200.0,
+        "status": 0,
+        "beta_min": 2890027.7990347636,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.0,
+        "time": 26400.0,
+        "status": 0,
+        "beta_min": 2919773.1504878313,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.0,
+        "time": 27600.0,
+        "status": 0,
+        "beta_min": 2944710.296619693,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.0,
+        "time": 28800.0,
+        "status": 0,
+        "beta_min": 2965215.978313502,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.0,
+        "time": 30000.0,
+        "status": 1,
+        "beta_min": 2981594.14398634,
+        "exit_speed": 20.476659246981967,
+        "exit_time": 544260.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.0,
+        "time": 31200.0,
+        "status": 1,
+        "beta_min": 2994067.220501754,
+        "exit_speed": 22.517449264545316,
+        "exit_time": 489480.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.0,
+        "time": 32400.0,
+        "status": 1,
+        "beta_min": 3002819.137936436,
+        "exit_speed": 23.9254636237646,
+        "exit_time": 455700.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.0,
+        "time": 33600.0,
+        "status": 1,
+        "beta_min": 3007961.0599025493,
+        "exit_speed": 24.934665394975276,
+        "exit_time": 432540.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.0,
+        "time": 34800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 25.66601765576211,
+        "exit_time": 416280.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.0,
+        "time": 36000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 26.16412337343313,
+        "exit_time": 405240.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.0,
+        "time": 37200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 26.448535832252244,
+        "exit_time": 398340.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.0,
+        "time": 38400.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 26.515559623507748,
+        "exit_time": 395220.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.0,
+        "time": 39600.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 26.35475859684424,
+        "exit_time": 395820.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.0,
+        "time": 40800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 25.953686268873142,
+        "exit_time": 400320.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.0,
+        "time": 42000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 25.29010549396725,
+        "exit_time": 409560.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.0,
+        "time": 43200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 24.33925609962638,
+        "exit_time": 425220.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.0,
+        "time": 44400.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 23.0688136657533,
+        "exit_time": 451200.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.0,
+        "time": 45600.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 21.439830898733103,
+        "exit_time": 497820.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.0,
+        "time": 46800.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.0,
+        "time": 48000.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.0,
+        "time": 49200.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.0,
+        "time": 50400.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.0,
+        "time": 51600.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.0,
+        "time": 52800.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 432780.0
+      },
+      {
+        "burn": 12.0,
+        "time": 54000.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 394500.0
+      },
+      {
+        "burn": 12.0,
+        "time": 55200.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 369180.0
+      },
+      {
+        "burn": 12.0,
+        "time": 56400.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 351780.0
+      },
+      {
+        "burn": 12.0,
+        "time": 57600.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 340380.0
+      },
+      {
+        "burn": 12.0,
+        "time": 58800.0,
+        "status": 1,
+        "beta_min": 1097892.3335809894,
+        "exit_speed": 61.58774595028656,
+        "exit_time": 570420.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.0,
+        "time": 60000.0,
+        "status": 0,
+        "beta_min": 2508882.823555876,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.0,
+        "time": 61200.0,
+        "status": 0,
+        "beta_min": 2920731.2980843624,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.0,
+        "time": 62400.0,
+        "status": 0,
+        "beta_min": 2456665.4458218473,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.5,
+        "time": 0.0,
+        "status": 1,
+        "beta_min": 1659387.6381455003,
+        "exit_speed": 51.46431844653846,
+        "exit_time": 291900.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.5,
+        "time": 1200.0,
+        "status": 1,
+        "beta_min": 1066152.8229975482,
+        "exit_speed": 63.5505740389074,
+        "exit_time": 260640.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.5,
+        "time": 2400.0,
+        "status": 0,
+        "beta_min": 495553.1743530567,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.5,
+        "time": 3600.0,
+        "status": 3,
+        "beta_min": 157470.2897187072,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 98880.0
+      },
+      {
+        "burn": 12.5,
+        "time": 4800.0,
+        "status": 3,
+        "beta_min": 157198.87307058868,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 89280.0
+      },
+      {
+        "burn": 12.5,
+        "time": 6000.0,
+        "status": 3,
+        "beta_min": 154304.435806566,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 84900.0
+      },
+      {
+        "burn": 12.5,
+        "time": 7200.0,
+        "status": 3,
+        "beta_min": 154393.3619466851,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 83460.0
+      },
+      {
+        "burn": 12.5,
+        "time": 8400.0,
+        "status": 3,
+        "beta_min": 154100.84677125656,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 84660.0
+      },
+      {
+        "burn": 12.5,
+        "time": 9600.0,
+        "status": 3,
+        "beta_min": 154059.85644053054,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 88800.0
+      },
+      {
+        "burn": 12.5,
+        "time": 10800.0,
+        "status": 3,
+        "beta_min": 158220.54795225564,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 96420.0
+      },
+      {
+        "burn": 12.5,
+        "time": 12000.0,
+        "status": 3,
+        "beta_min": 156519.05212569275,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 107940.0
+      },
+      {
+        "burn": 12.5,
+        "time": 13200.0,
+        "status": 3,
+        "beta_min": 158831.7822635133,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 123480.0
+      },
+      {
+        "burn": 12.5,
+        "time": 14400.0,
+        "status": 3,
+        "beta_min": 148641.7369553353,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 143880.0
+      },
+      {
+        "burn": 12.5,
+        "time": 15600.0,
+        "status": 3,
+        "beta_min": 151325.86101065503,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 172560.0
+      },
+      {
+        "burn": 12.5,
+        "time": 16800.0,
+        "status": 2,
+        "beta_min": 1193347.727597679,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 292680.0
+      },
+      {
+        "burn": 12.5,
+        "time": 18000.0,
+        "status": 2,
+        "beta_min": 2334215.048114477,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 254040.0
+      },
+      {
+        "burn": 12.5,
+        "time": 19200.0,
+        "status": 2,
+        "beta_min": 2624930.615261045,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 277260.0
+      },
+      {
+        "burn": 12.5,
+        "time": 20400.0,
+        "status": 3,
+        "beta_min": 149556.35173829226,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 440880.0
+      },
+      {
+        "burn": 12.5,
+        "time": 21600.0,
+        "status": 0,
+        "beta_min": 2753371.539774937,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.5,
+        "time": 22800.0,
+        "status": 0,
+        "beta_min": 2804013.629209812,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.5,
+        "time": 24000.0,
+        "status": 0,
+        "beta_min": 2847366.20707477,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.5,
+        "time": 25200.0,
+        "status": 0,
+        "beta_min": 960505.0718807086,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.5,
+        "time": 26400.0,
+        "status": 0,
+        "beta_min": 1859523.140458453,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.5,
+        "time": 27600.0,
+        "status": 0,
+        "beta_min": 2941797.300254483,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.5,
+        "time": 28800.0,
+        "status": 0,
+        "beta_min": 2963268.124695301,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.5,
+        "time": 30000.0,
+        "status": 1,
+        "beta_min": 2980382.18942429,
+        "exit_speed": 19.147510373372953,
+        "exit_time": 532740.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.5,
+        "time": 31200.0,
+        "status": 1,
+        "beta_min": 2993404.745147268,
+        "exit_speed": 21.943553871470602,
+        "exit_time": 465420.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.5,
+        "time": 32400.0,
+        "status": 1,
+        "beta_min": 3002532.358104926,
+        "exit_speed": 23.8253396900515,
+        "exit_time": 429000.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.5,
+        "time": 33600.0,
+        "status": 1,
+        "beta_min": 3007892.7508027893,
+        "exit_speed": 25.184137592093776,
+        "exit_time": 404880.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.5,
+        "time": 34800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 26.21113455866317,
+        "exit_time": 387960.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.5,
+        "time": 36000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 26.981398779511938,
+        "exit_time": 376020.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.5,
+        "time": 37200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 27.525623365014344,
+        "exit_time": 367860.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.5,
+        "time": 38400.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 27.851504579925145,
+        "exit_time": 362880.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.5,
+        "time": 39600.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 27.958665662108253,
+        "exit_time": 360720.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.5,
+        "time": 40800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 27.839965026676097,
+        "exit_time": 361260.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.5,
+        "time": 42000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 27.48250583852537,
+        "exit_time": 364620.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.5,
+        "time": 43200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 26.867406157696735,
+        "exit_time": 371220.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.5,
+        "time": 44400.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 25.97398071753872,
+        "exit_time": 381780.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.5,
+        "time": 45600.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 24.769274205487253,
+        "exit_time": 397980.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.5,
+        "time": 46800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 23.21891744233903,
+        "exit_time": 423180.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.5,
+        "time": 48000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 21.279283601305586,
+        "exit_time": 466740.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.5,
+        "time": 49200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 18.814790605722745,
+        "exit_time": 570240.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.5,
+        "time": 50400.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.5,
+        "time": 51600.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.5,
+        "time": 52800.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.5,
+        "time": 54000.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 499620.0
+      },
+      {
+        "burn": 12.5,
+        "time": 55200.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 437400.0
+      },
+      {
+        "burn": 12.5,
+        "time": 56400.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 401220.0
+      },
+      {
+        "burn": 12.5,
+        "time": 57600.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 377820.0
+      },
+      {
+        "burn": 12.5,
+        "time": 58800.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 362700.0
+      },
+      {
+        "burn": 12.5,
+        "time": 60000.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 354360.0
+      },
+      {
+        "burn": 12.5,
+        "time": 61200.0,
+        "status": 0,
+        "beta_min": 1703429.9904952708,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 12.5,
+        "time": 62400.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.0,
+        "time": 0.0,
+        "status": 1,
+        "beta_min": 2112431.592301601,
+        "exit_speed": 36.554795675202506,
+        "exit_time": 343440.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.0,
+        "time": 1200.0,
+        "status": 1,
+        "beta_min": 1567669.3252185988,
+        "exit_speed": 52.88697448272423,
+        "exit_time": 271920.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.0,
+        "time": 2400.0,
+        "status": 1,
+        "beta_min": 963022.5063713783,
+        "exit_speed": 64.10179399285093,
+        "exit_time": 250680.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.0,
+        "time": 3600.0,
+        "status": 2,
+        "beta_min": 396820.5206965972,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 173820.0
+      },
+      {
+        "burn": 13.0,
+        "time": 4800.0,
+        "status": 3,
+        "beta_min": 156845.04358233168,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 92040.0
+      },
+      {
+        "burn": 13.0,
+        "time": 6000.0,
+        "status": 3,
+        "beta_min": 149881.00496433178,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 85140.0
+      },
+      {
+        "burn": 13.0,
+        "time": 7200.0,
+        "status": 3,
+        "beta_min": 149206.4419091271,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 82260.0
+      },
+      {
+        "burn": 13.0,
+        "time": 8400.0,
+        "status": 3,
+        "beta_min": 158555.50415715037,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 82140.0
+      },
+      {
+        "burn": 13.0,
+        "time": 9600.0,
+        "status": 3,
+        "beta_min": 149505.9878474739,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 84900.0
+      },
+      {
+        "burn": 13.0,
+        "time": 10800.0,
+        "status": 3,
+        "beta_min": 157283.82002596997,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 90900.0
+      },
+      {
+        "burn": 13.0,
+        "time": 12000.0,
+        "status": 3,
+        "beta_min": 158342.21162672763,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 100800.0
+      },
+      {
+        "burn": 13.0,
+        "time": 13200.0,
+        "status": 3,
+        "beta_min": 151820.0906556094,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 114720.0
+      },
+      {
+        "burn": 13.0,
+        "time": 14400.0,
+        "status": 3,
+        "beta_min": 157395.67405990593,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 132660.0
+      },
+      {
+        "burn": 13.0,
+        "time": 15600.0,
+        "status": 3,
+        "beta_min": 148526.82753722573,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 155760.0
+      },
+      {
+        "burn": 13.0,
+        "time": 16800.0,
+        "status": 3,
+        "beta_min": 155890.4350827652,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 188940.0
+      },
+      {
+        "burn": 13.0,
+        "time": 18000.0,
+        "status": 2,
+        "beta_min": 1347262.453544922,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 278100.0
+      },
+      {
+        "burn": 13.0,
+        "time": 19200.0,
+        "status": 2,
+        "beta_min": 2323616.401784241,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 274380.0
+      },
+      {
+        "burn": 13.0,
+        "time": 20400.0,
+        "status": 2,
+        "beta_min": 2676543.542191901,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 306600.0
+      },
+      {
+        "burn": 13.0,
+        "time": 21600.0,
+        "status": 3,
+        "beta_min": 159130.4957134078,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 448980.0
+      },
+      {
+        "burn": 13.0,
+        "time": 22800.0,
+        "status": 0,
+        "beta_min": 2793729.8366459543,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.0,
+        "time": 24000.0,
+        "status": 0,
+        "beta_min": 2839607.990452774,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.0,
+        "time": 25200.0,
+        "status": 0,
+        "beta_min": 284045.3874345056,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.0,
+        "time": 26400.0,
+        "status": 3,
+        "beta_min": 155761.97175107533,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 540360.0
+      },
+      {
+        "burn": 13.0,
+        "time": 27600.0,
+        "status": 0,
+        "beta_min": 2938864.301235444,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.0,
+        "time": 28800.0,
+        "status": 0,
+        "beta_min": 2961307.808227631,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.0,
+        "time": 30000.0,
+        "status": 1,
+        "beta_min": 2979170.3753958256,
+        "exit_speed": 18.177906841215375,
+        "exit_time": 516960.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.0,
+        "time": 31200.0,
+        "status": 1,
+        "beta_min": 2992743.2150564715,
+        "exit_speed": 21.573594752090372,
+        "exit_time": 442860.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.0,
+        "time": 32400.0,
+        "status": 1,
+        "beta_min": 3002245.4159084745,
+        "exit_speed": 23.835181751566125,
+        "exit_time": 406200.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.0,
+        "time": 33600.0,
+        "status": 1,
+        "beta_min": 3007824.56954401,
+        "exit_speed": 25.48473510971615,
+        "exit_time": 382320.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.0,
+        "time": 34800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 26.760215395917943,
+        "exit_time": 365580.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.0,
+        "time": 36000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 27.75761616582609,
+        "exit_time": 353580.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.0,
+        "time": 37200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 28.51873204104081,
+        "exit_time": 345060.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.0,
+        "time": 38400.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 29.061400667593308,
+        "exit_time": 339300.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.0,
+        "time": 39600.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 29.389251974899384,
+        "exit_time": 335940.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.0,
+        "time": 40800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 29.501465295142527,
+        "exit_time": 334740.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.0,
+        "time": 42000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 29.393394429928627,
+        "exit_time": 335580.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.0,
+        "time": 43200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 29.050407211353914,
+        "exit_time": 338640.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.0,
+        "time": 44400.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 28.46152189246131,
+        "exit_time": 344040.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.0,
+        "time": 45600.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 27.605731837123642,
+        "exit_time": 352260.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.0,
+        "time": 46800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 26.455996322285564,
+        "exit_time": 364140.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.0,
+        "time": 48000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 24.977449854931955,
+        "exit_time": 381240.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.0,
+        "time": 49200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 23.121203675994842,
+        "exit_time": 407040.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.0,
+        "time": 50400.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 20.83673955809563,
+        "exit_time": 450840.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.0,
+        "time": 51600.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 18.031718180102338,
+        "exit_time": 559560.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.0,
+        "time": 52800.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.0,
+        "time": 54000.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.0,
+        "time": 55200.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.0,
+        "time": 56400.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 496800.0
+      },
+      {
+        "burn": 13.0,
+        "time": 57600.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 441600.0
+      },
+      {
+        "burn": 13.0,
+        "time": 58800.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 409260.0
+      },
+      {
+        "burn": 13.0,
+        "time": 60000.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 389400.0
+      },
+      {
+        "burn": 13.0,
+        "time": 61200.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 378420.0
+      },
+      {
+        "burn": 13.0,
+        "time": 62400.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 375840.0
+      },
+      {
+        "burn": 13.5,
+        "time": 0.0,
+        "status": 1,
+        "beta_min": 2434233.096042999,
+        "exit_speed": 24.113386159618567,
+        "exit_time": 426720.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.5,
+        "time": 1200.0,
+        "status": 1,
+        "beta_min": 1949590.1988116286,
+        "exit_speed": 40.34222238806909,
+        "exit_time": 305040.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.5,
+        "time": 2400.0,
+        "status": 1,
+        "beta_min": 1396015.403830832,
+        "exit_speed": 57.23701928724848,
+        "exit_time": 250260.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.5,
+        "time": 3600.0,
+        "status": 1,
+        "beta_min": 782133.4459110163,
+        "exit_speed": 59.54361884248043,
+        "exit_time": 258240.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.5,
+        "time": 4800.0,
+        "status": 2,
+        "beta_min": 262190.48677488766,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 165660.0
+      },
+      {
+        "burn": 13.5,
+        "time": 6000.0,
+        "status": 3,
+        "beta_min": 156631.11342439867,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 86340.0
+      },
+      {
+        "burn": 13.5,
+        "time": 7200.0,
+        "status": 3,
+        "beta_min": 155909.97504331195,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 81720.0
+      },
+      {
+        "burn": 13.5,
+        "time": 8400.0,
+        "status": 3,
+        "beta_min": 159055.16394616052,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 80400.0
+      },
+      {
+        "burn": 13.5,
+        "time": 9600.0,
+        "status": 3,
+        "beta_min": 151915.67140788282,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 81900.0
+      },
+      {
+        "burn": 13.5,
+        "time": 10800.0,
+        "status": 3,
+        "beta_min": 157395.6915128925,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 86460.0
+      },
+      {
+        "burn": 13.5,
+        "time": 12000.0,
+        "status": 3,
+        "beta_min": 154258.92306870897,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 94860.0
+      },
+      {
+        "burn": 13.5,
+        "time": 13200.0,
+        "status": 3,
+        "beta_min": 155158.6049409911,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 107340.0
+      },
+      {
+        "burn": 13.5,
+        "time": 14400.0,
+        "status": 3,
+        "beta_min": 159853.91560862903,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 123720.0
+      },
+      {
+        "burn": 13.5,
+        "time": 15600.0,
+        "status": 3,
+        "beta_min": 157438.67107434545,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 144240.0
+      },
+      {
+        "burn": 13.5,
+        "time": 16800.0,
+        "status": 3,
+        "beta_min": 151748.49840908634,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 170160.0
+      },
+      {
+        "burn": 13.5,
+        "time": 18000.0,
+        "status": 0,
+        "beta_min": 208667.34424200113,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.5,
+        "time": 19200.0,
+        "status": 2,
+        "beta_min": 1351014.3619416726,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 293940.0
+      },
+      {
+        "burn": 13.5,
+        "time": 20400.0,
+        "status": 2,
+        "beta_min": 2142921.4449495086,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 300720.0
+      },
+      {
+        "burn": 13.5,
+        "time": 21600.0,
+        "status": 2,
+        "beta_min": 2616122.1291281474,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 340380.0
+      },
+      {
+        "burn": 13.5,
+        "time": 22800.0,
+        "status": 0,
+        "beta_min": 2725896.1803080835,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.5,
+        "time": 24000.0,
+        "status": 2,
+        "beta_min": 2049715.6507659082,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 459720.0
+      },
+      {
+        "burn": 13.5,
+        "time": 25200.0,
+        "status": 3,
+        "beta_min": 159257.04027284883,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 454500.0
+      },
+      {
+        "burn": 13.5,
+        "time": 26400.0,
+        "status": 3,
+        "beta_min": 154886.136551994,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 499500.0
+      },
+      {
+        "burn": 13.5,
+        "time": 27600.0,
+        "status": 0,
+        "beta_min": 2935909.427954582,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.5,
+        "time": 28800.0,
+        "status": 0,
+        "beta_min": 2959341.3591445535,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.5,
+        "time": 30000.0,
+        "status": 1,
+        "beta_min": 2977958.2618846465,
+        "exit_speed": 17.555671942100425,
+        "exit_time": 495120.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.5,
+        "time": 31200.0,
+        "status": 1,
+        "beta_min": 2992082.6316596204,
+        "exit_speed": 21.407310288462238,
+        "exit_time": 421500.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.5,
+        "time": 32400.0,
+        "status": 1,
+        "beta_min": 3001958.9598474656,
+        "exit_speed": 23.963297073819895,
+        "exit_time": 386160.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.5,
+        "time": 33600.0,
+        "status": 1,
+        "beta_min": 3007756.5161360917,
+        "exit_speed": 25.84594532837023,
+        "exit_time": 363300.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.5,
+        "time": 34800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 27.325305544385657,
+        "exit_time": 347220.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.5,
+        "time": 36000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 28.514380866277428,
+        "exit_time": 335460.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.5,
+        "time": 37200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 29.45772900362486,
+        "exit_time": 326940.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.5,
+        "time": 38400.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 30.179491385491104,
+        "exit_time": 320940.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.5,
+        "time": 39600.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 30.692135188258675,
+        "exit_time": 316980.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.5,
+        "time": 40800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 30.99362038202036,
+        "exit_time": 314940.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.5,
+        "time": 42000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 31.088243503893064,
+        "exit_time": 314520.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.5,
+        "time": 43200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 30.964394616054665,
+        "exit_time": 315840.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.5,
+        "time": 44400.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 30.61975561444828,
+        "exit_time": 318780.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.5,
+        "time": 45600.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 30.036264986128163,
+        "exit_time": 323640.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.5,
+        "time": 46800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 29.199146928460376,
+        "exit_time": 330660.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.5,
+        "time": 48000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 28.08684874964241,
+        "exit_time": 340320.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.5,
+        "time": 49200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 26.67038191518049,
+        "exit_time": 353460.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.5,
+        "time": 50400.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 24.900465710544346,
+        "exit_time": 371940.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.5,
+        "time": 51600.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 22.725400239570863,
+        "exit_time": 399240.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.5,
+        "time": 52800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 20.074220129977316,
+        "exit_time": 445980.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.5,
+        "time": 54000.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.5,
+        "time": 55200.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.5,
+        "time": 56400.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.5,
+        "time": 57600.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 13.5,
+        "time": 58800.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 495900.0
+      },
+      {
+        "burn": 13.5,
+        "time": 60000.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 448860.0
+      },
+      {
+        "burn": 13.5,
+        "time": 61200.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 422100.0
+      },
+      {
+        "burn": 13.5,
+        "time": 62400.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 407880.0
+      },
+      {
+        "burn": 14.0,
+        "time": 0.0,
+        "status": 0,
+        "beta_min": 2679260.574649311,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.0,
+        "time": 1200.0,
+        "status": 1,
+        "beta_min": 2237160.6033554925,
+        "exit_speed": 30.770128552787053,
+        "exit_time": 343980.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.0,
+        "time": 2400.0,
+        "status": 1,
+        "beta_min": 1738914.9144191486,
+        "exit_speed": 46.18028722730571,
+        "exit_time": 270600.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.0,
+        "time": 3600.0,
+        "status": 1,
+        "beta_min": 1166545.2068498696,
+        "exit_speed": 63.26823457639504,
+        "exit_time": 231840.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.0,
+        "time": 4800.0,
+        "status": 1,
+        "beta_min": 553287.5044922637,
+        "exit_speed": 20.917763302896656,
+        "exit_time": 451980.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.0,
+        "time": 6000.0,
+        "status": 3,
+        "beta_min": 159040.50906896836,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 89340.0
+      },
+      {
+        "burn": 14.0,
+        "time": 7200.0,
+        "status": 3,
+        "beta_min": 154385.09417135513,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 81900.0
+      },
+      {
+        "burn": 14.0,
+        "time": 8400.0,
+        "status": 3,
+        "beta_min": 149318.11355755286,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 79320.0
+      },
+      {
+        "burn": 14.0,
+        "time": 9600.0,
+        "status": 3,
+        "beta_min": 157995.17773468138,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 79620.0
+      },
+      {
+        "burn": 14.0,
+        "time": 10800.0,
+        "status": 3,
+        "beta_min": 157271.3322249213,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 82920.0
+      },
+      {
+        "burn": 14.0,
+        "time": 12000.0,
+        "status": 3,
+        "beta_min": 151464.26758299916,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 89880.0
+      },
+      {
+        "burn": 14.0,
+        "time": 13200.0,
+        "status": 3,
+        "beta_min": 152438.34135959024,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 101040.0
+      },
+      {
+        "burn": 14.0,
+        "time": 14400.0,
+        "status": 3,
+        "beta_min": 158971.494867332,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 116220.0
+      },
+      {
+        "burn": 14.0,
+        "time": 15600.0,
+        "status": 3,
+        "beta_min": 150004.84948694584,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 135240.0
+      },
+      {
+        "burn": 14.0,
+        "time": 16800.0,
+        "status": 3,
+        "beta_min": 159643.05441512057,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 158280.0
+      },
+      {
+        "burn": 14.0,
+        "time": 18000.0,
+        "status": 3,
+        "beta_min": 153640.60094229865,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 186900.0
+      },
+      {
+        "burn": 14.0,
+        "time": 19200.0,
+        "status": 0,
+        "beta_min": 250566.5014906406,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.0,
+        "time": 20400.0,
+        "status": 2,
+        "beta_min": 1112563.923270105,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 351540.0
+      },
+      {
+        "burn": 14.0,
+        "time": 21600.0,
+        "status": 2,
+        "beta_min": 1622403.6841352624,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 336420.0
+      },
+      {
+        "burn": 14.0,
+        "time": 22800.0,
+        "status": 2,
+        "beta_min": 1640489.4529090063,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 380400.0
+      },
+      {
+        "burn": 14.0,
+        "time": 24000.0,
+        "status": 0,
+        "beta_min": 815339.553525441,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.0,
+        "time": 25200.0,
+        "status": 3,
+        "beta_min": 156136.28073001787,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 415980.0
+      },
+      {
+        "burn": 14.0,
+        "time": 26400.0,
+        "status": 3,
+        "beta_min": 159616.47810664712,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 477120.0
+      },
+      {
+        "burn": 14.0,
+        "time": 27600.0,
+        "status": 0,
+        "beta_min": 2932936.2894598404,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.0,
+        "time": 28800.0,
+        "status": 0,
+        "beta_min": 2957365.5173734524,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.0,
+        "time": 30000.0,
+        "status": 1,
+        "beta_min": 2976736.13655552,
+        "exit_speed": 17.267367066878627,
+        "exit_time": 468960.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.0,
+        "time": 31200.0,
+        "status": 1,
+        "beta_min": 2991419.8792637303,
+        "exit_speed": 21.43427340772266,
+        "exit_time": 401400.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.0,
+        "time": 32400.0,
+        "status": 1,
+        "beta_min": 3001672.9901407077,
+        "exit_speed": 24.20432365441608,
+        "exit_time": 368400.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.0,
+        "time": 33600.0,
+        "status": 1,
+        "beta_min": 3007688.5905889035,
+        "exit_speed": 26.27355089749052,
+        "exit_time": 346860.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.0,
+        "time": 34800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 27.921975615783065,
+        "exit_time": 331560.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.0,
+        "time": 36000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 29.265295816384302,
+        "exit_time": 320340.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.0,
+        "time": 37200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 30.358653122697028,
+        "exit_time": 312060.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.0,
+        "time": 38400.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 31.232019978817004,
+        "exit_time": 306000.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.0,
+        "time": 39600.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 31.897558073877633,
+        "exit_time": 301800.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.0,
+        "time": 40800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 32.35842603098745,
+        "exit_time": 299280.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.0,
+        "time": 42000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 32.619117625718985,
+        "exit_time": 298200.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.0,
+        "time": 43200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 32.6766493873876,
+        "exit_time": 298500.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.0,
+        "time": 44400.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 32.52778820412981,
+        "exit_time": 300120.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.0,
+        "time": 45600.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 32.16189887210432,
+        "exit_time": 303180.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.0,
+        "time": 46800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 31.568275854655166,
+        "exit_time": 307800.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.0,
+        "time": 48000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 30.736486056634043,
+        "exit_time": 314100.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.0,
+        "time": 49200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 29.64466503733799,
+        "exit_time": 322500.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.0,
+        "time": 50400.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 28.27095153496144,
+        "exit_time": 333480.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.0,
+        "time": 51600.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 26.57605805434665,
+        "exit_time": 348120.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.0,
+        "time": 52800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 24.51232998387341,
+        "exit_time": 368220.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.0,
+        "time": 54000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 22.007709623182148,
+        "exit_time": 397980.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.0,
+        "time": 55200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 18.979758224304458,
+        "exit_time": 450420.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.0,
+        "time": 56400.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.0,
+        "time": 57600.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.0,
+        "time": 58800.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.0,
+        "time": 60000.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.0,
+        "time": 61200.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 501960.0
+      },
+      {
+        "burn": 14.0,
+        "time": 62400.0,
+        "status": 2,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 464220.0
+      },
+      {
+        "burn": 14.5,
+        "time": 0.0,
+        "status": 0,
+        "beta_min": 2878274.567792424,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 1200.0,
+        "status": 1,
+        "beta_min": 2464735.278013885,
+        "exit_speed": 23.68087866271376,
+        "exit_time": 384240.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 2400.0,
+        "status": 1,
+        "beta_min": 2007150.970925148,
+        "exit_speed": 37.730025216981815,
+        "exit_time": 292860.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 3600.0,
+        "status": 1,
+        "beta_min": 1486494.9538914731,
+        "exit_speed": 53.709291853256346,
+        "exit_time": 242100.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 4800.0,
+        "status": 1,
+        "beta_min": 889807.5828563735,
+        "exit_speed": 67.2903592725406,
+        "exit_time": 225060.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 6000.0,
+        "status": 2,
+        "beta_min": 317680.2255600071,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 151140.0
+      },
+      {
+        "burn": 14.5,
+        "time": 7200.0,
+        "status": 3,
+        "beta_min": 156291.97268637363,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 82860.0
+      },
+      {
+        "burn": 14.5,
+        "time": 8400.0,
+        "status": 3,
+        "beta_min": 151610.4149972232,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 78720.0
+      },
+      {
+        "burn": 14.5,
+        "time": 9600.0,
+        "status": 3,
+        "beta_min": 146725.63044742736,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 78000.0
+      },
+      {
+        "burn": 14.5,
+        "time": 10800.0,
+        "status": 3,
+        "beta_min": 147249.53066392738,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 80160.0
+      },
+      {
+        "burn": 14.5,
+        "time": 12000.0,
+        "status": 3,
+        "beta_min": 158401.51476490826,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 85680.0
+      },
+      {
+        "burn": 14.5,
+        "time": 13200.0,
+        "status": 3,
+        "beta_min": 157614.84723964552,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 95520.0
+      },
+      {
+        "burn": 14.5,
+        "time": 14400.0,
+        "status": 3,
+        "beta_min": 155603.18223298388,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 109740.0
+      },
+      {
+        "burn": 14.5,
+        "time": 15600.0,
+        "status": 3,
+        "beta_min": 156234.66503228623,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 127680.0
+      },
+      {
+        "burn": 14.5,
+        "time": 16800.0,
+        "status": 3,
+        "beta_min": 153353.94657514716,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 149220.0
+      },
+      {
+        "burn": 14.5,
+        "time": 18000.0,
+        "status": 3,
+        "beta_min": 154916.02473892388,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 174780.0
+      },
+      {
+        "burn": 14.5,
+        "time": 19200.0,
+        "status": 3,
+        "beta_min": 159283.24151334912,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 205440.0
+      },
+      {
+        "burn": 14.5,
+        "time": 20400.0,
+        "status": 3,
+        "beta_min": 159920.28834417454,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 244080.0
+      },
+      {
+        "burn": 14.5,
+        "time": 21600.0,
+        "status": 1,
+        "beta_min": 474080.7867321316,
+        "exit_speed": 60.62236344587805,
+        "exit_time": 411300.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 22800.0,
+        "status": 1,
+        "beta_min": 441939.72558334016,
+        "exit_speed": 61.3043506930747,
+        "exit_time": 449160.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 24000.0,
+        "status": 3,
+        "beta_min": 157505.2594020369,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 354480.0
+      },
+      {
+        "burn": 14.5,
+        "time": 25200.0,
+        "status": 3,
+        "beta_min": 148743.53890998662,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 393180.0
+      },
+      {
+        "burn": 14.5,
+        "time": 26400.0,
+        "status": 3,
+        "beta_min": 152300.6317797418,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 470700.0
+      },
+      {
+        "burn": 14.5,
+        "time": 27600.0,
+        "status": 0,
+        "beta_min": 2929944.4542601416,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 28800.0,
+        "status": 0,
+        "beta_min": 2955380.0939203515,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 30000.0,
+        "status": 1,
+        "beta_min": 2975515.25553735,
+        "exit_speed": 17.29309571084403,
+        "exit_time": 441840.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 31200.0,
+        "status": 1,
+        "beta_min": 2990752.493692956,
+        "exit_speed": 21.640785651398428,
+        "exit_time": 382620.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 32400.0,
+        "status": 1,
+        "beta_min": 3001387.507007129,
+        "exit_speed": 24.55914911789708,
+        "exit_time": 352380.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 33600.0,
+        "status": 1,
+        "beta_min": 3007620.7929123063,
+        "exit_speed": 26.768535240345567,
+        "exit_time": 332400.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 34800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 28.549089344040176,
+        "exit_time": 318060.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 36000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 30.021004244640256,
+        "exit_time": 307380.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 37200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 31.242075934108698,
+        "exit_time": 299340.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 38400.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 32.23796720399549,
+        "exit_time": 293460.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 39600.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 33.03126738389866,
+        "exit_time": 289200.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 40800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 33.62779557941236,
+        "exit_time": 286380.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 42000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 34.02695176550058,
+        "exit_time": 284940.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 43200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 34.23463021482356,
+        "exit_time": 284640.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 44400.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 34.24655333415945,
+        "exit_time": 285480.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 45600.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 34.05808554945682,
+        "exit_time": 287460.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 46800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 33.65928524650151,
+        "exit_time": 290700.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 48000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 33.047772612727606,
+        "exit_time": 295140.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 49200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 32.205808525132774,
+        "exit_time": 301080.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 50400.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 31.121093020910333,
+        "exit_time": 308700.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 51600.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 29.77464436087296,
+        "exit_time": 318360.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 52800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 28.137555537599898,
+        "exit_time": 330720.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 54000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 26.168826935442375,
+        "exit_time": 346920.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 55200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 23.812214254424752,
+        "exit_time": 369060.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 56400.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 20.98598618537411,
+        "exit_time": 402060.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 57600.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 17.597034804567652,
+        "exit_time": 463440.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 58800.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 60000.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 61200.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 14.5,
+        "time": 62400.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 0.0,
+        "status": 0,
+        "beta_min": 3046344.0917803706,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 1200.0,
+        "status": 1,
+        "beta_min": 2653381.3185375025,
+        "exit_speed": 19.06054090630888,
+        "exit_time": 416580.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 2400.0,
+        "status": 1,
+        "beta_min": 2224192.323703377,
+        "exit_speed": 31.744100456467006,
+        "exit_time": 311700.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 3600.0,
+        "status": 1,
+        "beta_min": 1744527.2023839506,
+        "exit_speed": 45.52232039190563,
+        "exit_time": 256200.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 4800.0,
+        "status": 1,
+        "beta_min": 1193209.1653918636,
+        "exit_speed": 62.62885935048225,
+        "exit_time": 220380.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 6000.0,
+        "status": 1,
+        "beta_min": 581387.734320156,
+        "exit_speed": 48.16275429902041,
+        "exit_time": 281640.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 7200.0,
+        "status": 3,
+        "beta_min": 156201.65836664004,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 85260.0
+      },
+      {
+        "burn": 15.0,
+        "time": 8400.0,
+        "status": 3,
+        "beta_min": 158649.8922921887,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 78600.0
+      },
+      {
+        "burn": 15.0,
+        "time": 9600.0,
+        "status": 3,
+        "beta_min": 148825.57021464602,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 76800.0
+      },
+      {
+        "burn": 15.0,
+        "time": 10800.0,
+        "status": 3,
+        "beta_min": 148273.4315378643,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 77940.0
+      },
+      {
+        "burn": 15.0,
+        "time": 12000.0,
+        "status": 3,
+        "beta_min": 155541.52013470026,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 82260.0
+      },
+      {
+        "burn": 15.0,
+        "time": 13200.0,
+        "status": 3,
+        "beta_min": 153190.10977437889,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 90780.0
+      },
+      {
+        "burn": 15.0,
+        "time": 14400.0,
+        "status": 3,
+        "beta_min": 157003.27964955894,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 103980.0
+      },
+      {
+        "burn": 15.0,
+        "time": 15600.0,
+        "status": 3,
+        "beta_min": 156279.26735840287,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 121200.0
+      },
+      {
+        "burn": 15.0,
+        "time": 16800.0,
+        "status": 3,
+        "beta_min": 155850.11940992207,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 141780.0
+      },
+      {
+        "burn": 15.0,
+        "time": 18000.0,
+        "status": 3,
+        "beta_min": 156344.58593045443,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 165780.0
+      },
+      {
+        "burn": 15.0,
+        "time": 19200.0,
+        "status": 3,
+        "beta_min": 155700.6418879062,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 193560.0
+      },
+      {
+        "burn": 15.0,
+        "time": 20400.0,
+        "status": 3,
+        "beta_min": 150069.65868094566,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 225420.0
+      },
+      {
+        "burn": 15.0,
+        "time": 21600.0,
+        "status": 3,
+        "beta_min": 155624.55989559492,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 260580.0
+      },
+      {
+        "burn": 15.0,
+        "time": 22800.0,
+        "status": 3,
+        "beta_min": 158426.6550557821,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 296640.0
+      },
+      {
+        "burn": 15.0,
+        "time": 24000.0,
+        "status": 3,
+        "beta_min": 158829.44818722797,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 333840.0
+      },
+      {
+        "burn": 15.0,
+        "time": 25200.0,
+        "status": 3,
+        "beta_min": 155245.37491188612,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 381060.0
+      },
+      {
+        "burn": 15.0,
+        "time": 26400.0,
+        "status": 3,
+        "beta_min": 152371.60068539027,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 481380.0
+      },
+      {
+        "burn": 15.0,
+        "time": 27600.0,
+        "status": 0,
+        "beta_min": 2926933.4727727803,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 28800.0,
+        "status": 0,
+        "beta_min": 2953388.8447754444,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 30000.0,
+        "status": 1,
+        "beta_min": 2974291.7106881165,
+        "exit_speed": 17.599486191976588,
+        "exit_time": 415980.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 31200.0,
+        "status": 1,
+        "beta_min": 2990086.0846147104,
+        "exit_speed": 22.00299070227452,
+        "exit_time": 365340.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 32400.0,
+        "status": 1,
+        "beta_min": 3001102.5106657706,
+        "exit_speed": 25.016274832738308,
+        "exit_time": 337920.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 33600.0,
+        "status": 1,
+        "beta_min": 3007553.1231161505,
+        "exit_speed": 27.329484317573293,
+        "exit_time": 319500.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 34800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 29.213610187545367,
+        "exit_time": 306120.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 36000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 30.788192646425223,
+        "exit_time": 296040.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 37200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 32.10963197843796,
+        "exit_time": 288420.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 38400.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 33.212178855270736,
+        "exit_time": 282660.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 39600.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 34.1142954371324,
+        "exit_time": 278400.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 40800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 34.82136664303538,
+        "exit_time": 275520.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 42000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 35.341760216613665,
+        "exit_time": 273780.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 43200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 35.67540954993026,
+        "exit_time": 273120.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 44400.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 35.82157662536004,
+        "exit_time": 273480.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 45600.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 35.77919067503909,
+        "exit_time": 274800.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 46800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 35.54440829173168,
+        "exit_time": 277080.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 48000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 35.10794508593733,
+        "exit_time": 280440.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 49200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 34.465731350668214,
+        "exit_time": 284880.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 50400.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 33.60577359525681,
+        "exit_time": 290580.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 51600.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 32.51630894629342,
+        "exit_time": 297720.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 52800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 31.183579580582307,
+        "exit_time": 306540.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 54000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 29.58740829967941,
+        "exit_time": 317460.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 55200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 27.693089524215413,
+        "exit_time": 331320.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 56400.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 25.466067662019693,
+        "exit_time": 349200.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 57600.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 22.84125824923008,
+        "exit_time": 373620.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 58800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 19.73389169758842,
+        "exit_time": 410400.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 60000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 16.062350219201075,
+        "exit_time": 484080.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 61200.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.0,
+        "time": 62400.0,
+        "status": 0,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 0.0,
+        "status": 0,
+        "beta_min": 3191750.9381051636,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 1200.0,
+        "status": 1,
+        "beta_min": 2814738.223130923,
+        "exit_speed": 17.18025037378518,
+        "exit_time": 421260.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 2400.0,
+        "status": 1,
+        "beta_min": 2406263.0021414077,
+        "exit_speed": 27.847467807583428,
+        "exit_time": 323280.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 3600.0,
+        "status": 1,
+        "beta_min": 1956446.3586454878,
+        "exit_speed": 39.57237899998903,
+        "exit_time": 268380.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 4800.0,
+        "status": 1,
+        "beta_min": 1446990.6453508239,
+        "exit_speed": 54.703124854674556,
+        "exit_time": 228000.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 6000.0,
+        "status": 1,
+        "beta_min": 860379.4667310016,
+        "exit_speed": 69.32934675698208,
+        "exit_time": 212520.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 7200.0,
+        "status": 2,
+        "beta_min": 288840.7690542045,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 143280.0
+      },
+      {
+        "burn": 15.5,
+        "time": 8400.0,
+        "status": 3,
+        "beta_min": 156083.5799690143,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 79080.0
+      },
+      {
+        "burn": 15.5,
+        "time": 9600.0,
+        "status": 3,
+        "beta_min": 147829.09202342544,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 76020.0
+      },
+      {
+        "burn": 15.5,
+        "time": 10800.0,
+        "status": 3,
+        "beta_min": 149285.7145966271,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 76200.0
+      },
+      {
+        "burn": 15.5,
+        "time": 12000.0,
+        "status": 3,
+        "beta_min": 155100.48233822084,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 79440.0
+      },
+      {
+        "burn": 15.5,
+        "time": 13200.0,
+        "status": 3,
+        "beta_min": 155765.880916118,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 86640.0
+      },
+      {
+        "burn": 15.5,
+        "time": 14400.0,
+        "status": 3,
+        "beta_min": 156884.14797390034,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 98820.0
+      },
+      {
+        "burn": 15.5,
+        "time": 15600.0,
+        "status": 3,
+        "beta_min": 158263.09451948132,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 115500.0
+      },
+      {
+        "burn": 15.5,
+        "time": 16800.0,
+        "status": 3,
+        "beta_min": 154152.74894852884,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 135540.0
+      },
+      {
+        "burn": 15.5,
+        "time": 18000.0,
+        "status": 3,
+        "beta_min": 158470.54197341253,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 158640.0
+      },
+      {
+        "burn": 15.5,
+        "time": 19200.0,
+        "status": 3,
+        "beta_min": 150538.50681648238,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 185040.0
+      },
+      {
+        "burn": 15.5,
+        "time": 20400.0,
+        "status": 3,
+        "beta_min": 147818.23917605486,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 214740.0
+      },
+      {
+        "burn": 15.5,
+        "time": 21600.0,
+        "status": 3,
+        "beta_min": 148655.07780008245,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 247500.0
+      },
+      {
+        "burn": 15.5,
+        "time": 22800.0,
+        "status": 3,
+        "beta_min": 159153.7587227687,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 282900.0
+      },
+      {
+        "burn": 15.5,
+        "time": 24000.0,
+        "status": 3,
+        "beta_min": 153940.22981313296,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 322860.0
+      },
+      {
+        "burn": 15.5,
+        "time": 25200.0,
+        "status": 3,
+        "beta_min": 154296.97236282108,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 379140.0
+      },
+      {
+        "burn": 15.5,
+        "time": 26400.0,
+        "status": 3,
+        "beta_min": 157411.54363081144,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 511020.0
+      },
+      {
+        "burn": 15.5,
+        "time": 27600.0,
+        "status": 0,
+        "beta_min": 2923902.9056486036,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 28800.0,
+        "status": 0,
+        "beta_min": 2951384.0831775106,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 30000.0,
+        "status": 1,
+        "beta_min": 2973060.443257233,
+        "exit_speed": 18.13065349046961,
+        "exit_time": 392520.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 31200.0,
+        "status": 1,
+        "beta_min": 2989420.65514562,
+        "exit_speed": 22.50560898913233,
+        "exit_time": 349440.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 32400.0,
+        "status": 1,
+        "beta_min": 3000818.0013357843,
+        "exit_speed": 25.564772996224946,
+        "exit_time": 324840.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 33600.0,
+        "status": 1,
+        "beta_min": 3007485.5812102784,
+        "exit_speed": 27.950528546881657,
+        "exit_time": 307920.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 34800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 29.91460925592538,
+        "exit_time": 295440.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 36000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 31.568118749210516,
+        "exit_time": 286020.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 37200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 32.9764319362425,
+        "exit_time": 278700.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 38400.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 34.164724612585395,
+        "exit_time": 273180.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 39600.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 35.156015415332575,
+        "exit_time": 269040.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 40800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 35.95975704261054,
+        "exit_time": 266100.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 42000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 36.58068249740727,
+        "exit_time": 264240.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 43200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 37.02225168874743,
+        "exit_time": 263340.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 44400.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 37.284640380857034,
+        "exit_time": 263340.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 45600.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 37.36494493835365,
+        "exit_time": 264240.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 46800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 37.26537335458801,
+        "exit_time": 265920.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 48000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 36.97734644185208,
+        "exit_time": 268500.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 49200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 36.49484551479268,
+        "exit_time": 272040.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 50400.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 35.817470862792504,
+        "exit_time": 276480.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 51600.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 34.931278135734075,
+        "exit_time": 282060.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 52800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 33.830988597762385,
+        "exit_time": 288840.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 54000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 32.50377199959491,
+        "exit_time": 297060.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 55200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 30.93269688703782,
+        "exit_time": 307080.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 56400.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 29.100974549404548,
+        "exit_time": 319320.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 57600.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 26.978804784406687,
+        "exit_time": 334620.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 58800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 24.532167731811658,
+        "exit_time": 354240.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 60000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 21.709185904031937,
+        "exit_time": 380760.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 61200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 18.432985469945347,
+        "exit_time": 420840.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 15.5,
+        "time": 62400.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 14.695490797798568,
+        "exit_time": 504900.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 0.0,
+        "status": 0,
+        "beta_min": 3319606.3083876916,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 1200.0,
+        "status": 1,
+        "beta_min": 2955663.401245776,
+        "exit_speed": 17.59526049735139,
+        "exit_time": 394560.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 2400.0,
+        "status": 1,
+        "beta_min": 2563195.6761662667,
+        "exit_speed": 25.75835337423003,
+        "exit_time": 325320.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 3600.0,
+        "status": 1,
+        "beta_min": 2135410.8548821406,
+        "exit_speed": 35.51677850090032,
+        "exit_time": 276480.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 4800.0,
+        "status": 1,
+        "beta_min": 1658506.159295014,
+        "exit_speed": 48.28620192862034,
+        "exit_time": 236640.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 6000.0,
+        "status": 1,
+        "beta_min": 1110964.8465740397,
+        "exit_speed": 65.25489695622018,
+        "exit_time": 207780.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 7200.0,
+        "status": 1,
+        "beta_min": 505022.58700453676,
+        "exit_speed": 43.80284236620196,
+        "exit_time": 294180.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 8400.0,
+        "status": 3,
+        "beta_min": 155940.22544776686,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 80340.0
+      },
+      {
+        "burn": 16.0,
+        "time": 9600.0,
+        "status": 3,
+        "beta_min": 149170.59155621956,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 75600.0
+      },
+      {
+        "burn": 16.0,
+        "time": 10800.0,
+        "status": 3,
+        "beta_min": 157945.4952275006,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 74820.0
+      },
+      {
+        "burn": 16.0,
+        "time": 12000.0,
+        "status": 3,
+        "beta_min": 148483.73775946943,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 77160.0
+      },
+      {
+        "burn": 16.0,
+        "time": 13200.0,
+        "status": 3,
+        "beta_min": 157711.03604780737,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 83100.0
+      },
+      {
+        "burn": 16.0,
+        "time": 14400.0,
+        "status": 3,
+        "beta_min": 157668.24991997567,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 94140.0
+      },
+      {
+        "burn": 16.0,
+        "time": 15600.0,
+        "status": 3,
+        "beta_min": 159580.9307932568,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 110460.0
+      },
+      {
+        "burn": 16.0,
+        "time": 16800.0,
+        "status": 3,
+        "beta_min": 154509.41861613735,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 130260.0
+      },
+      {
+        "burn": 16.0,
+        "time": 18000.0,
+        "status": 3,
+        "beta_min": 158828.92394405333,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 152880.0
+      },
+      {
+        "burn": 16.0,
+        "time": 19200.0,
+        "status": 3,
+        "beta_min": 156983.95533459383,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 178560.0
+      },
+      {
+        "burn": 16.0,
+        "time": 20400.0,
+        "status": 3,
+        "beta_min": 150477.62900419818,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 207360.0
+      },
+      {
+        "burn": 16.0,
+        "time": 21600.0,
+        "status": 3,
+        "beta_min": 152742.28120644807,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 239340.0
+      },
+      {
+        "burn": 16.0,
+        "time": 22800.0,
+        "status": 3,
+        "beta_min": 148605.102635429,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 275220.0
+      },
+      {
+        "burn": 16.0,
+        "time": 24000.0,
+        "status": 3,
+        "beta_min": 150485.8967857401,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 318780.0
+      },
+      {
+        "burn": 16.0,
+        "time": 25200.0,
+        "status": 0,
+        "beta_min": 168946.90663869795,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 26400.0,
+        "status": 3,
+        "beta_min": 155295.31196155192,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 561180.0
+      },
+      {
+        "burn": 16.0,
+        "time": 27600.0,
+        "status": 0,
+        "beta_min": 2920851.651255278,
+        "exit_speed": 0.0,
+        "exit_time": 0.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 28800.0,
+        "status": 1,
+        "beta_min": 2949376.44578917,
+        "exit_speed": 12.662369276599792,
+        "exit_time": 513480.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 30000.0,
+        "status": 1,
+        "beta_min": 2971830.6790414,
+        "exit_speed": 18.839213966523058,
+        "exit_time": 371580.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 31200.0,
+        "status": 1,
+        "beta_min": 2988755.9631378683,
+        "exit_speed": 23.123341163461888,
+        "exit_time": 334980.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 32400.0,
+        "status": 1,
+        "beta_min": 3000532.7103207507,
+        "exit_speed": 26.197188421090026,
+        "exit_time": 312900.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 33600.0,
+        "status": 1,
+        "beta_min": 3007418.1672045225,
+        "exit_speed": 28.627606606272064,
+        "exit_time": 297420.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 34800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 30.648445916489134,
+        "exit_time": 285840.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 36000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 32.3667738503578,
+        "exit_time": 276960.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 37200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 33.83853836899256,
+        "exit_time": 270120.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 38400.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 35.100725652405735,
+        "exit_time": 264780.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 39600.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 36.168124920845834,
+        "exit_time": 260760.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 40800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 37.051305656961645,
+        "exit_time": 257880.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 42000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 37.76107442535241,
+        "exit_time": 255900.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 43200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 38.29393976617519,
+        "exit_time": 254880.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 44400.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 38.65592320636778,
+        "exit_time": 254640.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 45600.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 38.844739618135925,
+        "exit_time": 255180.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 46800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 38.86052636797142,
+        "exit_time": 256440.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 48000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 38.69509924422655,
+        "exit_time": 258540.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 49200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 38.35131306042481,
+        "exit_time": 261360.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 50400.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 37.82111551326569,
+        "exit_time": 265020.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 51600.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 37.10229802033114,
+        "exit_time": 269520.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 52800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 36.18459340653664,
+        "exit_time": 275040.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 54000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 35.06693049349088,
+        "exit_time": 281580.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 55200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 33.73504891313749,
+        "exit_time": 289440.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 56400.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 32.1849773879983,
+        "exit_time": 298740.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 57600.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 30.401408729130463,
+        "exit_time": 309900.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 58800.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 28.371459261586203,
+        "exit_time": 323400.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 60000.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 26.08086696044601,
+        "exit_time": 339960.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 61200.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 23.508292193952393,
+        "exit_time": 360900.0,
+        "hit_time": 0.0
+      },
+      {
+        "burn": 16.0,
+        "time": 62400.0,
+        "status": 1,
+        "beta_min": 3009573.1815739344,
+        "exit_speed": 20.638295844739297,
+        "exit_time": 388500.0,
+        "hit_time": 0.0
+      }
+    ]
+  }
+}

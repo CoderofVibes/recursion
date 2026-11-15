@@ -22,8 +22,9 @@ import type {
  */
 export type ObjectiveRule =
   /**
-   * Stay between `inner` and `outer` from a body's centre while sweeping `revolutions` full
-   * turns about it. Leaving the band starts the count again. Reaching it completes the attempt.
+   * Stay between `inner` and `outer` from a body's centre (a spherical shell) while sweeping
+   * `revolutions` full turns about it, in whatever plane the orbit lies. Turning back undoes
+   * what was swept; leaving the band starts the count again. Reaching it completes the attempt.
    */
   | {
       readonly kind: 'orbit-band';
@@ -32,6 +33,21 @@ export type ObjectiveRule =
       readonly inner: Meters;
       readonly outer: Meters;
       readonly revolutions: number;
+    }
+  /**
+   * Leave the encounter (A6): judged the first time the ship is farther than `beyond` from the
+   * massive bodies' barycentre, in any direction. Reached, completing the attempt, if its speed
+   * relative to that barycentre is at least `minSpeed` and, when `maxDeltaV` is given, it has
+   * spent no more than that (the time integral of net thrust over mass: main engine and RCS
+   * translation; balanced attitude couples add nothing). Otherwise missed, once; the attempt
+   * goes on.
+   */
+  | {
+      readonly kind: 'depart';
+      readonly objective: ObjectiveId;
+      readonly beyond: Meters;
+      readonly minSpeed: MetersPerSecond;
+      readonly maxDeltaV?: MetersPerSecond;
     }
   /** Judged at completion: reached if the tank still holds at least `minimum`. */
   | {
@@ -58,6 +74,11 @@ export interface PlayValues {
   readonly recorderRate: Hertz;
   /** Longest forecast requested when a plan is committed. */
   readonly forecastSpan: Seconds;
+  /**
+   * The smallest asteroid the unaided eye makes out through the window: half the angle it
+   * spans from the ship. Smaller ones are left out of `ViewSnapshot.window`. Bodies always show.
+   */
+  readonly windowMinAngularRadius: Radians;
 }
 
 export interface EncounterSetup {
@@ -85,4 +106,5 @@ export const DEFAULT_PLAY: PlayValues = {
   telemetryKeepalive: 600,
   recorderRate: 0.05,
   forecastSpan: 16 * 3600,
+  windowMinAngularRadius: 2e-4,
 };

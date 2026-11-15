@@ -23,22 +23,36 @@ export interface BurnOptions {
   readonly duration: number;
   readonly attitude: AttitudeTarget;
   /**
-   * Turn to the burn attitude this long before the burn [ASSUMED 300 s: a 180° turn settles
-   * in about 300 s with 2B's controller]. Clipped so it never precedes the plan epoch.
+   * Turn to the burn attitude this long before the burn. Default `TURN_LEAD`. Clipped so it
+   * never precedes the plan epoch: a burn planned sooner than this after commitment may start
+   * before the ship has finished turning.
    */
   readonly lead?: number;
   /**
-   * Let the attitude go free this long after the burn ends [ASSUMED 5 s]. Holding an attitude
-   * costs RCS propellant continuously with 2B's controller, so coasting free is the default.
-   * Pass `null` to keep holding.
+   * This long after the burn ends [ASSUMED 5 s], stop holding the burn attitude and null the
+   * turn rate instead: the ship coasts without turning, at whatever attitude it has. Pass
+   * `null` to keep holding the burn attitude (a quiet hold costs under 1.2 kg/h).
+   *
+   * Not `free`: a burn leaves the ship turning (the RCS and the gimbal trimming against the
+   * thrust's lever arm; 2×10⁻³ rad/s after a 6 s burn), and a ship left free keeps turning,
+   * which smears the camera for hours: in a 5 m/s dive at Alpha it kept 229 fixes on Alpha in
+   * 8.4 h instead of about 1,350 (2G handoff). A rate hold costs a few tenths of a kilogram to
+   * null the rate and nothing after, since nothing torques a coasting ship.
    */
   readonly release?: number | null;
 }
 
+/**
+ * [ASSUMED] Time allowed for the turn to a burn attitude, s. The ship turns at no more than
+ * 0.008 rad/s so its star trackers keep their solution (`propulsion.attitudeControl.slewRate`
+ * in data/ship-baseline.json), and a half turn settles in about 420 s; this leaves a minute.
+ */
+export const TURN_LEAD = 480;
+
 /** Turn, burn, release: the commands for one burn, in time order. */
 export function burnSteps(options: BurnOptions): PlanStep[] {
   const thruster = options.thruster ?? 'main-engine';
-  const lead = Math.min(options.lead ?? 300, options.at);
+  const lead = Math.min(options.lead ?? TURN_LEAD, options.at);
   const steps: PlanStep[] = [];
   if (lead > 0)
     steps.push({ at: options.at - lead, command: { kind: 'attitude', target: options.attitude } });
@@ -55,7 +69,7 @@ export function burnSteps(options: BurnOptions): PlanStep[] {
   if (options.release !== null)
     steps.push({
       at: options.at + options.duration + (options.release ?? 5),
-      command: { kind: 'attitude', target: { reference: 'free' } },
+      command: { kind: 'attitude', target: { reference: 'rate', rate: { x: 0, y: 0, z: 0 } } },
     });
   return steps;
 }

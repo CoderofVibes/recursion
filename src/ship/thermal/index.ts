@@ -8,6 +8,7 @@ import type { ShipEvent } from '../../contracts/measurements.ts';
 import type { JsonValue } from '../../contracts/units.ts';
 import { getGeometry } from '../config/configuration.ts';
 import { bounded, systems } from '../power/baseline.ts';
+import { sunIncidence } from '../power/sun.ts';
 
 /** [ASSUMED] C04/C11 thermal stub: conservative finite nodes, passive/active transport and IR rejection.
  * Local freeze rupture, equipment damage and failed regulators remain Phase 3 work.
@@ -51,8 +52,8 @@ export function stepThermal(
   // Sunlight arrives with body shadows already applied (DECISIONS A3); only the sink
   // temperature still comes from the optional fieldSignals.illumination adapter.
   const irradiance = Math.max(0, env.sunlight.irradiance);
-  const sunAngle = Math.atan2(env.sunlight.direction.y, env.sunlight.direction.x);
-  const incidence = irradiance > 0 ? Math.max(0, Math.cos(sunAngle - env.kinematics.attitude)) : 0;
+  // The radiators take sunlight at the same incidence as the solar wings (1C's formula).
+  const incidence = sunIncidence(env, data.generation.solar.arrayNormal);
   const sink =
     typeof light?.sinkTemperature === 'number'
       ? Math.max(0, light.sinkTemperature)

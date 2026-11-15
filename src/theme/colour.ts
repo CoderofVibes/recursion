@@ -55,6 +55,8 @@ export const colour = {
   // Bodies and hull materials
   body: '#2a2018',
   bodyRim: '#ffb070',
+  /** A body's sunlit face, seen through the window. */
+  bodyLit: '#8a6a4a',
   asteroid: '#c9b89a',
   hull: '#3a3026',
   hullEmissive: '#120d08',
@@ -89,7 +91,30 @@ export const opacity = {
   shipFootprint: 0.55,
   hullEdges: 0.8,
   connector: 0.6,
+  /** Forecast envelope inside an adopted rule's validated span (A5): between sampled and extrapolated. */
+  validatedBody: 0.08,
+  validatedEdge: 0.42,
+  validatedHatch: 0.12,
+  /** Hologram wireframes: a ship drawing, a ghosted hull. */
+  wire: 0.5,
+  wireGhost: 0.07,
+  /** Instrument washes: a hovered row, a selected row, a Black Box highlight. */
+  rowHover: 0.05,
+  rowSelected: 0.11,
+  blackboxWash: 0.08,
+  /** Background of an alert banner, in its level's colour. */
+  alertWash: 0.1,
+  /** Black Box lamp at the low point of its breathe. */
+  lampDim: 0.35,
+  /** A stale reading: its bar or trace is dimmed to this. */
+  staleInstrument: 0.45,
 } as const;
+
+/** '#rrggbb' and an alpha → 'rgba(r, g, b, a)', for CSS. */
+export function rgba(c: string, a: number): string {
+  const n = Number.parseInt(c.slice(1, 7), 16);
+  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
+}
 
 /** '#rrggbb' → 0xrrggbb, for Three.js. */
 export function hex(c: string): number {

@@ -6,14 +6,24 @@
 import type { ObjectiveId } from '../contracts/ids.ts';
 import type { ShipEvent } from '../contracts/measurements.ts';
 import type { TruthWorld } from '../contracts/truth/index.ts';
+import type { Vec3 } from '../lib/vec3.ts';
 import type { ObjectiveRule } from './encounter.ts';
 
 /** Progress of one orbit-band rule. Plain data, part of the game's truth state. */
 export interface BandProgress {
   readonly inside: boolean;
-  /** Direction from the body to the ship at the last tick, rad. */
-  readonly angle: number;
-  /** Signed angle swept about the body since entering the band, rad. */
+  /** Unit vector from the body to the ship at the last tick. */
+  readonly direction: Vec3;
+  /**
+   * Unit normal of the plane the ship is sweeping in, pointing the way that counts as positive.
+   * Absent until the ship has moved about the body inside the band.
+   */
+  readonly normal?: Vec3;
+  /**
+   * Angle swept about the body since entering the band, rad: the angles between successive
+   * directions, added while the ship keeps going round the same way and subtracted when it
+   * turns back. Positive for the way round that is counter-clockwise seen from +z.
+   */
   readonly swept: number;
 }
 
@@ -21,45 +31,150 @@ export interface ObjectiveProgress {
   readonly bands: Readonly<Record<ObjectiveId, BandProgress>>;
   /** Set once: the objective that completed the attempt. */
   readonly completed?: ObjectiveId;
+  /** Δv spent so far, m/s: net thrust over mass, integrated each tick. Absent: none yet. */
+  readonly deltaV?: number;
+  /** `depart` objectives already judged as missed (each is judged once). */
+  readonly missed?: readonly ObjectiveId[];
+}
+
+/** Where the ship stands against a `depart` rule. Truth; for tests and tuning. */
+export interface DepartStatus {
+  /** Distance from the massive bodies' barycentre, m. */
+  readonly distance: number;
+  /** Speed relative to that barycentre, m/s. */
+  readonly speed: number;
+}
+
+/** The ship's distance from, and speed relative to, the massive bodies' barycentre. */
+export function departStatus(world: TruthWorld): DepartStatus {
+  let gm = 0;
+  let px = 0;
+  let py = 0;
+  let pz = 0;
+  let vx = 0;
+  let vy = 0;
+  let vz = 0;
+  for (const b of world.bodies) {
+    gm += b.gm;
+    px += b.gm * b.position.x;
+    py += b.gm * b.position.y;
+    pz += b.gm * b.position.z;
+    // A fixed body does not move, whatever velocity it was given (as the simulation has it).
+    if (b.fixed) continue;
+    vx += b.gm * b.velocity.x;
+    vy += b.gm * b.velocity.y;
+    vz += b.gm * b.velocity.z;
+  }
+  const k = world.ship.kinematics;
+  if (gm === 0)
+    return {
+      distance: Math.hypot(k.position.x, k.position.y, k.position.z),
+      speed: Math.hypot(k.velocity.x, k.velocity.y, k.velocity.z),
+    };
+  return {
+    distance: Math.hypot(k.position.x - px / gm, k.position.y - py / gm, k.position.z - pz / gm),
+    speed: Math.hypot(k.velocity.x - vx / gm, k.velocity.y - vy / gm, k.velocity.z - vz / gm),
+  };
 }
 
 export const initialObjectiveProgress: ObjectiveProgress = { bands: {} };
 
-const wrap = (a: number): number => {
-  const twoPi = 2 * Math.PI;
-  let w = a % twoPi;
-  if (w <= -Math.PI) w += twoPi;
-  else if (w > Math.PI) w -= twoPi;
-  return w;
-};
+/** A sweep must pass its full turns by this much, rad: far above rounding, far below a tick. */
+const FULL_TURN_MARGIN = 1e-9;
+
+/**
+ * One more tick of an orbit-band rule: the ship is at `offset` from the body, `inside` the
+ * band or not. The sweep is counted in three dimensions: each tick adds the angle between the
+ * last direction and this one, signed by whether the turn goes the same way round as the sweep
+ * so far (the cross product of the two directions against the running normal). The normal
+ * follows the plane as it precesses, so an inclined or wobbling orbit counts in full.
+ */
+function sweep(before: BandProgress | undefined, offset: Vec3, inside: boolean): BandProgress {
+  const r = Math.hypot(offset.x, offset.y, offset.z);
+  const direction =
+    r > 0 ? { x: offset.x / r, y: offset.y / r, z: offset.z / r } : { x: 1, y: 0, z: 0 };
+  // Leaving the band, or entering it, starts the count again.
+  if (!inside || !before?.inside) return { inside, direction, swept: 0 };
+  const a = before.direction;
+  const cx = a.y * direction.z - a.z * direction.y;
+  const cy = a.z * direction.x - a.x * direction.z;
+  const cz = a.x * direction.y - a.y * direction.x;
+  const sine = Math.hypot(cx, cy, cz);
+  if (sine === 0) return { ...before, direction };
+  const angle = Math.atan2(sine, a.x * direction.x + a.y * direction.y + a.z * direction.z);
+  /** The axis of this tick's turn, or its opposite. (+ 0: the state never holds a negative zero.) */
+  const axis = (sign: 1 | -1): Vec3 => ({
+    x: (sign * cx) / sine + 0,
+    y: (sign * cy) / sine + 0,
+    z: (sign * cz) / sine + 0,
+  });
+  // Which way round is positive is set by the first movement: counter-clockwise seen from +z
+  // (then from +y, then from +x, for a sweep that is edge-on to the axis before).
+  const n = before.normal;
+  const forward = n
+    ? cx * n.x + cy * n.y + cz * n.z >= 0
+    : cz !== 0
+      ? cz > 0
+      : cy !== 0
+        ? cy > 0
+        : cx > 0;
+  return {
+    inside,
+    direction,
+    normal: axis(forward ? 1 : -1),
+    swept: before.swept + (forward ? angle : -angle),
+  };
+}
 
 /**
  * Advance objective progress to the world's current state. Returns the new progress and the
  * `objective` events the ship notices this tick (reached / missed), stamped with `world.t`.
+ * `spent` is the Δv the ship spent during the tick that led to this state, m/s.
  */
 export function evaluateObjectives(
   rules: readonly ObjectiveRule[],
   progress: ObjectiveProgress,
   world: TruthWorld,
+  spent = 0,
 ): { progress: ObjectiveProgress; events: ShipEvent[] } {
   if (progress.completed) return { progress, events: [] };
   const events: ShipEvent[] = [];
   const bands: Record<ObjectiveId, BandProgress> = { ...progress.bands };
   let completed: ObjectiveId | undefined;
+  const deltaV = (progress.deltaV ?? 0) + spent;
+  let missed = progress.missed;
+
+  for (const rule of rules) {
+    if (rule.kind !== 'depart' || completed || missed?.includes(rule.objective)) continue;
+    const status = departStatus(world);
+    if (status.distance <= rule.beyond) continue;
+    const reached =
+      status.speed >= rule.minSpeed && (rule.maxDeltaV === undefined || deltaV <= rule.maxDeltaV);
+    events.push({
+      kind: 'objective',
+      t: world.t,
+      objective: rule.objective,
+      status: reached ? 'reached' : 'missed',
+    });
+    if (reached) completed = rule.objective;
+    else missed = [...(missed ?? []), rule.objective];
+  }
 
   for (const rule of rules) {
     if (rule.kind !== 'orbit-band') continue;
     const body = world.bodies.find((b) => b.id === rule.body);
     if (!body) continue;
-    const dx = world.ship.kinematics.position.x - body.position.x;
-    const dy = world.ship.kinematics.position.y - body.position.y;
-    const r = Math.hypot(dx, dy);
-    const angle = Math.atan2(dy, dx);
-    const inside = r >= rule.inner && r <= rule.outer;
-    const before = bands[rule.objective];
-    const swept = inside && before?.inside ? before.swept + wrap(angle - before.angle) : 0;
-    bands[rule.objective] = { inside, angle, swept };
-    if (!completed && Math.abs(swept) >= 2 * Math.PI * rule.revolutions) {
+    const offset = {
+      x: world.ship.kinematics.position.x - body.position.x,
+      y: world.ship.kinematics.position.y - body.position.y,
+      z: world.ship.kinematics.position.z - body.position.z,
+    };
+    const r = Math.hypot(offset.x, offset.y, offset.z);
+    const band = sweep(bands[rule.objective], offset, r >= rule.inner && r <= rule.outer);
+    bands[rule.objective] = band;
+    // Past the full turns, by more than rounding: a sweep that ends exactly on a full turn is
+    // decided on the next tick, however the angles happened to round.
+    if (!completed && Math.abs(band.swept) > 2 * Math.PI * rule.revolutions + FULL_TURN_MARGIN) {
       completed = rule.objective;
       events.push({ kind: 'objective', t: world.t, objective: rule.objective, status: 'reached' });
     }
@@ -77,5 +192,13 @@ export function evaluateObjectives(
       });
     }
   }
-  return { progress: completed ? { bands, completed } : { bands }, events };
+  return {
+    progress: {
+      bands,
+      ...(completed ? { completed } : {}),
+      ...(deltaV > 0 ? { deltaV } : {}),
+      ...(missed ? { missed } : {}),
+    },
+    events,
+  };
 }

@@ -3,12 +3,15 @@
  */
 
 import { describe, expect, it } from 'vitest';
+import { HANDS_ON_NEUTRAL, type HandsOnInput } from '../contracts/index.ts';
 import { createGravityRange, LAW } from '../content/gravity-range/index.ts';
 import { hashState } from '../lib/hash.ts';
+import { quat, v3 } from '../lib/index.ts';
 import { burnDuration, burnSteps } from './belief/maneuver.ts';
 import { createBlackBox } from './belief/blackbox.ts';
 import { createStandInModel } from './belief/standin-model.ts';
 import type { PlanDraft } from './belief/controls.ts';
+import type { BlackBoxPort } from './belief/ports.ts';
 import { createGameSession, type GameSession } from './session.ts';
 
 const setup = createGravityRange();
@@ -39,7 +42,7 @@ function dive(session: GameSession, deltaV: number): PlanDraft {
   return {
     name: 'Dive',
     items: burnSteps({
-      at: 400,
+      at: 600,
       duration: burnDuration(session.ship, mass, deltaV),
       attitude: { reference: 'retrograde' },
     }),
@@ -128,14 +131,15 @@ describe('game session: prepare, operate', () => {
     expect(view.trail.map((p) => p.t)).toEqual([
       0, 60, 120, 180, 240, 300, 360, 420, 480, 540, 600,
     ]);
-    expect(view.ship.footprint.length).toBeGreaterThan(3);
-    expect(view.coverage.sectors[0]).toMatchObject({ sensor: 'camera' });
-    // The camera is locked on Alpha, so its sector points along the believed line to it.
-    expect(Math.abs(view.coverage.sectors[0]!.center)).toBeLessThan(0.1);
-    // The objective ring follows Alpha's believed position.
+    expect(view.ship.hull[0]!.outline.length).toBeGreaterThan(3);
+    expect(view.coverage.cones[0]).toMatchObject({ sensor: 'camera' });
+    // The camera is locked on Alpha, so its cone points along the believed line to it.
+    expect(Math.abs(v3.azimuthOf(view.coverage.cones[0]!.axis))).toBeLessThan(0.1);
+    // The objective is the briefing's: leave the binary (A6).
     expect(view.objectives[0]).toMatchObject({
-      id: 'low-orbit',
-      region: { center: alpha.position },
+      id: 'depart',
+      kind: 'depart',
+      depart: { minSpeed: 50 },
     });
     expect(view.world.ship.propellant['main-propellant']!.mean).toBe(6000);
   });
@@ -144,27 +148,29 @@ describe('game session: prepare, operate', () => {
 describe('game session: commit a plan', () => {
   it('issues a frozen forecast, records plan and forecast, and executes the plan', async () => {
     const { session, blackBox } = start();
-    session.stepTicks(300);
+    // Committed at 100 s, so the burn (600 s later) is at 700 s as it always was; the turn now
+    // starts 480 s before it, because the ship turns no faster than its star trackers allow.
+    session.stepTicks(100);
     const forecast = await session.commit(dive(session, 9.85));
     expect(Object.isFrozen(forecast)).toBe(true);
     expect(Object.isFrozen(forecast.samples)).toBe(true);
     expect(forecast).toMatchObject({
       id: 'forecast-0001',
       attemptId: 'attempt-0001',
-      issuedAt: 300,
+      issuedAt: 100,
     });
     expect(forecast.samples.length).toBeGreaterThan(20);
     expect(session.status()).toMatchObject({ planId: 'plan-0001', pending: 3 });
     expect(session.snapshot().forecasts).toEqual([forecast]);
 
-    session.stepTicks(450);
+    session.stepTicks(650);
     const record = blackBox.attempt('attempt-0001')!;
     expect(record.plans).toHaveLength(1);
-    expect(record.plans[0]).toMatchObject({ id: 'plan-0001', name: 'Dive', epoch: 300 });
+    expect(record.plans[0]).toMatchObject({ id: 'plan-0001', name: 'Dive', epoch: 100 });
     expect(record.forecasts).toEqual([forecast]);
     const planned = record.executed.filter((e) => e.source === 'plan');
     expect(planned.map((e) => [e.t, e.command.kind, e.planItemId, e.status])).toEqual([
-      [400, 'attitude', 'plan-0001-1', 'executed'],
+      [220, 'attitude', 'plan-0001-1', 'executed'],
       [700, 'burn', 'plan-0001-2', 'executed'],
       [718, 'attitude', 'plan-0001-3', 'executed'],
     ]);
@@ -173,7 +179,7 @@ describe('game session: commit a plan', () => {
     if (burn.kind !== 'burn' || burn.attitude?.reference !== 'inertial')
       throw new Error('unresolved');
     // The ship has moved 700 s (0.07 rad) round its orbit since arrival.
-    expect(burn.attitude.angle).toBeCloseTo(Math.PI / 2 + 0.07, 1);
+    expect(quat.yawOf(burn.attitude.attitude)).toBeCloseTo(Math.PI / 2 + 0.07, 1);
     expect(record.plans[0]!.items[1]!.command).toMatchObject({
       attitude: { reference: 'retrograde' },
     });
@@ -201,7 +207,7 @@ describe('game session: commit a plan', () => {
     session.stepTicks(1000);
     const executed = blackBox.attempt('attempt-0001')!.executed.filter((e) => e.source === 'plan');
     expect(executed.map((e) => [e.t, e.command.kind, e.planId])).toEqual([
-      [110, 'attitude', 'plan-0001'],
+      [130, 'attitude', 'plan-0001'],
       [240, 'mark', 'plan-0002'],
     ]);
     expect(session.snapshot().forecasts.map((f) => f.id)).toEqual([
@@ -218,6 +224,41 @@ describe('game session: commit a plan', () => {
     expect(session.status().pending).toBe(0);
     expect(blackBox.attempt('attempt-0001')!.plans).toEqual([]);
     expect(blackBox.attempt('attempt-0001')!.forecasts).toEqual([]);
+  });
+
+  it('keeps the forecast detail through preview, commit and Black Box', async () => {
+    const { session, blackBox } = start();
+    session.stepTicks(100);
+    const draft = await session.preview(dive(session, 9.85));
+    expect(draft.detail!.sigmaMajor).toHaveLength(draft.samples.length);
+    expect(draft.detail!.presentSource).toBe('navigator');
+    const forecast = await session.commit(dive(session, 9.85));
+    expect(forecast.detail!.sigmaMajor).toHaveLength(forecast.samples.length);
+    expect(Object.isFrozen(forecast.detail)).toBe(true);
+    expect(blackBox.attempt('attempt-0001')!.forecasts[0]!.detail).toEqual(forecast.detail);
+    // The planned burn's attitude, resolved as the ship will resolve it, is in the record too.
+    expect(forecast.inputs.plannedAttitudes).toHaveLength(1);
+    expect(forecast.inputs.plannedAttitudes![0]!.t).toBe(700);
+  });
+
+  it('charts the encounter: its attempts, and what the model has measured there', () => {
+    const { session } = start();
+    expect(session.chart().regions[0]).toMatchObject({
+      id: 'gravity-range',
+      surveyed: 0,
+      current: true,
+      attempts: [{ index: 1, outcome: 'in-progress' }],
+    });
+    session.stepTicks(100);
+    session.recall();
+    // Alpha's pull has been measured (fixes at r0); Beta's has not, and no rule is adopted.
+    expect(session.chart().regions[0]).toMatchObject({
+      surveyed: 1 / 3,
+      attempts: [
+        { index: 1, outcome: 'recalled' },
+        { index: 2, outcome: 'in-progress' },
+      ],
+    });
   });
 
   it('holds time still while a commit waits for its forecast', async () => {
@@ -327,7 +368,8 @@ describe('game session: recurrence v0 (P8)', () => {
     // A rock 300 m ahead, closing at 30 m/s.
     const world = setup.definition.world;
     const k = world.ship.kinematics;
-    const dir = { x: Math.cos(k.attitude), y: Math.sin(k.attitude) };
+    const yaw = quat.yawOf(k.attitude);
+    const dir = { x: Math.cos(yaw), y: Math.sin(yaw) };
     const blocked = {
       ...setup,
       definition: {
@@ -339,8 +381,8 @@ describe('game session: recurrence v0 (P8)', () => {
             {
               id: 'rock',
               radius: 50,
-              position: { x: k.position.x + dir.x * 300, y: k.position.y + dir.y * 300 },
-              velocity: { x: k.velocity.x - dir.x * 30, y: k.velocity.y - dir.y * 30 },
+              position: { x: k.position.x + dir.x * 300, y: k.position.y + dir.y * 300, z: 0 },
+              velocity: { x: k.velocity.x - dir.x * 30, y: k.velocity.y - dir.y * 30, z: 0 },
             },
           ],
         },
@@ -371,5 +413,129 @@ describe('game session: recurrence v0 (P8)', () => {
     session.restart();
     expect(session.status()).toMatchObject({ phase: 'prepare', attemptIndex: 2, t: 0 });
     expect(blackBox.archive().attempts).toHaveLength(2);
+  });
+});
+
+describe('game session: hands-on flying (A8, A11)', () => {
+  const thrust: HandsOnInput = { ...HANDS_ON_NEUTRAL, throttle: 1 };
+  const turn: HandsOnInput = { ...HANDS_ON_NEUTRAL, yaw: 0.5 };
+  /** Lets a forecast the stand-in model has already worked out be issued and recorded. */
+  const settle = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
+  /** The `fly` commands in an attempt's record. */
+  const flown = (blackBox: BlackBoxPort, attempt = 'attempt-0001') =>
+    blackBox.attempt(attempt)!.executed.filter((e) => e.command.kind === 'fly');
+
+  it('sends a changed input to the ship as one executed command, and a repeated one not at all', () => {
+    const { session, blackBox } = start();
+    session.stepTicks(5);
+    // An attempt starts with the controls released, so a neutral input is nothing new.
+    session.fly(HANDS_ON_NEUTRAL);
+    session.fly(turn);
+    session.fly({ ...turn });
+    session.stepTicks(1);
+    session.fly(turn);
+    session.stepTicks(3);
+    expect(flown(blackBox).map((e) => [e.t, e.source, e.status])).toEqual([
+      [5, 'manual', 'executed'],
+    ]);
+    expect(flown(blackBox)[0]!.command).toEqual({ kind: 'fly', input: turn });
+    session.fly(thrust);
+    session.stepTicks(1);
+    expect(flown(blackBox).map((e) => [e.t, e.status])).toEqual([
+      [5, 'executed'],
+      [9, 'executed'],
+    ]);
+  });
+
+  it('issues one frozen, recorded coasting forecast on release, while time keeps running', async () => {
+    const { session, blackBox } = start(() => 0);
+    session.setPaused(false);
+    session.advance(5);
+    session.fly(thrust);
+    session.advance(3);
+    expect(session.snapshot().forecasts).toEqual([]);
+    session.fly(HANDS_ON_NEUTRAL);
+    session.fly(HANDS_ON_NEUTRAL);
+    // Unlike a commit, a release does not hold time while its forecast is on the way.
+    expect(session.status().committing).toBe(false);
+    expect(session.advance(4)).toBe(4);
+    await settle();
+
+    const issued = session.snapshot().forecasts;
+    expect(issued).toHaveLength(1);
+    const forecast = issued[0]!;
+    expect(Object.isFrozen(forecast)).toBe(true);
+    expect(Object.isFrozen(forecast.samples)).toBe(true);
+    expect(forecast).toMatchObject({
+      id: 'forecast-0001',
+      attemptId: 'attempt-0001',
+      issuedAt: 8,
+    });
+    expect(forecast.inputs.plan.epoch).toBe(8);
+    expect(forecast.inputs.plan.items).toEqual([]);
+    expect(forecast.samples.length).toBeGreaterThan(20);
+    const record = blackBox.attempt('attempt-0001')!;
+    expect(record.forecasts).toEqual([forecast]);
+    // Nothing was committed or scheduled.
+    expect(record.plans).toEqual([]);
+    expect(session.status()).toMatchObject({ t: 12, pending: 0 });
+    expect(session.status().planId).toBeUndefined();
+    expect(flown(blackBox).map((e) => [e.t, e.status])).toEqual([
+      [5, 'executed'],
+      [8, 'executed'],
+    ]);
+  });
+
+  it('leaves a plan that is still scheduled alone', async () => {
+    const { session, blackBox } = start();
+    session.stepTicks(10);
+    await session.commit({ items: [{ at: 500, command: { kind: 'mark', label: 'later' } }] });
+    session.fly(thrust);
+    session.stepTicks(2);
+    session.fly(HANDS_ON_NEUTRAL);
+    session.stepTicks(2);
+    await settle();
+    expect(session.status()).toMatchObject({ planId: 'plan-0001', pending: 1 });
+    expect(session.snapshot().forecasts.map((f) => [f.id, f.inputs.plan.items.length])).toEqual([
+      ['forecast-0001', 1],
+      ['forecast-0002', 0],
+    ]);
+    expect(blackBox.attempt('attempt-0001')!.plans.map((p) => p.id)).toEqual(['plan-0001']);
+  });
+
+  it('forgets the controls when a new attempt begins', async () => {
+    const { session, blackBox } = start();
+    session.stepTicks(3);
+    session.fly(thrust);
+    session.stepTicks(2);
+    session.recall();
+    // Released again at arrival: a neutral input is nothing new, the same thrust is.
+    session.fly(HANDS_ON_NEUTRAL);
+    session.fly(thrust);
+    session.stepTicks(1);
+    await settle();
+    expect(flown(blackBox, 'attempt-0002').map((e) => [e.t, e.status])).toEqual([[0, 'executed']]);
+    expect(session.snapshot().forecasts).toEqual([]);
+  });
+
+  it('carries on when the model cannot forecast the coast', async () => {
+    const blackBox = createBlackBox();
+    const session = createGameSession(setup, {
+      model: {
+        ...createStandInModel({ referenceRadius: LAW.referenceRadius }),
+        forecast: () => Promise.reject(new Error('model down')),
+      },
+      blackBox,
+      now: () => 'now',
+    });
+    session.stepTicks(3);
+    session.fly(thrust);
+    session.stepTicks(2);
+    session.fly(HANDS_ON_NEUTRAL);
+    expect(session.stepTicks(5)).toBe(5);
+    await settle();
+    expect(session.snapshot().forecasts).toEqual([]);
+    expect(blackBox.attempt('attempt-0001')!.forecasts).toEqual([]);
+    expect(session.status()).toMatchObject({ phase: 'operate', t: 10 });
   });
 });

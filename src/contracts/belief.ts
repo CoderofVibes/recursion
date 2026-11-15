@@ -5,8 +5,9 @@
  * sensed are absent or flagged untracked; positions carry uncertainty.
  */
 
-import type { Vec2 } from '../lib/vec2.ts';
-import type { Cov2, Gaussian } from './estimates.ts';
+import type { Quat } from '../lib/quat.ts';
+import type { Vec3 } from '../lib/vec3.ts';
+import type { Cov3, Gaussian } from './estimates.ts';
 import type {
   AsteroidId,
   BodyId,
@@ -17,20 +18,24 @@ import type {
   TelemetryChannel,
 } from './ids.ts';
 import type { MassProperties } from './ship.ts';
-import type { JsonValue, Meters, Radians, RadiansPerSecond, Seconds, Watts } from './units.ts';
+import type { JsonValue, Meters, Radians, Seconds, Watts } from './units.ts';
 
 /** Navigation estimate of the ship's kinematic state. */
 export interface ShipEstimate {
   readonly t: Seconds;
-  readonly position: Vec2;
-  readonly velocity: Vec2;
+  /** Centre of mass, inertial. */
+  readonly position: Vec3;
+  readonly velocity: Vec3;
   /** m². */
-  readonly positionCov: Cov2;
+  readonly positionCov: Cov3;
   /** (m/s)². */
-  readonly velocityCov: Cov2;
-  readonly attitude: Radians;
+  readonly velocityCov: Cov3;
+  /** Body to inertial. */
+  readonly attitude: Quat;
+  /** One-sigma attitude error about any axis. */
   readonly attitudeSigma: Radians;
-  readonly angularRate: RadiansPerSecond;
+  /** Body frame, rad/s. */
+  readonly angularVelocity: Vec3;
 }
 
 export interface TelemetryReading {
@@ -71,9 +76,9 @@ export interface BelievedShip extends ShipEstimate {
 export interface BelievedBody {
   readonly id: BodyId;
   readonly name: string;
-  readonly position: Vec2;
-  readonly velocity: Vec2;
-  readonly positionCov: Cov2;
+  readonly position: Vec3;
+  readonly velocity: Vec3;
+  readonly positionCov: Cov3;
   readonly radius: Meters;
   /** Currently being tracked by a sensor. */
   readonly tracked: boolean;
@@ -82,9 +87,9 @@ export interface BelievedBody {
 
 export interface BelievedAsteroid {
   readonly id: AsteroidId;
-  readonly position: Vec2;
-  readonly velocity: Vec2;
-  readonly positionCov: Cov2;
+  readonly position: Vec3;
+  readonly velocity: Vec3;
+  readonly positionCov: Cov3;
   readonly radius: Meters;
   readonly tracked: boolean;
   readonly lastSeen?: Seconds;

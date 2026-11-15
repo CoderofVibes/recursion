@@ -6,12 +6,17 @@
  * With a store, the attempt in progress is saved now and then and again when it ends, so data
  * up to the moment of loss survives a closed tab (2C handoff). An attempt that was still in
  * progress when a save was last written is closed as recalled at its last recorded time.
+ *
+ * Saved procedures (P9) live in the archive beside the attempts and are written to the store
+ * when they are saved or removed, so they outlast both recurrence and a reload.
  */
 
 import {
   AttemptRecorder,
   emptyArchive,
   withAttempt,
+  withProcedure,
+  withoutProcedure,
   type AttemptHeader,
   type BlackBoxStore,
 } from '../../blackbox/index.ts';
@@ -109,6 +114,15 @@ export function createBlackBox(options: BlackBoxOptions = {}): BlackBoxPort {
     attempt(attemptId) {
       if (recorder?.id === attemptId) return inProgress();
       return archive.attempts.find((a) => a.id === attemptId);
+    },
+    saveProcedure(procedure) {
+      archive = withProcedure(archive, procedure);
+      void store?.putProcedure(procedure).catch(() => undefined);
+    },
+    removeProcedure(id) {
+      if (!archive.procedures.some((p) => p.id === id)) return;
+      archive = withoutProcedure(archive, id);
+      void store?.deleteProcedure(id).catch(() => undefined);
     },
     archive() {
       const live = inProgress();

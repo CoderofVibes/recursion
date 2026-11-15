@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import baseline from '../../../data/ship-baseline.json';
 import type { EnvironmentEffects, ShipSystemsState } from '../../contracts/truth/ship.ts';
+import { fromYaw } from '../../lib/quat.ts';
 import { loadShipDefinition } from '../definition.ts';
 import { createShipSystemsState } from '../state.ts';
 import { computeMassProperties } from '../massprops/massprops.ts';
@@ -8,12 +9,17 @@ import { preparePropulsion, stepPropulsion } from './propulsion.ts';
 
 const env: EnvironmentEffects = {
   t: 0,
-  kinematics: { position: { x: 0, y: 0 }, velocity: { x: 0, y: 0 }, attitude: 0, angularRate: 0 },
-  specificForce: { x: 0, y: 0 },
+  kinematics: {
+    position: { x: 0, y: 0, z: 0 },
+    velocity: { x: 0, y: 0, z: 0 },
+    attitude: fromYaw(0),
+    angularVelocity: { x: 0, y: 0, z: 0 },
+  },
+  specificForce: { x: 0, y: 0, z: 0 },
   targets: [],
   intensity: {},
   fieldSignals: {},
-  sunlight: { direction: { x: 1, y: 0 }, irradiance: 0 },
+  sunlight: { direction: { x: 1, y: 0, z: 0 }, irradiance: 0 },
 };
 const definition = loadShipDefinition();
 function burning(id = 'main-engine', throttle = 1): ShipSystemsState {
@@ -40,7 +46,7 @@ describe('propulsion (C02, C10)', () => {
     const state = preparePropulsion(
       {
         ...initial,
-        attitudeTarget: { reference: 'inertial', angle: 0.3 },
+        attitudeTarget: { reference: 'inertial', attitude: fromYaw(0.3) },
         equipment: {
           ...initial.equipment,
           [pod.id]: { ...pod, powerDraw: 40, values: { ...pod.values, controlInhibited: 1 } },
@@ -64,7 +70,7 @@ describe('propulsion (C02, C10)', () => {
     for (let i = 0; i < 200; i++) {
       const result = stepPropulsion(state, definition, env, dt);
       const force = result.thrusts[0]!.force;
-      const impulse = Math.hypot(force.x, force.y) * dt;
+      const impulse = Math.hypot(force.x, force.y, force.z) * dt;
       const consumed = state.tanks['main-propellant']! - result.state.tanks['main-propellant']!;
       expect(consumed).toBeCloseTo(impulse / (320 * baseline.constants.g0.value), 10);
       integratedDeltaV +=
@@ -84,7 +90,10 @@ describe('propulsion (C02, C10)', () => {
     const state = { ...start, tanks: { ...start.tanks, 'main-propellant': 0.01 } };
     const result = stepPropulsion(state, definition, env, 1);
     const force = result.thrusts[0]!.force;
-    expect(Math.hypot(force.x, force.y)).toBeCloseTo(0.01 * 320 * baseline.constants.g0.value, 10);
+    expect(Math.hypot(force.x, force.y, force.z)).toBeCloseTo(
+      0.01 * 320 * baseline.constants.g0.value,
+      10,
+    );
     expect(result.state.tanks['main-propellant']).toBe(0);
     expect(result.events.filter((event) => event.kind === 'propellant-depleted')).toHaveLength(1);
     const next = stepPropulsion(result.state, definition, env, 1);
@@ -134,8 +143,8 @@ describe('propulsion (C02, C10)', () => {
       },
     };
     const result = stepPropulsion(tilted, definition, env, 1);
-    expect(result.torque).toBe(0);
-    expect(result.thrusts[0]!.point).toEqual({ x: -7, y: 0.08 });
+    expect(result.torque).toEqual({ x: 0, y: 0, z: 0 });
+    expect(result.thrusts[0]!.point).toEqual({ x: -7, y: 0.08, z: 0 });
     expect(Math.atan2(result.thrusts[0]!.force.y, result.thrusts[0]!.force.x)).toBeCloseTo(
       0.18,
       12,
@@ -145,7 +154,7 @@ describe('propulsion (C02, C10)', () => {
   it('uses finite RCS force and propellant for attitude hold and is deterministic', () => {
     const initial = createShipSystemsState(definition);
     let state = preparePropulsion(
-      { ...initial, attitudeTarget: { reference: 'inertial', angle: 0.3 } },
+      { ...initial, attitudeTarget: { reference: 'inertial', attitude: fromYaw(0.3) } },
       definition,
       env,
     );
@@ -161,14 +170,19 @@ describe('propulsion (C02, C10)', () => {
     const result = stepPropulsion(state, definition, env, 1);
     expect(result).toEqual(stepPropulsion(state, definition, env, 1));
     expect(state).toEqual(before);
-    expect(result.thrusts).toHaveLength(4);
-    expect(result.torque).toBe(0);
+    // A left turn is the lateral couple: the forward-right and aft-left pods, one jet each.
+    expect(result.thrusts.map((thrust) => thrust.source)).toEqual([
+      'rcs-forward-right',
+      'rcs-aft-left',
+    ]);
+    expect(result.torque).toEqual({ x: 0, y: 0, z: 0 });
     expect(result.state.tanks['rcs-left']).toBeLessThan(150);
     const sum = result.thrusts.reduce(
-      (v, force) => ({ x: v.x + force.force.x, y: v.y + force.force.y }),
-      { x: 0, y: 0 },
+      (v, force) => ({ x: v.x + force.force.x, y: v.y + force.force.y, z: v.z + force.force.z }),
+      { x: 0, y: 0, z: 0 },
     );
     expect(sum.x).toBeCloseTo(0, 10);
     expect(sum.y).toBeCloseTo(0, 10);
+    expect(sum.z).toBeCloseTo(0, 10);
   });
 });

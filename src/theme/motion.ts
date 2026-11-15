@@ -26,4 +26,12 @@ export const motion = {
   },
   /** OrbitControls damping factor. */
   cameraDamping: 0.08,
+  /**
+   * Fastest a display may turn with the ship, rad/s. The window and a heading-up hologram follow
+   * the ship's attitude, but time warp never speeds up interface motion: above this rate the
+   * display lags the ship rather than spinning.
+   */
+  maxDisplayTurn: 0.35,
+  /** How long the hands are off the flight controls before the coasting forecast is issued. */
+  coastForecastDelay: 350,
 } as const;

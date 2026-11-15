@@ -70,10 +70,14 @@ function trainAndHoldOut(
   train: readonly AttemptRecord[],
   held: AttemptRecord,
   probes?: ReadonlyMap<AttemptId, readonly Arc[]>,
+  unusable?: ReadonlyMap<AttemptId, string>,
 ): Trained {
   const spec = modelSpec(ctx, adopted);
   const s = spec.settings;
-  const problem = tierGProblem(ctx, spec, [...train, held], probes ? { probes } : {});
+  const problem = tierGProblem(ctx, spec, [...train, held], {
+    ...(probes ? { probes } : {}),
+    ...(unusable ? { unusable } : {}),
+  });
   const heldArcs = problem.builds.get(held.id)?.arcs ?? [];
   if (heldArcs.length === 0) throw new Error(`held-out attempt ${held.id} has no fittable arc`);
   const heldArc = heldArcs.reduce((a, b) => (b.meas.length > a.meas.length ? b : a));
@@ -127,6 +131,8 @@ export function testExtension(
   modelVersion: number,
   /** Tracked asteroids' probe arcs per attempt (the model's Tier L builds them). */
   probes?: ReadonlyMap<AttemptId, readonly Arc[]>,
+  /** Attempts the model could not use (`ModelDerived.unusable`): they give no arcs here either. */
+  unusable?: ReadonlyMap<AttemptId, string>,
 ): ExtensionRecord {
   if (!isTestableExtension(ext)) throw new Error(`extension ${ext} cannot be fitted by this model`);
   if (training.includes(heldOutId))
@@ -141,8 +147,8 @@ export function testExtension(
   if (!held) throw new Error(`unknown attempt ${heldOutId}`);
   const baseAdopted = adopted.filter((e) => e !== ext);
   const withExt = [...baseAdopted, ext];
-  const base = trainAndHoldOut(ctx, baseAdopted, train, held, probes);
-  const extd = trainAndHoldOut(ctx, withExt, train, held, probes);
+  const base = trainAndHoldOut(ctx, baseAdopted, train, held, probes, unusable);
+  const extd = trainAndHoldOut(ctx, withExt, train, held, probes, unusable);
   const added = extd.problem.globals.filter((g) => !base.problem.globals.includes(g));
   const ev = evidence(base.fit, extd.fit, added.length);
   const priorSigma: Record<string, number> = {};
@@ -188,6 +194,7 @@ export function testExtension(
           P: null,
           rel: [],
           scale: Float64Array.from(extd.problem.params, (p) => p.scale),
+          fromGlobalFit: extd.fit.converged,
         },
       ]),
     );
@@ -216,13 +223,13 @@ export function testExtension(
           a.id !== extd.heldArcId &&
           train.some((r) => attemptOfArc(a.id) === r.id),
       )
-      .flatMap((a) => rangeFixes(a, spec.primary).map((m) => m.z[1]!));
+      .flatMap((a) => rangeFixes(a, spec.primary).map((m) => m.z[2]!));
     // Every fit of the test counts toward the span: the ship's fixes and, around the body
     // they were measured from, the tracked asteroids' (A5).
     const probeRanges = (body: string) =>
       extd.problem.arcs
         .filter((a) => isProbeArc(a.id) && inTest(a))
-        .flatMap((a) => rangeFixes(a, body).map((m) => m.z[1]!));
+        .flatMap((a) => rangeFixes(a, body).map((m) => m.z[2]!));
     if (ranges.length > 0) {
       const sigmaN = extd.fit.names.includes(EXPONENT_ID) ? fitGet(extd.fit, EXPONENT_ID)[1] : 0;
       const eh = earnedHedge(
@@ -244,7 +251,7 @@ export function testExtension(
         });
         const testArcs = extd.problem.arcs.filter(inTest);
         for (const body of spec.bodies.slice(1)) {
-          const r = testArcs.flatMap((a) => rangeFixes(a, body).map((m) => m.z[1]!));
+          const r = testArcs.flatMap((a) => rangeFixes(a, body).map((m) => m.z[2]!));
           if (r.length > 0)
             spans.push({
               body,

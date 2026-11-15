@@ -1,9 +1,10 @@
 import baseline from '../../data/ship-baseline.json';
-import type { ShipDefinition } from '../contracts/ship.ts';
+import { isotropicInertia, type ShipDefinition } from '../contracts/ship.ts';
 import type { EquipmentState, ShipSystemsState } from '../contracts/truth/ship.ts';
 import { createRng } from '../lib/rng.ts';
 import { loadShipDefinition } from './definition.ts';
 import { computeMassProperties } from './massprops/index.ts';
+import { sensorStreamNames } from './sensors/index.ts';
 
 /** A fresh physical arrival. Recurrence/archive ownership remains with the game layer. */
 export function createShipSystemsState(
@@ -27,7 +28,7 @@ export function createShipSystemsState(
           bank: 0,
           selectedJet: 0,
         });
-      if (e.id === 'main-engine') values.gimbal = 0;
+      if (e.id === 'main-engine') Object.assign(values, { gimbal: 0, gimbalPitch: 0 });
       const deployment = definition.configurations.find(
         (c) => c.id === definition.defaultConfiguration,
       )?.paramOverrides?.[`${e.id}.deployment`];
@@ -49,9 +50,8 @@ export function createShipSystemsState(
     }),
   );
   const root = createRng(seed);
-  const streams = definition.equipment
-    .filter((e) => ['optical-tracker', 'accelerometer', 'star-tracker', 'gyro'].includes(e.kind))
-    .map((e) => `sensors.${e.id}`);
+  // One stream per instrument for its planar components and one for its out-of-plane ones.
+  const streams = sensorStreamNames(definition);
   const state: ShipSystemsState = {
     t: 0,
     configuration: definition.defaultConfiguration,
@@ -68,7 +68,12 @@ export function createShipSystemsState(
     exposure: {},
     attitudeTarget: { reference: 'free' },
     burns: [],
-    massProperties: { mass: 0, centerOfMass: { x: 0, y: 0 }, inertia: 0, footprint: [] },
+    massProperties: {
+      mass: 0,
+      centerOfMass: { x: 0, y: 0, z: 0 },
+      inertia: isotropicInertia(0),
+      hull: [],
+    },
     rng: Object.fromEntries(streams.map((name) => [name, root.stream(name).getState()])),
     ext: {},
   };

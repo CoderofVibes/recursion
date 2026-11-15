@@ -8,7 +8,7 @@
  * Field implementations live in src/sim/fields/<kind>.ts.
  */
 
-import type { Vec2 } from '../../lib/vec2.ts';
+import type { Vec3 } from '../../lib/vec3.ts';
 import type { FieldId } from '../ids.ts';
 import type { JsonValue, LatticeIntensity, Seconds } from '../units.ts';
 
@@ -24,24 +24,24 @@ export interface EnvironmentField {
   readonly id: FieldId;
   readonly kind: string;
   /** Extra acceleration on any particle (ship, asteroid) at a position, inertial m/s². */
-  acceleration?(position: Vec2, t: Seconds): Vec2;
+  acceleration?(position: Vec3, t: Seconds): Vec3;
   /**
    * Thrust response: given the nominal thrust force (inertial, N) on the ship at a position
    * and velocity, return the force actually applied. Identity outside the field.
    */
-  modifyThrust?(force: Vec2, position: Vec2, velocity: Vec2, t: Seconds): Vec2;
+  modifyThrust?(force: Vec3, position: Vec3, velocity: Vec3, t: Seconds): Vec3;
   /**
-   * Lattice intensity at a point in the flight plane. The game layer samples it over each
+   * Lattice intensity at a point in space. The game layer samples it over each
    * equipment item's occupied geometry (never just the ship's centre of mass, 1C).
    */
-  intensity?(position: Vec2, t: Seconds): LatticeIntensity;
+  intensity?(position: Vec3, t: Seconds): LatticeIntensity;
   /** Raw signal sensors could pick up at a position (processed by ship systems). */
-  signal?(position: Vec2, t: Seconds): JsonValue;
+  signal?(position: Vec3, t: Seconds): JsonValue;
   /**
    * True inside the field's region. When it changes for the ship between steps, the
    * simulation emits a `field-boundary` SimEvent (2A request). Omit for fields with no edge.
    */
-  inside?(position: Vec2, t: Seconds): boolean;
+  inside?(position: Vec3, t: Seconds): boolean;
 }
 
 export interface FieldFactory {

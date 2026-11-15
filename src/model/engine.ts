@@ -1,5 +1,8 @@
 /**
- * The predictive model as the game uses it (1G spec §3, §4, §5, §8.1, §11; DECISIONS A4, P5, P8).
+ * The predictive model as the game uses it (1G spec revision 3: §3, §4, §5, §8.1, §11; DECISIONS
+ * A4, A11, P5, P8). Three-dimensional: six state numbers per arc and per moving body, both thrust
+ * misalignment angles, the RCS scale, and the camera misalignment as a rotation in the body
+ * frame. `settings.planar` runs the planar reduction (spec Appendix A.3) for planar records.
  *
  * buildModel() is a pure, deterministic function of the Black Box records, the encounter
  * briefing and the adopted extensions: Tier G over every retained arc, then Tier L (windows,
@@ -15,6 +18,7 @@ import type {
   BelievedAsteroid,
   BelievedBody,
   CalibrationProfile,
+  Cov3,
   CovarianceMatrix,
   DataSupport,
   EncounterBriefing,
@@ -39,18 +43,25 @@ import {
   transitHistory,
   type AgingHistory,
 } from './aging.ts';
-import { arcsFromRecord, type ArcBuild, type Burn } from './adapt.ts';
+import { RCS_GROUP, arcsFromRecord, type ArcBuild, type Burn } from './adapt.ts';
 import {
+  MIN_ARC_FIXES,
+  bodyRefs,
   compileArc,
+  hasRange,
+  lineOfSight,
+  rangeFixTimes,
+  segmentPowered,
+  shipRefs,
   simulate,
   usable,
-  SHIP_REFS,
   type Arc,
   type ArcSolution as DynArcSolution,
   type BodyDef,
-  type ProfileDef,
   type EngineDef,
   type Ref,
+  type Refs3,
+  type State6,
   type Structure,
   type ThrustSegment,
 } from './dynamics.ts';
@@ -72,11 +83,12 @@ import {
   rangeFixes,
   shipParams,
   type Anchor,
+  type EngineValues,
   type FrozenBody,
   type LocalFitResult,
   type ProfileFit,
   type ReferenceLaw,
-  type Window,
+  type Vec3T,
   type WindowFit,
   type WindowRule,
 } from './tierL.ts';
@@ -135,7 +147,21 @@ export function contextFor(ctx: ModelContext, rec?: Pick<AttemptRecord, 'start'>
 export const muId = (body: string) => `body.${body}.mu`;
 export const EXPONENT_ID = 'law.gravity.exponent';
 export const scaleId = (thr: string) => `thruster.${thr}.scale`;
+/** Thrust misalignment about body +z (toward +y): the planar angle, spec `engine.dE`. */
 export const misalignId = (thr: string) => `thruster.${thr}.misalignment`;
+/** Thrust misalignment about body −y (toward +z): spec `engine.dP`. */
+export const pitchId = (thr: string) => `thruster.${thr}.misalignment-pitch`;
+/** The RCS translation scale, spec `rcs.kR` (`rcs` is the group, not an equipment id). */
+export const RCS_SCALE_ID = scaleId(RCS_GROUP);
+/**
+ * The camera misalignment's parameter ids about body x, y and z (spec `camera.bias.x, .y, .z`):
+ * the planar `sensor.<camera>.bias` is the z component.
+ */
+export const cameraIds = (camera: string): readonly [string, string, string] => [
+  `sensor.${camera}.bias-x`,
+  `sensor.${camera}.bias-y`,
+  `sensor.${camera}.bias`,
+];
 
 /** Extension ids: 'distance-law', and 'unmodeled-body:<bodyId>' (seen mode, spec §6.3). */
 export function extensionBody(ext: ExtensionId): string | null {
@@ -149,6 +175,8 @@ export interface ModelSpec {
   readonly exponent: boolean;
   readonly dynamic: boolean;
   readonly cameraId: string;
+  /** Planar reduction (spec Appendix A.3, `settings.planar`). */
+  readonly planar: boolean;
   readonly settings: ModelSettings;
 }
 
@@ -181,6 +209,7 @@ export function modelSpec(ctx: ModelContext, adopted: readonly ExtensionId[]): M
     exponent: adopted.includes('distance-law'),
     dynamic: !ctx.fixedBodies && bodies.length > 1,
     cameraId: camera,
+    planar: settings.planar === 1,
     settings,
   };
 }
@@ -202,67 +231,55 @@ function briefingBody(ctx: ModelContext, id: string): BelievedBody | undefined {
 
 /**
  * Other modelled bodies relative to the primary (primary at rest) at time t, from the briefing
- * at t = 0 propagated with the arrival priors. Rows: [x, y, vx, vy] per non-primary body.
+ * at t = 0 propagated with the arrival priors. Rows: [x, y, z, vx, vy, vz] per non-primary body
+ * (z and vz are 0 in the planar reduction).
  */
-/** The law and masses in force: fitted values when there are any, else the arrival priors. */
-export interface LawInForce {
-  readonly n: number;
-  readonly mu: (body: string) => number;
-}
-
-export function lawInForce(
-  ctx: ModelContext,
-  spec: ModelSpec,
-  values?: Readonly<Record<string, number>>,
-): LawInForce {
-  const prior = (id: string) => priorOf(ctx, id)?.value;
-  return {
-    n: spec.exponent ? (values?.[EXPONENT_ID] ?? prior(EXPONENT_ID) ?? 2) : 2,
-    mu: (b) => values?.[muId(b)] ?? prior(muId(b)) ?? 0,
-  };
-}
-
-export function briefingBodiesAt(
-  ctx: ModelContext,
-  spec: ModelSpec,
-  t: number,
-  law: LawInForce = lawInForce(ctx, spec),
-): number[][] {
+export function briefingBodiesAt(ctx: ModelContext, spec: ModelSpec, t: number): State6[] {
   const p = briefingBody(ctx, spec.primary);
-  const rel = spec.bodies.slice(1).map((id) => {
+  const out = spec.planar ? 0 : 1;
+  const rel: State6[] = spec.bodies.slice(1).map((id) => {
     const b = briefingBody(ctx, id);
-    if (!p || !b) return [0, 0, 0, 0];
+    if (!p || !b) return [0, 0, 0, 0, 0, 0];
     return [
       b.position.x - p.position.x,
       b.position.y - p.position.y,
+      out * (b.position.z - p.position.z),
       b.velocity.x - p.velocity.x,
       b.velocity.y - p.velocity.y,
+      out * (b.velocity.z - p.velocity.z),
     ];
   });
   if (t === 0 || rel.length === 0) return rel;
-  if (!spec.dynamic) return rel.map((r) => [r[0]! + r[2]! * t, r[1]! + r[3]! * t, r[2]!, r[3]!]);
+  if (!spec.dynamic)
+    return rel.map((r) => [r[0] + r[3] * t, r[1] + r[4] * t, r[2] + r[5] * t, r[3], r[4], r[5]]);
   const st: Structure = {
     r0: spec.settings.r0,
-    n: law.n,
+    n: 2,
     bodies: spec.bodies.map((id, j) => ({
       id,
-      mu: law.mu(id),
-      state:
-        j === 0 ? 'gauge' : (rel[j - 1] as unknown as readonly [number, number, number, number]),
+      mu: priorOf(ctx, muId(id))?.value ?? 0,
+      state: j === 0 ? 'gauge' : rel[j - 1]!,
     })),
-    ship: [1e15, 0, 0, 0],
+    ship: [1e15, 0, 0, 0, 0, 0],
     dynamicBodies: true,
-    engine: { kE: 1, dE: 0 },
+    engine: { kE: 1, dE: 0, dP: 0 },
     kA: 1,
-    camBias: 0,
+    camBias: [0, 0, 0],
   };
   const ca = compileArc(st, { id: 'briefing', epoch: 0, commands: [] }, new Map());
   const tr = simulate(ca, [], [t], spec.settings.dt);
   const P = tr.pos[0]!;
   const V = tr.vel[0]!;
   return spec.bodies.slice(1).map((_, k) => {
-    const j = k + 1;
-    return [P[2 * j]! - P[0]!, P[2 * j + 1]! - P[1]!, V[2 * j]! - V[0]!, V[2 * j + 1]! - V[1]!];
+    const j = 3 * (k + 1);
+    return [
+      P[j]! - P[0]!,
+      P[j + 1]! - P[1]!,
+      P[j + 2]! - P[2]!,
+      V[j]! - V[0]!,
+      V[j + 1]! - V[1]!,
+      V[j + 2]! - V[2]!,
+    ];
   });
 }
 
@@ -281,11 +298,18 @@ export interface TierGProblem {
   readonly accelSource?: string;
 }
 
+/** Engines that fire in the arcs (the RCS translation group is not an engine). */
 function thrustersOf(arcs: readonly Arc[]): string[] {
   const s = new Set<string>();
-  for (const a of arcs) for (const c of a.commands) if (c.thruster) s.add(c.thruster);
+  for (const a of arcs)
+    for (const c of a.commands)
+      if (c.thruster && c.thruster !== RCS_GROUP && c.u !== 0) s.add(c.thruster);
   return [...s].sort();
 }
+
+/** Does any arc fire the RCS for translation? */
+const hasRcs = (arcs: readonly Arc[]) =>
+  arcs.some((a) => a.commands.some((c) => c.rcs !== undefined && segmentPowered({ ...c, u: 0 })));
 
 /** Tier G structure and parameters for the given attempts (§3.6, §4.5). */
 export function tierGProblem(
@@ -295,11 +319,10 @@ export function tierGProblem(
   opts: {
     /** Tracked asteroids' probe arcs to fit as well (rule tests, §10 and A5). */
     readonly probes?: ReadonlyMap<AttemptId, readonly Arc[]>;
-    /** Values in force (an earlier fit) for propagating the briefing's bodies to arc epochs. */
-    readonly values?: Readonly<Record<string, number>>;
+    /** Attempts the model cannot use, with the reason: they give no arcs (`ModelDerived.unusable`). */
+    readonly unusable?: ReadonlyMap<AttemptId, string>;
   } = {},
 ): TierGProblem {
-  const law = lawInForce(ctx, spec, opts.values);
   const s = spec.settings;
   const builds = new Map<AttemptId, ArcBuild>();
   const records = new Map(attempts.map((r) => [r.id, r] as const));
@@ -307,60 +330,88 @@ export function tierGProblem(
   const arcs: Arc[] = [];
   const levels: string[] = [];
   for (const rec of attempts) {
-    const b = arcsFromRecord(rec, {
-      ship: ctx.ship,
-      settings: s,
-      ...(ctx.arrivalMass !== undefined ? { arrivalMass: ctx.arrivalMass } : {}),
-      bodies: spec.bodies,
-      primary: spec.primary,
-    });
+    const unusable = opts.unusable?.get(rec.id);
+    const b: ArcBuild =
+      unusable !== undefined
+        ? {
+            arcs: [],
+            burns: [],
+            limitedLevels: [],
+            unknownAttitude: [],
+            skipped: [{ arc: rec.id, reason: unusable }],
+          }
+        : arcsFromRecord(rec, {
+            ship: ctx.ship,
+            settings: s,
+            ...(ctx.arrivalMass !== undefined ? { arrivalMass: ctx.arrivalMass } : {}),
+            bodies: spec.bodies,
+            primary: spec.primary,
+          });
     builds.set(rec.id, b);
     arcs.push(...b.arcs);
     levels.push(...b.limitedLevels);
   }
   for (const rec of attempts)
-    for (const p of opts.probes?.get(rec.id) ?? [])
-      if (rangeFixes(p, spec.primary).length >= 3) arcs.push(p);
+    for (const p of opts.unusable?.has(rec.id) ? [] : (opts.probes?.get(rec.id) ?? []))
+      if (rangeFixTimes(p.meas, spec.primary).length >= MIN_ARC_FIXES) arcs.push(p);
   const thrusters = thrustersOf(arcs);
+  const rcs = hasRcs(arcs);
+  const planar = spec.planar;
   const accelSource = attempts
     .flatMap((r) => r.measurements)
     .find((m) => m.kind === 'accel')?.source;
   const hasAccel = arcs.some((a) => a.meas.some((m) => m.kind === 'accel'));
-  const camId = `sensor.${spec.cameraId}.bias`;
+  const camIds = cameraIds(spec.cameraId);
   const kAId = `sensor.${accelSource ?? 'accelerometer'}.scale`;
   // Ship calibrations: arrival value plus a per-arc deviation with an aging prior (§3.7).
   const dev = (g: string): Ref => [g, `{att}.${g}.d`];
   const engines: Record<string, EngineDef> = {};
-  for (const thr of thrusters) engines[thr] = { kE: dev(scaleId(thr)), dE: dev(misalignId(thr)) };
+  for (const thr of thrusters)
+    engines[thr] = {
+      kE: dev(scaleId(thr)),
+      dE: dev(misalignId(thr)),
+      dP: planar ? 0 : dev(pitchId(thr)),
+    };
   const others = spec.bodies.slice(1);
-  const bodies: BodyDef[] = spec.bodies.map((id, j) => {
+  const bodies: BodyDef[] = spec.bodies.map((id, j): BodyDef => {
     if (j === 0) return { id, mu: muId(id), state: 'gauge' };
     if (!spec.dynamic) {
-      const byArc: Record<string, readonly [number, number, number, number]> = {};
+      const byArc: Record<string, State6> = {};
       for (const a of arcs) {
-        const r = briefingBodiesAt(arcCtx(a), spec, a.epoch, law)[j - 1]!;
-        byArc[a.id] = [r[0]!, r[1]!, 0, 0];
+        const r = briefingBodiesAt(arcCtx(a), spec, a.epoch)[j - 1]!;
+        byArc[a.id] = [r[0], r[1], r[2], 0, 0, 0];
       }
-      return { id, mu: muId(id), state: [0, 0, 0, 0], stateByArc: byArc };
+      return { id, mu: muId(id), state: [0, 0, 0, 0, 0, 0], stateByArc: byArc };
     }
-    return {
-      id,
-      mu: muId(id),
-      state: [`{att}.${id}.x`, `{att}.${id}.y`, `{att}.${id}.vx`, `{att}.${id}.vy`] as const,
-    };
+    return { id, mu: muId(id), state: bodyRefs(id, planar) };
   });
+  const camBias: Refs3 = planar
+    ? [0, 0, dev(camIds[2])]
+    : [dev(camIds[0]), dev(camIds[1]), dev(camIds[2])];
   const structure: Structure = {
     r0: s.r0,
     n: spec.exponent ? EXPONENT_ID : 2,
     bodies,
-    ship: SHIP_REFS,
+    ship: shipRefs(planar),
     dynamicBodies: spec.dynamic,
-    engine: { kE: 1, dE: 0 },
+    engine: { kE: 1, dE: 0, dP: 0 },
     engines,
+    kR: rcs ? dev(RCS_SCALE_ID) : 1,
     kA: hasAccel ? dev(kAId) : 1,
-    camBias: dev(camId),
+    camBias,
   };
   const globals: Param[] = [];
+  const shipGlobal = (id: string, mean: number, sigma: number, scale: number) => {
+    const p = priorOf(ctx, id);
+    globals.push({
+      name: id,
+      init: p?.value ?? mean,
+      scale,
+      priorMean: p?.value ?? mean,
+      priorSigma: p?.sigma ?? sigma,
+      group: 'global',
+    });
+  };
   for (const id of spec.bodies) {
     const p = priorOf(ctx, muId(id));
     const mean = p?.value ?? 0;
@@ -375,85 +426,48 @@ export function tierGProblem(
       group: 'global',
     });
   }
-  if (spec.exponent) {
-    const p = priorOf(ctx, EXPONENT_ID);
-    globals.push({
-      name: EXPONENT_ID,
-      init: p?.value ?? 2,
-      scale: 1e-3,
-      priorMean: p?.value ?? 2,
-      priorSigma: p?.sigma ?? s.priorExponentSigma,
-      group: 'global',
-    });
-  }
+  if (spec.exponent) shipGlobal(EXPONENT_ID, 2, s.priorExponentSigma, 1e-3);
   for (const thr of thrusters) {
-    const ps = priorOf(ctx, scaleId(thr));
-    const pm = priorOf(ctx, misalignId(thr));
-    globals.push({
-      name: scaleId(thr),
-      init: ps?.value ?? 1,
-      scale: 1e-3,
-      priorMean: ps?.value ?? 1,
-      priorSigma: ps?.sigma ?? s.priorThrustScaleSigma,
-      group: 'global',
-    });
-    globals.push({
-      name: misalignId(thr),
-      init: pm?.value ?? 0,
-      scale: 1e-3,
-      priorMean: pm?.value ?? 0,
-      priorSigma: pm?.sigma ?? s.priorMisalignmentSigma,
-      group: 'global',
-    });
+    shipGlobal(scaleId(thr), 1, s.priorThrustScaleSigma, 1e-3);
+    shipGlobal(misalignId(thr), 0, s.priorMisalignmentSigma, 1e-3);
+    if (!planar) shipGlobal(pitchId(thr), 0, s.priorMisalignmentSigma, 1e-3);
   }
-  if (hasAccel) {
-    const p = priorOf(ctx, kAId);
-    globals.push({
-      name: kAId,
-      init: p?.value ?? 1,
-      scale: 1e-4,
-      priorMean: p?.value ?? 1,
-      priorSigma: p?.sigma ?? s.priorAccelScaleSigma,
-      group: 'global',
-    });
-  }
-  {
-    const p = priorOf(ctx, camId);
-    globals.push({
-      name: camId,
-      init: p?.value ?? 0,
-      scale: 1e-5,
-      priorMean: p?.value ?? 0,
-      priorSigma: p?.sigma ?? s.priorCameraBiasSigma,
-      group: 'global',
-    });
+  if (rcs) shipGlobal(RCS_SCALE_ID, 1, s.priorRcsScaleSigma, 1e-3);
+  if (hasAccel) shipGlobal(kAId, 1, s.priorAccelScaleSigma, 1e-4);
+  // The camera misalignment: the planar bias (about body z) first, as in the planar model.
+  shipGlobal(camIds[2], 0, s.priorCameraBiasSigma, 1e-5);
+  if (!planar) {
+    shipGlobal(camIds[0], 0, s.priorCameraBiasSigma, 1e-5);
+    shipGlobal(camIds[1], 0, s.priorCameraBiasSigma, 1e-5);
   }
   const locals: Param[] = [];
   for (const a of arcs) {
-    locals.push(...shipParams(a.id, guessShip(a, spec.primary, a.epoch)));
+    locals.push(...shipParams(a.id, guessShip(a, spec.primary, a.epoch), planar));
     if (spec.dynamic && others.length > 0) {
       const actx = arcCtx(a);
-      const prior = briefingBodiesAt(actx, spec, a.epoch, law);
+      const prior = briefingBodiesAt(actx, spec, a.epoch);
       const pBody = briefingBody(actx, spec.primary);
+      const largest = (c?: Cov3) => Math.max(c?.[0] ?? 0, c?.[3] ?? 0, c?.[5] ?? 0);
       others.forEach((id, k) => {
         const b = briefingBody(actx, id);
-        const posSigma = Math.sqrt(
-          Math.max(b?.positionCov[0] ?? 0, b?.positionCov[2] ?? 0) +
-            Math.max(pBody?.positionCov[0] ?? 0, pBody?.positionCov[2] ?? 0),
+        // The prior on a body's position: the larger believed variance on any axis, of the body
+        // and of the primary it is measured from, on each component.
+        const posSigma = Math.max(
+          Math.sqrt(largest(b?.positionCov) + largest(pBody?.positionCov)),
+          1,
         );
         const mean = prior[k]!;
         const nFix = rangeFixes(a, id).length;
         const guess = nFix >= 3 ? guessBody(a, spec.primary, id, a.epoch) : mean;
+        const vs = s.priorBodyVelocitySigma;
         locals.push(
-          ...bodyStateParams(a.id, id, guess, {
-            mean,
-            sigma: [
-              Math.max(posSigma, 1),
-              Math.max(posSigma, 1),
-              s.priorBodyVelocitySigma,
-              s.priorBodyVelocitySigma,
-            ],
-          }),
+          ...bodyStateParams(
+            a.id,
+            id,
+            guess,
+            { mean, sigma: [posSigma, posSigma, posSigma, vs, vs, vs] },
+            planar,
+          ),
         );
       });
     }
@@ -547,16 +561,18 @@ export function frozenStructure(
   values: Readonly<Record<string, number>>,
 ): Structure {
   const f = (r: Ref) => freezeRef(r, values);
+  const fe = (e: EngineDef): EngineDef => ({ kE: f(e.kE), dE: f(e.dE), dP: f(e.dP) });
   const engines: Record<string, EngineDef> = {};
-  for (const [k, e] of Object.entries(st.engines ?? {})) engines[k] = { kE: f(e.kE), dE: f(e.dE) };
+  for (const [k, e] of Object.entries(st.engines ?? {})) engines[k] = fe(e);
   return {
     ...st,
     n: f(st.n),
     bodies: st.bodies.map((b) => ({ ...b, mu: f(b.mu) })),
-    engine: { kE: f(st.engine.kE), dE: f(st.engine.dE) },
+    engine: fe(st.engine),
     engines,
+    kR: f(st.kR ?? 1),
     kA: f(st.kA),
-    camBias: f(st.camBias),
+    camBias: [f(st.camBias[0]), f(st.camBias[1]), f(st.camBias[2])],
   };
 }
 
@@ -584,14 +600,21 @@ export function arcFit(
 
 export interface PresentState {
   readonly source: 'anchor' | 'arrival';
-  /** The body the state is relative to: the one tracked most recently (the primary at arrival). */
-  readonly body: string;
-  /** Time of the state (its last fix). */
+  /** Time of the state. */
   readonly t: number;
-  /** Ship relative to `body` (x, y, vx, vy), that body at rest at t. */
+  /** Ship relative to the primary (x, y, z, vx, vy, vz), primary at rest at t. */
   readonly state: Float64Array;
-  /** 4×4 covariance including s². */
+  /** 6×6 covariance including s² (and the camera misalignment's share, §8.1). */
   readonly covariance: Matrix;
+  /**
+   * The camera misalignment the present state carried (§8.1): values and σ about body x, y, z
+   * (the current arc's, aged); absent when it was held fixed (planar reduction, arrival state).
+   */
+  readonly camera?: {
+    readonly ids: readonly string[];
+    readonly value: Vec3T;
+    readonly sigma: Vec3T;
+  };
   readonly anchor?: Anchor;
 }
 
@@ -599,6 +622,13 @@ export interface ModelDerived {
   readonly spec: ModelSpec;
   readonly problem: TierGProblem;
   readonly fit: FitResult | null;
+  /** Why Tier G gave no result although it ran: the values are then held at their priors. */
+  readonly fitFailure?: string;
+  /**
+   * Attempts the model could not be built with, each with the reason. They are left out of every
+   * fit and the rest are fitted: one bad attempt never stops the model (`buildModel`).
+   */
+  readonly unusable: ReadonlyMap<AttemptId, string>;
   /** Global values in force (Tier G when converged, else priors). */
   readonly values: Readonly<Record<string, number>>;
   readonly sigmas: Readonly<Record<string, number>>;
@@ -634,46 +664,56 @@ export function referenceFor(
   const v = d.values;
   const spec = d.spec;
   const n = spec.exponent ? (v[EXPONENT_ID] ?? 2) : 2;
-  const engines: Record<string, { kE: number; dE: number }> = {};
+  const engines: Record<string, EngineValues> = {};
   for (const [k, val] of Object.entries(v)) {
     const m = /^thruster\.(.+)\.scale$/.exec(k);
-    if (m) engines[m[1]!] = { kE: val, dE: v[misalignId(m[1]!)] ?? 0 };
+    if (m && m[1] !== RCS_GROUP)
+      engines[m[1]!] = { kE: val, dE: v[misalignId(m[1]!)] ?? 0, dP: v[pitchId(m[1]!)] ?? 0 };
   }
+  const cam = cameraIds(spec.cameraId);
   // A probe arc flies in the same world as the ship arc it was built from.
   const sol = d.solutions.get(arcId) ?? d.solutions.get(shipArcOf(arcId));
+  // A body's believed state comes from the arc's solution when a converged global fit made it,
+  // or when the arc tracked the body (and the reference body); otherwise from the briefing,
+  // propagated with the prior law (§5.2: the reference law holds believed values only).
+  const seen = (id: string) =>
+    sol !== undefined && rangeFixTimes(sol.arc.meas, id).length >= MIN_ARC_FIXES;
+  const trusted = (id: string) =>
+    sol?.fromGlobalFit === true || (seen(id) && (body === spec.primary || seen(body)));
   const others: FrozenBody[] = spec.bodies
     .filter((b) => b !== body)
     .map((id) => ({
       id,
       mu: v[muId(id)] ?? 0,
-      stateAt: (t: number) => relativeState(d, ctx, sol, arcId, id, body, t),
+      stateAt: (t: number) =>
+        relativeState(d, ctx, trusted(id) ? sol : undefined, arcId, id, body, t),
     }));
   return {
     r0: spec.settings.r0,
     body,
     mu: v[muId(body)] ?? 0,
     n,
-    cam: v[`sensor.${spec.cameraId}.bias`] ?? 0,
+    cam: [v[cam[0]] ?? 0, v[cam[1]] ?? 0, v[cam[2]] ?? 0],
     kE: 1,
     dE: 0,
+    dP: 0,
+    kR: v[RCS_SCALE_ID] ?? 1,
     engines,
     others,
+    planar: spec.planar,
   };
 }
 
 /** State of body `id` relative to body `ref` (ref at rest) at t, from an arc solution. */
 function relativeState(
-  d: Pick<ModelDerived, 'spec'> & {
-    readonly problem?: Pick<TierGProblem, 'records'>;
-    readonly values?: Readonly<Record<string, number>>;
-  },
+  d: Pick<ModelDerived, 'spec'> & { readonly problem?: Pick<TierGProblem, 'records'> },
   ctx: ModelContext,
   sol: ArcSolution | undefined,
   arcId: string,
   id: string,
   ref: string,
   t: number,
-): readonly [number, number, number, number] {
+): State6 {
   const bodies = d.spec.bodies;
   let P: Float64Array;
   let V: Float64Array;
@@ -687,24 +727,25 @@ function relativeState(
       contextFor(ctx, d.problem?.records.get(attemptOfArc(arcId))),
       d.spec,
       t,
-      lawInForce(ctx, d.spec, d.values),
     );
-    P = new Float64Array(2 * bodies.length);
-    V = new Float64Array(2 * bodies.length);
+    P = new Float64Array(3 * bodies.length);
+    V = new Float64Array(3 * bodies.length);
     rel.forEach((r, k) => {
-      P[2 * (k + 1)] = r[0]!;
-      P[2 * (k + 1) + 1] = r[1]!;
-      V[2 * (k + 1)] = r[2]!;
-      V[2 * (k + 1) + 1] = r[3]!;
+      for (let c = 0; c < 3; c++) {
+        P[3 * (k + 1) + c] = r[c]!;
+        V[3 * (k + 1) + c] = r[3 + c]!;
+      }
     });
   }
-  const i = bodies.indexOf(id);
-  const j = bodies.indexOf(ref);
+  const i = 3 * bodies.indexOf(id);
+  const j = 3 * bodies.indexOf(ref);
   return [
-    P[2 * i]! - P[2 * j]!,
-    P[2 * i + 1]! - P[2 * j + 1]!,
-    V[2 * i]! - V[2 * j]!,
-    V[2 * i + 1]! - V[2 * j + 1]!,
+    P[i]! - P[j]!,
+    P[i + 1]! - P[j + 1]!,
+    P[i + 2]! - P[j + 2]!,
+    V[i]! - V[j]!,
+    V[i + 1]! - V[j + 1]!,
+    V[i + 2]! - V[j + 2]!,
   ];
 }
 
@@ -721,21 +762,119 @@ export interface BuildOptions {
   readonly cache?: TierLCache;
 }
 
-/** Tier G + Tier L + present state: the full rebuild (§11.3). Pure and deterministic. */
+const reasonOf = (e: unknown): string => (e instanceof Error ? e.message : String(e));
+
+/** Path of the first number in `v` that is not finite, or null. */
+function nonFinite(v: unknown, path = ''): string | null {
+  if (typeof v === 'number') return Number.isFinite(v) ? null : path;
+  if (v === null || typeof v !== 'object') return null;
+  if (ArrayBuffer.isView(v) || Array.isArray(v)) {
+    const list = v as unknown as ArrayLike<unknown>;
+    for (let i = 0; i < list.length; i++) {
+      const q = list[i];
+      if (typeof q === 'number' ? Number.isFinite(q) : nonFinite(q) === null) continue;
+      return nonFinite(q, `${path}[${i}]`);
+    }
+    return null;
+  }
+  for (const [k, q] of Object.entries(v)) {
+    const bad = nonFinite(q, path ? `${path}.${k}` : k);
+    if (bad !== null) return bad;
+  }
+  return null;
+}
+
+/** What a snapshot derives from the attempts: none of it may be NaN or infinite. */
+function nonFiniteIn(snap: ModelSnapshot): string | null {
+  const { parameters, covariance, support, residuals, fit, calibration, noiseScale } = snap.state;
+  const p = snap.derived.present;
+  return nonFinite({
+    parameters,
+    covariance,
+    support,
+    residuals,
+    fit,
+    calibration,
+    noiseScale,
+    present: p ? { t: p.t, state: p.state, covariance: p.covariance.data } : null,
+  });
+}
+
+/**
+ * Tier G + Tier L + present state: the full rebuild (§11.3). Pure and deterministic.
+ *
+ * One bad attempt never stops the model. If the build fails, or gives a number that is not
+ * finite, every attempt is built on its own; those that fail alone are left out with the reason
+ * (`ModelDerived.unusable`, which the report carries) and the rest are fitted. Attempts that
+ * fail only together are all left out, so the model then stands on its priors and says why. The
+ * verdicts are a function of the records like everything else, so a rebuild still equals the
+ * live state.
+ */
 export function buildModel(input: ModelInput, opts: BuildOptions = {}): ModelSnapshot {
+  const attempt = (
+    inp: ModelInput,
+    unusable: ReadonlyMap<AttemptId, string>,
+  ): { readonly snap?: ModelSnapshot; readonly reason: string } => {
+    try {
+      const snap = buildOnce(inp, opts, unusable);
+      const bad = nonFiniteIn(snap);
+      return bad === null
+        ? { snap, reason: '' }
+        : { reason: `${bad} would not be a finite number` };
+    } catch (e) {
+      return { reason: reasonOf(e) };
+    }
+  };
+  const mine = input.attempts.filter((a) => a.encounterId === input.context.encounterId);
+  // An in-flight refresh keeps the verdicts of the last full build, except on the attempt in
+  // progress, whose record is still growing.
+  const unusable = new Map(
+    [...(opts.reuse?.unusable ?? [])].filter(
+      ([id]) => id !== input.current && mine.some((a) => a.id === id),
+    ),
+  );
+  const whole = attempt(input, unusable);
+  if (whole.snap) return whole.snap;
+  for (const rec of mine) {
+    if (unusable.has(rec.id)) continue;
+    const alone = attempt({ ...input, attempts: [rec] }, new Map());
+    if (!alone.snap) unusable.set(rec.id, alone.reason);
+  }
+  const rest = attempt(input, unusable);
+  if (rest.snap) return rest.snap;
+  for (const rec of mine)
+    if (!unusable.has(rec.id))
+      unusable.set(rec.id, `could not be fitted together with the other attempts: ${rest.reason}`);
+  return buildOnce(input, opts, unusable);
+}
+
+function buildOnce(
+  input: ModelInput,
+  opts: BuildOptions,
+  unusable: ReadonlyMap<AttemptId, string>,
+): ModelSnapshot {
   const ctx = input.context;
   const spec = modelSpec(ctx, input.adopted);
   const s = spec.settings;
   const attempts = [...input.attempts]
     .filter((a) => a.encounterId === ctx.encounterId)
     .sort((a, b) => a.index - b.index || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+  const problem = tierGProblem(ctx, spec, attempts, { unusable });
   const reuse = opts.reuse;
-  const problem = tierGProblem(ctx, spec, attempts, reuse ? { values: reuse.values } : {});
   let fit: FitResult | null = reuse ? reuse.fit : null;
-  if (!reuse && problem.arcs.length > 0)
-    fit = stagedFit(problem.structure, problem.arcs, problem.params, { dt: s.dt, h: s.fdStep });
+  let fitFailure = reuse?.fitFailure;
+  if (!reuse && problem.arcs.length > 0) {
+    // A global fit that cannot be solved leaves the values at their priors (§11.2: a Tier G
+    // result becomes the reference law only if it converged), and each arc is then fitted alone.
+    try {
+      fit = stagedFit(problem.structure, problem.arcs, problem.params, { dt: s.dt, h: s.fdStep });
+    } catch (e) {
+      fitFailure = reasonOf(e);
+    }
+  }
   const priorX = Float64Array.from(problem.params, (p) => p.init);
-  const useFit = !reuse && fit !== null && fit.converged;
+  const useFit =
+    !reuse && fit !== null && fit.converged && nonFinite([fit.x, fit.P.data, fit.chi2]) === null;
   const x = useFit ? fit!.x : priorX;
   const idx = new Map(problem.params.map((p, i) => [p.name, i]));
   const values: Record<string, number> = {};
@@ -758,7 +897,16 @@ export function buildModel(input: ModelInput, opts: BuildOptions = {}): ModelSna
       const rel = problem.params.flatMap((p, i) =>
         p.group === 'global' || p.group === a.id ? [i] : [],
       );
-      solutions.set(a.id, { arc: a, x, idx, structure: problem.structure, P: fit!.P, rel, scale });
+      solutions.set(a.id, {
+        arc: a,
+        x,
+        idx,
+        structure: problem.structure,
+        P: fit!.P,
+        rel,
+        scale,
+        fromGlobalFit: true,
+      });
       continue;
     }
     // Not in a converged Tier G (in flight, or a fit that did not converge): fit the arc alone.
@@ -783,11 +931,12 @@ export function buildModel(input: ModelInput, opts: BuildOptions = {}): ModelSna
         if (w.powered || w.fixes.length < s.windowKeepFixes) continue;
         if (ref.others && ref.others.length > 0) {
           const mid = w.fixes[w.fixes.length >> 1]!;
-          const ship = [-mid.z[1]! * Math.cos(mid.z[0]!), -mid.z[1]! * Math.sin(mid.z[0]!)];
-          const own = believedPull(ref.mu, n, s.r0, mid.z[1]!);
+          const los = lineOfSight(mid);
+          const ship = los.map((c) => -mid.z[2]! * c);
+          const own = believedPull(ref.mu, n, s.r0, mid.z[2]!);
           const tooStrong = ref.others.some((o) => {
             const st = o.stateAt(mid.t);
-            const r = Math.hypot(st[0] - ship[0]!, st[1] - ship[1]!);
+            const r = Math.hypot(st[0] - ship[0]!, st[1] - ship[1]!, st[2] - ship[2]!);
             return believedPull(o.mu, n, s.r0, r) > s.otherBodyPullLimit * own;
           });
           if (tooStrong) continue;
@@ -854,10 +1003,11 @@ export function buildModel(input: ModelInput, opts: BuildOptions = {}): ModelSna
         for (const a of shipArcs) if (a.epoch <= t && a.epoch >= arc.epoch) arc = a;
         return pathFor(arc.id, body, t);
       },
-      cameraBias: values[`sensor.${spec.cameraId}.bias`] ?? 0,
+      cameraBias: cameraIds(spec.cameraId).map((id) => values[id] ?? 0) as unknown as Vec3T,
       dt: s.dt,
       h: s.fdStep,
       normalPointInterval: s.normalPointInterval,
+      planar: spec.planar,
     });
     if (list.length > 0) probes.set(rec.id, list);
   }
@@ -879,7 +1029,7 @@ export function buildModel(input: ModelInput, opts: BuildOptions = {}): ModelSna
         }),
       );
     else {
-      const ranges = allArcs.flatMap((a) => rangeFixes(a, body).map((m) => m.z[1]!));
+      const ranges = allArcs.flatMap((a) => rangeFixes(a, body).map((m) => m.z[2]!));
       flatProfiles.push(
         ranges.length > 0
           ? flatProfile(body, Math.min(...ranges), Math.max(...ranges), s.r0)
@@ -893,6 +1043,8 @@ export function buildModel(input: ModelInput, opts: BuildOptions = {}): ModelSna
     spec,
     problem,
     fit,
+    ...(fitFailure !== undefined ? { fitFailure } : {}),
+    unusable,
     values,
     sigmas,
     solutions,
@@ -992,238 +1144,113 @@ export function presentState(
 ): PresentState | null {
   const s = d.spec.settings;
   const build = d.problem.builds.get(attemptId);
-  const actx = contextFor(ctx, d.problem.records.get(attemptId));
+  const rec = d.problem.records.get(attemptId);
+  const actx = contextFor(ctx, rec);
   const arc = build?.arcs[build.arcs.length - 1];
-  if (!arc) return arrivalState(actx, d.spec);
-  // From whichever body the camera fixed most recently: pointing at the second body for
-  // hours must not leave the present state behind (2F request 12). Ties go to the primary.
-  let best: { body: string; wins: Window[]; end: number } | null = null;
-  for (const body of d.spec.bodies) {
-    if (rangeFixes(arc, body).length < s.windowMinFixes) continue;
-    const wins = makeWindows(arc, body, windowRule(s))
-      .filter((w) => !w.powered && w.fixes.length >= s.windowKeepFixes)
-      .slice(-s.anchorWindows);
-    if (wins.length === 0) continue;
-    const end = wins[wins.length - 1]!.t1;
-    if (!best || end > best.end) best = { body, wins, end };
+  const nFix = arc ? rangeFixes(arc, d.spec.primary).length : 0;
+  if (!arc || nFix < s.windowMinFixes) return arrivalState(actx, d.spec);
+  const wins = makeWindows(arc, d.spec.primary, windowRule(s))
+    .filter((w) => !w.powered && w.fixes.length >= s.windowKeepFixes)
+    .slice(-s.anchorWindows);
+  if (wins.length === 0) return arrivalState(actx, d.spec);
+  const prof = d.profiles.find((p) => p.body === d.spec.primary) ?? null;
+  const extra = d.profiles.filter((p) => p.body !== d.spec.primary);
+  const base = referenceFor(d, d.spec.primary, arc.id, ctx);
+  // §8.1: the camera misalignment joins the fit, held by a prior at the values this arc uses
+  // with their σ (Tier G's posterior and the arc's deviation, aged to the last fix), or the
+  // arrival prior. The planar reduction holds it fixed, as revision 2 did.
+  const camera = d.spec.planar ? null : cameraInForce(d, arc.id, rec, wins);
+  const ref: ReferenceLaw = camera ? { ...base, cam: camera.value } : base;
+  // A present-state fit that cannot be solved leaves the arrival state, the best state the
+  // model then has: a forecast is always available.
+  let anc: Anchor;
+  try {
+    anc = anchorState(ref, prof, arc, wins, s.dt, {
+      h: s.fdStep,
+      gPrior: [1, s.localScalePriorSigma],
+      slopeSigma: s.anchorSlopePriorSigma,
+      extraProfiles: extra,
+      camSigma: camera?.sigma ?? null,
+    });
+  } catch {
+    return arrivalState(actx, d.spec);
   }
-  if (!best) return arrivalState(actx, d.spec);
-  const wins = best.wins;
-  const prof = d.profiles.find((p) => p.body === best.body) ?? null;
-  const extra = d.profiles.filter((p) => p.body !== best.body);
-  const ref = referenceFor(d, best.body, arc.id, ctx);
-  const anc = anchorState(ref, prof, arc, wins, s.dt, {
-    h: s.fdStep,
-    gPrior: [1, s.localScalePriorSigma],
-    slopeSigma: s.anchorSlopePriorSigma,
-    extraProfiles: extra,
-  });
-  const cov = zeros(4, 4);
-  for (let i = 0; i < 16; i++) cov.data[i] = anc.covariance.data[i]! * d.noiseScale;
+  const cov = zeros(6, 6);
+  for (let i = 0; i < 36; i++) cov.data[i] = anc.covariance.data[i]! * d.noiseScale;
+  if (nonFinite([anc.tNow, anc.state, cov.data]) !== null) return arrivalState(actx, d.spec);
   return {
     source: 'anchor',
-    body: best.body,
     t: anc.tNow,
     state: anc.state,
     covariance: cov,
     anchor: anc,
+    ...(camera ? { camera } : {}),
   };
 }
 
-export interface BodiesAt {
-  /** Other modelled bodies' states relative to `ref` (ref at rest) at t: x, y, vx, vy. */
-  readonly state: Readonly<Record<string, readonly [number, number, number, number]>>;
-  /**
-   * Their 4×4 covariances: the arc fit's own, plus the hedge on the bodies' motion since the
-   * pair was last fixed (2F request 13): the law's pull between bodies is extrapolated too.
-   */
-  readonly cov: Readonly<Record<string, Matrix>>;
-}
-
-/** The other bodies relative to `ref` at time t of an arc, with honest uncertainty (§8.2). */
-export function bodiesAt(
+/**
+ * The camera misalignment an arc uses (body x, y, z): the arrival value plus the arc's deviation
+ * with σ from the joint covariance, aged from the arc's last retained measurement to the last
+ * fix of `wins` (§3.7, §8.1).
+ */
+function cameraInForce(
   d: ModelDerived,
-  ctx: ModelContext,
   arcId: string,
-  ref: string,
-  t: number,
-): BodiesAt {
-  const spec = d.spec;
-  const s = spec.settings;
-  const others = spec.bodies.filter((b) => b !== ref);
-  const sol = d.solutions.get(arcId) ?? d.solutions.get(shipArcOf(arcId));
-  const arc = d.problem.arcs.find((a) => a.id === shipArcOf(arcId));
-  const actx = contextFor(ctx, d.problem.records.get(attemptOfArc(arcId)));
-  const law = lawInForce(ctx, spec, d.values);
-  const state: Record<string, readonly [number, number, number, number]> = {};
-  const cov: Record<string, Matrix> = {};
-  for (const o of others) {
-    state[o] = relativeState(d, ctx, sol, arcId, o, ref, t);
-    cov[o] = zeros(4, 4);
-  }
-  if (others.length === 0) return { state, cov };
-  // All bodies relative to ref at time u, from the arc's solution (or the briefing).
-  const allAt = (u: number, x?: ArrayLike<number>): Record<string, number[]> => {
-    const out: Record<string, number[]> = {};
-    if (sol && u >= sol.arc.epoch) {
-      const ca = compileArc(sol.structure, sol.arc, sol.idx);
-      const tr = simulate(ca, x ?? sol.x, [u], s.dt);
-      const P = tr.pos[0]!;
-      const V = tr.vel[0]!;
-      const r = ca.bodyIndex.get(ref)!;
-      for (const b of spec.bodies) {
-        const j = ca.bodyIndex.get(b)!;
-        out[b] = [P[2 * j]! - P[2 * r]!, P[2 * j + 1]! - P[2 * r + 1]!, V[2 * j]! - V[2 * r]!, V[2 * j + 1]! - V[2 * r + 1]!];
-      }
-      return out;
-    }
-    const rel = briefingBodiesAt(actx, spec, u, law); // relative to the primary
-    const p: Record<string, number[]> = { [spec.primary]: [0, 0, 0, 0] };
-    spec.bodies.slice(1).forEach((b, k) => (p[b] = rel[k]!));
-    for (const b of spec.bodies) out[b] = p[b]!.map((v, c) => v - p[ref]![c]!);
-    return out;
+  rec: AttemptRecord | undefined,
+  wins: readonly { readonly t1: number }[],
+): NonNullable<PresentState['camera']> {
+  const ids = cameraIds(d.spec.cameraId);
+  const cal = new Map(arcCalibration(d, arcId).map((c) => [c.id, c]));
+  const tNow = Math.max(...wins.map((w) => w.t1));
+  const one = (id: string): [number, number] => {
+    const c = cal.get(id);
+    const value = c?.value ?? d.values[id] ?? 0;
+    const sigma = c?.sigma ?? d.sigmas[id] ?? d.spec.settings.priorCameraBiasSigma;
+    const aged = rec && c ? agingBetween(d, rec, id, c.tLast, tNow).variance : 0;
+    return [value, Math.sqrt(sigma * sigma + aged)];
   };
-  // The fit's own uncertainty, or the briefing's.
-  if (sol && sol.P && t >= sol.arc.epoch) {
-    const P = sol.P;
-    const n = P.cols;
-    const cols: Record<string, number[]>[] = [];
-    const xp = new Float64Array(sol.x);
-    for (const i of sol.rel) {
-      const step = s.fdStep * sol.scale[i]!;
-      xp[i] = sol.x[i]! + step;
-      const plus = allAt(t, xp);
-      xp[i] = sol.x[i]! - step;
-      const minus = allAt(t, xp);
-      xp[i] = sol.x[i]!;
-      const col: Record<string, number[]> = {};
-      for (const o of others) col[o] = plus[o]!.map((v, c) => (v - minus[o]![c]!) / (2 * step));
-      cols.push(col);
-    }
-    for (const o of others)
-      sol.rel.forEach((ia, a) =>
-        sol.rel.forEach((ib, b) => {
-          const pab = P.data[ia * n + ib]!;
-          if (pab === 0) return;
-          for (let u = 0; u < 4; u++)
-            for (let v = 0; v < 4; v++) cov[o]!.data[u * 4 + v]! += cols[a]![o]![u]! * pab * cols[b]![o]![v]!;
-        }),
-      );
-  } else if (!sol) {
-    const pc = (b: string) => {
-      const q = briefingBody(actx, b)?.positionCov ?? [0, 0, 0];
-      return Math.max(q[0], q[2]);
-    };
-    for (const o of others) {
-      const pv = pc(o) + pc(ref);
-      const vv = s.priorBodyVelocitySigma ** 2;
-      [pv, pv, vv, vv].forEach((v, i) => (cov[o]!.data[i * 4 + i] = v));
-    }
-  }
-  // The hedge on the bodies' mutual pull since the pair was last fixed.
-  const covered = (b: string) => d.profiles.find((p) => p.body === b) ?? d.flatProfiles.find((p) => p.body === b);
-  const lastFix = (b: string) => {
-    if (!arc) return 0;
-    const f = rangeFixes(arc, b);
-    return f.length > 0 ? f[f.length - 1]!.t : arc.epoch;
+  const v = ids.map(one);
+  return {
+    ids,
+    value: [v[0]![0], v[1]![0], v[2]![0]],
+    sigma: [v[0]![1], v[1]![1], v[2]![1]],
   };
-  for (const o of others) {
-    const t0 = Math.min(lastFix(o), lastFix(ref), t);
-    if (t - t0 <= 0) continue;
-    const s0 = allAt(t0);
-    const names: string[] = [];
-    const sig: number[] = [];
-    const profiles: ProfileDef[] = [];
-    for (const b of spec.bodies) {
-      const p = covered(b);
-      if (!p) continue;
-      const v = d.validated[b];
-      names.push(`h.eta.${b}`);
-      sig.push(d.sigmaH0);
-      if (v && v.spans.length > 0) {
-        names.push(`h.etaE.${b}`);
-        sig.push(v.sigmaE);
-      }
-      const lr0 = Math.log(p.r0);
-      profiles.push({
-        body: b,
-        uNodes: [lr0 + p.uNodes[0]!, lr0 + p.uNodes[p.uNodes.length - 1]!],
-        gNodes: [1, 1],
-        rMin: p.rMin,
-        rMax: p.rMax,
-        eta: `h.eta.${b}`,
-        ...(v && v.spans.length > 0 ? { etaE: `h.etaE.${b}`, validated: v.spans } : {}),
-      });
-    }
-    if (names.length === 0) continue;
-    const st: Structure = {
-      r0: s.r0,
-      n: law.n,
-      bodies: spec.bodies.map((b) => ({
-        id: b,
-        mu: law.mu(b),
-        state: b === ref ? 'gauge' : (s0[b] as unknown as readonly [number, number, number, number]),
-      })),
-      ship: [1e15, 0, 0, 0],
-      dynamicBodies: true,
-      engine: { kE: 1, dE: 0 },
-      kA: 1,
-      camBias: 0,
-      profiles,
-    };
-    const idx = new Map(names.map((nm, i) => [nm, i]));
-    const ca = compileArc(st, { id: 'hedge', epoch: t0, commands: [] }, idx);
-    const iRef = ca.bodyIndex.get(ref)!;
-    const iO = ca.bodyIndex.get(o)!;
-    const at = (x: ArrayLike<number>) => {
-      const tr = simulate(ca, x, [t], s.dt);
-      const P = tr.pos[0]!;
-      const V = tr.vel[0]!;
-      return [P[2 * iO]! - P[2 * iRef]!, P[2 * iO + 1]! - P[2 * iRef + 1]!, V[2 * iO]! - V[2 * iRef]!, V[2 * iO + 1]! - V[2 * iRef + 1]!];
-    };
-    const x0 = new Float64Array(names.length);
-    names.forEach((_, i) => {
-      const step = 1e-3;
-      x0[i] = step;
-      const plus = at(x0);
-      x0[i] = -step;
-      const minus = at(x0);
-      x0[i] = 0;
-      const col = plus.map((v, c) => (v - minus[c]!) / (2 * step));
-      for (let u = 0; u < 4; u++)
-        for (let w = 0; w < 4; w++) cov[o]!.data[u * 4 + w]! += col[u]! * sig[i]! ** 2 * col[w]!;
-    });
-  }
-  return { state, cov };
 }
 
 /** Before enough fixes: the arrival estimate, relative to the primary's believed arrival state. */
 export function arrivalState(ctx: ModelContext, spec: ModelSpec): PresentState {
   const a = ctx.arrival;
   const p = briefingBody(ctx, spec.primary);
-  const px = p?.position.x ?? 0;
-  const py = p?.position.y ?? 0;
-  const vx = p?.velocity.x ?? 0;
-  const vy = p?.velocity.y ?? 0;
-  const cov = zeros(4, 4);
-  const pc = a.positionCov;
-  const vc = a.velocityCov;
-  const bc = p?.positionCov ?? [0, 0, 0];
-  cov.data[0] = pc[0] + bc[0];
-  cov.data[1] = cov.data[4] = pc[1] + bc[1];
-  cov.data[5] = pc[2] + bc[2];
-  cov.data[10] = vc[0];
-  cov.data[11] = cov.data[14] = vc[1];
-  cov.data[15] = vc[2];
+  const zero = { x: 0, y: 0, z: 0 };
+  const pp = p?.position ?? zero;
+  const pv = p?.velocity ?? zero;
+  const bc: Cov3 = p?.positionCov ?? [0, 0, 0, 0, 0, 0];
+  // The planar reduction holds everything out of the plane at zero.
+  const keep = spec.planar ? [1, 1, 0] : [1, 1, 1];
+  const cov = zeros(6, 6);
+  // [xx, xy, xz, yy, yz, zz] → rows and columns (i, j) of a 3×3 block at offset o.
+  const sym = [
+    [0, 1, 2],
+    [1, 3, 4],
+    [2, 4, 5],
+  ];
+  for (let i = 0; i < 3; i++)
+    for (let j = 0; j < 3; j++) {
+      const k = sym[i]![j]!;
+      const w = keep[i]! * keep[j]!;
+      cov.data[i * 6 + j] = w * (a.positionCov[k]! + bc[k]!);
+      cov.data[(3 + i) * 6 + 3 + j] = w * a.velocityCov[k]!;
+    }
   return {
     source: 'arrival',
-    body: spec.primary,
     t: a.t,
     state: Float64Array.of(
-      a.position.x - px,
-      a.position.y - py,
-      a.velocity.x - vx,
-      a.velocity.y - vy,
+      a.position.x - pp.x,
+      a.position.y - pp.y,
+      keep[2]! * (a.position.z - pp.z),
+      a.velocity.x - pv.x,
+      a.velocity.y - pv.y,
+      keep[2]! * (a.velocity.z - pv.z),
     ),
     covariance: cov,
   };
@@ -1248,14 +1275,19 @@ function labelFor(
   if (id === EXPONENT_ID)
     return { label: 'Distance-law exponent', unit: '', extension: 'distance-law' };
   const eqName = (eq: string) => ctx.ship.equipment.find((e) => e.id === eq)?.name ?? eq;
+  if (id === RCS_SCALE_ID) return { label: 'RCS translation scale', unit: '' };
   m = /^thruster\.(.+)\.scale$/.exec(id);
   if (m) return { label: `${eqName(m[1]!)} thrust scale`, unit: '' };
   m = /^thruster\.(.+)\.misalignment$/.exec(id);
   if (m) return { label: `${eqName(m[1]!)} misalignment`, unit: 'rad' };
+  m = /^thruster\.(.+)\.misalignment-pitch$/.exec(id);
+  if (m) return { label: `${eqName(m[1]!)} pitch misalignment`, unit: 'rad' };
   m = /^sensor\.(.+)\.scale$/.exec(id);
   if (m) return { label: `${eqName(m[1]!)} scale`, unit: '' };
   m = /^sensor\.(.+)\.bias$/.exec(id);
   if (m) return { label: `${eqName(m[1]!)} bearing bias`, unit: 'rad' };
+  m = /^sensor\.(.+)\.bias-(x|y)$/.exec(id);
+  if (m) return { label: `${eqName(m[1]!)} misalignment about body ${m[2]}`, unit: 'rad' };
   return { label: id, unit: '' };
 }
 
@@ -1286,23 +1318,36 @@ function mergeSpans(spans: [number, number][]): [number, number][] {
   return out;
 }
 
-/** Cross-range residuals (m) from bearing residuals: whitened residual × σ × measured range. */
+/**
+ * Cross-range residuals (m) from bearing residuals: whitened residual × σ × measured range, for
+ * both tangent directions of a fix (east and north; east only in the planar reduction). σ is
+ * the arc each row subtends: σ_az·cos(el) for the east row, σ_el for the north row.
+ */
 export function crossRangeResiduals(
   d: Pick<ModelDerived, 'fit' | 'problem'>,
 ): { arc: string; t: number; powered: boolean; m: number }[] {
   const fit = d.fit;
   if (!fit) return [];
   // The fit may predate the current arcs (in-flight refresh), so match by tag, not position.
-  const fixes = new Map<string, { s: number; r: number }>();
+  const fixes = new Map<string, { s: readonly number[]; r: number }>();
   for (const a of d.problem.arcs)
     for (const m of a.meas)
-      if (m.kind === 'opnav' && m.z.length > 1 && usable(d.problem.structure, m))
-        fixes.set(`${a.id}|${m.t}|${m.target}`, { s: m.sigma[0]!, r: m.z[1]! });
+      if (hasRange(m) && usable(d.problem.structure, m))
+        fixes.set(`${a.id}|${m.t}|${m.target}`, {
+          s: [(m.sigma[0] ?? 0) * Math.cos(m.z[1]!), m.sigma[1] ?? 0],
+          r: m.z[2]!,
+        });
   const out: { arc: string; t: number; powered: boolean; m: number }[] = [];
   fit.residTags.forEach((tag, k) => {
     if (tag.kind !== 'bearing') return;
     const f = fixes.get(`${tag.arc}|${tag.t}|${tag.target}`);
-    if (f) out.push({ arc: tag.arc, t: tag.t, powered: tag.powered, m: fit.resid[k]! * f.s * f.r });
+    if (f)
+      out.push({
+        arc: tag.arc,
+        t: tag.t,
+        powered: tag.powered,
+        m: fit.resid[k]! * f.s[tag.component]! * f.r,
+      });
   });
   return out;
 }
@@ -1400,7 +1445,7 @@ function toModelState(
   for (const body of d.spec.bodies) {
     const spans: [number, number][] = [];
     for (const a of [...d.problem.arcs, ...[...d.probes.values()].flat()]) {
-      const r = rangeFixes(a, body).map((m) => m.z[1]!);
+      const r = rangeFixes(a, body).map((m) => m.z[2]!);
       if (r.length > 0) spans.push([Math.min(...r), Math.max(...r)]);
     }
     distance[body] = mergeSpans(spans);
@@ -1490,7 +1535,7 @@ export function carriedCalibration(
     if (!chosen || chosen.support <= 0) return [];
     let v = chosen.sigma ** 2; // already includes aging to the end of the carrying attempt
     if (transit) {
-      const cam = /^sensor\.(.+)\.bias$/.exec(id)?.[1] ?? '';
+      const cam = /^sensor\.(.+)\.bias(?:-x|-y)?$/.exec(id)?.[1] ?? '';
       const ag = agingOf(id, cam);
       if (ag) {
         const start = conditionAtEnd(opts.carrying, ag.equipment);

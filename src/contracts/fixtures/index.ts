@@ -11,12 +11,19 @@
  *     collision with asteroid a-07 at 1500 s.
  *   - Model v3: distance-law extension enabled, validated against attempt 2.
  *
+ * Three-dimensional (A11). The bodies and the ship's path lie in the inertial x–y plane; the
+ * asteroids, the objective region, the sun, the camera's cone, the uncertainty ellipsoids, the
+ * ship's equipment heights and its hull are not planar, so views can be drawn in 3D.
+ *
  * Everything is built once at import by buildFixtures(); the build is deterministic.
  */
 
-import * as v from '../../lib/vec2.ts';
-import type { Vec2 } from '../../lib/vec2.ts';
-import { isoCov2 } from '../estimates.ts';
+import * as q from '../../lib/quat.ts';
+import { addSym3, pointInertia, principalAxes, fromPrincipal } from '../../lib/sym3.ts';
+import * as v from '../../lib/vec3.ts';
+import type { Vec3 } from '../../lib/vec3.ts';
+import type { Cov3 } from '../estimates.ts';
+import { isoCov3 } from '../estimates.ts';
 import { issueForecast, type Forecast, type ForecastObjectTrack } from '../forecast.ts';
 import type {
   AttemptOverlay,
@@ -33,6 +40,7 @@ import type {
   EquipmentStatus,
   ExecutedCommand,
   ForecastSample,
+  HullPrism,
   MassProperties,
   Measurement,
   ModelState,
@@ -65,40 +73,58 @@ import {
   type MockSample,
 } from './generate.ts';
 
+/** Body-frame point: x forward, y left, z up. */
+const at = (x: number, y: number, z = 0): Vec3 => ({ x, y, z });
+
 // ---------------------------------------------------------------------------------------------
 // Ship design (mock; the real baseline comes from section 1C)
 // ---------------------------------------------------------------------------------------------
 
-const rcs = (id: string, x: number, y: number, dirY: number) =>
+const rcs = (id: string, x: number, y: number, z: number, dirY: number, dirZ: number) =>
   ({
     id,
     kind: 'rcs-thruster',
     name: `RCS ${id.slice(-1)}`,
     mass: 8,
-    position: v.vec2(x, y),
+    position: at(x, y, z),
     ratedPower: 20,
     bus: 'bus-a',
     thermalNode: 'node-prop',
     modes: ['off', 'armed'],
     defaultMode: 'armed',
-    mount: { position: v.vec2(x, y), direction: v.vec2(0, dirY) },
+    mount: { position: at(x, y, z), direction: at(0, dirY, dirZ) },
     sheddable: true,
     params: { thrust: 220, isp: 230, minImpulseBit: 0.5 },
   }) as const;
+
+/** The mock ship's body: a 14 m × 4 m × 4 m prism with a pointed nose. */
+const BODY_PRISM: HullPrism = {
+  outline: [
+    { x: -7, y: -2 },
+    { x: 5, y: -2 },
+    { x: 7, y: 0 },
+    { x: 5, y: 2 },
+    { x: -7, y: 2 },
+  ],
+  zMin: -2,
+  zMax: 2,
+  part: 'structure',
+};
 
 export const mockShipDefinition: ShipDefinition = {
   id: 'mock-ship',
   name: 'Mock ship (fixture)',
   structureMass: 7000,
-  structureCenterOfMass: v.vec2(0.5, 0),
-  structureInertia: 1.6e5,
+  structureCenterOfMass: at(0.5, 0, 0),
+  // A slender body: little inertia about the long (roll) axis.
+  structureInertia: { moments: { x: 3.0e4, y: 1.6e5, z: 1.6e5 }, axes: q.IDENTITY },
   equipment: [
     {
       id: 'power-main',
       kind: 'power-source',
       name: 'Power unit',
       mass: 450,
-      position: v.vec2(-3, 0),
+      position: at(-3, 0, -0.3),
       ratedPower: 0,
       bus: 'bus-a',
       thermalNode: 'node-power',
@@ -112,7 +138,7 @@ export const mockShipDefinition: ShipDefinition = {
       kind: 'battery',
       name: 'Battery 1',
       mass: 300,
-      position: v.vec2(-1, 1.2),
+      position: at(-1, 1.2, -0.6),
       ratedPower: 0,
       bus: 'bus-a',
       thermalNode: 'node-power',
@@ -126,32 +152,37 @@ export const mockShipDefinition: ShipDefinition = {
       kind: 'main-engine',
       name: 'Main engine',
       mass: 260,
-      position: v.vec2(-6.5, 0),
+      position: at(-6.5, 0, 0),
       ratedPower: 150,
       bus: 'bus-a',
       thermalNode: 'node-prop',
       modes: ['off', 'armed'],
       defaultMode: 'armed',
-      mount: { position: v.vec2(-7, 0), direction: v.vec2(1, 0) },
+      mount: { position: at(-7, 0, 0), direction: at(1, 0, 0) },
       sheddable: true,
       params: { thrust: ENGINE.thrust, isp: ENGINE.isp, minImpulseBit: 40 },
     },
-    rcs('rcs-1', 5, 1.6, -1),
-    rcs('rcs-2', 5, -1.6, 1),
-    rcs('rcs-3', -5, 1.6, -1),
-    rcs('rcs-4', -5, -1.6, 1),
+    rcs('rcs-1', 5, 1.6, 0, -1, 0),
+    rcs('rcs-2', 5, -1.6, 0, 1, 0),
+    rcs('rcs-3', -5, 1.6, 0, -1, 0),
+    rcs('rcs-4', -5, -1.6, 0, 1, 0),
+    // Dorsal and ventral jets: pitch and vertical translation.
+    rcs('rcs-5', 5, 0, 1.6, 0, -1),
+    rcs('rcs-6', 5, 0, -1.6, 0, 1),
+    rcs('rcs-7', -5, 0, 1.6, 0, -1),
+    rcs('rcs-8', -5, 0, -1.6, 0, 1),
     {
       id: 'opt-nav',
       kind: 'optical-tracker',
       name: 'Optical nav camera',
       mass: 35,
-      position: v.vec2(6, 0),
+      position: at(6, 0, 0.4),
       ratedPower: 140,
       bus: 'bus-a',
       thermalNode: 'node-avionics',
       modes: ['off', 'standby', 'track'],
       defaultMode: 'track',
-      mount: { position: v.vec2(6.2, 0), direction: v.vec2(1, 0) },
+      mount: { position: at(6.2, 0, 0.4), direction: at(1, 0, 0) },
       sheddable: true,
       params: { sigmaBearing: 1.5e-4, sigmaRangeFraction: 1e-3, halfWidth: 0.6, range: 2e6 },
     },
@@ -160,7 +191,7 @@ export const mockShipDefinition: ShipDefinition = {
       kind: 'accelerometer',
       name: 'Inertial unit',
       mass: 12,
-      position: v.vec2(0.5, 0),
+      position: at(0.5, 0, 0),
       ratedPower: 40,
       bus: 'bus-a',
       thermalNode: 'node-avionics',
@@ -174,7 +205,7 @@ export const mockShipDefinition: ShipDefinition = {
       kind: 'star-tracker',
       name: 'Star tracker',
       mass: 6,
-      position: v.vec2(4, 0.8),
+      position: at(4, 0.8, 1.2),
       ratedPower: 15,
       bus: 'bus-a',
       thermalNode: 'node-avionics',
@@ -188,7 +219,7 @@ export const mockShipDefinition: ShipDefinition = {
       kind: 'recorder',
       name: 'Black Box',
       mass: 20,
-      position: v.vec2(0, -0.8),
+      position: at(0, -0.8, 0.2),
       ratedPower: 30,
       bus: 'bus-a',
       thermalNode: 'node-avionics',
@@ -202,7 +233,7 @@ export const mockShipDefinition: ShipDefinition = {
       kind: 'processor',
       name: 'Flight computer',
       mass: 15,
-      position: v.vec2(1, 0),
+      position: at(1, 0, 0.5),
       ratedPower: 120,
       bus: 'bus-a',
       thermalNode: 'node-avionics',
@@ -216,7 +247,7 @@ export const mockShipDefinition: ShipDefinition = {
       kind: 'radiator',
       name: 'Radiator panels',
       mass: 140,
-      position: v.vec2(-2, 1.9),
+      position: at(-2, 1.9, 0),
       ratedPower: 10,
       bus: 'bus-a',
       thermalNode: 'node-power',
@@ -230,7 +261,7 @@ export const mockShipDefinition: ShipDefinition = {
       kind: 'life-support',
       name: 'Life support',
       mass: 900,
-      position: v.vec2(2, 0),
+      position: at(2, 0, -0.4),
       ratedPower: 1800,
       bus: 'bus-a',
       thermalNode: 'node-avionics',
@@ -244,7 +275,7 @@ export const mockShipDefinition: ShipDefinition = {
       kind: 'comms',
       name: 'Radio',
       mass: 25,
-      position: v.vec2(3, -1.2),
+      position: at(3, -1.2, -1.0),
       ratedPower: 60,
       bus: 'bus-a',
       thermalNode: 'node-avionics',
@@ -258,10 +289,20 @@ export const mockShipDefinition: ShipDefinition = {
     {
       id: 'tank-main',
       name: 'Main tank',
-      position: v.vec2(-3.5, 0),
+      position: at(-3.5, 0, 0),
       capacity: 3200,
       propellant: 'MMH/NTO',
-      feeds: ['main-engine', 'rcs-1', 'rcs-2', 'rcs-3', 'rcs-4'],
+      feeds: [
+        'main-engine',
+        'rcs-1',
+        'rcs-2',
+        'rcs-3',
+        'rcs-4',
+        'rcs-5',
+        'rcs-6',
+        'rcs-7',
+        'rcs-8',
+      ],
     },
   ],
   buses: [{ id: 'bus-a', name: 'Main bus', voltage: 120, limit: 7500 }],
@@ -274,28 +315,39 @@ export const mockShipDefinition: ShipDefinition = {
     {
       id: 'stowed',
       name: 'Stowed',
-      footprint: [v.vec2(-7, -2), v.vec2(5, -2), v.vec2(7, 0), v.vec2(5, 2), v.vec2(-7, 2)],
+      hull: [BODY_PRISM],
       transitionTime: 0,
     },
     {
       id: 'radiators-deployed',
       name: 'Radiators deployed',
-      footprint: [
-        v.vec2(-7, -2),
-        v.vec2(-4, -2),
-        v.vec2(-4, -6),
-        v.vec2(0, -6),
-        v.vec2(0, -2),
-        v.vec2(5, -2),
-        v.vec2(7, 0),
-        v.vec2(5, 2),
-        v.vec2(0, 2),
-        v.vec2(0, 6),
-        v.vec2(-4, 6),
-        v.vec2(-4, 2),
-        v.vec2(-7, 2),
+      // The body plus two thin radiator panels: three convex prisms.
+      hull: [
+        BODY_PRISM,
+        {
+          outline: [
+            { x: -4, y: 2 },
+            { x: 0, y: 2 },
+            { x: 0, y: 6 },
+            { x: -4, y: 6 },
+          ],
+          zMin: -0.1,
+          zMax: 0.1,
+          part: 'radiator-1',
+        },
+        {
+          outline: [
+            { x: -4, y: -6 },
+            { x: 0, y: -6 },
+            { x: 0, y: -2 },
+            { x: -4, y: -2 },
+          ],
+          zMin: -0.1,
+          zMax: 0.1,
+          part: 'radiator-1',
+        },
       ],
-      equipmentPositions: { 'radiator-1': v.vec2(-2, 4) },
+      equipmentPositions: { 'radiator-1': at(-2, 4, 0) },
       paramOverrides: { 'radiator-1.area': 36 },
       transitionTime: 90,
     },
@@ -315,7 +367,7 @@ export function mockMassProperties(
   const config = def.configurations.find((c) => c.id === configurationId);
   if (!config) throw new Error(`unknown configuration ${configurationId}`);
   const tank = def.tanks[0];
-  const points: { m: number; p: Vec2 }[] = [
+  const points: { m: number; p: Vec3 }[] = [
     { m: def.structureMass, p: def.structureCenterOfMass },
     ...def.equipment.map((e) => ({
       m: e.mass,
@@ -325,12 +377,21 @@ export function mockMassProperties(
   ];
   const mass = points.reduce((s, q) => s + q.m, 0);
   const com = v.scale(
-    points.reduce((s, q) => v.addScaled(s, q.p, q.m), v.ZERO),
+    points.reduce((s, item) => v.addScaled(s, item.p, item.m), v.ZERO),
     1 / mass,
   );
-  const inertia =
-    def.structureInertia + points.reduce((s, q) => s + q.m * v.distanceSq(q.p, com), 0);
-  return { mass, centerOfMass: com, inertia, footprint: config.footprint };
+  // Structure tensor plus every point mass by the parallel-axis theorem, then principal axes.
+  const tensor = points.reduce(
+    (sum, item) => addSym3(sum, pointInertia(item.m, v.sub(item.p, com))),
+    fromPrincipal(def.structureInertia.moments, def.structureInertia.axes),
+  );
+  const principal = principalAxes(tensor);
+  return {
+    mass,
+    centerOfMass: com,
+    inertia: { moments: principal.values, axes: principal.axes },
+    hull: config.hull,
+  };
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -427,7 +488,7 @@ function mockCalibration(
   referenceExponent: number,
   inflation: number,
 ): CalibrationProfile {
-  const alpha = (MOCK_BODIES[0] as { position: Vec2 }).position;
+  const alpha = (MOCK_BODIES[0] as { position: Vec3 }).position;
   const r0 = REFERENCE_RADIUS;
   const spans: readonly (readonly [number, number])[] = [
     [0, 300],
@@ -460,18 +521,49 @@ function mockCalibration(
 
 const ARRIVAL_ESTIMATE: ShipEstimate = {
   t: 0,
-  position: v.add(ARRIVAL.position, v.vec2(120, -80)),
-  velocity: v.add(ARRIVAL.velocity, v.vec2(0.02, -0.03)),
-  positionCov: isoCov2(150),
-  velocityCov: isoCov2(0.05),
+  position: v.add(ARRIVAL.position, v.vec3(120, -80, 60)),
+  velocity: v.add(ARRIVAL.velocity, v.vec3(0.02, -0.03, 0.01)),
+  positionCov: isoCov3(150),
+  velocityCov: isoCov3(0.05),
   attitude: ARRIVAL.attitude,
   attitudeSigma: 1e-4,
-  angularRate: 0,
+  angularVelocity: v.ZERO,
 };
+
+/**
+ * Uncertainty that is larger along the direction of travel than across it, as a tracking
+ * filter's is: σ_along = 1.5σ, σ_across = 0.7σ.
+ */
+function alongTrackCov(velocity: Vec3, sigma: number): Cov3 {
+  const u = v.normalize(velocity);
+  const across = (0.7 * sigma) ** 2;
+  const extra = (1.5 * sigma) ** 2 - across;
+  return [
+    across + extra * u.x * u.x,
+    extra * u.x * u.y,
+    extra * u.x * u.z,
+    across + extra * u.y * u.y,
+    extra * u.y * u.z,
+    across + extra * u.z * u.z,
+  ];
+}
+
+/** One-sigma radius of a covariance, averaged over directions. */
+const meanSigma = (cov: Cov3): number => Math.sqrt((cov[0] + cov[3] + cov[5]) / 3);
 
 const FORECAST_STEP = 20;
 const FORECAST_HORIZON = 1800;
 const SHIP_HALF_LENGTH = 7;
+
+/** A star-tracker fix: the true attitude with a small error about each body axis. */
+function attitudeFix(attitude: q.Quat, error: readonly [number, number, number]): number[] {
+  const measured = q.multiply(
+    attitude,
+    q.fromRotationVector({ x: error[0], y: error[1], z: error[2] }),
+  );
+  const r = q.toRotationVector(measured);
+  return [r.x, r.y, r.z];
+}
 
 function measurementsFor(id: string, truth: readonly MockSample[]): Measurement[] {
   const rng = fixtureRng(`measurements/${id}`);
@@ -483,13 +575,16 @@ function measurementsFor(id: string, truth: readonly MockSample[]): Measurement[
         const r = v.length(rel);
         const sigR = 50 + 1e-3 * r;
         const sigB = 1.5e-4;
+        // An isotropic pointing error: the azimuth error grows as 1 / cos(elevation).
+        const elevation = v.elevationOf(rel);
+        const sigAz = sigB / Math.max(Math.cos(elevation), 1e-6);
         out.push({
           kind: 'bearing',
           t: s.t,
           source: 'opt-nav',
           target: b.id,
-          value: [v.angleOf(rel) + rng.normal(0, sigB)],
-          sigma: [sigB],
+          value: [v.azimuthOf(rel) + rng.normal(0, sigAz), elevation + rng.normal(0, sigB)],
+          sigma: [sigAz, sigB],
         });
         out.push({
           kind: 'range',
@@ -506,8 +601,12 @@ function measurementsFor(id: string, truth: readonly MockSample[]): Measurement[
         kind: 'accel',
         t: s.t,
         source: 'imu',
-        value: [s.thrustAccel + TRUE_IMU_BIAS_X + rng.normal(0, 2e-4), rng.normal(0, 2e-4)],
-        sigma: [2e-4, 2e-4],
+        value: [
+          s.thrustAccel + TRUE_IMU_BIAS_X + rng.normal(0, 2e-4),
+          rng.normal(0, 2e-4),
+          rng.normal(0, 2e-4),
+        ],
+        sigma: [2e-4, 2e-4, 2e-4],
       });
     }
     if (s.t % 5 === 0) {
@@ -515,8 +614,12 @@ function measurementsFor(id: string, truth: readonly MockSample[]): Measurement[
         kind: 'attitude',
         t: s.t,
         source: 'star-tracker',
-        value: [v.wrapAngle(s.attitude + rng.normal(0, 1e-4))],
-        sigma: [1e-4],
+        value: attitudeFix(s.attitude, [
+          rng.normal(0, 1e-4),
+          rng.normal(0, 1e-4),
+          rng.normal(0, 1e-4),
+        ]),
+        sigma: [1e-4, 1e-4, 1e-4],
       });
     }
     if (s.t % 30 === 0) {
@@ -544,18 +647,21 @@ function measurementsFor(id: string, truth: readonly MockSample[]): Measurement[
 
 /** Measured path: position fixes from Alpha bearing and range (ship = target − ρ·û). */
 function trailFrom(measurements: readonly Measurement[]): TrailPoint[] {
-  const alpha = MOCK_BODIES[0] as { id: string; position: Vec2 };
-  const bearings = new Map<number, number>();
+  const alpha = MOCK_BODIES[0] as { id: string; position: Vec3 };
+  const bearings = new Map<number, readonly number[]>();
   const trail: TrailPoint[] = [];
   for (const m of measurements) {
     if (m.target !== alpha.id) continue;
-    if (m.kind === 'bearing') bearings.set(m.t, m.value[0] as number);
+    if (m.kind === 'bearing') bearings.set(m.t, m.value);
     if (m.kind === 'range') {
-      const theta = bearings.get(m.t);
-      if (theta === undefined) continue;
+      const bearing = bearings.get(m.t);
+      if (bearing === undefined) continue;
       trail.push({
         t: m.t,
-        position: v.sub(alpha.position, v.fromAngle(theta, m.value[0] as number)),
+        position: v.sub(
+          alpha.position,
+          v.fromAzEl(bearing[0] as number, bearing[1] as number, m.value[0] as number),
+        ),
       });
     }
   }
@@ -606,7 +712,7 @@ function executedFor(plan: Plan): ExecutedCommand[] {
 function believedAsteroidsAt(
   truth: readonly MockAsteroid[],
   t: number,
-  shipPosition: Vec2,
+  shipPosition: Vec3,
   rngName: string,
 ): BelievedAsteroid[] {
   const rng = fixtureRng(rngName);
@@ -616,9 +722,15 @@ function believedAsteroidsAt(
     const sigma = tracked ? 150 : 2500;
     return {
       id: a.id,
-      position: v.add(now.position, v.vec2(rng.normal(0, sigma), rng.normal(0, sigma))),
-      velocity: v.add(now.velocity, v.vec2(rng.normal(0, 0.2), rng.normal(0, 0.2))),
-      positionCov: isoCov2(sigma),
+      position: v.add(
+        now.position,
+        v.vec3(rng.normal(0, sigma), rng.normal(0, sigma), rng.normal(0, sigma)),
+      ),
+      velocity: v.add(
+        now.velocity,
+        v.vec3(rng.normal(0, 0.2), rng.normal(0, 0.2), rng.normal(0, 0.2)),
+      ),
+      positionCov: isoCov3(sigma),
       radius: a.radius,
       tracked,
       ...(tracked ? { lastSeen: t } : {}),
@@ -634,7 +746,7 @@ function forecastFor(
 ): Forecast {
   const g = newtonianGravity(spec.forecastMu);
   const track = propagate(g, spec.burns, FORECAST_HORIZON, spec.forecastScale);
-  const alpha = MOCK_BODIES[0] as { position: Vec2 };
+  const alpha = MOCK_BODIES[0] as { position: Vec3 };
   const [lo, hi] = spec.support;
   let extrapolatingSince: number | undefined;
   const samples: ForecastSample[] = [];
@@ -649,7 +761,7 @@ function forecastFor(
       t: s.t,
       position: s.position,
       velocity: s.velocity,
-      positionCov: isoCov2(sigma),
+      positionCov: alongTrackCov(s.velocity, sigma),
       extrapolating,
     });
   }
@@ -658,9 +770,9 @@ function forecastFor(
     const objSamples: ForecastObjectTrack['samples'][number][] = [];
     let p = a.position;
     let vel = a.velocity;
-    const sigma0 = Math.sqrt(a.positionCov[0]);
+    const sigma0 = meanSigma(a.positionCov);
     for (let t = 0; t <= FORECAST_HORIZON; t += FORECAST_STEP) {
-      objSamples.push({ t, position: p, positionCov: isoCov2(sigma0 + 0.1 * t) });
+      objSamples.push({ t, position: p, positionCov: isoCov3(sigma0 + 0.1 * t) });
       ({ position: p, velocity: vel } = coastParticle(p, vel, g, FORECAST_STEP, 5));
     }
     return { id: a.id, samples: objSamples };
@@ -677,7 +789,7 @@ function forecastFor(
           best = {
             t: os.t,
             d,
-            sigma: Math.hypot(Math.sqrt(os.positionCov[0]), Math.sqrt(ss.positionCov[0])),
+            sigma: Math.hypot(meanSigma(os.positionCov), meanSigma(ss.positionCov)),
           };
         }
       });
@@ -755,7 +867,7 @@ export function buildFixtures(): Fixtures {
   const knownAtArrival = believedAsteroidsAt(asteroids, 0, ARRIVAL.position, 'believed/arrival');
 
   // Model v2 data support comes from attempt 1's distances.
-  const alphaPos = (MOCK_BODIES[0] as { position: Vec2 }).position;
+  const alphaPos = (MOCK_BODIES[0] as { position: Vec3 }).position;
   const r1 = truth1.map((s) => v.distance(s.position, alphaPos));
   const support1: readonly [number, number] = [Math.min(...r1), Math.max(...r1)];
   const supportArrival: readonly [number, number] = [146e3, 154e3];
@@ -933,7 +1045,7 @@ export function buildFixtures(): Fixtures {
       name: b.name,
       position: b.position,
       velocity: v.ZERO,
-      positionCov: isoCov2(500),
+      positionCov: isoCov3(500),
       radius: b.radius,
       tracked: true,
       lastFix: t,
@@ -946,7 +1058,8 @@ export function buildFixtures(): Fixtures {
         id: 'gap',
         kind: 'pass-gap',
         label: 'Gap',
-        region: { center: v.vec2(250e3, -60e3), radius: 8e3 },
+        // A sphere centred a little above the bodies' plane.
+        region: { center: v.vec3(250e3, -60e3, 5e3), radius: 8e3 },
         window: { from: 1200, to: 2400 },
       },
     ],
@@ -1028,12 +1141,20 @@ export function buildFixtures(): Fixtures {
   const ship: BelievedShip = {
     t: tView,
     position: fix.position,
-    velocity: v.add(truthAtView.velocity, v.vec2(rngView.normal(0, 0.05), rngView.normal(0, 0.05))),
-    positionCov: isoCov2(180),
-    velocityCov: isoCov2(0.06),
-    attitude: v.wrapAngle(truthAtView.attitude + rngView.normal(0, 1e-4)),
+    velocity: v.add(
+      truthAtView.velocity,
+      v.vec3(rngView.normal(0, 0.05), rngView.normal(0, 0.05), rngView.normal(0, 0.05)),
+    ),
+    positionCov: alongTrackCov(truthAtView.velocity, 180),
+    velocityCov: isoCov3(0.06),
+    attitude: q.multiply(
+      truthAtView.attitude,
+      q.fromRotationVector(
+        v.vec3(rngView.normal(0, 1e-4), rngView.normal(0, 1e-4), rngView.normal(0, 1e-4)),
+      ),
+    ),
     attitudeSigma: 1e-4,
-    angularRate: 0,
+    angularVelocity: v.ZERO,
     configuration: 'stowed',
     massProperties: massNow,
     equipment,
@@ -1053,19 +1174,17 @@ export function buildFixtures(): Fixtures {
     ),
     fields: [],
   };
-  const alphaBearing = v.angleOf(v.sub(alphaPos, fix.position));
+  const towardAlpha = v.normalize(v.sub(alphaPos, fix.position));
   const viewSnapshot: ViewSnapshot = {
     t: tView,
     paused: true,
     warp: 1,
     world: believedWorld,
-    ship: { footprint: massNow.footprint, centerOfMass: massNow.centerOfMass, thrust: [] },
+    ship: { hull: massNow.hull, centerOfMass: massNow.centerOfMass, thrust: [] },
     trail: trail2,
     forecasts: attempt2.forecasts,
     coverage: {
-      sectors: [
-        { sensor: 'opt-nav', center: alphaBearing, halfWidth: 0.6, range: 2e6, quality: 0.92 },
-      ],
+      cones: [{ sensor: 'opt-nav', axis: towardAlpha, halfAngle: 0.6, range: 2e6, quality: 0.92 }],
     },
     objectives: briefing.objectives,
   };

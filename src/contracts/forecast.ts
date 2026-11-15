@@ -6,19 +6,13 @@
  * Use issueForecast() to turn a draft into a frozen Forecast.
  */
 
-import type { Vec2 } from '../lib/vec2.ts';
+import type { Quat } from '../lib/quat.ts';
+import type { Vec3 } from '../lib/vec3.ts';
 import { deepFreeze, type DeepReadonly } from '../lib/freeze.ts';
 import type { Plan } from './commands.ts';
-import type { Cov2, CovarianceMatrix } from './estimates.ts';
+import type { Cov3, CovarianceMatrix } from './estimates.ts';
 import type { ShipEstimate } from './belief.ts';
-import type {
-  AttemptId,
-  BodyId,
-  ExtensionId,
-  ForecastId,
-  ObjectId,
-  ParameterId,
-} from './ids.ts';
+import type { AttemptId, BodyId, ExtensionId, ForecastId, ObjectId, ParameterId } from './ids.ts';
 import type { CalibrationProfile } from './model.ts';
 import type { MassProperties } from './ship.ts';
 import type { Meters, Seconds } from './units.ts';
@@ -26,9 +20,10 @@ import type { Meters, Seconds } from './units.ts';
 export interface ForecastSample {
   readonly t: Seconds;
   /** Centre of mass, inertial. */
-  readonly position: Vec2;
-  readonly velocity: Vec2;
-  readonly positionCov: Cov2;
+  readonly position: Vec3;
+  readonly velocity: Vec3;
+  /** 3D position uncertainty (the envelope is an ellipsoid; `covEllipsoid`). */
+  readonly positionCov: Cov3;
   /** True where the model has no supporting data (envelope drawn as extrapolation). */
   readonly extrapolating: boolean;
   /**
@@ -51,8 +46,8 @@ export interface ForecastObjectTrack {
   readonly id: ObjectId;
   readonly samples: readonly {
     readonly t: Seconds;
-    readonly position: Vec2;
-    readonly positionCov: Cov2;
+    readonly position: Vec3;
+    readonly positionCov: Cov3;
   }[];
 }
 
@@ -90,6 +85,58 @@ export interface ForecastInputs {
     readonly values: Readonly<Record<ParameterId, number>>;
     readonly covariance: CovarianceMatrix;
   };
+  /**
+   * Camera-to-star-tracker misalignment the present state used: values and covariance,
+   * including aging (spec revision 3 §8.1). The model records it; stand-ins may omit.
+   */
+  readonly camera?: {
+    readonly values: Readonly<Record<ParameterId, number>>;
+    readonly covariance: CovarianceMatrix;
+  };
+  /**
+   * The full attitude each planned burn was forecast with, resolved from its attitude target
+   * with roll held (`quat.pointAlong`), so the record shows what the ship was expected to do.
+   */
+  readonly plannedAttitudes?: readonly { readonly t: Seconds; readonly attitude: Quat }[];
+}
+
+/** One-sigma size of each uncertainty source at one forecast sample: its longest axis, m. */
+export interface ForecastSigmaBySource {
+  readonly t: Seconds;
+  /** The present state (tracking). */
+  readonly state: Meters;
+  /** The calibration profile (measured gravity strength at sampled distances). */
+  readonly profile: Meters;
+  /** The hedge outside sampled distances (default, or earned inside validated spans). */
+  readonly hedge: Meters;
+  /** Engine calibration, for planned burns. */
+  readonly engine: Meters;
+  readonly mass: Meters;
+  readonly total: Meters;
+}
+
+/** How a tracked asteroid entered the forecast (spec §10). */
+export interface AsteroidForecastNote {
+  readonly id: ObjectId;
+  /** False when its track was too short to forecast; it is then absent from `objects`. */
+  readonly forecast: boolean;
+  /** Time of its last fix used, and how many normal points its present state came from. */
+  readonly tLast?: Seconds;
+  readonly fixes?: number;
+}
+
+/**
+ * What the envelope is made of (spec §8.2–8.3, §9): for the console's forecast detail. Kept with
+ * the forecast, so a debrief can say why an old forecast was as wide as it was.
+ */
+export interface ForecastDetail {
+  /** Per sample, in the order of `samples`. */
+  readonly sigmaMajor: readonly ForecastSigmaBySource[];
+  /** How the present state was obtained (for example `window`, `arrival`, `plan`). */
+  readonly presentSource: string;
+  readonly presentTime: Seconds;
+  /** Tracked asteroids: which were forecast and which had too short a track. */
+  readonly asteroids: readonly AsteroidForecastNote[];
 }
 
 export interface ForecastDraft {
@@ -104,6 +151,8 @@ export interface ForecastDraft {
   readonly samples: readonly ForecastSample[];
   readonly objects: readonly ForecastObjectTrack[];
   readonly closestApproaches: readonly ClosestApproach[];
+  /** What the envelope is made of. The model supplies it; stand-ins may omit. */
+  readonly detail?: ForecastDetail;
 }
 
 declare const issuedBrand: unique symbol;

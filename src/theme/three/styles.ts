@@ -3,7 +3,7 @@
  * materials from these, never from literal values. Rules: docs/design/visual-direction.md.
  */
 import { colour, opacity } from '../colour.ts';
-import { dash, line } from '../line.ts';
+import { dash, hatch, line } from '../line.ts';
 
 export interface LineStyle {
   readonly colour: string;
@@ -60,6 +60,13 @@ export const envelopeStyle = {
   extrapolatedBody: opacity.extrapolatedBody,
   extrapolatedEdge: opacity.extrapolatedEdge,
   extrapolatedHatch: opacity.extrapolatedHatch,
+  /** Extrapolating, but inside an adopted rule's validated span (ForecastSample.validated, A5). */
+  validatedBody: opacity.validatedBody,
+  validatedEdge: opacity.validatedEdge,
+  validatedHatch: opacity.validatedHatch,
+  /** Hatch spacing in world units; the view scales these to the encounter. */
+  hatchSpacing: hatch.envelopeSpacing,
+  validatedHatchSpacing: hatch.validatedSpacing,
 } as const;
 
 /** Flight plane and sensor coverage. */
@@ -78,6 +85,14 @@ export const planeStyle = {
   coverageEdge: opacity.coverageEdge,
   veil: opacity.planeVeil,
   veilColour: colour.viewBackground,
+  /** Hatch spacing over never-sensed space, world units. */
+  unknownSpacing: hatch.unknownSpacing,
+  /**
+   * Ship seconds after which space sensed earlier reads as unknown again: the hatch returns as
+   * the look ages, because rocks move [ASSUMED 2 h; an 8 h dive outlasts it unless the camera
+   * keeps looking, which is the point of P12].
+   */
+  earlierMemory: 7200,
 } as const;
 
 /** Asteroid and object marks by what the ship knows about them. */

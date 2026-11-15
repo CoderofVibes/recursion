@@ -1,10 +1,19 @@
 /**
  * Every [ASSUMED] constant the model uses (1G spec §11.1: they are stored in ModelState.settings).
- * Values follow tools/estimator-ref/assumptions.json where 1G set them; the rest are marked
- * as 2C's own play values. All are tuning values for playtest (2F, 5A).
+ * Values follow tools/estimator-ref/assumptions.json and assumptions-3d.json where 1G set them;
+ * the rest are marked as 2C's own play values. All are tuning values for playtest (2F, 5A).
  */
 
 export interface ModelSettings {
+  /**
+   * Planar reduction (spec revision 3, §1 and Appendix A.3): 1 runs the model as revision 2 did,
+   * for records that hold nothing out of the x–y plane. Every out-of-plane unknown is then held
+   * at zero as a fixed number (z and vz of the ship and of every body, the pitch misalignment,
+   * the camera components about body x and y, the orbit-normal empirical term), the elevation and
+   * f_z rows are left out, and the present state carries no camera term. 0 (the default) is the
+   * game: everything is three-dimensional.
+   */
+  readonly planar: number;
   /** The model's reference length for μ (P4). With n = 2 the value does not matter. m. */
   readonly r0: number;
   /** Integration step of the believed dynamics, s. 1G used 60 s; 30 s keeps close passes accurate. */
@@ -51,6 +60,12 @@ export interface ModelSettings {
   /** Per √(camera power cycle). */
   readonly agingCameraBiasCycle: number;
   readonly agingCameraBiasCondition: number;
+  /** RCS translation scale (assumptions-3d.json): per √day, per √(RCS Δv / ref), per condition. */
+  readonly agingRcsScaleDay: number;
+  readonly agingRcsScaleUse: number;
+  /** Commanded RCS Δv unit, m/s. */
+  readonly agingRcsUseRef: number;
+  readonly agingRcsScaleCondition: number;
   /** Held-out test k (§7.2) and the confounding threshold (§9.3). */
   readonly heldOutSigmaK: number;
   readonly confoundedRho: number;
@@ -59,8 +74,11 @@ export interface ModelSettings {
   /** Default priors when the briefing gives none (§3.6). */
   readonly priorExponentSigma: number;
   readonly priorThrustScaleSigma: number;
+  /** Each misalignment angle (about body +z and about body −y). */
   readonly priorMisalignmentSigma: number;
+  readonly priorRcsScaleSigma: number;
   readonly priorAccelScaleSigma: number;
+  /** Each component of the camera misalignment (body x, y, z). */
   readonly priorCameraBiasSigma: number;
   readonly priorExtraBodyMuSigma: number;
   /** [2C] Prior σ of a secondary body's velocity at an arc epoch, from the briefing, m/s. */
@@ -88,6 +106,7 @@ export interface ModelSettings {
 }
 
 export const DEFAULT_SETTINGS: ModelSettings = {
+  planar: 0,
   r0: 1.0e6,
   dt: 30,
   fdStep: 1e-3,
@@ -118,12 +137,17 @@ export const DEFAULT_SETTINGS: ModelSettings = {
   agingCameraBiasDay: 5e-6,
   agingCameraBiasCycle: 1e-5,
   agingCameraBiasCondition: 2e-4,
+  agingRcsScaleDay: 0.005,
+  agingRcsScaleUse: 0.02,
+  agingRcsUseRef: 10,
+  agingRcsScaleCondition: 0.2,
   heldOutSigmaK: 3,
   confoundedRho: 0.9,
   otherBodyPullLimit: 0.2,
   priorExponentSigma: 1,
   priorThrustScaleSigma: 0.05,
   priorMisalignmentSigma: 0.01,
+  priorRcsScaleSigma: 0.1,
   priorAccelScaleSigma: 1e-3,
   priorCameraBiasSigma: 1e-4,
   priorExtraBodyMuSigma: 1e11,

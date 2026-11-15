@@ -180,6 +180,27 @@ Safe preparation should allow deliberate thought without a universal countdown. 
 >
 > When the ship is destroyed and the player fails the screen should go black (maybe some camera shaking up and down to simulate the space craft's failure) and the game restarts at the beginning (roguelikes are cruel) with the player walking into the control room and seeing the initial environment. Player hands and such are not part of this game - just a 1st person view and a small white dot on the screen to show what the player is interacting with (something subtle like that).
 
+### Addendum: answers and further direction (owner, 2026-11-14, given to 1E)
+
+Answering 1E's questions on the composition:
+
+> 1. Time does pass while you're in the room and walking around. You're just in open space most of the time traveling between encounters. I'd love for, at some point, us to build a cool universe environment the player sees as they walk the room and prepare. Also, the visuals of things like the gravity wells should be great too. But that is for later.
+> 2. Agreed - map should only view what has been charted. It should be 3D not just on a plane - the universe expands in all directions and the player isn't taking a linear path through it. A 3D holographic map would be best. And when selecting an environment, the player's view should then zoom to that environment, it is 3D as well and see the environment in detail. So each environment will have to be built out.
+> 3. I would like the flight to be in 3D space - I believe it is doable. Not just flying on a flat plane.
+> 4. 8m wide is fine.
+
+And further direction:
+
+> I'd like for the control room to actually look like a control room, not an empty room with a console and two screens. Please use the images as references to fill out the room environment.
+>
+> The player in the flight view should fly hands on. Predictive modeling should help in some way that is yet to be determined.
+>
+> The ship is a good first pass but it looks like a plain cylinder with square/rectangle boxes in it. I attached a blue print. What I'd like is for the the ship to have that detail, but in 3D. Each system, when selected, should isolate the system and project and image of the system and its components, looking like the reference image but in 3D. There should be readouts included in each system screen, graphs, data, bars presenting levels, things like that. [...] I want the ship and its systems in this view to look cool, present well, and have data/info displayed in a clean way with the system image when selected.
+>
+> For the flight screen, the ship should be farther back on the flight screen so the player can see objects and scanned things ahead of it.
+
+The reference images stay out of the repository at the owner's request.
+
 ## 11. Physics derivation during the build
 
 At some point during the hackathon build window, I plan to give Codex a focused assignment to re-derive the relevant physics from our chosen fictional assumptions, including the inverse-2.5 gravity law.
