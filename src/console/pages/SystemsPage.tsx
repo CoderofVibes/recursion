@@ -29,6 +29,7 @@ import {
 } from '../data.ts';
 import type { Desk } from '../desk.ts';
 import { fixed, name, whole } from '../format.ts';
+import { doseRate, doseRateView, rateText } from '../radiation.ts';
 
 /** Assemblies that are structure or stores: listed last and quietly. */
 const PASSIVE = new Set(['other']);
@@ -119,6 +120,40 @@ export function EquipmentDetail({
   );
 }
 
+/**
+ * The radiation monitor (A24): the dose rate where it sits, its noise, whether it is over
+ * range, and the caution the session raises above the hazard threshold.
+ */
+export function RadiationPanel({ desk }: { readonly desk: Desk }) {
+  const status = desk.game.status();
+  const reading = doseRate(status);
+  const caution = status.alerts.some((a) => (a.id as string) === 'radiation-high');
+  const view = doseRateView(reading, status.t, caution);
+  const threshold = reading?.threshold;
+  return (
+    <Panel
+      title="Radiation"
+      aside={reading ? `monitor in ${name(reading.source)}` : 'monitor'}
+      status={view.status === 'caution' ? 'caution' : 'nominal'}
+      {...(view.status === 'caution' ? { statusLine: 'dose rate above the hazard threshold' } : {})}
+    >
+      <Trend
+        title="Dose rate"
+        unit="U"
+        value={view.value}
+        data={desk.history('radiation')}
+        status={view.status}
+        min={0}
+        {...(threshold !== undefined ? { limits: [{ at: threshold, kind: 'caution' }] } : {})}
+      />
+      <Line label="reading" {...(view.status === 'stale' ? { status: 'stale' } : {})}>
+        {view.note}
+      </Line>
+      {threshold !== undefined ? <Line label="caution above">{rateText(threshold)} U</Line> : null}
+    </Panel>
+  );
+}
+
 export function SystemsPage({ desk }: { readonly desk: Desk }) {
   const { game } = desk;
   const [selected, setSelected] = useState('camera');
@@ -181,6 +216,8 @@ export function SystemsPage({ desk }: { readonly desk: Desk }) {
         />
         <Line label="fix rate">{fixed(fixRate(ship, camera), 2)} per s</Line>
       </Panel>
+
+      <RadiationPanel desk={desk} />
 
       <Panel title="Stores and heat">
         {stores(ship, game.ship, desk.design.reserve).map((s) => (

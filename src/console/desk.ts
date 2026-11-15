@@ -19,6 +19,7 @@ import { distance, length } from '../view3d/adapter.ts';
 import type { ApproachAlert } from '../view3d/flight/FlightHolo.ts';
 import { defaultDesign, designMark, setupCommands } from './mission.ts';
 import type { MissionDesign } from './mission.ts';
+import { doseRate } from './radiation.ts';
 
 export type PageId = 'mission' | 'plan' | 'model' | 'blackbox' | 'systems' | 'credits';
 
@@ -395,6 +396,10 @@ export class Desk {
       push(`range:${b.id}`, distance(ship.position, b.position) - b.radius);
     push('speed', length(ship.velocity));
     if (miss !== null) push('miss', miss);
+    // The radiation monitor (A24), while its reading stands; over range it is a lower limit.
+    const dose = doseRate(this.game.status());
+    if (dose && snapshot.t <= dose.validUntil)
+      push('radiation', dose.saturated ? dose.saturationRate : dose.rate);
   }
 }
 

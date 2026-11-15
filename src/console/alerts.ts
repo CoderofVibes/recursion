@@ -3,22 +3,101 @@
  * One list, read by the flight view's alert stack and by the frame loop, which drops the warp
  * to 1× when a new one appears (DECISIONS A12).
  *
- * Alerts come from belief only: the issued forecast's closest approaches, the miss from that
- * forecast, the gauged reserve, the model's own faults (P11).
+ * Alerts come from belief only: the session's own (power gauges, radiation monitor), the issued
+ * forecast's closest approaches, the miss from that forecast, the gauged reserve, the model's
+ * own faults (P11).
  */
-import type { AlertItem } from '../theme/components/index.ts';
+import type { AlertItem, AlertLevel } from '../theme/components/index.ts';
 import { stores } from './data.ts';
 import type { Desk } from './desk.ts';
-import { clock, dist, fixed, whole } from './format.ts';
+import { clock, dist, duration, fixed, name, whole } from './format.ts';
+import { rateText } from './radiation.ts';
 
 /** Off the forecast: the ship is this many sigma from where the forecast put it now. */
 const MISS_SIGMAS = 3;
+
+/**
+ * The session's own alerts (`status().alerts`): the power gauges' (A18 (5)) and the radiation
+ * monitor's (A24). The session drops warp itself when one is new; the screens show them like
+ * any other. Read by shape, so a kind the session adds later still shows, by its id.
+ */
+export function raisedAlerts(alerts: readonly object[], t: number): AlertItem[] {
+  return alerts.map((alert) => {
+    const a = alert as Readonly<Record<string, unknown>>;
+    const kind = String(a.id);
+    const id = `game-${kind}`;
+    const level: AlertLevel =
+      a.level === 'warning' ? 'warning' : a.level === 'advisory' ? 'advisory' : 'caution';
+    const num = (key: string): number | undefined => {
+      const v = a[key];
+      return typeof v === 'number' && Number.isFinite(v) ? v : undefined;
+    };
+    const left = num('timeToEmpty');
+    switch (kind) {
+      case 'power-low':
+        return {
+          id,
+          level,
+          text: 'Power low',
+          ...(left !== undefined ? { detail: `${duration(left)} without generation` } : {}),
+        };
+      case 'power-reserve':
+        return {
+          id,
+          level,
+          text: 'On battery reserve',
+          ...(left !== undefined ? { detail: `${duration(left)} left` } : {}),
+        };
+      case 'critical-service': {
+        const functions = Array.isArray(a.functions) ? a.functions.map(String).map(name) : [];
+        const deadline = num('deadline');
+        const parts = [
+          ...(functions.length ? [functions.join(', ')] : []),
+          ...(deadline !== undefined ? [`lost in ${clock(deadline - t)}`] : []),
+        ];
+        return {
+          id,
+          level,
+          text: 'Critical power short',
+          ...(parts.length ? { detail: parts.join(' · ') } : {}),
+        };
+      }
+      case 'radiation-high': {
+        const rate = num('rate');
+        const threshold = num('threshold');
+        const reading =
+          rate === undefined ? '' : `${a.saturated === true ? '≥ ' : ''}${rateText(rate)} U`;
+        const limit = threshold === undefined ? '' : `above ${rateText(threshold)} U`;
+        const detail = [reading, limit].filter(Boolean).join(' · ');
+        return { id, level, text: 'Radiation high', ...(detail ? { detail } : {}) };
+      }
+      default: {
+        const words = name(kind);
+        return { id, level, text: words.charAt(0).toUpperCase() + words.slice(1) };
+      }
+    }
+  });
+}
+
+/**
+ * The session's alert that came up between two of its statuses: the reason when the session
+ * dropped warp itself. Only one new at this level counts (as `freshAlerts`).
+ */
+export function newlyRaised(
+  before: readonly object[],
+  after: readonly object[],
+  t: number,
+): AlertItem | undefined {
+  const key = (a: AlertItem): string => `${a.id}:${a.level}`;
+  const seen = new Set(raisedAlerts(before, t).map(key));
+  return raisedAlerts(after, t).find((a) => a.level !== 'advisory' && !seen.has(key(a)));
+}
 
 export function flightAlerts(desk: Desk): AlertItem[] {
   const { game } = desk;
   const status = game.status();
   const snapshot = desk.snapshot();
-  const items: AlertItem[] = [];
+  const items: AlertItem[] = raisedAlerts(status.alerts, status.t);
   const failure = desk.modelError();
   if (failure) items.push({ id: 'model', level: 'caution', text: 'Model fault', detail: failure });
   for (const a of desk.flightAlerts) {
