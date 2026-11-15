@@ -1,0 +1,676 @@
+{
+  "attachment": {
+    "joint_position_velocity_covariance": [
+      [
+        0.123077177473,
+        0.0761543549467,
+        0.0,
+        -0.00101539139929,
+        0.000807695699645,
+        -0.0003
+      ],
+      [
+        0.0761543549467,
+        0.237308709893,
+        0.0,
+        -0.00233078279858,
+        0.00101539139929,
+        0.00015
+      ],
+      [
+        0.0,
+        0.0,
+        0.275385887367,
+        0.00283847849822,
+        -0.00141923924911,
+        0.0
+      ],
+      [
+        -0.00101539139929,
+        -0.00233078279858,
+        0.00283847849822,
+        0.000193923483957,
+        0.000217538258021,
+        -2e-06
+      ],
+      [
+        0.000807695699645,
+        0.00101539139929,
+        -0.00141923924911,
+        0.000217538258021,
+        0.000520230870989,
+        -4e-06
+      ],
+      [
+        -0.0003,
+        0.00015,
+        0.0,
+        -2e-06,
+        -4e-06,
+        0.00063
+      ]
+    ],
+    "omega_inertial_rad_s": [
+      0.00666666666667,
+      0.0133333333333,
+      0.0133333333333
+    ],
+    "period_s": 314.159265359,
+    "position_major_sigma_m": 0.524772224271,
+    "radius_vector_m": [
+      447.2135955,
+      -223.60679775,
+      0.0
+    ],
+    "velocity_inertial_m_s": [
+      3.98142397,
+      5.46284794,
+      -7.203559925
+    ],
+    "velocity_major_sigma_m_s": 0.025179356624
+  },
+  "capture": {
+    "attachment_sweep_one_second_m": 9.99983333417,
+    "example_three_sigma_age_limit_s": 16.4466924129,
+    "transverse_crossing_windows": [
+      {
+        "full_window_s": 8.0,
+        "half_window_s": 4.0,
+        "relative_transverse_speed_m_s": 0.5
+      },
+      {
+        "full_window_s": 2.0,
+        "half_window_s": 1.0,
+        "relative_transverse_speed_m_s": 2.0
+      }
+    ],
+    "uncertainty_by_age": [
+      {
+        "age_s": 0,
+        "sigma_transverse_m": 0.524772224271,
+        "three_sigma_m": 1.57431667281
+      },
+      {
+        "age_s": 10,
+        "sigma_transverse_m": 0.581279526017,
+        "three_sigma_m": 1.74383857805
+      },
+      {
+        "age_s": 20,
+        "sigma_transverse_m": 0.724835075977,
+        "three_sigma_m": 2.17450522793
+      },
+      {
+        "age_s": 60,
+        "sigma_transverse_m": 1.58914627626,
+        "three_sigma_m": 4.76743882879
+      }
+    ]
+  },
+  "checks": [
+    {
+      "id": "attachment-speed",
+      "pass": true,
+      "tolerance": 1e-12,
+      "value": 10.0
+    },
+    {
+      "id": "motion-is-three-dimensional",
+      "pass": true,
+      "value": -7.453559925
+    },
+    {
+      "id": "velocity-matches-position-derivative",
+      "pass": true,
+      "tolerance": 1e-08,
+      "value": 1.41275612021e-10
+    },
+    {
+      "id": "rigid-rotation-equivariance",
+      "pass": true,
+      "tolerance": 1e-12,
+      "value": 2.01376217337e-15
+    },
+    {
+      "id": "covariance-jacobian-finite-difference",
+      "pass": true,
+      "tolerance": 1e-06,
+      "value": 1.03098670934e-07
+    },
+    {
+      "id": "joint-covariance-is-positive-semidefinite",
+      "pass": true,
+      "tolerance": 1e-12,
+      "value": [
+        1.93215245865e-05,
+        0.000625,
+        0.000631599812257,
+        0.0850024001877,
+        0.275385887367,
+        0.275451720197
+      ]
+    },
+    {
+      "id": "position-velocity-cross-covariance-retained",
+      "pass": true,
+      "value": 0.00428143205201
+    },
+    {
+      "id": "fresh-fix-meets-example-capture-width",
+      "pass": true,
+      "value": 1.57431667281
+    },
+    {
+      "id": "twenty-second-old-fix-exceeds-example-capture-width",
+      "pass": true,
+      "value": 2.17450522793
+    },
+    {
+      "id": "capture-width-horizon-root",
+      "pass": true,
+      "tolerance": 1e-12,
+      "value": 16.4466924129
+    },
+    {
+      "id": "one-second-contact-sweep-exceeds-capture-width",
+      "pass": true,
+      "value": 9.99983333417
+    },
+    {
+      "id": "release-velocity-chord--5s",
+      "pass": true,
+      "tolerance": 1e-12,
+      "value": 1.1995000625
+    },
+    {
+      "id": "release-velocity-chord--2s",
+      "pass": true,
+      "tolerance": 1e-12,
+      "value": 0.47996800064
+    },
+    {
+      "id": "release-velocity-chord-+0s",
+      "pass": true,
+      "tolerance": 1e-12,
+      "value": 0.0
+    },
+    {
+      "id": "release-velocity-chord-+2s",
+      "pass": true,
+      "tolerance": 1e-12,
+      "value": 0.47996800064
+    },
+    {
+      "id": "release-velocity-chord-+5s",
+      "pass": true,
+      "tolerance": 1e-12,
+      "value": 1.1995000625
+    },
+    {
+      "id": "common-time-release-sensitivity",
+      "pass": true,
+      "tolerance": 1e-07,
+      "value": 4.97210410429e-09
+    },
+    {
+      "id": "tracked-feature-spin-fit",
+      "pass": true,
+      "tolerance": 1e-12,
+      "value": [
+        -8.85460033747e-17,
+        0.02
+      ]
+    },
+    {
+      "id": "held-out-feature-prediction",
+      "pass": true,
+      "tolerance": 1e-10,
+      "value": [
+        1.51063457746e-13,
+        1.02475930688e-13,
+        0.0
+      ]
+    },
+    {
+      "id": "wrong-spin-sign-fails-held-out",
+      "pass": true,
+      "value": [
+        717.3560909,
+        841.470984808,
+        932.039085967
+      ]
+    },
+    {
+      "id": "symmetric-arm-spin-alias",
+      "pass": true,
+      "tolerance": 1e-10,
+      "value": [
+        0.0,
+        4.58506571161e-13,
+        5.75671182916e-13,
+        4.5828629415e-13
+      ]
+    },
+    {
+      "id": "euler-principal-axis-matches-independent-rodrigues",
+      "pass": true,
+      "tolerance": 1e-07,
+      "value": 7.96103597892e-11
+    },
+    {
+      "id": "free-spin-does-not-identify-inertia",
+      "pass": true,
+      "tolerance": 1e-07,
+      "value": 0.0
+    },
+    {
+      "id": "euler-negative-control-responds-to-inertia-ratios",
+      "pass": true,
+      "value": 6.25377643382
+    },
+    {
+      "id": "euler-torque-free-angular-momentum",
+      "pass": true,
+      "tolerance": 1e-10,
+      "value": 4.31415005819e-14
+    },
+    {
+      "id": "euler-torque-free-energy",
+      "pass": true,
+      "tolerance": 1e-10,
+      "value": 4.40386908227e-15
+    }
+  ],
+  "frame": "right-handed inertial; angular-rate examples supplied in inertial axes",
+  "inertia_observability": {
+    "assumption": "torque-free rigid bodies with measured common initial pose and rate",
+    "inertia_body_kg_m2": [
+      [
+        [
+          12000000000.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          16000000000.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          20000000000.0
+        ]
+      ],
+      [
+        [
+          60000000000.0,
+          0.0,
+          0.0
+        ],
+        [
+          0.0,
+          50000000000.0,
+          0.0
+        ],
+        [
+          0.0,
+          0.0,
+          80000000000.0
+        ]
+      ]
+    ],
+    "integration": "RK4 Euler angular rate and rotation-matrix kinematics",
+    "off_axis_landmark_separation_at_60s_m": 6.25377643382,
+    "off_axis_negative_control_initial_rate_rad_s": [
+      0.006,
+      0.009,
+      0.02
+    ],
+    "off_axis_negative_control_runs": [
+      {
+        "max_relative_angular_momentum_error": 4.13289364696e-14,
+        "max_relative_energy_error": 4.40386908227e-15,
+        "samples": [
+          {
+            "landmark_inertial_m": [
+              344.777701856,
+              -16.2679267264,
+              -361.750868504
+            ],
+            "omega_body_rad_s": [
+              0.00335415389526,
+              0.010868508521,
+              0.0196252441771
+            ],
+            "t_s": 40.0
+          },
+          {
+            "landmark_inertial_m": [
+              273.067643817,
+              50.9787342755,
+              -415.734567425
+            ],
+            "omega_body_rad_s": [
+              0.00263443570052,
+              0.0111619721738,
+              0.019559247196
+            ],
+            "t_s": 50.0
+          },
+          {
+            "landmark_inertial_m": [
+              188.084265206,
+              117.220710597,
+              -448.200417435
+            ],
+            "omega_body_rad_s": [
+              0.00190010148161,
+              0.0113835153419,
+              0.0195081068119
+            ],
+            "t_s": 60.0
+          }
+        ]
+      },
+      {
+        "max_relative_angular_momentum_error": 4.31415005819e-14,
+        "max_relative_energy_error": 2.33988398752e-15,
+        "samples": [
+          {
+            "landmark_inertial_m": [
+              344.393005075,
+              -11.6232230889,
+              -362.295954629
+            ],
+            "omega_body_rad_s": [
+              0.00207323157953,
+              0.0103131648224,
+              0.020197163853
+            ],
+            "t_s": 40.0
+          },
+          {
+            "landmark_inertial_m": [
+              271.4798738,
+              56.5102629094,
+              -416.059212502
+            ],
+            "omega_body_rad_s": [
+              0.00102412956326,
+              0.0104384350796,
+              0.0202172646434
+            ],
+            "t_s": 50.0
+          },
+          {
+            "landmark_inertial_m": [
+              184.783256042,
+              122.532094746,
+              -448.152913684
+            ],
+            "omega_body_rad_s": [
+              -3.40295420368e-05,
+              0.0104785053129,
+              0.0202237412587
+            ],
+            "t_s": 60.0
+          }
+        ]
+      }
+    ],
+    "principal_axis_runs": [
+      {
+        "max_relative_angular_momentum_error": 0.0,
+        "max_relative_energy_error": 0.0,
+        "samples": [
+          {
+            "landmark_inertial_m": [
+              418.513844718,
+              58.0859081952,
+              -267.342830554
+            ],
+            "omega_body_rad_s": [
+              0.0,
+              0.0,
+              0.02
+            ],
+            "t_s": 40.0
+          },
+          {
+            "landmark_inertial_m": [
+              367.069625073,
+              130.062907984,
+              -313.597720521
+            ],
+            "omega_body_rad_s": [
+              0.0,
+              0.0,
+              0.02
+            ],
+            "t_s": 50.0
+          },
+          {
+            "landmark_inertial_m": [
+              300.991497831,
+              196.854710069,
+              -347.350458985
+            ],
+            "omega_body_rad_s": [
+              0.0,
+              0.0,
+              0.02
+            ],
+            "t_s": 60.0
+          }
+        ]
+      },
+      {
+        "max_relative_angular_momentum_error": 0.0,
+        "max_relative_energy_error": 0.0,
+        "samples": [
+          {
+            "landmark_inertial_m": [
+              418.513844718,
+              58.0859081952,
+              -267.342830554
+            ],
+            "omega_body_rad_s": [
+              0.0,
+              0.0,
+              0.02
+            ],
+            "t_s": 40.0
+          },
+          {
+            "landmark_inertial_m": [
+              367.069625073,
+              130.062907984,
+              -313.597720521
+            ],
+            "omega_body_rad_s": [
+              0.0,
+              0.0,
+              0.02
+            ],
+            "t_s": 50.0
+          },
+          {
+            "landmark_inertial_m": [
+              300.991497831,
+              196.854710069,
+              -347.350458985
+            ],
+            "omega_body_rad_s": [
+              0.0,
+              0.0,
+              0.02
+            ],
+            "t_s": 60.0
+          }
+        ]
+      }
+    ],
+    "step_s": 0.1
+  },
+  "parameters": {
+    "attachment_radius_m": 500.0,
+    "capture_position_tolerance_m": 2.0,
+    "centre_position_sigma_m": 0.25,
+    "centre_velocity_m_s": [
+      1.0,
+      -0.5,
+      0.25
+    ],
+    "landmark_position_sigma_m": 0.15,
+    "pose_sigma_rad": 0.000872664625997,
+    "release_coast_s": 600.0,
+    "release_surrogate_radius_m": 600.0,
+    "spin_axis": [
+      0.333333333333,
+      0.666666666667,
+      0.666666666667
+    ],
+    "spin_rad_s": 0.02,
+    "spin_sigma_rad_s": 5e-05
+  },
+  "reconciliation_snapshot": {
+    "s1": "baf65e0; no committed study artifacts at initial read",
+    "s2": "baf65e0; no committed study artifacts at initial read"
+  },
+  "release": {
+    "common-time-position-sensitivity_m_per_s": 144.0,
+    "nominal_speed_m_s": 12.0,
+    "nominal_velocity_m_s": [
+      3.577708764,
+      7.155417528,
+      -8.94427191
+    ],
+    "scope": "constant-spin circular surrogate followed by free linear coast",
+    "timing_cases": [
+      {
+        "direction_change_deg": 5.72957795131,
+        "position_difference_at_nominal_release_plus_600s_m": 722.698789383,
+        "release_position_m": [
+          516.116523866,
+          -302.705123143,
+          44.6468612097
+        ],
+        "release_velocity_m_s": [
+          4.63135979136,
+          6.58390791015,
+          -8.89958780583
+        ],
+        "timing_error_s": -5.0,
+        "velocity_change_from_nominal_m_s": 1.1995000625
+      },
+      {
+        "direction_change_deg": 2.29183118052,
+        "position_difference_at_nominal_release_plus_600s_m": 288.460768402,
+        "release_position_m": [
+          529.073537219,
+          -282.420542533,
+          17.8837739233
+        ],
+        "release_velocity_m_s": [
+          4.00405755275,
+          6.9350886701,
+          -8.93711744648
+        ],
+        "timing_error_s": -2.0,
+        "velocity_change_from_nominal_m_s": 0.47996800064
+      },
+      {
+        "direction_change_deg": 0.0,
+        "position_difference_at_nominal_release_plus_600s_m": 0.0,
+        "release_position_m": [
+          536.6563146,
+          -268.3281573,
+          0.0
+        ],
+        "release_velocity_m_s": [
+          3.577708764,
+          7.155417528,
+          -8.94427191
+        ],
+        "timing_error_s": 0.0,
+        "velocity_change_from_nominal_m_s": 0.0
+      },
+      {
+        "direction_change_deg": 2.29183118052,
+        "position_difference_at_nominal_release_plus_600s_m": 287.500832401,
+        "release_position_m": [
+          543.380556358,
+          -253.806504256,
+          -17.8837739233
+        ],
+        "release_velocity_m_s": [
+          3.14563640443,
+          7.36429924426,
+          -8.93711744648
+        ],
+        "timing_error_s": 2.0,
+        "velocity_change_from_nominal_m_s": 0.47996800064
+      },
+      {
+        "direction_change_deg": 5.72957795131,
+        "position_difference_at_nominal_release_plus_600s_m": 716.701289085,
+        "release_position_m": [
+          551.834012834,
+          -231.270145207,
+          -44.6468612097
+        ],
+        "release_velocity_m_s": [
+          2.4883104533,
+          7.65543257918,
+          -8.89958780583
+        ],
+        "timing_error_s": 5.0,
+        "velocity_change_from_nominal_m_s": 1.1995000625
+      }
+    ]
+  },
+  "rotation_fit": {
+    "held_out_errors_m": [
+      1.51063457746e-13,
+      1.02475930688e-13,
+      0.0
+    ],
+    "held_out_times_s": [
+      40.0,
+      50.0,
+      60.0
+    ],
+    "phase_and_rate_fit": [
+      -8.85460033747e-17,
+      0.02
+    ],
+    "symmetric_alias_errors_m": [
+      0.0,
+      4.58506571161e-13,
+      5.75671182916e-13,
+      4.5828629415e-13
+    ],
+    "symmetric_alias_rate_rad_s": 0.177079632679,
+    "training_feature_angles_rad": [
+      0.0,
+      0.2,
+      0.4,
+      0.6
+    ],
+    "training_times_s": [
+      0.0,
+      10.0,
+      20.0,
+      30.0
+    ],
+    "wrong_sign_errors_m": [
+      717.3560909,
+      841.470984808,
+      932.039085967
+    ]
+  },
+  "schema": "recursion.s3.kinematic-reference.v1",
+  "status": "ASSUMED example values; DEMONSTRATED algebra only; no route/playability claim",
+  "units": "SI; degree-valued display fields explicitly named"
+}
