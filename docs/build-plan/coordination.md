@@ -4,26 +4,26 @@ The live state of the build between threads: who is running, who holds which sha
 
 **Integrator, after a compaction or in a new main thread:** read this file first (the "Morning" section, if it's still there), then `git log --oneline -15`, then the handoffs of any thread marked running.
 
-**Last updated:** 2026-11-15 morning, new main thread. **All the overnight branches are merged** (NIGHT, VX, 3C, 3B, ART, S23; AU had nothing). Next: the owner's decisions for today, at the end of the Morning section.
+**Last updated:** 2026-11-15 morning, new main thread. **All the overnight branches are merged** (NIGHT, VX, 3C, 3B, ART, S23; AU had nothing). The owner played the build and decided **A26**: four morning threads, with prompts at the end of `phase-3-extras.md` (3F new; VX's next pass; 2C and 2F resuming). The owner launches them.
 
 ## Threads
 
 | Thread | Model | Worktree · branch | Status | Gate or next step | Last merged into main |
 |---|---|---|---|---|---|
-| 2D control room | Opus 5.5 | `.worktrees/2d` · `p2/2d-control-room` | **Paused overnight**; all merged (`0ee3d1c`): region picker (A25), 2F's screen data, funnels in the window, A24 monitor on SYSTEMS, A20 slice | Resumes from main; waiting on: 2F's new fields drawn, the monitor reading, truth-side funnel projection, 3C registering ChainLinkPanel | `0ee3d1c` |
+| 2D control room | Opus 5.5 | `.worktrees/2d` · `p2/2d-control-room` | **Retired** (A26): its whole lane (console, view3d, theme, app) passes to 3F; all its work is merged (`0ee3d1c`) | Its open screen items are in 3F's prompt; ChainLinkPanel registered by NIGHT | `0ee3d1c` |
 | 2G speed pass | Opus 5.5 | `.worktrees/2g` · `p2/2g-3d-flight` | **Done**, evidence and handoff merged. Next per-tick target: the environment step (rock visibility); a quiet-machine rebaseline is still to run (R11) | — | `bc292a9` |
-| 2F game loop | Opus 5.5 | `.worktrees/2f` · `p2/2f-game` | **Paused overnight**; all merged (`0ee3d1c`), including R38's contract fields | Resumes from main with: the monitor's caution (R37, restore the tripwire), sensors within the tick, the wells' save seam | `0ee3d1c` |
-| 2C model and Black Box | Opus 5.5 | `.worktrees/2c` · `p2/2c-model` | **Paused overnight**; all merged | Resumes with: R32 once the funnel channel lands, R37's monitor in the Black Box | `0ee3d1c` |
+| 2F game loop | Opus 5.5 | `.worktrees/2f` · `p2/2f-game` | **Resuming** (A26; prompt `phase-3-extras.md` § 2F resumes; lighter bar) | R37's game half and the tripwire (R39), R20, the forecast's end at warp, the wells' save seam and work ledger, whatever stops a judge finishing the Garden or Cathedral. Leaves VX's one call in `withFunnels` alone | `0ee3d1c` |
+| 2C model and Black Box | Opus 5.5 | `.worktrees/2c` · `p2/2c-model` | **Resuming** (A26; prompt `phase-3-extras.md` § 2C resumes; lighter bar) | R47 first, then R46 (the Cathedral threadable), then R32 lighter (the Garden's pull learned from the flight) | `0ee3d1c` |
 | 3B Inverse Wells | GPT/Codex | `.worktrees/3b` · `p3/3b-wells` | **Done, merged** (`5c442ce`, from `a6887f0`): handed the channel to 3C and took its fix unchanged; live-field admission rerun (24 cases repeat exactly; 11 of 14 nominal flights reach the exit; crush and birth-veto probes pass). **Admission incomplete:** the real-model flights issue no forecasts and record no field signal, because no funnel scene reaches the camera | Its open requests (`docs/handoffs/3B.md` § Requests): the wells' window and camera producer (R31), the saved lifecycle and work ledger (2F), inference (R32) | `5c442ce` |
 | 3C Chain Link Fence | GPT/Codex (GPT-6 Astra) | `.worktrees/3c` · `p3/3c-lattice` | **Done, merged** (`e2137be`, from `8a1713b`): owns `src/ship/sensors/wells*`; the funnel channel fixed (R45) and wired into the dispatcher and recorder budget (R36); the radiation monitor's sensor and caution (its half of R37); contracts `radiation-monitor.ts`, `wells-acquisition.ts` (additive, reviewed) | Left for others: live scenes (the wells' window producer, R31), reconstruction (R32, R46), the radiation-triggered warp drop (R37) | `e2137be` |
 | 3E playability harness | GPT/Codex | `.worktrees/3e` · `p3/3e-harness` | **Done**: `npm run harness` (smoke, reference, learning, routes, all); its pending-acceptance list names the gaps | — | `44db2fc` |
 | 3A power and thermal | GPT/Codex | `.worktrees/3a` · `p3/3a-power-thermal` | **Done**: causal radiation and thermal faults, heaters, physical service signals (`electricalService`, `energizedEquipment`); command tape identical; 72 h transit sustainable | Its wiring is 2F's (R26) | `767100b` |
 | 3D expedition | Opus 5.5 | not created yet · `p3/3d-expedition` | **Gated** | After 2F's and 2C's first checkpoints merge | — |
-| 3F console v2 | Claude | — | **Gated** | After 2D hands off | — |
+| 3F console v2 | Claude, driven by the owner | `.worktrees/3f` · `p3/3f-console-v2` (to create) | **Ready to launch** (A26; prompt `phase-3-extras.md` § 3F, which replaces phase-3.md's 3F; **full bar**) | Layouts proposed to the owner first; MISSION → EXPLORATION; FLIGHT's level disc and thrust markers; 2D's open screen items | — |
 | S16 Well Garden layout | GPT/Codex | `.worktrees/s16` · `st/s16-well-garden` | **Done**: three-well prototype, 25-entry catalogue, garden budget (A15 Q05) | — | `e6eb51d` |
-| S23 the opening | GPT/Codex | `.worktrees/s23` · `st/s23-the-opening` | **Done, merged for the record** (this commit, from `3d93895`) | — | (this commit) |
+| S23 the opening | GPT/Codex | `.worktrees/s23` · `st/s23-the-opening` | **Done, merged for the record** (`65d3185`, from `3d93895`) | — | `65d3185` |
 | OP the opening | GPT (base) then Opus 5.5 | `.worktrees/op` · `p3/op-opening` | **Merged** (`6ac2397`): the 19.5 s opening, replay and Skip, reduced motion, room hooks (R23), the home window shared with the ending. Not yet in the game: only the dev preview plays it (R41). Its dev server and launch entry are removed | Gate once per browser (A25) | `6ac2397` |
-| VX window and sky visuals | GPT/Codex (GPT-6 Astra) | `.worktrees/vx` · `p3/vx-visuals` | **Done, merged** (`01a0947`, from `ac5be1e`): the deep sky (baked cubemap), the opening's Earth and title, cloud and funnel optics wired into the window. Handoff `docs/handoffs/vx.md` | Window side of R31 is complete for `WindowFunnel` entries; the Well Garden's producer is not (R31). S15 gate fails (R49). Theme owner may adopt `sky/style.ts` | `01a0947` |
+| VX window and sky visuals | GPT/Codex (GPT-6 Astra) | `.worktrees/vx` · `p3/vx-visuals` | **Running**: first pass merged (`01a0947`); now on the atlas pass (`7f43b09` on its branch, unmerged). **Next** (A26; relay text in `phase-3-extras.md` § VX — next; lighter bar): each mission's whole view, and the wells' optical producer (R50) | S15 gate fails (R49). Theme owner (now 3F) may adopt `sky/style.ts` | `01a0947` |
 | NIGHT judge's run | Claude (Fable 5.2) | `.worktrees/night` · `p3/night-hardening` | **Done, merged** (`42b5c36`, from `cb1ace1`); report `docs/handoffs/night.md`; judge-run driver in `docs/handoffs/night/judge-run/` | Its found-not-fixed list feeds R46–R48 | `42b5c36` |
 | AU basic audio | GPT/Codex | `.worktrees/au` · `p3/au-audio` | **No work on the branch**: 0 ahead of main, worktree clean at `b5f84ac` | Ask the owner whether AU ran, or where its work is | — |
 | ART window references | Owner's choice (Claude or GPT) | `.worktrees/art` · `art/window-references` | **Merged** (`0e9bf1b`, from `49cfd09`; through round 7 prompts): `docs/art/` only, no images (checked). **References only (A23): no image ships or is committed** | If it runs again, merge docs only | `0e9bf1b` |
@@ -64,9 +64,9 @@ In the morning the integrator merges in this order: the paused threads' checkpoi
 6. **AU:** nothing to merge (see Threads).
 
 **Then** give the owner a short "here's the game now" and settle today's plan with them, one decision at a time. Open for today:
-- **The scope line for the submission:** Twin Deeps is the complete loop; the Well Garden and the Cathedral are previews. Which (if any) gets more work today, and which paused threads (2D, 2F, 2C) resume, on what.
-- **The Cathedral can't be threaded** (2C's fit): fix today, or present it honestly as a preview.
-- **Wells in the window:** who builds the optical-data producer VX needs (2D or 3B), or leave the Garden as a preview.
+- **Decided (A26):** the Well Garden and the Cathedral are developed further with a lighter bar (the console keeps the full bar); 3F, VX, 2C and 2F take it on. Was: **The scope line for the submission:** Twin Deeps is the complete loop; the Well Garden and the Cathedral are previews. Which (if any) gets more work today, and which paused threads (2D, 2F, 2C) resume, on what.
+- **Decided (A26):** 2C fixes it (R46). Was: **The Cathedral can't be threaded** (2C's fit): fix today, or present it honestly as a preview.
+- **Decided (A26):** VX builds the producer (R50). Was: **Wells in the window:** who builds the optical-data producer VX needs (2D or 3B), or leave the Garden as a preview.
 - **S15's release check fails after VX:** tune VX's level of detail, or accept with a note.
 - **The judge's README:** the picker and the Twin Deeps recipe.
 - **AU:** did it run? Without it the game ships silent.
@@ -84,7 +84,8 @@ In the morning the integrator merges in this order: the paused threads' checkpoi
 | `src/game/truth-step.ts` | 2F (from 2G, 2026-11-14) | 2F's handoff. 3B, 3C and S17's subtick acquisition schedule go through 2F |
 | `src/game/` (rest), `src/content/`, `src/app/game.ts` | 2F | 2F's handoff. Encounter subfolders excepted, and 3B and 3C may each add their one registration line in `src/game/encounters.ts` (R1). |
 | `src/model/`, `src/blackbox/` | 2C | 2C's handoff |
-| `src/console/`, `src/view3d/`, `src/theme/`, rest of `src/app/` | 2D | 2D's handoff, then 3F (console and view3d) |
+| `src/console/` (except `encounters/`; 3F may change the encounter panels' layout and presentation only), `src/view3d/` (except `fields/` and VX's paths), `src/theme/`, `prototypes/`, `docs/design/visual-direction.md`, `src/app/` (except `game.ts`) | **3F** (from 2D, A26, 2026-11-15) | 3F's handoff |
+| `src/view3d/sky/`, `fx/`, `opening/`, `room/outside.ts`, VX's two `followEye` calls in `RoomView.ts`; the wells' optical producer (a new file) and its one call in `withFunnels` (`src/game/funnels.ts`) | VX | VX's handoff (R50) |
 | `src/sim/fields/wells*`, `src/content/inverse-wells/`, `src/view3d/fields/wells/`, `src/console/encounters/inverse-wells/` | 3B | 3B's handoff |
 | `src/sim/fields/lattice*`, `src/ship/sensors/`, `src/content/chain-link/`, `src/view3d/fields/lattice/`, `src/console/encounters/chain-link/` | 3C | 3C's handoff |
 | `tools/harness/` | 3E | 3E's handoff |
@@ -164,6 +165,7 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 | R47 | NIGHT → 2C | The true law fails its held-out TEST on long or messy attempts (39 h held out: T/ν 926,160,514 against 1.05) though the fitted exponent is 2.5001; the page reads as "the law is wrong" | **Open**: owner decides today | Meanwhile the judge's README gives the recipe: two dives of a few hours, RECALL after each, then TEST |
 | R48 | NIGHT → integrator | S15's and S20's runners and `prototypes/shots/capture.mjs` wait for the room on a fresh profile, now behind the 19.5 s opening: set `localStorage['recursion:opening-seen'] = '1'` before page scripts, or load `?encounter=…` | **Open** | Needed before any S15 rerun |
 | R49 | VX → integrator | **S15's release gate fails after VX** (modest profile, 4× CPU throttle): frame p95 Room 54.7, Flight 109.1, Map 72.8, Ship 97.0 ms against 33 ms; cold room readiness 3.4 / 2.4 s against 2.5 s. Profiles point at program setup and draw submission, and the belief-side snapshot helpers (`standin-model.ts`), not only VX's sky | **Open**: owner decides today (tune level of detail, or accept with a note) | Uncontrolled host; a quiet-machine rerun needs R48 first. Evidence `docs/handoffs/vx/performance.json` |
+| R50 | Owner → VX (A26) | **The wells' optical producer** (R31's truth side, VX's request 1): call `projectFunnelOptics` with the actual eye, occlusion, lifecycle, culling and level of detail at the source; fill `EncounterSetup.window` with `WindowFunnel` entries | **Agreed**: scoped exception to VX, a new file plus one call in `withFunnels`; 2F leaves that call alone | Folds R13 and R31. Feeds the camera too (R32) |
 
 Add new rows at the bottom with the next ID. Never renumber.
 
@@ -179,7 +181,8 @@ Decided: A15 (S11's queue), A16 (the lattice), A17 (the ending) and A18 (the Gra
 
 | Commit | What |
 |---|---|
-| (this commit) | S23 merged for the record (`3d93895`): the opening's study, reference script and vectors. Check 1,356 tests + speed test, build, production smoke of the opening and all three regions, no page errors. **All overnight branches now merged** |
+| (this commit) | A26 (the owner's morning playtest) recorded; prompts for the morning threads in `phase-3-extras.md`: 3F (console v2, full bar), VX's next pass, 2C and 2F resuming (lighter bar); 2D retired into 3F; R50 |
+| `65d3185` | S23 merged for the record (`3d93895`): the opening's study, reference script and vectors. Check 1,356 tests + speed test, build, production smoke of the opening and all three regions, no page errors. **All overnight branches now merged** |
 | `0e9bf1b` | ART merged (`49cfd09`): `docs/art/` (art bible, references, selections, window prompts and views, VX brief), no images. Check 1,356 tests + speed test, build, production smoke of the opening and all three regions, no page errors |
 | `5c442ce` | 3B merged (`a6887f0`): live-field admission evidence (`src/content/inverse-wells/admission-reports/`, 8.5 MB of JSON, not imported by the app). Check 1,356 tests + speed test, build, harness smoke (3 pass), production smoke of the opening and all three regions, a Well Garden flight to its designed loss, and **Twin Deeps' full learning loop** (two dives, TEST passes 1.02 against 1.11, exponent 2.5001, RMS 543 m → 26 m, ADOPT), no page errors |
 | `e2137be` | 3C merged (`8a1713b`): the funnel channel fixed (R45) and wired (R36); the radiation monitor's sensor and caution (R37, 3C's half); two additive contracts reviewed. Check 1,355 tests + speed test, build, harness smoke (3 pass), production smoke of the opening and all three regions, live flights in the Well Garden (designed loss at T+00:29) and the Cathedral (power, heat, Black Box live), no page errors |

@@ -125,6 +125,8 @@ For every section:
 
 ## 3F — Console and view, version 2
 
+**Superseded on 2026-11-15** by [phase-3-extras.md § 3F](phase-3-extras.md#3f--console-v2-the-engineering-made-legible) (A26): the console rebuilt for legibility. This version is kept for the record.
+
 **Thread:** Claude · **Branch:** `p3/3f-console-v2`
 
 **Owns:** `src/console/` except `encounters/`; `src/view3d/` except `fields/`.
