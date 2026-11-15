@@ -13,6 +13,7 @@
 import { StrictMode, useEffect, useMemo, useState } from 'react';
 import type { ReactElement, ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
+import type { Root } from 'react-dom/client';
 import { LevelBar, Panel, Readout, ReadoutGrid, Trend } from '../components/index.ts';
 import { applyTheme } from '../index.ts';
 import { clock, dist, duration, fixed, whole } from '../../console/format.ts';
@@ -1881,7 +1882,12 @@ function Loader(): ReactElement {
   return data ? <App data={data} /> : <p className="cs-note">loading the recorded flight</p>;
 }
 
-createRoot(document.getElementById('root')!).render(
+// One root, kept across hot reloads of this module (as the UI lab does).
+const container = document.getElementById('root');
+if (!container) throw new Error('missing #root element');
+const host = window as unknown as { rxConsoleV2Root?: Root };
+host.rxConsoleV2Root ??= createRoot(container);
+host.rxConsoleV2Root.render(
   <StrictMode>
     <Loader />
   </StrictMode>,
