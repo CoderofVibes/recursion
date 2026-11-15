@@ -43,7 +43,7 @@ import {
   type ExtensionRecord,
 } from './extensions.ts';
 import { buildForecast, type ForecastRequest, type ModelForecastDetail } from './forecast.ts';
-import type { LatticeReconstruction } from './lattice/reconstruct.ts';
+import { LatticeMemo, type LatticeReconstruction } from './lattice/reconstruct.ts';
 import { latticeFields, type LatticeFields } from './lattice/visual.ts';
 import {
   burnReport,
@@ -86,6 +86,8 @@ export class ModelService {
   private version = 0;
   private readonly cache: TierLCache = new Map();
   private readonly latticeCache = new WeakMap<ModelSnapshot, Map<string, LatticeFields>>();
+  /** The attempt in progress's lattice work, reused by its next rebuild (R61). */
+  private latticeMemo: { readonly attemptId: AttemptId; readonly memo: LatticeMemo } | null = null;
 
   constructor(ctx: ModelContext) {
     this.ctx = ctx;
@@ -201,6 +203,7 @@ export class ModelService {
       throw new Error(`attempt ${final.id} is not in progress`);
     this.attempts = [...this.attempts, { ...final }];
     this.current = null;
+    this.latticeMemo = null;
     return this.bump();
   }
 
@@ -300,7 +303,15 @@ export class ModelService {
     }
     const hit = byKey.get(key);
     if (hit) return hit;
-    const result = latticeFields(this.snap, this.ctx, rec, now ?? Infinity);
+    // Only the attempt in progress keeps a memo: it is rebuilt again and again as frames come
+    // in. An archived attempt is rebuilt once per view, and must not displace it.
+    let memo: LatticeMemo | undefined;
+    if (this.current && rec.id === this.current.id) {
+      if (this.latticeMemo?.attemptId !== rec.id)
+        this.latticeMemo = { attemptId: rec.id, memo: new LatticeMemo() };
+      memo = this.latticeMemo.memo;
+    }
+    const result = latticeFields(this.snap, this.ctx, rec, now ?? Infinity, undefined, memo);
     byKey.set(key, result);
     return result;
   }

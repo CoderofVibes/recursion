@@ -16,6 +16,8 @@ import { emptyArchive, withAttempt } from './archive.ts';
 import { AttemptRecorder } from './recorder.ts';
 import { doseRateReadings, lossReview } from './radiation.ts';
 import { MemoryBlackBoxStore } from './store.ts';
+import { encodeRadiationReading } from '../ship/sensors/radiation-observations.ts';
+import { RADIATION_MONITOR } from '../ship/sensors/radiation-spec.ts';
 
 const ship = loadShipDefinition();
 const CONTACT = 30;
@@ -109,6 +111,40 @@ describe('the radiation monitor in the loss review (A24)', () => {
     const a = lossReview(record(readings('telemetry')));
     const b = lossReview(record());
     expect(a.radiation.onset).toEqual(b.radiation.onset);
+  });
+
+  it('reads 3C’s monitor channel, with the monitor’s own threshold (R58)', () => {
+    // 3C's channel as the ship records it: background, then first contact through the
+    // monitor's response time.
+    const monitor: Measurement[] = [];
+    for (let t = 0; t <= 42; t += 0.5) {
+      const truth =
+        t < CONTACT ? 0 : 20 * (1 - Math.exp(-(t - CONTACT) / RADIATION_MONITOR.responseTime));
+      const sigma = RADIATION_MONITOR.noiseFloor + RADIATION_MONITOR.relativeNoise * truth;
+      const rate = Math.min(RADIATION_MONITOR.saturationRate, truth);
+      monitor.push(
+        encodeRadiationReading({
+          version: 1,
+          source: RADIATION_MONITOR.host,
+          t,
+          rate,
+          saturated: rate >= RADIATION_MONITOR.saturationRate,
+          responseTime: RADIATION_MONITOR.responseTime,
+          saturationRate: RADIATION_MONITOR.saturationRate,
+          validUntil: t + RADIATION_MONITOR.validity,
+          sigma,
+        }),
+      );
+    }
+    const r = lossReview(record(monitor));
+    expect(r.radiation.monitors).toEqual([RADIATION_MONITOR.host]);
+    expect(r.radiation.note).toBeUndefined();
+    // The monitor's published hazard threshold, crossed by the first reading after contact.
+    expect(r.radiation.onset).toEqual({ t: 30.5, rate: expect.any(Number), rule: 'threshold' });
+    expect(r.radiation.onset!.rate).toBeGreaterThanOrEqual(RADIATION_MONITOR.hazardThreshold);
+    expect(r.radiation.leadBeforeFirstFailure).toBeCloseTo(7.3, 9);
+    expect(r.radiation.peak!.rate).toBeCloseTo(20 * (1 - Math.exp(-12 / 0.25)), 6);
+    expect(r.radiation.readings.every((x) => x.source === RADIATION_MONITOR.host)).toBe(true);
   });
 
   it('says so when the record has no monitor reading', () => {
