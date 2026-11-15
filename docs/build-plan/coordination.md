@@ -4,7 +4,7 @@ The live state of the build between threads: who is running, who holds which sha
 
 **Integrator, after a compaction:** read this file first, then `git log --oneline -15`, then the handoffs of any thread marked running.
 
-**Last updated:** 2026-11-14, A19 complete; R1 blocking on 2F's fields wiring; 3C's scoped contracts exception; R19, R20. Unannounced checkpoints sit on 2D, 2C, 3B and 3C; merge them when announced.
+**Last updated:** 2026-11-14, A19 complete; R1 blocking on 2F's fields wiring; 3C's scoped contracts exception; R19, R20. Unannounced checkpoints sit on 2D, 3B and 3C; merge them when announced.
 
 ## Threads
 
@@ -13,7 +13,7 @@ The live state of the build between threads: who is running, who holds which sha
 | 2D control room | Opus 5.5 | `.worktrees/2d` · `p2/2d-control-room` | Running: S9's requests, S15's console fixes, 2G's screen data, S8's displays, credits link | — | `c7e8568` (update 4) |
 | 2G speed pass | Opus 5.5 | `.worktrees/2g` · `p2/2g-3d-flight` | **Done** (`83704bc`). Finishing evidence: S15's CPU-profile phase, waiting for 2D's S15 run to free port 4175; then commits its handoff and `docs/engineering/s15-rank1/` | Commit the evidence | `83704bc` |
 | 2F game loop | Opus 5.5 | `.worktrees/2f` · `p2/2f-game` | Running. Merged: A18 (1), (3), (4), (5) with placeholder power values, (6); S8's 70 catalogue flights as tests; encounter registry | Next: S21's power values and the cloud crescent (R14); fields into the simulation via `truth-step.ts` (R1), power-loss check next to collision loss | `7036c60` |
-| 2C model and Black Box | Opus 5.5 | `.worktrees/2c` · `p2/2c-model` | Running: WIP committed, then redone on the 3D model; bodies' track uncertainty; A18 (1) with 2F | — | before 2G |
+| 2C model and Black Box | Opus 5.5 | `.worktrees/2c` · `p2/2c-model` | Round done and merged: bodies' track uncertainty, two moving bodies, forecast as of its issue time (A18 (1)), S8 checks with two fixes, lazy fallback | Next: 3C's reconstruction and Black Box function (R9), S17's requests, S20's (R17); 5% range-noise robustness still open | `4bf5359` |
 | 3B Inverse Wells | GPT/Codex | `.worktrees/3b` · `p3/3b-wells` | Running: field mechanics first | Layout from S16; loading via R1 | — |
 | 3C Chain Link Fence | GPT/Codex (GPT-6 Astra), reassigned by the owner | `.worktrees/3c` · `p3/3c-lattice` | Running: field and exposure mechanics first | S17's numbers when they land (R8) | — |
 | 3E playability harness | GPT/Codex | `.worktrees/3e` · `p3/3e-harness` | **Done**: `npm run harness` (smoke, reference, learning, routes, all); its pending-acceptance list names the gaps | — | `44db2fc` |
@@ -80,6 +80,8 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 | R19 | 3B → integrator | S22's forward exit is a disc crossing; `reach-region` takes spheres | **Decided by the integrator:** the prototype uses a destination sphere entirely beyond S22's exit plane; an exact disc waits for playtest evidence | |
 | R20 | 3C → 2F | In `truth-step.ts`: build the environment at every real acquisition state (`createChainLinkEnvironment(setup).at(state)`), not one frozen scene per second; schedule within the 1 s step to the earliest sensor, recorder, dose, trip or failure event, then integrate the rest; keep acquisition time separate from product availability; swept whole-ship admission for physical exits | **Open**: relay | After the fields wiring (R1) and A20 |
 
+| R21 | 2C → integrator | Forecast contract: `presentBody`, `presentAge`, `stale` and the bodies' share of the envelope | **Done** (this commit): optional fields on `ForecastDetail` and `ForecastSigmaBySource` | 2D can show them |
+
 Add new rows at the bottom with the next ID. Never renumber.
 
 ## Owner decisions still open
@@ -94,7 +96,10 @@ Decided: A15 (S11's queue), A16 (the lattice), A17 (the ending) and A18 (the Gra
 
 | Commit | What |
 |---|---|
-| (this commit) | A20: faster coasting; ledger |
+| (this commit) | Forecast contract fields for 2C (R21) |
+| `4bf5359` | 2C on the 3D model |
+| `6d11f4d` | A19 (4); ledger R1, R15, R19, R20 |
+| `b3e8406` | A20: faster coasting; ledger |
 | `15171df` | S22: the funnel field |
 | `78f4dd5` | A16: twenty fences; A15 after S18; ledger (R1 confirmed, R11 measured, R18) |
 | `7036c60` | 2F checkpoint: power death (placeholders), S8's flights as tests |

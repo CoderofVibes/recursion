@@ -112,6 +112,11 @@ export interface ForecastSigmaBySource {
   /** Engine calibration, for planned burns. */
   readonly engine: Meters;
   readonly mass: Meters;
+  /**
+   * The other bodies' believed states at the present time, where they pull the ship (2C,
+   * 2F request 13). Absent from stand-ins.
+   */
+  readonly bodies?: Meters;
   readonly total: Meters;
 }
 
@@ -137,6 +142,16 @@ export interface ForecastDetail {
   readonly presentTime: Seconds;
   /** Tracked asteroids: which were forecast and which had too short a track. */
   readonly asteroids: readonly AsteroidForecastNote[];
+  /**
+   * The body the present state was fixed against: the one the camera tracked most recently, and
+   * the forecast's reference. Every covariance in the forecast is relative to it, and its own
+   * track carries none (2C, 2F request 12). Absent from stand-ins.
+   */
+  readonly presentBody?: string;
+  /** Issue time minus the present state's time. */
+  readonly presentAge?: Seconds;
+  /** Nothing was tracked lately, so the forecast is carried from an older present state. */
+  readonly stale?: boolean;
 }
 
 export interface ForecastDraft {
