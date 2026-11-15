@@ -157,6 +157,7 @@ What the crew knows from the spec sheets. True deviations live in truth.
 
 ### `view.ts` — what the console and 3D view receive
 - `ViewSnapshot` — `t`, paused, warp, `world` (`BelievedWorld`), `ship` (`ShipView`: `hull`, CoM, `ThrustTick`s, all body frame), measured `trail`, issued `forecasts`, sensor `coverage` (`SensorCone`s: an inertial axis, a half-angle and a range; everything else is unknown), objectives, optional two-attempt `compare` (`AttemptOverlay`s) and `selection`, and `window`.
+- `CoverageLook` (`ViewSnapshot.coverageEarlier`) — coverage sensed in earlier attempts of this encounter, rebuilt by the game layer from Black Box records: the attempt, the sensor, the span of ship time, where the ship believed it was (briefing frame), the axis, half-angle and range. It records what was sensed then, not what is there now.
 - `WindowView` — what the unaided eye sees through the window (A3, A8): the sun's direction and whether it is in view, whether the ship is in sunlight, and each `WindowObject` light shows (a direction, an apparent size and whether it is lit: never a range). It holds nothing that needs an instrument, so it can show a rock the ship has not catalogued and never shows a field.
 
 ### `truth/` — TRUTH, not for belief-side code

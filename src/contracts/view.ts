@@ -56,6 +56,25 @@ export interface SensorCoverage {
   readonly cones: readonly SensorCone[];
 }
 
+/**
+ * A look a sensor took in an earlier attempt of this encounter, rebuilt from Black Box records
+ * (R6): where the ship believed it was, which way the sensor looked and how far it could see.
+ * It says what was sensed then, not what is there now: things have moved since (A10).
+ */
+export interface CoverageLook {
+  readonly attemptId: AttemptId;
+  readonly sensor: EquipmentId;
+  /** Ship time in that attempt over which this look held (the sensor neither turned much nor the ship moved far). */
+  readonly from: Seconds;
+  readonly to: Seconds;
+  /** Where the ship believed it was, in this encounter's briefing frame. */
+  readonly origin: Vec3;
+  /** Inertial unit vector along the sensor's axis. */
+  readonly axis: Vec3;
+  readonly halfAngle: Radians;
+  readonly range: Meters;
+}
+
 /** One attempt in a two-attempt Black Box comparison overlay. */
 export interface AttemptOverlay {
   readonly attemptId: AttemptId;
@@ -117,4 +136,9 @@ export interface ViewSnapshot {
   readonly selection?: Selection;
   /** The view through the window. Absent from fixtures and stand-ins that have no world. */
   readonly window?: WindowView;
+  /**
+   * Coverage sensed in earlier attempts of this encounter, oldest first, from Black Box (R6).
+   * This attempt's own history is the view's to keep. Absent: none recorded.
+   */
+  readonly coverageEarlier?: readonly CoverageLook[];
 }
