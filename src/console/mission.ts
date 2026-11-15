@@ -141,7 +141,11 @@ export interface Debrief {
   /** What differs from the attempt before, in plain instrument words. */
   readonly changed: readonly string[];
   /** Where each issued forecast left what was measured. */
-  readonly forecasts: readonly { readonly label: string; readonly value: string; readonly bad: boolean }[];
+  readonly forecasts: readonly {
+    readonly label: string;
+    readonly value: string;
+    readonly bad: boolean;
+  }[];
 }
 
 /** First and last recorded reading of a telemetry channel in an attempt. */
@@ -432,7 +436,9 @@ export function debrief(
       fly: {
         label: 'evidence',
         planned: EVIDENCE.fly.detail,
-        measured: objective.length ? `${objective.length} objective events` : 'objective not reached',
+        measured: objective.length
+          ? `${objective.length} objective events`
+          : 'objective not reached',
         met: record.outcome.kind === 'completed',
       },
     };
@@ -466,11 +472,13 @@ export function debrief(
 
   const used = (span: { first: number; last: number } | undefined): number | undefined =>
     span ? span.first - span.last : undefined;
-  const rcsUsed =
-    rcsL || rcsR ? (used(rcsL) ?? 0) + (used(rcsR) ?? 0) : undefined;
+  const rcsUsed = rcsL || rcsR ? (used(rcsL) ?? 0) + (used(rcsR) ?? 0) : undefined;
   const cost = [
     { label: 'main propellant', value: main ? `${fixed(used(main)!, 1)} kg` : 'not recorded' },
-    { label: 'rcs propellant', value: rcsUsed !== undefined ? `${fixed(rcsUsed, 1)} kg` : 'not recorded' },
+    {
+      label: 'rcs propellant',
+      value: rcsUsed !== undefined ? `${fixed(rcsUsed, 1)} kg` : 'not recorded',
+    },
     { label: 'hydrogen', value: hydrogen ? `${fixed(used(hydrogen)!, 2)} kg` : 'not recorded' },
     { label: 'ship time', value: `T+${clock(lastT)}` },
     {

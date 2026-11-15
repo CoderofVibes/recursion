@@ -75,7 +75,8 @@ export class CoverageHistory {
     }
     while (this.kept.length > this.capacity) {
       let stalest = 0;
-      for (let i = 1; i < this.kept.length; i++) if (this.kept[i]!.t < this.kept[stalest]!.t) stalest = i;
+      for (let i = 1; i < this.kept.length; i++)
+        if (this.kept[i]!.t < this.kept[stalest]!.t) stalest = i;
       this.kept.splice(stalest, 1);
     }
   }

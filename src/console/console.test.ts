@@ -16,14 +16,7 @@ import { cssVariables } from '../theme/index.ts';
 import { surveyed } from './chart.ts';
 import { busLoads, deltaV, heat, stores, validatedSpans, visited } from './data.ts';
 import { bytes, clock, dist, duration, sci } from './format.ts';
-import {
-  changes,
-  debrief,
-  defaultDesign,
-  designMark,
-  designOf,
-  setupCommands,
-} from './mission.ts';
+import { changes, debrief, defaultDesign, designMark, designOf, setupCommands } from './mission.ts';
 
 const { readFileSync } = (await import(/* @vite-ignore */ `node:${'fs'}`)) as {
   readFileSync(path: URL, encoding: 'utf8'): string;
@@ -63,7 +56,11 @@ describe('mission design', () => {
     const base = attempts[0]!;
     const record: AttemptRecord = {
       ...base,
-      executed: [executed(1, designMark(design)), ...base.executed, executed(9e9, designMark(later))],
+      executed: [
+        executed(1, designMark(design)),
+        ...base.executed,
+        executed(9e9, designMark(later)),
+      ],
     };
     expect(designOf(record)?.design.reserve).toBe(1234);
   });

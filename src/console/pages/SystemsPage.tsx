@@ -32,7 +32,13 @@ import { fixed, name, whole } from '../format.ts';
 /** Assemblies that are structure or stores: listed last and quietly. */
 const PASSIVE = new Set(['other']);
 
-export function EquipmentDetail({ desk, spec }: { readonly desk: Desk; readonly spec: EquipmentSpec }) {
+export function EquipmentDetail({
+  desk,
+  spec,
+}: {
+  readonly desk: Desk;
+  readonly spec: EquipmentSpec;
+}) {
   const { game } = desk;
   const ship = game.snapshot().world.ship;
   const status = ship.equipment[spec.id];
@@ -78,7 +84,10 @@ export function EquipmentDetail({ desk, spec }: { readonly desk: Desk; readonly 
             value={status.mode}
             {...(ended
               ? {}
-              : { onChange: (mode: string) => game.command({ kind: 'mode', equipment: spec.id, mode }) })}
+              : {
+                  onChange: (mode: string) =>
+                    game.command({ kind: 'mode', equipment: spec.id, mode }),
+                })}
           />
         </>
       ) : null}
@@ -148,7 +157,13 @@ export function SystemsPage({ desk }: { readonly desk: Desk }) {
           />
         ))}
         {battery ? (
-          <LevelBar label="Batteries" value={battery.value} max={battery.max} text={battery.text} status={battery.status} />
+          <LevelBar
+            label="Batteries"
+            value={battery.value}
+            max={battery.max}
+            text={battery.text}
+            status={battery.status}
+          />
         ) : null}
         <Trend
           title="Essential bus"
@@ -174,7 +189,9 @@ export function SystemsPage({ desk }: { readonly desk: Desk }) {
             max={s.max}
             text={s.text}
             status={s.status}
-            {...(s.mark !== undefined ? { marks: [{ at: s.mark, kind: 'target' as const, label: 'reserve' }] } : {})}
+            {...(s.mark !== undefined
+              ? { marks: [{ at: s.mark, kind: 'target' as const, label: 'reserve' }] }
+              : {})}
           />
         ))}
         <Caption>heat margin</Caption>
@@ -196,7 +213,10 @@ export function SystemsPage({ desk }: { readonly desk: Desk }) {
           value={ship.configuration}
           {...(ended
             ? {}
-            : { onChange: (configuration: string) => game.command({ kind: 'configure', configuration }) })}
+            : {
+                onChange: (configuration: string) =>
+                  game.command({ kind: 'configure', configuration }),
+              })}
         />
       </Panel>
 
@@ -222,8 +242,16 @@ export function SystemsPage({ desk }: { readonly desk: Desk }) {
         </div>
       </Panel>
 
-      <Panel title={spec ? spec.name : 'Component'} aside={spec?.kind ?? ''} tone={spec?.kind === 'recorder' ? 'blackbox' : 'measured'}>
-        {spec ? <EquipmentDetail desk={desk} spec={spec} /> : <p className="cs-note">choose an assembly</p>}
+      <Panel
+        title={spec ? spec.name : 'Component'}
+        aside={spec?.kind ?? ''}
+        tone={spec?.kind === 'recorder' ? 'blackbox' : 'measured'}
+      >
+        {spec ? (
+          <EquipmentDetail desk={desk} spec={spec} />
+        ) : (
+          <p className="cs-note">choose an assembly</p>
+        )}
       </Panel>
     </div>
   );

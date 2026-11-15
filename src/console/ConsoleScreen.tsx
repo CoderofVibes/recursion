@@ -21,7 +21,13 @@ const PAGES: readonly { id: PageId; label: string }[] = [
   { id: 'systems', label: 'SYSTEMS' },
 ];
 
-export function ConsoleScreen({ desk, visible }: { readonly desk: Desk; readonly visible: boolean }) {
+export function ConsoleScreen({
+  desk,
+  visible,
+}: {
+  readonly desk: Desk;
+  readonly visible: boolean;
+}) {
   useDesk(desk);
   const { game } = desk;
   const status = game.status();

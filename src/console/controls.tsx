@@ -47,7 +47,16 @@ export interface NumberFieldProps {
   readonly disabled?: boolean;
 }
 
-export function NumberField({ label, value, onChange, unit, min, max, step, disabled }: NumberFieldProps) {
+export function NumberField({
+  label,
+  value,
+  onChange,
+  unit,
+  min,
+  max,
+  step,
+  disabled,
+}: NumberFieldProps) {
   return (
     <label className="cs-field">
       <span className="cs-field__label">{label}</span>
@@ -132,7 +141,13 @@ export function Actions({ children }: { readonly children: ReactNode }) {
  * ENTER starts it. Inside it there is no pause: every adjustment happens in real time, and the
  * warp steps compress long coasts, never slower than 1×. Warp never changes the simulation's step.
  */
-export function TimeControls({ game, compact }: { readonly game: GameControls; readonly compact?: boolean }) {
+export function TimeControls({
+  game,
+  compact,
+}: {
+  readonly game: GameControls;
+  readonly compact?: boolean;
+}) {
   const status = game.status();
   if (status.phase === 'prepare')
     return (

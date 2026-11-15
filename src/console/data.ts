@@ -37,7 +37,8 @@ export function stores(ship: BelievedShip, definition: ShipDefinition, reserve?:
     .filter((t) => t.id !== 'product-water' && t.id !== 'xenon')
     .map((t) => {
       const kg = ship.propellant[t.id]?.mean ?? 0;
-      const low = t.id === 'main-propellant' && reserve !== undefined ? kg < reserve : kg < t.capacity * 0.1;
+      const low =
+        t.id === 'main-propellant' && reserve !== undefined ? kg < reserve : kg < t.capacity * 0.1;
       return {
         id: t.id,
         label: t.name,
@@ -111,7 +112,10 @@ export function batteries(ship: BelievedShip, definition: ShipDefinition): Level
  * count the essential and payload buses twice: they are fed through the main buses). `bridging`
  * is what the batteries are putting in to cover a shortfall.
  */
-export function powerBalance(ship: BelievedShip, definition: ShipDefinition): {
+export function powerBalance(
+  ship: BelievedShip,
+  definition: ShipDefinition,
+): {
   generated: number;
   load: number;
   bridging: number;
@@ -149,7 +153,8 @@ export function recorder(
   historySeconds = 0,
 ): RecorderState {
   const spec = definition.equipment.find((e) => e.kind === 'recorder');
-  const systems = definition.systems?.recorder as { capacity?: number; bytesPerSample?: number } | undefined;
+  const systems = definition.systems?.recorder as
+    { capacity?: number; bytesPerSample?: number } | undefined;
   const bytes = reading(ship, 'black-box.bytes') ?? 0;
   const rate = reading(ship, 'black-box.sample-rate') ?? 0;
   const capacity = systems?.capacity ?? 8e9;
@@ -168,7 +173,11 @@ export function recorder(
 }
 
 /** Speed change the main propellant on board buys, m/s (rocket equation, nominal ratings). */
-export function deltaV(ship: BelievedShip, definition: ShipDefinition, thruster = 'main-engine'): number {
+export function deltaV(
+  ship: BelievedShip,
+  definition: ShipDefinition,
+  thruster = 'main-engine',
+): number {
   const spec = definition.equipment.find((e) => e.id === thruster);
   const tank = definition.tanks.find((t) => t.feeds.includes(thruster));
   const propellant = tank ? (ship.propellant[tank.id]?.mean ?? 0) : 0;

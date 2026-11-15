@@ -9,7 +9,14 @@
 import { useState } from 'react';
 import type { ExtensionState, ModelState, ParameterEstimate } from '../../contracts/index.ts';
 import type { ExtensionRecord } from '../../model/index.ts';
-import { ComponentList, ComponentRow, LevelBar, Panel, Readout, ReadoutGrid } from '../../theme/components/index.ts';
+import {
+  ComponentList,
+  ComponentRow,
+  LevelBar,
+  Panel,
+  Readout,
+  ReadoutGrid,
+} from '../../theme/components/index.ts';
 import type { Status } from '../../theme/components/index.ts';
 import { Actions, Button, Caption, Line, SelectField } from '../controls.tsx';
 import { validatedSpans, visited } from '../data.ts';
@@ -19,7 +26,11 @@ import { StrengthPlot } from '../StrengthPlot.tsx';
 import type { StrengthDot } from '../StrengthPlot.tsx';
 
 const RULES: readonly { id: string; label: string; detail: string }[] = [
-  { id: 'distance-law', label: 'DISTANCE LAW', detail: 'the pull falls with distance by a fitted power' },
+  {
+    id: 'distance-law',
+    label: 'DISTANCE LAW',
+    detail: 'the pull falls with distance by a fitted power',
+  },
 ];
 
 const value = (p: ParameterEstimate): string =>
@@ -87,7 +98,9 @@ export function ModelPage({ desk }: { readonly desk: Desk }) {
 
   // World parameters and rules' parameters once each; ship calibrations as used in this attempt.
   const world = model.parameters.filter((p) => !p.arc && !p.freshness);
-  const calibrations = model.parameters.filter((p) => p.arc === status.attemptId || (p.freshness && !p.arc));
+  const calibrations = model.parameters.filter(
+    (p) => p.arc === status.attemptId || (p.freshness && !p.arc),
+  );
   const shipCal = calibrations.length
     ? calibrations
     : model.parameters.filter((p) => /^(thruster|sensor)\./.test(p.id) && !p.arc);
@@ -100,7 +113,9 @@ export function ModelPage({ desk }: { readonly desk: Desk }) {
       (result) => {
         desk.tests.set(rule, result);
         setBusy('');
-        desk.say(`${rule}: ${result.adoptable ? 'holds against the held-out attempt' : 'does not hold'}`);
+        desk.say(
+          `${rule}: ${result.adoptable ? 'holds against the held-out attempt' : 'does not hold'}`,
+        );
       },
       (reason: unknown) => {
         desk.tests.set(rule, { error: reason instanceof Error ? reason.message : String(reason) });
@@ -134,7 +149,11 @@ export function ModelPage({ desk }: { readonly desk: Desk }) {
         title="Model"
         tone="forecast"
         aside={`v${model.version}`}
-        statusLine={failure ? `model fault: ${failure}` : `${model.basedOn.attempts.length} attempts · ${model.basedOn.measurementCount.toLocaleString('en-US')} measurements`}
+        statusLine={
+          failure
+            ? `model fault: ${failure}`
+            : `${model.basedOn.attempts.length} attempts · ${model.basedOn.measurementCount.toLocaleString('en-US')} measurements`
+        }
         status={failure ? 'warning' : 'nominal'}
       >
         <ReadoutGrid columns={3}>
@@ -143,9 +162,20 @@ export function ModelPage({ desk }: { readonly desk: Desk }) {
             label="Fit χ²/ν"
             value={model.fit && model.fit.nu > 0 ? sci(model.fit.chi2 / model.fit.nu, 3) : '—'}
           />
-          <Readout label="Noise ×" value={model.noiseScale !== undefined ? fixed(model.noiseScale, 2) : '—'} />
-          <Readout label="Coast rms" value={dist(model.residuals.coast.rms)} sigma={`n ${model.residuals.coast.n}`} />
-          <Readout label="Powered rms" value={dist(model.residuals.powered.rms)} sigma={`n ${model.residuals.powered.n}`} />
+          <Readout
+            label="Noise ×"
+            value={model.noiseScale !== undefined ? fixed(model.noiseScale, 2) : '—'}
+          />
+          <Readout
+            label="Coast rms"
+            value={dist(model.residuals.coast.rms)}
+            sigma={`n ${model.residuals.coast.n}`}
+          />
+          <Readout
+            label="Powered rms"
+            value={dist(model.residuals.powered.rms)}
+            sigma={`n ${model.residuals.powered.n}`}
+          />
           <Readout
             label="Rules"
             value={model.extensions.filter((e) => e.status === 'adopted').length}
@@ -199,7 +229,10 @@ export function ModelPage({ desk }: { readonly desk: Desk }) {
         <SelectField
           label="Hold out"
           value={held}
-          options={finished.map((a) => ({ value: a.id, label: `ATTEMPT ${a.index} · ${a.outcome.kind}` }))}
+          options={finished.map((a) => ({
+            value: a.id,
+            label: `ATTEMPT ${a.index} · ${a.outcome.kind}`,
+          }))}
           onChange={setHeldOut}
           disabled={finished.length < 2}
         />
@@ -227,12 +260,16 @@ export function ModelPage({ desk }: { readonly desk: Desk }) {
               <p className="cs-note">{rule.detail}</p>
               {v ? (
                 <>
-                  <Line label="held-out T/ν" status={v.TperNu <= v.threshold ? 'nominal' : 'caution'}>
+                  <Line
+                    label="held-out T/ν"
+                    status={v.TperNu <= v.threshold ? 'nominal' : 'caution'}
+                  >
                     {fixed(v.TperNu, 2)} against {fixed(v.threshold, 2)}
                   </Line>
                   {isRecord(result) && result.state.validation ? (
                     <Line label="rms before → after">
-                      {dist(result.state.validation.rmsBefore)} → {dist(result.state.validation.rmsAfter)}
+                      {dist(result.state.validation.rmsBefore)} →{' '}
+                      {dist(result.state.validation.rmsAfter)}
                     </Line>
                   ) : null}
                 </>
@@ -247,7 +284,9 @@ export function ModelPage({ desk }: { readonly desk: Desk }) {
                   {result.evidence.evidence ? 'beats its penalty' : 'does not beat its penalty'}
                 </Line>
               ) : null}
-              {result && 'error' in result ? <p className="cs-note">no test: {result.error}</p> : null}
+              {result && 'error' in result ? (
+                <p className="cs-note">no test: {result.error}</p>
+              ) : null}
               {(ext?.validatedSpans ?? []).map((s, i) => (
                 <Line key={i} label={`validated · ${s.body}`} tone="forecast">
                   {dist(s.rMin)} – {dist(s.rMax)} · σ {fixed(s.sigmaE, 3)}
@@ -337,11 +376,19 @@ export function ModelPage({ desk }: { readonly desk: Desk }) {
         ))}
         <Caption>what each attempt lacks</Caption>
         {(report?.coverage ?? []).slice(-4).map((c) => (
-          <Line key={c.attempt} label={c.attempt.replace('attempt-', 'attempt ')} status={c.missing.length ? 'caution' : 'nominal'}>
-            {c.missing.length ? c.missing.join('; ') : `${c.coastFixes} coasting fixes · ${c.burns} burns`}
+          <Line
+            key={c.attempt}
+            label={c.attempt.replace('attempt-', 'attempt ')}
+            status={c.missing.length ? 'caution' : 'nominal'}
+          >
+            {c.missing.length
+              ? c.missing.join('; ')
+              : `${c.coastFixes} coasting fixes · ${c.burns} burns`}
           </Line>
         ))}
-        {!report ? <p className="cs-note">diagnostics arrive with the model's next report</p> : null}
+        {!report ? (
+          <p className="cs-note">diagnostics arrive with the model's next report</p>
+        ) : null}
       </Panel>
     </div>
   );

@@ -106,7 +106,9 @@ describe('console pages on the fixtures', () => {
     const { game, commands } = stubGame();
     const desk = new Desk(game);
     desk.commitDesign();
-    expect(commands[0]).toEqual(designMark(defaultDesign(shipDefinition, briefing.knownBodies[0]!.id)));
+    expect(commands[0]).toEqual(
+      designMark(defaultDesign(shipDefinition, briefing.knownBodies[0]!.id)),
+    );
     expect(commands.length).toBeGreaterThan(1);
     expect(desk.designedAt).toBe(viewSnapshot.t);
   });

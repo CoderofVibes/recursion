@@ -113,7 +113,10 @@ export function startControlRoom(
       if (!first) {
         // The attempt before this one ended: its debrief is on the console, and the player
         // walks back in from the door (A9). A Recall arrives here without a loss sequence.
-        const before = game.blackBox.archive().attempts.filter((a) => a.id !== status.attemptId).at(-1);
+        const before = game.blackBox
+          .archive()
+          .attempts.filter((a) => a.id !== status.attemptId)
+          .at(-1);
         if (before) desk.debriefOf = before.id;
         desk.page = 'blackbox';
         if (!view.dying()) view.lose(false);
@@ -192,7 +195,13 @@ export function startControlRoom(
     if (wanted === 'map' || wanted === 'ship' || wanted === 'console' || wanted === 'flight')
       view.go(wanted, true);
     const page = query.get('page');
-    if (page === 'mission' || page === 'plan' || page === 'model' || page === 'blackbox' || page === 'systems')
+    if (
+      page === 'mission' ||
+      page === 'plan' ||
+      page === 'model' ||
+      page === 'blackbox' ||
+      page === 'systems'
+    )
       desk.page = page;
   }
 

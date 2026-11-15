@@ -67,7 +67,8 @@ describe('flight hologram', () => {
     const alerts = holo.alerts();
     const forecast = viewSnapshot.forecasts.at(-1);
     for (const a of alerts) expect(a.t).toBeGreaterThan(viewSnapshot.t);
-    for (let i = 1; i < alerts.length; i++) expect(alerts[i]!.t).toBeGreaterThanOrEqual(alerts[i - 1]!.t);
+    for (let i = 1; i < alerts.length; i++)
+      expect(alerts[i]!.t).toBeGreaterThanOrEqual(alerts[i - 1]!.t);
     // Every alert comes from the forecast as issued, never from anywhere else.
     for (const a of alerts)
       expect(forecast?.closestApproaches.some((c) => c.id === a.id && c.t === a.t)).toBe(true);

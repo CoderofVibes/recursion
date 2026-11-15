@@ -145,7 +145,15 @@ export function setThin(l: LineSegments, flat: readonly number[]): void {
 }
 
 /** Circle (or arc) in the XZ plane as a flat point list. Angle 0 points to -z, positive toward +x. */
-export function arcXZ(r: number, a0 = 0, a1 = Math.PI * 2, n = 96, y = 0, cx = 0, cz = 0): number[] {
+export function arcXZ(
+  r: number,
+  a0 = 0,
+  a1 = Math.PI * 2,
+  n = 96,
+  y = 0,
+  cx = 0,
+  cz = 0,
+): number[] {
   const out: number[] = [];
   for (let i = 0; i <= n; i++) {
     const a = a0 + ((a1 - a0) * i) / n;

@@ -97,7 +97,12 @@ export class RoomView {
   private readonly holoRoot = new Group();
   private readonly holoTilt = new Group();
   private readonly cone;
-  private readonly player = { x: DOOR.x as number, z: DOOR.z as number, yaw: DOOR.yaw as number, pitch: DOOR.pitch as number };
+  private readonly player = {
+    x: DOOR.x as number,
+    z: DOOR.z as number,
+    yaw: DOOR.yaw as number,
+    pitch: DOOR.pitch as number,
+  };
   private current: ViewMode = 'room';
   private inRegion = false;
   private trans: {
@@ -135,14 +140,23 @@ export class RoomView {
   ) {
     this.canvas = canvas;
     this.events = events;
-    this.renderer = new WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+    this.renderer = new WebGLRenderer({
+      canvas,
+      antialias: true,
+      powerPreference: 'high-performance',
+    });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.setClearColor(hex(roomSurface.void));
     this.camera.rotation.order = 'YXZ';
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
     this.composer.addPass(
-      new UnrealBloomPass(new Vector2(1, 1), roomBloom.strength, roomBloom.radius, roomBloom.threshold),
+      new UnrealBloomPass(
+        new Vector2(1, 1),
+        roomBloom.strength,
+        roomBloom.radius,
+        roomBloom.threshold,
+      ),
     );
     this.composer.addPass(new OutputPass());
     this.labels = new CSS2DRenderer({ element: labels });
@@ -258,7 +272,8 @@ export class RoomView {
     // Walking.
     if (mode === 'room' && !this.trans && !this.death) {
       const k = this.keys;
-      const f = (k.has('w') || k.has('arrowup') ? 1 : 0) - (k.has('s') || k.has('arrowdown') ? 1 : 0);
+      const f =
+        (k.has('w') || k.has('arrowup') ? 1 : 0) - (k.has('s') || k.has('arrowdown') ? 1 : 0);
       const s = (k.has('d') ? 1 : 0) - (k.has('a') ? 1 : 0);
       const turn = (k.has('arrowleft') ? 1 : 0) - (k.has('arrowright') ? 1 : 0);
       const p = this.player;
@@ -313,14 +328,17 @@ export class RoomView {
     this.holoRoot.visible = cur.holo > 0.05;
     // In a focus view nothing of the room is lit by the hologram.
     this.shell.setHologramLight(cur.holo * (1 - cur.veil));
-    this.shell.setRecorderLamp(data.recording ? 0.55 + 0.45 * Math.sin(this.time * 2.6) ** 2 : 0.45);
+    this.shell.setRecorderLamp(
+      data.recording ? 0.55 + 0.45 * Math.sin(this.time * 2.6) ** 2 : 0.45,
+    );
 
     // The cursor: what it has found on the console.
     let found: Hotspot | null = null;
     if (mode === 'room' && !this.trans && !this.death) {
       this.ray.setFromCamera(this.locked() ? new Vector2(0, 0) : this.mouse, camera);
       const hit = this.ray.intersectObjects(this.shell.hotspots, false)[0];
-      if (hit && hit.distance < REACH) found = (hit.object.userData.hot as Hotspot | undefined) ?? null;
+      if (hit && hit.distance < REACH)
+        found = (hit.object.userData.hot as Hotspot | undefined) ?? null;
     }
     if (found !== this.hot) {
       this.hot = found;
@@ -392,7 +410,11 @@ export class RoomView {
       };
     }
     const pos = new Vector3(...v.pos);
-    const m = new Matrix4().lookAt(pos, new Vector3(...v.look), new Vector3(...(v.up ?? [0, 1, 0])));
+    const m = new Matrix4().lookAt(
+      pos,
+      new Vector3(...v.look),
+      new Vector3(...(v.up ?? [0, 1, 0])),
+    );
     return { pos, quat: new Quaternion().setFromRotationMatrix(m) };
   }
 
@@ -462,7 +484,8 @@ export class RoomView {
       this.camera.position.y += Math.sin(t * 41) * L.shake * k + Math.sin(t * 17) * L.shake * 0.4;
       this.camera.rotateZ(Math.sin(t * 29 + 1) * L.roll * k);
       this.shell.setLevel(
-        this.cur.level * (Math.sin(t * 53) > -0.2 ? 0.35 + 0.65 * Math.abs(Math.sin(t * 23)) : 0.05),
+        this.cur.level *
+          (Math.sin(t * 53) > -0.2 ? 0.35 + 0.65 * Math.abs(Math.sin(t * 23)) : 0.05),
       );
       this.holoRoot.visible = Math.sin(t * 61) > -0.3 && t < L.hologramEnd;
       return;
@@ -524,7 +547,10 @@ export class RoomView {
     };
     const point = (e: MouseEvent): void => {
       const r = canvas.getBoundingClientRect();
-      this.mouse.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+      this.mouse.set(
+        ((e.clientX - r.left) / r.width) * 2 - 1,
+        -((e.clientY - r.top) / r.height) * 2 + 1,
+      );
     };
 
     on(window, 'keydown', (e: KeyboardEvent) => {
@@ -545,8 +571,10 @@ export class RoomView {
       if (k === '3') this.go('console');
       if (k === '4') this.go('flight');
       if (k === '0') this.go('room');
-      if (k === 'u' && this.current === 'flight') this.flight.setHeadingUp(!this.flight.headingUp());
-      if ((k === 'f' || k === 'enter') && this.current === 'room' && this.hot) this.activate(this.hot);
+      if (k === 'u' && this.current === 'flight')
+        this.flight.setHeadingUp(!this.flight.headingUp());
+      if ((k === 'f' || k === 'enter') && this.current === 'room' && this.hot)
+        this.activate(this.hot);
     });
     on(window, 'keyup', (e: KeyboardEvent) => this.keys.delete(e.key.toLowerCase()));
     on(window, 'blur', () => this.keys.clear());
@@ -572,7 +600,9 @@ export class RoomView {
         this.ray.setFromCamera(this.mouse, this.camera);
         this.ship.select(this.ship.pick(this.ray));
       } else if (mode === 'flight') {
-        this.events.flightPick(this.flight.pick(this.mouse.x, this.mouse.y, this.camera, this.height));
+        this.events.flightPick(
+          this.flight.pick(this.mouse.x, this.mouse.y, this.camera, this.height),
+        );
       }
     });
     on(window, 'mousemove', (e: MouseEvent) => {
@@ -608,7 +638,8 @@ export class RoomView {
         const mode = this.current;
         if (mode === 'flight' || (mode === 'map' && this.inRegion))
           this.flight.setRange(this.flight.range() * k);
-        else if (mode === 'map') this.map.spin.scale.setScalar(clamp(this.map.spin.scale.x / k, 0.7, 2.4));
+        else if (mode === 'map')
+          this.map.spin.scale.setScalar(clamp(this.map.spin.scale.x / k, 0.7, 2.4));
         else if (mode === 'ship')
           this.ship.group.scale.setScalar(clamp(this.ship.group.scale.x / k, 0.6, 2.6));
       },

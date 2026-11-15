@@ -191,9 +191,7 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
           <div className="cs-item" key={b.key}>
             <div className="cs-item__head">
               <span>BURN {i + 1}</span>
-              <span className="cs-item__value">
-                {fixed(durationOf(b), 1)} s · main engine
-              </span>
+              <span className="cs-item__value">{fixed(durationOf(b), 1)} s · main engine</span>
               <button
                 type="button"
                 className="cs-item__close"
@@ -259,7 +257,9 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
                 max={100}
                 step={5}
                 value={Math.round(b.throttle * 100)}
-                onChange={(v) => patchBurn(b.key, { throttle: Math.min(1, Math.max(0.05, v / 100)) })}
+                onChange={(v) =>
+                  patchBurn(b.key, { throttle: Math.min(1, Math.max(0.05, v / 100)) })
+                }
               />
             </div>
           </div>

@@ -83,4 +83,5 @@ export function bytes(n: number): string {
 export const name = (id: string): string => id.replace(/-/g, ' ');
 
 /** Degrees from radians, 0–360. */
-export const degrees = (radians: number): number => (((radians * 180) / Math.PI) % 360 + 360) % 360;
+export const degrees = (radians: number): number =>
+  ((((radians * 180) / Math.PI) % 360) + 360) % 360;

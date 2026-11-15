@@ -41,7 +41,11 @@ export function DebriefView({ report }: { readonly report: Debrief }) {
     <>
       <ReadoutGrid columns={3}>
         <Readout label="Attempt" value={report.index} tone="blackbox" />
-        <Readout label="Outcome" value={report.outcome === 'in-progress' ? 'flying' : report.outcome} tone="blackbox" />
+        <Readout
+          label="Outcome"
+          value={report.outcome === 'in-progress' ? 'flying' : report.outcome}
+          tone="blackbox"
+        />
         <Readout label="Ship time" value={clock(report.duration)} />
       </ReadoutGrid>
       {report.design ? (
@@ -115,7 +119,9 @@ export function BlackBoxPage({ desk }: { readonly desk: Desk }) {
 
   const pick = (id: string): void => {
     setFocus(id);
-    setPicked((list) => (list.includes(id) ? list.filter((x) => x !== id) : [...list.slice(-1), id]));
+    setPicked((list) =>
+      list.includes(id) ? list.filter((x) => x !== id) : [...list.slice(-1), id],
+    );
   };
   const a = attempts.find((x) => x.id === picked[0]);
   const b = attempts.find((x) => x.id === picked[1]);
@@ -123,7 +129,11 @@ export function BlackBoxPage({ desk }: { readonly desk: Desk }) {
   const comparison = a && b ? compareAttempts(a, b, desk.report ?? null) : undefined;
   const changed = comparison
     ? comparison.executed
-        .filter((d) => d.kind === 'same' || d.kind === 'changed' ? d.kind === 'changed' && d.a.kind !== 'mark' : d.command.kind !== 'mark')
+        .filter((d) =>
+          d.kind === 'same' || d.kind === 'changed'
+            ? d.kind === 'changed' && d.a.kind !== 'mark'
+            : d.command.kind !== 'mark',
+        )
         .map((d) => describeDiff(d, 'A', 'B'))
         .filter((line): line is string => line !== null)
     : [];
@@ -153,7 +163,13 @@ export function BlackBoxPage({ desk }: { readonly desk: Desk }) {
               mode={outcomeText(x)}
               value={`${whole(x.measurements.length)} rec`}
               tone="blackbox"
-              status={x.outcome.kind === 'lost' ? 'warning' : x.outcome.kind === 'in-progress' ? 'nominal' : 'stale'}
+              status={
+                x.outcome.kind === 'lost'
+                  ? 'warning'
+                  : x.outcome.kind === 'in-progress'
+                    ? 'nominal'
+                    : 'stale'
+              }
               selected={picked.includes(x.id) || focusId === x.id}
               onSelect={() => pick(x.id)}
             />
@@ -205,7 +221,9 @@ export function BlackBoxPage({ desk }: { readonly desk: Desk }) {
         title="Debrief"
         tone="blackbox"
         aside={focused ? `attempt ${focused.index}` : ''}
-        statusLine={focused?.outcome.kind === 'in-progress' ? 'attempt in progress: so far' : undefined}
+        statusLine={
+          focused?.outcome.kind === 'in-progress' ? 'attempt in progress: so far' : undefined
+        }
       >
         {report ? <DebriefView report={report} /> : <p className="cs-note">no attempt on record</p>}
       </Panel>
@@ -217,7 +235,10 @@ export function BlackBoxPage({ desk }: { readonly desk: Desk }) {
       >
         {comparison && a && b ? (
           <>
-            <Line label="configuration" status={comparison.configurationDiffers ? 'caution' : 'nominal'}>
+            <Line
+              label="configuration"
+              status={comparison.configurationDiffers ? 'caution' : 'nominal'}
+            >
               {comparison.configurationDiffers
                 ? `${comparison.a.configuration.start} → ${comparison.b.configuration.start}`
                 : 'same'}

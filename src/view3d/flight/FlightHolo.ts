@@ -257,9 +257,7 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
       g.add(tag);
       trans.add(g);
       const marker = new Group(); // bearing mark on the rim when the body is outside the volume
-      marker.add(
-        linesH.fat([-0.03, 0, 0.035, 0, 0, 0, 0.03, 0, 0.035], holoLines.bodyBearing),
-      );
+      marker.add(linesH.fat([-0.03, 0, 0.035, 0, 0, 0, 0.03, 0, 0.035], holoLines.bodyBearing));
       const markerTag = label('', 'dim');
       markerTag.position.set(0, 0.05, 0.02);
       marker.add(markerTag);
@@ -476,7 +474,14 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
     for (let d = 0; d < 360; d += 15) {
       const a = (d * Math.PI) / 180;
       const r1 = RING * (d % 90 === 0 ? 0.9 : 0.95);
-      ticks.push(Math.sin(a) * RING, 0, -Math.cos(a) * RING, Math.sin(a) * r1, 0, -Math.cos(a) * r1);
+      ticks.push(
+        Math.sin(a) * RING,
+        0,
+        -Math.cos(a) * RING,
+        Math.sin(a) * r1,
+        0,
+        -Math.cos(a) * r1,
+      );
     }
     ring.add(thin(ticks, colour.ink, holoWire.tick));
   }
@@ -509,10 +514,7 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
   const pickables: { id: string; p: Vector3 }[] = [];
 
   /** The forecast's position at time `t`, by linear interpolation; null outside its span. */
-  const forecastAt = (
-    f: AnyForecast,
-    t: number,
-  ): { p: GameVec; sigma: number } | null => {
+  const forecastAt = (f: AnyForecast, t: number): { p: GameVec; sigma: number } | null => {
     const s = f.samples;
     const first = s[0];
     const last = s[s.length - 1];
@@ -599,7 +601,11 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
         })),
       );
     });
-    const rings = { sampled: [] as number[], extrapolated: [] as number[], validated: [] as number[] };
+    const rings = {
+      sampled: [] as number[],
+      extrapolated: [] as number[],
+      validated: [] as number[],
+    };
     const centre = new Vector3();
     const next = new Vector3();
     const tangent = new Vector3();
@@ -664,7 +670,11 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
     // Closest approaches still ahead.
     latestAlerts = f.closestApproaches
       // Still ahead, and a real pass: a body the path merely recedes from is not an approach.
-      .filter((c) => c.t > now && (bodyRadius.get(c.id) === undefined || c.distance < 12 * bodyRadius.get(c.id)!))
+      .filter(
+        (c) =>
+          c.t > now &&
+          (bodyRadius.get(c.id) === undefined || c.distance < 12 * bodyRadius.get(c.id)!),
+      )
       .map((c): ApproachAlert => {
         const body = bodyMarks.has(c.id);
         const near = c.distance - 2 * c.sigma;
@@ -823,7 +833,12 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
       snapshot.t,
       ship.position.x,
       ship.position.y,
-      sensed.map((c) => ({ sensor: c.sensor, center: c.bearing, halfWidth: c.halfAngle, range: c.range })),
+      sensed.map((c) => ({
+        sensor: c.sensor,
+        center: c.bearing,
+        halfWidth: c.halfAngle,
+        range: c.range,
+      })),
     );
     (planeMat.uniforms.uToVolume!.value as Matrix4).copy(rot.matrix);
     setHoloPlane(
@@ -953,9 +968,7 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
     selectRing.visible = selectTag.visible = showChosen;
     if (showChosen && chosen && chosenHolo) {
       selectRing.position.copy(chosenHolo);
-      selectRing.scale.setScalar(
-        Math.max(1, (chosen.radius * Sh * 1.6) / holoSize.selection),
-      );
+      selectRing.scale.setScalar(Math.max(1, (chosen.radius * Sh * 1.6) / holoSize.selection));
       selectTag.position.copy(chosenHolo).y -= holoSize.selection * 1.4;
       const closing = Math.hypot(
         chosen.velocity.x - ship.velocity.x,
@@ -1051,10 +1064,21 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
       const by = v.y * 0.86;
       const bz = v.z * 0.86;
       setFat(velocity, [
-        0, 0, 0, v.x, v.y, v.z,
-        bx + side.x, by + side.y, bz + side.z,
-        v.x, v.y, v.z,
-        bx - side.x, by - side.y, bz - side.z,
+        0,
+        0,
+        0,
+        v.x,
+        v.y,
+        v.z,
+        bx + side.x,
+        by + side.y,
+        bz + side.z,
+        v.x,
+        v.y,
+        v.z,
+        bx - side.x,
+        by - side.y,
+        bz - side.z,
       ]);
     } else velocity.visible = false;
 
@@ -1083,7 +1107,8 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
         const half = Math.min(s.halfAngle, 1.4);
         const along = tmp.copy(axis).applyQuaternion(rot.quaternion);
         const b = along.dot(rot.position);
-        const toEdge = -b + Math.sqrt(Math.max(0, b * b - rot.position.lengthSq() + (Rh * 0.97) ** 2));
+        const toEdge =
+          -b + Math.sqrt(Math.max(0, b * b - rot.position.lengthSq() + (Rh * 0.97) ** 2));
         const reach = Math.min(s.range * Sh, toEdge * Math.cos(half) * 0.92);
         const r = Math.tan(half) * reach;
         const u = tmp2.set(0, 1, 0).cross(axis);

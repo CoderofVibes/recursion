@@ -16,7 +16,12 @@ export interface FlightKeys {
   /** Keys held down, lower case. */
   readonly held: ReadonlySet<string>;
   /** Which controls the ship answers to today (the rest wait for 2G's hands-on seam). */
-  readonly available: { readonly throttle: boolean; readonly yaw: boolean; readonly pitch: boolean; readonly translate: boolean };
+  readonly available: {
+    readonly throttle: boolean;
+    readonly yaw: boolean;
+    readonly pitch: boolean;
+    readonly translate: boolean;
+  };
 }
 
 export interface FlightHudProps {
@@ -116,7 +121,12 @@ export function FlightHud({ desk, available, headingUp, range, onHeadingUp }: Fl
         <Panel title="Flight" aside={headingUp ? 'heading up' : 'chart up'}>
           <ReadoutGrid columns={2}>
             <Readout label="Speed" value={fixed(speed, 2)} unit="m/s" size="readout" />
-            <Readout label="Heading" value={String(Math.round(degrees(heading(ship.attitude)))).padStart(3, '0')} unit="°" size="readout" />
+            <Readout
+              label="Heading"
+              value={String(Math.round(degrees(heading(ship.attitude)))).padStart(3, '0')}
+              unit="°"
+              size="readout"
+            />
             {snapshot.world.bodies.map((b) => (
               <Readout
                 key={b.id}
@@ -151,13 +161,33 @@ export function FlightHud({ desk, available, headingUp, range, onHeadingUp }: Fl
             status={rcsNow < rcsMax * 0.2 ? 'caution' : 'nominal'}
           />
           {bus ? (
-            <LevelBar label={`Power · ${bus.label}`} value={bus.value} max={bus.max} text={`${whole(bus.value)} W`} status={bus.status} marks={[{ at: bus.mark ?? bus.max, kind: 'caution' }]} />
+            <LevelBar
+              label={`Power · ${bus.label}`}
+              value={bus.value}
+              max={bus.max}
+              text={`${whole(bus.value)} W`}
+              status={bus.status}
+              marks={[{ at: bus.mark ?? bus.max, kind: 'caution' }]}
+            />
           ) : null}
           {battery ? (
-            <LevelBar label="Batteries" value={battery.value} max={battery.max} text={battery.text} status={battery.status} />
+            <LevelBar
+              label="Batteries"
+              value={battery.value}
+              max={battery.max}
+              text={battery.text}
+              status={battery.status}
+            />
           ) : null}
           {node ? (
-            <LevelBar label={`Heat · ${node.label}`} value={node.value} max={node.max} text={node.text} status={node.status} marks={[{ at: node.mark ?? node.max, kind: 'warning' }]} />
+            <LevelBar
+              label={`Heat · ${node.label}`}
+              value={node.value}
+              max={node.max}
+              text={node.text}
+              status={node.status}
+              marks={[{ at: node.mark ?? node.max, kind: 'warning' }]}
+            />
           ) : null}
           <LevelBar
             label="Recorder"
@@ -169,7 +199,11 @@ export function FlightHud({ desk, available, headingUp, range, onHeadingUp }: Fl
         </Panel>
 
         {chosen ? (
-          <Panel title={chosen.id} aside={chosen.tracked ? 'tracked' : 'seen'} status={chosen.tracked ? 'nominal' : 'stale'}>
+          <Panel
+            title={chosen.id}
+            aside={chosen.tracked ? 'tracked' : 'seen'}
+            status={chosen.tracked ? 'nominal' : 'stale'}
+          >
             <Line label="range">
               {dist(distance(ship.position, chosen.position) - chosen.radius)}
             </Line>
