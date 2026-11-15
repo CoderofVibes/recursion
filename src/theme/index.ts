@@ -14,3 +14,17 @@ export { instrument, trendGrid, gaugeArc } from './instrument.ts';
 export { cssVariables, applyTheme } from './css.ts';
 export { lineStyles, envelopeStyle, planeStyle, objectStyle } from './three/styles.ts';
 export type { LineStyle } from './three/styles.ts';
+export { holoLines, holoWire, holoSize } from './three/holo.ts';
+export { shipWire, shipHoloMotion } from './three/ship-holo.ts';
+export { mapLines, mapWire, mapHaze, mapMotion } from './three/map-holo.ts';
+export {
+  roomSurface,
+  roomFinish,
+  roomLights,
+  roomBloom,
+  outsideStyle,
+  lossSequence,
+  roomMotion,
+} from './room.ts';
+export { roomDressing } from './dressing.ts';
+export { hud, hudSurface, hudMotion, hudOpacity } from './hud.ts';

@@ -9,9 +9,9 @@ Belief side (P11): nothing here may import truth or the simulation.
 
 | Import from | What you get | Pulls in |
 |---|---|---|
-| `src/theme/index.ts` | Tokens as plain data: `colour`, `opacity`, `type`, `space`, `surface`, `instrument`, `line`, `dash`, `hatch`, `motion`, `render`, the 3D style table, `cssVariables`, `applyTheme()`, `hex()`, `rgba()` | nothing |
+| `src/theme/index.ts` | Tokens as plain data: `colour`, `opacity`, `type`, `space`, `surface`, `instrument`, `line`, `dash`, `hatch`, `motion`, `render`, the 3D style tables, the room (`roomSurface`, `roomFinish`, `roomLights`, `roomBloom`, `roomDressing`, `outsideStyle`, `lossSequence`, `roomMotion`), the holograms (`holoLines`, `holoWire`, `holoSize`, `shipWire`, `mapLines`, `mapWire`), the overlays (`hud`, `hudSurface`, `hudMotion`, `hudOpacity`), `cssVariables`, `applyTheme()`, `hex()`, `rgba()` | nothing |
 | `src/theme/components/index.ts` | Instrument primitives: `Panel`, `LevelBar`, `Gauge`, `Trend`, `Readout`, `ReadoutGrid`, `Schematic`, `SchematicBox`, `ComponentRow`, `ComponentList`, `ModeChips`, `Toggle`, `Alert`, `AlertStack`, `BlackBoxMark` | React, the stylesheet |
-| `src/theme/three/index.ts` | Material builders: `LineKit`, `lineMaterial`, `wireMaterial`, `envelopeGeometry`, `envelopeMaterial`, `planeMaterial`, `setPlaneCoverage`, `planeVeilMaterial`, `bodyMaterial`, `rockMaterial`, `setSun`, `latticeMaterial`, `wellLineMaterial`, `wellColour` | three |
+| `src/theme/three/index.ts` | Material builders: `LineKit`, `lineMaterial`, `wireMaterial`, `envelopeGeometry`, `envelopeMaterial`, `planeMaterial`, `setPlaneCoverage`, `planeVeilMaterial`, `holoPlaneMaterial`, `setHoloPlane`, `bodyMaterial`, `rockMaterial`, `setSun`, `latticeMaterial`, `wellLineMaterial`, `wellColour` | three |
 
 ## Using it
 
@@ -39,6 +39,24 @@ applyTheme(document.documentElement); // once, at the root: defines the --rx-* t
 - In CSS of your own, use the `--rx-*` custom properties, never a literal colour or size.
 - For 3D, build materials with the builders, keep a `LineKit` per view, call `setResolution` on
   resize and `setPixelsPerUnit` every frame so dashes keep their rhythm on screen.
+
+## The control room
+
+The room, its holograms and the overlays laid over them take their look from here too
+(DECISIONS A8). Layout (where things are, camera poses) is in `src/view3d/room/layout.ts`.
+
+| File | Decides |
+|---|---|
+| `room.ts` | Surfaces, finishes and lights of the compartment, the loss sequence's timings, walking speeds |
+| `dressing.ts` | The set dressing: wall screens, plates, lamps, seats |
+| `three/holo.ts` | Hologram line styles, wire opacities and sizes (the volume's radius, how far back the ship sits) |
+| `three/holo-plane.ts` | The hologram's reference plane: grid, coverage, hatch where nothing is sensed |
+| `three/ship-holo.ts`, `three/map-holo.ts` | The ship drawing's and the map's own styles |
+| `hud.ts` | Overlays: margins, column widths, key caps, the cursor, plate surfaces, glows, timings |
+| `motion.ts` | `maxDisplayTurn` (time warp never spins a display), `coastForecastDelay` |
+
+The overlay stylesheets (`src/app/control-room.css`, `src/console/console.css`) hold no literal
+colour, pixel size or timing; `src/console/console.test.ts` fails if one appears.
 
 ## The UI lab
 

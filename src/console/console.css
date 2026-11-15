@@ -1,0 +1,393 @@
+/*
+ * The console's screen and the small controls the console builds on theme tokens.
+ * Every colour, size, weight, line and timing is a --rx-* custom property from applyTheme().
+ */
+
+/* ---- The screen: it takes over the view when the player looks down into the console --------- */
+.cs-screen {
+  position: absolute;
+  inset: 0;
+  padding: var(--rx-hud-screen-pad);
+  background: var(--rx-hud-screen-vignette);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--rx-t-screen-in) var(--rx-ease-out);
+}
+.cs-screen[data-on] {
+  opacity: 1;
+  pointer-events: auto;
+}
+.cs-frame {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--rx-gap);
+  padding: var(--rx-table-pad);
+  background: var(--rx-table);
+  border: var(--rx-line-rule) solid var(--rx-table-edge);
+  border-radius: var(--rx-table-radius);
+  box-shadow: var(--rx-hud-screen-inset);
+}
+.cs-tabs {
+  display: flex;
+  align-items: center;
+  gap: var(--rx-row-gap);
+}
+.cs-tab {
+  padding: var(--rx-row-gap) var(--rx-table-pad);
+  background: var(--rx-panel);
+  border: var(--rx-line-rule) solid var(--rx-panel-edge);
+  border-radius: var(--rx-panel-radius);
+  font: inherit;
+  font-size: var(--rx-size-label);
+  letter-spacing: var(--rx-tracking-label);
+  color: var(--rx-ink-dim);
+  cursor: pointer;
+  transition: color var(--rx-t-fast) var(--rx-ease-out);
+}
+.cs-tab:hover {
+  color: var(--rx-ink);
+}
+.cs-tab[data-on] {
+  color: var(--rx-ink);
+  border-color: var(--rx-ink-dim);
+}
+.cs-tab[data-tone='blackbox'] {
+  color: var(--rx-blackbox);
+}
+.cs-tab[data-tone='blackbox'][data-on] {
+  border-color: var(--rx-blackbox);
+}
+/* Black Box has something to show: a steady mark, never a blink. */
+.cs-tab[data-flag]::after {
+  content: ' ●';
+}
+.cs-tabs__name {
+  margin-left: auto;
+  font-size: var(--rx-size-label);
+  letter-spacing: var(--rx-tracking-label);
+  text-transform: uppercase;
+  color: var(--rx-ink-faint);
+}
+.cs-page {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--rx-panel-edge) transparent;
+}
+.cs-grid {
+  /* Panels flow down columns, so a short panel does not leave a hole beside a tall one. */
+  column-width: var(--rx-hud-panel-min);
+  column-gap: var(--rx-gap);
+}
+.cs-grid > * {
+  break-inside: avoid;
+  margin-bottom: var(--rx-gap);
+}
+.cs-foot {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--rx-gap) * 2);
+  font-size: var(--rx-size-small);
+  letter-spacing: var(--rx-tracking-label);
+  color: var(--rx-ink-dim);
+}
+.cs-foot__note {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+}
+.cs-foot__back {
+  color: var(--rx-ink-faint);
+}
+
+/* ---- Controls --------------------------------------------------------------------------------- */
+.cs-button {
+  padding: var(--rx-chip-pad-y) var(--rx-chip-pad-x);
+  background: var(--rx-hud-plate-soft);
+  border: var(--rx-line-rule) solid var(--rx-panel-edge);
+  border-radius: var(--rx-panel-radius);
+  font: inherit;
+  font-size: var(--rx-size-small);
+  letter-spacing: var(--rx-tracking-label);
+  text-transform: uppercase;
+  color: var(--rx-ink-dim);
+  cursor: pointer;
+  pointer-events: auto;
+  transition:
+    color var(--rx-t-fast) var(--rx-ease-out),
+    border-color var(--rx-t-fast) var(--rx-ease-out);
+}
+.cs-button:hover:not(:disabled) {
+  color: var(--rx-ink);
+  border-color: var(--rx-ink-dim);
+}
+.cs-button:disabled {
+  opacity: var(--rx-stale);
+  cursor: default;
+}
+.cs-button[data-primary] {
+  color: var(--rx-ink);
+  border-color: var(--rx-ink-dim);
+  background: var(--rx-wash-selected);
+}
+.cs-button[data-tone='forecast'] {
+  color: var(--rx-forecast);
+}
+.cs-button[data-tone='forecast'][data-primary] {
+  border-color: var(--rx-forecast);
+  background: var(--rx-wash-forecast);
+}
+.cs-button[data-tone='blackbox'] {
+  color: var(--rx-blackbox);
+}
+.cs-button[data-tone='blackbox'][data-primary] {
+  border-color: var(--rx-blackbox);
+  background: var(--rx-wash-blackbox);
+}
+.cs-button[data-status='caution'] {
+  color: var(--rx-caution);
+}
+.cs-button[data-status='warning'] {
+  color: var(--rx-warning);
+}
+.cs-button:focus-visible,
+.cs-tab:focus-visible,
+.cs-field__input:focus-visible {
+  outline: var(--rx-line-rule) solid var(--rx-ink);
+  outline-offset: var(--rx-unit);
+}
+.cs-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--rx-row-gap);
+}
+.cs-field {
+  display: grid;
+  grid-template-columns: var(--rx-bar-label-width) minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: var(--rx-gap);
+  font-size: var(--rx-size-small);
+}
+.cs-field__label {
+  letter-spacing: var(--rx-tracking-label);
+  text-transform: uppercase;
+  color: var(--rx-ink-dim);
+}
+.cs-field__input {
+  min-width: 0;
+  padding: var(--rx-unit) var(--rx-row-pad-x);
+  background: var(--rx-table);
+  border: var(--rx-line-rule) solid var(--rx-panel-edge);
+  border-radius: var(--rx-panel-radius);
+  font: inherit;
+  font-size: var(--rx-size-body);
+  color: var(--rx-ink);
+  color-scheme: dark;
+}
+.cs-field__unit {
+  color: var(--rx-ink-faint);
+}
+.cs-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rx-unit);
+}
+.cs-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--rx-gap);
+  font-size: var(--rx-size-small);
+  --rx-c: var(--rx-ink);
+}
+.cs-line[data-tone='forecast'] {
+  --rx-c: var(--rx-forecast);
+}
+.cs-line[data-tone='blackbox'] {
+  --rx-c: var(--rx-blackbox);
+}
+.cs-line[data-status='caution'] {
+  --rx-c: var(--rx-caution);
+}
+.cs-line[data-status='warning'] {
+  --rx-c: var(--rx-warning);
+}
+.cs-line:is([data-status='stale'], [data-status='off']) {
+  --rx-c: var(--rx-ink-dim);
+}
+.cs-line__label {
+  flex: none;
+  letter-spacing: var(--rx-tracking-label);
+  text-transform: uppercase;
+  color: var(--rx-ink-dim);
+}
+.cs-line__value {
+  min-width: 0;
+  text-align: right;
+  color: var(--rx-c);
+}
+.cs-caption {
+  margin: var(--rx-row-gap) 0 0;
+  font-size: var(--rx-size-small);
+  letter-spacing: var(--rx-tracking-label);
+  text-transform: uppercase;
+  color: var(--rx-ink-faint);
+}
+.cs-note {
+  margin: 0;
+  font-size: var(--rx-size-small);
+  color: var(--rx-ink-dim);
+}
+.cs-change {
+  margin: 0;
+  padding-left: var(--rx-row-pad-x);
+  border-left: var(--rx-line-rule) solid var(--rx-blackbox);
+  font-size: var(--rx-size-small);
+  color: var(--rx-ink);
+}
+.cs-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rx-row-gap);
+  padding: var(--rx-row-gap) 0;
+  border-top: var(--rx-line-rule) solid var(--rx-panel-edge);
+}
+.cs-item__head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--rx-gap);
+  font-size: var(--rx-size-label);
+  letter-spacing: var(--rx-tracking-label);
+  text-transform: uppercase;
+}
+.cs-item__value {
+  margin-left: auto;
+  color: var(--rx-ink-dim);
+  text-transform: none;
+}
+.cs-item__value[data-status='nominal'] {
+  color: var(--rx-ink);
+}
+.cs-item__value[data-status='caution'] {
+  color: var(--rx-caution);
+}
+.cs-item__close {
+  padding: 0 var(--rx-row-pad-x);
+  background: none;
+  border: none;
+  font: inherit;
+  color: var(--rx-ink-faint);
+  cursor: pointer;
+}
+.cs-item__close:hover {
+  color: var(--rx-ink);
+}
+.cs-scroll {
+  max-height: 60vh;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--rx-panel-edge) transparent;
+}
+
+/* ---- Time ---------------------------------------------------------------------------------------- */
+.cs-time {
+  display: flex;
+  align-items: center;
+  gap: var(--rx-unit);
+  pointer-events: auto;
+}
+.cs-time__met {
+  margin-right: var(--rx-gap);
+  font-size: var(--rx-size-value);
+  font-weight: var(--rx-weight-strong);
+  color: var(--rx-ink);
+  text-shadow: var(--rx-number-glow);
+}
+.cs-time__note {
+  margin-left: var(--rx-row-gap);
+  color: var(--rx-caution);
+  font-size: var(--rx-size-small);
+}
+
+/* ---- Strength against distance ---------------------------------------------------------------- */
+.cs-plot {
+  display: block;
+  width: 100%;
+}
+svg.cs-plot {
+  height: var(--rx-hud-plot);
+}
+.cs-plot__axis {
+  stroke: var(--rx-grid-major);
+  stroke-width: var(--rx-line-rule);
+}
+.cs-plot__law {
+  stroke: var(--rx-forecast);
+  stroke-width: var(--rx-line-trace-secondary);
+  stroke-dasharray: var(--rx-dash-forecast);
+}
+.cs-plot__tick {
+  fill: var(--rx-ink-faint);
+  font-family: var(--rx-font);
+  font-size: var(--rx-size-small);
+}
+.cs-plot__point line {
+  stroke: var(--rx-ink-dim);
+  stroke-width: var(--rx-line-rule);
+}
+.cs-plot__point circle {
+  fill: var(--rx-ink-dim);
+  stroke: var(--rx-ink-dim);
+  stroke-width: var(--rx-line-rule);
+}
+.cs-plot__point[data-current] :is(line, circle) {
+  stroke: var(--rx-measured);
+}
+.cs-plot__point[data-current] circle {
+  fill: var(--rx-measured);
+}
+.cs-plot__point circle[data-probe] {
+  fill: none;
+}
+.cs-plot__validated {
+  stroke: var(--rx-forecast);
+  stroke-width: var(--rx-line-trace);
+}
+.cs-plot__visits {
+  stroke: var(--rx-thrust);
+  stroke-width: var(--rx-line-trace);
+}
+.cs-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--rx-gap);
+  margin: 0;
+  font-size: var(--rx-size-small);
+  color: var(--rx-ink-dim);
+}
+.cs-legend [data-swatch]::before {
+  content: '';
+  display: inline-block;
+  width: var(--rx-gap);
+  margin-right: var(--rx-unit);
+  vertical-align: middle;
+  border-top: var(--rx-line-trace) solid var(--rx-ink-dim);
+}
+.cs-legend [data-swatch='validated']::before {
+  border-color: var(--rx-forecast);
+}
+.cs-legend [data-swatch='visits']::before {
+  border-color: var(--rx-thrust);
+}
+.cs-legend [data-swatch='probe']::before {
+  width: var(--rx-pip);
+  height: var(--rx-pip);
+  border: var(--rx-line-rule) solid var(--rx-ink-dim);
+  border-radius: 50%;
+}

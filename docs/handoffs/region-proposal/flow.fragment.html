@@ -1,0 +1,229 @@
+<div id="recursion-expedition-flow">
+  <div class="rf-heading">
+    <h2>Recursion · expedition flow</h2>
+    <span class="text-small text-muted">23 environments · proposed connections</span>
+  </div>
+  <div class="rf-legend text-small" aria-label="Route legend">
+    <span><svg width="28" height="14" aria-hidden="true"><path d="M1 7H25M20 3L25 7 20 11" fill="none" stroke="currentColor"/></svg>Forward route</span>
+    <span><svg width="28" height="14" aria-hidden="true"><path d="M1 7H25" fill="none" stroke="currentColor" stroke-dasharray="4 4"/><path d="M20 3L25 7 20 11" fill="none" stroke="currentColor"/></svg>Optional exploration</span>
+    <span><svg width="28" height="14" aria-hidden="true"><path d="M3 7H25M8 3L3 7 8 11M20 3L25 7 20 11" fill="none" stroke="currentColor"/></svg>Cross-transfer</span>
+  </div>
+  <div class="rf-map" role="group" aria-label="Expedition route network">
+    <svg class="rf-connections" aria-hidden="true" fill="none">
+      <defs>
+        <marker id="rf-arrow" viewBox="0 0 8 10" refX="7" refY="5" markerWidth="8" markerHeight="10" markerUnits="userSpaceOnUse" orient="auto-start-reverse"><path d="M1 1L7 5 1 9" fill="none" stroke="var(--muted-foreground)" stroke-width="1.3" stroke-linejoin="round"/></marker>
+      </defs>
+      <g class="rf-edge-layer"></g>
+    </svg>
+    <div class="rf-grid"></div>
+  </div>
+  <div class="rf-cycle text-small">
+    <span>Ship lost → Unfamiliar Sky</span>
+    <span class="text-muted">Black Box records + model learning persist</span>
+  </div>
+  <p class="sr-only">This is a conceptual flow, not a spatial map. From arrival, choose power and thermal exploration or sensing and navigation exploration. An optional two-way transfer connects the Well Garden and Unseen Cathedral so either branch can come first without revisiting a region. Optional detours rejoin farther ahead. Both branches converge at Stillwater, then lead through Braided Crossing, the Turning Rim, the Passage, and the Familiar Sky at Earth. Focus, hover or tap an environment for its description. Click to select an environment and emphasize its connections.</p>
+</div>
+<style>
+#recursion-expedition-flow .rf-heading { display: flex; flex-direction: column; gap: calc(var(--font-size-base) * .25); padding-inline-end: 92px; }
+#recursion-expedition-flow .rf-legend { display: flex; flex-wrap: wrap; gap: calc(var(--font-size-base) * .5) calc(var(--font-size-base) * 1.2); margin-block: calc(var(--font-size-base) * 1) calc(var(--font-size-base) * 1.25); color: var(--muted-foreground); }
+#recursion-expedition-flow .rf-legend > span { display: inline-flex; align-items: center; gap: calc(var(--font-size-base) * .35); }
+#recursion-expedition-flow .rf-map { position: relative; }
+#recursion-expedition-flow .rf-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); align-items: center; row-gap: calc(var(--font-size-base) * 2.6); padding-block: calc(var(--font-size-base) * .5); }
+#recursion-expedition-flow .rf-place { display: flex; align-items: center; flex-direction: column; gap: calc(var(--font-size-base) * .25); min-width: 0; z-index: 1; justify-self: center; }
+#recursion-expedition-flow .rf-note { color: var(--muted-foreground); }
+#recursion-expedition-flow .rf-lane { justify-self: center; text-align: center; color: var(--muted-foreground); z-index: 1; }
+#recursion-expedition-flow .rf-lane span { background: var(--background); }
+#recursion-expedition-flow .rf-connections { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+#recursion-expedition-flow .rf-edge { stroke: color-mix(in srgb, var(--foreground) 50%, var(--background)); stroke-width: 1.35; stroke-linecap: round; stroke-linejoin: round; fill: none; }
+#recursion-expedition-flow .rf-edge[data-kind="optional"] { stroke-dasharray: 4 5; }
+#recursion-expedition-flow .rf-edge.is-related { stroke: var(--viz-series-1); stroke-width: 2; }
+#recursion-expedition-flow .rf-cycle { display: flex; flex-wrap: wrap; justify-content: center; gap: calc(var(--font-size-base) * .35) calc(var(--font-size-base) * 1); margin-block-start: calc(var(--font-size-base) * 1.5); }
+#recursion-expedition-flow[data-narrow="true"] .rf-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); row-gap: calc(var(--font-size-base) * 2.8); }
+</style>
+<script>
+(() => {
+  const root = document.getElementById('recursion-expedition-flow');
+  const grid = root.querySelector('.rf-grid');
+  const map = root.querySelector('.rf-map');
+  const svg = root.querySelector('.rf-connections');
+  const layer = root.querySelector('.rf-edge-layer');
+  const nodes = [
+    {id:'C01', name:'Unfamiliar Sky', label:'Unfamiliar|Sky', group:'Arrival', pos:[1,2,2], mobile:[1,1,2], description:'Wake in the control room beneath an immense dark limb. Nearby fragments masquerade as distant stars until a small burn reveals their depth.', insight:'Establish tracking, pointing and a coast-versus-burn baseline.', pressure:'A familiar departure still needs controlled thrust and current observations.', systems:'Existing motion, operation and measurement.'},
+    {id:'C02', name:'Twin Deeps', label:'Twin Deeps', group:'Arrival', pos:[2,2,2], mobile:[2,1,1], description:'Two vast bodies surround a three-dimensional web of inclined debris tracks. Measured trajectories begin separating from the familiar gravity forecast.', insight:'Distinguish a wrong distance law from uncertain masses or an overlooked second body.', pressure:'The learned law helps; debris phase, approach velocity and clearance still demand skill.', systems:'Existing gravity, motion, operation and measurement.'},
+    {id:'A02', name:'Tidal Orchard', label:'Tidal|Orchard', group:'Optional investigation', pos:[3,4,1], mobile:[3,2,1], newPhysics:true, description:'A massive body fills one side of the sky. Among elongated fragments, the deployed ship begins turning even with its engine off.', insight:'Investigate gravity acting differently across an extended spacecraft.', pressure:'Control pointing and configuration near a steep gravity gradient; then rejoin at the Lantern Field.', systems:'New coupling: distributed gravity forces and gravity-gradient torque. Scale needs validation.'},
+    {id:'C03', name:'Lantern Field', label:'Lantern Field', group:'Route choice', pos:[4,2,2], mobile:[4,1,2], description:'An open volume contains several glimmers above, below and behind the ship. Different sightlines offer competing leads into the universe.', insight:'Choose useful observations and an exploration direction for the questions still unanswered.', pressure:'Pointing time, processing and transfer reserves have opportunity costs.', systems:'Existing motion, operation and measurement.'},
+    {id:'P01', name:'Listening Shelf', label:'Listening|Shelf', group:'Power and thermal branch', pos:[6,2,1], mobile:[6,1,1], description:'A broad overhang provides clearance for a survey. Starting a second load can darken both instruments while the battery remains full and Black Box keeps recording.', insight:'Understand shared electrical branches, load sequencing and deliberate protection recovery.', pressure:'Retain useful sensing and control while managing the actual available supply.', systems:'Existing electrical distribution, protection and measurement.'},
+    {id:'N01', name:'Shadow Observatory', label:'Shadow|Observatory', group:'Sensing and navigation branch', pos:[6,3,1], mobile:[6,2,1], description:'A huge rock blocks a bright foreground source, revealing dim targets at different depths. Controlled observations tighten uncertain positions.', insight:'Separate the effects of pointing, processing, exposure and coverage.', pressure:'Choose a useful observation interval without spending the reserves needed for transit.', systems:'Existing measurement and operation.'},
+    {id:'P02', name:'Sunward', label:'Sunward', group:'Power and thermal branch', pos:[7,2,1], mobile:[7,1,1], description:'Sunlight enters through a slanted gap between enormous slabs. A roll begins charging the arrays while exposing a radiator to incoming heat.', insight:'Balance generation, cooling, deployment and useful pointing.', pressure:'Leave with worthwhile energy and enough thermal margin for the next maneuver.', systems:'Existing illumination, geometry, electrical and thermal operation.'},
+    {id:'N02', name:'Far Aperture', label:'Far Aperture', group:'Sensing and navigation branch', pos:[7,3,1], mobile:[7,2,1], description:'Two overlapping bodies appear to form one wall. A carefully chosen sideways-and-upward translation reveals a distant light between them.', insight:'Choose a viewpoint that resolves depth, motion and occlusion.', pressure:'A useful observation baseline costs travel and may narrow the remaining approach options.', systems:'Existing motion, geometry and measurement.'},
+    {id:'R01', name:'Red Wall', label:'Red Wall', group:'Optional thermal investigation', pos:[8,1,1], mobile:[8,1,1], description:'A faintly glowing surface fills one side of a quiet observation pocket. After a demanding operation stops, one component continues getting hotter.', insight:'Measure stored heat, delayed response and sustainable operating duration.', pressure:'Abort before the accumulated heat consumes the next maneuver’s margin; rejoin at the Well Garden.', systems:'Existing thermal transport and operation.'},
+    {id:'N04', name:'Petal Gallery', label:'Petal Gallery', group:'Optional spatial investigation', pos:[8,4,1], mobile:[8,2,1], description:'Tiny openings above and below reveal different views of one remote landmark. Its motion across several petals suggests that separate views share a destination.', insight:'Distinguish reflections, duplicates and paired spatial connections.', pressure:'Acquire a discriminating observation while preserving pointing and travel reserves; rejoin at the Cathedral.', systems:'Existing paired openings and measurement.'},
+    {id:'R03', name:'Missing Room', label:'Missing|Room', group:'Optional sensing investigation', pos:[9,4,1], mobile:[9,2,1], description:'A sheltered vantage overlooks apparently empty space. Reducing processing makes a passage appear in the reconstruction without establishing that it is clear.', insight:'Distinguish absent structure from unresolved lattice observations.', pressure:'Maintain enough evidence to judge whole-ship clearance; rejoin at the Cathedral.', systems:'Existing lattice reconstruction, measurement and operation.'},
+    {id:'P03', name:'Well Garden', label:'Well Garden', group:'Power and thermal branch', pos:[10,2,1], mobile:[10,1,1], description:'Dark cores surround the ship at different depths. Within a measured influence, radial propulsion reverses while coasting and tangential propulsion remain ordinary.', insight:'Learn how to time burns across the local reversal boundary.', pressure:'Retain sideways momentum and control reserve while executing the actual entry and exit.', systems:'Existing inverse wells, motion, operation and measurement.'},
+    {id:'N03', name:'Unseen Cathedral', label:'Unseen|Cathedral', group:'Sensing and navigation branch', pos:[10,3,1], mobile:[10,2,1], description:'The optical window looks open. Powered reconstruction reveals vast tilted lattice sheets surrounding a twisting route through clear volumes.', insight:'Use sensing and configuration to protect the entire spacecraft, including moving appendages.', pressure:'Manage processing and cooling while flying precise three-dimensional clearances.', systems:'Existing lattice, motion, operation and measurement.'},
+    {id:'R02', name:'Hinge', label:'Hinge', group:'Optional well investigation', pos:[11,1,1], mobile:[11,1,1], description:'A rocky landmark brackets an invisible well boundary. Small trials reveal where radial propulsion weakens and reverses.', insight:'Measure the transition and adapt timing to entry speed and angle.', pressure:'A poorly timed burn can spend propellant without useful radial response; rejoin at Back of the World.', systems:'Existing inverse wells, motion and measurement.'},
+    {id:'P04', name:'Back of the World', label:'Back of|the World', group:'Power and thermal branch', pos:[12,2,1], mobile:[12,1,1], description:'An enormous eclipsing body removes most of the sky. The control room reflects in the glass while a thin illuminated exit remains far to one side.', insight:'Test whether the operating schedule lasts through a complete low-generation transfer.', pressure:'Preserve power, heat and control margins for the exit maneuver.', systems:'Existing motion, occlusion, electrical and thermal operation.'},
+    {id:'A03', name:'Borrowed Spin', label:'Borrowed|Spin', group:'Optional momentum-exchange route', pos:[12,4,1], mobile:[12,2,1], newPhysics:true, description:'A rotating abandoned structure carries a surviving tether attachment through space. Capture lets the ship exchange momentum with the structure before releasing toward Stillwater.', insight:'Plan capture, load, attitude and release as one maneuver.', pressure:'Match relative velocity, respect tension limits and release onto a useful trajectory.', systems:'New physics and hardware: tether dynamics, capture, structural limits and momentum exchange.'},
+    {id:'A01', name:'Countercurrent', label:'Countercurrent', group:'Optional braking route', pos:[13,1,1], mobile:[13,1,1], newPhysics:true, description:'A thin gas streamer curls around a dark moon. Turning the ship into it reduces an overshoot while uneven loading begins twisting the hull.', insight:'Compare saved propulsion with detour, attitude-control and thermal costs.', pressure:'Balance gas braking, heating and control before rejoining at Stillwater.', systems:'New physics: gas drag, distributed loading, torque and heating.'},
+    {id:'C04', name:'Stillwater', label:'Stillwater', group:'Convergence', pos:[14,2,2], mobile:[14,1,2], description:'A spacious pocket overlooks charted regions above, below and behind. The ship has room to assess the route ahead and rehearse with its actual surviving condition.', insight:'Combine portable knowledge into a procedure that fits this ship.', pressure:'Earlier success does not restore damaged hardware, fuel, power or cooling capacity.', systems:'Existing operation, motion and measurement.'},
+    {id:'R04', name:'Crooked Ship', label:'Crooked|Ship', group:'Optional configuration investigation', pos:[15,4,1], mobile:[15,2,1], description:'Tracked rocks provide reference directions for a bounded maneuver. An off-center burn exposes the mismatch between thrust alignment and current mass distribution.', insight:'Measure turn authority and clearance for the current configuration.', pressure:'Manage limited compensation and deployment time; rejoin at Braided Crossing.', systems:'Existing mass properties, thrust, attitude control and geometry.'},
+    {id:'C05', name:'Braided Crossing', label:'Braided|Crossing', group:'Combined passage', pos:[16,2,2], mobile:[16,1,2], description:'Inclined debris streams cross in front of tilted lattice openings, with a well boundary on one approach. The clear volumes do not share one straight axis.', insight:'Combine braking, turning, folding, sensing and cooling into an executable sequence.', pressure:'Fresh geometry and current control authority keep this demanding after the rules are understood.', systems:'Existing motion, operation, measurement, wells and lattice.'},
+    {id:'C06', name:'Turning Rim', label:'Turning Rim', group:'Homeward reconnaissance', pos:[17,2,2], mobile:[17,1,2], description:'A hairline turns into a moving oval containing a differently oriented sky. Rim measurements reveal a finite opportunity for the whole ship to cross.', insight:'Measure the window, exit conditions and remaining shortfalls.', pressure:'Choose whether to commit, wait or continue investigating while reserves permit.', systems:'Existing paired openings, motion, operation and measurement.'},
+    {id:'H01', name:'Passage', label:'Passage', group:'Homeward commitment', pos:[18,2,2], mobile:[18,1,2], description:'The moving opening fills the view. The nose can be through while trailing appendages still require clearance in the unfamiliar universe.', insight:'Execute the complete crossing with the real surviving ship.', pressure:'Match motion, attitude and timing while retaining enough sensing, cooling and exit reserve.', systems:'Existing paired openings and coupled ship systems.'},
+    {id:'H02', name:'Familiar Sky', label:'Familiar Sky', group:'Earth arrival', pos:[19,2,2], mobile:[19,1,2], description:'Earth occupies the window. The room does not reset; depleted gauges and damaged equipment remain. The table establishes a recognizable approach.', insight:'Confirm return and establish controlled approach and contact.', pressure:'Use the remaining control and resources; no automatic repair or refill.', systems:'Existing motion, measurement, communications and opening transition.'}
+  ];
+  const edges = [
+    ['C01','C02'], ['C02','C03'], ['C02','A02','optional'], ['A02','C03','optional'],
+    ['C03','P01'], ['C03','N01'], ['P01','P02'], ['P02','P03'], ['P03','P04'], ['P04','C04'],
+    ['N01','N02'], ['N02','N03'], ['N03','C04'], ['P03','N03','transfer'],
+    ['P02','R01','optional'], ['R01','P03','optional'], ['P03','R02','optional'], ['R02','P04','optional'],
+    ['N02','N04','optional'], ['N04','N03','optional'], ['N02','R03','optional'], ['R03','N03','optional'],
+    ['P04','A01','optional'], ['A01','C04','optional'], ['N03','A03','optional'], ['A03','C04','optional'],
+    ['C04','C05'], ['C04','R04','optional'], ['R04','C05','optional'],
+    ['C05','C06'], ['C06','H01'], ['H01','H02']
+  ];
+  const byId = new Map(nodes.map(n => [n.id,n]));
+  const elements = new Map();
+  const ns = 'http://www.w3.org/2000/svg';
+  const paths = [];
+  let selected = null;
+  let hovering = null;
+  let narrow = false;
+  let pending = false;
+  for (const n of nodes) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'rf-place';
+    wrapper.dataset.node = n.id;
+    const button = document.createElement('button');
+    button.className = 'btn';
+    button.type = 'button';
+    button.setAttribute('aria-pressed','false');
+    button.setAttribute('aria-label',n.name + '. ' + n.group + '. ' + n.description);
+    button.dataset.tooltip = n.name + ' · ' + n.group + '. ' + n.description + ' Learn: ' + n.insight + ' Pressure: ' + n.pressure + ' Systems: ' + n.systems;
+    button.dataset.tooltipPlacement = 'top';
+    const label = document.createElement('span');
+    n.label.split('|').forEach((part,i) => { if(i) label.append(document.createElement('br')); label.append(document.createTextNode(part)); });
+    button.append(label);
+    wrapper.append(button);
+    if (n.newPhysics) {
+      const note = document.createElement('span');
+      note.className = 'rf-note text-small';
+      note.textContent = 'New physics';
+      wrapper.append(note);
+    }
+    grid.append(wrapper);
+    elements.set(n.id,{wrapper,button});
+    button.addEventListener('pointerenter',() => { hovering=n.id; highlight(); });
+    button.addEventListener('pointerleave',() => { hovering=null; highlight(); });
+    button.addEventListener('focus',() => { hovering=n.id; highlight(); });
+    button.addEventListener('blur',() => { hovering=null; highlight(); });
+    button.addEventListener('click',() => {
+      selected = selected === n.id ? null : n.id;
+      highlight();
+      const chosen = byId.get(selected);
+      const state = {modelContent: chosen ? {selectedEnvironment:chosen.name,branch:chosen.group,proposal:'Recursion expedition flow'} : null,privateContent:{selected}};
+      if (window.openai?.setWidgetState) Promise.resolve(window.openai.setWidgetState(state)).catch(() => {});
+    });
+  }
+  const laneLabels = [
+    {text:'Power / thermal',wide:[5,2,1],small:[5,1,1]},
+    {text:'Sensing / navigation',wide:[5,3,1],small:[5,2,1]}
+  ].map(d => {
+    const el = document.createElement('div'); el.className='rf-lane text-small';
+    const span=document.createElement('span'); span.textContent=d.text; el.append(span); grid.append(el); return {...d,el};
+  });
+  for (const [from,to,kind='forward'] of edges) {
+    const path=document.createElementNS(ns,'path');
+    path.classList.add('rf-edge'); path.dataset.from=from; path.dataset.to=to; path.dataset.kind=kind;
+    path.setAttribute('marker-end','url(#rf-arrow)');
+    if(kind==='transfer') path.setAttribute('marker-start','url(#rf-arrow)');
+    layer.append(path); paths.push({from,to,kind,path});
+  }
+  function highlight() {
+    const active=hovering || selected;
+    for (const [id,e] of elements) e.button.setAttribute('aria-pressed',String(id===selected));
+    for (const e of paths) e.path.classList.toggle('is-related',e.from===active || e.to===active);
+  }
+  function restore(state) {
+    const id=state?.privateContent?.selected;
+    selected=byId.has(id)?id:null; highlight();
+  }
+  restore(window.openai?.widgetState);
+  window.addEventListener('openai:set_globals',e => { if(e.detail?.globals && 'widgetState' in e.detail.globals) restore(e.detail.globals.widgetState); });
+
+  function setCell(el,p) { el.style.gridRow=String(p[0]); el.style.gridColumn=p[1]+' / span '+p[2]; }
+  function box(el,origin,pad=0) {
+    const r=el.getBoundingClientRect(); return {l:r.left-origin.left-pad,r:r.right-origin.left+pad,t:r.top-origin.top-pad,b:r.bottom-origin.top+pad,cx:r.left-origin.left+r.width/2,cy:r.top-origin.top+r.height/2};
+  }
+  function inside(p,o) { return p.x>o.l+.05 && p.x<o.r-.05 && p.y>o.t+.05 && p.y<o.b-.05; }
+  function blocked(a,b,obstacles) {
+    if(Math.abs(a.x-b.x)<.1) return obstacles.some(o => a.x>o.l+.05 && a.x<o.r-.05 && Math.max(a.y,b.y)>o.t+.05 && Math.min(a.y,b.y)<o.b-.05);
+    return obstacles.some(o => a.y>o.t+.05 && a.y<o.b-.05 && Math.max(a.x,b.x)>o.l+.05 && Math.min(a.x,b.x)<o.r-.05);
+  }
+  function route(start,end,obstacles,width,height) {
+    const direct = Math.abs(start.x-end.x)<.1 || Math.abs(start.y-end.y)<.1;
+    if(direct && !blocked(start,end,obstacles)) return [start,end];
+    const bends=[{x:start.x,y:end.y},{x:end.x,y:start.y}];
+    for(const p of bends) if(!blocked(start,p,obstacles) && !blocked(p,end,obstacles)) return [start,p,end];
+    const xs=[start.x,end.x,4,width-4]; const ys=[start.y,end.y,4,height-4];
+    for(const o of obstacles) { xs.push(Math.max(4,o.l-2),Math.min(width-4,o.r+2)); ys.push(Math.max(4,o.t-2),Math.min(height-4,o.b+2)); }
+    const uniq=a=>[...new Set(a.map(v=>Math.round(v*10)/10))].sort((a,b)=>a-b);
+    const xx=uniq(xs), yy=uniq(ys), nx=xx.length;
+    const sx=xx.indexOf(Math.round(start.x*10)/10), sy=yy.indexOf(Math.round(start.y*10)/10);
+    const tx=xx.indexOf(Math.round(end.x*10)/10), ty=yy.indexOf(Math.round(end.y*10)/10);
+    const sid=sy*nx+sx, tid=ty*nx+tx;
+    const pos=id=>({x:xx[id%nx],y:yy[Math.floor(id/nx)]});
+    const open=[sid], scores=new Map([[sid,0]]), parent=new Map(), done=new Set();
+    const estimate=id=>{const p=pos(id);return (scores.get(id)??Infinity)+Math.abs(p.x-end.x)+Math.abs(p.y-end.y);};
+    let iterations=0;
+    while(open.length && iterations++<15000) {
+      let bi=0;for(let i=1;i<open.length;i++)if(estimate(open[i])<estimate(open[bi]))bi=i;
+      const id=open.splice(bi,1)[0];if(done.has(id))continue;
+      if(id===tid) { const ids=[id];let q=id;while(parent.has(q)){q=parent.get(q);ids.push(q);}return ids.reverse().map(pos); }
+      done.add(id);const x=id%nx,y=Math.floor(id/nx),a=pos(id);
+      const next=[];if(x>0)next.push(id-1);if(x<nx-1)next.push(id+1);if(y>0)next.push(id-nx);if(y<yy.length-1)next.push(id+nx);
+      for(const q of next) {
+        if(done.has(q))continue;const b=pos(q);if(obstacles.some(o=>inside(b,o)) || blocked(a,b,obstacles))continue;
+        const cost=scores.get(id)+Math.abs(a.x-b.x)+Math.abs(a.y-b.y)+.8;
+        if(cost<(scores.get(q)??Infinity)){scores.set(q,cost);parent.set(q,id);open.push(q);}
+      }
+    }
+    return [start,{x:start.x,y:(start.y+end.y)/2},{x:end.x,y:(start.y+end.y)/2},end];
+  }
+  function simplify(points) {
+    const out=[];
+    for(const p of points) {
+      if(out.length && Math.abs(p.x-out.at(-1).x)<.1 && Math.abs(p.y-out.at(-1).y)<.1)continue;
+      if(out.length>1){const a=out.at(-2),b=out.at(-1);if((Math.abs(a.x-b.x)<.1 && Math.abs(b.x-p.x)<.1)||(Math.abs(a.y-b.y)<.1 && Math.abs(b.y-p.y)<.1))out.pop();}
+      out.push(p);
+    }
+    return out;
+  }
+  function draw() {
+    pending=false;
+    const width=map.clientWidth; narrow=width<560;root.dataset.narrow=String(narrow);
+    for(const n of nodes)setCell(elements.get(n.id).wrapper,narrow?n.mobile:n.pos);
+    for(const d of laneLabels)setCell(d.el,narrow?d.small:d.wide);
+    const origin=map.getBoundingClientRect(),height=map.clientHeight;
+    svg.setAttribute('viewBox','0 0 '+width+' '+height);
+    const boxes=new Map([...elements].map(([id,e])=>[id,box(e.wrapper,origin,7)]));
+    const obs=[...boxes.values(),...laneLabels.map(d=>box(d.el,origin,6))];
+    for(const e of paths) {
+      const a=boxes.get(e.from),b=boxes.get(e.to);
+      let s={x:a.cx,y:a.b+3},t={x:b.cx,y:b.t-3};
+      if(e.kind==='transfer') {s={x:a.r+3,y:a.cy};t={x:b.l-3,y:b.cy};}
+      else if(e.kind==='optional' && Math.abs(a.cx-b.cx)>60) {
+        const dir=b.cx>a.cx?1:-1;
+        s={x:dir>0?a.r+3:a.l-3,y:a.cy};
+        t={x:dir>0?b.l-3:b.r+3,y:b.cy};
+      }
+      const pts=simplify(route(s,t,obs,width,height));
+      e.path.setAttribute('d',pts.map((p,i)=>(i?'L':'M')+p.x.toFixed(1)+' '+p.y.toFixed(1)).join(' '));
+    }
+  }
+  function schedule() {if(!pending){pending=true;requestAnimationFrame(draw);}}
+  new ResizeObserver(schedule).observe(grid);
+  document.fonts?.ready.then(schedule);
+  schedule();
+})();
+</script>
