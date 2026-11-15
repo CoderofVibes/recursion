@@ -4,7 +4,7 @@ The live state of the build between threads: who is running, who holds which sha
 
 **Integrator, after a compaction:** read this file first, then `git log --oneline -15`, then the handoffs of any thread marked running.
 
-**Last updated:** 2026-11-14, 3C reassigned to GPT and launched.
+**Last updated:** 2026-11-14, S19 merged and Tidal Orchard deferred.
 
 ## Threads
 
@@ -23,7 +23,7 @@ The live state of the build between threads: who is running, who holds which sha
 | S16 Well Garden layout | GPT/Codex | `.worktrees/s16` · `st/s16-well-garden` | Running | Feeds 3B | — |
 | S17 lattice first contact | GPT/Codex | `.worktrees/s17` · `st/s17-lattice-first-contact` | Running | Feeds 3C; its landing starts 3C | — |
 | S18 tether gate | GPT/Codex | `.worktrees/s18` · `st/s18-tether-gate` | Running | Future tether work | — |
-| S19 tidal check | GPT/Codex | `.worktrees/s19` · `st/s19-tidal-check` | Running | Decides Tidal Orchard | — |
+| S19 tidal check | GPT/Codex | `.worktrees/s19` · `st/s19-tidal-check` | **Done**: Tidal Orchard deferred (A15 Q21) | — | merged, see log |
 | S20 3D recheck | GPT/Codex | `.worktrees/s20` · `st/s20-3d-recheck` | Running | Findings go to 2D (R5) and the submission | — |
 | S21 belt and power | GPT/Codex | `.worktrees/s21` · `st/s21-belt-power` | Running | Values go to 2F (R6) and 3A | — |
 
@@ -78,7 +78,8 @@ Decided: A15 (S11's queue), A16 (the lattice), A17 (the ending) and A18 (the Gra
 
 | Commit | What |
 |---|---|
-| (this commit) | 3C reassigned to GPT/Codex and launched |
+| (this commit) | S19 merged; Tidal Orchard deferred (A15 Q21) |
+| `ae562fe` | 3C reassigned to GPT/Codex and launched |
 | `682957b` | This ledger |
 | `5b94ed2` | `npm run harness`; wells and lattice paths split between 3B and 3C |
 | `393b5a8` | A18 (3): learning burns free, `depart` requires a real Beta assist |
