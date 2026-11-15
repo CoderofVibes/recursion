@@ -59,6 +59,7 @@ Dotted paths, shared by the model's estimates and truth's `HiddenParameters`:
 | `thruster.<equipmentId>.misalignment-pitch` | Thrust direction error about body −y (tilts the thrust toward +z) | rad |
 | `thruster.rcs.scale` | One thrust scale shared by every RCS jet (true / nominal); `rcs` is the group, not an equipment id | — |
 | `sensor.<equipmentId>.bias-x`, `.bias-y`, `.bias-z`, `.bias` | Sensor biases, body axes. For an accelerometer: m/s² on each axis. For the camera: its misalignment to the star trackers, a small rotation fixed in the body frame, with `.bias` the part about body +z (the planar parameter) and `.bias-x`, `.bias-y` the other two | sensor unit |
+| `sensor.<equipmentId>.rate-bias-x`, `.rate-bias-y` | Gyro biases about body x and y, for a unit that is both accelerometer and gyro (its z gyro bias is `.bias`) | rad/s |
 | `sensor.<equipmentId>.scale` | Accelerometer scale factor (true / nominal) | — |
 | `unmodeled.<n>.mu`, `.x`, `.y`, `.z` | Extra body never seen (extension `unmodeled-body`, unseen mode) | m³/s², m |
 | `empirical.ax`, `empirical.ay`, `empirical.az` | Constant unexplained acceleration (extension `empirical-acceleration`) | m/s² |
