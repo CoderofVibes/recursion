@@ -2,6 +2,7 @@
 import type { ShipDefinition } from '../../contracts/ship.ts';
 import type { EnvironmentEffects, ShipTruth } from '../../contracts/truth/ship.ts';
 import { buildEnvironment } from '../../game/environment.ts';
+import { withRadiationMonitorInput } from '../../ship/sensors/radiation-environment.ts';
 import { getGeometry } from '../../ship/config/index.ts';
 import type { SimState } from '../../sim/types.ts';
 import {
@@ -70,13 +71,18 @@ export function createChainLinkEnvironment(setup: ChainLinkSetup): ChainLinkEnvi
         ],
         sunExclusionAngle: setup.play.sunExclusionAngle,
       });
-      return {
-        ...base,
-        fieldSignals: {
-          ...base.fieldSignals,
-          [field.id]: field.signal!(state.world.ship.kinematics.position, state.world.t),
+      return withRadiationMonitorInput(
+        {
+          ...base,
+          fieldSignals: {
+            ...base.fieldSignals,
+            [field.id]: field.signal!(state.world.ship.kinematics.position, state.world.t),
+          },
         },
-      };
+        state.world.ship.systems,
+        setup.definition.ship,
+        [field],
+      );
     },
   };
 }

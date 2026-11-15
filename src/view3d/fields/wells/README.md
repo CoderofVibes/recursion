@@ -124,11 +124,9 @@ or a route. Materials, line styles, opacity, tessellation and render order come 
 - **2D / 3F:** mount `WellEvidencePanel` from
   `src/console/encounters/inverse-wells/index.tsx` for a selected detected field. It displays
   existing evidence only and never changes the game clock or adopts a rule.
-- **2D / integrator:** the eager glob in `fieldViews.ts` creates an initialization cycle
-  when the first plugin registers synchronously. This plugin registers in a module-init
-  deferred import after registry initialization, and exports async `registerWellView`
-  for explicit mounting. The flight view retries absent factories each frame.
-  Prefer having the shared loader register exported factories to remove that cycle.
+- **Resolved by integrator `1f0dfef`:** the registry now uses a hoisted function, so
+  eager plugin registration is safe. This plugin registers synchronously and exports
+  `registerWellView` for explicit mounting; no deferred import remains.
 - **Theme owner:** may adopt the local funnel geometry primitive; existing well materials
   and tokens already supply its style.
 

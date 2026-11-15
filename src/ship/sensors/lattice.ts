@@ -170,11 +170,11 @@ export function stepLatticeAcquisition(
   dt: number,
   packetBudgetBytes: number,
   recorderRate: number,
-): { state: ShipSystemsState; measurements: Measurement[] } {
+): { state: ShipSystemsState; measurements: Measurement[]; bytes: number } {
   const scenes = Object.entries(env.fieldSignals).filter(
     (entry): entry is [string, JsonValue & LatticeSensorScene] => isScene(entry[1]),
   );
-  if (!scenes.length) return { state, measurements: [] };
+  if (!scenes.length) return { state, measurements: [], bytes: 0 };
   const memory = (state.ext?.latticeAcquisition as unknown as Memory | undefined) ?? {
     sequence: 0,
     nextAt: env.t,
@@ -182,7 +182,8 @@ export function stepLatticeAcquisition(
     rawStopped: false,
   };
   let next = { ...memory };
-  let packet = Math.max(0, packetBudgetBytes);
+  const packetCapacity = Math.max(0, packetBudgetBytes);
+  let packet = packetCapacity;
   const measurements: Measurement[] = [];
   const camera = healthy(state, definition, 'camera', env.t);
   const processor = healthy(state, definition, 'science-processor', env.t);
@@ -429,5 +430,6 @@ export function stepLatticeAcquisition(
       ext: { ...state.ext, latticeAcquisition: next as unknown as JsonValue },
     },
     measurements,
+    bytes: packetCapacity - packet,
   };
 }

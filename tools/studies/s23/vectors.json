@@ -1,0 +1,85 @@
+{
+  "earth": {
+    "selectedRangeFromCentreKm": 250000.0,
+    "earthRadiusKm": 6371.0,
+    "perigeeFromCentreKm": 10000.0,
+    "earthArrivalExcessSpeedKmPerS": 2.945162,
+    "arrivalHyperbolaEccentricity": 1.217610905,
+    "openingCameraPitchRad": -0.105,
+    "verticalFovDeg": 62.0,
+    "earthAzimuthDeg": 4.7,
+    "earthElevationDeg": 2.0,
+    "views": [
+      {
+        "rangeFromCentreKm": 50000.0,
+        "angularDiameterDeg": 14.641059,
+        "phaseDeg": 61.982084,
+        "daylightFraction": 0.769294,
+        "inboundRadialSpeedKmPerS": 4.591539,
+        "projectedDiameterPxAt720h": 157.588,
+        "projectedDiameterPxAt1080h": 236.382
+      },
+      {
+        "rangeFromCentreKm": 100000.0,
+        "angularDiameterDeg": 7.305576,
+        "phaseDeg": 74.515468,
+        "daylightFraction": 0.644156,
+        "inboundRadialSpeedKmPerS": 3.970145,
+        "projectedDiameterPxAt720h": 78.288,
+        "projectedDiameterPxAt1080h": 117.432
+      },
+      {
+        "rangeFromCentreKm": 250000.0,
+        "angularDiameterDeg": 2.920567,
+        "phaseDeg": 83.241318,
+        "daylightFraction": 0.560759,
+        "inboundRadialSpeedKmPerS": 3.423646,
+        "projectedDiameterPxAt720h": 31.259,
+        "projectedDiameterPxAt1080h": 46.889
+      },
+      {
+        "rangeFromCentreKm": 500000.0,
+        "angularDiameterDeg": 1.460165,
+        "phaseDeg": 86.494077,
+        "daylightFraction": 0.531073,
+        "inboundRadialSpeedKmPerS": 3.19891,
+        "projectedDiameterPxAt720h": 15.626,
+        "projectedDiameterPxAt1080h": 23.438
+      },
+      {
+        "rangeFromCentreKm": 750000.0,
+        "angularDiameterDeg": 0.973429,
+        "phaseDeg": 87.631081,
+        "daylightFraction": 0.520891,
+        "inboundRadialSpeedKmPerS": 3.117884,
+        "projectedDiameterPxAt720h": 10.417,
+        "projectedDiameterPxAt1080h": 15.625
+      }
+    ]
+  },
+  "lights": {
+    "openingPulseWindowsMs": [
+      [
+        2900,
+        3140
+      ],
+      [
+        4100,
+        4340
+      ],
+      [
+        4770,
+        5010
+      ],
+      [
+        5650,
+        5890
+      ],
+      [
+        6320,
+        6560
+      ]
+    ],
+    "maximumPulseWindowsIntersectingOneSecond": 2
+  }
+}

@@ -1,6 +1,6 @@
-# Phase 3 extras: the opening and basic audio
+# Phase 3 extras: the opening, visuals, audio, and the morning threads
 
-Added by the owner on 2026-11-14 to be built before the submission. Same conventions as [phase-3.md](phase-3.md): read [the build plan README](README.md) (Conventions, Path releases) and [the coordination ledger](coordination.md) first. Write only your listed paths. Request anything else from its owner through the integrator. Keep `npm run check` and `npm run build` green, and checkpoint as you go: committed, announced in one line.
+Added by the owner on 2026-11-14 to be built before the submission; the morning threads (3F, VX's next pass, 2C and 2F resuming) were added on 2026-11-15 after the owner's playtest (A26) and are at the end of this file. Same conventions as [phase-3.md](phase-3.md): read [the build plan README](README.md) (Conventions, Path releases) and [the coordination ledger](coordination.md) first. Write only your listed paths. Request anything else from its owner through the integrator. Keep `npm run check` and `npm run build` green, and checkpoint as you go: committed, announced in one line.
 
 ---
 
@@ -168,3 +168,118 @@ GPT threads keep their own lanes: VX (visuals), AU (audio), 3C (sensors, includi
 4. **Credits:** list ElevenLabs as the audio source in your handoff, for the README credits, the submission and the AI disclosure (S12, S13).
 
 **Owns:** `src/audio/`, `public/audio/` and `docs/audio/`.
+
+**Relaunch (owner, 2026-11-15).** AU's first launch left no work on the branch, so it starts again from current `main`: the opening is in the game, and the console and room now belong to 3F. What changed since the prompt above:
+- **The mute control already exists.** `src/app/sound.ts` keeps the player's choice (`soundMuted()`, `setSoundMuted()`, `onSoundMuted()`), and the room shows "M ▸ SOUND ON" and answers the `M` key. Read it; don't build another.
+- **The mount line** (R24) goes in 3F's `src/app/App.tsx`, still one line under your scoped exception; tell 3F through the integrator before committing it. 3F hides the sound switch until audio exists: export a way to tell (for example `soundAvailable()` from `src/audio/`) and name it in your checkpoint.
+- **The opening's cue times** moved with the 19.5 s opening (R42): opening-rumble 6.5 s, alarms 6.6, 7.8 and 8.47 s, loss-failure 9.35 s, black-cut 10.65 s, opening-title 11.95 s, **new** title-out 15.9 s, room-wake 17.9 s. With reduced motion the opening is a still sky and a plain fade (R44); the loss holds at most three flashes a second (R43), so its sounds follow NIGHT's schedule in `src/view3d/room/loss.ts`.
+- **The cue list comes first, as before**, because the owner generates every file in ElevenLabs from it. Commit `docs/audio/cues.md` as your first checkpoint and say so in one line.
+- **The lighter bar applies** (A26, below): done means a judge hears the game respond to what happens, and nothing breaks without the files. Keep check and build green; never loosen a test.
+
+---
+
+# The morning threads (2026-11-15, A26)
+
+The owner played the merged build and decided A26. Four threads follow from it.
+
+**The bar.** 3F (the console) works to the full bar written in its section. **VX, 2C and 2F work to the lighter bar (A26 (4)):** done means a judge following the README can play the region and understand what happened. Claims stay honestly labelled. No new evidence suites, admission matrices or performance studies are required. No test, tolerance or claim is loosened anywhere: fix the cause, or report it.
+
+Everyone: run `git merge main` first. NIGHT, VX's first pass, 3C, 3B, ART and S23 are merged; read `docs/handoffs/night.md` (the judge's run) and [the coordination ledger](coordination.md). Keep `npm run check` and `npm run build` green, commit checkpoints as you go and announce each in one line; the integrator merges them as they come. NIGHT's driver in `docs/handoffs/night/judge-run/` plays the production build in headless Chrome with real keys and clicks (read its header); use it to check your work as a judge would meet it.
+
+---
+
+## 3F — Console v2: the engineering, made legible
+
+**Thread:** Claude, driven live by the owner · **Branch:** `p3/3f-console-v2` · **Worktree:** `.worktrees/3f`
+
+This replaces 3F in [phase-3.md](phase-3.md), which extended the console for an expedition that isn't being built.
+
+**Read:**
+- `docs/CREATIVE_BRIEF.md`; DECISIONS A8, A12, A21, A24, A25, **A26**, P10 and P11;
+- `docs/handoffs/2D.md` (the control room as built: you take over its lane), `docs/handoffs/night.md` (what a cold player met) and S9's first-five-minutes study (`docs/studies/s9/`);
+- `docs/design/visual-direction.md`, `src/theme/README.md` and `src/view3d/README.md`;
+- the game itself: play the production build through all three regions before changing anything.
+
+**The owner's critique (A26):** MISSION, PLAN, MODEL and BLACK BOX are walls of text. A judge sees screens full of writing and planning, and can't tell where the engineering work is done or what is going on.
+
+**Goal:** a judge who has never seen the game can tell, from the screens alone, what they are deciding, what the ship predicts, what actually happened, and what they learned. The engineering is the game: make it visible.
+
+1. **Design with the owner first.** Before rebuilding, propose two or three layouts, as screenshots of quick mockups on real data (or in the UI lab), each built around one spine a judge can follow. One starting idea, the owner's to keep or drop: organise the console around the loop itself (explore, design, predict, fly, compare, learn) instead of one page per subsystem. The owner chooses; then build.
+2. **MISSION becomes EXPLORATION** (A26): the player is exploring, trying to find the way out of this universe. Rename it everywhere: tabs, keys, labels, help text, tests, and the click targets in NIGHT's driver.
+3. **Less text, more instrument.** Every number a judge needs stays, but explanations shrink to labels with detail on demand. Parameter dumps (for example `FUNNEL-0-CORE.MU × MAIN-ENGINE.SCALE ρ −0.00`) become readable names and pictures, or fold away. After a flight, the predicted-against-flown comparison is the most visible thing on the console.
+4. **FLIGHT:**
+   - **Keep the reference disc level**, parallel to the console. Today heading-up turns the whole chart by the inverse of the ship's full attitude (`FlightHolo.ts`, `rot.quaternion` from `displayQ`), so pitch and roll tilt the disc and grid: at −13° pitch the disc leans 13°. Turn the chart by heading (yaw) only; show pitch and roll on the ship model.
+   - **Explain the pink thrust markers.** The chevrons and dashed line of action (commanded thrust, `colour.thrust`) appear for every firing, attitude-hold pulses included, with no label. Label them, or show them only for burns the player commanded, with attitude control drawn more quietly.
+   - **Turning by hand:** Q/E turn the 30 t ship about a degree every two seconds, and FLIGHT says nothing while a key is held (NIGHT's finding 7). Show the turn in progress.
+5. **2D's open screen items, now yours:**
+   - the radiation monitor's reading and caution on SYSTEMS (R37; it reads "no reading" today);
+   - the loss review's radiation block on the debrief (2C's update 7 request);
+   - MODEL's truncated readouts at laptop width, and FLIGHT's right column below the fold (NIGHT's finding 10);
+   - the "M ▸ SOUND ON" switch, shown while the game has no audio: hide it until audio exists. AU is relaunched and will tell you how to know (for example `soundAvailable()` from `src/audio/`), and it adds one mount line to `App.tsx` under its scoped exception (R24).
+6. **Keep every capability** the console has today: planning burns and pointing; PREVIEW, COMMIT and CUTOFF; procedures and RECALL; records, debrief and compare; the model's TEST and ADOPT; the encounter panels; systems and configuration. Redesign how they are found and read, not whether they exist.
+
+**Owns** (2D hands over its whole lane; it is paused and does not resume on these paths):
+- `src/console/` except `encounters/`. You may change the **layout and presentation** of the encounter panels in `src/console/encounters/` (3B and 3C are done), keeping their data and commands unchanged.
+- `src/view3d/` except `fields/` and VX's paths: `sky/`, `fx/`, `opening/`, `room/outside.ts`, and VX's two `outside.followEye(...)` calls in `room/RoomView.ts`.
+- The UI lane: `src/theme/`, `prototypes/`, `docs/design/visual-direction.md`.
+- `src/app/` except `game.ts`.
+- In `docs/handoffs/night/judge-run/`, the click targets only, to follow renamed labels.
+
+**The bar is the full one** (the owner kept it for the console):
+- `npm run check` and `npm run build` green; new behaviour tested, including the level disc and every renamed or moved control;
+- every control reachable by keyboard, with visible focus; readable at 1366 × 768 with no sideways scroll;
+- every visual value from `src/theme/` (Convention 11); no truth imports in screens (P11); uncertainty shown wherever a value is believed;
+- A12 live operation: time keeps running, and alerts drop warp to 1× from every view;
+- at most three flashes in any second; reduced motion respected;
+- S15's views measured on the modest profile before and after (set the opening marker first, ledger R48): no view gets slower;
+- a cold judge's run on the production build with NIGHT's driver: the opening, the picker, Twin Deeps' learning loop through ADOPT, the Well Garden and the Cathedral to their losses, with no page errors;
+- before-and-after screenshots of every screen in your handoff (`docs/handoffs/3F.md`, with images in `docs/handoffs/3f/`);
+- never loosen a test, tolerance or claim;
+- the gate: the owner plays it.
+
+---
+
+## VX — next: each mission's whole view
+
+**For the running VX thread.** The owner pastes this after VX's current atlas pass (Galaxy, Ember Wheel, Needle, Hollow and Eye).
+
+> The owner's next direction for VX (DECISIONS A26 (3)): design what the player sees for the whole of each mission, not only the sky. Run `git merge main` first, and read the morning threads' preamble in `docs/build-plan/phase-3-extras.md` (the lighter bar).
+>
+> 1. **Twin Deeps:** the entire slingshot sequence, from arrival through the Alpha approach, the Beta pass and the belt, to departure. The bodies, the belt's rocks and the radiation clouds' crescent, at honest sizes and directions, from the data the window receives.
+> 2. **The Well Garden:** the whole flight with the wells visible: precursors, births, the funnels' glow and rings, the throat, as the ship flies among some 2,600 sites.
+> 3. **The wells' optical producer (R31, your request 1) is yours**, under a scoped exception: on the truth side, call 3B's `projectFunnelOptics` (`src/content/inverse-wells/optics.ts`) with the actual eye, occlusion and lifecycle, and with culling and level of detail at the source, and fill `EncounterSetup.window` with `WindowFunnel` entries. Write the producer in a new file of your own; add only its one call in `withFunnels` (`src/game/funnels.ts`, 2F's file, which 2F leaves alone). No catalogue geometry crosses into the renderer (P11).
+> 4. **The Unseen Cathedral:** the lattice stays invisible to the eye (A16). Design the region's view as the art bible allows: the rock field and the sky through it.
+>
+> **Ownership:** `src/view3d/sky/`, `fx/`, `opening/`, `room/outside.ts`, plus the producer file and its one call. 3F now owns the rest of `src/view3d/` and `RoomView.ts`; ask the integrator for anything there.
+>
+> **The bar is lighter (A26):** done means a judge playing the region sees it and it reads well. Production-build screenshots of each region go in your handoff. Keep check and build green, never loosen a test, and don't make S15's numbers worse (level of detail first). No new evidence suites.
+
+---
+
+## 2C resumes (2026-11-15)
+
+**For the paused 2C thread** (`.worktrees/2c`, `p2/2c-model`). The owner pastes:
+
+> 2C resumes (DECISIONS A26). Run `git merge main` first, then read the morning threads' preamble in `docs/build-plan/phase-3-extras.md` (the lighter bar), `docs/handoffs/night.md` (found-not-fixed 1 and 2) and ledger rows R32, R46 and R47.
+>
+> 1. **R47, first: Twin Deeps' held-out TEST fails on long or messy attempts**, though the fitted exponent is right (2.5001): with a 39 h attempt held out, "T/ν 926,160,514 against 1.05"; with a 6 h attempt and a misaligned 40 m/s burn held out, "73.7 against 1.13". Find the cause and fix it, so a judge who flies freely and has the right law gets an honest pass. When a test does fail, the page says why in plain words (the held-out attempt carries something the model can't explain), instead of reading as "the law is wrong". Don't loosen the threshold or the statistics.
+> 2. **R46: make the Cathedral threadable.** On the twenty-fence lattice nearly every fragment starts its own track: 18,999 tracks, 2,952 fitted features, 0 supported. Fix association so fragments of one strand join. Done when a judge recording at Thread for a few minutes sees supported strands in FLIGHT and can fly between them. Repro: `src/game/lattice-loop.test.ts` with `survey` → `thread`. Don't lower the gates to draw strands that aren't there.
+> 3. **The Well Garden (R32, lighter):** the model learns a funnel's pull from the flight's own evidence (motion and IMU first; the camera's contour bearings once VX's producer feeds the camera), so a later forecast shows the pull and a judge can plan around a throat. No catalogue coordinates become belief.
+>
+> **Owns:** `src/model/`, `src/blackbox/`. **The bar is lighter (A26)**, except that no test, tolerance or claim is loosened. Checkpoint as you go; write handoff update 8.
+
+---
+
+## 2F resumes (2026-11-15)
+
+**For the paused 2F thread** (`.worktrees/2f`, `p2/2f-game`). The owner pastes:
+
+> 2F resumes (DECISIONS A26). Run `git merge main` first, then read the morning threads' preamble in `docs/build-plan/phase-3-extras.md` (the lighter bar), `docs/handoffs/night.md` and ledger rows R20, R37 and R39.
+>
+> 1. **R37, the game's half:** the environment supplies the radiation monitor's point signal from every active field, including the Gravity range's clouds and the Cathedral's lattice. `session.ts` consumes the recorded caution at once, drops warp to 1× and stops that frame's remaining ticks. Then restore the clouds tripwire to its 20 s figure (R39). 3C's APIs are in `src/ship/sensors/RADIATION.md`. Today the lattice's first warning at warp is "Critical power short", one second before the loss.
+> 2. **R20:** sensors acquire at their own times within the tick, not only at each tick's start (at 350 W the Cathedral's frames arrive once in six seconds).
+> 3. **The end of a forecast at warp:** make it impossible to miss, consistent with A6 and A12. NIGHT's finding 5: the forecast ended at T+11 h and the ship coasted 20 h at 2000× into a belt rock with no warp drop.
+> 4. **The Well Garden, finishable:** the funnels' lifecycle survives save and reload (3B's request 3), with the pull's work ledger (request 4), enough that an attempt, a RECALL and a reload never break the field.
+> 5. Anything else in the game loop that stops a judge finishing the Well Garden or the Cathedral, found by playing them with NIGHT's driver.
+>
+> **Owns:** `src/game/` (including `truth-step.ts`), `src/content/gravity-range/`, `src/app/game.ts`. VX adds one call in `withFunnels` (`src/game/funnels.ts`) for the wells' window producer: leave that call alone. **The bar is lighter (A26)**, except that no test, tolerance or claim is loosened. Checkpoint as you go; write handoff update 4.

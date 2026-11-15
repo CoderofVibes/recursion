@@ -24,15 +24,17 @@ export interface FunnelOpticalSegment {
 /** Visible portion of the supplied segment, in its parameter space; no reversed/empty spans. */
 export type OpticalInterval = readonly [from: number, to: number];
 
-export interface FunnelOpticsInput {
+export interface FunnelOpticalSampling {
+  /** Ordered axial fractions in [0,1]; vertices lie on S22's exact quadratic radius. */
+  readonly stations: readonly number[];
+  readonly azimuthSegments: number;
+}
+
+export interface FunnelOpticsInput extends FunnelOpticalSampling {
   readonly eye: Vec3;
   readonly observedAt: number;
   readonly brightness: number;
   readonly phase: FunnelAppearancePhase;
-  /** Ordered axial fractions in [0,1]. Every vertex uses S22's exact quadratic radius.
-   * The caller chooses station spacing and can request a partial visible axial extent. */
-  readonly stations: readonly number[];
-  readonly azimuthSegments: number;
   /** Required, pure visibility/occlusion/completion clipper. It may return multiple disjoint
    * intervals in increasing order, or [] for no light. There is no fully-visible default. */
   readonly visibleParts: (segment: FunnelOpticalSegment) => readonly OpticalInterval[];
@@ -53,6 +55,12 @@ function validateInput(input: FunnelOpticsInput): void {
     throw new Error('optical brightness must be in [0,1]');
   if (!['precursor', 'ramping', 'active', 'fading'].includes(input.phase))
     throw new Error('optical phase must describe visible appearance');
+  validateSampling(input);
+  if (typeof input.visibleParts !== 'function')
+    throw new Error('optical visibility clipper is required');
+}
+
+function validateSampling(input: FunnelOpticalSampling): void {
   if (!Number.isSafeInteger(input.azimuthSegments) || input.azimuthSegments < 3)
     throw new Error('optical azimuthSegments must be an integer of at least 3');
   if (!Array.isArray(input.stations) || input.stations.length < 2)
@@ -65,8 +73,6 @@ function validateInput(input: FunnelOpticsInput): void {
   }
   if (!Number.isSafeInteger(input.stations.length * input.azimuthSegments * 2))
     throw new Error('optical tessellation segment count is not a safe integer');
-  if (typeof input.visibleParts !== 'function')
-    throw new Error('optical visibility clipper is required');
 }
 
 function validateParts(parts: readonly OpticalInterval[]): void {
@@ -88,18 +94,14 @@ function validateParts(parts: readonly OpticalInterval[]): void {
   }
 }
 
-/** No result means no visible light, not an invisible site's disclosed position.
- * Rings and meridians are piecewise-linear optical contours at caller-selected resolution.
- * Their sampled vertices lie exactly on R(s)=Rt+(Rm-Rt)(1-s)^2. The arbitrary meridian phase
- * comes from the existing deterministic perpendicular helper; it has no force significance.
- * No nav-camera power, recorder, timer or activation guard is consulted here. */
-export function projectFunnelOptics(
+/** Truth-side support shared by the window and camera light producers. No visibility,
+ * phase, photometry or force inference: the caller must supply the actual emitted light. */
+export function funnelOpticalSegments(
   spec: FieldInstanceSpec,
-  input: FunnelOpticsInput,
-): WindowFunnelVisual | undefined {
+  input: FunnelOpticalSampling,
+): readonly FunnelOpticalSegment[] {
   const p = readFunnelParameters(spec);
-  validateInput(input);
-  if (input.brightness === 0) return undefined;
+  validateSampling(input);
   const u = v3.anyPerpendicular(p.axis);
   const v = v3.cross(p.axis, u);
   const rings = input.stations.map((fraction) => {
@@ -116,7 +118,7 @@ export function projectFunnelOptics(
       return point;
     });
   });
-  const segments: Array<WindowFunnelVisual['segments'][number]> = [];
+  const segments: FunnelOpticalSegment[] = [];
   let index = 0;
   const emit = (
     kind: FunnelOpticalSegment['kind'],
@@ -125,14 +127,43 @@ export function projectFunnelOptics(
     fromFraction: number,
     toFraction: number,
   ) => {
-    const segment: FunnelOpticalSegment = {
+    segments.push({
       index: index++,
       kind,
       from,
       to,
       fromFraction,
       toFraction,
-    };
+    });
+  };
+  for (let k = 0; k < rings.length; k++) {
+    const ring = rings[k]!;
+    const fraction = input.stations[k]!;
+    for (let i = 0; i < input.azimuthSegments; i++) {
+      emit('contour', ring[i]!, ring[(i + 1) % input.azimuthSegments]!, fraction, fraction);
+      if (k + 1 < rings.length)
+        emit('meridian', ring[i]!, rings[k + 1]![i]!, fraction, input.stations[k + 1]!);
+    }
+  }
+  return segments;
+}
+
+/** No result means no visible light, not an invisible site's disclosed position.
+ * Rings and meridians are piecewise-linear optical contours at caller-selected resolution.
+ * Their sampled vertices lie exactly on R(s)=Rt+(Rm-Rt)(1-s)^2. The arbitrary meridian phase
+ * comes from the existing deterministic perpendicular helper; it has no force significance.
+ * No nav-camera power, recorder, timer or activation guard is consulted here. */
+export function projectFunnelOptics(
+  spec: FieldInstanceSpec,
+  input: FunnelOpticsInput,
+): WindowFunnelVisual | undefined {
+  // Retain spec validation even when the caller supplies no light.
+  readFunnelParameters(spec);
+  validateInput(input);
+  if (input.brightness === 0) return undefined;
+  const segments: Array<WindowFunnelVisual['segments'][number]> = [];
+  for (const segment of funnelOpticalSegments(spec, input)) {
+    const { from, to, fromFraction, toFraction } = segment;
     const parts = input.visibleParts(segment);
     validateParts(parts);
     for (const [start, end] of parts) {
@@ -151,15 +182,6 @@ export function projectFunnelOptics(
       const fractionA = fromFraction + (toFraction - fromFraction) * start;
       const fractionB = fromFraction + (toFraction - fromFraction) * end;
       segments.push({ from: rayA, to: rayB, depth: 1 - (fractionA + fractionB) / 2 });
-    }
-  };
-  for (let k = 0; k < rings.length; k++) {
-    const ring = rings[k]!;
-    const fraction = input.stations[k]!;
-    for (let i = 0; i < input.azimuthSegments; i++) {
-      emit('contour', ring[i]!, ring[(i + 1) % input.azimuthSegments]!, fraction, fraction);
-      if (k + 1 < rings.length)
-        emit('meridian', ring[i]!, rings[k + 1]![i]!, fraction, input.stations[k + 1]!);
     }
   }
   return segments.length === 0

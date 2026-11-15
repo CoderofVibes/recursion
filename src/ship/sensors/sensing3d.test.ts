@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { RADIATION_MONITOR } from './radiation-spec.ts';
+import { WELL_CAMERA_STREAM } from './wells.ts';
 import baseline from '../../../data/ship-baseline.json';
 import { isotropicInertia } from '../../contracts/ship.ts';
 import type {
@@ -322,8 +324,14 @@ describe('seeded noise: the planar components keep their streams (P2)', () => {
       expect(names).toContain(`sensors.${id}`);
       expect(names).toContain(outOfPlaneStream(id));
     }
-    expect(names).toHaveLength(10);
-    expect(new Set(names).size).toBe(10);
+    // A24/R36 add independent product streams; the original ten navigation streams remain.
+    expect(
+      names.filter((name) => name !== RADIATION_MONITOR.stream && name !== WELL_CAMERA_STREAM),
+    ).toHaveLength(10);
+    expect(names).toContain(RADIATION_MONITOR.stream);
+    expect(names).toContain(WELL_CAMERA_STREAM);
+    expect(names).toHaveLength(12);
+    expect(new Set(names).size).toBe(12);
     // A state without them is not silently reseeded.
     const state = initial();
     const { [outOfPlaneStream('imu-a')]: _dropped, ...rest } = state.rng;

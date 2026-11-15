@@ -1,0 +1,1454 @@
+{
+  "protocol": "s22-live-field-summary-v1",
+  "source": {
+    "revision": "6344b17d7490f854ae355169fe08b5e1cf98aafb",
+    "node": "v24.22.1",
+    "contentHash": "47643105ec09674ac13077bed6a5df907cf7f88e11a8cdb4548c2065d88cedf0",
+    "files": {
+      "src/app/App.tsx": "ba5e1fcd691cfc9305b375187e59694b999ed6544ab30e0bca331e60e22b3cfe",
+      "src/app/ControlRoom.tsx": "8bfeae516820f42bfcef4e896d4e562eca1919b8f525e24bffb6e5b6715d5a4b",
+      "src/app/game.ts": "0a12c33b17c70f87a3232ea4a725b78514e26011f264d3f6d903ceb020cdeaad",
+      "src/app/globals.d.ts": "d7a6103b719f0ae28144baaaea37f89c58bfab3cca1df7cdfc5ec2dc2264c1ab",
+      "src/app/hands.test.ts": "e309c6038a838780836b9360bc56a829a72de99fdf2cf8deae303083e146a1db",
+      "src/app/hands.ts": "f11a4975e083d68ff4119af97297a8c2291d75174ae70d77ed0e3afe3cf9cd1a",
+      "src/app/loop.ts": "3d3f94d6e9d3db7f4752cc945816be2ccdbd7afb1da380992b629aa9725824d5",
+      "src/app/opening/launch.ts": "d448e5fe26ccc3b5f01c18d2b78196184edcad1c61dfa176389fc225e92c8d4b",
+      "src/app/opening/opening.test.ts": "337a88ecffb3eb38536f92c68681825ca76c84546a859579d69d33ecca15c123",
+      "src/app/opening/OpeningGate.tsx": "13a9fd968c57855894dae045c439f094f530b25a4c669601623c6d58a08e825c",
+      "src/app/opening/play.ts": "ec29289bce5ae0bfd61be19d647584582e3d8a76a31934ca0b3d5bf2156966c9",
+      "src/app/opening/preview.tsx": "a37a2cfeae0bc350dca3b2ae71754e5f810302fca66a37b9840497a213ba6ad7",
+      "src/app/opening/sequence.ts": "e0ed70222337211d595fc1a310b08464f5a021edda7c385c26d79364a715513f",
+      "src/app/regions.test.ts": "52011b64ee442398c40d53d0a0a5b321d9488ecc207662e6e8a82c06ca8c4168",
+      "src/app/sound.test.ts": "92adf4d432101d1e642f9e1fb069bf67cccd4bf3d44ddcfdbc37874e2fa33265",
+      "src/app/sound.ts": "0c08ed0678cbf694017c50b1583077c9f4dce01abedc14dc81a060838a8395ff",
+      "src/blackbox/archive.ts": "038c1c74c6151ff0547dfa3bcc2eae266f26668f4ab5a5aa1c11c32bab24dfbb",
+      "src/blackbox/blackbox.test.ts": "624d38a214e1ac51f7e186cc9a4713871f91997407dc783729edad3e37741d0a",
+      "src/blackbox/compare.ts": "5a106f40a1119f166436fb370a24c75a9a20ce1aefebde1587e90e0c9f2df401",
+      "src/blackbox/condition.test.ts": "cdfddd1ee4eec4de4640791a43d400945fe9c6bdfd42993f31c347d13e591541",
+      "src/blackbox/condition.ts": "54d4f9673d59198a735745b6ae7e57736a2cda2b21efd52fce40f71c6987cfb6",
+      "src/blackbox/index.ts": "512cbf20a3a62e7a5cb092b54e9e6ebe83e485b0c7a2b7576d2d385db3dfbcbc",
+      "src/blackbox/lattice.test.ts": "11a952a8f7cb216f165a5957ed179f1cc05f4d4750004c8193492f3226653049",
+      "src/blackbox/lattice.ts": "51f69cb99883adbe77acaa31eeb01dffff2b70c0c36e3dda86f97c86d75f1bc5",
+      "src/blackbox/procedures.ts": "ecf4be6123e64c2602ad1cf6dca49e878a01fced5fb9fdfdee32ef9c56a34bcc",
+      "src/blackbox/radiation.test.ts": "324b63e5dabbc8b9c1df77f4b704ed92983778442a34978893fc0313dd764149",
+      "src/blackbox/radiation.ts": "a8c023083469126548447bfeddf6570acb2bf6b029c5bff87018e6ac22cc0a6e",
+      "src/blackbox/recorder.ts": "d657ba8028d8fa084f593f596d8b6208f16fe307a66f9f48a6125a59a7123e22",
+      "src/blackbox/store.ts": "06ccff775d49353c3a76da655a99066657cda9774244fb21313f021487337ca7",
+      "src/console/alerts.ts": "5dfc65d27dca4a97eaf7e64f4cc3a0304fc6304d78be94b27029cc9501086335",
+      "src/console/chart.ts": "d74cf6fcd36ade465b7fd0b464b7f4003fccc6db8936c8e314cc821d07d80125",
+      "src/console/Columns.tsx": "89fb4cf4dc3a98df01331ddb83ef9101a88aa5c29767ff0988988785b6dfe2df",
+      "src/console/console.test.ts": "4b867fa2a60f45fd64fc4bd71cd2996095041308e641872cba48307d28f61ef6",
+      "src/console/ConsoleScreen.tsx": "4883e5b752a932b196e2f86327832c38f23285e142f443ae2e13804d5841a2a1",
+      "src/console/controls.tsx": "6e3556028bc7636b5d33736ad9d1bbcb732b2ab5cd38112c64abc0a6d8bf0c0a",
+      "src/console/data.ts": "a5f9bc88ddbaeecbf8b6d477017a4ab0781125f58607b6353a94f42fdd4786c3",
+      "src/console/departure.test.tsx": "f68e29c7dcfad55cb2b556f1dd952ab981933386be60217642e4e681b2615dac",
+      "src/console/desk.test.ts": "b62e558c35c8eeccacff5f94b06d60e4516942dd50e6166a72283b6dd521ac74",
+      "src/console/desk.ts": "d15dd40fd6c975a684322462f1af2cd8f76f010b9cb0f75c18aecdf1d5f8c501",
+      "src/console/encounterPanels.ts": "c5a47d8a949cfe4a07795322191f69ec0783899c93bb4fde996f82ce41b1e969",
+      "src/console/encounters/chain-link/chain-link.test.tsx": "2332af469b34c2b13d903cd846075607d227fbbb082f9b06695f02f599d1bb11",
+      "src/console/encounters/chain-link/ChainLinkPanel.tsx": "52a994dbdae5d1141bc646cbfaee015df100b6619cd0fcb647189825b993e9f9",
+      "src/console/encounters/chain-link/commands.ts": "213e58e56d412177fa3a89e0d03a985704ff6989a5baafe301c2bb04e4e79428",
+      "src/console/encounters/chain-link/index.ts": "693cb10483d61785fabf703c51eaad5e58b68d390be2f7cae2daede584d9a5ba",
+      "src/console/encounters/inverse-wells/index.tsx": "abe85bd9e549abd7f0434bb592213232c2ef723b41a4149e7ea68d3a1fca3aff",
+      "src/console/encounters/inverse-wells/panel.test.tsx": "b8175a6c08d92323e55d83fcb7efd3195a5710c627ee3ae6f423fca7d1699cb6",
+      "src/console/FlightHud.tsx": "f6d64e0adcd321ce9ced9f4fa0cc800ea5cabfc21178b8cad3d96e23cfb5c793",
+      "src/console/format.ts": "c1e99030c42621c8d2cb4ac028dde47d7724b14d161660a5b7de1aacdc415536",
+      "src/console/Framing.tsx": "a3b585ac891629509d49913d878b3959bb70b3928805d13dc76dbecf481c085e",
+      "src/console/MapPlate.tsx": "2f27e82745d7357ef3d09ab685de2aadeaf9eb982d404cb1e0c5cd62672f5300",
+      "src/console/mission.ts": "c2f013c0ad812941dd4db52b62cec37e0ddc35cfa0a7fdf578681a2fd9c8d200",
+      "src/console/pages/BlackBoxPage.tsx": "94128c239cb52daf67081458ff7a64491f243123c2a8ad484b3a260b8d854d10",
+      "src/console/pages/CreditsPage.tsx": "15b257e4b6329dcb5d0e54aa1a7ecffa9ed2789a2b68284b669a6502169f42b9",
+      "src/console/pages/MissionPage.tsx": "1fb3748d0464d4afc837bc6d46bfa951dae1d2dddedec961f35e3aa76d92690c",
+      "src/console/pages/ModelPage.tsx": "c2e57ba485f09502a065e3e97668485acfc9ce15dcfea4fc2cfaf08f0e70665e",
+      "src/console/pages/PlanPage.tsx": "404cb3c5d7f22c7cd83106605609021249186de6e1768298a17b60fcb86f474c",
+      "src/console/pages/SystemsPage.tsx": "b5af3cda7cf4296e320871973375b8b1f6a80922cab9952b79cf0592421e8503",
+      "src/console/pages.test.tsx": "8ffb8dccc7b49bd210303890075b1405017cc1fb9d399b8f0c3916ab8e51fb7c",
+      "src/console/radiation.test.ts": "5b0f3b2605065e8e58b84ba430e8d035a17062e95aa250bab86ad62c20f2bc1d",
+      "src/console/radiation.ts": "8e6951a6d4eac309a3397e8ba629c8dcfc59fac76f6636f111cea6ad352bcedb",
+      "src/console/regions.test.tsx": "d3ad3af193953c9eb9815c5c3e99e9a675f7a5437f7f879a76d2aa050fc0003f",
+      "src/console/regions.tsx": "878d5cd28e63c5f976f6003c369a067e6eb2b7e1359ec24a3f1ca2f106d0d64e",
+      "src/console/ShipPanels.tsx": "897861a0cf1cc309f0c1b3b5344292de2cf5039d92b8948cbca136753bf98a93",
+      "src/console/StrengthPlot.tsx": "451ad68eafda5e1b3af5dfe1d5d6891c3d450347966d55ceb9cbcd3ea7c0c73b",
+      "src/console/time.test.tsx": "91679b4ecabcd5ad9002a86a291820367188ba15b995def0b6eddb0ce1cc7d52",
+      "src/content/chain-link/chain-link.test.ts": "4c2505cc2342d56028bdb067ed8ac1c0d6b14e98b95245c2aeda4a88d8e0335a",
+      "src/content/chain-link/environment.ts": "4b7b89b57bc9b6f6dfe60bbe1392620bc72419747063a3e161f2f244b2e041a3",
+      "src/content/chain-link/index.ts": "3841ccd194494663038ac3db434733a2b31e0bdece7d29cade7d927f97fd3e36",
+      "src/content/chain-link/layout.ts": "2480592e772985e71b4a926b0a82739cd4f90a9e90d8159770d5953d8e0d59bd",
+      "src/content/chain-link/qualification-results.json": "43183f47a35c072f999cf025bd55e763e7f9a5091bfa1e0dae9c22bcbc487da3",
+      "src/content/chain-link/qualification-runner.mjs": "d2de604a1135b30a6bf0a11275e0dcd3c207f0c67352f473056b8f2162609b78",
+      "src/content/chain-link/qualification.test.ts": "7a6632bd3b488dc41f3e59f3e496fcd891a5e70c761ad090e5c445a0cf06a4f3",
+      "src/content/chain-link/qualification.ts": "8df455c30911b459d1c7b92be9a84ef915e97efa72fccdd95f261938641562f9",
+      "src/content/gravity-range/briefing.ts": "e35849ccaacdc6067ca037a63faa9ce64f34ff2772d858bd8a84ce05c189532c",
+      "src/content/gravity-range/clouds.test.ts": "15405d86a4a54ca5aef9fdb49efcd22351ce6b87cffcf4aa59ef519905554abf",
+      "src/content/gravity-range/clouds.ts": "4b34e8cf3ecd0b24124957276299ddd7f9f7d0a5149039b972fa940050571944",
+      "src/content/gravity-range/geometry.test.ts": "e03205011247d1b7ac4e502f4c5af8df5b0b21f9519b0a70a35bc626213d6be3",
+      "src/content/gravity-range/geometry.ts": "6fa5035e5c470e6dc0394c89a48393bf2db0c157c798ac53b63368da4ccd0adb",
+      "src/content/gravity-range/gravity-range.test.ts": "74e999d69ea433f7ebe3c80b6c572b552fd246d884afb706517940392fdf06d1",
+      "src/content/gravity-range/index.ts": "9b52f7eb97c2f84826e71c19e958dd3d4e0fe03809bfd7700ac0df348b7f6a83",
+      "src/content/gravity-range/s21-vectors.test.ts": "a7b48b0857a3421bceb7915206ed0504e40d9ee67e030e629e92b8a10dfb9e1d",
+      "src/content/gravity-range/s8-vectors.test.ts": "a822f2b1d55088d5b29d05c10765bb0e622734c38e5f398ccdbbdab5d4883365",
+      "src/content/gravity-range/slingshot.test.ts": "88ff030aa602f02d54c49e5a4cc18ec9dca496e040c612f28c2e9601b463cb54",
+      "src/content/gravity-range/world.ts": "36d8b1b1aa0ce4df17aa180afb938e4dc9aa9d97c3fe9b6946d442009b79cb8c",
+      "src/content/inverse-wells/acquisition.test.ts": "179db6ef575dd93049c9e42cc88ce08441083a347f4ae5f1c3d31bceb2ac478c",
+      "src/content/inverse-wells/admission-observer.test.ts": "948b68155f5c9bb79f6a709fa487f09c6d13e8ed430ad893369e62f124f3c8a4",
+      "src/content/inverse-wells/admission-observer.ts": "ebaefd5fd39cddf1e0a4d551acde91625f7ea474ed308e0314b2285ad3edd47e",
+      "src/content/inverse-wells/admission-runner.mjs": "29e1d73d4b3d51cdfe616f84fe4c41161332af3fb483dbf1a5ee764c895137ca",
+      "src/content/inverse-wells/admission-summary.mjs": "0d3cdabe6094f17bb1e2721ea385bf6c14eef4fcd0a8c14b5b0043ac32d28309",
+      "src/content/inverse-wells/admission.ts": "9c428a87caa63d97c73d505cf2c1143579b43b41f3f4c80898f026138f45f192",
+      "src/content/inverse-wells/experiments.ts": "f8b121f19f3a42769c0b9889b006c2bf218594b9474b2b8f9661b6ae44e0ea37",
+      "src/content/inverse-wells/funnel-experiments.test.ts": "e2d05ff8aba15fc2bbf40b8047673deac5ffcb49a62522d9f719aac43d71e6cc",
+      "src/content/inverse-wells/funnel-experiments.ts": "a5647ab26ff182d4bdfc67c04bb99c0efada5224b00a7f28bf22427b6ab84329",
+      "src/content/inverse-wells/hazards.test.ts": "3eb43239b28f91896333ede860a061ce21b8957648c53682a291b7da88c0cd7d",
+      "src/content/inverse-wells/hazards.ts": "40b2e2b6178fad83081a56321a571bb066d87c4529ac830fefa1d235d0cf0723",
+      "src/content/inverse-wells/import-s16.mjs": "df21e714d4d6fa71a8f178d35b1e783143cd1776e3592bf582fa757441d50bd0",
+      "src/content/inverse-wells/import-s22.mjs": "a7816bc1bd7506213cf7778d7036dd433bfe12b124ae2775349ef46c5f2cd6c0",
+      "src/content/inverse-wells/index.ts": "6488d91eed185e8d7ccdb8349770e3532787d39f6ce42873c42a07a07c9bbec6",
+      "src/content/inverse-wells/inverse-wells.test.ts": "c20f491822d6fb64ba1eb52ef99addc9e1017a757caa0a31d1ee580bff908c60",
+      "src/content/inverse-wells/layout.ts": "ece743403377537dcfc180bf9cec74c07e47cc0e323cde962faa541358e9bd86",
+      "src/content/inverse-wells/lifecycle.test.ts": "8d3f23f489a19f96b150ca4abd82bee0db49d5e12123ea191c93d08d8a940d22",
+      "src/content/inverse-wells/lifecycle.ts": "691522214c4c31e5495b0c2c3767d5ee9c81916f7ccaad10ba23e7395845d74c",
+      "src/content/inverse-wells/loading.test.ts": "af445b506d6c0f2f03db5ba10c30edc373fc3fdaf862091551d67a0f32e31419",
+      "src/content/inverse-wells/optics.test.ts": "332332b634d1e058a92635e77494d38fb829c64f1eaafb06405f2dbff250a7ae",
+      "src/content/inverse-wells/optics.ts": "f02777bb1438ec22d428c242faaa27fb8a335f42f13260c0c9a16858abcd6b4a",
+      "src/content/inverse-wells/s16-catalogue.json": "e388d6fb8a1384c9a41fa360ddb9ed6db4c2ce1371209cec7e7d188dafc93403",
+      "src/content/inverse-wells/s16-layout.test.ts": "f092655578e02c363356edb023da22ead442a7d360bdb801e233c472adeff40d",
+      "src/content/inverse-wells/s16-layout.ts": "0a908088c95963313a477f4cf864816d17030303b00ab183d3ba62f72b2dbc9e",
+      "src/content/inverse-wells/s16-reference.json": "c6c1a40756318f7718cac59e1c587795b4a71ed71a9a38dbd052c4e0767a086d",
+      "src/content/inverse-wells/s22-catalogue.json": "ec7fd824c118c1a9c07a12f91e93386aa8d1808913f2805923db6736a12e7875",
+      "src/content/inverse-wells/s22-layout.test.ts": "02f21b11e58b5b3d2b5666373a07cee81f5371a7e69d718d2675bf59f959ce72",
+      "src/content/inverse-wells/s22-layout.ts": "0cd0b7a44f0422c03b07cc7726216300cde1247dcea1e08402ae72725ce207fd",
+      "src/content/inverse-wells/s22-reference.json": "936d5dcdb2d0bddfb9368081a7c366840032b26228c20dd6d8e0506c49d3fb5c",
+      "src/content/inverse-wells/s22-routes.test.ts": "12b79ab6e3fa849b64f2fb73ea857e59f2e651cafdd460dacc3b361bb212bf9d",
+      "src/contracts/attempt.ts": "68ecde8b27278a5a29e0df0d0c0b91b48c0e9fd057afa072d26cbc30ebcf8ea0",
+      "src/contracts/belief.ts": "053f34ff2f1cbe172c191f70508cad22e6c8a6c8d244f6b01fdedefc41c5d423",
+      "src/contracts/boundary.test.ts": "2440a1f25a08e39621e10a63b64a6212fd480b4868142128720b73cd1be0bd56",
+      "src/contracts/chart.ts": "fd7bbc8dc176afe6b074eac706e74682d62e89620f494089beafc648495d80c1",
+      "src/contracts/commands.ts": "a114dea4b9b5ef2a9922e1b3c6d04c4d8298e1208c462f58c8fb8c9d69a4cdf0",
+      "src/contracts/encounter.ts": "04b2ef3a09cd9eeab0b6f2c18bf6a017fb9987e62744e20eace546e8d0dcadba",
+      "src/contracts/estimates.ts": "02da0476e965698e11b233626f57b273eecc041b310c759d4142a06b75d44efb",
+      "src/contracts/fixtures/fixtures.test.ts": "b3e06580c30d2e786c7ef7950e80836b083704727ebf9fc270cc3f73a9908469",
+      "src/contracts/fixtures/generate.ts": "b6467778a3433dcb892394575d841fed982873eb152f8df751bfb78a192619cf",
+      "src/contracts/fixtures/index.ts": "b3c569eadc1b3963f207c3b8c47f206adc4cef3d35a37b2e8a74dfc8e79e1cfc",
+      "src/contracts/fixtures/truth.ts": "ae207dcae6fdd3792cb4626cc1b635395913ba818eeb7e7392f52d3517fc7cd3",
+      "src/contracts/forecast.ts": "efd20d76ab2d31e4cdc6e5dbbbec7eeb14f454a30be5445558da6715e22de8d8",
+      "src/contracts/ids.ts": "c2e06a0ee9502720f7fcc2c12e9c93c20a98cbc0e8f6f97d9b20f0b0810d8857",
+      "src/contracts/index.ts": "34cdfa1fb0223b172d47d8daa65f4103ec7727a73a2e8fad04b5aa05d9a5b723",
+      "src/contracts/lattice-acquisition.ts": "4a57d2a8c6f8746886f8298bda6fb54381632455463d3262d4620847b83002eb",
+      "src/contracts/lattice-coverage.ts": "134c71f954463145dc7bbab0686c7185fabae0f84427a600e0a6e2692c142917",
+      "src/contracts/measurements.ts": "f569090294f0bc42def5b4e621359a26b0727365b9b47d23e18d7dcdf1d77df5",
+      "src/contracts/model.ts": "f42650e222c619c676a829bb6211a4641959451ca5e40a968f82181e85d77e99",
+      "src/contracts/radiation-monitor.ts": "b324bf9bed2bf795bf40e65d66d5c87d77a5c2af3dac26023ce8c94adcf38d95",
+      "src/contracts/ship.ts": "efc62f739564abaaade50890ef17a2d8abda053a40e61373fef5bc9d01ede8fe",
+      "src/contracts/truth/encounter.ts": "8b726536df094a27caee2a77c7d44f4a63e1119594b64ae838ff3691824f83fb",
+      "src/contracts/truth/events.ts": "6168f8ff3715231b743d2464366ba635bce6f4d2036f5afb398227ccca7e09fc",
+      "src/contracts/truth/fields.ts": "8d8b86c4f4a5112325fe1f846f3c004c9244df847f9acdcb999a1dac03cfa02b",
+      "src/contracts/truth/index.ts": "0c328eeac9280e6a563c2e168baf378ddf155bac22e4de0f149066947929551d",
+      "src/contracts/truth/ship.ts": "8117492bd3e04b01ef9502ce8b11f665347743c944e9b1c6d87bea08734a2b4d",
+      "src/contracts/truth/world.ts": "c339372eb389b9236d7703da1a7703206e996608fe7002045918c251257ce156",
+      "src/contracts/units.ts": "bdb82a372578362ffca736ab5ebfdce58a6c5210ff0ccac9a6ce17accd4e7042",
+      "src/contracts/view.ts": "1e45a21ac8b698f7ca86314cb844216f4bdcf23b711348361a2e524898b4cc97",
+      "src/contracts/wells-acquisition.ts": "9706fcf69edce818f8e7a48ce16daf4f82f4e4c2a64ec385cc2cfb05803f5034",
+      "src/game/adapters.ts": "60379a166433e04a81cfe4adeb8794d1b47a898160658a1b4815e70c1d51b1a7",
+      "src/game/arrival.test.ts": "fdac32b1b53538d18dd35ea0014c9e91abd8f6e8ce2a77e1f1c673b7e93ca02b",
+      "src/game/arrival.ts": "4e1fbcc6f20fa4f3c97a31bd9777b2c6901847b828619642322b359532ae2b0d",
+      "src/game/belief/belief.test.ts": "b7a737eae09a9c8f9d66282c3089cdd15d93612d1a3ca7d9244aeb043523c87d",
+      "src/game/belief/blackbox.test.ts": "8cd481fbdca5966934953e22b2e09912f335490efd9d749016413327381ca780",
+      "src/game/belief/blackbox.ts": "fb5f472d444381146e2b5909d98bd21f9b76abb1451e24f454cd7151f2c8c3a2",
+      "src/game/belief/chain-link-panel.ts": "1e49cb9d561d635e18019d9399e6662482bd056a9631052eea7b3ebdfb0744c5",
+      "src/game/belief/chart.ts": "c82f1dd68241d703001e04fd80eea34a0b25a78b97017d7392570966a01ffb83",
+      "src/game/belief/controls.ts": "ed0122ab6939eb3dd55f2479cf25c6ae5363439a384eb26da26a69ea85898267",
+      "src/game/belief/coverage.ts": "12e5889d7c6bc446e13d24f8492cf35100266a5ac9f43665ab2ba44629e8819c",
+      "src/game/belief/departure.ts": "475f852ec95c2ff3eb637329c1b7164997effe2de5c60878533134e8e858691d",
+      "src/game/belief/maneuver.ts": "d535c6d6a9d8ff73b4e3f98d9e1fffbdfba785d908dc2b441823ffcd228bade0",
+      "src/game/belief/model-bridge.test.ts": "94cd9086b157e6d5f078f4fb3311b4e67751a02fd88cebb496779604b110e7e3",
+      "src/game/belief/model-bridge.ts": "7db6ff0a0c0ba46282e2f4db8ea23abb7866ea40fc6e6e2a535ff3d4154b7a75",
+      "src/game/belief/ports.ts": "72fccb9516ee6d764a33b1a7a2fb49f332181a2e6de8402fe15f928047eb4f1d",
+      "src/game/belief/power.ts": "34eed8913e5a914f2bcf7878b0a324a0218ea177a372a7b1c2f11f38e6be9d51",
+      "src/game/belief/resolve.ts": "e0062e06b53b7a883683d7ca1f96ed6f5c3462d3e5c35c073b045605543d1602",
+      "src/game/belief/standin-model.ts": "06c4589439a868a61d70374ef377da9b42abc0aa5a5cf388d29d56c46a37448b",
+      "src/game/belief/telemetry.ts": "f4abbf9b59531ed6a4e61494cba5b255e985454563ce6503496ac28dd18d369b",
+      "src/game/belief/view.ts": "f17b068ad26471637e42c739568f78fb0b3dbf6776f9e8189a29d70f6ac67007",
+      "src/game/chain-link-panel.test.ts": "d18dc099c7951e324906bba3e02aea673103e89f37e2d24cc34c09b0e0b030d0",
+      "src/game/command-tape.test.ts": "09f2194e2c04b619262a6aac943a7c036ea0948e15bcbb1f331af53d6c983ab5",
+      "src/game/command-tape.ts": "850671125e599cca6d9a09f0875bb07fc770ba4c8c387d655885e8502b793371",
+      "src/game/coverage.test.ts": "2de1025c03e9ccec42f019bbcbb6b9757e59d6ff08b9c0d51feffdd83f3113a1",
+      "src/game/depart.test.ts": "25b6db867fa56d6ba019e6866e8faa6811699775a43424c9f094439bd87f6ed7",
+      "src/game/departure.test.ts": "c80912479eb78237d9b5cf1efbc385bafd9e4831de58b16c99d7b9e72126a784",
+      "src/game/encounter.ts": "b9f9f3e5c39eab7a537f34d2b08aad45f365d439bc52c89c370ba4658adb6716",
+      "src/game/encounters.ts": "c3d4bc2dc2652dedb3f2d452d261c75271f87603aca5f202d9a051f5c122bcf8",
+      "src/game/environment.test.ts": "b2270b86c84f191564048452f9e3f732c0226d8b2e6168f2c8dc4902810ce97d",
+      "src/game/environment.ts": "bea734ee3660bc6c8594adb698979a20a9937d3e698026a3a93acdaf74e90cec",
+      "src/game/fields.test.ts": "8d8ed5906c62db4a68d6abc14450f2e06eae4402a4bd6b9ca5c550a092dbd569",
+      "src/game/flight3d.test.ts": "6de30b0029f00fbf8eea6facf8adcf9bbf36117198b268e4bccd1c7942281aff",
+      "src/game/frame-budget.test.ts": "94bfa676c10144ca74d562c8b3e6d8f6879796273e97a765b77f4fa02e905116",
+      "src/game/funnels.test.ts": "5cbb2587111ff6d9fd8cad62fac439dc77cb7ae5777c9a3ae905c6e9f15e7867",
+      "src/game/funnels.ts": "f74cd051d154091670ff335c90ea7efb430d661ee00cc088a891a9cc91c8b3ec",
+      "src/game/jacobi.ts": "d4f0248b393c2453b95221cd95fbb0973ba5eac3288476e63afdcf5859339ac2",
+      "src/game/lattice.ts": "4b9d08e217397eeb36a6f7931edfdef14512420e6e3a7325d285b94d47b7227d",
+      "src/game/maneuver.test.ts": "0516fb9da5f4cc404fd1563ae6d0d21566a86ef580fb59168c5528797bcceff4",
+      "src/game/model-loop.test.ts": "45be8d6ea09d8f34544dc2622bf129760d9efd4dbbfa4f8e94d9f5605e76796f",
+      "src/game/objectives.test.ts": "db19bbf35c79a4a3923156bcf4f93918eb815cab54329cce3a034ddc09d9286c",
+      "src/game/objectives.ts": "7efb45b67252bee768d0ba0819a30ccf9800d6aa309baca00a4d6db9dea99c65",
+      "src/game/power.test.ts": "fca0931570d3291e83b909c3c91925ee739a041c25f7464ae9f4605f7f1691e1",
+      "src/game/power.ts": "5af8841fe516c2c73883a8d4885efcce340489573e0aa838ba8843d486346bea",
+      "src/game/rocks.test.ts": "c565326d342bc225a3d6c409f6c5a750d72a1e92247f7765a116202d067ede69",
+      "src/game/session.test.ts": "b02e7bf90b0d45ec0f83199e191558ac500adcd3b99b9b2ba8373f544ac51b10",
+      "src/game/session.ts": "d47fc9861145575ba894f4a446f8dd29b29bba26f3873c1f03e64566a50ee969",
+      "src/game/truth-step.test.ts": "4ad0d6bee64cb356db379e816a332992584d5805fe35e42f17921bc03cd8d456",
+      "src/game/truth-step.ts": "63fee4407052c14a1e24b33729e975f92ac4eba76daa97b9f58313dbf8deacf8",
+      "src/game/window.test.ts": "6f3881bc724b2b451cfaad6d97f89c04395bc09fc074dddd8229e754933a4080",
+      "src/game/window.ts": "159678b162f225795bdae6d04433f2a2be71fd91f676bf764952a92d7e91bb1b",
+      "src/lib/clock.ts": "72f4b69a635a1c6e9fcb9701a6e67e220168112c8db298ceadb958af66d493df",
+      "src/lib/freeze.ts": "cf3d79bb0972888a5d38423495f7b3207ad94912a85f9f95a1aa35550a09e233",
+      "src/lib/hash.ts": "d97915977c494cdf6527ac551fea0efac606914bedf4b1ca72d3eaaf64250978",
+      "src/lib/index.ts": "7ebca9245c4dd53bef46d5402430f7c33ae0232062c41632080267273e9bcf5b",
+      "src/lib/lib.test.ts": "cc2c378f4f51ccb7438094c714883d04c30558165046084c402b8176c213ab0f",
+      "src/lib/math3.test.ts": "a1d9b5eeadf13e94588e5f26a02f7e9fb279b753dcac550b821bf3bb8d1ad13e",
+      "src/lib/quat.ts": "6b6fdc21d9800fd09bf632d83f28353be8783cb88928f3457173fb819c395cf6",
+      "src/lib/rng.ts": "a0eb0e55c7f3d5ac04305d59009e7fe07ec24de8d6f84a332a4044a8a1b734fe",
+      "src/lib/sym3.ts": "4ae03641891ecd483adfc49249bb675cb627db5ea2d12616ed50fe49b8370677",
+      "src/lib/vec2.ts": "df48bb00bd9ad563f80ddd68abed1ef3e704a082c79320ab3f387078c40b3deb",
+      "src/lib/vec3.ts": "3e8fbd46711b572a996a9eac5820117e03ef1318965abfb5202fc974765a95e4",
+      "src/main.tsx": "dc2bb6ab9b90c4213dab69fd0120f7c403ad06918d9a6224894e8e5896b61a0e",
+      "src/model/adapt.ts": "d213d1bcd639ed101f464fe8cefaca527d549c28f055d274e0c53d38ab4bd0e2",
+      "src/model/aging.ts": "9fc3b8362162e253f08bc756c78cd06fd1aeb529fc8a28f820bb1a76b4f152e0",
+      "src/model/binary.test.ts": "b10cc74a3a5a9b820fda789874344b77ce726f190c3281a6fe316d77f3b11c52",
+      "src/model/client.test.ts": "499e61abf1f6f9d3d4c5a75395afe4786958ab4664aa6ea80a14fefd32edb023",
+      "src/model/client.ts": "dd4fef71eb958a26e64edaf3de3e88b06cf3bcc2309ba53734219c3c269a9b0b",
+      "src/model/condition.test.ts": "af90bfdf490f1734a5a7e7cbed594c83e622dff09398553f8b59f09bd1789698",
+      "src/model/context.ts": "1fccf49b81f1ba711515aabeb04d1da85ac140ac7778e0ac4c9b92235576a918",
+      "src/model/diagnostics.ts": "391ced2fddc025b801a92cff62ae3537e078cb9e4b2ffbd988d2a056904774a9",
+      "src/model/dynamics.ts": "246cf4c2600392e667f3c7b4df70368f6c6408147663708752f666ea8a26ffb9",
+      "src/model/engine.ts": "50ac0906977be07d806fd9f8901ac9ef5a45272f23df6480f306845d7b811a36",
+      "src/model/extensions.ts": "d2dbd61ce01603801251e64677acb5e93795f4329f10ca3d7857c31ce1b40da4",
+      "src/model/forecast.ts": "389917efe22dfbc5789f6f26a3ea13e31dcc12932543eb1a002095270affa8e6",
+      "src/model/index.ts": "9eccf4f458b61d9f5af0986dae410767ed2ac1330053cf64b26db4f7c3cf5638",
+      "src/model/lattice/frames.ts": "7a0f660673feb745497f7f06a1f55f159e51df5c9f8a55a400bf17aafe04fc5e",
+      "src/model/lattice/poses.ts": "f48d54707126bc591f6612651f23840eee8413c0920630c65de9a4f55db9c244",
+      "src/model/lattice/reconstruct.ts": "cd35ed7ce0e0e149d0d78e10c9afa56f05292a4f028d3c22d92d40343bf32b7f",
+      "src/model/lattice/visual.ts": "8a7cea925fb7e4c888b579a593e5ba06dc0f29d0e33d5784f0c7281f3cb3c453",
+      "src/model/lattice-flight.test.ts": "adf8296570e1a417345d8208bed9c30ba14c4fdad13f17a8c78b2e28105efd27",
+      "src/model/lattice-harness.ts": "dcff76cd48b12b0de210b7d40809c38fa4aa1b1b8592a387e0a8eb09aff58ebe",
+      "src/model/lattice.test.ts": "31850ac2a02ad1faaedf6bde5a7c789bb5a462687620c3a255a73ded2032bf52",
+      "src/model/linalg.ts": "cd514d48e5cb4629da9a6640eef54f1be07b02586537db3da2881580082e6e36",
+      "src/model/probes.test.ts": "ca001a2e652bef251822159b2eacbc0dc0cb1dac4fabcfa96f5b9417ef43cba9",
+      "src/model/probes.ts": "f6402d149f72a8dcbd687ecfe72aec7db6a27a8c730f205e65060764c95c7e3a",
+      "src/model/report.ts": "5e6da410064a80e46229d601d80ce4b13db4ba5be4abbea0fb45b97b7bc2023a",
+      "src/model/revision2.test.ts": "c0b9769ffaf90dca3eb31280c3ee152a8ec398f5062c7784c630261406f3e967",
+      "src/model/rpc.ts": "f7aa5013d93284e89cde372ff0fd410e8664f3d402132108f8e31fe67b8c63dd",
+      "src/model/runs.test.ts": "84864ebdb436e671faf240f4bcca20eb6f27f59dbaad259c1e061240a9409947",
+      "src/model/s8.test.ts": "eeadad3dd83508656deae8ebcca3bca23c22239d26aac6f1392d350fd4d073f2",
+      "src/model/service.test.ts": "c657a604efd85914e79bebdbe039343964aafc8e5cc50d51eea3fb7bf4bc0cb1",
+      "src/model/service.ts": "ecca57d60e77547cdca8a5f853a27c5f0b92e40473d98a44c7e972428f57031d",
+      "src/model/service3d.test.ts": "058da30491471e5434909dc042fb7874cee060a94fde8b9ec7d0aaf8598b63f4",
+      "src/model/settings.ts": "717e3ca9140151d883cade0517626e8fe771736921238ab03150d6c33f98eddf",
+      "src/model/short-attempts.test.ts": "e3355176ec9645c6920fe29eb177e93616e2e64ca8d11fb8d3fec8dfc228544f",
+      "src/model/solve.ts": "57309c13a1a9f10ac8fd558bcf28163ae2e370a3d49fd52870c0e06ed9b37e3b",
+      "src/model/tierL.ts": "35a8590fe4f2b051ee85c6f459ac69dcbac3d228057e1170854c7f7580c296a0",
+      "src/model/vector-harness.ts": "0564c76d514426dfba8231c11ed0453c08943949f7f5701250dd5cc20da5118f",
+      "src/model/vectors.test.ts": "c20d49f8f59bede71cd85a801c1e2cecb40d41a8572077c6d667df52e88975b5",
+      "src/model/vectors3d.test.ts": "ad668ceb57ba9eb73dab634af9389af62714df96c91ca9b74246e1c0b8973904",
+      "src/model/worker.ts": "de893bc935e094a4d053665b65b12aa280b0ba1c20172e3156bc661bc13c3c89",
+      "src/ship/commands.ts": "e399ef0cfb7b2bbe9cff5184f707d3221592b871817491aae524f85240f93522",
+      "src/ship/condition/condition.test.ts": "a3c89b1bdeac33065751a4867f139351877c50e771ee7a631851ddd659f53b40",
+      "src/ship/condition/index.ts": "aef1d900fd0f3ac940bf2b52f2bb07a4410676bb67f1ff88ca7006adf4e59ebd",
+      "src/ship/condition/integrate.ts": "73ef1514243aaf721386eecb3c6f0e490c0c5e8cad777c8c090ebc0091aba947",
+      "src/ship/condition/s17.test.ts": "1b1b7169eeb4c6dba2bff70e8652c0ad942548fa11bb01a8d734f55965fd8978",
+      "src/ship/config/configuration.test.ts": "bdffb588403ac10e38185176476955adcfcf03b5eb47066a9e581d519e63ed40",
+      "src/ship/config/configuration.ts": "b2e8caff351e9f097c3659a3da758e1e85bce091260f798fec5e57375a79d891",
+      "src/ship/config/faults.test.ts": "49e84e3f2ab864148a0a472cff3807d4d3a5619f93ce9f572a7eabbcccde8db9",
+      "src/ship/config/index.ts": "3d941223cdcfac4acf4bf5fdbdf3d63b7e50ddfe147b7a969b78060d6880cfdb",
+      "src/ship/definition.ts": "c4eabc8ffb1468e2930b80d0ed14fa5eac05727e40816de09bf1100af65f73c1",
+      "src/ship/handson.test.ts": "fa7cc573c252c0d6ce8237da2ee5a08068b7fc14ce693af83f3a55672bee36fe",
+      "src/ship/index.ts": "7ff99e6571848c1deadab3b3f99d770fb2c3e790429e87d7408a27a9ab44efe9",
+      "src/ship/massprops/index.ts": "c35d09cec75c3b8f393aefe1634a038abb64cbd71f52651ea5d493d7c5435429",
+      "src/ship/massprops/massprops.test.ts": "01eecdfc69771439bbb0c060f0a586c546386aaa783e3790188a3935d7e75325",
+      "src/ship/massprops/massprops.ts": "6354a1d5c3670a10a158fe7bccf190499fa30794d314bd36240ecb5697fb83d9",
+      "src/ship/power/baseline.ts": "939ece2ff0b8cb206167ddee160ce7ef4ca4b7c36895adff9d63ed27aecad0d4",
+      "src/ship/power/index.ts": "59e34998c63681cd9c9d4cba1ee27a1bd00c5db3558801f02f958b1f3b4235af",
+      "src/ship/power/power.test.ts": "470af8074ca40508dbb3c19578ad8d40f870f5c32ef9a389b7eede4b217e8387",
+      "src/ship/power/service.test.ts": "8037e6d7e14689af611bc6782d8b06e1765df398e98c5be2fd5def61dafbdb50",
+      "src/ship/power/service.ts": "734f48123eeb34d2135eb7db5d78be5b08ea75af343e26b2c2602c9509bdca3a",
+      "src/ship/power/sun.test.ts": "a9eb163bc0ef853bfd45413629bb8160d8d163ce9022ed93d48749b11c8b563e",
+      "src/ship/power/sun.ts": "139f8c4ba075a6ec6043752b70951364e04479528d2a4c31b4fd9350edc17125",
+      "src/ship/propulsion/allocator.test.ts": "d12d5dd0176a4099ad227c05da2b9aa2834b02b3a9e3b4e3c29dee0a00a6ec31",
+      "src/ship/propulsion/allocator.ts": "60b8745dfc2549aeb35132dcf9cebf070ff52f08061a91ac5c680d77d760cd9c",
+      "src/ship/propulsion/control.test.ts": "2bc4d8b97c471a873b5c66c62842962bc15f998344a73ffc53717b74ecfc2ad0",
+      "src/ship/propulsion/control.ts": "adb4ed9e32d002a9da9a9727601e8ef7dc41b8233b833e0354ccb2b8fabab101",
+      "src/ship/propulsion/index.ts": "0c00bcbad1712d22dcd44db150b7d6af6dfb7573727bf18f02807752312efe52",
+      "src/ship/propulsion/jets.ts": "9ab4e05a7ba2c8767fcca5f50dcb7dfd859221e1bb8c4f7473cbd6b264145b14",
+      "src/ship/propulsion/nominal.test.ts": "f6e1d3aa1141e189ca6a7e3db2d8d749c2b02716d806068a76015d09170004cb",
+      "src/ship/propulsion/nominal.ts": "095459055ca6031f4b20a36262a3fb34653f7ecc772b999044a92940c85b5701",
+      "src/ship/propulsion/propulsion.test.ts": "3b3818d1c15df81d7566d9262ba333205466f26e9102270f92d08996b6deeab7",
+      "src/ship/propulsion/propulsion.ts": "8dd616bc10079b2c414ca1a3530f8c99026f37ccc0f9150bef4a56e9442b074f",
+      "src/ship/propulsion/thrust3d.test.ts": "cb53a3f10fae0df469d115140734cd8af836b367a24ed6678a5a96cfeb7847de",
+      "src/ship/sensors/camera-products.test.ts": "71fb8c72b3c2e151b3dbed07a793a6a798aad9726c174c2d83abbfd8b75602ad",
+      "src/ship/sensors/functional-power.ts": "8830ef05c69fef6b7cdf84f57b07417dd37a0cee939ddf5fcc6782a4d78fe1ce",
+      "src/ship/sensors/index.ts": "9fcacce72648d35f7025b9f6c842ecc0632f221bb3f6c223a04fdbd4b6109e46",
+      "src/ship/sensors/lattice-diagnostic-observations.ts": "07d8e2884cda63c8ce6ee45815d87fecb059e71cee91deac6678fbd38c2eb110",
+      "src/ship/sensors/lattice-diagnostic.test.ts": "506160a765c881216016451da694aba1b037a62b4e4a28abf828c9a225d09844",
+      "src/ship/sensors/lattice-diagnostic.ts": "cb08c5a62b555ecafb6b4642df6746c9571cf0a6e6fa56f3f2e95a8aff41230d",
+      "src/ship/sensors/lattice-observations.ts": "a726f16ff930ffa9b05de7687d92a7e37b520ee4485ce5db1f4dd10e20ab2578",
+      "src/ship/sensors/lattice-power.test.ts": "369a89a2f1510d485af2f1d4a3ac11c05b1195de10f1d4eaaf14e92cd0724fba",
+      "src/ship/sensors/lattice.test.ts": "2a7cf2068dd00744e9a074cd480666ce70a8c8d919cfd078e6b2b3d5dc56034d",
+      "src/ship/sensors/lattice.ts": "aae73af7f40b96009a8ab10b2dbf3a6e7e4e72e1e9a01bcd993dc136c37010de",
+      "src/ship/sensors/radiation-environment.test.ts": "4c26b5eb4119fa78f99fe3cbf4edd5d1ad69b8cda537f0bd8a5e324284f990e1",
+      "src/ship/sensors/radiation-environment.ts": "dd3a812179b22969c4564f69d2fefd12399be0d5ab04ea55480e3bd2fdb6576d",
+      "src/ship/sensors/radiation-observations.ts": "01c1e53459235c42ececa0b4d04a7dd4df8648cc200fdf5ff192e477b2c5c4f9",
+      "src/ship/sensors/radiation-spec.ts": "2a009522f791047680eb08c36291640a7ea37055922462d3cc5b5b56a9202144",
+      "src/ship/sensors/radiation.test.ts": "c3fe7a559bf967367adf075b21f1ce4e0a15902454d936e844e53c9a5679d1da",
+      "src/ship/sensors/radiation.ts": "a116b5a52d7dd9ed96ec755481ea4488ee6e3b26b9952de436866b1291e25816",
+      "src/ship/sensors/sensing3d.test.ts": "134e9c8d1c22fa5acdc6653d63a4fe461a383ee75e8817a582fa1884453c3bf5",
+      "src/ship/sensors/sensors.test.ts": "508ad3876704b10d672216ae718eba20899ea1b4d517699d765ab50bfb4d9748",
+      "src/ship/sensors/wells-observations.ts": "bb09bb4f5159c379074a179f69780bf9151e9415668af452dc72ecddff9177f7",
+      "src/ship/sensors/wells-visibility.test.ts": "d8381e2a246695063294189b5f1125f4313418ca9b7c0ca7a805104dded36553",
+      "src/ship/sensors/wells-visibility.ts": "91fd62746eebf7d0cda8403a779ccf4b0c4fe1b6a51bc1bb409b4d182e010cf2",
+      "src/ship/sensors/wells.test.ts": "ca722f05ee1cfe7c8239fcb5197036098ad85bf4998d4a5d18fef0868fc0cb80",
+      "src/ship/sensors/wells.ts": "1ecf625bf8606023763b7e7a289a5c7ea3058461ad28e338a4002590f28b12dd",
+      "src/ship/ship.test.ts": "3fca00cf8e97994bbdea0d931f1553f280644c062433580bdd980b4022bc634f",
+      "src/ship/state.ts": "c28933dac7b295c7bb57562316297cdb4b31406cc500f89997552ab90304e82e",
+      "src/ship/test-helpers.ts": "e1eb8e04ce8a26f39d901882a088bfa43d80fee0193dc254d6bdac9906022219",
+      "src/ship/thermal/depth.test.ts": "942b776a19297bd53cd1485532f47388b5afd6e16dbdcb81f07439acef4b0bcc",
+      "src/ship/thermal/index.ts": "02f21d9d32d91aca35622e126cccb0ea69e63c9ca7226d92828c0ab886be8a96",
+      "src/ship/thermal/protection.ts": "0872415eab70ed43172a081468f6d285656173fae8d9eb813963e63a8593f0f7",
+      "src/ship/thermal/thermal.test.ts": "0acbd90e3a87d741b3f86c986f07f4ac9ea2e31edef00f89424523e54313d23b",
+      "src/ship/thermal/transit.test.ts": "9eeb5b747e0b4267fb7fd5097e13e46506b3331e89931b6f1f377ee38c61b076",
+      "src/sim/analytic.ts": "7bc945c0a349117e3f3db6b835033f150cee124ac09e3acc995494f886621037",
+      "src/sim/contact-3d.test.ts": "2d8288a48756202c09cbecab811b7a92a203cdae161dfd1279d7966928394879",
+      "src/sim/contact.test.ts": "9e15a0b5c31d3c49a54b2a5fd5298c8ed08ecf31b9268e5e33c7d640670c89c1",
+      "src/sim/determinism-3d.test.ts": "b44d138d9d6562ab4d92a7e17f6425975b9d942ed4e7e739b392055a9bfd7c20",
+      "src/sim/determinism.test.ts": "72e88afe16a876fc3a02f053563d23e8e3326bf8a4a267d0bbd55cfc9a2d8438",
+      "src/sim/fields/lattice.test.ts": "fa7b06a71cd4f08dd4b58bb5f8204bdf8f2a37b8f95c59ea54b253920505a59e",
+      "src/sim/fields/lattice.ts": "d0bf2d222217fbfc756573479b694dd56f56feb0c9c9b4ef5aa44c65eacba0ab",
+      "src/sim/fields/wells.test.ts": "d1ddc1d8b23547b9e6b4863d1bb42adf4a02b54fbb1a1a93284fd83aa3bdd909",
+      "src/sim/fields/wells.ts": "3e3475c1942d0885a12978b29de340a8ddc192580f591c684c57177e06077dbc",
+      "src/sim/fields-3d.test.ts": "9fd55bb00342783652309eda7f15c86d728b9c9a9dc9f2f90dc6d4ec7b79fce0",
+      "src/sim/fields.test.ts": "640a91d04e2455749175b89093575d1b3b6b4915bd30a6ddaf354f5a5149ff62",
+      "src/sim/geometry.ts": "229e4bcabb23db80b63d8b8e751794ffa5268135e97d469d2e87a78755a9e9d8",
+      "src/sim/gmat.test.ts": "4255a9c4c405672dece6571115643c61a72560f3fd40e5f826540cf2884e8d2f",
+      "src/sim/gravity.ts": "12a527dd79455f70fdf6e52f67513e4dc8a82a9e30f518f7e69d98bd8ed1e1b3",
+      "src/sim/inclined.test.ts": "115a2587d7e33729ebd2b3d44a1fd00991d8089c166264e12ef1501d9baaa2ac",
+      "src/sim/index.ts": "9fd50ff6e3418fd4279b7fd4600bdd876de6e6ce7a1f470341f6f62db8e68406",
+      "src/sim/invariants.test.ts": "5096e2262530d651fab20bbec0cad814b84454a6997a6eeebcc50e984d8d5446",
+      "src/sim/invariants.ts": "de29eb062915cf16f4d2a6e95dcb2de3b84f1a4ee3e38356fdd7c006db5e5076",
+      "src/sim/performance.test.ts": "55a8230dc3c0d1871c11ff38bacfa80323f80cadce3d92aaee9cf75da6356418",
+      "src/sim/rigid-body-3d.test.ts": "586a11616a9358145858d55043494e5f5e902cf2e9f289bbe4bbaa23c9ebc36f",
+      "src/sim/rigid-body.test.ts": "d88090d3ce0cabf3868f3caba0eff835ef7aadfd670ce52bc13a08edc4c01242",
+      "src/sim/simulation.ts": "d09e05f0afe894f9ecab3d796e7f55f72cff14b5cc7006e4fcaa9f7c207835b7",
+      "src/sim/snapshot.test.ts": "380a12958f894555ccda4e9866d00a17d197b1715907cb1746c72ada7851136a",
+      "src/sim/snapshot.ts": "fec37ebe1605ee217e829e0a1251775ab42ba42df00599d153d4ff3d0e00fc8c",
+      "src/sim/test-helpers.ts": "f43aa907608273c0813fb404edad3b00eb10ada788ed69dc0f27a6038aafb39d",
+      "src/sim/types.ts": "ea8f99ff8881a89101da7800319780aace38e02399b7a89f0586fdee3d89c3ae",
+      "src/sim/vectors.test.ts": "b1913b96f0c98b40c7beb70260167c60a8c3b628de292388b846a1d19daa2345",
+      "src/sim/vectors3d.test.ts": "5e539865fa2a2a5c62147be54d9b6d7a0eb7b562b0d5f50451f872b08a2e549b",
+      "src/theme/colour.ts": "9023dc9d045252f1c38d6eaa5ca362bd88636c546f063b06664cfbc74eb6361a",
+      "src/theme/components/Alert.tsx": "cd2de42756a38001001427489f800632f6f226d6a1d0b87bfc564d186d869242",
+      "src/theme/components/BlackBoxMark.tsx": "dfd3cf11bdb820f2fb1380e892356e744785267da60d13c8708083ce9c179ef1",
+      "src/theme/components/ComponentRow.tsx": "a04a9e7dde3024d88ebc1906fdfefbd5d5fdad730860225f60f2b86a862d0a0c",
+      "src/theme/components/components.test.tsx": "065c190d6dc8bacb2a71758abf061fd9cad394e5c6776ce9ae538d05b3d9b0a0",
+      "src/theme/components/controls.test.tsx": "63ede53ce44419e9f8dd3b84491e32158bec43d9ff8457f01fce92c8f6aa9e2a",
+      "src/theme/components/Gauge.tsx": "2ed1c6f1e39238bade30e55d5f7d641de129914d855140fdff30b04d8ec5ab41",
+      "src/theme/components/index.ts": "f3df4a892b4d4cfc4ea15243d1ea32752d97768a846fc0ca44f00b6e6dc87578",
+      "src/theme/components/LevelBar.tsx": "d42fe91118a99a84f2ac4329235e7fe1cec7d1375c77a6198272b6dfd4c6f1ca",
+      "src/theme/components/ModeChips.tsx": "a4e49ffc7d23b16a39b43ce20fcc1f330bcc981debbeabb78d1146444119e93f",
+      "src/theme/components/Panel.tsx": "4be4f74682c528a5c42227c3be7f0ee363daffa0945c211ed86a3aac93d2d478",
+      "src/theme/components/Readout.tsx": "008e7efbbb0f288879b854942b9289145c97a1487a7096553442911c319d8222",
+      "src/theme/components/scale.ts": "bc4459256c2ce185dd7bbbb2e05630d25369624f9ac4242e4b18d2d6eef1e84c",
+      "src/theme/components/Schematic.tsx": "542a694bef12a3a36db15b4d70d62854f5fdb46969a8cf8f37411688a36cc2b9",
+      "src/theme/components/Trend.tsx": "878ba0bceae601ffa80df3a2a93d58ff51ced0fe7a813acc31535193630ccef9",
+      "src/theme/css.ts": "f9bce8bbee66ed6a4bddefc56a1885404bb7a37d4758842545096e9356c4bcaf",
+      "src/theme/dressing.ts": "53b03d92fbb88ff0044ba58fae14ab98f4b9c41e42d1e97cc83e50b63073fdcc",
+      "src/theme/hud.ts": "e310847958f3ce2846412c209d05271a9865f2444b35e91f3aabcb936f0578b4",
+      "src/theme/index.ts": "0bf80f9c026844653cbb53a7544810880f38cc891b8f61a9aa1cb3df1b731458",
+      "src/theme/instrument.ts": "f84b4d6383c6ab12337eda65d52bd7bad69ceb78854e9af9e7d168e6edd9f0b5",
+      "src/theme/lab/data.ts": "eb1d73b28298ea1c940a697ac080ffc286f56125f841d326994532c7ba9a0822",
+      "src/theme/lab/lab.tsx": "246a1fc273a95c5bb143d7232f7383eaa1ae291254575393370c77c7afd0b795",
+      "src/theme/lab/more.tsx": "5311d64751d58a7414c2c5aa32da7da2356b2dd17ec254b6ccea07546684b201",
+      "src/theme/lab/scene.ts": "ff3cac1ef75626f259f8cac40dcd4cbf917890cb69c542d84a8d253647c3d52d",
+      "src/theme/line.ts": "0c56a0eb2ccb46b5cc3daa0fcb14321f5cde800f3f4b0f047d2596fefdc43c7c",
+      "src/theme/motion.ts": "eca9dfc08ce85ec69ed9bc1ed57d6853e8719ecf4fee5c01bca1c2001fc32bd5",
+      "src/theme/render.ts": "a53d40ac799cb5bda2bebac81b88fe37c37e4049bd75ae6618845ca6820f2e56",
+      "src/theme/room.ts": "acc08293f4dff113b890af81738b4c78b05d8e4c7e04c2b0fa475cdd4a8c55a8",
+      "src/theme/space.ts": "fb26eeb92950f38e89c925a2b1180fec5f91684da4cfd9c3c2feaedf6e073d36",
+      "src/theme/theme.test.ts": "235fa29703eb09dc0e6eb3b074439384bf22b8b38f5683a0308f13cd62ffcff6",
+      "src/theme/three/bodies.ts": "069bd9c1f81b49930b5fbe715cefa1e66a6d8259c93e9051431833ac7b4d76a6",
+      "src/theme/three/envelope.ts": "838cfb4347d06ba9d30b1a6ca3364d872997e572c6c8f0f4cc766a4bd652ad2a",
+      "src/theme/three/fields.ts": "d4e0bbee19a1dbafed73b672c0f3413ca7cfcef2a19acf6af7c5b22f8c2ba698",
+      "src/theme/three/holo-plane.ts": "1bdeb50003a2e0568d3908fdefd0ec240592b4103b3c6cd45f164846a060651a",
+      "src/theme/three/holo.ts": "3218bfe50d93ca8dad914dd901e8e409e4fe4b8a9bb11b0ac36c5312eaf69a1d",
+      "src/theme/three/index.ts": "2c32b853c233cf91ba876f1e1107f6d60814b48f1fcad946713b6961b381fd81",
+      "src/theme/three/lines.ts": "8317989852d1401074e5fc8699b61166880080750436b0bb88e4de1b77f56ed1",
+      "src/theme/three/map-holo.ts": "ddc12572277149d00d70cb69cd646bd85d47e3d170ce3fa82de0ad8dfce157aa",
+      "src/theme/three/plane.ts": "2116876b9b64fbd684b03ad2433c2ef1dc8b40b6acfc0b09d8754d593decd8e6",
+      "src/theme/three/ship-holo.ts": "b077cea79a2435312582633d3abf9eafc1f2f87001859e1b66d3a16327731c13",
+      "src/theme/three/styles.ts": "bbc5a92adda096dd691685ef051e7721ce2d1856aeaa6e8acc5ecf4cf9533836",
+      "src/theme/three/three.test.ts": "7b08b1f8d7368b4f739ea1038829c7d8dc2a09ed3c018004427bcf144c63c6f1",
+      "src/theme/type.ts": "ffe5df743b6768f8497328df88f658738a9c20d20c8a781c11c98e8bfe0a9474",
+      "src/view3d/adapter.test.ts": "cf261aaaeb2d9849990cfc1e75c06af7d5903a3ff45739ee99cf0c7f914599af",
+      "src/view3d/adapter.ts": "6c7552d071634623f3786ef77198f9d1552cc3affca33c81bf50cf56a6b5e153",
+      "src/view3d/fields/lattice/data.ts": "c51da275e1606cafa539d9aa1009717f6427980ed33b33b798d80cb91ded7cfb",
+      "src/view3d/fields/lattice/geometry.ts": "b655a8efc28288088eaf9d2b5ac88da11f9090a6ad804d69cb4c7ee5edeb8051",
+      "src/view3d/fields/lattice/index.ts": "e1ff658da88c4daf36d2d86a242bc56706d2a7093b12db7ef93f87f0ba5a9b3b",
+      "src/view3d/fields/lattice/lattice.test.ts": "c2feb1b86c879b0ba05b613c08b3895cf8a54cbc449f7e64d61c6cb7400191ce",
+      "src/view3d/fields/lattice/LatticeView.ts": "8eca831609d7917822d62fd81ec3102664001b323d083b72d06e2c0a18cf17da",
+      "src/view3d/fields/lattice/preview.tsx": "86998c5af4c65f438325105d900f43e1a5cae39815a88f7add0772d38651f469",
+      "src/view3d/fields/wells/evidence.ts": "1ce54f592a0ff1ee33c984decec6ac7ef4c29de13458e6ffdf63c9cc674e6c07",
+      "src/view3d/fields/wells/funnel.test.ts": "3778173cc06797b3309664cbf375a4ea60bde492d4342f19ea2ece5d6a7d54d1",
+      "src/view3d/fields/wells/funnel.ts": "2a793ddfef56f2d9184ae3403e06b3f2680599482240a4534a9f94e95e600571",
+      "src/view3d/fields/wells/index.ts": "ccb6eed820690e8347f129757af7c0c78e1027453ae0c6b9d2960bdbb6ec7e6c",
+      "src/view3d/fields/wells/wells.test.ts": "d070fa93adcd0e513576edbc88f7a98c3db103b59dada7abeef4127865c8296d",
+      "src/view3d/fieldViews.ts": "458a2973260b6c573168d378f2ee62e0523b6ba0abef45f5db1ab03caea28b7f",
+      "src/view3d/flight/coverageHistory.test.ts": "ba6425f564437cdb8720b4e1372d995311f3faa7ad3fccbce35e5f8a867fe638",
+      "src/view3d/flight/coverageHistory.ts": "e9614836b2fceaceca127a9ef0ecdc286e3c4bfd87ccd335b2087a02015f3788",
+      "src/view3d/flight/flight.test.ts": "2958349ee15d271fd5ab29938681b575aa4b4dbcc83c6a38c2e9901cbb22802f",
+      "src/view3d/flight/FlightHolo.ts": "35ad914edde89d0e00be6dcd4dbeeb074ef710837d1dab2f117935efc95f7107",
+      "src/view3d/gfx.ts": "a48b7aef478cc9dbb37061aabfdb8de011b489007dca6d39eeaee42faa5c9e6a",
+      "src/view3d/map/layout.ts": "523f01018f8316b1c88643362da2cb570b6b5b5593fe6fcfd7a387e85db0f9a4",
+      "src/view3d/map/map.test.ts": "6e625e17e79fb79660d08d07d57c7139a62157f581fb66ea8aed2024c89b555d",
+      "src/view3d/map/MapHolo.ts": "f0538204d556ee93f2ee1f250e637abdf789208199a73accc2c0a04b188f8c47",
+      "src/view3d/opening/home.ts": "fd4958bc7a27f7ec8370342daf27ca69b6db7e834df0b412bf8af05c202c3597",
+      "src/view3d/opening/panel.ts": "ee249d336976debfde8ed880fcb1b52b72e04705c55f284d8ed569ea1f241171",
+      "src/view3d/opening/shot.ts": "0aaab90d72b8a0f56b0b7c291aac31ca0cb139465f0c24b3a0ef3904230d0e74",
+      "src/view3d/room/dress.ts": "1d8b27d1bac6718ac16656ee958f8a0f1e33ff534fddc142555f2c270cc500b6",
+      "src/view3d/room/funnelSky.test.ts": "a534ab73190950a1c94a84ddbe2236ce0458132c548b201139da190ba7605b26",
+      "src/view3d/room/funnelSky.ts": "a6d0b26028796a75271683434b1bc9ce00daf4209138fffc501c880cbe2a98bb",
+      "src/view3d/room/layout.ts": "d0cdb0e430b95047b9b2f76908e29ac339cf65fc59208ebe71d6a4353aa273f0",
+      "src/view3d/room/outside.test.ts": "00f80c8600fb97147ea1b8a69c52fa92b4feb3f88305e5a89a05a1553b1ff371",
+      "src/view3d/room/outside.ts": "3df0dc8644eff9c2edadcc34255595b87ebc4541592882aefda9654eeb6040ff",
+      "src/view3d/room/RoomView.ts": "b4f20ab998b39e40e48206dcc149059f8d26ef0252242b7c6675f430f43cbc40",
+      "src/view3d/room/shell.ts": "3282883d9f34e9fe03a84e110dee31dd8aa12d36b3683ed4fda1b81f90344ebc",
+      "src/view3d/room/textures.ts": "1677c9cce3a614dc3336814ec8b8da0e379a2db8307c1e5068cce86a166992c6",
+      "src/view3d/ship/model.ts": "c29587b9829438a9bb84704899d7910c9662dba5358ed9ba02e95c75d60e7f5a",
+      "src/view3d/ship/parts.ts": "aec9693b6e26535f868a8501bb53764f7899d634eac1cc7ce3f1ecd4a19fea78",
+      "src/view3d/ship/ship.test.ts": "4b9351614e6e6d6e28a86f80777a27e1e084a5a544b527e6e6d43bddd87ee3cb",
+      "src/view3d/ship/ShipHolo.ts": "94a91f301fa455e71e856c647a04d90251d22bfc113068943fc85043e0de22e4",
+      "src/view3d/ship/wire.ts": "bbd7d5e40fb2e70a8aa0035eccc0767c6b6737b3bfa07c5866f7c81bcb96aa55",
+      "src/view3d/windowViews.ts": "d81d42dc3b3bcccf36d19d7ef7d1ca69c6fbbaee98319f7d601a231b17fc0cad",
+      "data/ship-baseline.json": "0912882fc43b487e7c349c637ba0881935714ccc345e1eb49d4ab5a25c50b9d6",
+      "tools/harness/flight.test.ts": "a87bc036752d90097d8257b35174958066ce53f589b4c6d8a60ce8a9a301403d",
+      "tools/harness/flight.ts": "2e7b9a1713e8ca48fbfce8f426c9cbcb4b52c0d8374e9f3700cea1129e862ba0",
+      "tools/harness/integration.test.ts": "2b05fcc5b107ba14eb193d3897b8c1ba8fd6158f50c33f2c0a70849d439c912b",
+      "tools/harness/integration.ts": "eaf3c7f492f22b3314713b4e4a37fcfd1cbaa97e1b2cc4cb345e54176b8fdcb3",
+      "tools/harness/learning.ts": "ba37f191fba252d488417b69c096e30ae9d94e7c9830828e3047b307cd007d57",
+      "tools/harness/metrics.test.ts": "5a457ac4bd09cfd5fb1517dfed78f2463224983c0646d66830e709004672ab4f",
+      "tools/harness/metrics.ts": "c92647b7c428a6370a899ca365bfce83da17ea1f203cb8f8601eada580fa431f",
+      "tools/harness/references.test.ts": "b29681c86f98a707a1991b4a180a065939928fa70103ddd648abf5ec966bb746",
+      "tools/harness/references.ts": "1a4d9c3404f97323b86f4cb3167146742676a3af3b0ac59d879c0a41d35de5a3",
+      "tools/harness/run.mjs": "7f74a058481b310f2d7b0d487e26345fafef54c637d54da7ff6aa7eccb76852b",
+      "tools/harness/scenarios.ts": "439277e97daeb6c423bbd81903f9a26e391f4f1383ac0eeb5d69a3370f34e847",
+      "tools/harness/tsconfig.json": "05598b58ac3739f8bd1aec740ecc3e65a0feb2fbfde7cdabf8ba8bd9d5d83cdb",
+      "tools/harness/vitest.config.ts": "f3ae1d070fba4b7781fccd6e3103c41a51f32b94f93aa7ea4d5cdff30bec9c7d",
+      "package-lock.json": "34a4c2ea6734384ebe70e0d946965b4ffc7ca7a5eeac765fc5e43cdce93e3b1c"
+    }
+  },
+  "execution": "completed",
+  "acceptance": "incomplete",
+  "count": 24,
+  "exactRepeat": true,
+  "results": [
+    {
+      "file": "s22-22000-axial-away.json",
+      "sha256": "287e8b5faf35927ed618e12e8976960331637061d0a9e48c23d5e61714c700b0",
+      "id": "s22-22000-axial-away",
+      "execution": "completed",
+      "outcome": {
+        "kind": "lost",
+        "t": 1621.8166606579175,
+        "cause": "collision"
+      },
+      "actualStop": 1622,
+      "previousOutcome": {
+        "kind": "lost",
+        "t": 1621.8166606579175,
+        "cause": "collision"
+      },
+      "previousStop": 1622,
+      "changed": false,
+      "mainKg": 122.36594555735064,
+      "rcsKg": 0.6767207595214018,
+      "firstFailedMargin": {
+        "t": 1621.8166606579175,
+        "kind": "hull-contact",
+        "subject": "funnel-0-core",
+        "detail": "Relative speed 115.03079501742701 m/s"
+      },
+      "targets": {
+        "mainKg": 1000,
+        "rcsKg": 30,
+        "mainWithin": true,
+        "rcsWithin": true,
+        "scope": "Measured consumption only; incomplete flights do not pass route admission."
+      },
+      "lifecycle": {
+        "precursor": 650,
+        "birth": 216
+      },
+      "finalPhases": {
+        "dormant": 0,
+        "precursor": 434,
+        "active": 2167,
+        "cancelled": 0
+      },
+      "sweptTicks": 1622,
+      "contacts": [
+        {
+          "t": 1621.999997794232,
+          "field": "funnel-0",
+          "cause": "structural",
+          "tick": [
+            1621,
+            1622
+          ]
+        }
+      ],
+      "exactRepeat": true
+    },
+    {
+      "file": "s22-22000-coast.json",
+      "sha256": "adaaf64166db93ba004ff3d9d7ddbe969a839eef9ccdb32ec767ab09320a18ef",
+      "id": "s22-22000-coast",
+      "execution": "completed",
+      "outcome": {
+        "kind": "lost",
+        "t": 1764.296569357496,
+        "cause": "collision"
+      },
+      "actualStop": 1765,
+      "previousOutcome": {
+        "kind": "lost",
+        "t": 1764.296569357496,
+        "cause": "collision"
+      },
+      "previousStop": 1765,
+      "changed": false,
+      "mainKg": 0,
+      "rcsKg": 0,
+      "firstFailedMargin": {
+        "t": 1764.296569357496,
+        "kind": "hull-contact",
+        "subject": "funnel-0-core",
+        "detail": "Relative speed 108.79378057391921 m/s"
+      },
+      "targets": {
+        "mainKg": 1000,
+        "rcsKg": 30,
+        "mainWithin": true,
+        "rcsWithin": true,
+        "scope": "Measured consumption only; incomplete flights do not pass route admission."
+      },
+      "lifecycle": {
+        "precursor": 650,
+        "birth": 216
+      },
+      "finalPhases": {
+        "dormant": 0,
+        "precursor": 434,
+        "active": 2167,
+        "cancelled": 0
+      },
+      "sweptTicks": 1765,
+      "contacts": [
+        {
+          "t": 1764.999999999807,
+          "field": "funnel-0",
+          "cause": "structural",
+          "tick": [
+            1764,
+            1765
+          ]
+        }
+      ],
+      "exactRepeat": true
+    },
+    {
+      "file": "s22-22000-cutoff-abort-positive-y.json",
+      "sha256": "e67ff80a73af7197d445befca607d0d876eb7c0250896f5c0587d9f420f28785",
+      "id": "s22-22000-cutoff-abort-positive-y",
+      "execution": "completed",
+      "outcome": {
+        "kind": "in-progress"
+      },
+      "actualStop": 3600,
+      "previousOutcome": null,
+      "previousStop": null,
+      "changed": null,
+      "mainKg": 61.18297277867532,
+      "rcsKg": 0.5747491382237513,
+      "firstFailedMargin": null,
+      "targets": {
+        "mainKg": 1000,
+        "rcsKg": 30,
+        "mainWithin": true,
+        "rcsWithin": true,
+        "scope": "Measured consumption only; incomplete flights do not pass route admission."
+      },
+      "lifecycle": {
+        "precursor": 650,
+        "birth": 650
+      },
+      "finalPhases": {
+        "dormant": 0,
+        "precursor": 0,
+        "active": 2601,
+        "cancelled": 0
+      },
+      "sweptTicks": 3600,
+      "contacts": [],
+      "exactRepeat": true
+    },
+    {
+      "file": "s22-22000-cutoff-abort.json",
+      "sha256": "100bcfaed229d7ba4cb8780532de586116d9914ab076c598c7b900006dca0d5a",
+      "id": "s22-22000-cutoff-abort",
+      "execution": "completed",
+      "outcome": {
+        "kind": "in-progress"
+      },
+      "actualStop": 3600,
+      "previousOutcome": {
+        "kind": "in-progress"
+      },
+      "previousStop": 3600,
+      "changed": false,
+      "mainKg": 61.18297277867532,
+      "rcsKg": 0.5562088434423913,
+      "firstFailedMargin": null,
+      "targets": {
+        "mainKg": 1000,
+        "rcsKg": 30,
+        "mainWithin": true,
+        "rcsWithin": true,
+        "scope": "Measured consumption only; incomplete flights do not pass route admission."
+      },
+      "lifecycle": {
+        "precursor": 650,
+        "birth": 650
+      },
+      "finalPhases": {
+        "dormant": 0,
+        "precursor": 0,
+        "active": 2601,
+        "cancelled": 0
+      },
+      "sweptTicks": 3600,
+      "contacts": [],
+      "exactRepeat": true
+    },
+    {
+      "file": "s22-22000-delayed-negative-y.json",
+      "sha256": "927a49cc5ffe9d743d6a8bd1bc4fafdc64b1abb0b917fc06acefdd2e5346c0d1",
+      "id": "s22-22000-delayed-negative-y",
+      "execution": "completed",
+      "outcome": {
+        "kind": "in-progress"
+      },
+      "actualStop": 36000,
+      "previousOutcome": {
+        "kind": "in-progress"
+      },
+      "previousStop": 36000,
+      "changed": false,
+      "mainKg": 122.36594555735064,
+      "rcsKg": 0.5562088434423913,
+      "firstFailedMargin": null,
+      "targets": {
+        "mainKg": 1000,
+        "rcsKg": 30,
+        "mainWithin": true,
+        "rcsWithin": true,
+        "scope": "Measured consumption only; incomplete flights do not pass route admission."
+      },
+      "lifecycle": {
+        "precursor": 650,
+        "birth": 650
+      },
+      "finalPhases": {
+        "dormant": 0,
+        "precursor": 0,
+        "active": 2601,
+        "cancelled": 0
+      },
+      "sweptTicks": 36000,
+      "contacts": [],
+      "exactRepeat": true
+    },
+    {
+      "file": "s22-22000-delayed-positive-y.json",
+      "sha256": "4344414740c22516a2cb2c7a5a0a92e40fe0a97202adb196a7f6b7278b8622e5",
+      "id": "s22-22000-delayed-positive-y",
+      "execution": "completed",
+      "outcome": {
+        "kind": "completed",
+        "t": 22946,
+        "objective": "forward"
+      },
+      "actualStop": 22946,
+      "previousOutcome": {
+        "kind": "completed",
+        "t": 22946,
+        "objective": "forward"
+      },
+      "previousStop": 22946,
+      "changed": false,
+      "mainKg": 122.36594555735064,
+      "rcsKg": 0.5747491382237513,
+      "firstFailedMargin": null,
+      "targets": {
+        "mainKg": 1000,
+        "rcsKg": 30,
+        "mainWithin": true,
+        "rcsWithin": true,
+        "scope": "Measured consumption only; incomplete flights do not pass route admission."
+      },
+      "lifecycle": {
+        "precursor": 650,
+        "birth": 650
+      },
+      "finalPhases": {
+        "dormant": 0,
+        "precursor": 0,
+        "active": 2601,
+        "cancelled": 0
+      },
+      "sweptTicks": 22946,
+      "contacts": [],
+      "exactRepeat": true
+    },
+    {
+      "file": "s22-22000-model-negative-y.json",
+      "sha256": "cd0c20e417c30d28899d49ed0b9a3f4b4ea94dab993df9f47c39952038872c1b",
+      "id": "s22-22000-model-negative-y",
+      "execution": "completed",
+      "outcome": {
+        "kind": "completed",
+        "t": 25468,
+        "objective": "forward"
+      },
+      "actualStop": 25468,
+      "previousOutcome": {
+        "kind": "in-progress"
+      },
+      "previousStop": 36000,
+      "changed": true,
+      "mainKg": 122.36594555735064,
+      "rcsKg": 0.5562088434423913,
+      "firstFailedMargin": null,
+      "targets": {
+        "mainKg": 1000,
+        "rcsKg": 30,
+        "mainWithin": true,
+        "rcsWithin": true,
+        "scope": "Measured consumption only; incomplete flights do not pass route admission."
+      },
+      "lifecycle": {
+        "precursor": 650,
+        "birth": 650
+      },
+      "finalPhases": {
+        "dormant": 0,
+        "precursor": 0,
+        "active": 2601,
+        "cancelled": 0
+      },
+      "sweptTicks": 25468,
+      "contacts": [],
+      "exactRepeat": true
+    },
+    {
+      "file": "s22-22000-model-positive-y.json",
+      "sha256": "999c1e7347a5663e999b70b8e88e10d7c3baf0990a45957a241e95e8cc4f2d5c",
+      "id": "s22-22000-model-positive-y",
+      "execution": "completed",
+      "outcome": {
+        "kind": "completed",
+        "t": 25881,
+        "objective": "forward"
+      },
+      "actualStop": 25881,
+      "previousOutcome": null,
+      "previousStop": null,
+      "changed": null,
+      "mainKg": 122.36594555735064,
+      "rcsKg": 0.5747491382237513,
+      "firstFailedMargin": null,
+      "targets": {
+        "mainKg": 1000,
+        "rcsKg": 30,
+        "mainWithin": true,
+        "rcsWithin": true,
+        "scope": "Measured consumption only; incomplete flights do not pass route admission."
+      },
+      "lifecycle": {
+        "precursor": 650,
+        "birth": 650
+      },
+      "finalPhases": {
+        "dormant": 0,
+        "precursor": 0,
+        "active": 2601,
+        "cancelled": 0
+      },
+      "sweptTicks": 25881,
+      "contacts": [],
+      "exactRepeat": true
+    },
+    {
+      "file": "s22-22000-negative-y.json",
+      "sha256": "27193472cd7310b577a5f644f90a404f04d96472e9a5622694e402d8a53e3144",
+      "id": "s22-22000-negative-y",
+      "execution": "completed",
+      "outcome": {
+        "kind": "completed",
+        "t": 25468,
+        "objective": "forward"
+      },
+      "actualStop": 25468,
+      "previousOutcome": {
+        "kind": "in-progress"
+      },
+      "previousStop": 36000,
+      "changed": true,
+      "mainKg": 122.36594555735064,
+      "rcsKg": 0.5562088434423913,
+      "firstFailedMargin": null,
+      "targets": {
+        "mainKg": 1000,
+        "rcsKg": 30,
+        "mainWithin": true,
+        "rcsWithin": true,
+        "scope": "Measured consumption only; incomplete flights do not pass route admission."
+      },
+      "lifecycle": {
+        "precursor": 650,
+        "birth": 650
+      },
+      "finalPhases": {
+        "dormant": 0,
+        "precursor": 0,
+        "active": 2601,
+        "cancelled": 0
+      },
+      "sweptTicks": 25468,
+      "contacts": [],
+      "exactRepeat": true
+    },
+    {
+      "file": "s22-22000-positive-y.json",
+      "sha256": "ab39f85a7f200b94bd1f79462c667caf7fe2de405a24179055f9ce213de88cbf",
+      "id": "s22-22000-positive-y",
+      "execution": "completed",
+      "outcome": {
+        "kind": "completed",
+        "t": 25881,
+        "objective": "forward"
+      },
+      "actualStop": 25881,
+      "previousOutcome": {
+        "kind": "completed",
+        "t": 25881,
+        "objective": "forward"
+      },
+      "previousStop": 25881,
+      "changed": false,
+      "mainKg": 122.36594555735064,
+      "rcsKg": 0.5747491382237513,
+      "firstFailedMargin": null,
+      "targets": {
+        "mainKg": 1000,
+        "rcsKg": 30,
+        "mainWithin": true,
+        "rcsWithin": true,
+        "scope": "Measured consumption only; incomplete flights do not pass route admission."
+      },
+      "lifecycle": {
+        "precursor": 650,
+        "birth": 650
+      },
+      "finalPhases": {
+        "dormant": 0,
+        "precursor": 0,
+        "active": 2601,
+        "cancelled": 0
+      },
+      "sweptTicks": 25881,
+      "contacts": [],
+      "exactRepeat": true
+    },
+    {
+      "file": "s22-22000-worn-negative-y.json",
+      "sha256": "98acd2ea5778134aed3b375700e7d535791ce26e9a54f2e88e2b186e36fd7be3",
+      "id": "s22-22000-worn-negative-y",
+      "execution": "completed",
+      "outcome": {
+        "kind": "completed",
+        "t": 24967,
+        "objective": "forward"
+      },
+      "actualStop": 24967,
+      "previousOutcome": {
+        "kind": "completed",
+        "t": 24967,
+        "objective": "forward"
+      },
+      "previousStop": 24967,
+      "changed": false,
+      "mainKg": 85.6561618901469,
+      "rcsKg": 0.5742856308553996,
+      "firstFailedMargin": null,
+      "targets": {
+        "mainKg": 1000,
+        "rcsKg": 30,
+        "mainWithin": true,
+        "rcsWithin": true,
+        "scope": "Measured consumption only; incomplete flights do not pass route admission."
+      },
+      "lifecycle": {
+        "precursor": 650,
+        "birth": 650
+      },
+      "finalPhases": {
+        "dormant": 0,
+        "precursor": 0,
+        "active": 2601,
+        "cancelled": 0
+      },
+      "sweptTicks": 24967,
+      "contacts": [],
+      "exactRepeat": true
+    },
+    {
+      "file": "s22-22000-worn-positive-y.json",
+      "sha256": "a940da2b2d97f773cef3ef5f136b1059e65889a346c65d5379b24ed2504e1b8d",
+      "id": "s22-22000-worn-positive-y",
+      "execution": "completed",
+      "outcome": {
+        "kind": "completed",
+        "t": 22866,
+        "objective": "forward"
+      },
+      "actualStop": 22866,
+      "previousOutcome": {
+        "kind": "completed",
+        "t": 23102,
+        "objective": "forward"
+      },
+      "previousStop": 23102,
+      "changed": true,
+      "mainKg": 85.6561618901469,
+      "rcsKg": 0.5775301824421604,
+      "firstFailedMargin": null,
+      "targets": {
+        "mainKg": 1000,
+        "rcsKg": 30,
+        "mainWithin": true,
+        "rcsWithin": true,
+        "scope": "Measured consumption only; incomplete flights do not pass route admission."
+      },
+      "lifecycle": {
+        "precursor": 650,
+        "birth": 650
+      },
+      "finalPhases": {
+        "dormant": 0,
+        "precursor": 0,
+        "active": 2601,
+        "cancelled": 0
+      },
+      "sweptTicks": 22866,
+      "contacts": [],
+      "exactRepeat": true
+    },
+    {
+      "file": "s22-22005-negative-y.json",
+      "sha256": "ac2e0a8fd2245df3b418f09b4d1c5d273998cf4a4b537fecb8fd4eb885f1d3ec",
+      "id": "s22-22005-negative-y",
+      "execution": "completed",
+      "outcome": {
+        "kind": "completed",
+        "t": 16921,
+        "objective": "forward"
+      },
+      "actualStop": 16921,
+      "previousOutcome": {
+        "kind": "completed",
+        "t": 16921,
+        "objective": "forward"
+      },
+      "previousStop": 16921,
+      "changed": false,
+      "mainKg": 122.36594555735064,
+      "rcsKg": 0.5562088434423913,
+      "firstFailedMargin": null,
+      "targets": {
+        "mainKg": 1000,
+        "rcsKg": 30,
+        "mainWithin": true,
+        "rcsWithin": true,
+        "scope": "Measured consumption only; incomplete flights do not pass route admission."
+      },
+      "lifecycle": {
+        "precursor": 650,
+        "birth": 650
+      },
+      "finalPhases": {
+        "dormant": 0,
+        "precursor": 0,
+        "active": 2601,
+        "cancelled": 0
+      },
+      "sweptTicks": 16921,
+      "contacts": [],
+      "exactRepeat": true
+    },
+    {
+      "file": "s22-22005-positive-y.json",
+      "sha256": "da9463f3ff4971094fbdbbf18207bbd40fcbb78204beac0be3ab24f206711622",
+      "id": "s22-22005-positive-y",
+      "execution": "completed",
+      "outcome": {
+        "kind": "completed",
+        "t": 15410,
+        "objective": "forward"
+      },
+      "actualStop": 15410,
+      "previousOutcome": {
+        "kind": "completed",
+        "t": 15410,
+        "objective": "forward"
+      },
+      "previousStop": 15410,
+      "changed": false,
+      "mainKg": 122.36594555735064,
+      "rcsKg": 0.5840192856144313,
+      "firstFailedMargin": null,
+      "targets": {
+        "mainKg": 1000,
+        "rcsKg": 30,
+        "mainWithin": true,
+        "rcsWithin": true,
+        "scope": "Measured consumption only; incomplete flights do not pass route admission."
+      },
+      "lifecycle": {
+        "precursor": 650,
+        "birth": 650
+      },
+      "finalPhases": {
+        "dormant": 0,
+        "precursor": 0,
+        "active": 2601,
+        "cancelled": 0
+      },
+      "sweptTicks": 15410,
+      "contacts": [],
+      "exactRepeat": true
+    },
+    {
+      "file": "s22-22011-negative-y.json",
+      "sha256": "6f366084208a1daeae5b072f056d211d342f4d7b87c1c2e5342bcbd28c5aac92",
+      "id": "s22-22011-negative-y",
+      "execution": "completed",
+      "outcome": {
+        "kind": "completed",
+        "t": 15672,
+        "objective": "forward"
+      },
+      "actualStop": 15672,
+      "previousOutcome": {
+        "kind": "completed",
+        "t": 15672,
+        "objective": "forward"
+      },
+      "previousStop": 15672,
+      "changed": false,
+      "mainKg": 122.36594555735064,
+      "rcsKg": 0.5654789908330713,
+      "firstFailedMargin": null,
+      "targets": {
+        "mainKg": 1000,
+        "rcsKg": 30,
+        "mainWithin": true,
+        "rcsWithin": true,
+        "scope": "Measured consumption only; incomplete flights do not pass route admission."
+      },
+      "lifecycle": {
+        "precursor": 650,
+        "birth": 650
+      },
+      "finalPhases": {
+        "dormant": 0,
+        "precursor": 0,
+        "active": 2601,
+        "cancelled": 0
+      },
+      "sweptTicks": 15672,
+      "contacts": [],
+      "exactRepeat": true
+    },
+    {
+      "file": "s22-22011-positive-y.json",
+      "sha256": "3728555caa58fc4c817b9aeb3c12ed053fb6cd0ba20df77ad14c31462f8bd5bd",
+      "id": "s22-22011-positive-y",
+      "execution": "completed",
+      "outcome": {
+        "kind": "completed",
+        "t": 16087,
+        "objective": "forward"
+      },
+      "actualStop": 16087,
+      "previousOutcome": {
+        "kind": "completed",
+        "t": 16087,
+        "objective": "forward"
+      },
+      "previousStop": 16087,
+      "changed": false,
+      "mainKg": 122.36594555735064,
+      "rcsKg": 0.5747491382237513,
+      "firstFailedMargin": null,
+      "targets": {
+        "mainKg": 1000,
+        "rcsKg": 30,
+        "mainWithin": true,
+        "rcsWithin": true,
+        "scope": "Measured consumption only; incomplete flights do not pass route admission."
+      },
+      "lifecycle": {
+        "precursor": 650,
+        "birth": 650
+      },
+      "finalPhases": {
+        "dormant": 0,
+        "precursor": 0,
+        "active": 2601,
+        "cancelled": 0
+      },
+      "sweptTicks": 16087,
+      "contacts": [],
+      "exactRepeat": true
+    },
+    {
+      "file": "s22-22015-negative-y.json",
+      "sha256": "cf7add9ebbcee84b63b37d915d5793046b169a27448191bfa8d326d62ef28262",
+      "id": "s22-22015-negative-y",
+      "execution": "completed",
+      "outcome": {
+        "kind": "completed",
+        "t": 18538,
+        "objective": "forward"
+      },
+      "actualStop": 18538,
+      "previousOutcome": {
+        "kind": "completed",
+        "t": 18538,
+        "objective": "forward"
+      },
+      "previousStop": 18538,
+      "changed": false,
+      "mainKg": 122.36594555735064,
+      "rcsKg": 0.5562088434423913,
+      "firstFailedMargin": null,
+      "targets": {
+        "mainKg": 1000,
+        "rcsKg": 30,
+        "mainWithin": true,
+        "rcsWithin": true,
+        "scope": "Measured consumption only; incomplete flights do not pass route admission."
+      },
+      "lifecycle": {
+        "precursor": 650,
+        "birth": 650
+      },
+      "finalPhases": {
+        "dormant": 0,
+        "precursor": 0,
+        "active": 2601,
+        "cancelled": 0
+      },
+      "sweptTicks": 18538,
+      "contacts": [],
+      "exactRepeat": true
+    },
+    {
+      "file": "s22-22015-positive-y.json",
+      "sha256": "b5481385c951db1bdd36675d72645b53af5eea1798a266b41baadda0f89e10fe",
+      "id": "s22-22015-positive-y",
+      "execution": "completed",
+      "outcome": {
+        "kind": "completed",
+        "t": 19011,
+        "objective": "forward"
+      },
+      "actualStop": 19011,
+      "previousOutcome": {
+        "kind": "completed",
+        "t": 19011,
+        "objective": "forward"
+      },
+      "previousStop": 19011,
+      "changed": false,
+      "mainKg": 122.36594555735064,
+      "rcsKg": 0.5747491382237513,
+      "firstFailedMargin": null,
+      "targets": {
+        "mainKg": 1000,
+        "rcsKg": 30,
+        "mainWithin": true,
+        "rcsWithin": true,
+        "scope": "Measured consumption only; incomplete flights do not pass route admission."
+      },
+      "lifecycle": {
+        "precursor": 650,
+        "birth": 650
+      },
+      "finalPhases": {
+        "dormant": 0,
+        "precursor": 0,
+        "active": 2601,
+        "cancelled": 0
+      },
+      "sweptTicks": 19011,
+      "contacts": [],
+      "exactRepeat": true
+    },
+    {
+      "file": "s22-22017-negative-y.json",
+      "sha256": "61540ab1bc77f896645a530d19dbe8e04aed02ea281f0ce77792a1b593ebc7c3",
+      "id": "s22-22017-negative-y",
+      "execution": "completed",
+      "outcome": {
+        "kind": "completed",
+        "t": 21807,
+        "objective": "forward"
+      },
+      "actualStop": 21807,
+      "previousOutcome": {
+        "kind": "completed",
+        "t": 21807,
+        "objective": "forward"
+      },
+      "previousStop": 21807,
+      "changed": false,
+      "mainKg": 122.36594555735064,
+      "rcsKg": 0.5562088434423913,
+      "firstFailedMargin": null,
+      "targets": {
+        "mainKg": 1000,
+        "rcsKg": 30,
+        "mainWithin": true,
+        "rcsWithin": true,
+        "scope": "Measured consumption only; incomplete flights do not pass route admission."
+      },
+      "lifecycle": {
+        "precursor": 650,
+        "birth": 650
+      },
+      "finalPhases": {
+        "dormant": 0,
+        "precursor": 0,
+        "active": 2601,
+        "cancelled": 0
+      },
+      "sweptTicks": 21807,
+      "contacts": [],
+      "exactRepeat": true
+    },
+    {
+      "file": "s22-22017-positive-y.json",
+      "sha256": "84cdda5a0ddd63babbeaa7af144b71f75753bc5ca9f6ea16255a01e076e4005d",
+      "id": "s22-22017-positive-y",
+      "execution": "completed",
+      "outcome": {
+        "kind": "completed",
+        "t": 21629,
+        "objective": "forward"
+      },
+      "actualStop": 21629,
+      "previousOutcome": {
+        "kind": "completed",
+        "t": 21629,
+        "objective": "forward"
+      },
+      "previousStop": 21629,
+      "changed": false,
+      "mainKg": 122.36594555735064,
+      "rcsKg": 0.5747491382237513,
+      "firstFailedMargin": null,
+      "targets": {
+        "mainKg": 1000,
+        "rcsKg": 30,
+        "mainWithin": true,
+        "rcsWithin": true,
+        "scope": "Measured consumption only; incomplete flights do not pass route admission."
+      },
+      "lifecycle": {
+        "precursor": 650,
+        "birth": 650
+      },
+      "finalPhases": {
+        "dormant": 0,
+        "precursor": 0,
+        "active": 2601,
+        "cancelled": 0
+      },
+      "sweptTicks": 21629,
+      "contacts": [],
+      "exactRepeat": true
+    },
+    {
+      "file": "s22-22020-negative-y.json",
+      "sha256": "af08e13e4a4238b4df85620ffb80b42299f83c2038bb1c5d855bfd1e8a7d3609",
+      "id": "s22-22020-negative-y",
+      "execution": "completed",
+      "outcome": {
+        "kind": "in-progress"
+      },
+      "actualStop": 36000,
+      "previousOutcome": {
+        "kind": "in-progress"
+      },
+      "previousStop": 36000,
+      "changed": false,
+      "mainKg": 122.36594555735064,
+      "rcsKg": 0.5562088434423913,
+      "firstFailedMargin": null,
+      "targets": {
+        "mainKg": 1000,
+        "rcsKg": 30,
+        "mainWithin": true,
+        "rcsWithin": true,
+        "scope": "Measured consumption only; incomplete flights do not pass route admission."
+      },
+      "lifecycle": {
+        "precursor": 650,
+        "birth": 650
+      },
+      "finalPhases": {
+        "dormant": 0,
+        "precursor": 0,
+        "active": 2601,
+        "cancelled": 0
+      },
+      "sweptTicks": 36000,
+      "contacts": [],
+      "exactRepeat": true
+    },
+    {
+      "file": "s22-22020-positive-y.json",
+      "sha256": "3646677d00941bc8ab19ac98ad79a5f92c9ab61999b8641e5ae40b86794e4067",
+      "id": "s22-22020-positive-y",
+      "execution": "completed",
+      "outcome": {
+        "kind": "completed",
+        "t": 21861,
+        "objective": "forward"
+      },
+      "actualStop": 21861,
+      "previousOutcome": {
+        "kind": "completed",
+        "t": 21861,
+        "objective": "forward"
+      },
+      "previousStop": 21861,
+      "changed": false,
+      "mainKg": 122.36594555735064,
+      "rcsKg": 0.5747491382237513,
+      "firstFailedMargin": null,
+      "targets": {
+        "mainKg": 1000,
+        "rcsKg": 30,
+        "mainWithin": true,
+        "rcsWithin": true,
+        "scope": "Measured consumption only; incomplete flights do not pass route admission."
+      },
+      "lifecycle": {
+        "precursor": 650,
+        "birth": 650
+      },
+      "finalPhases": {
+        "dormant": 0,
+        "precursor": 0,
+        "active": 2601,
+        "cancelled": 0
+      },
+      "sweptTicks": 21861,
+      "contacts": [],
+      "exactRepeat": true
+    },
+    {
+      "file": "s22-22029-negative-y.json",
+      "sha256": "01940e66ad2cb082da1d172d5a6edb583aa5645ac68b047d72fe9da0a69c0b97",
+      "id": "s22-22029-negative-y",
+      "execution": "completed",
+      "outcome": {
+        "kind": "in-progress"
+      },
+      "actualStop": 36000,
+      "previousOutcome": {
+        "kind": "in-progress"
+      },
+      "previousStop": 36000,
+      "changed": false,
+      "mainKg": 122.36594555735064,
+      "rcsKg": 0.5562088434423913,
+      "firstFailedMargin": null,
+      "targets": {
+        "mainKg": 1000,
+        "rcsKg": 30,
+        "mainWithin": true,
+        "rcsWithin": true,
+        "scope": "Measured consumption only; incomplete flights do not pass route admission."
+      },
+      "lifecycle": {
+        "precursor": 650,
+        "birth": 650
+      },
+      "finalPhases": {
+        "dormant": 0,
+        "precursor": 0,
+        "active": 2601,
+        "cancelled": 0
+      },
+      "sweptTicks": 36000,
+      "contacts": [],
+      "exactRepeat": true
+    },
+    {
+      "file": "s22-22029-positive-y.json",
+      "sha256": "6ee6c099c4c87d4290a0ce870f2d13eb274df60fa37c1075949d0b8b6352bd0e",
+      "id": "s22-22029-positive-y",
+      "execution": "completed",
+      "outcome": {
+        "kind": "in-progress"
+      },
+      "actualStop": 36000,
+      "previousOutcome": {
+        "kind": "in-progress"
+      },
+      "previousStop": 36000,
+      "changed": false,
+      "mainKg": 122.36594555735064,
+      "rcsKg": 0.5840192856144313,
+      "firstFailedMargin": null,
+      "targets": {
+        "mainKg": 1000,
+        "rcsKg": 30,
+        "mainWithin": true,
+        "rcsWithin": true,
+        "scope": "Measured consumption only; incomplete flights do not pass route admission."
+      },
+      "lifecycle": {
+        "precursor": 650,
+        "birth": 650
+      },
+      "finalPhases": {
+        "dormant": 0,
+        "precursor": 0,
+        "active": 2601,
+        "cancelled": 0
+      },
+      "sweptTicks": 36000,
+      "contacts": [],
+      "exactRepeat": true
+    }
+  ]
+}
