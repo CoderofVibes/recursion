@@ -15,7 +15,7 @@ The montage's bed plays under every scene from the wells to the console (the sli
 
 ## Snaps to black
 
-At 12.8 s and 26.2 s **everything stops dead**: silence until the next shot (owner, 2026-11-15: no `black-cut`, whose take read as a drum). The alarm cuts at 12.8 s with it. The page enforces this, and a test checks it (`src/trailer/cues.test.ts`).
+At 12.8 s and 26.2 s **the picture cuts to black and every effect stops dead** (owner, 2026-11-15: no `black-cut`, whose take read as a drum). At 12.8 s the music bed carries through the black into the console shots, so the sound has no gap there; it lands its next accent on the first console shot. The alarm cuts at 12.8 s with it. The page enforces this, and a test checks it (`src/trailer/cues.test.ts`).
 
 ## The game's cues the trailer reuses (`public/audio/`, AU's prompts)
 

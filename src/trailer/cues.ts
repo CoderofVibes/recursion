@@ -97,7 +97,7 @@ const montageBed = (): SoundCue[] => {
   const shots = SHEET_IDS.filter((id) => id.startsWith('montage-'));
   return shots.map((id, i) => {
     const next = shots[i + 1];
-    return bed(start(id), next ? start(next) : start('console'), [A1, A2, A3][i % 3]!);
+    return bed(start(id), next ? start(next) : start('console'), [A2, A3, A1][i % 3]!);
   });
 };
 
@@ -118,8 +118,9 @@ export const CUES: readonly SoundCue[] = [
     file: 'flicker-crackle',
     at,
     until: Math.min(Math.round((at + 0.3) * 1000) / 1000, SNAP),
-    // The take peaks at -20 dBFS: lifted to be heard over the hit.
-    gain: 1.8,
+    // The owner's retake (2026-11-15): 0.63 s of crackle from its first instant, peak -16 dBFS;
+    // each flicker plays its first 0.3 s, at the old take's level.
+    gain: 1.2,
   })),
   // No sound as the title goes out (owner, 2026-11-15): the game's `title-out` right after the
   // hit would be one effect up against another. The hit fades into the black before the slingshot.
@@ -127,7 +128,16 @@ export const CUES: readonly SoundCue[] = [
   // The bed under the action, from the wells' cut to the snap (owner: it starts with the wells).
   bed(start('wells'), start('lattice'), A2),
   bed(start('lattice'), start('braid'), LATTICE_HIT, LATTICE_RATE),
-  bed(start('braid'), SNAP, A1),
+  // The braid's bed plays through the snap into the console shots (owner, 2026-11-15: no gap
+  // in the sound there; the picture still cuts to black and the braid's own sounds stop dead).
+  // Slowed a little so its next accent lands exactly on the first console shot, where the
+  // montage takes it up from that same accent.
+  bed(
+    start('braid'),
+    start('montage-flight'),
+    A1,
+    (A2 - A1) / (start('montage-flight') - start('braid')),
+  ),
 
   // The slingshot.
   {

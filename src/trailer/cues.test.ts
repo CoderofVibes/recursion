@@ -21,6 +21,8 @@ describe("the trailer's sound", () => {
     SNAPS.forEach((snap, i) => {
       for (const cue of CUES.filter((c) => c.at < snap)) {
         expect(cue.until, `${cue.file} at ${cue.at} s`).toBeDefined();
+        // The one exception (owner): the music bed bridges the first snap into the console shots.
+        if (cue.file === 'montage-bed' && i === 0) continue;
         expect(cue.until!).toBeLessThanOrEqual(snap);
       }
       const during = CUES.filter((c) => c.at >= snap && c.at < next[i]!);
@@ -47,14 +49,18 @@ describe("the trailer's sound", () => {
     for (const cue of bed) {
       const rate = cue.rate ?? 1;
       const hit = (cue.offset ?? 0) + BED_LEAD;
-      // Never across a snap: everything stops dead there.
-      for (const snap of SNAPS) expect(cue.at >= snap || cue.until! <= snap).toBe(true);
+      // Never across the card's snap; the first it bridges, from the braid (owner).
+      expect(cue.at >= SNAPS[1]! || cue.until! <= SNAPS[1]!).toBe(true);
+      if (cue.at < SNAPS[0]! && cue.until! > SNAPS[0]!) {
+        expect(cue.at).toBe(beat('braid').start);
+        expect(cue.until).toBe(beat('montage-flight').start);
+      }
       // The next big accent in the take falls at or after this cue's cut, never just before it;
       // the one exception is the lattice's, which is placed on the strike.
       for (const accent of BED_ACCENTS.filter((a) => a > hit + 0.1)) {
         const lands = cue.at + (accent - hit) / rate;
         if (Math.abs(lands - LATTICE_STRIKE) < 1e-9) continue;
-        expect(lands).toBeGreaterThanOrEqual(cue.until!);
+        expect(lands).toBeGreaterThanOrEqual(cue.until! - 1e-9);
       }
       // It starts on an accent, or (the lattice) on a hit that brings an accent onto the strike.
       if (!BED_ACCENTS.some((a) => Math.abs(a - hit) < 1e-9)) {
