@@ -4,10 +4,11 @@ Thread: GPT/Codex · Branch: `p3/tr-visuals` · 2026-11-15 (Pacific)
 
 ## Delivered
 
-Review draft under A26: each shot still needs the owner's approval in the trailer page. The shared rig and wells are the first checkpoint; subsequent checkpoints extend this note.
+Review draft under A26: each shot still needs the owner's approval in the trailer page. Wells checkpoint: `508480c`; subsequent checkpoints extend this note.
 
 - `src/trailer/rig/`: one scripted RoomView, one WebGL canvas and its CSS label layer, serialized off-screen preparation, recorded-optics interpolation, capture/review tools.
 - `src/trailer/scenes/wells/`: real run-0 Garden geometry and optical fixture; prepared window contours and staged FLIGHT reconstruction; display-only yaw after 0.6 s.
+- `src/trailer/scenes/console/`: the real opening's Earth, stars and held standing pose, with a staged slowly turning FLIGHT ship and level disc.
 - `src/view3d/room/RoomView.ts`: **owner-authorized exception**, one additive `renderScriptedFrame(data, shot, time)` beside the opening's scripted-shot method. Applies camera, frame, light, hologram and `sampleLoss` without advancing the room clock. Existing methods, PF renderer setup and 3F region/range code are untouched. The game never calls it.
 - `src/view3d/sky/`: **no change needed**. These fixtures keep the sun visible; the existing exposure remains at its initialized daylight target. The staged braid also uses a fixed visible sun. No wall-clock exposure transition enters these shots.
 
@@ -36,6 +37,18 @@ Reproduce in the isolated dev-game browser: evaluate `scenes/wells/reframe.js` w
 Compression: **held T+1238 s**; the 2.5 s display yaw runs at 1×. No room-brightness changes.
 
 [DEMONSTRATED: wells-review.json] One canvas, zero console errors, exact repeat image. RTX 4050 / ANGLE D3D11: median 6.1 ms, p95 24.1 ms, worst 48.5 ms; CPU render p95 5.9 ms. The earlier default headless run selected Intel UHD and was substantially slower. **Sustained 60 fps is not yet demonstrated**; do not read the 165-Hz median as a no-hitch claim.
+
+## Console — 23.9–26.2 s
+
+[Start](tv/console-start.png) · [Middle](tv/console-middle.png) · [End](tv/console-end.png) · [Timing and seek report](tv/console-review.json) · Trailer hold: `?still=25.05`
+
+![Earth and the ship hologram](tv/console-middle.png)
+
+[DEMONSTRATED: console scene and captures] Uses the actual `HOME_SHOT` position, rotation and room level, with `createHomeWindow()` and no lens. No Earth position, radius, texture, light or sky change. **Proposal: held camera**, so the final calm answers the opening. The real FLIGHT disc is level (`headingUp: false`).
+
+**Every staged element:** the ship hologram is visible over Earth; it uses the Garden fixture's real ship configuration, relocated to the display origin with a slow 0.25 rad/s spin derived from `roomMotion`. This is a display composition, not a recorded homeward trajectory. No nearby bodies or fields in the hologram. Held world time; display spin at 1×. No brightness changes or alarm; TR's hard cut remains 26.2 s.
+
+[DEMONSTRATED: console-review.json] One canvas, zero console errors, exact repeat image. RTX 4050: median 6.1 ms, p95 18.1 ms, worst 30.4 ms; CPU render p95 3.7 ms. Sustained-60 gate remains open.
 
 ## Requests outside TV ownership
 
