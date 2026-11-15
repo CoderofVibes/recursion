@@ -77,6 +77,10 @@ function recordingClient(fail?: string) {
     report: () => note('report', {} as never),
     burns: () => note('burns', []),
     empirical: () => note('empirical', null),
+    lattice: (id: string, now?: number) =>
+      note(`lattice:${id}:${now}`, [
+        { id: `lattice-of-${id}`, kind: 'lattice', detected: true, visual: { upTo: now ?? null } },
+      ]),
     terminate: () => undefined,
   } as unknown as ModelClient;
   return { client, calls };
@@ -180,6 +184,51 @@ describe('model bridge', () => {
       .filter((c) => c.startsWith('append:'))
       .reduce((n, c) => n + Number(c.split(':')[2]), 0);
     expect(appended).toBe(8);
+  });
+
+  it('carries the lattice the model rebuilds from recorded frames into the believed world (A16)', async () => {
+    let ms = 0;
+    const { client, calls } = recordingClient();
+    const bridge = createModelBridge(client, { referenceRadius: 1e6, clock: () => ms });
+    const box = createBlackBox();
+    bridge.beginAttempt(start, box.beginAttempt(start, 0));
+    // Ordinary records: the model is not asked for a lattice, and the ship believes none.
+    bridge.ingest(batch(0));
+    await bridge.settled();
+    expect(calls.some((c) => c.startsWith('lattice'))).toBe(false);
+    expect(bridge.believedWorld(1).fields).toEqual([]);
+
+    // The Black Box function's frames are recorded: the next hand-over rebuilds the lattice from
+    // the frames so far, after the records have been appended and refreshed.
+    const frame = (t: number): Measurement => ({
+      kind: 'field-signal',
+      t,
+      source: 'camera',
+      channel: 'lattice.angular-fragments.v2',
+      value: [1, 2, 3],
+      sigma: [0, 0, 0],
+    });
+    calls.length = 0;
+    ms = 1200;
+    bridge.ingest({ ...batch(20), measurements: [fix(20), frame(18), frame(19)] });
+    await bridge.settled();
+    expect(calls).toEqual(['append:attempt-0001:3', 'refresh', 'lattice:attempt-0001:19']);
+    expect(bridge.believedWorld(21).fields).toEqual([
+      { id: 'lattice-of-attempt-0001', kind: 'lattice', detected: true, visual: { upTo: 19 } },
+    ]);
+    // It stays what the model last rebuilt, and is asked for again as records arrive.
+    calls.length = 0;
+    ms = 2400;
+    bridge.ingest(batch(40));
+    await bridge.settled();
+    expect(calls).toEqual(['append:attempt-0001:1', 'refresh', 'lattice:attempt-0001:19']);
+
+    // A new attempt believes no lattice until it has recorded its own frames (new-run rule).
+    const next = { ...start, attemptId: 'attempt-0002', index: 2 };
+    bridge.endAttempt(box.endAttempt('attempt-0001', { kind: 'recalled', t: 50 }, 0));
+    bridge.beginAttempt(next, box.beginAttempt(next, 1));
+    await bridge.settled();
+    expect(bridge.believedWorld(0).fields).toEqual([]);
   });
 
   it('refits in flight at most once a minute, and before a forecast when records are new', async () => {

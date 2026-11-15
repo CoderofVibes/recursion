@@ -104,6 +104,17 @@ export const NEAR_RANGE: Readonly<Record<string, number>> = { 'chain-link': 120 
 
 /** The shortest range FLIGHT allows in an encounter. */
 export const rangeMinFor = (encounterId: string): number => NEAR_RANGE[encounterId] ?? RANGE_MIN;
+
+/**
+ * The range FLIGHT opens at, from how far the nearest briefed body is at arrival: it sits two
+ * thirds of the way to the rim, as Alpha does in the Gravity range (1,000 km away, the standard
+ * 1,500 km). An encounter a few kilometres across then opens at its own scale instead of as a
+ * dot in an empty volume. Two figures, never past the standard range nor under the floor.
+ */
+export function openingRange(nearest: number | undefined, floor = RANGE_MIN): number {
+  if (nearest === undefined || !Number.isFinite(nearest) || nearest <= 0) return RANGE_DEFAULT;
+  return clamp(Number((1.5 * nearest).toPrecision(2)), floor, RANGE_DEFAULT);
+}
 /** Seconds between rebuilds of clipped paths as the ship moves through the volume. */
 const RECLIP = 0.25;
 

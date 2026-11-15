@@ -18,6 +18,12 @@
  * with the model, what is recorded waits here and goes in the next, in order; nothing is dropped,
  * and a forecast still takes everything recorded up to its moment first.
  *
+ * The lattice (A16): once the ship records the Black Box function's frames, each hand-over also
+ * asks the model for the lattice rebuilt from the records so far (`ModelClient.lattice`, 2C), and
+ * the believed world carries it in `fields`, where FLIGHT's lattice view draws it. It is the
+ * model's reconstruction from the ship's own frames and believed path, never the field itself
+ * (P11); with no frames there is no field, and a new attempt starts with none.
+ *
  * Refit in flight: the global fit (Tier G) also runs during an attempt, at most once a minute
  * of real time (1G spec §11.2) and before a forecast when new records have arrived. Besides
  * updating the numbers, it is what gives the attempt in progress its own solution: until then
@@ -27,6 +33,7 @@
 
 import type {
   AttemptRecord,
+  BelievedField,
   ExecutedCommand,
   ExtensionId,
   ForecastDetail,
@@ -84,6 +91,11 @@ export interface ModelBridge extends ModelPort {
   lastError(): string | undefined;
 }
 
+/** The Black Box function's recorded channels (3C's `lattice.angular-fragments.v2` and the rest). */
+const LATTICE_CHANNELS = 'lattice.';
+/** After a rebuild of the lattice, wait this many times what it took before the next. [ASSUMED] */
+const LATTICE_REST = 4;
+
 export function createModelBridge(client: ModelClient, options: ModelBridgeOptions): ModelBridge {
   const navigator = createStandInModel({ referenceRadius: options.referenceRadius });
   const clock = options.clock ?? (() => performance.now());
@@ -104,6 +116,12 @@ export function createModelBridge(client: ModelClient, options: ModelBridgeOptio
   let stale = false;
   /** Timed hand-overs handed to the queue that have not come back from the model. */
   let handoversOut = 0;
+  /** This attempt has recorded lattice frames, and the latest of them is from this ship time. */
+  let latticeAt: number | undefined;
+  /** The lattice the model last rebuilt from this attempt's records (A16). */
+  let fields: readonly BelievedField[] = [];
+  /** The bridge's clock before which the lattice is not rebuilt again. */
+  let latticeNext = -Infinity;
   let queue: Promise<void> = Promise.resolve();
 
   /** Run a model call after everything queued before it; keep the loop alive if it fails. */
@@ -141,6 +159,7 @@ export function createModelBridge(client: ModelClient, options: ModelBridgeOptio
     if (!fresh && !refit) return;
     const delta = { measurements, executed, events };
     const id = attemptId;
+    const lattice = latticeAt;
     measurements = [];
     executed = [];
     events = [];
@@ -154,6 +173,17 @@ export function createModelBridge(client: ModelClient, options: ModelBridgeOptio
       try {
         if (fresh) await client.append(id, delta);
         take(await (refit ? client.refit() : client.refresh()));
+        // The lattice from the frames recorded so far; a stale answer for an attempt that has
+        // since ended is not kept.
+        if (lattice !== undefined && clock() >= latticeNext) {
+          const from = clock();
+          const rebuilt = await client.lattice(id, lattice);
+          // A rebuild grows with the frames recorded (2C: frames × features²). It is asked for
+          // again only after several times what the last one took, so on a long pass it never
+          // takes more than a share of the model's time from forecasts and fits.
+          latticeNext = clock() + LATTICE_REST * (clock() - from);
+          if (id === attemptId) fields = rebuilt;
+        }
       } finally {
         handoversOut--;
       }
@@ -168,6 +198,9 @@ export function createModelBridge(client: ModelClient, options: ModelBridgeOptio
       executed = [];
       events = [];
       stale = false;
+      latticeAt = undefined;
+      latticeNext = -Infinity;
+      fields = [];
       lastRefit = clock();
       if (!initialised) {
         initialised = true;
@@ -193,7 +226,11 @@ export function createModelBridge(client: ModelClient, options: ModelBridgeOptio
 
     ingest(batch) {
       navigator.ingest(batch);
-      for (const m of batch.measurements) measurements.push(m);
+      for (const m of batch.measurements) {
+        measurements.push(m);
+        if (m.kind === 'field-signal' && m.channel?.startsWith(LATTICE_CHANNELS))
+          latticeAt = Math.max(latticeAt ?? -Infinity, m.t);
+      }
       for (const e of batch.executed) executed.push(e);
       for (const e of batch.events) events.push(e);
       // Not while the last one is still with the model (see the header): these records wait.
@@ -211,7 +248,8 @@ export function createModelBridge(client: ModelClient, options: ModelBridgeOptio
     },
 
     believedWorld(t) {
-      return navigator.believedWorld(t);
+      const world = navigator.believedWorld(t);
+      return fields.length > 0 ? { ...world, fields: [...world.fields, ...fields] } : world;
     },
 
     state() {

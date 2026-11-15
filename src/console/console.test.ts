@@ -106,6 +106,24 @@ describe('debrief', () => {
       if (line.met === null) expect(line.measured).toMatch(/not recorded|nothing ranged|not yet/);
   });
 
+  it('names what the ship ranged as the briefing does, not by its id', () => {
+    const record = withDesign(attempts[0]!);
+    const text = (named: typeof bodies) => {
+      const report = debrief(record, { ...archive, attempts: [record] }, named);
+      return [
+        ...report.constraints.map((c) => c.measured),
+        ...report.forecasts.map((f) => f.value),
+      ].join(' | ');
+    };
+    const ranged = bodies.filter((b) => text(bodies).includes(`from ${b.id}`));
+    expect(ranged.length).toBeGreaterThan(0);
+    const renamed = bodies.map((b) => ({ ...b, name: `The ${b.id} throat` }));
+    for (const b of ranged) {
+      expect(text(renamed)).toContain(`from The ${b.id} throat`);
+      expect(text(renamed)).not.toContain(`from ${b.id}`);
+    }
+  });
+
   it('lists a held burn by the time it ran, not the time it was commanded for', () => {
     const base = attempts[0]!;
     const quiet = { ...base, executed: base.executed.filter((e) => e.source === 'procedure') };

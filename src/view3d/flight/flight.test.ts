@@ -17,7 +17,9 @@ import { registerFieldView } from '../fieldViews.ts';
 import { LineSet } from '../gfx.ts';
 import {
   makeFlightHolo,
+  openingRange,
   pastAndAhead,
+  RANGE_DEFAULT,
   RANGE_MAX,
   RANGE_MIN,
   rangeMinFor,
@@ -248,6 +250,23 @@ describe('coverage from earlier attempts (2G coverageEarlier)', () => {
     expect(kept.length).toBeLessThanOrEqual(24);
     for (let i = 1; i < kept.length; i++)
       expect(kept[i - 1]!.fresh).toBeGreaterThanOrEqual(kept[i]!.fresh);
+  });
+});
+
+describe('the range FLIGHT opens at', () => {
+  it('puts the nearest briefed body two thirds of the way out, at each encounter’s scale', () => {
+    // The Gravity range: Alpha 1,000 km away (with the arrival's survey error) is the standard.
+    expect(openingRange(1_000_700)).toBe(RANGE_DEFAULT);
+    // The Well Garden: the entrance throat 108.8 km away.
+    expect(openingRange(108_800)).toBe(160_000);
+    // The Unseen Cathedral: the survey rock 1,452 m away, under the encounter's 120 m floor never.
+    expect(openingRange(1452, rangeMinFor('chain-link'))).toBe(2200);
+    expect(openingRange(10, rangeMinFor('chain-link'))).toBe(120);
+    expect(openingRange(1452)).toBe(RANGE_MIN);
+    // Never wider than the standard, and the standard when nothing is briefed.
+    expect(openingRange(9_000_000)).toBe(RANGE_DEFAULT);
+    expect(openingRange(undefined)).toBe(RANGE_DEFAULT);
+    expect(openingRange(Infinity)).toBe(RANGE_DEFAULT);
   });
 });
 

@@ -125,7 +125,7 @@ export class RoomView {
   private tiltUser = 0;
   /** How each hologram was framed at first, for resetFraming(). */
   private readonly framingAtRest: {
-    readonly range: number;
+    range: number;
     readonly map: Quaternion;
     readonly ship: Quaternion;
   };
@@ -338,6 +338,11 @@ export class RoomView {
     if (mode === 'flight') this.tiltUser = clamp(this.tiltUser + radians, -0.3, 0.6);
     else if (mode === 'map' || mode === 'ship')
       this.tiltUser = clamp(this.tiltUser + radians, -0.25, 0.8);
+  }
+  /** The range FLIGHT starts at and a reset returns to: the host sets it to the encounter's scale. */
+  setFlightRange(metres: number): void {
+    this.flight.setRange(metres);
+    this.framingAtRest.range = this.flight.range();
   }
   /** Back to how the view first framed its hologram. */
   resetFraming(): void {
