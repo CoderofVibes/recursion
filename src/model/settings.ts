@@ -41,6 +41,12 @@ export interface ModelSettings {
   /** [2C] A forecast whose present state is older than this is flagged stale, s. */
   readonly presentStaleAfter: number;
   /**
+   * [2C] A converged global fit that moves a body the arc never fixed by more than this many σ
+   * of its prior is not believed for that body: it is absorbing what the model's law cannot
+   * explain (2F request 13). The body then comes from the briefing under the law in force.
+   */
+  readonly bodyPriorPullLimit: number;
+  /**
    * Validated range transfer (§7.4, DECISIONS A5: "every body"): 1 = a rule shared by all bodies
    * applies its validated spans around every body (shared-law); 0 = the same body only.
    */
@@ -124,6 +130,7 @@ export const DEFAULT_SETTINGS: ModelSettings = {
   sigmaHFloor: 0.01,
   horizonFraction: 0.1,
   presentStaleAfter: 3600,
+  bodyPriorPullLimit: 3,
   validatedRangeSharedLaw: 1,
   agingEngineScaleDay: 0.002,
   agingEngineScaleUse: 0.005,

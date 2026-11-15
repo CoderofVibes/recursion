@@ -658,6 +658,11 @@ export interface PresentState {
     readonly value: Vec3T;
     readonly sigma: Vec3T;
   };
+  /**
+   * How the true state differs from `state` per unit of each shared hedge exponent (the present
+   * state's consider analysis, `Anchor.hedge`): the forecast moves it with the exponent.
+   */
+  readonly hedge?: Readonly<Record<string, Float64Array>>;
   readonly anchor?: Anchor;
 }
 
@@ -698,7 +703,7 @@ export interface ModelSnapshot {
 /** Reference law for Tier L around `body` within one arc (§5.2), others frozen from Tier G. */
 export function referenceFor(
   d: Pick<ModelDerived, 'spec' | 'values' | 'solutions'> & {
-    readonly problem?: Pick<TierGProblem, 'records'>;
+    readonly problem?: Pick<TierGProblem, 'records'> & Partial<Pick<TierGProblem, 'params'>>;
   },
   body: string,
   arcId: string,
@@ -725,7 +730,7 @@ export function referenceFor(
         relativeState(
           d,
           ctx,
-          fromSolution(sol, spec, body, id) ? sol : undefined,
+          fromSolution(sol, spec, body, id, d.problem?.params) ? sol : undefined,
           arcId,
           id,
           body,
@@ -753,16 +758,49 @@ export function referenceFor(
  * arc's solution: when a converged global fit made it, or when the arc tracked the body (and the
  * reference body). Otherwise it comes from the briefing, propagated under the law in force (§5.2:
  * the reference law holds believed values only).
+ *
+ * A converged global fit is not believed for a body the arc never fixed if it moved that body's
+ * state beyond `settings.bodyPriorPullLimit` σ of its prior: with nothing measuring the body, the
+ * fit is using it to absorb what its law cannot explain (a Newtonian fit of an inverse-2.5 dive
+ * moved Beta 88 km at 11,400 s and 870 km at 13,800 s, against a 5 km, 1 m/s prior; 2F request
+ * 13).
  */
 function fromSolution(
   sol: ArcSolution | undefined,
   spec: ModelSpec,
   body: string,
   id: string,
+  params?: readonly Param[],
 ): boolean {
   if (!sol) return false;
   const seen = (b: string) => rangeFixTimes(sol.arc.meas, b).length >= MIN_ARC_FIXES;
-  return sol.fromGlobalFit === true || (seen(id) && (body === spec.primary || seen(body)));
+  if (seen(id) && (body === spec.primary || seen(body))) return true;
+  return sol.fromGlobalFit === true && !pulledBeyondPrior(sol, id, params, spec.settings);
+}
+
+const priorsByProblem = new WeakMap<readonly Param[], Map<string, Param>>();
+
+/** A body's state in an arc's solution sits beyond the pull limit of its prior (see above). */
+function pulledBeyondPrior(
+  sol: ArcSolution,
+  id: string,
+  params: readonly Param[] | undefined,
+  s: ModelSettings,
+): boolean {
+  if (!params) return false;
+  let byName = priorsByProblem.get(params);
+  if (!byName) {
+    byName = new Map(params.map((p) => [p.name, p]));
+    priorsByProblem.set(params, byName);
+  }
+  // The body's state in this arc, and its mass, which carries it along the arc.
+  for (const name of [...STATE_KEYS.map((k) => `${sol.arc.id}.${id}.${k}`), muId(id)]) {
+    const p = byName.get(name);
+    const i = sol.idx.get(name);
+    if (!p || i === undefined || p.priorMean === undefined || !(p.priorSigma! > 0)) continue;
+    if (Math.abs(sol.x[i]! - p.priorMean) > s.bodyPriorPullLimit * p.priorSigma!) return true;
+  }
+  return false;
 }
 
 /** State of body `id` relative to body `ref` (ref at rest) at t, from an arc solution. */
@@ -953,6 +991,26 @@ function buildOnce(
     values[g] = reuse?.values[g] ?? x[i]!;
     sigmas[g] = reuse?.sigmas[g] ?? (useFit ? fitGet(fit!, g)[1] : (prm.priorSigma ?? 0));
   }
+  // The mass of a body no arc ever fixed is believed only as far as its prior allows: a fit that
+  // moves it further is using it to absorb what its law cannot explain (a Newtonian fit of an
+  // inverse-2.5 dive put Beta's μ at 1.4e10 against 2.2e9 ± 8e8; 2F request 13). It is then held
+  // at its prior, with the prior's σ, everywhere the values are in force.
+  if (useFit) {
+    const fixed = new Set(
+      spec.bodies.filter((b) =>
+        problem.arcs.some((a) => rangeFixTimes(a.meas, b).length >= MIN_ARC_FIXES),
+      ),
+    );
+    for (const b of spec.bodies) {
+      const id = muId(b);
+      const prm = problem.params[idx.get(id) ?? -1];
+      if (fixed.has(b) || !prm || prm.priorMean === undefined || !(prm.priorSigma! > 0)) continue;
+      if (Math.abs(values[id]! - prm.priorMean) > s.bodyPriorPullLimit * prm.priorSigma!) {
+        values[id] = prm.priorMean;
+        sigmas[id] = prm.priorSigma!;
+      }
+    }
+  }
   const scale = Float64Array.from(problem.params, (p) => p.scale);
   const solutions = new Map<string, ArcSolution>();
   for (const a of problem.arcs) {
@@ -990,13 +1048,26 @@ function buildOnce(
   const partial = { spec, values, solutions, problem };
   const rule = windowRule(s);
   const n = spec.exponent ? (values[EXPONENT_ID] ?? 2) : 2;
-  const fitWindows = (arcs: readonly Arc[], body: string): LocalFitResult[] => {
-    const out: LocalFitResult[] = [];
+  /**
+   * Local fits of the coasting windows of `arcs` about `body`. A window where another body pulls
+   * too hard is left out of the calibration profile (§13.7); with `forPaths` true for its arc it
+   * is still fitted, flagged `excluded`, because the ship's path there is all a tracked rock's
+   * fixes need (a rock of Beta's belt is met between the bodies, where Alpha pulls half as hard
+   * as Beta and every window is excluded; S8's ring crossing).
+   */
+  const fitWindows = (
+    arcs: readonly Arc[],
+    body: string,
+    forPaths: (arc: Arc) => boolean = () => false,
+  ): (LocalFitResult & { readonly excluded: boolean })[] => {
+    const out: (LocalFitResult & { readonly excluded: boolean })[] = [];
     for (const a of arcs) {
       const ref = referenceFor(partial, body, a.id, ctx);
+      const paths = forPaths(a);
       for (const w of makeWindows(a, body, rule)) {
         // Coasting windows only; a sliver between two burns is too short to fit.
         if (w.powered || w.fixes.length < s.windowKeepFixes) continue;
+        let excluded = false;
         if (ref.others && ref.others.length > 0) {
           const mid = w.fixes[w.fixes.length >> 1]!;
           const los = lineOfSight(mid);
@@ -1007,7 +1078,8 @@ function buildOnce(
             const r = Math.hypot(st[0] - ship[0]!, st[1] - ship[1]!, st[2] - ship[2]!);
             return believedPull(o.mu, n, s.r0, r) > s.otherBodyPullLimit * own;
           });
-          if (tooStrong) continue;
+          if (tooStrong && !paths) continue;
+          excluded = tooStrong;
         }
         const key = opts.cache
           ? `${w.id}|${w.t0}|${w.t1}|${w.fixes.length}|${hashState([
@@ -1022,14 +1094,34 @@ function buildOnce(
             ])}`
           : '';
         const hit = opts.cache?.get(key);
-        const res = hit ?? localFitDetailed(ref, a, w, s.dt, [1, s.localScalePriorSigma]);
+        let res: LocalFitResult;
+        try {
+          res = hit ?? localFitDetailed(ref, a, w, s.dt, [1, s.localScalePriorSigma]);
+        } catch (e) {
+          // A path-only window that cannot be fitted is simply not a path.
+          if (excluded) continue;
+          throw e;
+        }
         if (!hit) opts.cache?.set(key, res);
-        out.push(res);
+        out.push({ ...res, excluded });
       }
     }
     return out;
   };
-  const shipFits = new Map(spec.bodies.map((body) => [body, fitWindows(problem.arcs, body)]));
+  // Attempts that tracked a rock (a range fix on anything that is not a briefed body).
+  const rockArcs = new Set(
+    attempts
+      .filter((rec) => {
+        const known = new Set(contextFor(ctx, rec).bodies.map((b) => b.id));
+        return rec.measurements.some(
+          (m) => m.kind === 'range' && !!m.target && !known.has(m.target),
+        );
+      })
+      .flatMap((rec) => (problem.builds.get(rec.id)?.arcs ?? []).map((a) => a.id)),
+  );
+  const shipFits = new Map(
+    spec.bodies.map((body) => [body, fitWindows(problem.arcs, body, (a) => rockArcs.has(a.id))]),
+  );
 
   // The ship's path relative to each body: the window fit covering t (to the next window).
   // The ship's path relative to each body: per ship arc, its window fits in time order; the
@@ -1086,7 +1178,9 @@ function buildOnce(
   const profiles: ProfileFit[] = [];
   const flatProfiles: ProfileFit[] = [];
   for (const body of spec.bodies) {
-    const rows = [...shipFits.get(body)!, ...fitWindows(probeList, body)].map((r) => r.row);
+    const rows = [...shipFits.get(body)!, ...fitWindows(probeList, body)]
+      .filter((r) => !r.excluded)
+      .map((r) => r.row);
     windows.push(...rows);
     if (rows.length > 0)
       profiles.push(
@@ -1266,9 +1360,10 @@ export function presentState(
   // first fix (2F request 13): a second body moved under a law not sampled out there would
   // otherwise bias the present state with nothing in its covariance to say so.
   const tFirst = wins[0]!.fixes[0]!.t;
-  const bodyPriors = d.spec.dynamic
-    ? bodyCovariances(d, bodiesAt(d, ctx, arc.id, body, tFirst, asOf))
-    : undefined;
+  const bodyPriors =
+    d.spec.dynamic && !(globalThis as { __noBP?: boolean }).__noBP
+      ? bodyCovariances(d, bodiesAt(d, ctx, arc.id, body, tFirst, asOf))
+      : undefined;
   // A present-state fit that cannot be solved leaves the arrival state, the best state the
   // model then has: a forecast is always available.
   let anc: Anchor;
@@ -1280,6 +1375,17 @@ export function presentState(
       extraProfiles: extra,
       camSigma: camera?.sigma ?? null,
       ...(bodyPriors ? { bodyPriors } : {}),
+      considerHedge: {
+        sigmaH: d.sigmaH0,
+        validated: d.validated,
+        flat: d.flatProfiles,
+        // As the forecast does (§8.2): the masses of other bodies without a profile.
+        mu: Object.fromEntries(
+          d.spec.bodies
+            .filter((b) => b !== body && !d.profiles.some((p) => p.body === b))
+            .map((b) => [b, d.sigmas[muId(b)] ?? 0]),
+        ),
+      },
     });
   } catch {
     return arrivalState(actx, d.spec);
@@ -1294,6 +1400,7 @@ export function presentState(
     state: anc.state,
     covariance: cov,
     anchor: anc,
+    ...(anc.hedge ? { hedge: anc.hedge } : {}),
     ...(camera ? { camera } : {}),
   };
 }
@@ -1338,7 +1445,7 @@ export function bodiesAt(
   const eta: Record<string, Record<string, Float64Array>> = {};
   const since: Record<string, number> = {};
   const sol = d.solutions.get(arcId) ?? d.solutions.get(shipArcOf(arcId));
-  const trusted = (id: string) => fromSolution(sol, spec, ref, id);
+  const trusted = (id: string) => fromSolution(sol, spec, ref, id, d.problem.params);
   for (const o of others) {
     state[o] = relativeState(d, ctx, trusted(o) ? sol : undefined, arcId, o, ref, t);
     cov[o] = zeros(6, 6);

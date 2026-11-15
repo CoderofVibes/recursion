@@ -277,12 +277,13 @@ export function buildForecast(
   // Executed burns not finished at the present state, then the plan's burns. A hands-on burn
   // still open when the forecast is issued stops at the last record (it is not known to go on);
   // a commanded burn of the attempt in progress runs on as commanded; once the attempt has
-  // ended, nothing thrusts past its end.
+  // ended, nothing thrusts past its end. The plan being forecast is in the plan: its own executed
+  // commands (one recorded at the moment of commitment, A18) are not counted again.
   const att = new AttitudeLog(record.measurements);
   const mass = new MassLog(ctx.ship, record.measurements, arrivalMassOf(ctx));
   const adaptCtx = { ship: ctx.ship, settings: s, bodies: spec.bodies, primary: spec.primary };
   const executed = burnsFromExecuted(
-    record.executed,
+    record.executed.filter((e) => e.planId === undefined || e.planId !== req.plan.id),
     record.outcome.kind === 'in-progress' ? Infinity : record.outcome.t,
     handsOnThrust(ctx.ship, recordEnd(record)),
   )
@@ -536,6 +537,7 @@ export function buildForecast(
     muSigma,
     ...(spec.dynamic ? { bodyLaw: true } : {}),
     ...(bodiesNow ? { othersCov: bodiesNow.cov, othersEta: bodiesNow.eta } : {}),
+    ...(present.hedge ? { xNowEta: present.hedge } : {}),
     h: s.fdStep,
   });
 

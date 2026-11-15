@@ -736,6 +736,26 @@ export interface AnchorInfo {
   };
 }
 
+/** The hedge exponents a present-state fit considers (`anchorState`). */
+export interface ConsiderHedge {
+  /** σ_h0 of the default hedge. */
+  readonly sigmaH: number;
+  /** Per body: validated spans (m) and the earned σ_e that applies inside them. */
+  readonly validated?: Readonly<
+    Record<
+      string,
+      { readonly spans: readonly (readonly [number, number])[]; readonly sigmaE: number }
+    >
+  >;
+  /** Covered ranges of bodies without a profile (g ≡ 1). */
+  readonly flat?: readonly ProfileFit[];
+  /**
+   * σ of μ for the other bodies the forecast also treats as uncertain (those without a profile,
+   * §8.2): considered too, under the forecast's names (`f.mu.<id>`).
+   */
+  readonly mu?: Readonly<Record<string, number>>;
+}
+
 export interface Anchor {
   /** Time of the last fix used. */
   readonly tNow: number;
@@ -743,6 +763,13 @@ export interface Anchor {
   readonly state: Float64Array;
   /** 6×6 covariance (before s²). It contains the camera misalignment's share. */
   readonly covariance: Matrix;
+  /**
+   * With `considerHedge`: how the true state at the last fix differs from this estimate per unit
+   * of each shared source (`eta:<body>`, `etaE:<body>`, `f.mu.<body>`; six numbers each). The fit holds
+   * the exponents at zero, as the forecast's mean does; a law that bends by η outside the covered
+   * distances would have moved the fitted state by this much (consider parameters).
+   */
+  readonly hedge?: Readonly<Record<string, Float64Array>>;
   readonly info: AnchorInfo;
 }
 
@@ -759,6 +786,12 @@ export interface Anchor {
  * first fix joins the fit, held by a prior at its believed state with that 6×6 covariance, so
  * where the model is unsure the second body is (moved under a law it has not sampled there) is
  * part of the present state's covariance and not a hidden bias.
+ *
+ * `considerHedge` treats the hedge exponents of every body's pull as consider parameters: the
+ * fit is unchanged, and `Anchor.hedge` says how the state would move if the law bent outside the
+ * covered distances (a second body pulls from far outside them: in the inverse-2.5 world Beta's
+ * tide on a ship near Alpha is about 0.6 of Newton's, which biased a dive's present state by
+ * kilometres with a σ of 150 m). `flat` gives covered ranges for bodies without a profile.
  */
 export function anchorState(
   ref: ReferenceLaw,
@@ -773,6 +806,7 @@ export function anchorState(
     extraProfiles?: readonly ProfileFit[];
     camSigma?: Vec3T | null;
     bodyPriors?: Readonly<Record<string, Matrix>>;
+    considerHedge?: ConsiderHedge;
   } = {},
 ): Anchor {
   const h = opts.h ?? 1e-3;
@@ -870,6 +904,21 @@ export function anchorState(
     for (let r = 0; r < 6; r++) Jm.data[r * q + i] = (sp[r]! - sm[r]!) / (2 * step);
   }
   const PNow = sandwich(Jm, res.P);
+  const hedge = opts.considerHedge
+    ? considerHedge(opts.considerHedge, {
+        st,
+        sub,
+        params,
+        fullPriors,
+        res,
+        Jm,
+        prof,
+        extra: opts.extraProfiles ?? [],
+        aid,
+        tLast,
+        dt,
+      })
+    : undefined;
   const [g, gS] = fitGet(res, `${aid}.g`);
   const [g1, g1S] = fitGet(res, `${aid}.g1`);
   const cam = camSigma ? camKeys.map((k) => fitGet(res, `${aid}.cam.${k}`)) : null;
@@ -877,6 +926,7 @@ export function anchorState(
     tNow: tLast,
     state: xNow,
     covariance: PNow,
+    ...(hedge ? { hedge } : {}),
     info: {
       windows: wins.map((w) => w.id),
       tFirst,
@@ -901,6 +951,131 @@ export function anchorState(
         : {}),
     },
   };
+}
+
+/**
+ * Consider analysis of the present-state fit for the hedge exponents (see `anchorState`). The
+ * fit's estimate moves by S = P Jxᵀ Jη per unit η (Jx, Jη: −d(whitened residual)/d(parameter)),
+ * and η moves the propagation to the last fix by K; the estimate's error per unit η is
+ * G = Jm S − K, so the true state is the estimate minus G η.
+ */
+function considerHedge(
+  ch: ConsiderHedge,
+  f: {
+    readonly st: Structure;
+    readonly sub: Arc;
+    readonly params: readonly Param[];
+    readonly fullPriors: readonly FullPrior[];
+    readonly res: ReturnType<Problem['solve']>;
+    readonly Jm: Matrix;
+    readonly prof: ProfileFit | null;
+    readonly extra: readonly ProfileFit[];
+    readonly aid: string;
+    readonly tLast: number;
+    readonly dt: number;
+  },
+): Record<string, Float64Array> | undefined {
+  const all = [...(f.prof ? [f.prof] : []), ...f.extra];
+  for (const p of ch.flat ?? []) if (!all.some((q) => q.body === p.body)) all.push(p);
+  const etaParams: Param[] = [];
+  const shared: string[] = [];
+  const profiles: ProfileDef[] = all.map((p) => {
+    const name = `${f.aid}.h.${p.body}`;
+    etaParams.push({
+      name,
+      init: 0,
+      scale: 1e-2,
+      priorMean: 0,
+      priorSigma: ch.sigmaH,
+      group: f.aid,
+    });
+    shared.push(`eta:${p.body}`);
+    const v = ch.validated?.[p.body];
+    const earned =
+      v && v.spans.length > 0 ? { etaE: `${f.aid}.hE.${p.body}`, spans: v.spans } : undefined;
+    if (earned && v) {
+      etaParams.push({
+        name: earned.etaE,
+        init: 0,
+        scale: 1e-2,
+        priorMean: 0,
+        priorSigma: v.sigmaE,
+        group: f.aid,
+      });
+      shared.push(`etaE:${p.body}`);
+    }
+    return profileDef(p, undefined, name, earned);
+  });
+  // Masses of the other bodies the forecast treats as uncertain.
+  const muRef = new Map<string, string>();
+  for (const [id, sig] of Object.entries(ch.mu ?? {})) {
+    const b = f.st.bodies.find((q) => q.id === id);
+    if (!b || !(sig > 0) || typeof b.mu !== 'number') continue;
+    const name = `${f.aid}.m.${id}`;
+    etaParams.push({
+      name,
+      init: b.mu,
+      scale: Math.max(1e-3 * Math.abs(b.mu), sig * 1e-2),
+      priorMean: b.mu,
+      priorSigma: sig,
+      group: f.aid,
+    });
+    shared.push(`f.mu.${id}`);
+    muRef.set(id, name);
+  }
+  const k = etaParams.length;
+  if (k === 0) return undefined;
+  const q = f.res.x.length;
+  const stC: Structure = {
+    ...f.st,
+    profiles,
+    bodies: f.st.bodies.map((b) => (muRef.has(b.id) ? { ...b, mu: muRef.get(b.id)! } : b)),
+  };
+  const probC = new Problem(stC, [f.sub], [...f.params, ...etaParams], {
+    dt: f.dt,
+    ...(f.fullPriors.length > 0 ? { fullPriors: f.fullPriors } : {}),
+  });
+  const xC = Float64Array.from([...f.res.x, ...etaParams.map((e) => e.init)]);
+  const { J } = probC.residualAndJacobian(xC);
+  const m = J.rows;
+  const p = J.cols;
+  // A = Jxᵀ Jη (q × k), then S = P A.
+  const A = new Float64Array(q * k);
+  for (let r = 0; r < m; r++)
+    for (let j = 0; j < k; j++) {
+      const je = J.data[r * p + q + j]!;
+      if (je === 0) continue;
+      for (let i = 0; i < q; i++) A[i * k + j]! += J.data[r * p + i]! * je;
+    }
+  const P = f.res.P;
+  const S = new Float64Array(q * k);
+  for (let i = 0; i < q; i++)
+    for (let j = 0; j < k; j++) {
+      let v = 0;
+      for (let l = 0; l < q; l++) v += P.data[i * q + l]! * A[l * k + j]!;
+      S[i * k + j] = v;
+    }
+  const caC = compileArc(stC, f.sub, probC.idx);
+  const rel = (xv: ArrayLike<number>) => shipAndBodies(caC, xv, [f.tLast], f.dt).state[0]!;
+  const out: Record<string, Float64Array> = {};
+  const xp = Float64Array.from(xC);
+  for (let j = 0; j < k; j++) {
+    const step = shared[j]!.startsWith('f.mu.') ? 1e-3 * etaParams[j]!.scale * 1e3 : 1e-3;
+    xp[q + j] = xC[q + j]! + step;
+    const plus = rel(xp);
+    xp[q + j] = xC[q + j]! - step;
+    const minus = rel(xp);
+    xp[q + j] = xC[q + j]!;
+    const col = new Float64Array(6);
+    for (let r = 0; r < 6; r++) {
+      let jm = 0;
+      for (let i = 0; i < q; i++) jm += f.Jm.data[r * q + i]! * S[i * k + j]!;
+      const K = (plus[r]! - minus[r]!) / (2 * step);
+      col[r] = -(jm - K); // the true state minus the estimate, per unit of the source
+    }
+    out[shared[j]!] = col;
+  }
+  return out;
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -1016,6 +1191,12 @@ export interface ForecastCoreInput {
    * forecast: moving it moves the body's starting state by this much as well.
    */
   readonly othersEta?: Readonly<Record<string, Readonly<Record<string, ArrayLike<number>>>>>;
+  /**
+   * How the true present state differs from `xNow` per unit of each shared source (six numbers
+   * per source, named as in `sensitivity`: `eta:<body>`, `etaE:<body>`, `f.mu.<body>`;
+   * `Anchor.hedge`): moving the source moves the starting state with it.
+   */
+  readonly xNowEta?: Readonly<Record<string, ArrayLike<number>>>;
   readonly h?: number;
 }
 
@@ -1138,8 +1319,20 @@ export function forecastCore(inp: ForecastCoreInput): ForecastCoreResult {
   const base = run(x);
   const q = x.length;
   const T = sortedTimes.length;
-  // A hedge exponent also moves the bodies' starting states (`othersEta`).
+  // A hedge exponent also moves the bodies' starting states (`othersEta`) and the ship's
+  // (`xNowEta`).
   const coupling = new Map<number, [number, number][]>();
+  for (const [i, sig] of muIdx) if (sig > 0) etaByName.set(names[i]!, i);
+  for (const [nm, col] of Object.entries(inp.xNowEta ?? {})) {
+    const i = etaByName.get(nm);
+    if (i === undefined) continue;
+    const pairs = coupling.get(i) ?? [];
+    for (let c = 0; c < 6; c++) {
+      const v = col[c] ?? 0;
+      if (v !== 0 && Number.isFinite(v)) pairs.push([c, v]);
+    }
+    coupling.set(i, pairs);
+  }
   for (const [id, byName] of Object.entries(inp.othersEta ?? {})) {
     const list = bodyStateIdx.get(id);
     if (!list) continue;
