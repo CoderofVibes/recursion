@@ -9,6 +9,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { ConsoleScreen } from '../console/ConsoleScreen.tsx';
 import { Desk, useDesk } from '../console/desk.ts';
+import { loadEncounterPanels } from '../console/encounterPanels.ts';
 import { FlightHud } from '../console/FlightHud.tsx';
 import { MapPlate } from '../console/MapPlate.tsx';
 import { ShipPanels } from '../console/ShipPanels.tsx';
@@ -65,6 +66,7 @@ export function ControlRoom({ game, modelError, erase }: ControlRoomProps) {
     const labels = labelsRef.current;
     if (!canvas || !labels) return;
     applyTheme(document.documentElement);
+    loadEncounterPanels();
     const running = startControlRoom(canvas, labels, game, desk, (change) =>
       setUi((u) => ({ ...u, ...change })),
     );

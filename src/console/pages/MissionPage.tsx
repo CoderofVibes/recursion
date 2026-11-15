@@ -8,9 +8,9 @@ import type { EquipmentSpec } from '../../contracts/index.ts';
 import { LevelBar, ModeChips, Panel, Readout, ReadoutGrid } from '../../theme/components/index.ts';
 import { Columns } from '../Columns.tsx';
 import { Actions, Button, Caption, Line, NumberField, enter } from '../controls.tsx';
-import { fixRate, recorder, spendable, stores } from '../data.ts';
+import { departProgress, fixRate, recorder, recorderEstimate, spendable, stores } from '../data.ts';
 import type { Desk } from '../desk.ts';
-import { clock, duration, fixed, whole } from '../format.ts';
+import { clock, dist, duration, fixed, whole } from '../format.ts';
 import { APPROACH, EVIDENCE } from '../mission.ts';
 import type { Approach, EvidenceGoal } from '../mission.ts';
 
@@ -31,17 +31,16 @@ export function MissionPage({ desk }: { readonly desk: Desk }) {
   const main = stores(ship, game.ship, design.reserve).find((s) => s.id === 'main-propellant');
   // What the propellant above the reserve buys (the same figure FLIGHT shows as "to spend").
   const budget = spendable(ship, game.ship, design.reserve);
+  const depart = departProgress(snapshot, game.model.state());
   const targets = [
     ...snapshot.world.bodies.map((b) => ({ value: b.id, label: b.name.toUpperCase() })),
     ...snapshot.world.asteroids.map((a) => ({ value: a.id, label: a.id.toUpperCase() })),
   ];
-  // What the recorder setting will cost: power from the ratings, storage from its sample size.
-  const systems = game.ship.systems?.recorder as { bytesPerSample?: number } | undefined;
-  const fill = design.setup.recorderRate * (systems?.bytesPerSample ?? 0);
-  const recorderWatts =
-    design.setup.recorderRate <= 1
-      ? 15 + (35 - 15) * Math.max(0, (design.setup.recorderRate - 1 / 10) / (1 - 1 / 10))
-      : 35 + ((100 - 35) * (design.setup.recorderRate - 10)) / 40;
+  // What the recorder setting will cost and record, as the ship works it out (S20): power from
+  // its operating points, at most one sample a second, storage from the sample size.
+  const estimate = recorderEstimate(design.setup.recorderRate, game.ship);
+  const fill = estimate.bytesPerSecond;
+  const recorderWatts = estimate.watts;
   const ended = status.phase === 'ended';
   const scheduled = status.planId
     ? `${status.planId} · ${status.pending} commands pending`
@@ -55,6 +54,20 @@ export function MissionPage({ desk }: { readonly desk: Desk }) {
             {o.label}
           </Line>
         ))}
+        {depart ? (
+          // The frame the objective is judged in, as the ship believes it (S20).
+          <Line
+            label="from the centre of mass"
+            status={
+              depart.speed >= depart.minSpeed && depart.distance >= depart.beyond
+                ? 'nominal'
+                : undefined
+            }
+          >
+            {fixed(depart.speed, 1)} of {whole(depart.minSpeed)} m/s · {dist(depart.distance)} of{' '}
+            {dist(depart.beyond)} out
+          </Line>
+        ) : null}
         <Caption>evidence goal</Caption>
         <ModeChips
           label="Evidence goal"
@@ -158,7 +171,7 @@ export function MissionPage({ desk }: { readonly desk: Desk }) {
             label="Fixes"
             value={fixed(
               Math.min(
-                design.setup.recorderRate,
+                estimate.samplesPerSecond,
                 modePower(camera, design.setup.cameraMode) / (modePower(camera, 'track') || 120),
               ),
               2,
@@ -171,6 +184,13 @@ export function MissionPage({ desk }: { readonly desk: Desk }) {
             tone="blackbox"
           />
         </ReadoutGrid>
+        {design.setup.recorderRate > 1 ? (
+          <p className="cs-note">
+            ▲ the ship takes at most one sample a second: a faster rate costs more power and records
+            no more
+          </p>
+        ) : null}
+        {/* The estimate above is for the setting chosen; this is what the ship does now. */}
         <p className="cs-note">
           now: {fixed(fixRate(ship, camera), 2)} fixes per s · recorder{' '}
           {recorderSpec ? whole(ship.equipment[recorderSpec.id]?.powerDraw ?? 0) : '—'} W

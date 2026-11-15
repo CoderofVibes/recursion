@@ -22,6 +22,23 @@ Everything on screen that is not three-dimensional. It reaches the game only thr
 | `data.ts` | Instrument rows from the believed ship: stores, bus loads, heat margin, recorder, Δv |
 | `controls.tsx`, `StrengthPlot.tsx`, `console.css` | Local controls built on theme tokens (listed for the UI lane in `docs/handoffs/2D.md`) |
 
+## Encounter panels
+
+An encounter's own instruments go beside FLIGHT. The interface is `encounterPanels.ts`; each panel lives in `encounters/<encounter-id>/` and belongs to the section that builds that encounter. Its `index.ts` registers the panel for its encounter id, through a dynamic import (the console loads every `encounters/*/index.ts` eagerly, so a static import back would be a cycle):
+
+```tsx
+// src/console/encounters/chain-link/index.ts
+void import('../../encounterPanels.ts').then(({ registerEncounterPanel }) =>
+  registerEncounterPanel('chain-link', ({ snapshot, game, command }) => (
+    <ChainLinkPanel state={stateFrom(snapshot)} onMode={(m) => command(latticeModeCommands(m))} />
+  )),
+);
+```
+
+- `snapshot` is the frame's (no second one is built); `game` is `GameControls`.
+- `command` sends each command to the ship through `GameControls.command`, as SYSTEMS's controls do: in real time, never a pause (A12). Show delivered values from telemetry, never the request.
+- FLIGHT zooms to `rangeMinFor(encounterId)` in true metres (`src/view3d/flight/FlightHolo.ts` `NEAR_RANGE`: the Chain Link 120 m; elsewhere 5 km).
+
 ## Rules it keeps
 
 - **The model forecasts; the player plans and flies** (P6). No control here plans a burn.

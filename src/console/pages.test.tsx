@@ -25,6 +25,7 @@ import { FlightHud } from './FlightHud.tsx';
 import { MapPlate } from './MapPlate.tsx';
 import { designMark, defaultDesign } from './mission.ts';
 import { ShipPanels } from './ShipPanels.tsx';
+import { registerEncounterPanel } from './encounterPanels.ts';
 import { testVerdict } from './pages/ModelPage.tsx';
 import type { ExtensionRecord } from '../model/index.ts';
 
@@ -213,6 +214,33 @@ describe('instruments beside the holograms', () => {
       expect(html).toContain('Margins');
       expect(html).not.toContain('NaN');
     }
+  });
+
+  it("mounts the encounter's own panel beside FLIGHT, its commands through the ship's channel (R4)", () => {
+    const { game, commands } = stubGame();
+    let send: ((c: readonly unknown[]) => void) | undefined;
+    registerEncounterPanel(briefing.id, ({ command }) => {
+      send = command as (c: readonly unknown[]) => void;
+      return <p>ENCOUNTER PANEL HERE</p>;
+    });
+    const html = renderToStaticMarkup(
+      <FlightHud
+        desk={new Desk(game)}
+        available={{ throttle: true, yaw: true, pitch: true, translate: true }}
+        headingUp
+        range={1_500_000}
+        onHeadingUp={() => undefined}
+      />,
+    );
+    expect(html).toContain('ENCOUNTER PANEL HERE');
+    send?.([
+      { kind: 'mode', equipment: 'camera', mode: 'detail' },
+      { kind: 'recorder', sampleRate: 10 },
+    ]);
+    expect(commands).toEqual([
+      { kind: 'mode', equipment: 'camera', mode: 'detail' },
+      { kind: 'recorder', sampleRate: 10 },
+    ]);
   });
 
   it('renders each ship system beside the drawing', () => {

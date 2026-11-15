@@ -55,6 +55,89 @@ export function nearestClearance(
   return best;
 }
 
+/**
+ * Progress toward a `depart` objective (S20: say which frame a speed is in). The objective
+ * measures speed from the encounter's centre of mass; this is that frame as the ship believes
+ * it: the bodies' believed positions and velocities weighted by the model's GM for each.
+ * Null without a depart objective, or before the model holds a GM for every body.
+ */
+export function departProgress(
+  snapshot: Pick<ViewSnapshot, 'world' | 'objectives'>,
+  model: Pick<ModelState, 'parameters'>,
+): {
+  speed: number;
+  distance: number;
+  minSpeed: number;
+  beyond: number;
+  maxDeltaV?: number;
+} | null {
+  const objective = snapshot.objectives.find((o) => o.depart);
+  if (!objective?.depart) return null;
+  let mu = 0;
+  const p = { x: 0, y: 0, z: 0 };
+  const v = { x: 0, y: 0, z: 0 };
+  for (const b of snapshot.world.bodies) {
+    const gm = model.parameters.find((q) => q.id === `body.${b.id}.mu`)?.value;
+    if (!(gm !== undefined && gm > 0)) return null;
+    mu += gm;
+    p.x += gm * b.position.x;
+    p.y += gm * b.position.y;
+    p.z += gm * (b.position.z ?? 0);
+    v.x += gm * b.velocity.x;
+    v.y += gm * b.velocity.y;
+    v.z += gm * (b.velocity.z ?? 0);
+  }
+  if (!(mu > 0)) return null;
+  const ship = snapshot.world.ship;
+  const centre = { x: p.x / mu, y: p.y / mu, z: p.z / mu };
+  const drift = { x: v.x / mu, y: v.y / mu, z: v.z / mu };
+  return {
+    speed: distance(ship.velocity, drift),
+    distance: distance(ship.position, centre),
+    minSpeed: objective.depart.minSpeed,
+    beyond: objective.depart.beyond,
+    ...(objective.maxDeltaV !== undefined ? { maxDeltaV: objective.maxDeltaV } : {}),
+  };
+}
+
+/**
+ * What a recorder rate costs and records (S20: the estimate must match the ship). The ship
+ * requests its minimum power anywhere up to its minimum rate, interpolates above it, and takes
+ * at most one sample per 1 s step whatever the rate asked for.
+ */
+export function recorderEstimate(
+  rate: number,
+  definition: ShipDefinition,
+): { watts: number; samplesPerSecond: number; bytesPerSecond: number } {
+  const r = definition.systems?.recorder as
+    | {
+        minimumSampleRate?: number;
+        normalSampleRate?: number;
+        highSampleRate?: number;
+        powerMinimum?: number;
+        powerNormal?: number;
+        powerHigh?: number;
+        bytesPerSample?: number;
+      }
+    | undefined;
+  const lo = r?.minimumSampleRate ?? 1;
+  const mid = r?.normalSampleRate ?? 10;
+  const hi = r?.highSampleRate ?? 50;
+  const p0 = r?.powerMinimum ?? 15;
+  const p1 = r?.powerNormal ?? 35;
+  const p2 = r?.powerHigh ?? 100;
+  const watts =
+    rate <= 0
+      ? 0
+      : rate <= lo
+        ? p0
+        : rate <= mid
+          ? p0 + ((rate - lo) / (mid - lo)) * (p1 - p0)
+          : p1 + ((Math.min(rate, hi) - mid) / (hi - mid)) * (p2 - p1);
+  const samplesPerSecond = Math.min(Math.max(rate, 0), 1);
+  return { watts, samplesPerSecond, bytesPerSecond: samplesPerSecond * (r?.bytesPerSample ?? 0) };
+}
+
 /** Main propellant above the planned reserve, kg, and the speed change it buys, m/s. */
 export function spendable(
   ship: BelievedShip,

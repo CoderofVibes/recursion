@@ -13,12 +13,15 @@
  */
 import { flightAlerts, freshAlerts } from '../console/alerts.ts';
 import type { Desk } from '../console/desk.ts';
+import { isHandsOnNeutral } from '../contracts/index.ts';
 import type { GameControls } from '../game/belief/controls.ts';
 import { chartView } from '../view3d/adapter.ts';
 import type { Chart } from '../view3d/map/MapHolo.ts';
 import type { Hotspot, ViewMode } from '../view3d/room/layout.ts';
+import { rangeMinFor } from '../view3d/flight/FlightHolo.ts';
 import { RoomView } from '../view3d/room/RoomView.ts';
 import type { LossStage } from '../view3d/room/RoomView.ts';
+import { coastCadence } from '../theme/index.ts';
 import { createHandsOn } from './hands.ts';
 
 /** What the room's overlays need to know about the view. */
@@ -70,6 +73,8 @@ export function startControlRoom(
     blackBox: () => desk.setPage('blackbox'),
   });
   desk.keys = view.keys;
+  // Some encounters are studied at close range: FLIGHT may zoom in that far there (3C, R4).
+  view.flight.setRangeMin(rangeMinFor(game.briefing.id));
   const hands = createHandsOn(game);
 
   let raf = 0;
@@ -80,6 +85,18 @@ export function startControlRoom(
   let attemptSeen = '';
   let endHandled = '';
   let alertsShowing: ReadonlySet<string> = new Set();
+
+  // A20: while coasting at high warp with nobody at the controls, draw fewer frames so the
+  // simulation gets more of each wall second. Any input, or warp dropping, draws every frame.
+  let lastInput = performance.now();
+  let lastDraw = 0;
+  let sinceDraw = 0;
+  let sinceNotify = 0;
+  const touched = (): void => {
+    lastInput = performance.now();
+  };
+  const inputs = ['keydown', 'pointerdown', 'pointermove', 'wheel'] as const;
+  for (const type of inputs) window.addEventListener(type, touched, { passive: true });
 
   // A hidden page holds the game (A12) and lets it go when the page is shown again.
   let heldByPage = false;
@@ -124,8 +141,6 @@ export function startControlRoom(
     }
     if (!view.dying()) game.advance(dt);
     status = game.status();
-    const snapshot = game.snapshot();
-    desk.setFrame(snapshot);
 
     // The flight controls answer only inside the encounter.
     const flying = view.mode() === 'flight' && !view.dying() && status.phase === 'operate';
@@ -146,12 +161,32 @@ export function startControlRoom(
       desk.notify();
     }
 
-    sinceChart += dt;
+    // A20: a quiet coast at high warp draws only every so often; the game, the keys and the
+    // alerts above and below run every frame regardless.
+    sinceDraw += dt;
+    const coasting =
+      status.phase === 'operate' &&
+      !status.paused &&
+      game.status().warp >= coastCadence.warp &&
+      isHandsOnNeutral(hand.input) &&
+      view.settled() &&
+      now - lastInput > coastCadence.quietAfterInput;
+    if (coasting && now - lastDraw < 1000 / coastCadence.drawRate) {
+      instruments(dt, true);
+      return;
+    }
+    lastDraw = now;
+    const drawDt = Math.min(0.1, sinceDraw);
+    sinceDraw = 0;
+    const snapshot = game.snapshot();
+    desk.setFrame(snapshot);
+
+    sinceChart += drawDt;
     if (sinceChart > 1) {
       sinceChart = 0;
       chart = chartView(game.chart());
     }
-    view.frame(dt, {
+    view.frame(drawDt, {
       snapshot,
       ...(desk.preview ? { preview: desk.preview } : {}),
       selected: desk.selected,
@@ -161,8 +196,14 @@ export function startControlRoom(
       recording: !status.paused && status.phase !== 'ended',
     });
 
+    desk.sample(drawDt, snapshot, view.flight.miss()?.metres ?? null);
+    instruments(dt, coasting);
+  };
+
+  /** The instruments' refresh and A12's alert rule: every frame, drawn or not. */
+  const instruments = (dt: number, coasting: boolean): void => {
+    const status = game.status();
     const miss = view.flight.miss();
-    desk.sample(dt, snapshot, miss?.metres ?? null);
     sinceInstruments += dt;
     if (sinceInstruments >= INSTRUMENT_PERIOD) {
       sinceInstruments = 0;
@@ -176,7 +217,13 @@ export function startControlRoom(
         game.setWarp(1);
         desk.dropWarp(first.text.toLowerCase());
       }
-      desk.notify();
+      // The instruments redraw less often on a quiet coast (A20); an alert above has already
+      // dropped warp, so the next refresh is a full one.
+      sinceNotify += INSTRUMENT_PERIOD;
+      if (!coasting || sinceNotify >= 1 / coastCadence.instrumentRate || game.status().warp === 1) {
+        sinceNotify = 0;
+        desk.notify();
+      }
     }
   };
   const loop = (now: number): void => {
@@ -217,6 +264,7 @@ export function startControlRoom(
     stop() {
       cancelAnimationFrame(raf);
       document.removeEventListener('visibilitychange', onVisibility);
+      for (const type of inputs) window.removeEventListener(type, touched);
       hands.release();
       view.dispose();
     },

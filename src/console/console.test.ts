@@ -17,9 +17,11 @@ import {
   batteries,
   busLoads,
   deltaV,
+  departProgress,
   heat,
   hullReach,
   nearestClearance,
+  recorderEstimate,
   spendable,
   stores,
   validatedSpans,
@@ -318,5 +320,72 @@ describe('margin to act (S8)', () => {
     expect(none).toEqual({ kg: 0, deltaV: 0 });
     const some = spendable(ship, shipDefinition, 0);
     expect(some.deltaV).toBeCloseTo(deltaV(ship, shipDefinition), 6);
+  });
+});
+
+describe('estimates that match the ship (S20)', () => {
+  it('prices a recorder rate as the ship does, and never promises more than a sample a second', () => {
+    const def = {
+      ...shipDefinition,
+      systems: {
+        recorder: {
+          minimumSampleRate: 1,
+          normalSampleRate: 10,
+          highSampleRate: 50,
+          powerMinimum: 15,
+          powerNormal: 35,
+          powerHigh: 100,
+          bytesPerSample: 256,
+        },
+      },
+    } as typeof shipDefinition;
+    expect(recorderEstimate(0.05, def).watts).toBe(15);
+    expect(recorderEstimate(0.2, def).watts).toBe(15);
+    expect(recorderEstimate(1, def).watts).toBe(15);
+    expect(recorderEstimate(10, def).watts).toBe(35);
+    expect(recorderEstimate(0, def).watts).toBe(0);
+    expect(recorderEstimate(10, def).samplesPerSecond).toBe(1);
+    expect(recorderEstimate(0.2, def).bytesPerSecond).toBeCloseTo(0.2 * 256, 9);
+  });
+
+  it('measures departure from the believed centre of mass, weighted by the model GM', () => {
+    const ship = {
+      ...viewSnapshot.world.ship,
+      position: { x: 3, y: 0, z: 0 },
+      velocity: { x: 0, y: 5, z: 0 },
+    };
+    const bodies = [
+      {
+        ...viewSnapshot.world.bodies[0]!,
+        id: 'a',
+        position: { x: 0, y: 0, z: 0 },
+        velocity: { x: 0, y: 1, z: 0 },
+      },
+      {
+        ...viewSnapshot.world.bodies[0]!,
+        id: 'b',
+        position: { x: 4, y: 0, z: 0 },
+        velocity: { x: 0, y: -1, z: 0 },
+      },
+    ];
+    const snapshot = {
+      world: { ...viewSnapshot.world, ship, bodies },
+      objectives: [
+        { id: 'd', kind: 'depart', label: 'DEPART', depart: { beyond: 9e6, minSpeed: 50 } },
+      ],
+    } as unknown as Parameters<typeof departProgress>[0];
+    const model = {
+      parameters: [
+        { id: 'body.a.mu', value: 3 },
+        { id: 'body.b.mu', value: 1 },
+      ],
+    } as unknown as Parameters<typeof departProgress>[1];
+    const p = departProgress(snapshot, model)!;
+    // Centre of mass at x = 1, moving at +0.5 in y.
+    expect(p.distance).toBeCloseTo(2, 9);
+    expect(p.speed).toBeCloseTo(4.5, 9);
+    expect(p.minSpeed).toBe(50);
+    // Without a GM for every body there is no frame to state.
+    expect(departProgress(snapshot, { parameters: [] } as never)).toBeNull();
   });
 });

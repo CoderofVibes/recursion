@@ -21,12 +21,14 @@ import {
   batteries,
   busLoads,
   heat,
+  departProgress,
   nearestClearance,
   recorder,
   spendable,
   stores,
 } from './data.ts';
 import type { Desk } from './desk.ts';
+import { EncounterSlot } from './encounterPanels.ts';
 import { bytes, clock, degrees, dist, fixed, name, whole } from './format.ts';
 
 export interface FlightKeys {
@@ -98,6 +100,7 @@ export function FlightHud({
   const forecast = snapshot.forecasts.at(-1);
   const end = forecast?.samples.at(-1);
   const nearest = nearestClearance(snapshot);
+  const depart = departProgress(snapshot, game.model.state());
   const budget = spendable(ship, game.ship, desk.design.reserve);
   let pass: NonNullable<typeof forecast>['closestApproaches'][number] | undefined;
   for (const c of forecast?.closestApproaches ?? [])
@@ -144,6 +147,9 @@ export function FlightHud({
             FORECAST v{forecast.modelVersion} · ISSUED T+{clock(forecast.issuedAt)} · ENDS T+
             {clock(end.t)}
             {miss ? ` · NOW Δ ${dist(miss.metres)} ${fixed(miss.sigmas, 1)}σ` : ''}
+            {forecast.detail?.stale
+              ? ` · ▲ FROM T+${clock(forecast.detail.presentTime)}: NOTHING TRACKED LATELY`
+              : ''}
           </>
         ) : (
           'NO FORECAST ISSUED'
@@ -158,7 +164,12 @@ export function FlightHud({
         <aside className="fh-side">
           <Panel title="Flight" aside={headingUp ? 'heading up' : 'chart up'}>
             <ReadoutGrid columns={2}>
-              <Readout label="Speed" value={fixed(speed, 2)} unit="m/s" size="readout" />
+              <Readout
+                label={primary ? `Speed · ${primary.name}` : 'Speed'}
+                value={fixed(speed, 2)}
+                unit="m/s"
+                size="readout"
+              />
               <Readout
                 label="Heading"
                 value={String(Math.round(degrees(heading(ship.attitude)))).padStart(3, '0')}
@@ -237,6 +248,20 @@ export function FlightHud({
             <Line label="to spend" status={budget.deltaV < 1 ? 'caution' : undefined}>
               {fixed(budget.deltaV, 1)} m/s · {whole(budget.kg)} kg above the reserve
             </Line>
+            {depart ? (
+              // The objective's frame, as believed: not the speed past Alpha above (S20).
+              <Line
+                label="depart · c. of mass"
+                status={
+                  depart.speed >= depart.minSpeed && depart.distance >= depart.beyond
+                    ? 'nominal'
+                    : undefined
+                }
+              >
+                {fixed(depart.speed, 1)} of {whole(depart.minSpeed)} m/s · {dist(depart.distance)}{' '}
+                of {dist(depart.beyond)}
+              </Line>
+            ) : null}
             <Trend
               title="Off the forecast"
               unit="km"
@@ -245,6 +270,9 @@ export function FlightHud({
               tone="forecast"
             />
           </Panel>
+
+          {/* The encounter's own instruments, from its section (3B, 3C: ledger R4). */}
+          <EncounterSlot game={game} snapshot={snapshot} />
 
           <Panel title="Margins">
             {main ? (

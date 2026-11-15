@@ -366,6 +366,15 @@ export function changes(record: AttemptRecord, previous: AttemptRecord | undefin
   return out;
 }
 
+/** The comparison point with the largest miss in σ, if any. */
+export function worstOf<T extends { readonly t: number; readonly sigmas: number }>(
+  points: readonly T[],
+): T | undefined {
+  let worst: T | undefined;
+  for (const p of points) if (!worst || p.sigmas > worst.sigmas) worst = p;
+  return worst;
+}
+
 /** Judge an attempt against its own design, from its record. */
 export function debrief(
   record: AttemptRecord,
@@ -500,14 +509,22 @@ export function debrief(
   // "held" says through when, and nothing after its end is credited to it or held against it.
   const forecasts: Debrief['forecasts'][number][] = divergences.map(({ f, d }) => {
     const ends = `ends T+${clock(f.horizon)}`;
+    const firstCompared = d.points[0]?.t;
     const lastCompared = d.points.at(-1)?.t;
+    // The worst miss with its moment, and the stretch it was compared over (S20).
+    const worst = worstOf(d.points);
+    const worstText = `worst ${fixed(d.maxSigmas ?? 0, 1)}σ${worst ? ` at T+${clock(worst.t)}` : ''}`;
+    const over =
+      firstCompared !== undefined && lastCompared !== undefined
+        ? `compared T+${clock(firstCompared)}–T+${clock(lastCompared)}`
+        : '';
     return {
       label: `forecast T+${clock(f.issuedAt)} · v${f.modelVersion}`,
       value: d.unmeasured
         ? `not recorded: nothing measured while it ran · ${ends}`
         : d.firstBeyond3Sigma !== null
-          ? `left at T+${clock(d.firstBeyond3Sigma)} · worst ${fixed(d.maxSigmas ?? 0, 1)}σ · ${ends}`
-          : `within envelope through T+${clock(lastCompared ?? f.issuedAt)} · worst ${fixed(d.maxSigmas ?? 0, 1)}σ · ${ends}`,
+          ? `left at T+${clock(d.firstBeyond3Sigma)} · ${worstText} · ${over} · ${ends}`
+          : `within envelope through T+${clock(lastCompared ?? f.issuedAt)} · ${worstText} · ${over} · ${ends}`,
       bad: d.firstBeyond3Sigma !== null,
     };
   });

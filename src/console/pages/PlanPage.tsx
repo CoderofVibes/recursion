@@ -35,6 +35,7 @@ const SOURCES: readonly (readonly [keyof Omit<ForecastSigmaBySource, 't' | 'tota
   ['state', 'tracking now'],
   ['profile', 'measured pull'],
   ['hedge', 'beyond the data'],
+  ['bodies', 'other bodies'],
   ['engine', 'engine'],
   ['mass', 'mass'],
 ];
@@ -173,6 +174,7 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
   const extrapolating = shown ? shown.samples.filter((s) => s.extrapolating).length : 0;
   const detail = shown?.detail;
   const endSigma = detail?.sigmaMajor.at(-1);
+  const bodyName = (id: string): string => bodies.find((b) => b.id === id)?.name ?? id;
 
   const save = (): void => {
     // Read only when asked: reading the record in progress copies all of it.
@@ -442,19 +444,39 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
                   <Line label="total" tone="forecast">
                     {dist(endSigma.total)}
                   </Line>
-                  {SOURCES.map(([key, label]) => (
-                    <LevelBar
-                      key={key}
-                      label={label}
-                      value={endSigma[key]}
-                      max={Math.max(endSigma.total, 1)}
-                      text={dist(endSigma[key])}
-                      tone="forecast"
-                    />
-                  ))}
-                  <Line label="present state" tone="forecast">
-                    {detail.presentSource} · T+{clock(detail.presentTime)}
+                  {SOURCES.map(([key, label]) => {
+                    const value = endSigma[key];
+                    // A source the forecast does not report (a stand-in has no bodies' share)
+                    // is left out, not drawn as zero.
+                    return value === undefined ? null : (
+                      <LevelBar
+                        key={key}
+                        label={label}
+                        value={value}
+                        max={Math.max(endSigma.total, 1)}
+                        text={dist(value)}
+                        tone="forecast"
+                      />
+                    );
+                  })}
+                  <Line
+                    label="present state"
+                    tone="forecast"
+                    status={detail.stale ? 'caution' : undefined}
+                  >
+                    {detail.presentSource}
+                    {detail.presentBody ? ` against ${bodyName(detail.presentBody)}` : ''} · T+
+                    {clock(detail.presentTime)}
+                    {detail.presentAge !== undefined
+                      ? ` · ${duration(detail.presentAge)} before issue`
+                      : ''}
                   </Line>
+                  {detail.stale ? (
+                    <p className="cs-note">
+                      ▲ nothing tracked lately: carried from an older present state; point the
+                      camera at a body to refresh it
+                    </p>
+                  ) : null}
                   {detail.asteroids.length ? (
                     <Line label="rocks" tone="forecast">
                       {detail.asteroids.filter((a) => a.forecast).length} forecast

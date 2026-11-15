@@ -246,6 +246,10 @@ export class RoomView {
   dying(): boolean {
     return this.death !== null;
   }
+  /** No camera travel or loss sequence under way: the view is still (A20 may thin its frames). */
+  settled(): boolean {
+    return this.trans === null && this.death === null;
+  }
   locked(): boolean {
     return document.pointerLockElement === this.canvas;
   }

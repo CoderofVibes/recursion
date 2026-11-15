@@ -24,7 +24,7 @@ import { Actions, Button, Caption, Line, SelectField } from '../controls.tsx';
 import { recorder } from '../data.ts';
 import type { Desk } from '../desk.ts';
 import { bytes, clock, dist, duration, fixed, whole } from '../format.ts';
-import { APPROACH, EVIDENCE, debrief, describeDiff } from '../mission.ts';
+import { APPROACH, EVIDENCE, debrief, describeDiff, worstOf } from '../mission.ts';
 import type { Debrief } from '../mission.ts';
 
 const rms = (values: readonly { readonly value: number }[]): number =>
@@ -345,11 +345,13 @@ export function BlackBoxPage({ desk }: { readonly desk: Desk }) {
             {(['a', 'b'] as const).map((side) => {
               const s = comparison[side];
               const first = s.divergence.find((d) => d.firstBeyond3Sigma !== null);
+              const points = s.divergence.flatMap((d) => d.points);
+              const worstPoint = worstOf(points);
               const worst = Math.max(0, ...s.divergence.map((d) => d.maxSigmas ?? 0));
-              const through = Math.max(
-                -Infinity,
-                ...s.divergence.map((d) => d.points.at(-1)?.t ?? -Infinity),
-              );
+              const through = Math.max(-Infinity, ...points.map((p) => p.t));
+              const since = Math.min(Infinity, ...points.map((p) => p.t));
+              // The worst miss's moment and the stretch compared (S20).
+              const worstText = `worst ${fixed(worst, 1)}σ${worstPoint ? ` at T+${clock(worstPoint.t)}` : ''}`;
               return (
                 <Line
                   key={side}
@@ -360,9 +362,9 @@ export function BlackBoxPage({ desk }: { readonly desk: Desk }) {
                   {s.divergence.length === 0
                     ? 'no forecast was issued'
                     : first
-                      ? `left at T+${clock(first.firstBeyond3Sigma!)} · worst ${fixed(worst, 1)}σ`
+                      ? `left at T+${clock(first.firstBeyond3Sigma!)} · ${worstText}`
                       : Number.isFinite(through)
-                        ? `within envelope through T+${clock(through)} · worst ${fixed(worst, 1)}σ`
+                        ? `within envelope T+${clock(since)}–T+${clock(through)} · ${worstText}`
                         : 'not recorded: nothing measured inside a forecast'}
                 </Line>
               );

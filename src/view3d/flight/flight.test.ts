@@ -17,6 +17,7 @@ import {
   pastAndAhead,
   RANGE_MAX,
   RANGE_MIN,
+  rangeMinFor,
   withEarlierAttempts,
 } from './FlightHolo.ts';
 
@@ -214,5 +215,19 @@ describe('coverage from earlier attempts (2G coverageEarlier)', () => {
     expect(kept.length).toBeLessThanOrEqual(24);
     for (let i = 1; i < kept.length; i++)
       expect(kept[i - 1]!.fresh).toBeGreaterThanOrEqual(kept[i]!.fresh);
+  });
+});
+
+describe('close range where an encounter is studied close (3C, R4)', () => {
+  it('lets FLIGHT zoom to 120 m in the Chain Link, in true metres, and keeps 5 km elsewhere', () => {
+    expect(rangeMinFor('chain-link')).toBe(120);
+    expect(rangeMinFor('gravity-range')).toBe(RANGE_MIN);
+    const holo = make();
+    holo.setRangeMin(rangeMinFor('chain-link'));
+    holo.setRange(1);
+    expect(holo.range()).toBe(120);
+    holo.setRangeMin(RANGE_MIN);
+    expect(holo.range()).toBe(RANGE_MIN);
+    holo.dispose();
   });
 });

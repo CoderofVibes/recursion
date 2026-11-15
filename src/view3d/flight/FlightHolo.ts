@@ -94,6 +94,16 @@ const MAX_RUNS = 3;
 export const RANGE_MIN = 5_000;
 export const RANGE_MAX = 12_000_000;
 export const RANGE_DEFAULT = 1_500_000;
+
+/**
+ * Encounters studied at close range: the shortest range FLIGHT allows there, in true metres
+ * (3C, ledger R4: the Chain Link's lattice is studied at about 120–500 m, the whole ship in
+ * view). Elsewhere the floor stays at `RANGE_MIN`. [ASSUMED] 120 m, from 3C's handoff.
+ */
+export const NEAR_RANGE: Readonly<Record<string, number>> = { 'chain-link': 120 };
+
+/** The shortest range FLIGHT allows in an encounter. */
+export const rangeMinFor = (encounterId: string): number => NEAR_RANGE[encounterId] ?? RANGE_MIN;
 /** Seconds between rebuilds of clipped paths as the ship moves through the volume. */
 const RECLIP = 0.25;
 
@@ -134,6 +144,8 @@ export interface FlightHolo {
   update(frame: FlightFrame, dt: number, time: number): void;
   range(): number;
   setRange(metres: number): void;
+  /** The shortest range allowed (true metres): `rangeMinFor` the encounter. */
+  setRangeMin(metres: number): void;
   headingUp(): boolean;
   setHeadingUp(on: boolean): void;
   /** The map's region view: chart-up, no large ship. */
@@ -249,6 +261,7 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
   const linesE = new LineSet(); // drawn in game metres, inside `trans`
 
   let range = RANGE_DEFAULT;
+  let rangeMin = RANGE_MIN;
   let headingUp = true;
   let chart = false;
   let pixelsPerMetre = 600;
@@ -1331,7 +1344,12 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
     update,
     range: () => range,
     setRange(metres) {
-      range = clamp(metres, RANGE_MIN, RANGE_MAX);
+      range = clamp(metres, rangeMin, RANGE_MAX);
+      reclip = 0;
+    },
+    setRangeMin(metres) {
+      rangeMin = clamp(metres, 1, RANGE_MAX);
+      range = clamp(range, rangeMin, RANGE_MAX);
       reclip = 0;
     },
     headingUp: () => headingUp,

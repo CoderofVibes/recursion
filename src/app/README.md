@@ -25,6 +25,10 @@ Time (A12): before entering, nothing is dangerous and the clock waits. Inside th
 
 Keyboard (S9): the scene canvas, the console's page tabs and every control are reachable with Tab; focus follows the view; a focused control keeps Space, Enter and the arrows, every other key still reaches the scene; Escape in a field leaves the field first.
 
+## Coasting (A20)
+
+While coasting at 60× or more with nobody at the controls (no key, click, wheel or pointer move for 1.5 s, hands off, no camera travel or loss), the room draws 12 frames a second and the instruments refresh twice a second, so the simulation gets more of each wall second. The game, the flight keys and A12's alert check run every frame regardless; any input, or warp dropping (an alert drops it to 1×), draws every frame again at once. Values in `src/theme/motion.ts` `coastCadence` [ASSUMED], to agree with 2F's per-frame simulation budget.
+
 ## Hands-on flying
 
 `hands.ts` turns the flight keys into `HandsOnInput` and sends it through `GameControls.fly` (2G): `W` main engine (`Shift` for a quarter throttle), `S` retro, `A` / `D` lateral, `R` / `F` vertical, `Q` / `E` yaw, `↑` / `↓` pitch, `X` cut. The game flies the input until the next one and issues the coasting forecast when the controls are released.
