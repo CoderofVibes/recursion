@@ -589,7 +589,7 @@ export function arcFit(
   const params = problem.params.filter((p) => p.group === arc.id);
   if (params.length === 0) return null;
   const structure = frozenStructure(problem.structure, values);
-  const fit = stagedFit(structure, [arc], params, { dt: s.dt, h: s.fdStep });
+  const fit = stagedFit(structure, [arc], params, { dt: s.dt, h: s.fdStep, firstStageSpan: s.arcGrowthFirstSpan });
   return {
     arc,
     structure,
@@ -938,7 +938,7 @@ function buildOnce(
     // A global fit that cannot be solved leaves the values at their priors (§11.2: a Tier G
     // result becomes the reference law only if it converged), and each arc is then fitted alone.
     try {
-      fit = stagedFit(problem.structure, problem.arcs, problem.params, { dt: s.dt, h: s.fdStep });
+      fit = stagedFit(problem.structure, problem.arcs, problem.params, { dt: s.dt, h: s.fdStep, firstStageSpan: s.arcGrowthFirstSpan });
     } catch (e) {
       fitFailure = reasonOf(e);
     }

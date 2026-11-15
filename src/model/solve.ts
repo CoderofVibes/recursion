@@ -140,6 +140,11 @@ export interface SolverOptions {
   readonly tmax?: ReadonlyMap<string, number>;
   readonly maxIterations?: number;
   readonly tolerance?: number;
+  /**
+   * Arc growing (§4.5) on a long arc: its first stage spans at most this long, s, and the stages
+   * double from there to the spec's 25%. Absent: the spec's stages only.
+   */
+  readonly firstStageSpan?: number;
 }
 
 const NOT_FINITE = 'fit: a measurement or a prediction is not a finite number';
@@ -531,6 +536,24 @@ function normal(
 }
 
 /**
+ * The time each arc-growing stage spans from an arc's first usable measurement, s (Infinity: all
+ * of it). The spec's fractions of `span`; with `cap`, a first stage longer than it is halved until
+ * it is not, the stages doubling back up to the spec's first.
+ */
+export function stageSpans(
+  span: number,
+  fracs: readonly number[] = [0.25, 0.5, 1],
+  cap?: number,
+): number[] {
+  const spans = fracs.map((f) => (f < 1 ? f * span : Infinity));
+  const first = spans[0]!;
+  const before: number[] = [];
+  if (cap !== undefined && cap > 0 && Number.isFinite(first))
+    for (let s = first / 2; 2 * s > cap; s /= 2) before.unshift(s);
+  return [...before, ...spans];
+}
+
+/**
  * Arc growing (§4.5): fit the first 25%, 50%, then all of each arc's usable data, each stage
  * starting from the previous solution.
  *
@@ -538,6 +561,15 @@ function normal(
  * first MIN_ARC_FIXES range fixes on the gauge body, or all of its data if it has fewer. A
  * quarter of a short arc can hold a single fix, which gives a position and no velocity; the
  * stage's normal matrix is then singular, and no later stage could run.
+ *
+ * A long arc's 25% is itself long: a 39 h attempt's first stage would be 10 h of data fitted from
+ * the starting values (Newtonian, n = 2), far outside the linear regime the stages exist for, and
+ * the fit lost its way (R47: χ² 3.3e8 on 6,291 rows, a negative mass, a 0.43 rad engine error,
+ * where stages starting at 2–3 h converge to χ²/ν 1.01 and the true law). With `firstStageSpan`,
+ * a first stage longer than that is halved until it is not, and the stages double back up to the
+ * spec's 25%, 50% and all. An arc whose 25% is within it keeps the spec's stages exactly. In a
+ * fit of several arcs the schedules are aligned at their ends: a shorter arc holds its first
+ * stage while a longer one climbs.
  */
 export function stagedFit(
   st: Structure,
@@ -550,21 +582,30 @@ export function stagedFit(
   let x: ArrayLike<number> = x0 ?? params.map((p) => p.init);
   let res: FitResult | null = null;
   const gauge = st.bodies.find((b) => b.state === 'gauge')?.id;
-  for (const f of fracs) {
-    let tmax: Map<string, number> | undefined;
-    if (f < 1) {
-      tmax = new Map();
-      for (const a of arcs) {
-        const ts = a.meas.filter((m) => usable(st, m)).map((m) => m.t);
-        if (ts.length === 0) continue;
-        const lo = Math.min(...ts);
-        const hi = Math.max(...ts);
-        const fixes = gauge === undefined ? [] : rangeFixTimes(a.meas, gauge);
-        const determined = fixes.length >= MIN_ARC_FIXES ? fixes[MIN_ARC_FIXES - 1]! : hi;
-        tmax.set(a.id, Math.max(lo + f * (hi - lo), determined));
-      }
+  // Per arc: the last time each stage uses (Infinity: all of it).
+  const ladders = new Map<string, number[]>();
+  for (const a of arcs) {
+    const ts = a.meas.filter((m) => usable(st, m)).map((m) => m.t);
+    if (ts.length === 0) continue;
+    const lo = Math.min(...ts);
+    const hi = Math.max(...ts);
+    const fixes = gauge === undefined ? [] : rangeFixTimes(a.meas, gauge);
+    const determined = fixes.length >= MIN_ARC_FIXES ? fixes[MIN_ARC_FIXES - 1]! : hi;
+    ladders.set(
+      a.id,
+      stageSpans(hi - lo, fracs, opts.firstStageSpan).map((s) =>
+        Number.isFinite(s) ? Math.max(lo + s, determined) : s,
+      ),
+    );
+  }
+  const stages = Math.max(fracs.length, ...[...ladders.values()].map((l) => l.length));
+  for (let k = 0; k < stages; k++) {
+    const tmax = new Map<string, number>();
+    for (const [id, l] of ladders) {
+      const t = l[Math.max(0, k - (stages - l.length))]!;
+      if (Number.isFinite(t)) tmax.set(id, t);
     }
-    const prob = new Problem(st, arcs, params, { ...opts, ...(tmax ? { tmax } : {}) });
+    const prob = new Problem(st, arcs, params, { ...opts, ...(tmax.size > 0 ? { tmax } : {}) });
     res = prob.solve(x, opts.maxIterations ?? 60, opts.tolerance ?? 1e-3);
     x = res.x;
   }
