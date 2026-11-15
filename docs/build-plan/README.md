@@ -31,6 +31,7 @@ Phases 1 and 2 have one ready-to-launch prompt file per section. Phases 3–5 ar
 | 2D | Control room and every screen: the single screen thread, with the UI lane (replaces the earlier 2D console and 2E view prompts) | Claude (Fable), worktree | [phase-2/2D-control-room.md](phase-2/2D-control-room.md) | 1E close-out, 2C, 2F (2G joins as it lands) |
 | 2F | Gravity range and game loop (stopped while 2G converts to 3D; resumes after) | Claude (Fable), worktree | [phase-2/2F-gravity-range-integration.md](phase-2/2F-gravity-range-integration.md) | 2A, 2B (2C–2E join as they land) |
 | 2G | Three-dimensional flight: contracts, physics, ship, model and the Gravity range in 3D (A11) | Claude (Fable), worktree | [phase-2/2G-3d-flight.md](phase-2/2G-3d-flight.md) | 2C update 3 (merged) |
+| S1–S6 | Studies, in parallel with the build: Borrowed Spin (tether physics, hardware, encounter and model), the expedition in 3D, wells and lattice in 3D, paired openings | GPT/Codex, one thread each | [studies/README.md](studies/README.md) | — |
 | 3A–3F | Power/thermal depth, Inverse Wells, Chain Link Fence, expedition and recurrence, playability harness, console v2 | 3 Claude, 2 GPT/Codex, 1 Claude | [phase-3.md](phase-3.md) | Phase 2 gate |
 | 4A–4E | Power branch, sensing branch and Petal Gallery, combined encounters, homeward passage, audio | 3 Claude, 2 GPT/Codex | [phase-4.md](phase-4.md) | Phase 3 gate |
 | 5A–5D | Balance and release, first-run experience, submission package, cold playtest | 3 Claude, 1 GPT/Codex | [phase-5.md](phase-5.md) | Phase 4 gate |
@@ -111,7 +112,9 @@ The owner dials in the game's look and feel throughout the build. 1E ran the lan
 | `docs/engineering/`, `data/ship-baseline.json` | 1C; 2G for the 3D conversion |
 | `tools/gmat/`, `tests/vectors/gmat/`, `docs/verification/` | 1D; 2G for the 3D conversion |
 | `prototypes/`, `docs/design/visual-direction.md`, `docs/design/img/`, `src/theme/` (tokens, instrument primitives, 3D styles, UI lab) | The owner's UI lane: 1E, then 2D from 2026-11-14 |
-| `docs/design/expedition.md`, `docs/design/encounter-template.md` | 1F |
+| `docs/design/expedition.md`, `docs/design/regions/` | S4 (after 1F) |
+| `docs/design/encounter-template.md` | 1F |
+| `docs/studies/<id>/`, `tools/studies/<id>/` | That study (S1–S6) |
 | `docs/model/`, `tests/vectors/estimator/`, `tools/estimator-ref/` | 1G; 2G for the 3D conversion |
 | `src/sim/` (except `fields/`), `src/lib/` | 2A; 2G for the 3D conversion |
 | `src/ship/` | 2B, and 2G for the 3D conversion; in Phase 3 split between 3A (power, thermal, condition, config, massprops, propulsion) and 3C (sensors) |
