@@ -22,23 +22,40 @@ export interface MassDetail {
   readonly tensor: Sym3;
 }
 
-function build(
-  definition: ShipDefinition,
-  geometry: Geometry,
-  tankMasses: readonly number[],
-): MassDetail {
-  const data = (definition.systems ?? baseline) as unknown as typeof baseline;
-  interface Item {
-    mass: number;
-    position: Vec3;
-    roll: number;
-    pitch: number;
-    yaw: number;
-  }
+interface Item {
+  readonly mass: number;
+  readonly position: Vec3;
+  readonly roll: number;
+  readonly pitch: number;
+  readonly yaw: number;
+}
+
+/**
+ * The part of the sums that depends only on the design and the geometry: the structure and
+ * every assembly, in order, with the running totals of mass and of mass × position after the
+ * last of them. A build carries on from these with the tanks, so it adds the same numbers in
+ * the same order as summing everything from scratch (S15 rank 1: the tanks change every
+ * tick, the rest only when an appendage moves).
+ */
+interface FixedPart {
+  readonly definition: ShipDefinition;
+  readonly items: readonly Item[];
+  readonly mass: number;
+  readonly mx: number;
+  readonly my: number;
+  readonly mz: number;
+}
+const fixedParts = new WeakMap<Geometry, FixedPart>();
+/** Each tank's inertia per kilogram, in the definition's tank order. */
+const tankInertias = new WeakMap<ShipDefinition, readonly number[]>();
+
+function fixedPart(definition: ShipDefinition, geometry: Geometry): FixedPart {
+  const cached = fixedParts.get(geometry);
+  if (cached?.definition === definition) return cached;
   const structure = definition.structureInertia;
   // The structure's own tensor in body axes; with identity axes these are its three moments.
   const structureTensor = inertiaTensor(structure);
-  const masses: Item[] = [
+  const items: Item[] = [
     {
       mass: definition.structureMass,
       position: definition.structureCenterOfMass,
@@ -48,26 +65,74 @@ function build(
     },
   ];
   for (const equipment of definition.equipment)
-    masses.push({
+    items.push({
       mass: equipment.mass,
       position: geometry.positions[equipment.id] ?? equipment.position,
       roll: geometry.intrinsicInertiaRoll[equipment.id] ?? 0,
       pitch: geometry.intrinsicInertiaPitch[equipment.id] ?? 0,
       yaw: geometry.intrinsicInertia[equipment.id] ?? 0,
     });
-  const resources = [...data.propellant, ...data.reactants];
+  let mass = 0;
+  let mx = 0;
+  let my = 0;
+  let mz = 0;
+  for (const item of items) {
+    mass = mass + item.mass;
+    mx = mx + item.mass * item.position.x;
+    my = my + item.mass * item.position.y;
+    mz = mz + item.mass * item.position.z;
+  }
+  const part = { definition, items, mass, mx, my, mz };
+  fixedParts.set(geometry, part);
+  return part;
+}
+
+function tankInertiaPerKg(definition: ShipDefinition): readonly number[] {
+  let perKg = tankInertias.get(definition);
+  if (!perKg) {
+    const data = (definition.systems ?? baseline) as unknown as typeof baseline;
+    const resources = [...data.propellant, ...data.reactants];
+    perKg = definition.tanks.map(
+      (tank) => resources.find((r) => r.id === tank.id)?.intrinsicInertiaPerKg ?? 0,
+    );
+    tankInertias.set(definition, perKg);
+  }
+  return perKg;
+}
+
+function build(
+  definition: ShipDefinition,
+  geometry: Geometry,
+  tankMasses: readonly number[],
+): MassDetail {
+  const fixed = fixedPart(definition, geometry);
+  const perKg = tankInertiaPerKg(definition);
+  const masses: Item[] = [...fixed.items];
+  let mass = fixed.mass;
+  let mx = fixed.mx;
+  let my = fixed.my;
+  let mz = fixed.mz;
   definition.tanks.forEach((tank, index) => {
-    const mass = tankMasses[index]!;
+    const tankMass = tankMasses[index]!;
     // [ASSUMED] A compact tank: the same inertia per kilogram about every axis.
-    const inertia = mass * (resources.find((r) => r.id === tank.id)?.intrinsicInertiaPerKg ?? 0);
-    masses.push({ mass, position: tank.position, roll: inertia, pitch: inertia, yaw: inertia });
+    const inertia = tankMass * perKg[index]!;
+    masses.push({
+      mass: tankMass,
+      position: tank.position,
+      roll: inertia,
+      pitch: inertia,
+      yaw: inertia,
+    });
+    mass = mass + tankMass;
+    mx = mx + tankMass * tank.position.x;
+    my = my + tankMass * tank.position.y;
+    mz = mz + tankMass * tank.position.z;
   });
-  const mass = masses.reduce((total, item) => total + item.mass, 0);
   if (!(mass > 0)) throw new Error('Ship mass must be positive');
   const centerOfMass = {
-    x: unsigned(masses.reduce((total, item) => total + item.mass * item.position.x, 0) / mass),
-    y: unsigned(masses.reduce((total, item) => total + item.mass * item.position.y, 0) / mass),
-    z: unsigned(masses.reduce((total, item) => total + item.mass * item.position.z, 0) / mass),
+    x: unsigned(mx / mass),
+    y: unsigned(my / mass),
+    z: unsigned(mz / mass),
   };
   // [ESTABLISHED: S14, S24] Parallel-axis theorem, every term of the tensor. The zz sum keeps
   // 1C's planar form (intrinsic yaw + m (dx² + dy²)), so heights cannot change the yaw inertia.

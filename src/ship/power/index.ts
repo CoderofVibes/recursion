@@ -1,4 +1,4 @@
-import type { ShipDefinition } from '../../contracts/ship.ts';
+import type { EquipmentSpec, ShipDefinition } from '../../contracts/ship.ts';
 import type {
   EnvironmentEffects,
   EquipmentState,
@@ -8,12 +8,84 @@ import type { ShipEvent } from '../../contracts/measurements.ts';
 import type { JsonValue } from '../../contracts/units.ts';
 import { getGeometry } from '../config/configuration.ts';
 import { requestedRecorderPower } from '../sensors/index.ts';
-import { bounded, modeOf, systems } from './baseline.ts';
+import { bounded, modeOf, modesOf, NO_MODE, systems, type OperatingMode } from './baseline.ts';
 import { sunIncidence } from './sun.ts';
 
 type Side = 'a' | 'b';
 /** Functions whose active unit is essential: its spare inherits the priority when selected. */
 const ACTIVE_FUNCTIONS = ['eclss-', 'internal-pump-', 'external-pump-', 'flight-cpu-', 'imu-'];
+/** The equipment and bus ids of each side. */
+const SIDES = {
+  a: {
+    solar: 'solar-left',
+    fuel: 'fuel-cell-a',
+    battery: 'battery-a',
+    pdu: 'pdu-a',
+    main: 'main-a',
+  },
+  b: {
+    solar: 'solar-right',
+    fuel: 'fuel-cell-b',
+    battery: 'battery-b',
+    pdu: 'pdu-b',
+    main: 'main-b',
+  },
+} as const;
+
+/** What the dispatch needs to know about one assembly that never changes in flight. */
+interface PowerSpec {
+  readonly spec: EquipmentSpec;
+  /** Its mode table in the baseline (`modeOf`, without the lookups). */
+  readonly modes: Readonly<Record<string, OperatingMode>> | undefined;
+  /** What its feeder is rated for: a bus feeder its bus's limit, anything else its rating. */
+  readonly feederLimit: number;
+  /** The same, as the step's sub-step search reads it (the first bus of that id). */
+  readonly tripRating: number;
+  readonly activeFunction: boolean;
+  /** Its place in the baseline's shed order, −1 when it is not listed. */
+  readonly shedIndex: number;
+}
+/**
+ * The definition's power facts, indexed once (S15 rank 1): looking them up every tick was most
+ * of the dispatch. Values only; the same definition always gives the same tables.
+ */
+interface PowerTables {
+  readonly specs: readonly PowerSpec[];
+  readonly busLimits: Readonly<Record<string, number>>;
+  /** `busLimits['main-a' | 'main-b'] ?? Infinity`. */
+  readonly mainLimit: Readonly<Record<Side, number>>;
+  readonly essential: { readonly converterEfficiency?: number } | undefined;
+  readonly waterCapacity: number;
+}
+const powerTables = new WeakMap<ShipDefinition, PowerTables>();
+
+function tablesOf(definition: ShipDefinition): PowerTables {
+  let tables = powerTables.get(definition);
+  if (!tables) {
+    const data = systems(definition);
+    const busLimits = Object.fromEntries(definition.buses.map((bus) => [bus.id, bus.limit]));
+    tables = {
+      specs: definition.equipment.map((spec) => ({
+        spec,
+        modes: modesOf(definition, spec.id),
+        feederLimit:
+          spec.kind === 'power-bus' ? (busLimits[spec.bus!] ?? spec.ratedPower) : spec.ratedPower,
+        tripRating:
+          spec.kind === 'power-bus'
+            ? (definition.buses.find((bus) => bus.id === spec.bus)?.limit ?? spec.ratedPower)
+            : spec.ratedPower,
+        activeFunction: ACTIVE_FUNCTIONS.some((prefix) => spec.id.startsWith(prefix)),
+        shedIndex: data.power.shedOrder.indexOf(spec.id),
+      })),
+      busLimits,
+      mainLimit: { a: busLimits['main-a'] ?? Infinity, b: busLimits['main-b'] ?? Infinity },
+      essential: data.buses.find((bus) => bus.id === 'essential'),
+      waterCapacity: definition.tanks.find((tank) => tank.id === 'product-water')?.capacity ?? 54,
+    };
+    powerTables.set(definition, tables);
+  }
+  return tables;
+}
 /**
  * An equipment record while one dispatch is being worked out. It is a fresh copy made at the
  * start of the dispatch, so filling it in place is invisible outside (2F's request 4: the
@@ -30,6 +102,8 @@ interface Load {
   floor: number;
   priority: number;
   factor: number;
+  /** Its operating point in its present mode. */
+  mode: OperatingMode;
 }
 
 /** [ASSUMED] baseline C03/C09/C13: protected per-bus dispatch, with explicit losses. */
@@ -43,15 +117,11 @@ export function stepPower(
     throw new RangeError('Power dt must be finite and positive');
   const data = systems(definition);
   let split = dt;
-  for (const spec of definition.equipment) {
+  for (const { spec, modes, tripRating: rating } of tablesOf(definition).specs) {
     const e = state.equipment[spec.id];
     if (!e || e.tripped || e.condition <= 0 || e.mode === 'off' || !(e.values.faultPower! > 0))
       continue;
-    const rating =
-      spec.kind === 'power-bus'
-        ? (definition.buses.find((bus) => bus.id === spec.bus)?.limit ?? spec.ratedPower)
-        : spec.ratedPower;
-    const demand = modeOf(definition, spec.id, e.mode).power + e.values.faultPower!;
+    const demand = (modes?.[e.mode] ?? NO_MODE).power + e.values.faultPower!;
     const remaining = data.power.rpc.tripDelay - (e.values.overloadTime ?? 0);
     if (
       demand > rating * data.power.branchHeadroom * data.power.rpc.tripCurrentMultiple &&
@@ -113,6 +183,7 @@ function dispatchPower(
   if (!(dt > 0) || !Number.isFinite(dt))
     throw new RangeError('Power dt must be finite and positive');
   const data = systems(definition);
+  const tables = tablesOf(definition);
   const equipment: Record<string, Working> = {};
   const events: ShipEvent[] = [];
   const tanks = { ...state.tanks };
@@ -123,7 +194,7 @@ function dispatchPower(
     const e = equipment[id] ?? state.equipment[id];
     return !!e && e.condition > 0 && !e.tripped && e.mode !== 'off';
   };
-  for (const spec of definition.equipment) {
+  for (const { spec } of tables.specs) {
     const old = state.equipment[spec.id];
     if (!old) continue;
     equipment[spec.id] = {
@@ -132,6 +203,8 @@ function dispatchPower(
       values: { ...old.values, heat: 0, generatedPower: 0, requestedPower: 0, unmetPower: 0 },
     };
   }
+  // Values are written straight into the working records below, in the order they always were
+  // (so every record keeps its key order); `update` is left for the breaker's rare path.
   const update = (id: string, values: Record<string, number>, draw?: number): void => {
     const working = equipment[id];
     if (!working) return;
@@ -153,7 +226,7 @@ function dispatchPower(
   };
   for (const side of ['a', 'b'] as const) {
     const s = sources[side];
-    const solarId = side === 'a' ? 'solar-left' : 'solar-right';
+    const solarId = SIDES[side].solar;
     if (pdu[side] && healthy(solarId)) {
       s.solar =
         Math.min(
@@ -165,7 +238,7 @@ function dispatchPower(
             (geometry.deployment[solarId] ?? 0),
         ) * (equipment[solarId]?.condition ?? 0);
     }
-    const fuelId = `fuel-cell-${side}`;
+    const fuelId = SIDES[side].fuel;
     if (pdu[side] && healthy(fuelId)) {
       const previous = equipment[fuelId]?.values.output ?? fc.initialPowerPerStack;
       const maximum = fc.maxPowerPerStack * (equipment[fuelId]?.condition ?? 0);
@@ -174,7 +247,7 @@ function dispatchPower(
       const rise = Math.min(dt, (maximum - start) / fc.rampRateWPerS);
       s.fuel = (start * rise + 0.5 * fc.rampRateWPerS * rise * rise + maximum * (dt - rise)) / dt;
     }
-    const batteryId = `battery-${side}`;
+    const batteryId = SIDES[side].battery;
     const e = equipment[batteryId];
     const temperature = state.thermal.service ?? 295;
     const charge = bounded(
@@ -182,7 +255,10 @@ function dispatchPower(
       0,
       battery.capacityPerPack * (e?.condition ?? 0),
     );
-    update(batteryId, { charge, output: 0 });
+    if (e) {
+      e.values.charge = charge;
+      e.values.output = 0;
+    }
     if (
       pdu[side] &&
       healthy(batteryId) &&
@@ -204,8 +280,7 @@ function dispatchPower(
   const hydrogen = Math.max(0, tanks['fuel-cell-hydrogen'] ?? 0);
   const oxygen = Math.max(0, tanks['fuel-cell-oxygen'] ?? 0);
   const water = Math.max(0, tanks['product-water'] ?? 0);
-  const waterCapacity =
-    definition.tanks.find((tank) => tank.id === 'product-water')?.capacity ?? 54;
+  const waterCapacity = tables.waterCapacity;
   const fuelEnergy =
     Math.min(
       hydrogen,
@@ -219,30 +294,29 @@ function dispatchPower(
   sources.a.fuel *= fuelScale;
   sources.b.fuel *= fuelScale;
 
-  const essential = data.buses.find((bus) => bus.id === 'essential')!;
-  const eta = essential.converterEfficiency ?? 1;
+  const eta = tables.essential!.converterEfficiency ?? 1;
   const available = (side: Side) =>
     sources[side].solar + sources[side].fuel + sources[side].discharge;
   const essentialSide: Side = pdu.a && (available('a') >= available('b') || !pdu.b) ? 'a' : 'b';
-  const busLimits = Object.fromEntries(definition.buses.map((bus) => [bus.id, bus.limit]));
+  const busLimits = tables.busLimits;
+  const mainLimit = tables.mainLimit;
   const loads: Load[] = [];
-  for (const spec of definition.equipment) {
+  for (const { spec, modes, feederLimit, activeFunction, shedIndex } of tables.specs) {
     const e = equipment[spec.id];
     if (!e || !spec.bus || spec.kind === 'battery') continue;
-    const mode = modeOf(definition, spec.id, e.mode);
+    const mode = modes?.[e.mode] ?? NO_MODE;
     const wanted =
       spec.id === data.recorder.equipmentId
         ? requestedRecorderPower(state.recorder.sampleRate, definition)
         : mode.power;
-    const activeFunction = ACTIVE_FUNCTIONS.some((prefix) => spec.id.startsWith(prefix));
     const isEssential = activeFunction ? e.mode === 'active' : !spec.sheddable;
-    let request = healthy(spec.id)
+    // `healthy(spec.id)`: the record is this one, unchanged so far.
+    const isHealthy = e.condition > 0 && !e.tripped && e.mode !== 'off';
+    let request = isHealthy
       ? Math.min(wanted, Math.max(isEssential ? wanted : 0, e.allocation))
       : 0;
     const faultPower = Math.max(0, e.values.faultPower ?? 0);
-    if (healthy(spec.id) && faultPower > 0) {
-      const feederLimit =
-        spec.kind === 'power-bus' ? (busLimits[spec.bus] ?? spec.ratedPower) : spec.ratedPower;
+    if (isHealthy && faultPower > 0) {
       const tripThreshold =
         feederLimit * data.power.branchHeadroom * data.power.rpc.tripCurrentMultiple;
       const elapsed = request + faultPower > tripThreshold ? (e.values.overloadTime ?? 0) + dt : 0;
@@ -269,7 +343,6 @@ function dispatchPower(
         : isEssential
           ? request
           : 0;
-    const shedIndex = data.power.shedOrder.indexOf(spec.id);
     const priority = isEssential
       ? 0
       : spec.id === 'ion-drive'
@@ -289,12 +362,13 @@ function dispatchPower(
       floor,
       priority,
       factor: spec.bus === 'essential' ? 1 / eta : 1,
+      mode,
     });
-    update(spec.id, { requestedPower: wanted });
+    equipment[spec.id]!.values.requestedPower = wanted;
   }
   // Charging is a separately requested load, with no simultaneous discharge.
   for (const side of ['a', 'b'] as const) {
-    const id = `battery-${side}`;
+    const id = SIDES[side].battery;
     const e = equipment[id];
     const temperature = state.thermal.service ?? 295;
     if (
@@ -308,15 +382,24 @@ function dispatchPower(
         Math.max(0, battery.capacityPerPack * e.condition - (e.values.charge ?? 0)) /
           (dt * battery.chargeEfficiency),
       );
-      loads.push({ id, side, bus: `main-${side}`, requested, floor: 0, priority: 11, factor: 1 });
+      loads.push({
+        id,
+        side,
+        bus: SIDES[side].main,
+        requested,
+        floor: 0,
+        priority: 11,
+        factor: 1,
+        mode: modeOf(definition, id, e.mode),
+      });
     }
   }
   const demand = { a: 0, b: 0 };
   for (const load of loads) demand[load.side] += load.requested * load.factor;
   let transfer = 0; // Positive: a -> b; generation only, never pooled batteries.
   if (oldPower?.tieClosed === true && pdu.a && pdu.b) {
-    const ga = Math.min(sources.a.solar + sources.a.fuel, busLimits['main-a'] ?? Infinity);
-    const gb = Math.min(sources.b.solar + sources.b.fuel, busLimits['main-b'] ?? Infinity);
+    const ga = Math.min(sources.a.solar + sources.a.fuel, mainLimit.a);
+    const gb = Math.min(sources.b.solar + sources.b.fuel, mainLimit.b);
     transfer =
       ga > demand.a
         ? Math.min(data.power.tieMaxPower, ga - demand.a, Math.max(0, demand.b - gb))
@@ -336,10 +419,7 @@ function dispatchPower(
     const outgoing = Math.max(0, load.side === 'a' ? transfer : -transfer);
     const headroom = Math.max(
       0,
-      Math.min(
-        capacity - spent[load.side],
-        (busLimits[`main-${load.side}`] ?? Infinity) - outgoing - spent[load.side],
-      ),
+      Math.min(capacity - spent[load.side], mainLimit[load.side] - outgoing - spent[load.side]),
     );
     const busRoom = Math.max(0, (busLimits[load.bus] ?? Infinity) - (busSpent[load.bus] ?? 0));
     const supplied = pdu[load.side] ? Math.min(request, headroom / load.factor, busRoom) : 0;
@@ -361,15 +441,17 @@ function dispatchPower(
   let unmet = 0;
   for (const load of loads) {
     const draw = draws[load.id] ?? 0;
-    const e = equipment[load.id]!;
-    const mode = modeOf(definition, load.id, e.mode);
+    const mode = load.mode;
     const short = Math.max(0, load.requested - draw);
     loadWatts += draw;
     unmet += short;
     conversionLoss += draw * (load.factor - 1);
     const heat =
       load.id === 'black-box' ? draw : mode.power > 0 ? (draw * mode.heat) / mode.power : draw;
-    update(load.id, { heat, unmetPower: short }, draw);
+    const working = equipment[load.id]!;
+    working.powerDraw = draw;
+    working.values.heat = heat;
+    working.values.unmetPower = short;
     if (short > 1e-9 && (state.equipment[load.id]?.values.unmetPower ?? 0) <= 1e-9) {
       events.push(
         load.floor > 0 && draw < load.floor
@@ -383,9 +465,8 @@ function dispatchPower(
       );
     }
   }
-  update(`pdu-${essentialSide}`, {
-    heat: (equipment[`pdu-${essentialSide}`]?.values.heat ?? 0) + conversionLoss,
-  });
+  const essentialPdu = equipment[SIDES[essentialSide].pdu];
+  if (essentialPdu) essentialPdu.values.heat = (essentialPdu.values.heat ?? 0) + conversionLoss;
   let generated = 0;
   let discharged = 0;
   let charged = 0;
@@ -394,7 +475,8 @@ function dispatchPower(
   const busLedger: Record<string, JsonValue> = {};
   for (const side of ['a', 'b'] as const) {
     const s = sources[side];
-    const id = `battery-${side}`;
+    const ids = SIDES[side];
+    const id = ids.battery;
     const e = equipment[id];
     let chargeInput = draws[id] ?? 0;
     let sourceNeed = spent[side] + (side === 'a' ? transfer : -transfer);
@@ -414,7 +496,7 @@ function dispatchPower(
         battery.maxChargePowerPerPack * e.condition,
         Math.max(0, battery.capacityPerPack * e.condition - (e.values.charge ?? 0)) /
           (dt * battery.chargeEfficiency),
-        Math.max(0, (busLimits[`main-${side}`] ?? Infinity) - spent[side]),
+        Math.max(0, mainLimit[side] - spent[side]),
       );
       sourceNeed += chargeInput;
       spent[side] += chargeInput;
@@ -432,14 +514,17 @@ function dispatchPower(
       before +
         dt * (chargeInput * battery.chargeEfficiency - discharge / battery.dischargeEfficiency),
     );
-    update(
-      id,
-      { charge: after, output: discharge, heat: loss, generatedPower: discharge },
-      chargeInput,
-    );
+    const batteryRecord = equipment[id];
+    if (batteryRecord) {
+      batteryRecord.powerDraw = chargeInput;
+      batteryRecord.values.charge = after;
+      batteryRecord.values.output = discharge;
+      batteryRecord.values.heat = loss;
+      batteryRecord.values.generatedPower = discharge;
+    }
     if (before > 0 && after <= 1e-8)
       events.push({ kind: 'battery-depleted', t: state.t + dt, equipment: id });
-    const fuelId = `fuel-cell-${side}`;
+    const fuelId = ids.fuel;
     const previous = state.equipment[fuelId]?.values.output ?? 0;
     // Recover ramp terminal value from its integrated output where ramp-limited.
     const endOutput =
@@ -449,21 +534,23 @@ function dispatchPower(
             previous + fc.rampRateWPerS * dt,
           )
         : fuelOutput;
-    update(fuelId, {
-      output: endOutput,
-      generatedPower: fuelOutput,
-      heat: fuelOutput * (1 / fc.netEfficiencyHHV - 1),
-    });
-    update(side === 'a' ? 'solar-left' : 'solar-right', {
-      output: solarOutput,
-      generatedPower: solarOutput,
-    });
+    const fuelRecord = equipment[fuelId];
+    if (fuelRecord) {
+      fuelRecord.values.output = endOutput;
+      fuelRecord.values.generatedPower = fuelOutput;
+      fuelRecord.values.heat = fuelOutput * (1 / fc.netEfficiencyHHV - 1);
+    }
+    const solarRecord = equipment[ids.solar];
+    if (solarRecord) {
+      solarRecord.values.output = solarOutput;
+      solarRecord.values.generatedPower = solarOutput;
+    }
     generated += solarOutput + fuelOutput;
     fuelGenerated += fuelOutput;
     discharged += discharge;
     charged += chargeInput;
     batteryLoss += loss;
-    busLedger[`main-${side}`] = {
+    busLedger[ids.main] = {
       load: spent[side],
       generated: solarOutput + fuelOutput,
       discharged: discharge,
