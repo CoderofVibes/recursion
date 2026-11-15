@@ -35,3 +35,20 @@ export const motion = {
   /** How long the hands are off the flight controls before the coasting forecast is issued. */
   coastForecastDelay: 350,
 } as const;
+
+/**
+ * A20, faster coasting on slow machines: while coasting at high warp with nobody at the
+ * controls, fewer frames are drawn so the simulation gets more of each wall second. Any touch of
+ * a key or the pointer, or warp dropping (an alert drops it to 1×, A12), draws every frame again
+ * at once. [ASSUMED] values, to agree with 2F's per-frame simulation budget.
+ */
+export const coastCadence = {
+  /** Warp at or above which a quiet coast draws fewer frames. */
+  warp: 60,
+  /** Frames drawn per second while coasting. */
+  drawRate: 12,
+  /** Refreshes of the instruments per second while coasting (5 otherwise). */
+  instrumentRate: 2,
+  /** ms after the last key, click, wheel or pointer move before frames thin out. */
+  quietAfterInput: 1500,
+} as const;

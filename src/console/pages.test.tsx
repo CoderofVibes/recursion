@@ -25,6 +25,9 @@ import { FlightHud } from './FlightHud.tsx';
 import { MapPlate } from './MapPlate.tsx';
 import { designMark, defaultDesign } from './mission.ts';
 import { ShipPanels } from './ShipPanels.tsx';
+import { registerEncounterPanel } from './encounterPanels.ts';
+import { testVerdict } from './pages/ModelPage.tsx';
+import type { ExtensionRecord } from '../model/index.ts';
 
 const pending = <T,>(): Promise<T> => new Promise<T>(() => undefined);
 
@@ -54,6 +57,29 @@ function stubGame(options: { model?: ModelState; snapshot?: ViewSnapshot; ended?
       pending: 0,
     }),
     snapshot: () => options.snapshot ?? viewSnapshot,
+    chart: () => ({
+      regions: [
+        {
+          id: briefing.id,
+          name: briefing.name,
+          position: { x: 0, y: 0, z: 0 },
+          radius: 2e7,
+          surveyed: 0,
+          current: true,
+          attempts: [{ index: 1, outcome: 'in-progress' }],
+        },
+      ],
+      corridors: [],
+      leads: [
+        {
+          id: 'lead-1',
+          name: 'Faint source',
+          from: briefing.id,
+          direction: { x: 0, y: 1, z: 0 },
+          spread: 0.1,
+        },
+      ],
+    }),
     command: (c: unknown) => void commands.push(c),
     setPaused: () => undefined,
     setWarp: () => undefined,
@@ -64,7 +90,7 @@ function stubGame(options: { model?: ModelState; snapshot?: ViewSnapshot; ended?
   return { game, commands };
 }
 
-const PAGES: readonly PageId[] = ['mission', 'plan', 'model', 'blackbox', 'systems'];
+const PAGES: readonly PageId[] = ['mission', 'plan', 'model', 'blackbox', 'systems', 'credits'];
 
 describe('console pages on the fixtures', () => {
   for (const page of PAGES)
@@ -96,17 +122,77 @@ describe('console pages on the fixtures', () => {
     expect(html).toContain('BEGIN AGAIN');
   });
 
+  it('links the licence and notices under the deployment base (S13)', () => {
+    const { game } = stubGame();
+    const desk = new Desk(game);
+    desk.page = 'credits';
+    const html = renderToStaticMarkup(<ConsoleScreen desk={desk} visible />);
+    const base = import.meta.env.BASE_URL;
+    for (const file of ['LICENSE', 'NOTICE', 'THIRD-PARTY-NOTICES.txt'])
+      expect(html).toContain(`href="${base}${file}"`);
+    expect(html).toContain('#what-we-verified');
+  });
+
   it('mounts no page while the screen is down', () => {
     const { game } = stubGame();
     const html = renderToStaticMarkup(<ConsoleScreen desk={new Desk(game)} visible={false} />);
     expect(html).not.toContain('rx-panel');
   });
 
+  it('says how many attempts are finished and what the next test fits and checks (S9 R6, R7)', () => {
+    const { game } = stubGame();
+    const desk = new Desk(game);
+    desk.page = 'model';
+    const html = renderToStaticMarkup(<ConsoleScreen desk={desk} visible />);
+    const finished = archive.attempts.filter((a) => a.outcome.kind !== 'in-progress');
+    expect(html).toContain('finished attempts');
+    if (finished.length >= 2) {
+      const held = finished.at(-1)!;
+      expect(html).toContain(`check on attempt ${held.index}`);
+      expect(html).not.toContain(`attempt${finished.length > 2 ? 's' : ''} ${held.index} ·`);
+    } else expect(html).toContain('test unavailable');
+    // The data behind the plot can be read without it.
+    expect(html).toContain('cs-table');
+  });
+
+  it('words a test result before its statistics, and never as ready when it is not', () => {
+    const base = {
+      state: { id: 'distance-law', status: 'candidate' },
+      training: ['a1'],
+      heldOut: 'a2',
+    } as unknown as ExtensionRecord;
+    expect(testVerdict(undefined, false)).toBeNull();
+    expect(testVerdict(undefined, true)?.text).toBe('adopted');
+    expect(testVerdict({ error: 'no fittable arc' }, false)?.text).toBe('no test: no fittable arc');
+    expect(testVerdict({ ...base, adoptable: true }, false)).toEqual({
+      text: 'passes · not adopted',
+      status: 'nominal',
+    });
+    const fails = {
+      ...base,
+      adoptable: false,
+      heldOutTest: { pass: false },
+    } as unknown as ExtensionRecord;
+    expect(testVerdict(fails, false)?.text).toMatch(/^fails/);
+    const weak = {
+      ...base,
+      adoptable: false,
+      heldOutTest: { pass: true },
+      evidence: { evidence: false, deltaCost: 1, penalty: 9 },
+    } as unknown as ExtensionRecord;
+    expect(testVerdict(weak, false)).toEqual({
+      text: 'insufficient evidence: the fit does not beat its penalty',
+      status: 'caution',
+    });
+  });
+
   it('records the design and sets the ship up through commands only', () => {
     const { game, commands } = stubGame();
     const desk = new Desk(game);
     desk.commitDesign();
-    expect(commands[0]).toEqual(designMark(defaultDesign(shipDefinition, briefing.knownBodies[0]!.id)));
+    expect(commands[0]).toEqual(
+      designMark(defaultDesign(shipDefinition, briefing.knownBodies[0]!.id)),
+    );
     expect(commands.length).toBeGreaterThan(1);
     expect(desk.designedAt).toBe(viewSnapshot.t);
   });
@@ -128,6 +214,33 @@ describe('instruments beside the holograms', () => {
       expect(html).toContain('Margins');
       expect(html).not.toContain('NaN');
     }
+  });
+
+  it("mounts the encounter's own panel beside FLIGHT, its commands through the ship's channel (R4)", () => {
+    const { game, commands } = stubGame();
+    let send: ((c: readonly unknown[]) => void) | undefined;
+    registerEncounterPanel(briefing.id, ({ command }) => {
+      send = command as (c: readonly unknown[]) => void;
+      return <p>ENCOUNTER PANEL HERE</p>;
+    });
+    const html = renderToStaticMarkup(
+      <FlightHud
+        desk={new Desk(game)}
+        available={{ throttle: true, yaw: true, pitch: true, translate: true }}
+        headingUp
+        range={1_500_000}
+        onHeadingUp={() => undefined}
+      />,
+    );
+    expect(html).toContain('ENCOUNTER PANEL HERE');
+    send?.([
+      { kind: 'mode', equipment: 'camera', mode: 'detail' },
+      { kind: 'recorder', sampleRate: 10 },
+    ]);
+    expect(commands).toEqual([
+      { kind: 'mode', equipment: 'camera', mode: 'detail' },
+      { kind: 'recorder', sampleRate: 10 },
+    ]);
   });
 
   it('renders each ship system beside the drawing', () => {
@@ -157,12 +270,23 @@ describe('instruments beside the holograms', () => {
     }
   });
 
-  it('renders the map plate for the charted region', () => {
+  it('renders the map plate for the charted region, and for a chosen lead', () => {
     const holo = { selected: () => null, onChange: () => () => undefined } as unknown as MapHolo;
     const { game } = stubGame();
     const html = renderToStaticMarkup(
       <MapPlate desk={new Desk(game)} holo={holo} region={false} onRegion={() => undefined} />,
     );
     expect(html).toContain('ENTER REGION');
+    // The charted objects as a list the keyboard can use (S9 R13): the region and the lead.
+    expect(html).toContain('LEAD · FAINT SOURCE');
+    const onLead = {
+      selected: () => ({ kind: 'lead', id: 'lead-1' }),
+      onChange: () => () => undefined,
+    } as unknown as MapHolo;
+    const lead = renderToStaticMarkup(
+      <MapPlate desk={new Desk(game)} holo={onLead} region={false} onRegion={() => undefined} />,
+    );
+    expect(lead).toContain('Faint source');
+    expect(lead).toContain('unknown');
   });
 });

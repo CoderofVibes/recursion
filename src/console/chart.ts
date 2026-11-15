@@ -1,51 +1,12 @@
 /**
- * The chart the MAP shows: only what has been charted (DECISIONS A8; brief §1: the exit is never
- * labelled). For the Phase 2 playtest that is one region, the encounter the ship is in, with
- * what Black Box holds of it. Regions, corridors and leads beyond it arrive with the expedition
- * (3D, 3F); the contracts do not carry chart positions yet (see docs/handoffs/2D.md, requests).
+ * What the MAP's plate says about a charted region: only what the ship holds (DECISIONS A8;
+ * brief §1: the exit is never labelled). The chart itself is the game's (`GameControls.chart()`,
+ * drawn through `chartView` in src/view3d/adapter.ts).
  */
-import type { BlackBoxArchive, ModelState, ViewSnapshot } from '../contracts/index.ts';
+import type { BlackBoxArchive, ViewSnapshot } from '../contracts/index.ts';
 import type { GameControls } from '../game/belief/controls.ts';
-import type { Chart, ChartOutcome } from '../view3d/map/MapHolo.ts';
 import { deltaV } from './data.ts';
 import { dist, fixed, whole } from './format.ts';
-
-/**
- * How much of the region is surveyed, 0 to 1: the share of its bodies whose pull the model has
- * measured at some distance, with a rule adopted counting as one more.
- */
-export function surveyed(model: ModelState, bodies: number): number {
-  const measured = model.calibration.filter((c) => c.distances.length > 0).length;
-  const rules = model.extensions.some((e) => e.status === 'adopted') ? 1 : 0;
-  return Math.min(1, (measured + rules) / Math.max(1, bodies + 1));
-}
-
-export function buildChart(game: GameControls, archive: BlackBoxArchive): Chart {
-  const model = game.model.state();
-  const status = game.status();
-  const attempts = archive.attempts
-    .filter((a) => a.encounterId === game.briefing.id && a.id !== status.attemptId)
-    .map((a) => ({ index: a.index, outcome: a.outcome.kind as ChartOutcome }));
-  attempts.push({
-    index: status.attemptIndex,
-    outcome: status.outcome.kind as ChartOutcome,
-  });
-  return {
-    regions: [
-      {
-        id: game.briefing.id,
-        name: game.briefing.name.toUpperCase(),
-        position: [0, 0, 0],
-        radius: 1,
-        surveyed: surveyed(model, game.briefing.knownBodies.length),
-        current: true,
-        attempts,
-      },
-    ],
-    corridors: [],
-    leads: [],
-  };
-}
 
 /** Facts about the charted region, for the map's plate: only what the ship holds. */
 export function regionFacts(

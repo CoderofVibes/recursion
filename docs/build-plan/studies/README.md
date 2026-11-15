@@ -26,6 +26,7 @@ Design and physics studies that run in parallel with the build. Each one answers
 | S20 | The 3D release, rechecked: S9's first five minutes, S12's claims and demo, S15's speed | [S20-3d-recheck.md](S20-3d-recheck.md) |
 | S21 | The Gravity range's belt and power (A18): corral the player, make power a real constraint | [S21-belt-power.md](S21-belt-power.md) |
 | S22 | The well field as real funnels (A19): pull, reversal, crush; a big field through 3D, random orientations, wells that appear | [S22-big-well-field.md](S22-big-well-field.md) |
+| S23 | The opening (A21): beat sheet, Earth, the black hole, the title, sound cues | [S23-the-opening.md](S23-the-opening.md) |
 
 ## Rules for every study
 1. **Read first:**

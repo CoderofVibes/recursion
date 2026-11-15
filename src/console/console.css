@@ -52,6 +52,22 @@
   color: var(--rx-ink);
   border-color: var(--rx-ink-dim);
 }
+/* Credits: there to be found, not asking to be. */
+.cs-tab[data-quiet] {
+  color: var(--rx-ink-faint);
+}
+.cs-link {
+  color: var(--rx-ink);
+  text-decoration: underline;
+  text-decoration-color: var(--rx-ink-faint);
+}
+.cs-link:hover {
+  text-decoration-color: var(--rx-ink);
+}
+.cs-link:focus-visible {
+  outline: var(--rx-line-rule) solid var(--rx-ink);
+  outline-offset: var(--rx-unit);
+}
 .cs-tab[data-tone='blackbox'] {
   color: var(--rx-blackbox);
 }
@@ -75,15 +91,24 @@
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--rx-panel-edge) transparent;
+  outline: none;
 }
+/* The page has the keyboard (to scroll a long debrief): a hairline at its edge. */
+.cs-page:focus-visible {
+  box-shadow: inset 0 0 0 var(--rx-line-rule) var(--rx-ink-faint);
+}
+/* Panels down balanced columns (Columns.tsx works out the split; plain flex boxes lay it out). */
 .cs-grid {
-  /* Panels flow down columns, so a short panel does not leave a hole beside a tall one. */
-  column-width: var(--rx-hud-panel-min);
-  column-gap: var(--rx-gap);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--rx-gap);
 }
-.cs-grid > * {
-  break-inside: avoid;
-  margin-bottom: var(--rx-gap);
+.cs-col {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--rx-gap);
 }
 .cs-foot {
   display: flex;
@@ -93,8 +118,24 @@
   letter-spacing: var(--rx-tracking-label);
   color: var(--rx-ink-dim);
 }
+/* Narrow windows: the time block and the note give way; the mark and the way back never wrap. */
+.cs-foot > * {
+  flex: none;
+  white-space: nowrap;
+}
+.cs-foot > .cs-time {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+/* The reason warp dropped is kept whole; the next event gives way first. */
+.cs-foot .cs-time__eta {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .cs-foot__note {
-  flex: 1;
+  flex: 1 1 0;
   min-width: 0;
   overflow: hidden;
   white-space: nowrap;
@@ -102,7 +143,22 @@
   text-transform: uppercase;
 }
 .cs-foot__back {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  letter-spacing: inherit;
   color: var(--rx-ink-faint);
+}
+button.cs-foot__back {
+  cursor: pointer;
+}
+button.cs-foot__back:hover {
+  color: var(--rx-ink-dim);
+}
+button.cs-foot__back:focus-visible {
+  outline: var(--rx-line-rule) solid var(--rx-ink);
+  outline-offset: var(--rx-unit);
 }
 
 /* ---- Controls --------------------------------------------------------------------------------- */
@@ -157,7 +213,8 @@
 }
 .cs-button:focus-visible,
 .cs-tab:focus-visible,
-.cs-field__input:focus-visible {
+.cs-field__input:focus-visible,
+.cs-item__close:focus-visible {
   outline: var(--rx-line-rule) solid var(--rx-ink);
   outline-offset: var(--rx-unit);
 }
@@ -244,6 +301,36 @@
   font-size: var(--rx-size-small);
   color: var(--rx-ink-dim);
 }
+/* The numbers behind a plot, folded away until asked for. */
+.cs-details {
+  font-size: var(--rx-size-small);
+  color: var(--rx-ink-dim);
+}
+.cs-details summary {
+  cursor: pointer;
+  letter-spacing: var(--rx-tracking-label);
+  text-transform: uppercase;
+}
+.cs-details summary:focus-visible {
+  outline: var(--rx-line-rule) solid var(--rx-ink);
+  outline-offset: var(--rx-unit);
+}
+.cs-table {
+  width: 100%;
+  margin-top: var(--rx-unit);
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.cs-table th {
+  text-align: left;
+  font-weight: var(--rx-weight-regular);
+  color: var(--rx-ink-faint);
+  border-bottom: var(--rx-line-rule) solid var(--rx-panel-edge);
+}
+.cs-table td {
+  padding: var(--rx-unit) var(--rx-unit) 0 0;
+  color: var(--rx-ink);
+}
 .cs-change {
   margin: 0;
   padding-left: var(--rx-row-pad-x);
@@ -288,6 +375,13 @@
 .cs-item__close:hover {
   color: var(--rx-ink);
 }
+/* A place focus is sent to (a component's controls): no stop of its own, a hairline when on it. */
+.cs-anchor {
+  outline: none;
+}
+.cs-anchor:focus-visible {
+  box-shadow: 0 0 0 var(--rx-line-rule) var(--rx-ink-faint);
+}
 .cs-scroll {
   max-height: 60vh;
   overflow-y: auto;
@@ -302,6 +396,17 @@
   gap: var(--rx-unit);
   pointer-events: auto;
 }
+.cs-time__row {
+  display: flex;
+  align-items: center;
+  gap: var(--rx-unit);
+}
+/* Beside a hologram: the row, then the reason and the next event on lines of their own. */
+.cs-time[data-compact] {
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0;
+}
 .cs-time__met {
   margin-right: var(--rx-gap);
   font-size: var(--rx-size-value);
@@ -313,6 +418,28 @@
   margin-left: var(--rx-row-gap);
   color: var(--rx-caution);
   font-size: var(--rx-size-small);
+}
+/* How long the next event is, in ship time and in wall time at this warp (nominal). */
+.cs-time__eta {
+  margin-left: var(--rx-gap);
+  color: var(--rx-forecast);
+  font-size: var(--rx-size-small);
+  letter-spacing: var(--rx-tracking-label);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.cs-time[data-compact] .cs-time__eta,
+.cs-time[data-compact] .cs-time__reason {
+  margin-left: 0;
+}
+/* Why warp last dropped to 1×, kept beside the controls until warp is raised again. */
+.cs-time__reason {
+  margin-left: var(--rx-gap);
+  color: var(--rx-caution);
+  font-size: var(--rx-size-small);
+  letter-spacing: var(--rx-tracking-label);
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 /* ---- Strength against distance ---------------------------------------------------------------- */

@@ -7,15 +7,58 @@
  * Belief side (P11): it sees the game only through `GameControls`.
  */
 import { useSyncExternalStore } from 'react';
-import type { AttemptId, ForecastDraft, ViewSnapshot } from '../contracts/index.ts';
+import type {
+  AttemptId,
+  BlackBoxArchive,
+  ForecastDraft,
+  ViewSnapshot,
+} from '../contracts/index.ts';
 import type { GameControls, PlanDraft } from '../game/belief/controls.ts';
-import type { ExtensionRecord, ModelReport } from '../model/index.ts';
+import type { BurnReport, EmpiricalReport, ExtensionRecord, ModelReport } from '../model/index.ts';
 import { distance, length } from '../view3d/adapter.ts';
 import type { ApproachAlert } from '../view3d/flight/FlightHolo.ts';
 import { defaultDesign, designMark, setupCommands } from './mission.ts';
 import type { MissionDesign } from './mission.ts';
 
-export type PageId = 'mission' | 'plan' | 'model' | 'blackbox' | 'systems';
+export type PageId = 'mission' | 'plan' | 'model' | 'blackbox' | 'systems' | 'credits';
+
+/** A burn's direction: along or against the believed velocity, toward or away from a body, or the body axis. */
+export type BurnDirection = 'prograde' | 'retrograde' | 'toward' | 'away' | 'axis';
+
+/** One burn being planned, as the player typed it. Times are seconds after commitment. */
+export interface BurnRow {
+  readonly key: number;
+  readonly at: number;
+  readonly direction: BurnDirection;
+  /** Body for toward/away. */
+  readonly target: string;
+  /** For `axis`: degrees to turn the nose to the left of where it points now. */
+  readonly offset: number;
+  readonly sizing: 'deltaV' | 'duration';
+  readonly amount: number;
+  readonly throttle: number;
+}
+
+/** One camera pointing being planned. */
+export interface PointRow {
+  readonly key: number;
+  readonly at: number;
+  readonly target: string;
+}
+
+/** The plan as the player is editing it on PLAN (S9 R4). */
+export interface PlanEdit {
+  readonly burns: readonly BurnRow[];
+  readonly points: readonly PointRow[];
+}
+
+export const EMPTY_PLAN: PlanEdit = { burns: [], points: [] };
+
+/** Where the draft stands: nothing yet, edited, shown in a preview, or committed as it is. */
+export type DraftState = 'empty' | 'edited' | 'previewed' | 'committed';
+
+/** Real milliseconds the console keeps one read of Black Box's archive while an attempt runs. */
+const ARCHIVE_PERIOD = 2000;
 
 /** Readings kept for trend graphs: a short ring of samples per channel. */
 const HISTORY = 160;
@@ -33,12 +76,26 @@ export class Desk {
   design: MissionDesign;
   /** Sim time the design was last committed in this attempt; undefined until then. */
   designedAt: number | undefined;
-  /** The plan being edited and the draft forecast of it, if previewed. */
+  /**
+   * The plan being edited: kept across page and view changes, set aside on recurrence (its times
+   * meant something only from the conditions it was written in).
+   */
+  planEdit: PlanEdit = EMPTY_PLAN;
+  /** The previous attempt's draft, offered back as an unscheduled draft, never replayed. */
+  setAside: { readonly edit: PlanEdit; readonly attempt: number } | undefined;
+  /** The draft forecast of the plan as edited, if previewed; cleared by any edit. */
   preview: ForecastDraft | undefined;
   /** Object chosen in the flight view. */
   selected: string | null = null;
   compare: readonly [AttemptId, AttemptId] | undefined;
   report: ModelReport | undefined;
+  /**
+   * The model's look at each recorded burn and at any pull it cannot explain (RuleControls.burns
+   * and .empirical), asked for on MODEL: each costs fits, so they run only when asked. Kept with
+   * the model version they were worked out on.
+   */
+  burnCheck: { readonly version: number; readonly burns: readonly BurnReport[] } | undefined;
+  unexplained: { readonly version: number; readonly result: EmpiricalReport | null } | undefined;
   /** The latest test of each rule in this session. */
   readonly tests = new Map<string, ExtensionRecord | { error: string }>();
   /** A short line about the last thing the console did, for its footer. */
@@ -50,7 +107,20 @@ export class Desk {
   flightMiss: { readonly metres: number; readonly sigmas: number } | null = null;
   /** Keys held down in the room (the flight key caps light from this). */
   keys: ReadonlySet<string> = new Set();
+  /**
+   * Why warp last dropped to 1× (A12: a new caution or warning, or flying by hand), shown beside
+   * the time controls until the player raises warp again (S9 R3b). Never resumes warp itself.
+   */
+  warpDrop: string | null = null;
 
+  /** The snapshot the frame loop took this frame (`snapshot()`). */
+  private frameSnapshot: ViewSnapshot | undefined;
+  private archived: { key: string; at: number; value: BlackBoxArchive } | undefined;
+  /** Bumped by every edit of the plan; a preview or commit remembers the edit it was made from. */
+  private edits = 0;
+  private previewedEdit = -1;
+  private committedEdit = -1;
+  private rowKey = 1;
   private readonly series = new Map<string, number[]>();
   private sinceSample = SAMPLE_EVERY;
   private reportVersion = -1;
@@ -80,6 +150,34 @@ export class Desk {
   notify(): void {
     this.version++;
     for (const l of this.listeners) l();
+  }
+
+  /**
+   * What the views draw: the frame loop's snapshot of this frame, so the instruments do not
+   * each build another (a snapshot costs most of a millisecond). Outside the loop, a fresh one.
+   */
+  snapshot(): ViewSnapshot {
+    return this.frameSnapshot ?? this.game.snapshot();
+  }
+  /** The frame loop hands over each frame's snapshot. */
+  setFrame(snapshot: ViewSnapshot): void {
+    this.frameSnapshot = snapshot;
+  }
+
+  /**
+   * Black Box's archive for the console, read at most every ARCHIVE_PERIOD while an attempt runs
+   * (S15: reading it copies the whole record in progress). A new attempt, a change of phase or
+   * `fresh` (after saving a procedure) reads it at once; the same objects come back in between,
+   * so pages can memoize on them.
+   */
+  archive(fresh = false): BlackBoxArchive {
+    const s = this.game.status();
+    const key = `${s.attemptId}|${s.phase}`;
+    const now = performance.now();
+    const c = this.archived;
+    if (fresh || !c || c.key !== key || now - c.at > ARCHIVE_PERIOD)
+      this.archived = { key, at: now, value: this.game.blackBox.archive() };
+    return this.archived!.value;
   }
 
   setPage(page: PageId): void {
@@ -112,10 +210,25 @@ export class Desk {
     }
     this.say('design recorded');
   }
-  /** A new attempt: the design carries over as the starting point, not yet committed. */
+  /**
+   * A new attempt: the design carries over as the starting point, not yet committed. The plan
+   * being edited is set aside, with a visible reason, and offered back: its times were relative
+   * to conditions that are gone, so it is never scheduled again by itself.
+   */
   newAttempt(): void {
+    const { burns, points } = this.planEdit;
+    if (burns.length + points.length > 0) {
+      this.setAside = {
+        edit: this.planEdit,
+        attempt: Math.max(1, this.game.status().attemptIndex - 1),
+      };
+      this.planEdit = EMPTY_PLAN;
+      this.edits++;
+      this.note = 'plan draft set aside for the new attempt';
+    }
     this.designedAt = undefined;
     this.preview = undefined;
+    this.warpDrop = null;
     this.selected = null;
     this.compare = undefined;
     this.game.setCompare();
@@ -133,21 +246,60 @@ export class Desk {
   }
 
   // ---- Plans ---------------------------------------------------------------------------------
+  /** Change the plan being edited. Any change makes a preview of the old inputs stale. */
+  editPlan(change: (edit: PlanEdit) => PlanEdit): void {
+    this.planEdit = change(this.planEdit);
+    this.edits++;
+    if (this.preview) {
+      this.preview = undefined;
+      this.say('draft changed · preview again');
+    } else this.notify();
+  }
+  /** A key for a new row, unique in this session. */
+  newRowKey(): number {
+    return this.rowKey++;
+  }
+  /** Where the draft stands against what was previewed and committed. */
+  draftState(): DraftState {
+    const { burns, points } = this.planEdit;
+    if (this.committedEdit === this.edits) return 'committed';
+    if (this.preview && this.previewedEdit === this.edits) return 'previewed';
+    return burns.length + points.length === 0 ? 'empty' : 'edited';
+  }
+  /** Take back the previous attempt's draft, unscheduled. */
+  restoreSetAside(): void {
+    const kept = this.setAside;
+    if (!kept) return;
+    this.setAside = undefined;
+    this.editPlan(() => kept.edit);
+    this.say(`draft from attempt ${kept.attempt} restored · not scheduled`);
+  }
+
   previewPlan(plan: PlanDraft): void {
+    const edit = this.edits;
     this.say('forecasting');
     this.game.preview(plan).then(
       (draft) => {
+        // Edited while the forecast ran: the preview would describe inputs no longer shown.
+        if (edit !== this.edits) return this.say('draft changed while forecasting · preview again');
         this.preview = draft;
+        this.previewedEdit = edit;
         this.say(`draft forecast: ${draft.samples.length} samples`);
       },
       (reason: unknown) => this.say(`no forecast · ${message(reason)}`),
     );
   }
-  commitPlan(plan: PlanDraft): void {
+  /** Commit a plan: the draft as edited, or (`fromDraft` false) a saved procedure. */
+  commitPlan(plan: PlanDraft, fromDraft = true): void {
+    const edit = this.edits;
     this.preview = undefined;
     this.say('committing');
     this.game.commit(plan).then(
-      (forecast) => this.say(`forecast ${forecast.id} issued on model v${forecast.modelVersion}`),
+      (forecast) => {
+        // A procedure's commit replaces whatever the draft had scheduled.
+        this.committedEdit = fromDraft ? edit : -1;
+        this.say(`forecast ${forecast.id} issued on model v${forecast.modelVersion}`);
+      },
       (reason: unknown) => this.say(`not committed · ${message(reason)}`),
     );
   }
@@ -176,6 +328,41 @@ export class Desk {
       () => {
         this.reportBusy = false;
       },
+    );
+  }
+
+  /** Warp was dropped to 1× for this reason. */
+  dropWarp(reason: string): void {
+    this.warpDrop = reason;
+    this.say(`warp to 1× · ${reason}`);
+  }
+
+  /** Ask the model how each recorded burn went against what it expected (costs a fit per burn). */
+  checkBurns(): void {
+    const rules = this.game.rules;
+    if (!rules) return;
+    const version = this.game.model.state().version;
+    this.say('checking burns');
+    rules.burns().then(
+      (burns) => {
+        this.burnCheck = { version, burns };
+        this.say(`burns checked: ${burns.length}`);
+      },
+      (reason: unknown) => this.say(`no burn check · ${message(reason)}`),
+    );
+  }
+  /** Ask the model for any pull it cannot explain with the law it has. */
+  findUnexplained(): void {
+    const rules = this.game.rules;
+    if (!rules) return;
+    const version = this.game.model.state().version;
+    this.say('looking for unexplained pull');
+    rules.empirical().then(
+      (result) => {
+        this.unexplained = { version, result };
+        this.say(result ? 'unexplained pull: fitted' : 'unexplained pull: nothing to fit yet');
+      },
+      (reason: unknown) => this.say(`no fit · ${message(reason)}`),
     );
   }
 

@@ -4,9 +4,9 @@
  * sensor, and nothing here is a hologram. The room is the ship, so the outside turns as the ship
  * turns and the ship's nose is always toward the window.
  *
- * Until the game layer supplies a window channel (see docs/handoffs/2D.md, requests), this is
- * drawn from the believed world, so a rock the ship has never catalogued is not yet seen by eye
- * either, and the sun's direction is a display value.
+ * Drawn from the game's window channel (ViewSnapshot.window, 2G): what light shows, with the
+ * sun where it is and bodies in shadow dark. Without it (stand-ins, old fixtures) it falls back
+ * to the believed world and a display sun.
  */
 import {
   BufferGeometry,
@@ -24,7 +24,7 @@ import {
   Vector3,
 } from 'three';
 import type { Scene, ShaderMaterial } from 'three';
-import type { ViewSnapshot } from '../../contracts/index.ts';
+import type { ViewSnapshot, WindowView } from '../../contracts/index.ts';
 import { colour, hex, outsideStyle, render } from '../../theme/index.ts';
 import { bodyMaterial, rockMaterial, setSun } from '../../theme/three/index.ts';
 import { attitudeToScene, toScene } from '../adapter.ts';
@@ -150,14 +150,68 @@ export function buildOutside(scene: Scene): Outside {
     return (radius * drawn) / dist;
   };
 
+  /** Lit or unlit: an unlit body is a dark disc against the stars, with no rim of light. */
+  const setLit = (mesh: Mesh, lit: boolean): void => {
+    const u = (mesh.material as ShaderMaterial).uniforms;
+    if (mesh.userData.lit === lit) return;
+    mesh.userData.lit = lit;
+    mesh.userData.cLit ??= (u.cLit!.value as Color).clone();
+    (u.cLit!.value as Color).copy(lit ? (mesh.userData.cLit as Color) : (u.cDark!.value as Color));
+    u.uRimStrength!.value = lit ? render.rimStrength : 0;
+  };
+
+  /**
+   * The eye's view from the game (`ViewSnapshot.window`): directions and apparent sizes only,
+   * never a range. Each object is drawn along its direction at a distance that orders it by
+   * apparent size (rocks in front of bodies), scaled to keep its true angular size.
+   */
+  const fromWindow = (view: WindowView): void => {
+    let bodyIndex = 0;
+    const seen = new Set<string>();
+    let n = 0;
+    for (const o of view.objects) {
+      toScene(o.direction, d).normalize();
+      const a = Math.max(o.angularRadius, 0);
+      if (o.kind === 'body') {
+        const mesh = bodyMesh(o.id, bodyIndex++);
+        seen.add(o.id);
+        mesh.visible = true;
+        const drawn = NEAR + SPAN * (0.45 + 0.55 / (1 + a * 20));
+        mesh.position.copy(d).multiplyScalar(drawn);
+        mesh.scale.setScalar(drawn * Math.tan(Math.min(a, 1.4)));
+        setLit(mesh, o.lit);
+      } else if (o.lit && n < MAX_ROCKS) {
+        // An unlit rock is not seen at all.
+        const drawn = NEAR + SPAN * (0.1 + 0.3 / (1 + a * 2000));
+        const r = drawn * Math.tan(Math.min(a, 1.4));
+        let h = 0;
+        for (let k = 0; k < o.id.length; k++) h = (h * 31 + o.id.charCodeAt(k)) % 6283;
+        spin.setFromAxisAngle(axis, h / 1000);
+        m4.compose(d.multiplyScalar(drawn), spin, scale.set(r, r * 0.8, r * 1.1));
+        rocks.setMatrixAt(n++, m4);
+      }
+    }
+    for (const [id, mesh] of bodies) if (!seen.has(id)) mesh.visible = false;
+    rocks.count = n;
+    rocks.instanceMatrix.needsUpdate = true;
+  };
+
   return {
     update(snapshot) {
       const ship = snapshot.world.ship;
       // The room is the ship: bring the ship's nose onto the room's -z, the window.
       rot.quaternion.copy(attitudeToScene(ship.attitude, q)).invert();
-      sunWorld.copy(sunEnv).applyQuaternion(rot.quaternion);
+      const view = snapshot.window;
+      if (view?.sun) toScene(view.sun.direction, sunWorld).normalize();
+      else sunWorld.copy(sunEnv);
+      sunWorld.applyQuaternion(rot.quaternion);
       for (const m of materials) setSun(m, [sunWorld.x, sunWorld.y, sunWorld.z]);
+      if (view) {
+        fromWindow(view);
+        return;
+      }
 
+      // Without a window channel (stand-ins, old fixtures): the believed world.
       snapshot.world.bodies.forEach((b, i) => {
         const mesh = bodyMesh(b.id, i);
         const r = place(ship.position, b.position, b.radius, mesh.position);

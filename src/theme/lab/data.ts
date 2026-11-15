@@ -8,7 +8,8 @@ import {
   viewSnapshot,
   viewSnapshotCompare,
 } from '../../contracts/fixtures/index.ts';
-import { covEllipse } from '../../contracts/index.ts';
+import { principalAxes } from '../../lib/sym3.ts';
+import type { Sym3 } from '../../lib/sym3.ts';
 import type { SchematicLink, SchematicNode, Status } from '../components/index.ts';
 
 const KM = 1000;
@@ -18,12 +19,13 @@ const fmt = (v: number, digits = 0): string =>
   v.toLocaleString('en-US', { maximumFractionDigits: digits, minimumFractionDigits: digits });
 
 /**
- * A k-sigma radius in km. An issued Forecast is deeply frozen, and that type forgets a covariance
- * has exactly three entries, so rebuild the triple before handing it to the contract helper.
+ * A k-sigma radius in km: along the longest axis of the 3D covariance [xx, xy, xz, yy, yz, zz]
+ * (A11), as the flight view's tube is drawn.
  */
 export function sigmaKm(cov: readonly number[], k: number): number {
-  // LIFT(2G): the x–y block [xx, xy, yy] of a Cov3 [xx, xy, xz, yy, yz, zz].
-  return covEllipse([cov[0] ?? 0, cov[1] ?? 0, cov[3] ?? 0], k).major / KM;
+  const c = [0, 1, 2, 3, 4, 5].map((i) => cov[i] ?? 0) as unknown as Sym3;
+  const { values } = principalAxes(c);
+  return (k * Math.sqrt(Math.max(values.x, values.y, values.z, 0))) / KM;
 }
 
 function need<T>(v: T | undefined, what: string): T {

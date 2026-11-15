@@ -131,4 +131,8 @@ export const roomMotion = {
   /** Radians per pixel: pointer-locked look, and drag-to-look. */
   look: 0.0021,
   dragLook: 0.004,
+  /** One press of a framing key or button on a hologram: range factor, orbit and tilt, rad. */
+  frameZoom: 1.25,
+  frameOrbit: 0.2,
+  frameTilt: 0.08,
 } as const;

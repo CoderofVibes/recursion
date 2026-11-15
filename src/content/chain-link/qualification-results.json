@@ -1,0 +1,186 @@
+{
+  "protocol": "a16-twenty-production-flight-v1",
+  "sourceSha256": "0c051e49d79a55d3e2b2bcc95ddd7b80ae83f4fe49e6babc70a55306c1304918",
+  "cases": [
+    {
+      "catalogueIndex": 0,
+      "seed": "a16-twenty-controlled",
+      "contentVersion": "cathedral-a16-twenty-2",
+      "dt": 0.1,
+      "complete": true,
+      "elapsed": 6023.3,
+      "fenceCount": 20,
+      "rcsUsed": 25.316772523983843,
+      "rcsRemaining": 274.68322747601616,
+      "mainUsed": 0,
+      "hydrogenUsed": 0.35746392439131736,
+      "oxygenUsed": 2.859711395130539,
+      "recordedBytes": 246710272,
+      "recordedLatticeFrames": 9989,
+      "minimumContinuousClearance": 21.62149614952901,
+      "minimumRockClearance": 21.977797753318594,
+      "maximumMaterialSpeedBound": 2.3379850834316027,
+      "maximumTrackingError": 0.2550909272788945,
+      "maximumAttitudeError": 0.009267929866396189,
+      "maximumTemperature": {
+        "cabin": 295,
+        "service": 295,
+        "external-loop": 285.0004484582351,
+        "hx-water": 292.7054707025632
+      },
+      "minimumScannerPower": {
+        "camera": 200,
+        "science-processor": 1000,
+        "black-box": 35
+      },
+      "faults": [],
+      "contacts": 0,
+      "finalLocalDatum": {
+        "x": 7950.133132505073,
+        "y": 39.99958636954501,
+        "z": 39.99269035293875
+      },
+      "finalLocalVelocity": {
+        "x": 1.3999844892679434,
+        "y": 0.00004927278418401731,
+        "z": 0.0001894433200606674
+      },
+      "commandTicks": 60233
+    },
+    {
+      "catalogueIndex": 1,
+      "seed": "a16-twenty-controlled",
+      "contentVersion": "cathedral-a16-twenty-2",
+      "dt": 0.1,
+      "complete": true,
+      "elapsed": 6023.200000000001,
+      "fenceCount": 20,
+      "rcsUsed": 25.288962081812087,
+      "rcsRemaining": 274.7110379181879,
+      "mainUsed": 0,
+      "hydrogenUsed": 0.3575967101574431,
+      "oxygenUsed": 2.860773681259545,
+      "recordedBytes": 246706176,
+      "recordedLatticeFrames": 9989,
+      "minimumContinuousClearance": 21.681229248460063,
+      "minimumRockClearance": 21.986731721167452,
+      "maximumMaterialSpeedBound": 2.3379850834316027,
+      "maximumTrackingError": 0.263724917507697,
+      "maximumAttitudeError": 0.009170628555219665,
+      "maximumTemperature": {
+        "cabin": 295,
+        "service": 295,
+        "external-loop": 285.0004481020313,
+        "hx-water": 292.7054707025632
+      },
+      "minimumScannerPower": {
+        "camera": 200,
+        "science-processor": 1000,
+        "black-box": 35
+      },
+      "faults": [],
+      "contacts": 0,
+      "finalLocalDatum": {
+        "x": 7950.043868842794,
+        "y": 39.99567005262361,
+        "z": 40.006898111591
+      },
+      "finalLocalVelocity": {
+        "x": 1.3999713236486029,
+        "y": -0.00014201133564262225,
+        "z": -0.00003588299369169934
+      },
+      "commandTicks": 60232
+    },
+    {
+      "catalogueIndex": 2,
+      "seed": "a16-twenty-controlled",
+      "contentVersion": "cathedral-a16-twenty-2",
+      "dt": 0.1,
+      "complete": true,
+      "elapsed": 6023.400000000001,
+      "fenceCount": 20,
+      "rcsUsed": 25.469729955930347,
+      "rcsRemaining": 274.53027004406965,
+      "mainUsed": 0,
+      "hydrogenUsed": 0.3576101971848624,
+      "oxygenUsed": 2.8608815774788994,
+      "recordedBytes": 246714368,
+      "recordedLatticeFrames": 9989,
+      "minimumContinuousClearance": 21.62930745265603,
+      "minimumRockClearance": 21.958651607316142,
+      "maximumMaterialSpeedBound": 2.3379850834316014,
+      "maximumTrackingError": 0.28917205422362796,
+      "maximumAttitudeError": 0.009253619770233852,
+      "maximumTemperature": {
+        "cabin": 295,
+        "service": 295,
+        "external-loop": 285.0004611679919,
+        "hx-water": 292.7054707025632
+      },
+      "minimumScannerPower": {
+        "camera": 200,
+        "science-processor": 1000,
+        "black-box": 35
+      },
+      "faults": [],
+      "contacts": 0,
+      "finalLocalDatum": {
+        "x": 7950.099543618031,
+        "y": 39.99656309502734,
+        "z": 40.00548615083778
+      },
+      "finalLocalVelocity": {
+        "x": 1.3997344283091304,
+        "y": -0.00010770056500120084,
+        "z": 0.0001392941956038507
+      },
+      "commandTicks": 60234
+    },
+    {
+      "catalogueIndex": 3,
+      "seed": "a16-twenty-controlled",
+      "contentVersion": "cathedral-a16-twenty-2",
+      "dt": 0.1,
+      "complete": true,
+      "elapsed": 6023.3,
+      "fenceCount": 20,
+      "rcsUsed": 25.39556877680502,
+      "rcsRemaining": 274.604431223195,
+      "mainUsed": 0,
+      "hydrogenUsed": 0.3572089948158883,
+      "oxygenUsed": 2.8576719585271064,
+      "recordedBytes": 246710272,
+      "recordedLatticeFrames": 9989,
+      "minimumContinuousClearance": 21.62272930267465,
+      "minimumRockClearance": 21.96327540872038,
+      "maximumMaterialSpeedBound": 2.337985083431602,
+      "maximumTrackingError": 0.2577195974504951,
+      "maximumAttitudeError": 0.009172460430912799,
+      "maximumTemperature": {
+        "cabin": 295,
+        "service": 295,
+        "external-loop": 285.00045273215073,
+        "hx-water": 292.7054707025632
+      },
+      "minimumScannerPower": {
+        "camera": 200,
+        "science-processor": 1000,
+        "black-box": 35
+      },
+      "faults": [],
+      "contacts": 0,
+      "finalLocalDatum": {
+        "x": 7950.036066445362,
+        "y": 39.9984564041597,
+        "z": 40.00152911301393
+      },
+      "finalLocalVelocity": {
+        "x": 1.3998021675597543,
+        "y": 0.00007807170526330509,
+        "z": -0.000035885186005946146
+      },
+      "commandTicks": 60233
+    }
+  ]
+}

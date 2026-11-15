@@ -1,7 +1,7 @@
 /**
  * The 3D half of the UI lab: the fixture snapshot drawn with the theme's materials, so each one
  * can be judged and tuned before the real view exists. Lab only. One scene unit is one kilometre;
- * game (x, y) maps to (x, 0, -y).
+ * game (x, y, z) maps to (x, z, -y), as in the control room (src/view3d/adapter.ts).
  */
 import {
   BufferGeometry,
@@ -49,8 +49,9 @@ import type { LineStyleName } from '../three/index.ts';
 import { lab, sigmaKm } from './data.ts';
 
 const S = 1 / 1000;
-type P = { readonly x: number; readonly y: number };
-const at = (p: P, y = 0): [number, number, number] => [p.x * S, y, -p.y * S];
+type P = { readonly x: number; readonly y: number; readonly z?: number };
+/** Game to lab scene; lift raises a mark above the point (km). */
+const at = (p: P, lift = 0): [number, number, number] => [p.x * S, (p.z ?? 0) * S + lift, -p.y * S];
 const flat = (pts: readonly P[], y = 0): number[] => pts.flatMap((p) => at(p, y));
 const circle = (c: P, radiusKm: number, n = 72, y = 0): number[] => {
   const out: number[] = [];
@@ -60,6 +61,22 @@ const circle = (c: P, radiusKm: number, n = 72, y = 0): number[] => {
   }
   return out;
 };
+
+/** Convex envelope of points (monotone chain), counter-clockwise. */
+function outlineOf(points: readonly P[]): P[] {
+  const s = [...points].sort((a, b) => a.x - b.x || a.y - b.y);
+  const cross = (o: P, a: P, b: P): number => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+  const half = (list: P[]): P[] => {
+    const out: P[] = [];
+    for (const p of list) {
+      while (out.length >= 2 && cross(out[out.length - 2]!, out[out.length - 1]!, p) <= 0)
+        out.pop();
+      out.push(p);
+    }
+    return out.slice(0, -1);
+  };
+  return s.length < 3 ? s : [...half(s), ...half([...s].reverse())];
+}
 
 export interface LabScene {
   setCompare(on: boolean): void;
@@ -120,7 +137,7 @@ export function mountScene(canvas: HTMLCanvasElement): LabScene {
   setPlaneCoverage(
     planeMat,
     [ship.position.x * S, ship.position.y * S],
-    // LIFT(2G): each cone is drawn as its x–y sector about the axis's azimuth.
+    // The reference plane shows each cone's footprint: its sector about the axis's azimuth.
     snapshot.coverage.cones.map((s) => ({
       center: Math.atan2(s.axis.y, s.axis.x),
       halfWidth: s.halfAngle,
@@ -198,7 +215,8 @@ export function mountScene(canvas: HTMLCanvasElement): LabScene {
 
   // The ship: an enlarged symbol (true size is 14 m), body axis, and velocity.
   const symbol = 1.3; // km per metre of hull
-  // LIFT(2G): the ship symbol is the first hull prism's outline, turned by the attitude's yaw.
+  // The ship symbol on the plane: the outline of all its hull prisms seen from above, turned by
+  // the heading (roll is held, so the heading is what turns it on the plane).
   const yaw = yawOf(ship.attitude);
   const cosA = Math.cos(yaw);
   const sinA = Math.sin(yaw);
@@ -206,7 +224,7 @@ export function mountScene(canvas: HTMLCanvasElement): LabScene {
     x: ship.position.x + (p.x * cosA - p.y * sinA) * symbol * 1000,
     y: ship.position.y + (p.x * sinA + p.y * cosA) * symbol * 1000,
   });
-  const hull = snapshot.ship.hull[0]?.outline ?? [];
+  const hull = outlineOf(snapshot.ship.hull.flatMap((prism) => prism.outline));
   const first = hull[0];
   if (first) line(flat([...hull, first].map(body), 0.3), 'shipFootprint', order.shipMarks);
   line(
@@ -218,7 +236,11 @@ export function mountScene(canvas: HTMLCanvasElement): LabScene {
     flat(
       [
         ship.position,
-        { x: ship.position.x + ship.velocity.x * 260, y: ship.position.y + ship.velocity.y * 260 },
+        {
+          x: ship.position.x + ship.velocity.x * 260,
+          y: ship.position.y + ship.velocity.y * 260,
+          z: ship.position.z + ship.velocity.z * 260,
+        },
       ],
       0.3,
     ),

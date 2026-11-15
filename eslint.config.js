@@ -72,6 +72,11 @@ export default defineConfig([
     languageOptions: { globals: globals.node },
   },
   {
+    // Evidence scripts committed with docs (for example docs/engineering/) run in Node.
+    files: ['docs/**/*.{js,mjs}'],
+    languageOptions: { globals: globals.node },
+  },
+  {
     files: BELIEF_SIDE,
     rules: {
       'no-restricted-imports': ['error', { patterns: TRUTH_IMPORT_PATTERNS }],

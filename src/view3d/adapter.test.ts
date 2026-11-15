@@ -7,6 +7,7 @@ import { describe, expect, it } from 'vitest';
 import {
   attitudeToScene,
   bodyToDrawing,
+  chartView,
   coverageCones,
   distance,
   heading,
@@ -38,6 +39,29 @@ describe('positions', () => {
     close(bodyToDrawing({ x: 8, y: 0 }), [0, 0, -8]);
     close(bodyToDrawing({ x: 0, y: 2.5 }), [-2.5, 0, 0]);
     close(bodyToDrawing({ x: 0, y: 0, z: 1 }), [0, 1, 0]);
+  });
+
+  it("draws the game's chart on the same axes as everything else", () => {
+    const view = chartView({
+      regions: [
+        {
+          id: 'here',
+          name: 'HERE',
+          position: { x: 1, y: 2, z: 3 },
+          radius: 5,
+          surveyed: 0.5,
+          current: true,
+          attempts: [{ index: 1, outcome: 'lost' }],
+        },
+      ],
+      corridors: [],
+      leads: [{ id: 'l', name: 'L', from: 'here', direction: { x: 0, y: 1, z: 0 }, spread: 0.1 }],
+      reach: 9,
+    });
+    expect(view.regions[0]?.position).toEqual([1, 3, -2]);
+    expect(view.leads[0]?.direction).toEqual([0, 0, -1]);
+    expect(view.regions[0]?.attempts).toEqual([{ index: 1, outcome: 'lost' }]);
+    expect(view.reach).toBe(9);
   });
 });
 

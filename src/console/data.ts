@@ -14,8 +14,145 @@ import type {
 } from '../contracts/index.ts';
 import type { Status } from '../theme/components/index.ts';
 import { distance } from '../view3d/adapter.ts';
+import { whole } from './format.ts';
 
 const G0 = 9.80665;
+
+/** How far the hull reaches from the centre of mass in any direction, m: the whole hull, not a point. */
+export function hullReach(ship: Pick<ViewSnapshot['ship'], 'hull' | 'centerOfMass'>): number {
+  const c = ship.centerOfMass;
+  let reach = 0;
+  for (const prism of ship.hull)
+    for (const p of prism.outline)
+      for (const z of [prism.zMin, prism.zMax])
+        reach = Math.max(reach, Math.hypot(p.x - c.x, p.y - c.y, z - (c.z ?? 0)));
+  return reach;
+}
+
+/**
+ * The sensed object nearest the hull now (S8): believed position, its radius and the hull's
+ * reach taken off the distance. Only what the ship senses; tracked says whether it is ranged.
+ */
+export function nearestClearance(
+  snapshot: Pick<ViewSnapshot, 'world' | 'ship'>,
+): { id: string; name: string; clearance: number; tracked: boolean } | null {
+  const ship = snapshot.world.ship.position;
+  const reach = hullReach(snapshot.ship);
+  let best: { id: string; name: string; clearance: number; tracked: boolean } | null = null;
+  const consider = (
+    id: string,
+    name: string,
+    at: typeof ship,
+    radius: number,
+    tracked: boolean,
+  ) => {
+    const clearance = distance(ship, at) - radius - reach;
+    if (!best || clearance < best.clearance) best = { id, name, clearance, tracked };
+  };
+  for (const b of snapshot.world.bodies) consider(b.id, b.name, b.position, b.radius, b.tracked);
+  for (const a of snapshot.world.asteroids)
+    consider(a.id, a.id.toUpperCase(), a.position, a.radius, a.tracked);
+  return best;
+}
+
+/**
+ * Progress toward a `depart` objective (S20: say which frame a speed is in). The objective
+ * measures speed from the encounter's centre of mass; this is that frame as the ship believes
+ * it: the bodies' believed positions and velocities weighted by the model's GM for each.
+ * Null without a depart objective, or before the model holds a GM for every body.
+ */
+export function departProgress(
+  snapshot: Pick<ViewSnapshot, 'world' | 'objectives'>,
+  model: Pick<ModelState, 'parameters'>,
+): {
+  speed: number;
+  distance: number;
+  minSpeed: number;
+  beyond: number;
+  maxDeltaV?: number;
+} | null {
+  const objective = snapshot.objectives.find((o) => o.depart);
+  if (!objective?.depart) return null;
+  let mu = 0;
+  const p = { x: 0, y: 0, z: 0 };
+  const v = { x: 0, y: 0, z: 0 };
+  for (const b of snapshot.world.bodies) {
+    const gm = model.parameters.find((q) => q.id === `body.${b.id}.mu`)?.value;
+    if (!(gm !== undefined && gm > 0)) return null;
+    mu += gm;
+    p.x += gm * b.position.x;
+    p.y += gm * b.position.y;
+    p.z += gm * (b.position.z ?? 0);
+    v.x += gm * b.velocity.x;
+    v.y += gm * b.velocity.y;
+    v.z += gm * (b.velocity.z ?? 0);
+  }
+  if (!(mu > 0)) return null;
+  const ship = snapshot.world.ship;
+  const centre = { x: p.x / mu, y: p.y / mu, z: p.z / mu };
+  const drift = { x: v.x / mu, y: v.y / mu, z: v.z / mu };
+  return {
+    speed: distance(ship.velocity, drift),
+    distance: distance(ship.position, centre),
+    minSpeed: objective.depart.minSpeed,
+    beyond: objective.depart.beyond,
+    ...(objective.maxDeltaV !== undefined ? { maxDeltaV: objective.maxDeltaV } : {}),
+  };
+}
+
+/**
+ * What a recorder rate costs and records (S20: the estimate must match the ship). The ship
+ * requests its minimum power anywhere up to its minimum rate, interpolates above it, and takes
+ * at most one sample per 1 s step whatever the rate asked for.
+ */
+export function recorderEstimate(
+  rate: number,
+  definition: ShipDefinition,
+): { watts: number; samplesPerSecond: number; bytesPerSecond: number } {
+  const r = definition.systems?.recorder as
+    | {
+        minimumSampleRate?: number;
+        normalSampleRate?: number;
+        highSampleRate?: number;
+        powerMinimum?: number;
+        powerNormal?: number;
+        powerHigh?: number;
+        bytesPerSample?: number;
+      }
+    | undefined;
+  const lo = r?.minimumSampleRate ?? 1;
+  const mid = r?.normalSampleRate ?? 10;
+  const hi = r?.highSampleRate ?? 50;
+  const p0 = r?.powerMinimum ?? 15;
+  const p1 = r?.powerNormal ?? 35;
+  const p2 = r?.powerHigh ?? 100;
+  const watts =
+    rate <= 0
+      ? 0
+      : rate <= lo
+        ? p0
+        : rate <= mid
+          ? p0 + ((rate - lo) / (mid - lo)) * (p1 - p0)
+          : p1 + ((Math.min(rate, hi) - mid) / (hi - mid)) * (p2 - p1);
+  const samplesPerSecond = Math.min(Math.max(rate, 0), 1);
+  return { watts, samplesPerSecond, bytesPerSecond: samplesPerSecond * (r?.bytesPerSample ?? 0) };
+}
+
+/** Main propellant above the planned reserve, kg, and the speed change it buys, m/s. */
+export function spendable(
+  ship: BelievedShip,
+  definition: ShipDefinition,
+  reserve: number,
+): { kg: number; deltaV: number } {
+  const engine = definition.equipment.find((e) => e.id === 'main-engine');
+  const tank = definition.tanks.find((t) => t.feeds.includes('main-engine'));
+  const onBoard = tank ? (ship.propellant[tank.id]?.mean ?? 0) : 0;
+  const kg = Math.max(0, onBoard - reserve);
+  const isp = engine?.params.isp ?? 0;
+  const mass = ship.massProperties.mass;
+  if (!(kg > 0) || !(isp > 0) || !(mass > kg)) return { kg, deltaV: 0 };
+  return { kg, deltaV: isp * G0 * Math.log(mass / (mass - kg)) };
+}
 
 export interface Level {
   readonly id: string;
@@ -37,7 +174,8 @@ export function stores(ship: BelievedShip, definition: ShipDefinition, reserve?:
     .filter((t) => t.id !== 'product-water' && t.id !== 'xenon')
     .map((t) => {
       const kg = ship.propellant[t.id]?.mean ?? 0;
-      const low = t.id === 'main-propellant' && reserve !== undefined ? kg < reserve : kg < t.capacity * 0.1;
+      const low =
+        t.id === 'main-propellant' && reserve !== undefined ? kg < reserve : kg < t.capacity * 0.1;
       return {
         id: t.id,
         label: t.name,
@@ -53,14 +191,23 @@ export function stores(ship: BelievedShip, definition: ShipDefinition, reserve?:
 /** Load on each bus against its protection limit. */
 export function busLoads(ship: BelievedShip, definition: ShipDefinition): Level[] {
   return definition.buses.map((b) => {
-    const load = reading(ship, `${b.id}.load`) ?? 0;
+    const measured = reading(ship, `${b.id}.load`);
+    const load = measured ?? 0;
     return {
       id: b.id,
       label: b.name,
       value: load,
       max: b.limit,
-      text: `${Math.round(load).toLocaleString('en-US')} / ${b.limit.toLocaleString('en-US')} W`,
-      status: load > b.limit * 0.9 ? 'warning' : load > b.limit * 0.75 ? 'caution' : 'nominal',
+      // Before the first telemetry there is no load to show, not a load of zero.
+      text: measured === undefined ? 'no reading' : `${whole(load)} / ${whole(b.limit)} W`,
+      status:
+        measured === undefined
+          ? 'stale'
+          : load > b.limit * 0.9
+            ? 'warning'
+            : load > b.limit * 0.75
+              ? 'caution'
+              : 'nominal',
       mark: b.limit * 0.75,
     };
   });
@@ -91,11 +238,24 @@ export function batteries(ship: BelievedShip, definition: ShipDefinition): Level
   if (packs.length === 0) return undefined;
   let charge = 0;
   let capacity = 0;
+  let measured = false;
   for (const p of packs) {
-    charge += ship.equipment[p.id]?.readings.charge ?? reading(ship, `${p.id}.charge`) ?? 0;
+    const c = ship.equipment[p.id]?.readings.charge ?? reading(ship, `${p.id}.charge`);
+    if (c !== undefined) measured = true;
+    charge += c ?? 0;
     capacity += p.params.capacity ?? p.params.energyCapacity ?? 0;
   }
   if (!(capacity > 0)) capacity = Math.max(charge, 1);
+  // Before the first telemetry the packs are unread, not empty.
+  if (!measured)
+    return {
+      id: 'batteries',
+      label: 'batteries',
+      value: 0,
+      max: capacity,
+      text: 'no reading',
+      status: 'stale',
+    };
   return {
     id: 'batteries',
     label: 'batteries',
@@ -111,7 +271,10 @@ export function batteries(ship: BelievedShip, definition: ShipDefinition): Level
  * count the essential and payload buses twice: they are fed through the main buses). `bridging`
  * is what the batteries are putting in to cover a shortfall.
  */
-export function powerBalance(ship: BelievedShip, definition: ShipDefinition): {
+export function powerBalance(
+  ship: BelievedShip,
+  definition: ShipDefinition,
+): {
   generated: number;
   load: number;
   bridging: number;
@@ -149,7 +312,8 @@ export function recorder(
   historySeconds = 0,
 ): RecorderState {
   const spec = definition.equipment.find((e) => e.kind === 'recorder');
-  const systems = definition.systems?.recorder as { capacity?: number; bytesPerSample?: number } | undefined;
+  const systems = definition.systems?.recorder as
+    { capacity?: number; bytesPerSample?: number } | undefined;
   const bytes = reading(ship, 'black-box.bytes') ?? 0;
   const rate = reading(ship, 'black-box.sample-rate') ?? 0;
   const capacity = systems?.capacity ?? 8e9;
@@ -168,7 +332,11 @@ export function recorder(
 }
 
 /** Speed change the main propellant on board buys, m/s (rocket equation, nominal ratings). */
-export function deltaV(ship: BelievedShip, definition: ShipDefinition, thruster = 'main-engine'): number {
+export function deltaV(
+  ship: BelievedShip,
+  definition: ShipDefinition,
+  thruster = 'main-engine',
+): number {
   const spec = definition.equipment.find((e) => e.id === thruster);
   const tank = definition.tanks.find((t) => t.feeds.includes(thruster));
   const propellant = tank ? (ship.propellant[tank.id]?.mean ?? 0) : 0;

@@ -2021,7 +2021,7 @@
       "initialMode": "active",
       "redundancy": "Local emergency controls abstracted",
       "failureProtection": "Loss prevents normal UI commands; not a ship truth oracle.",
-      "radiationProfile": "standard",
+      "radiationProfile": "hardened",
       "label": "ASSUMED",
       "mechanismSources": [
         "S20"
