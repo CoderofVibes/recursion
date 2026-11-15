@@ -49,19 +49,27 @@ export interface FieldView {
 
 export type FieldViewFactory = (context: FieldViewContext) => FieldView;
 
-const registry = new Map<string, FieldViewFactory>();
+/**
+ * The registry lives on a hoisted function, not a module-level const. Vite hoists this module's
+ * eager plugin glob above every const, so a plugin that registers while this module is still
+ * initialising would otherwise hit the const's temporal dead zone (integrator, after 3B).
+ */
+function registry(): Map<string, FieldViewFactory> {
+  const self = registry as typeof registry & { map?: Map<string, FieldViewFactory> };
+  return (self.map ??= new Map());
+}
 
 /** Register the view for one kind of field (`BelievedField.kind`). The last one registered wins. */
 export function registerFieldView(kind: string, factory: FieldViewFactory): void {
-  registry.set(kind, factory);
+  registry().set(kind, factory);
 }
 
 export function fieldViewFor(kind: string): FieldViewFactory | undefined {
-  return registry.get(kind);
+  return registry().get(kind);
 }
 
 export function registeredFieldKinds(): string[] {
-  return [...registry.keys()];
+  return [...registry().keys()];
 }
 
 let loaded = false;
