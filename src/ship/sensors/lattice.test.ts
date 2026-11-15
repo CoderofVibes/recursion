@@ -5,6 +5,7 @@ import { fromYaw } from '../../lib/quat.ts';
 import { loadShipDefinition } from '../definition.ts';
 import { createShipSystemsState } from '../state.ts';
 import { stepShipSystems } from '../index.ts';
+import { radiationProfiles, stepCondition } from '../condition/index.ts';
 import { createChainLink } from '../../content/chain-link/index.ts';
 import { createChainLinkEnvironment } from '../../content/chain-link/environment.ts';
 import { createSimulation } from '../../sim/index.ts';
@@ -228,6 +229,89 @@ describe('lattice acquisition from installed hardware (A16, S17, P11/P12)', () =
     );
     expect(restored.measurements).toEqual([]);
   });
+
+  it.each(['science-processor', 'black-box'] as const)(
+    'handles a partial frame through an actual 3A %s upset, recovery and archive replay',
+    (id) => {
+      const setup = createChainLink('partial-frame-upset');
+      const header = {
+        id: `partial-frame-${id}`,
+        index: 1,
+        encounterId: setup.definition.briefing.id,
+        startedAt: '2026-11-14T00:00:00Z',
+        start: {
+          estimate: setup.definition.briefing.arrivalEstimate,
+          configuration: setup.definition.briefing.arrivalConfiguration,
+          modelVersion: 0,
+          briefing: setup.definition.briefing,
+        },
+      };
+      const archive = new AttemptRecorder(header);
+      const first = acquire({ ...initial(), t: 99 }, environment(99));
+      archive.recordMeasurements(first.measurements);
+      const partial = acquire({ ...first.state, t: 100 }, environment(), 1);
+      expect(partial.measurements).toEqual([]);
+      const profile = radiationProfiles(definition).get(id)!;
+      // Spread the first upset dose over four seconds, below the raw burnout threshold.
+      const upset = stepCondition(
+        partial.state,
+        definition,
+        { [id]: { rawDose: profile.upsetInterval / profile.susceptibility, aboveBurnout: false } },
+        { [id]: true },
+        4,
+      );
+      expect(upset.events).toContainEqual({
+        kind: 'equipment-fault',
+        t: 104,
+        equipment: id,
+        fault: 'radiation-upset',
+      });
+      expect(upset.state.equipment[id]!.powerDraw).toBe(partial.state.equipment[id]!.powerDraw);
+      const restartAt = upset.state.equipment[id]!.values.radiationRestartUntil!;
+      const during = acquire({ ...upset.state, t: 104 }, environment(104));
+      archive.recordMeasurements(during.measurements);
+      expect(during.measurements).toEqual([]);
+      const beforeRecovery = acquire(
+        { ...during.state, t: restartAt - 0.001 },
+        environment(restartAt - 0.001),
+      );
+      expect(beforeRecovery.measurements).toEqual([]);
+      const recovered = stepCondition(
+        during.state,
+        definition,
+        {},
+        { [id]: true },
+        restartAt - during.state.t,
+      );
+      expect(recovered.events).toContainEqual({
+        kind: 'equipment-recovered',
+        t: restartAt,
+        equipment: id,
+      });
+      const ready = { ...recovered.state, t: restartAt };
+      // Recorder-only loss leaves the acquired product in the still-powered processor.
+      // Disable the camera to prove recovery retains that data rather than acquiring it again.
+      const resumed = acquire(
+        id === 'black-box' ? change(ready, 'camera', { mode: 'off' }) : ready,
+        environment(restartAt),
+      );
+      expect(resumed.measurements).toHaveLength(1);
+      const frame = decodeLatticeFrame(resumed.measurements[0]!)!;
+      expect(frame.acquisition).toEqual(id === 'black-box' ? [100, 100] : [restartAt, restartAt]);
+      expect(frame.availableAt).toBe(restartAt);
+      expect(frame.fragments).toHaveLength(4);
+      archive.recordMeasurements(resumed.measurements);
+      const measurements = archive.snapshot().measurements;
+      expect(measurements.map((m) => m.t)).toEqual([99, restartAt]);
+      expect(measurements.map(decodeLatticeFrame).map((f) => f!.acquisition)).toEqual([
+        [99, 99],
+        id === 'black-box' ? [100, 100] : [restartAt, restartAt],
+      ]);
+      const replay = new AttemptRecorder(header);
+      replay.recordMeasurements(JSON.parse(JSON.stringify(measurements)));
+      expect(replay.snapshot().measurements).toEqual(measurements);
+    },
+  );
 
   it('uses the real ship power, warmup, recording and thermal pipeline with the authored field', () => {
     const setup = createChainLink('sensor-production', { catalogueIndex: 0 });
