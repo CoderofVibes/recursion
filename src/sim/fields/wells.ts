@@ -1,6 +1,7 @@
 /**
- * [FICTIONAL] A15/Q01–Q05, S5: a static spherical well modifies net delivered propulsion
+ * Historical [FICTIONAL] A15/Q01–Q05, S5: a static sphere modifies net delivered propulsion
  * at the centre of mass. Gravity, velocity and nominal actuator moments are untouched.
+ * A19 funnel geometry/index utilities are neutral scaffolding while S22 specifies its law.
  * Truth only. Neither these parameters nor diagnostic samples are sensor observations.
  */
 import type { FieldId } from '../../contracts/ids.ts';
@@ -91,11 +92,279 @@ export function validateWellSpecs(specs: readonly FieldInstanceSpec[], minimumGa
   }
 }
 
+/** A19/S22 geometry scaffolding only: no force, reversal, visibility or crush law is implied. */
+export interface FunnelGeometry {
+  readonly mouth: Vec3;
+  /** Unit direction from the mouth toward the throat. */
+  readonly axis: Vec3;
+  readonly length: number;
+  readonly mouthRadius: number;
+  readonly throatRadius: number;
+}
+
+export interface FunnelCoordinates {
+  readonly axial: number;
+  readonly axialFraction: number;
+  readonly radial: Vec3;
+  readonly radialDistance: number;
+}
+
+export interface WellBounds {
+  readonly min: Vec3;
+  readonly max: Vec3;
+}
+
+function checkedFunnel(geometry: FunnelGeometry): FunnelGeometry {
+  const { mouth, axis, length, mouthRadius, throatRadius } = geometry;
+  if (
+    !v3.isFinite3(mouth) ||
+    !v3.isFinite3(axis) ||
+    ![length, mouthRadius, throatRadius].every(Number.isFinite)
+  )
+    throw new Error('funnel geometry must be finite');
+  const axisLength = Math.hypot(axis.x, axis.y, axis.z);
+  if (Math.abs(axisLength - 1) > 1e-10) throw new Error('funnel axis must be a unit vector');
+  if (
+    length <= 0 ||
+    mouthRadius < 0 ||
+    throatRadius < 0 ||
+    Math.max(mouthRadius, throatRadius) === 0
+  )
+    throw new Error('funnel length must be positive and radii nonnegative with nonzero extent');
+  return {
+    mouth: { ...mouth },
+    axis: v3.scale(axis, 1 / axisLength),
+    length,
+    mouthRadius,
+    throatRadius,
+  };
+}
+
+/** Pure axial/radial coordinates. Deliberately does not decide the taper or an inside predicate. */
+export function funnelCoordinates(geometry: FunnelGeometry, position: Vec3): FunnelCoordinates {
+  const g = checkedFunnel(geometry);
+  if (!v3.isFinite3(position)) throw new Error('funnel position must be finite');
+  const offset = v3.sub(position, g.mouth);
+  const axial = v3.dot(offset, g.axis);
+  const radial = v3.addScaled(offset, g.axis, -axial);
+  return {
+    axial,
+    axialFraction: axial / g.length,
+    radial,
+    radialDistance: Math.hypot(radial.x, radial.y, radial.z),
+  };
+}
+
+/**
+ * Conservative AABB of an oriented length envelope bounded by the larger endpoint radius.
+ * It encloses a linear taper and any sampled taper staying below that radius, but chooses
+ * neither as S22's physical profile. A bulging profile must supply a larger explicit bound.
+ * This is broad phase only; it is not a whole-hull narrow phase or a throat/crush decision.
+ */
+export function funnelBounds(geometry: FunnelGeometry): WellBounds {
+  const g = checkedFunnel(geometry);
+  const end = v3.addScaled(g.mouth, g.axis, g.length);
+  const radius = Math.max(g.mouthRadius, g.throatRadius);
+  const rounding =
+    16 *
+    Number.EPSILON *
+    Math.max(
+      1,
+      g.length,
+      radius,
+      Math.abs(g.mouth.x),
+      Math.abs(g.mouth.y),
+      Math.abs(g.mouth.z),
+      Math.abs(end.x),
+      Math.abs(end.y),
+      Math.abs(end.z),
+    );
+  const extent = {
+    x: radius * Math.sqrt(Math.max(0, 1 - g.axis.x * g.axis.x)) + rounding,
+    y: radius * Math.sqrt(Math.max(0, 1 - g.axis.y * g.axis.y)) + rounding,
+    z: radius * Math.sqrt(Math.max(0, 1 - g.axis.z * g.axis.z)) + rounding,
+  };
+  return checkedBounds({
+    min: {
+      x: Math.min(g.mouth.x, end.x) - extent.x,
+      y: Math.min(g.mouth.y, end.y) - extent.y,
+      z: Math.min(g.mouth.z, end.z) - extent.z,
+    },
+    max: {
+      x: Math.max(g.mouth.x, end.x) + extent.x,
+      y: Math.max(g.mouth.y, end.y) + extent.y,
+      z: Math.max(g.mouth.z, end.z) + extent.z,
+    },
+  });
+}
+
+export interface BoundedWell {
+  readonly id: FieldId;
+  readonly bounds: WellBounds;
+}
+
+export interface WellSpatialIndex {
+  readonly size: number;
+  /** Inclusive broad-phase candidates, always sorted by stable ID. */
+  candidatesAt(position: Vec3): readonly FieldId[];
+  candidatesInBounds(bounds: WellBounds): readonly FieldId[];
+  /** Inflate every box by padding metres; caller owns curved-path and whole-hull narrow phase. */
+  candidatesAlongSegment(from: Vec3, to: Vec3, padding?: number): readonly FieldId[];
+}
+
+function checkedBounds(bounds: WellBounds): WellBounds {
+  const { min, max } = bounds;
+  if (!v3.isFinite3(min) || !v3.isFinite3(max) || min.x > max.x || min.y > max.y || min.z > max.z)
+    throw new Error('well bounds must be finite and ordered');
+  return { min: { ...min }, max: { ...max } };
+}
+
+const compareId = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
+const containsPoint = (b: WellBounds, p: Vec3): boolean =>
+  p.x >= b.min.x &&
+  p.x <= b.max.x &&
+  p.y >= b.min.y &&
+  p.y <= b.max.y &&
+  p.z >= b.min.z &&
+  p.z <= b.max.z;
+const intersectsBounds = (a: WellBounds, b: WellBounds): boolean =>
+  a.min.x <= b.max.x &&
+  a.max.x >= b.min.x &&
+  a.min.y <= b.max.y &&
+  a.max.y >= b.min.y &&
+  a.min.z <= b.max.z &&
+  a.max.z >= b.min.z;
+
+interface BoundsNode {
+  readonly bounds: WellBounds;
+  readonly entries?: readonly BoundedWell[];
+  readonly left?: BoundsNode;
+  readonly right?: BoundsNode;
+}
+
+function boundsTree(entries: readonly BoundedWell[]): BoundsNode | undefined {
+  if (entries.length === 0) return undefined;
+  const lo = { x: Infinity, y: Infinity, z: Infinity };
+  const hi = { x: -Infinity, y: -Infinity, z: -Infinity };
+  for (const { bounds } of entries) {
+    lo.x = Math.min(lo.x, bounds.min.x);
+    lo.y = Math.min(lo.y, bounds.min.y);
+    lo.z = Math.min(lo.z, bounds.min.z);
+    hi.x = Math.max(hi.x, bounds.max.x);
+    hi.y = Math.max(hi.y, bounds.max.y);
+    hi.z = Math.max(hi.z, bounds.max.z);
+  }
+  const bounds = { min: lo, max: hi };
+  if (entries.length <= 8) return { bounds, entries };
+  const span = v3.sub(hi, lo);
+  const axis = span.x >= span.y && span.x >= span.z ? 'x' : span.y >= span.z ? 'y' : 'z';
+  const sorted = [...entries].sort(
+    (a, b) =>
+      a.bounds.min[axis] / 2 +
+        a.bounds.max[axis] / 2 -
+        (b.bounds.min[axis] / 2 + b.bounds.max[axis] / 2) || compareId(a.id, b.id),
+  );
+  const middle = Math.floor(sorted.length / 2);
+  return {
+    bounds,
+    left: boundsTree(sorted.slice(0, middle)),
+    right: boundsTree(sorted.slice(middle)),
+  };
+}
+
+/** Immutable deterministic AABB tree. No per-well simulation callbacks or truth-side RNG draws. */
+export function createWellSpatialIndex(entries: readonly BoundedWell[]): WellSpatialIndex {
+  const ids = new Set<string>();
+  const copied = entries.map((entry) => {
+    if (!entry.id.trim() || ids.has(entry.id))
+      throw new Error('well index IDs must be nonempty and distinct');
+    ids.add(entry.id);
+    return { id: entry.id, bounds: checkedBounds(entry.bounds) };
+  });
+  const root = boundsTree(copied);
+  function query(intersects: (bounds: WellBounds) => boolean): readonly FieldId[] {
+    const result: FieldId[] = [];
+    function visit(node: BoundsNode | undefined): void {
+      if (!node || !intersects(node.bounds)) return;
+      if (node.entries) {
+        for (const entry of node.entries) if (intersects(entry.bounds)) result.push(entry.id);
+      } else {
+        visit(node.left);
+        visit(node.right);
+      }
+    }
+    visit(root);
+    return result.sort(compareId);
+  }
+  return {
+    size: copied.length,
+    candidatesAt(position) {
+      if (!v3.isFinite3(position)) throw new Error('well query position must be finite');
+      return query((bounds) => containsPoint(bounds, position));
+    },
+    candidatesInBounds(bounds) {
+      const checked = checkedBounds(bounds);
+      return query((candidate) => intersectsBounds(candidate, checked));
+    },
+    candidatesAlongSegment(from, to, padding = 0) {
+      if (!v3.isFinite3(from) || !v3.isFinite3(to) || !Number.isFinite(padding) || padding < 0)
+        throw new Error('well segment query must be finite with nonnegative padding');
+      const delta = v3.sub(to, from);
+      return query((bounds) => {
+        let enter = 0;
+        let leave = 1;
+        for (const axis of ['x', 'y', 'z'] as const) {
+          const lo = bounds.min[axis] - padding;
+          const hi = bounds.max[axis] + padding;
+          if (delta[axis] === 0) {
+            if (from[axis] < lo || from[axis] > hi) return false;
+          } else {
+            const a = (lo - from[axis]) / delta[axis];
+            const b = (hi - from[axis]) / delta[axis];
+            enter = Math.max(enter, Math.min(a, b));
+            leave = Math.min(leave, Math.max(a, b));
+            if (enter > leave) return false;
+          }
+        }
+        return true;
+      });
+    },
+  };
+}
+
 export interface WellSample {
   readonly radius: number;
   readonly radial: Vec3;
   readonly weight: number;
   readonly radialGain: number;
+}
+
+/** C2 edge weight: coordinate 0 is full response, 1 is ordinary; finite values outside clamp. */
+export function smoothWellWeight(normalizedEdgeCoordinate: number): number {
+  if (!Number.isFinite(normalizedEdgeCoordinate))
+    throw new Error('well edge coordinate must be finite');
+  if (normalizedEdgeCoordinate <= 0) return 1;
+  if (normalizedEdgeCoordinate >= 1) return 0;
+  const u = 1 - normalizedEdgeCoordinate;
+  return u * u * u * (10 + u * (-15 + 6 * u));
+}
+
+/**
+ * Shape-independent I - 2w eeᵀ response. Caller chooses the supported direction/profile.
+ * Both tangents remain ordinary and the force norm cannot grow for 0 <= w <= 1.
+ * This force-only operation adds no torque and does not select any A19 funnel physics.
+ */
+export function applyRadialResponse(force: Vec3, unitDirection: Vec3, weight: number): Vec3 {
+  if (!v3.isFinite3(force) || !v3.isFinite3(unitDirection))
+    throw new Error('well response vectors must be finite');
+  if (!Number.isFinite(weight) || weight < 0 || weight > 1)
+    throw new Error('well response weight must lie in [0,1]');
+  const length = Math.hypot(unitDirection.x, unitDirection.y, unitDirection.z);
+  if (Math.abs(length - 1) > 1e-10)
+    throw new Error('well response direction must be a unit vector');
+  if (weight === 0 || v3.lengthSq(force) === 0) return force;
+  const e = length === 1 ? unitDirection : v3.scale(unitDirection, 1 / length);
+  return v3.addScaled(force, e, -2 * weight * v3.dot(force, e));
 }
 
 function sample(parameters: WellParameters, position: Vec3): WellSample {
@@ -108,9 +377,9 @@ function sample(parameters: WellParameters, position: Vec3): WellSample {
   if (radius <= parameters.innerRadius) weight = 1;
   else if (radius >= parameters.outerRadius) weight = 0;
   else {
-    // Evaluate from the nearer endpoint to avoid cancellation close to the outer edge.
-    const u = (parameters.outerRadius - radius) / (parameters.outerRadius - parameters.innerRadius);
-    weight = u * u * u * (10 + u * (-15 + 6 * u));
+    weight = smoothWellWeight(
+      (radius - parameters.innerRadius) / (parameters.outerRadius - parameters.innerRadius),
+    );
   }
   return { radius, radial: v3.scale(offset, 1 / radius), weight, radialGain: 1 - 2 * weight };
 }
@@ -120,9 +389,7 @@ export function sampleWell(spec: FieldInstanceSpec, position: Vec3): WellSample 
 }
 
 function transformed(force: Vec3, s: WellSample): Vec3 {
-  if (!v3.isFinite3(force)) throw new Error('well force must be finite');
-  if (s.weight === 0 || v3.lengthSq(force) === 0) return force;
-  return v3.addScaled(force, s.radial, -2 * s.weight * v3.dot(force, s.radial));
+  return applyRadialResponse(force, s.radial, s.weight);
 }
 
 export interface WellPower {
@@ -203,13 +470,74 @@ export const wellFactory: FieldFactory = {
   },
 };
 
-/** Use the exact world's field list here; never compose unvalidated overlapping wells. */
+/**
+ * Use the exact world's field list here; never compose unvalidated overlapping wells.
+ * One canonical leader dispatches through an index. Followers retain JSON IDs and inside
+ * geometry, but have no modifyThrust hook, so the simulation has ONE thrust callback.
+ * This implements only the historical A15 sphere law, not the pending S22 funnel law.
+ */
 export function createWellRegistry(
   specs: readonly FieldInstanceSpec[],
   minimumGap = 0,
 ): FieldRegistry {
   validateWellSpecs(specs, minimumGap);
-  return createFieldRegistry([wellFactory]);
+  const wells = specs
+    .filter((spec) => spec.kind === WELL_KIND)
+    .map((spec) => ({ id: spec.id, parameters: readWellParameters(spec) }))
+    .sort((a, b) => compareId(a.id, b.id));
+  const byId = new Map(wells.map((well) => [well.id, well.parameters]));
+  const index = createWellSpatialIndex(
+    wells.map(({ id, parameters: p }) => ({
+      id,
+      bounds: {
+        min: {
+          x: p.center.x - p.outerRadius,
+          y: p.center.y - p.outerRadius,
+          z: p.center.z - p.outerRadius,
+        },
+        max: {
+          x: p.center.x + p.outerRadius,
+          y: p.center.y + p.outerRadius,
+          z: p.center.z + p.outerRadius,
+        },
+      },
+    })),
+  );
+  const leader = wells[0]?.id;
+  const dispatch = (force: Vec3, position: Vec3): Vec3 => {
+    if (!v3.isFinite3(force)) throw new Error('well force must be finite');
+    for (const id of index.candidatesAt(position)) {
+      const p = byId.get(id)!;
+      if (v3.distance(position, p.center) <= p.outerRadius)
+        return transformed(force, sample(p, position));
+    }
+    return force;
+  };
+  return createFieldRegistry([
+    {
+      kind: WELL_KIND,
+      create(spec) {
+        const p = readWellParameters(spec);
+        const expected = byId.get(spec.id);
+        if (
+          !expected ||
+          p.coreRadius !== expected.coreRadius ||
+          p.innerRadius !== expected.innerRadius ||
+          p.outerRadius !== expected.outerRadius ||
+          !v3.equals(p.center, expected.center)
+        )
+          throw new Error(
+            'well spec does not match the indexed registry; rebuild from the exact world fields',
+          );
+        return {
+          id: spec.id,
+          kind: WELL_KIND,
+          inside: (position: Vec3) => v3.distance(position, expected.center) < expected.outerRadius,
+          ...(spec.id === leader ? { modifyThrust: dispatch } : {}),
+        };
+      },
+    },
+  ]);
 }
 
 export interface WellCrossing {

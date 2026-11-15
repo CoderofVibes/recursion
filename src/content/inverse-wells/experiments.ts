@@ -65,7 +65,7 @@ export function experimentSetup(
   experiment: WellExperiment,
   seed = 'well-experiment-1',
 ): InverseWellsSetup {
-  const base = createInverseWells(seed);
+  const base = createInverseWells(seed, { layout: MECHANICS_PREVIEW });
   const world = base.definition.world;
   const core = world.bodies.find((body) => body.id === 'garden-a-core')!;
   const kinematics = {

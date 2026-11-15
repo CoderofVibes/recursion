@@ -39,6 +39,53 @@ const field: BelievedField = {
 };
 
 describe('well observation panel', () => {
+  it('presents an observed A19 funnel and precursor without substituting spherical influence or inferred mechanics', () => {
+    const funnel: BelievedField = {
+      id: 'observed-funnel',
+      kind: 'inverse-well',
+      detected: true,
+      visual: {
+        schema: 'well-funnel-observation-v2',
+        phase: 'precursor',
+        provenance: {
+          attemptId: 'A2',
+          frameId: 'P03',
+          measurementIds: ['image-1'],
+          from: 0,
+          to: 10,
+          current: true,
+        },
+        support: 'supported',
+        validUntil: 20,
+        rule: 'ordinary',
+        responses: [],
+        geometry: {
+          mouth: { x: 0, y: 0, z: 0 },
+          axis: { x: 0.6, y: 0, z: 0.8 },
+          mouthSigma: 10,
+          axisSigma: 0.01,
+          length: { value: 20_000, sigma: 100 },
+          mouthRadius: { value: 2_000, sigma: 20 },
+          throatRadius: { value: 100, sigma: 10 },
+          stations: [
+            { fraction: 0, radius: { value: 2_000, sigma: 20 } },
+            { fraction: 1, radius: { value: 100, sigma: 10 } },
+          ],
+        },
+      },
+    };
+    const html = renderToStaticMarkup(<WellEvidencePanel field={funnel} t={15} />);
+    expect(html).toContain('Observed funnel');
+    expect(html).toContain('precursor');
+    expect(html).toContain('Mouth radius');
+    expect(html).toContain('Throat radius');
+    expect(html).toContain('20.00');
+    expect(html).not.toContain('spherical');
+    expect(html).not.toContain('schematic');
+    expect(html).not.toContain('crush');
+    expect(html).toContain('No recorded comparison');
+  });
+
   it('shows acquired estimates, explicit candidate status, held-out provenance and uncertainty', () => {
     const html = renderToStaticMarkup(<WellEvidencePanel field={field} t={15} />);
     expect(html).toContain('candidate');

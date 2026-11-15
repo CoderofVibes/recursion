@@ -15,7 +15,7 @@ import { createBlackBox } from '../../game/belief/blackbox.ts';
 import { contextFromBriefing, ModelService } from '../../model/index.ts';
 import { createSimulation } from '../../sim/index.ts';
 import { stepShipSystems } from '../../ship/index.ts';
-import { createInverseWells, LAW } from './index.ts';
+import { createInverseWells, LAW, MECHANICS_PREVIEW } from './index.ts';
 
 describe('Well Garden default acquisition', () => {
   it(
@@ -184,7 +184,7 @@ describe('Well Garden default acquisition', () => {
     'records a modelled optical target without inventing moving core tracks',
     { timeout: 30_000 },
     () => {
-      const setup = createInverseWells('garden-acquisition');
+      const setup = createInverseWells('garden-acquisition', { layout: MECHANICS_PREVIEW });
       const { world, ship: definition, briefing } = setup.definition;
       // Static massless cores are physical objects, not an invented orbiting secondary.
       expect(world.bodies.filter((body) => body.id.endsWith('-core'))).toHaveLength(3);

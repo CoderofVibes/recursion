@@ -2,6 +2,7 @@ import type { BelievedField } from '../../../contracts/index.ts';
 import { Panel, Readout, ReadoutGrid } from '../../../theme/components/index.ts';
 import { Caption, Line } from '../../controls.tsx';
 import { readWellVisual, wellDisplayState } from '../../../view3d/fields/wells/evidence.ts';
+import { readWellFunnelVisual } from '../../../view3d/fields/wells/funnel.ts';
 
 export interface WellEvidencePanelProps {
   readonly field: BelievedField;
@@ -18,14 +19,18 @@ const explanation = {
 
 /** Observation display only: no automatic experiment, rule adoption, or clock control. */
 export function WellEvidencePanel({ field, t }: WellEvidencePanelProps) {
-  const visual = readWellVisual(field);
+  const visual = readWellFunnelVisual(field) ?? readWellVisual(field);
   const state = wellDisplayState(visual, t);
   const supported = state === 'current';
   return (
     <Panel
       title="Well response"
       aside={field.id}
-      statusLine={explanation[state]}
+      statusLine={
+        state === 'current' && visual?.schema === 'well-funnel-observation-v2'
+          ? 'Observed funnel · shape does not establish its force response'
+          : explanation[state]
+      }
       status={supported ? 'nominal' : 'stale'}
     >
       {visual && state !== 'unknown' ? (
@@ -35,22 +40,52 @@ export function WellEvidencePanel({ field, t }: WellEvidencePanelProps) {
             {visual.provenance.attemptId} · {visual.provenance.frameId}
           </Line>
           <Line label="acquired through">{visual.provenance.to.toFixed(1)} s</Line>
-          <ReadoutGrid>
-            <Readout
-              label="Inner radius"
-              value={(visual.geometry.innerRadius.value / 1000).toFixed(2)}
-              sigma={(visual.geometry.innerRadius.sigma / 1000).toFixed(2)}
-              unit="km"
-              status={supported ? 'nominal' : 'stale'}
-            />
-            <Readout
-              label="Outer radius"
-              value={(visual.geometry.outerRadius.value / 1000).toFixed(2)}
-              sigma={(visual.geometry.outerRadius.sigma / 1000).toFixed(2)}
-              unit="km"
-              status={supported ? 'nominal' : 'stale'}
-            />
-          </ReadoutGrid>
+          {visual.schema === 'well-funnel-observation-v2' ? (
+            <>
+              <Line label="visible state">{visual.phase}</Line>
+              <ReadoutGrid columns={3}>
+                {(
+                  [
+                    ['Length', visual.geometry.length],
+                    ['Mouth radius', visual.geometry.mouthRadius],
+                    ['Throat radius', visual.geometry.throatRadius],
+                  ] as const
+                ).map(([label, reading]) => (
+                  <Readout
+                    key={label}
+                    label={label}
+                    value={(reading.value / 1000).toFixed(2)}
+                    sigma={(reading.sigma / 1000).toFixed(2)}
+                    unit="km"
+                    status={supported ? 'nominal' : 'stale'}
+                  />
+                ))}
+              </ReadoutGrid>
+              <Line label="mouth → throat axis">
+                {[visual.geometry.axis.x, visual.geometry.axis.y, visual.geometry.axis.z]
+                  .map((v) => v.toFixed(3))
+                  .join(', ')}{' '}
+                ± {visual.geometry.axisSigma.toFixed(3)} rad
+              </Line>
+            </>
+          ) : (
+            <ReadoutGrid>
+              <Readout
+                label="Inner radius"
+                value={(visual.geometry.innerRadius.value / 1000).toFixed(2)}
+                sigma={(visual.geometry.innerRadius.sigma / 1000).toFixed(2)}
+                unit="km"
+                status={supported ? 'nominal' : 'stale'}
+              />
+              <Readout
+                label="Outer radius"
+                value={(visual.geometry.outerRadius.value / 1000).toFixed(2)}
+                sigma={(visual.geometry.outerRadius.sigma / 1000).toFixed(2)}
+                unit="km"
+                status={supported ? 'nominal' : 'stale'}
+              />
+            </ReadoutGrid>
+          )}
           <Caption>Recorded comparisons · gain ± 1σ; coast is acceleration residual</Caption>
           {visual.responses.length === 0 ? (
             <Line label="response">No recorded comparison</Line>

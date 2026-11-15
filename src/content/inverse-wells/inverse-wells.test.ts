@@ -78,7 +78,7 @@ describe('P03 content provider', () => {
     expect(JSON.stringify(a.definition.briefing)).not.toMatch(
       /innerRadius|outerRadius|radialGain|inverse-well"/,
     );
-    expect(a.contentStatus).toBe('mechanics-preview');
+    expect(a.contentStatus).toBe('study-layout');
     expect(a.definition.world.fields).toHaveLength(3);
     expect(a.fieldRegistry.kinds()).toEqual(['inverse-well']);
     expect(a.exits.map((exit) => exit.destination)).toEqual(['P04', 'N03']);
@@ -87,7 +87,7 @@ describe('P03 content provider', () => {
   it.each(['power', 'cross-transfer'] as const)(
     'preserves a surviving %s arrival without repairs or new commands',
     (entrance) => {
-      const base = createInverseWells('carry', { entrance });
+      const base = createInverseWells('carry', { entrance, layout: MECHANICS_PREVIEW });
       const original = base.definition.world.ship;
       const ship = {
         ...original,
@@ -107,6 +107,7 @@ describe('P03 content provider', () => {
       };
       const carried = createInverseWells('carry', {
         entrance,
+        layout: MECHANICS_PREVIEW,
         arrival: {
           ship,
           definition: base.definition.ship,
@@ -141,10 +142,11 @@ describe('P03 content provider', () => {
         },
       }),
     ).toThrow(/overlap/);
-    const base = createInverseWells();
+    const base = createInverseWells(undefined, { layout: MECHANICS_PREVIEW });
     const center = MECHANICS_PREVIEW.wells[0]!.center;
     expect(() =>
       createInverseWells('bad', {
+        layout: MECHANICS_PREVIEW,
         arrival: {
           definition: base.definition.ship,
           briefing: base.definition.briefing,

@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import vectors from '../../../tools/studies/s5/vectors.json';
+import gardenVectors from '../../content/inverse-wells/s16-reference.json';
 import type { FieldInstanceSpec, TruthWorld } from '../../contracts/truth/index.ts';
 import * as quat from '../../lib/quat.ts';
+import { createRng } from '../../lib/rng.ts';
 import * as v3 from '../../lib/vec3.ts';
 import type { Vec3 } from '../../lib/vec3.ts';
 import { createShipSystemsState, loadShipDefinition, stepShipSystems } from '../../ship/index.ts';
@@ -9,15 +11,22 @@ import { createSimulation } from '../simulation.ts';
 import { actuators, asteroid, body, makeWorld, massProps, thrust } from '../test-helpers.ts';
 import {
   accumulateWellWork,
+  applyRadialResponse,
   createWellRegistry,
+  createWellSpatialIndex,
   DEFAULT_WELL_PROFILE,
   evaluateWell,
+  funnelBounds,
+  funnelCoordinates,
   readWellParameters,
   sampleWell,
   segmentWellCrossings,
+  smoothWellWeight,
   validateWellSpecs,
   wellFactory,
   wellSpec,
+  type FunnelGeometry,
+  type WellBounds,
 } from './wells.ts';
 
 const well = wellSpec('well-a', v3.ZERO);
@@ -234,6 +243,217 @@ describe('A15 separated spherical wells', () => {
   });
 });
 
+describe('neutral A19 funnel geometry and spatial index', () => {
+  const contains = (bounds: WellBounds, p: Vec3): boolean =>
+    (['x', 'y', 'z'] as const).every(
+      (axis) => bounds.min[axis] <= p[axis] && p[axis] <= bounds.max[axis],
+    );
+
+  // Independent face-plane intersection reference, not the tree's slab algorithm.
+  function bruteSegment(bounds: WellBounds, from: Vec3, to: Vec3, padding: number): boolean {
+    const p = { x: padding, y: padding, z: padding };
+    const b = { min: v3.sub(bounds.min, p), max: v3.add(bounds.max, p) };
+    if (contains(b, from) || contains(b, to)) return true;
+    const d = v3.sub(to, from);
+    for (const axis of ['x', 'y', 'z'] as const) {
+      if (d[axis] === 0) continue;
+      for (const face of [b.min[axis], b.max[axis]]) {
+        const t = (face - from[axis]) / d[axis];
+        if (t < 0 || t > 1) continue;
+        const hit = { ...v3.addScaled(from, d, t), [axis]: face };
+        if (contains(b, hit)) return true;
+      }
+    }
+    return false;
+  }
+
+  it('offers bounded shape-independent response and smooth edge primitives without choosing a funnel law', () => {
+    const rng = createRng('a19-response-primitives').stream('directions');
+    for (let i = 0; i < 512; i++) {
+      const e = v3.normalize({ x: rng.range(-1, 1), y: rng.range(-1, 1), z: rng.range(-1, 1) });
+      const force = { x: rng.range(-1, 1), y: rng.range(-1, 1), z: rng.range(-1, 1) };
+      const weight = rng.range(0, 1);
+      const applied = applyRadialResponse(force, e, weight);
+      expect(v3.length(applied)).toBeLessThanOrEqual(v3.length(force) + 1e-14);
+      expect(v3.dot(applied, e)).toBeCloseTo((1 - 2 * weight) * v3.dot(force, e), 13);
+      for (const tangent of [v3.anyPerpendicular(e), v3.cross(e, v3.anyPerpendicular(e))])
+        closeVec(applyRadialResponse(tangent, e, weight), tangent, 13);
+    }
+    expect([-1, 0, 0.25, 0.5, 0.75, 1, 2].map(smoothWellWeight)).toEqual([
+      1, 1, 0.896484375, 0.5, 0.103515625, 0, 0,
+    ]);
+    expect(() => applyRadialResponse(v3.UNIT_X, v3.ZERO, 1)).toThrow(/unit/);
+    expect(() => applyRadialResponse(v3.UNIT_X, v3.UNIT_X, 2)).toThrow(/weight/);
+    expect(() => applyRadialResponse({ x: NaN, y: 0, z: 0 }, v3.UNIT_X, 0)).toThrow(/finite/);
+    expect(() => smoothWellWeight(NaN)).toThrow(/finite/);
+  });
+
+  it('provides axial/radial coordinates without imposing a force or inside rule', () => {
+    const geometry: FunnelGeometry = {
+      mouth: { x: 10, y: 20, z: 30 },
+      axis: v3.UNIT_Z,
+      length: 1000,
+      mouthRadius: 100,
+      throatRadius: 5,
+    };
+    expect(funnelCoordinates(geometry, { x: 13, y: 24, z: 530 })).toEqual({
+      axial: 500,
+      axialFraction: 0.5,
+      radial: { x: 3, y: 4, z: 0 },
+      radialDistance: 5,
+    });
+    expect(funnelCoordinates(geometry, { x: 10, y: 20, z: 20 }).axialFraction).toBe(-0.01);
+    const q = quat.fromAxisAngle(v3.normalize({ x: 1, y: -2, z: 3 }), 0.87);
+    const rotated = {
+      ...geometry,
+      mouth: quat.rotate(q, geometry.mouth),
+      axis: quat.rotate(q, geometry.axis),
+    };
+    const coordinates = funnelCoordinates(rotated, quat.rotate(q, { x: 13, y: 24, z: 530 }));
+    expect(coordinates.axial).toBeCloseTo(500, 11);
+    expect(coordinates.radialDistance).toBeCloseTo(5, 11);
+    expect(v3.dot(coordinates.radial, rotated.axis)).toBeCloseTo(0, 11);
+    expect(() => funnelCoordinates({ ...geometry, axis: v3.ZERO }, v3.ZERO)).toThrow(/unit/);
+    expect(() => funnelBounds({ ...geometry, length: 0 })).toThrow(/length/);
+    expect(() => funnelBounds({ ...geometry, throatRadius: -1 })).toThrow(/radii/);
+  });
+
+  it('conservatively encloses arbitrarily oriented linear and bounded sampled tapers', () => {
+    const rng = createRng('a19-neutral-bounds').stream('geometry');
+    for (let i = 0; i < 48; i++) {
+      const axis = v3.normalize({ x: rng.range(-1, 1), y: rng.range(-1, 1), z: rng.range(-1, 1) });
+      const geometry = {
+        mouth: { x: rng.range(-1e6, 1e6), y: rng.range(-1e6, 1e6), z: rng.range(-1e6, 1e6) },
+        axis,
+        length: rng.range(20e3, 100e3),
+        mouthRadius: rng.range(100, 1000),
+        throatRadius: rng.range(1, 100),
+      };
+      const bounds = funnelBounds(geometry);
+      const radialA = v3.anyPerpendicular(axis);
+      const radialB = v3.cross(axis, radialA);
+      const index = createWellSpatialIndex([{ id: 'envelope', bounds }]);
+      for (const fraction of [0, 0.2, 0.5, 0.9, 1]) {
+        for (let angle = 0; angle < 32; angle++) {
+          const theta = (angle * 2 * Math.PI) / 32;
+          // The larger radius everywhere is stricter than a linear taper.
+          const radius = Math.max(geometry.mouthRadius, geometry.throatRadius);
+          const point = v3.add(
+            v3.addScaled(geometry.mouth, axis, geometry.length * fraction),
+            v3.add(
+              v3.scale(radialA, radius * Math.cos(theta)),
+              v3.scale(radialB, radius * Math.sin(theta)),
+            ),
+          );
+          expect(index.candidatesAt(point)).toEqual(['envelope']);
+        }
+      }
+    }
+  });
+
+  it('matches brute-force point and padded segment queries and ignores input order', () => {
+    const rng = createRng('a19-index-comparison').stream('geometry');
+    const point = () => ({
+      x: rng.range(-200e3, 200e3),
+      y: rng.range(-200e3, 200e3),
+      z: rng.range(-200e3, 200e3),
+    });
+    const entries = Array.from({ length: 384 }, (_, i) => ({
+      id: `f-${String(i).padStart(4, '0')}`,
+      bounds: funnelBounds({
+        mouth: point(),
+        axis: v3.normalize(point()),
+        length: rng.range(10e3, 100e3),
+        mouthRadius: rng.range(500, 5000),
+        throatRadius: 100,
+      }),
+    }));
+    const index = createWellSpatialIndex(entries);
+    const replay = createWellSpatialIndex(JSON.parse(JSON.stringify([...entries].reverse())));
+    expect(index.size).toBe(384);
+    for (let i = 0; i < 2048; i++) {
+      const p = i % 8 === 0 ? entries[i % entries.length]!.bounds.min : point();
+      const expected = entries
+        .filter((entry) => contains(entry.bounds, p))
+        .map((entry) => entry.id);
+      expect(index.candidatesAt(p)).toEqual(expected);
+      expect(replay.candidatesAt(p)).toEqual(expected);
+      if (i % 4 === 0) {
+        const to = point();
+        const padding = i % 16 === 0 ? 20 : 0;
+        const swept = entries
+          .filter((entry) => bruteSegment(entry.bounds, p, to, padding))
+          .map((entry) => entry.id);
+        expect(index.candidatesAlongSegment(p, to, padding)).toEqual(swept);
+        expect(replay.candidatesAlongSegment(p, to, padding)).toEqual(swept);
+      }
+    }
+  });
+
+  it('handles boundaries, padded whole-hull broad phase and immutable index snapshots', () => {
+    const bounds = { min: { x: 0, y: 0, z: 0 }, max: { x: 10, y: 10, z: 10 } };
+    const entries = [{ id: 'box', bounds }];
+    const index = createWellSpatialIndex(entries);
+    bounds.max.x = 999;
+    expect(index.candidatesAt({ x: 999, y: 0, z: 0 })).toEqual([]);
+    expect(index.candidatesAlongSegment({ x: -1, y: 10, z: 10 }, { x: 11, y: 10, z: 10 })).toEqual([
+      'box',
+    ]);
+    expect(index.candidatesAlongSegment({ x: -1, y: 11, z: 10 }, { x: 11, y: 11, z: 10 })).toEqual(
+      [],
+    );
+    expect(
+      index.candidatesAlongSegment({ x: -1, y: 11, z: 10 }, { x: 11, y: 11, z: 10 }, 1),
+    ).toEqual(['box']);
+    expect(index.candidatesAlongSegment(v3.ZERO, v3.ZERO)).toEqual(['box']);
+    expect(
+      index.candidatesInBounds({ min: { x: 10, y: 10, z: 10 }, max: { x: 20, y: 20, z: 20 } }),
+    ).toEqual(['box']);
+    expect(createWellSpatialIndex([]).candidatesAt(v3.ZERO)).toEqual([]);
+    expect(() => createWellSpatialIndex([...entries, ...entries])).toThrow(/distinct/);
+    expect(() =>
+      createWellSpatialIndex([{ id: 'bad', bounds: { min: v3.UNIT_X, max: v3.ZERO } }]),
+    ).toThrow(/ordered/);
+    expect(() => index.candidatesAlongSegment(v3.ZERO, v3.ZERO, -1)).toThrow(/padding/);
+    expect(() => index.candidatesAt({ x: NaN, y: 0, z: 0 })).toThrow(/finite/);
+  });
+
+  it('registers one indexed thrust dispatch for many sphere IDs and preserves direct factory results', () => {
+    const fields = Array.from({ length: 128 }, (_, i) =>
+      wellSpec(`sphere-${String(i).padStart(3, '0')}`, {
+        x: (i % 16) * 110_000,
+        y: Math.floor(i / 16) * 110_000,
+        z: (i % 3) * 110_000,
+      }),
+    );
+    const registry = createWellRegistry(fields);
+    const registered = [...fields].reverse().map((spec) => registry.create(spec));
+    const dispatchers = registered.filter((field) => field.modifyThrust);
+    expect(dispatchers).toHaveLength(1);
+    expect(dispatchers[0]!.id).toBe('sphere-000');
+    expect(registered.map((field) => field.id)).toEqual(
+      [...fields].reverse().map((field) => field.id),
+    );
+    const actual = dispatchers[0]!.modifyThrust!;
+    for (let i = 0; i < fields.length; i++) {
+      const spec = fields[i]!;
+      const p = v3.add(readWellParameters(spec).center, { x: 6000, y: 8000, z: 24000 });
+      const expected = wellFactory.create(spec).modifyThrust!(force, p, v3.ZERO, 0);
+      expect(actual(force, p, v3.ZERO, 0)).toEqual(expected);
+    }
+    expect(actual(force, { x: -1e9, y: -1e9, z: -1e9 }, v3.ZERO, 0)).toBe(force);
+    expect(() => registry.create(wellSpec(fields[0]!.id, { x: 1, y: 0, z: 0 }))).toThrow(
+      /indexed registry/,
+    );
+    expect(() => registry.create(wellSpec('not-indexed', v3.ZERO))).toThrow(/indexed registry/);
+    const simulation = createSimulation(
+      withWells(makeWorld({ position: { x: 30e3, y: 0, z: 0 } }), fields),
+      { dt: 1, registry },
+    );
+    expect(simulation.fields.filter((field) => field.modifyThrust)).toHaveLength(1);
+  });
+});
+
 describe('well work and independent S5 powered crossing', () => {
   const ref = vectors.well.burn;
   const source = vec(ref.source_position_m);
@@ -325,6 +545,205 @@ describe('well work and independent S5 powered crossing', () => {
     }
     expect(Math.abs(fine.work.fieldJ - ref.reference.final.field_extra_work_J)).toBeLessThan(5);
   });
+});
+
+describe('committed S16 vectors through production simulation', () => {
+  const centers = gardenVectors.layout.centers_m.map(vec);
+  const fields = centers.map((center, i) => wellSpec(`s16-w${i + 1}`, center));
+  const registry = createWellRegistry(fields, 10_000);
+  type FlightVector = Pick<
+    typeof gardenVectors.edge_band.reference,
+    'initial' | 'commands' | 't_s'
+  >;
+
+  /**
+   * Mechanics probe only: specified delivered inertial forces, identity attitude and no
+   * actuator/sensor controller. Each powered interval uses fixed production Verlet steps.
+   * Source-free coasts use one exact linear production step between command boundaries;
+   * this is a test speed optimization, not a change to the game's fixed outer tick.
+   */
+  function flyReference(reference: FlightVector, poweredStep: number) {
+    let world = withWells(
+      makeWorld({
+        position: vec(reference.initial.position_m),
+        velocity: vec(reference.initial.velocity_m_s),
+        mp: massProps({ mass: reference.initial.mass_kg }),
+        bodies: centers.map((center, i) => body(`core-${i + 1}`, 0, 1000, center)),
+      }),
+      fields,
+    );
+    let mass = reference.initial.mass_kg;
+    const clearance = centers.map(() => Infinity);
+    const events: { well: number; surface: string; t_s: number; direction: string }[] = [];
+    const cuts = [
+      ...new Set([
+        0,
+        reference.t_s,
+        ...reference.commands.flatMap((c) => [c.start_s, c.start_s + c.duration_s]),
+      ]),
+    ]
+      .filter((t) => t <= reference.t_s)
+      .sort((a, b) => a - b);
+    for (let i = 1; i < cuts.length; i++) {
+      const t0 = cuts[i - 1]!;
+      const duration = cuts[i]! - t0;
+      const force = reference.commands
+        .filter((c) => c.start_s <= t0 && t0 < c.start_s + c.duration_s)
+        .reduce((sum, c) => v3.add(sum, vec(c.force_N)), v3.ZERO);
+      const powered = v3.lengthSq(force) > 0;
+      const steps = powered ? Math.ceil(duration / poweredStep) : 1;
+      const dt = duration / steps;
+      const sim = createSimulation(world, { dt, registry });
+      let state = sim.initial;
+      const startMass = mass;
+      const rate = v3.length(force) / (320 * 9.80665);
+      for (let j = 0; j < steps; j++) {
+        const before = state.world.ship.kinematics;
+        const next = sim.step(
+          state,
+          powered
+            ? {
+                actuators: actuators(
+                  [thrust(v3.ZERO, force)],
+                  massProps({ mass: startMass - (j + 0.5) * dt * rate }),
+                ),
+              }
+            : {},
+        );
+        expect(next.contacts.some((contact) => contact.impact)).toBe(false);
+        const after = next.state.world.ship.kinematics;
+        const delta = v3.sub(after.position, before.position);
+        const lengthSquared = v3.lengthSq(delta);
+        // Independent enclosing-sphere clearance, not merely the CoM or the test hull.
+        // The acceleration bound makes powered chord clearance conservative. Long coasts
+        // have zero curvature here; no unlocalized powered contact is certified by this.
+        const curvatureBound = powered
+          ? (gardenVectors.unavoidability.acceleration_bound_m_s2 * dt * dt) / 8
+          : 0;
+        centers.forEach((center, k) => {
+          const u =
+            lengthSquared === 0
+              ? 0
+              : Math.min(
+                  1,
+                  Math.max(0, v3.dot(v3.sub(center, before.position), delta) / lengthSquared),
+                );
+          clearance[k] = Math.min(
+            clearance[k]!,
+            v3.distance(center, v3.addScaled(before.position, delta, u)) -
+              gardenVectors.layout.core_m -
+              gardenVectors.layout.hull_bound_m -
+              curvatureBound,
+          );
+          for (const event of segmentWellCrossings(fields[k]!, before.position, after.position))
+            events.push({
+              well: k + 1,
+              surface: event.surface === 'zero-response' ? 'zero-gain' : event.surface,
+              t_s: t0 + (j + event.fraction) * dt,
+              direction: event.direction,
+            });
+        });
+        state = next.state;
+      }
+      mass = startMass - duration * rate;
+      world = state.world;
+    }
+    return {
+      k: world.ship.kinematics,
+      mass,
+      clearance,
+      events: events.sort((a, b) => a.t_s - b.t_s),
+    };
+  }
+
+  it('matches S16 radial projection, both tangents and every selected smooth-edge sample', () => {
+    const projection = gardenVectors.projection;
+    const position = vec(projection.position_m);
+    const result = evaluateWell(fields[0]!, vec(projection.nominal_force_N), position, v3.ZERO);
+    expect(v3.distance(result.force, vec(projection.modified_force_N))).toBeLessThan(
+      gardenVectors.port_tolerances.force_N,
+    );
+    const radial = v3.normalize(position);
+    const tangentA = v3.normalize(v3.cross(radial, v3.UNIT_X));
+    const tangentB = v3.cross(radial, tangentA);
+    for (const tangent of [tangentA, tangentB])
+      expect(
+        v3.distance(evaluateWell(fields[0]!, tangent, position, v3.ZERO).force, tangent),
+      ).toBeLessThan(1e-14);
+    for (const shell of projection.shells) {
+      const sample = sampleWell(fields[0]!, { x: shell.radius_m, y: 0, z: 0 });
+      expect(sample.weight).toBeCloseTo(shell.weight, 14);
+      expect(sample.radialGain).toBeCloseTo(shell.radial_gain, 14);
+    }
+  });
+
+  it('matches the independent source-free edge burn and converges with powered step size', () => {
+    const reference = gardenVectors.edge_band.reference;
+    const tolerance = gardenVectors.edge_band.port_tolerances;
+    const runs = [0.5, 0.25, 1 / 64].map((dt) => flyReference(reference, dt));
+    const errors = runs.map((run) => v3.distance(run.k.position, vec(reference.final.position_m)));
+    expect(errors[0]! / errors[1]!).toBeGreaterThan(3.9);
+    expect(errors[0]! / errors[1]!).toBeLessThan(4.1);
+    const fine = runs[2]!;
+    expect(errors[2]).toBeLessThan(tolerance.position_m);
+    expect(v3.distance(fine.k.velocity, vec(reference.final.velocity_m_s))).toBeLessThan(
+      tolerance.velocity_m_s,
+    );
+    expect(Math.abs(fine.mass - reference.final.mass_kg)).toBeLessThan(tolerance.mass_kg);
+    expect(fine.events).toHaveLength(reference.events.length);
+    reference.events.forEach((expected, i) => {
+      const actual = fine.events[i]!;
+      expect({ well: actual.well, surface: actual.surface, direction: actual.direction }).toEqual({
+        well: expected.well,
+        surface: expected.surface,
+        direction: expected.direction,
+      });
+      expect(Math.abs(actual.t_s - expected.t_s)).toBeLessThan(tolerance.event_time_s);
+    });
+    expect(Math.min(...fine.clearance)).toBeGreaterThan(37_900);
+  });
+
+  for (const reference of gardenVectors.informed_crossings) {
+    const direction = reference.commands[0]!.force_N[2]! > 0 ? '+z' : '-z';
+    it(`reproduces the informed ${direction} finite-burn route, swept clearance and coast events`, () => {
+      const result = flyReference(reference, 1 / 32);
+      const tolerance = gardenVectors.port_tolerances;
+      expect(v3.distance(result.k.position, vec(reference.final.position_m))).toBeLessThan(
+        tolerance.route_position_m,
+      );
+      expect(v3.distance(result.k.velocity, vec(reference.final.velocity_m_s))).toBeLessThan(
+        tolerance.route_velocity_m_s,
+      );
+      expect(Math.abs(result.mass - reference.final.mass_kg)).toBeLessThan(tolerance.mass_kg);
+      const exitCorrection =
+        (gardenVectors.layout.exit.x_m - result.k.position.x) / result.k.velocity.x;
+      expect(Math.abs(exitCorrection)).toBeLessThan(tolerance.coast_event_time_s);
+      expect(Math.hypot(result.k.position.y, result.k.position.z)).toBeLessThan(
+        gardenVectors.layout.exit.disc_radius_m,
+      );
+      expect(Math.min(...result.clearance)).toBeGreaterThan(4000);
+      result.clearance.forEach((actual, i) =>
+        expect(Math.abs(actual - reference.minimum_core_clearance_m[i]!)).toBeLessThan(0.1),
+      );
+      expect(result.events).toHaveLength(reference.events.length);
+      reference.events.forEach((expected, i) => {
+        const actual = result.events[i]!;
+        expect({ well: actual.well, surface: actual.surface, direction: actual.direction }).toEqual(
+          {
+            well: expected.well,
+            surface: expected.surface,
+            direction: expected.direction,
+          },
+        );
+        expect(Math.abs(actual.t_s - expected.t_s)).toBeLessThan(tolerance.coast_event_time_s);
+      });
+      expect([
+        ...new Set(
+          result.events.filter((event) => event.surface === 'outer').map((event) => event.well),
+        ),
+      ]).toEqual(reference.influences_met);
+    });
+  }
 });
 
 describe('boundary geometry and explicit core domain', () => {

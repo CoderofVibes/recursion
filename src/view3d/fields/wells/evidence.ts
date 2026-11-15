@@ -19,8 +19,7 @@ export interface WellResponseEvidence {
   readonly measurementIds: readonly string[];
 }
 
-export interface WellVisual {
-  readonly schema: 'well-observation-v1';
+export interface WellObservation {
   readonly provenance: {
     readonly attemptId: string;
     readonly frameId: string;
@@ -34,6 +33,12 @@ export interface WellVisual {
   /** Supplied by the model's navigation/geometry freshness policy, not a UI timeout. */
   readonly validUntil: number;
   readonly rule: 'ordinary' | 'candidate' | 'adopted';
+  readonly responses: readonly WellResponseEvidence[];
+}
+
+/** Legacy S5/S16 fixture geometry only; A19's physical funnels use v2. */
+export interface WellVisual extends WellObservation {
+  readonly schema: 'well-observation-v1';
   readonly geometry: {
     readonly center: Vec3;
     /** Conservative one-sigma position bound, including correlated navigation uncertainty. */
@@ -41,7 +46,6 @@ export interface WellVisual {
     readonly innerRadius: WellEstimate;
     readonly outerRadius: WellEstimate;
   };
-  readonly responses: readonly WellResponseEvidence[];
 }
 
 const object = (v: unknown): v is Record<string, unknown> =>
@@ -54,12 +58,9 @@ const estimate = (v: unknown): v is WellEstimate =>
   object(v) && finite(v.value) && finite(v.sigma) && v.sigma >= 0;
 
 /** No implicit radii, response gains, age limits or source IDs may fill absent evidence. */
-export function readWellVisual(field: BelievedField): WellVisual | undefined {
-  if (!field.detected || field.kind !== WELL_VIEW_KIND) return undefined;
-  const v: unknown = field.visual;
-  if (!object(v) || v.schema !== 'well-observation-v1') return undefined;
+export function validWellObservation(v: unknown): v is WellObservation {
+  if (!object(v)) return false;
   const p = v.provenance;
-  const g = v.geometry;
   if (
     !object(p) ||
     !text(p.attemptId) ||
@@ -73,20 +74,9 @@ export function readWellVisual(field: BelievedField): WellVisual | undefined {
     v.validUntil < p.to ||
     !['supported', 'unresolved'].includes(String(v.support)) ||
     !['ordinary', 'candidate', 'adopted'].includes(String(v.rule)) ||
-    !object(g) ||
-    !object(g.center) ||
-    !finite(g.center.x) ||
-    !finite(g.center.y) ||
-    !finite(g.center.z) ||
-    !finite(g.centerSigma) ||
-    g.centerSigma < 0 ||
-    !estimate(g.innerRadius) ||
-    !estimate(g.outerRadius) ||
-    g.innerRadius.value <= 0 ||
-    g.outerRadius.value <= g.innerRadius.value ||
     !Array.isArray(v.responses)
   )
-    return undefined;
+    return false;
   const owned = new Map<string, string>();
   for (const r of v.responses) {
     if (
@@ -97,20 +87,43 @@ export function readWellVisual(field: BelievedField): WellVisual | undefined {
       !['radial', 'tangent-1', 'tangent-2', 'outside', 'coast'].includes(String(r.axis)) ||
       !['training', 'held-out'].includes(String(r.role))
     )
-      return undefined;
+      return false;
     for (const id of r.measurementIds) {
       // Independent completed experiments may not claim the same acquired sample.
       const owner = `${r.experiment}:${r.role}`;
-      if (owned.has(id) && owned.get(id) !== owner) return undefined;
+      if (owned.has(id) && owned.get(id) !== owner) return false;
       owned.set(id, owner);
     }
   }
+  return true;
+}
+
+export function readWellVisual(field: BelievedField): WellVisual | undefined {
+  if (!field.detected || field.kind !== WELL_VIEW_KIND) return undefined;
+  const v: unknown = field.visual;
+  if (!object(v) || v.schema !== 'well-observation-v1' || !validWellObservation(v))
+    return undefined;
+  const g = v.geometry;
+  if (
+    !object(g) ||
+    !object(g.center) ||
+    !finite(g.center.x) ||
+    !finite(g.center.y) ||
+    !finite(g.center.z) ||
+    !finite(g.centerSigma) ||
+    g.centerSigma < 0 ||
+    !estimate(g.innerRadius) ||
+    !estimate(g.outerRadius) ||
+    g.innerRadius.value <= 0 ||
+    g.outerRadius.value <= g.innerRadius.value
+  )
+    return undefined;
   return v as unknown as WellVisual;
 }
 
 export type WellDisplayState = 'unknown' | 'archived' | 'unresolved' | 'stale' | 'current';
 
-export function wellDisplayState(visual: WellVisual | undefined, t: number): WellDisplayState {
+export function wellDisplayState(visual: WellObservation | undefined, t: number): WellDisplayState {
   if (!visual || !Number.isFinite(t) || t < visual.provenance.to) return 'unknown';
   if (!visual.provenance.current) return 'archived';
   if (visual.support !== 'supported') return 'unresolved';

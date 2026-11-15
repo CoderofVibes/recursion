@@ -12,6 +12,8 @@ export interface GardenExit {
   readonly destination: 'P04' | 'N03';
   readonly center: Vec3;
   readonly radius: number;
+  /** Absent for a spherical transit volume; present for an outward disc crossing. */
+  readonly outwardNormal?: Vec3;
 }
 
 export interface GardenLayout {
@@ -20,7 +22,10 @@ export interface GardenLayout {
   readonly wells: readonly GardenWell[];
   /** Ordinary optical landmarks, independent of the fictional propulsion rule. */
   readonly landmarks: readonly MassiveBody[];
-  readonly entrances: Readonly<Record<'power' | 'cross-transfer', ShipKinematics>>;
+  readonly entrances: {
+    readonly power: ShipKinematics;
+    readonly 'cross-transfer'?: ShipKinematics;
+  };
   readonly exits: readonly GardenExit[];
   readonly sun: Sun;
 }

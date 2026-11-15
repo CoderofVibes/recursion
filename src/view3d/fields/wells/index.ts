@@ -1,14 +1,29 @@
-/** The funnel is an instrument glyph, not the physical influence shape or a window object. */
+/** A19 physical funnels use acquired v2 geometry. V1 is retained for S5/S16 fixtures only. */
 import { BufferGeometry, Float32BufferAttribute, LineSegments } from 'three';
 import { lineStyles, opacity, render, envelopeStyle } from '../../../theme/index.ts';
 import { wellColour, wellLineMaterial } from '../../../theme/three/index.ts';
 import { toScene } from '../../adapter.ts';
-import type { FieldViewFactory } from '../../fieldViews.ts';
+import type { FieldView, FieldViewFactory } from '../../fieldViews.ts';
 import { setFatSegs } from '../../gfx.ts';
 import { readWellVisual, wellDisplayState, WELL_VIEW_KIND, type WellVisual } from './evidence.ts';
+import { makeFunnelView, readWellFunnelVisual } from './funnel.ts';
 
 export { readWellVisual, wellDisplayState, WELL_VIEW_KIND } from './evidence.ts';
 export type { WellVisual, WellResponseEvidence, WellEstimate } from './evidence.ts';
+export {
+  makeFunnelView,
+  makeOpticalFunnelView,
+  orientedFunnelGeometry,
+  funnelUncertaintySegments,
+  readWellFunnelVisual,
+  readWindowFunnelVisual,
+} from './funnel.ts';
+export type {
+  WellFunnelVisual,
+  FunnelGeometryEstimate,
+  FunnelStation,
+  WindowFunnelVisual,
+} from './funnel.ts';
 
 /** Three orthogonal great circles: a spherical influence, even when the glyph looks conical. */
 function sphereSegments(radius: number): number[] {
@@ -56,7 +71,7 @@ function funnelGeometry(v: WellVisual): BufferGeometry {
   return geometry;
 }
 
-export const makeWellView: FieldViewFactory = ({ group, lines }) => {
+export const makeLegacyWellView: FieldViewFactory = ({ group, lines }) => {
   const bounds = lines.fatSegs([], lineStyles.wellBoundary, { order: render.renderOrder.envelope });
   const funnel = new LineSegments(new BufferGeometry(), wellLineMaterial());
   funnel.renderOrder = render.renderOrder.belowPlane;
@@ -95,6 +110,35 @@ export const makeWellView: FieldViewFactory = ({ group, lines }) => {
       bounds.material.dispose();
       funnel.geometry.dispose();
       funnel.material.dispose();
+    },
+  };
+};
+
+/** Dispatch only on validated evidence. A v2 observation never falls back to spherical bounds. */
+export const makeWellView: FieldViewFactory = (context) => {
+  let view: FieldView | undefined;
+  let schema: 'v1' | 'v2' | undefined;
+  return {
+    update(frame) {
+      const next = readWellFunnelVisual(frame.field)
+        ? 'v2'
+        : readWellVisual(frame.field)
+          ? 'v1'
+          : undefined;
+      if (next !== schema) {
+        view?.dispose();
+        view =
+          next === 'v2'
+            ? makeFunnelView(context)
+            : next === 'v1'
+              ? makeLegacyWellView(context)
+              : undefined;
+        schema = next;
+      }
+      view?.update(frame);
+    },
+    dispose() {
+      view?.dispose();
     },
   };
 };
