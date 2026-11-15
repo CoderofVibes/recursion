@@ -105,6 +105,27 @@ npm run harness -- --suite smoke
 - `npm run harness -- --suite smoke`: its three flights pass (execution completed; acceptance incomplete, as 3E reports it). Its reports were not committed.
 - No test, tolerance or claim was loosened. One assertion changed, for R44, which replaces what it stated: reduced motion now has no anomaly in the sky at all, where the test held the anomaly's dark under a cap.
 
+## Playing it again the same way
+
+`docs/handoffs/night/judge-run/` holds the driver used for the run: installed headless Chrome over the DevTools protocol, plain Node, nothing installed, real key and mouse events only. It writes its browser profile, state and screenshots to the system's temporary folder, never into the repository.
+
+```powershell
+npm run build
+npx vite preview --port 4311 --strictPort
+```
+
+```powershell
+node docs/handoffs/night/judge-run/do.mjs start
+node docs/handoffs/night/judge-run/do.mjs open http://localhost:4311/ :: wait 23000 :: key 3 :: wait 1700 :: text .cs-screen 600 :: shot mission :: issues
+node docs/handoffs/night/judge-run/watch.mjs 60 2000× dive --until 08:20
+node docs/handoffs/night/judge-run/do.mjs stop
+```
+
+- `do.mjs` runs steps against a Chrome that stays up between calls (`open`, `key`, `hold`, `click`, `fill`, `wait`, `waitfor`, `text`, `shot`, `js`, `issues`, `media reduced`, `size`, `clear`). `issues` prints every page error and console error or warning since the last call.
+- `watch.mjs` follows an attempt at warp, prints each change (alerts, warp drops with their reason, the phase), raises warp again after a drop if asked, and films a loss frame by frame.
+- `learning-loop.sh` (Git Bash) plays Twin Deeps' designed learning loop unattended, from a fresh browser through the opening to the adopted law: about four minutes.
+- `JUDGE=<name>` gives a second, separate browser.
+
 ## Screenshots
 
 In `docs/handoffs/night/`, from the production build:
