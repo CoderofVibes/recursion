@@ -4,7 +4,7 @@ The live state of the build between threads: who is running, who holds which sha
 
 **Integrator, after a compaction:** read this file first, then `git log --oneline -15`, then the handoffs of any thread marked running.
 
-**Last updated:** 2026-11-14, 3C and 2D merged. `?encounter=chain-link` stops on its loading screen until 2F passes fields into the simulation (R1). Unannounced checkpoints sit on 2D, 3B and 3C; merge them when announced.
+**Last updated:** 2026-11-14, 2F (fields wired) and 3B merged; all three encounters load in the production build. Unannounced checkpoints sit on 2D, 3B and 3C; merge them when announced.
 
 ## Threads
 
@@ -12,9 +12,9 @@ The live state of the build between threads: who is running, who holds which sha
 |---|---|---|---|---|---|
 | 2D control room | Opus 5.5 | `.worktrees/2d` · `p2/2d-control-room` | Running. Merged: S9 R1–R15, S15 console fixes, 2G's screen data, 2C's forecast fields, S20 items, encounter panel mount and 120 m zoom (R4), A20 frame cadence (12 fps while coasting at 60×+), credits tab, elliptical envelopes | Next: OP's hooks (R23), AU's mount (R24), funnels in the window (R13); re-measure SYSTEMS | `635245f` |
 | 2G speed pass | Opus 5.5 | `.worktrees/2g` · `p2/2g-3d-flight` | **Done**, evidence and handoff merged. Next per-tick target: the environment step (rock visibility); a quiet-machine rebaseline is still to run (R11) | — | `bc292a9` |
-| 2F game loop | Opus 5.5 | `.worktrees/2f` · `p2/2f-game` | Running. Merged: A18 (1), (3), (4), (5) with placeholder power values, (6); S8's 70 catalogue flights as tests; encounter registry | Next: S21's power values and the cloud crescent (R14); fields into the simulation via `truth-step.ts` (R1), power-loss check next to collision loss | `7036c60` |
+| 2F game loop | Opus 5.5 | `.worktrees/2f` · `p2/2f-game` | Running. Merged: fields reach the simulation (R1), S21's 120 s power rule in the tick, swept whole-ship exits, believed departure progress and turn allowance | Next, in order: wells crush loss and lifecycle (R30), A20 budget (R18), 3A wiring (R26), the cloud crescent (R14), R20's acquisition scheduling, R29 | `82f906b` |
 | 2C model and Black Box | Opus 5.5 | `.worktrees/2c` · `p2/2c-model` | Round done and merged: bodies' track uncertainty, two moving bodies, forecast as of its issue time (A18 (1)), S8 checks with two fixes, lazy fallback | Next: 3C's reconstruction and Black Box function (R9), S17's requests, S20's (R17); 5% range-noise robustness still open | `4bf5359` |
-| 3B Inverse Wells | GPT/Codex | `.worktrees/3b` · `p3/3b-wells` | Running: field mechanics first | Layout from S16; loading via R1 | — |
+| 3B Inverse Wells | GPT/Codex | `.worktrees/3b` · `p3/3b-wells` | **Merged**: S22's funnels as an indexed field, the 900 s precursor lifecycle, the downstream exit sphere, registration (`?encounter=inverse-wells`) | Playable needs: crush loss, lifecycle in the tick, window funnels (R30, R31) | `91a666a` |
 | 3C Chain Link Fence | GPT/Codex (GPT-6 Astra) | `.worktrees/3c` · `p3/3c-lattice` | **Done**: twenty fences qualified (≤25.5 kg RCS of 100 kg, ≥21.6 m clearance), recorded reveal, raw diagnostics, stale readings, additive contracts, registration, save format 2. Integrator gave one slow test a 30 s timeout | Playable in the app once 2F wires fields (R1, R20) and 2C reconstructs (R9) | `acc648d` |
 | 3E playability harness | GPT/Codex | `.worktrees/3e` · `p3/3e-harness` | **Done**: `npm run harness` (smoke, reference, learning, routes, all); its pending-acceptance list names the gaps | — | `44db2fc` |
 | 3A power and thermal | GPT/Codex | `.worktrees/3a` · `p3/3a-power-thermal` | **Done**: causal radiation and thermal faults, heaters, physical service signals (`electricalService`, `energizedEquipment`); command tape identical; 72 h transit sustainable | Its wiring is 2F's (R26) | `767100b` |
@@ -56,7 +56,7 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 
 | ID | From → to | What | Status | Notes |
 |---|---|---|---|---|
-| R1 | 3B, 3C → 2F | Loading interface: one line per encounter in `src/game/encounters.ts`, loaded via `?encounter=<id>` with its own save slot; the setup takes `run` and returns an `EncounterSetup` with `fields`; exits use `reach-region` | **Confirmed by 2F; 3C has registered `chain-link`. Blocking now: 2F must pass `setup.fields` into `createSimulation`** (main throws "world has fields but no field registry was given" on this route) | Top of 2F's list |
+| R1 | 3B, 3C → 2F | Loading interface; fields into the simulation | **Done** `82f906b`: all three encounters load in the production build | |
 | R2 | 3E → integrator | `npm run harness` → `node tools/harness/run.mjs` | **Done** `5b94ed2` | |
 | R3 | 2F ↔ 2C | A18 (1): the forecast is computed from the moment of commitment while time keeps running | **Agreed** (both prompted) | Model side is 2C's; game side is 2F's |
 | R4 | 3B, 3C → 2D | Mount points for encounter UI in `src/console/encounters/` and `src/view3d/fields/` | **Done** `635245f`: panels register themselves beside FLIGHT; FLIGHT zooms to 120 m in the Chain Link | The panel's data comes from 2F |
@@ -97,6 +97,11 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 
 | R29 | 2D → 2F | `src/game/model-loop.test.ts` failed once under the full suite and passes alone; give it an explicit timeout if it's load-sensitive | **Open**: relay | |
 
+| R30 | 3B → 2F (with integrator for `src/sim`) | Wells in the tick: structural loss at the earliest contact of any ship part with an active throat (3B's `createFunnelCrushIndex`, `createFunnelHullHazards`); the funnel lifecycle split at its events, with a newly seen precursor ending the warp batch and dropping to 1× (time keeps running); field snapshots rebuilt when activation changes; then the lifecycle in saves and the pull/correction work ledger | **Open**: relay | `docs/handoffs/3B.md` requests 2–4; 2F may touch the field-instance code in `src/sim/` it needs, telling the integrator |
+| R31 | 3B → 2D | Funnels in the window and FLIGHT: `projectFunnelOptics` / `makeOpticalFunnelView` with LOD and culling across ~2,600 sites; exact segment clipping in `FieldViewContext`; release disposed materials from `LineSet` | **Open**: relay | Folds R13. The registration cycle is already fixed by the integrator |
+| R32 | 3B → 2C | Acquire contour bearings and phase through the real camera; fit funnel geometry, pull and reversal separately from motion and IMU evidence; no catalogue coordinates as belief | **Open**: relay | After R9 |
+| R33 | Integrator | Fixes on merging 3B: its acquisition test imports `ModelService` from `src/model/service.ts` (2C's index exports the type only); the field-view registry moved onto a hoisted function (Vite's eager glob put plugin registration ahead of the const) | **Done** (this commit) | Tell 2D (its `fieldViews.ts`) and 3B |
+
 Add new rows at the bottom with the next ID. Never renumber.
 
 ## Owner decisions still open
@@ -111,7 +116,9 @@ Decided: A15 (S11's queue), A16 (the lattice), A17 (the ending) and A18 (the Gra
 
 | Commit | What |
 |---|---|
-| (this commit) | Chain-link abort test gets a 30 s timeout (load); ledger |
+| (this commit) | Integrator fixes on merging 3B (R33); ledger R30–R33 |
+| `91a666a`, `82f906b` | 3B (Inverse Wells); 2F (fields wired, power rule, swept exits) |
+| `1d000f9` | Chain-link abort test gets a 30 s timeout (load); ledger |
 | `635245f`, `acc648d` | 2D (S9, S15 fixes, screens, A20 half); 3C (Chain Link Fence) |
 | `46a1783` | Console hardened (R28); ESLint gives docs scripts Node globals; ledger R26–R28 |
 | `767100b` | 3A: power, thermal and condition |

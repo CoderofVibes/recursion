@@ -12,7 +12,9 @@ import { buildEnvironment } from '../../game/environment.ts';
 import { midStepMassProperties } from '../../game/truth-step.ts';
 import { createStandInModel } from '../../game/belief/standin-model.ts';
 import { createBlackBox } from '../../game/belief/blackbox.ts';
-import { contextFromBriefing, ModelService } from '../../model/index.ts';
+import { contextFromBriefing } from '../../model/index.ts';
+// The service class is imported from its module: the model's index exports it as a type only (2C's lazy fallback).
+import { ModelService } from '../../model/service.ts';
 import { createSimulation } from '../../sim/index.ts';
 import { stepShipSystems } from '../../ship/index.ts';
 import { createInverseWells, LAW, MECHANICS_PREVIEW, s16Layout } from './index.ts';
