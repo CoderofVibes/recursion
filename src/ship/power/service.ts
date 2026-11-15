@@ -67,7 +67,13 @@ export function energizedEquipment(
         !e.tripped &&
         e.mode !== 'off' &&
         (e.powerDraw > 0 || (e.values.generatedPower ?? 0) > 0);
-      if (e && spec.kind === 'battery' && e.mode !== 'off' && e.condition > 0 && !e.tripped) {
+      if (
+        e &&
+        (spec.kind === 'battery' || spec.kind === 'power-source') &&
+        !['off', 'stowed'].includes(e.mode) &&
+        e.condition > 0 &&
+        !e.tripped
+      ) {
         const pdu = state.equipment[spec.bus === 'main-a' ? 'pdu-a' : 'pdu-b'];
         live ||= !!pdu && pdu.condition > 0 && !pdu.tripped && pdu.powerDraw > 0;
       }

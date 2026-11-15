@@ -35,6 +35,15 @@ function dispatch(state: ShipSystemsState, irradiance = 0) {
 }
 
 describe('physical service for A16/A18 game policy', () => {
+  it('accounts for lost battery capacity as heat without creating or erasing stored energy', () => {
+    let state = edit(fresh(), 'battery-a', { condition: 0.5, mode: 'off' });
+    const before = state.equipment['battery-a']!.values.charge!;
+    state = dispatch(state);
+    const after = state.equipment['battery-a']!;
+    expect(after.values.charge! + after.values.capacityLossHeat! * 0.01).toBeCloseTo(before, 7);
+    expect(after.values.capacityLossHeat).toBeGreaterThan(0);
+    expect(dispatch(state).equipment['battery-a']!.values.capacityLossHeat).toBe(0);
+  });
   it('publishes the approved values without owning a game loss clock', () => {
     expect(POWER_LOSS_GRACE_SECONDS).toBe(120);
     expect(ENDURANCE_CAUTION_SECONDS).toBe(14400);
@@ -87,7 +96,7 @@ describe('physical service for A16/A18 game policy', () => {
         const dispatched = dispatch(state);
         return {
           energized: energizedEquipment(dispatched, definition),
-          duration: remaining,
+          duration: state.t < 0.05 ? Math.min(remaining, 0.05 - state.t) : remaining,
           sample: (dt) => ({
             'pdu-a': { rawDose: 9 * dt, aboveBurnout: true },
             // Camera has 0.05 s less contiguous severe contact than the PDU.

@@ -227,6 +227,7 @@ function dispatchPower(
     a: { solar: 0, fuel: 0, discharge: 0, optionalDischarge: 0 },
     b: { solar: 0, fuel: 0, discharge: 0, optionalDischarge: 0 },
   };
+  const capacityLoss: Record<Side, number> = { a: 0, b: 0 };
   for (const side of ['a', 'b'] as const) {
     const s = sources[side];
     const solarId = SIDES[side].solar;
@@ -258,6 +259,9 @@ function dispatchPower(
       0,
       battery.capacityPerPack * (e?.condition ?? 0),
     );
+    // [ASSUMED] Charge rejected by permanent cell-capacity loss dissipates locally.
+    // It is not silently erased and cannot be recovered by resetting protection.
+    capacityLoss[side] = Math.max(0, (e?.values.charge ?? charge) - charge);
     if (e) {
       e.values.charge = charge;
       e.values.output = 0;
@@ -549,7 +553,9 @@ function dispatchPower(
       batteryRecord.powerDraw = chargeInput;
       batteryRecord.values.charge = after;
       batteryRecord.values.output = discharge;
-      batteryRecord.values.heat = loss;
+      batteryRecord.values.heat = loss + capacityLoss[side] / dt;
+      if (capacityLoss[side] > 0 || batteryRecord.values.capacityLossHeat !== undefined)
+        batteryRecord.values.capacityLossHeat = capacityLoss[side] / dt;
       batteryRecord.values.generatedPower = discharge;
     }
     if (before > 0 && after <= 1e-8)

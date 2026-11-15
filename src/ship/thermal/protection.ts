@@ -40,18 +40,33 @@ export function stepThermalProtection(
   definition: ShipDefinition,
   dt: number,
 ): { state: ShipSystemsState; events: ShipEvent[] } {
+  if (!(dt > 0) || !Number.isFinite(dt)) throw new RangeError('Invalid thermal protection dt.');
   const data = systems(definition);
   const protection = data.thermalProtection;
-  const equipment = { ...state.equipment };
+  let equipment: Record<string, EquipmentState> | undefined;
   const events: ShipEvent[] = [];
   const at = state.t + dt;
   for (const spec of definition.equipment) {
-    const e = equipment[spec.id];
+    const e = state.equipment[spec.id];
     if (!e || !spec.thermalNode || radiationProfiles(definition).get(spec.id)?.susceptibility === 0)
       continue;
     const temperature = state.thermal[spec.thermalNode] ?? e.temperature ?? 295;
     const max = spec.params.tempMax ?? Infinity;
     const min = spec.params.tempMin ?? 0;
+    // Healthy steady flight is the common path. Do not clone 42 values/fault
+    // records per tick just to find no thermal protection event (2G speed pass).
+    if (
+      temperature >= min &&
+      (temperature < max || e.tripped || e.condition <= 0) &&
+      temperature <= max + protection.damageMargin &&
+      !e.values.thermalInhibited &&
+      !e.values.thermalDamageDwell &&
+      !(
+        e.id === 'interface-hx' &&
+        (temperature < data.thermalLoops[0]!.freezeTemperature || e.values.freezeDwell)
+      )
+    )
+      continue;
     const values = { ...e.values };
     let tripped = e.tripped;
     let condition = e.condition;
@@ -101,7 +116,10 @@ export function stepThermalProtection(
     }
     if (condition !== e.condition)
       events.push({ kind: 'condition-changed', t: at, equipment: e.id, condition });
-    if (changed) equipment[e.id] = { ...e, values, faults, condition, tripped };
+    if (changed) {
+      equipment ??= { ...state.equipment };
+      equipment[e.id] = { ...e, values, faults, condition, tripped };
+    }
   }
-  return { state: { ...state, equipment }, events };
+  return { state: equipment ? { ...state, equipment } : state, events };
 }

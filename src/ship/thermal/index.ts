@@ -138,10 +138,17 @@ export function stepThermal(
     };
     for (const loop of data.thermalLoops) {
       const hx = equipment['interface-hx'];
+      const regulator =
+        loop.id === 'internal-water'
+          ? hx
+          : equipment[
+              loop.pumpIds.find((id) => equipment[id]?.mode === 'active') ?? loop.pumpIds[0]!
+            ];
       const broken =
-        loop.id === 'internal-water' && (hx?.condition === 0 || hasFault(hx, 'freeze-rupture'));
-      const pump = isPumping(loop.pumpIds) && !broken && !hasFault(hx, 'regulator-closed');
-      const open = hasFault(hx, 'regulator-open');
+        loop.id === 'internal-water' &&
+        (!functionAvailable(hx, state.t) || hasFault(hx, 'freeze-rupture'));
+      const pump = isPumping(loop.pumpIds) && !broken && !hasFault(regulator, 'regulator-closed');
+      const open = hasFault(regulator, 'regulator-open');
       transfer(
         loop.from,
         loop.to,
@@ -155,7 +162,7 @@ export function stepThermal(
       const hx = equipment['interface-hx'];
       const pump =
         isPumping(EXTERNAL_PUMPS) &&
-        hx?.condition !== 0 &&
+        functionAvailable(hx, state.t) &&
         !hasFault(hx, 'freeze-rupture') &&
         !hasFault(hx, 'regulator-closed');
       transfer(
@@ -169,7 +176,11 @@ export function stepThermal(
     }
     for (const id of ['radiator-left', 'radiator-right']) {
       const e = equipment[id];
-      if (!e || e.condition <= 0 || hasFault(e, 'branch-isolated')) continue;
+      if (!e) continue;
+      if (e.condition <= 0 || hasFault(e, 'branch-isolated')) {
+        equipment[id] = { ...e, values: { ...e.values, radiatedPower: 0 } };
+        continue;
+      }
       const deployment = geometry.deployment[id] ?? 0;
       const area =
         radiator.stowedEffectiveAreaPerWing +
@@ -221,7 +232,8 @@ export function stepThermal(
       definition,
       h,
     );
-    equipment = { ...protectedStep.state.equipment };
+    if (protectedStep.state.equipment !== equipment)
+      equipment = { ...protectedStep.state.equipment };
     events.push(...protectedStep.events);
   }
   for (const spec of definition.equipment) {

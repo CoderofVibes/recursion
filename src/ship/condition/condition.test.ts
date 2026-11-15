@@ -3,11 +3,41 @@ import { loadShipDefinition } from '../definition.ts';
 import { createShipSystemsState } from '../state.ts';
 import { applyCommands } from '../commands.ts';
 import { functionAvailable, nextConditionBoundary, stepCondition } from './index.ts';
+import { buildFixtures } from '../../contracts/fixtures/index.ts';
+import { conditionDrops } from '../../model/aging.ts';
 
 const definition = loadShipDefinition();
 const initial = () => createShipSystemsState(definition);
 
 describe('causal cumulative component condition', () => {
+  it('preserves exact save/resume state and feeds real equipment IDs into model aging', () => {
+    let state = initial();
+    for (let i = 0; i < 5; i++)
+      state = {
+        ...stepCondition(
+          state,
+          definition,
+          { 'main-engine': { rawDose: 4, aboveBurnout: false } },
+          {},
+          0.5,
+        ).state,
+        t: state.t + 0.5,
+      };
+    const saved = JSON.parse(JSON.stringify(state)) as typeof state;
+    const run = (input: typeof state) =>
+      stepCondition(
+        input,
+        definition,
+        { 'main-engine': { rawDose: 15, aboveBurnout: false } },
+        {},
+        1,
+      );
+    const result = run(saved);
+    expect(result).toEqual(run(state));
+    const record = { ...buildFixtures().attempts[0], events: result.events };
+    expect(conditionDrops(record, 'main-engine', 0, 10)).toEqual([0.25]);
+    expect(conditionDrops(record, 'camera', 0, 10)).toEqual([]);
+  });
   it('applies susceptibility once, including off hardware; passive material is unchanged', () => {
     const state = initial();
     const result = stepCondition(

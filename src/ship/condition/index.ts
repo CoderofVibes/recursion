@@ -174,7 +174,7 @@ export function stepCondition(
           0,
           1,
         );
-    condition = oldRemaining > 0 ? (condition * remaining) / oldRemaining : 0;
+    condition = oldRemaining > 0 ? condition * (remaining / oldRemaining) : 0;
     values.radiationRemaining = remaining;
     values.radiationLeakage = data.maxLeakageFraction * (1 - remaining);
     const fault = (name: string) => {
