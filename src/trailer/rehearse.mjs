@@ -170,6 +170,8 @@ try {
           p95Ms: +percentile(list, 0.95).toFixed(2),
           worstMs: +Math.max(...list).toFixed(2),
           over16_7: list.filter((ms) => ms > 1000 / 60).length,
+          // Which frames of the beat ran long (the first forty), to tell a hitch at a cut from a slow shot.
+          slowFrames: list.flatMap((ms, i) => (ms > 1000 / 60 ? [i] : [])).slice(0, 40),
         },
       ]),
     );
@@ -193,10 +195,19 @@ try {
     };
     writeFileSync(new URL('rehearsal.json', out), `${JSON.stringify(report, null, 2)}\n`);
     console.log(JSON.stringify({ ...report, record: undefined, frames: undefined }, null, 2));
-    console.table(frames);
+    console.table(
+      Object.fromEntries(
+        Object.entries(frames).map(([beat, f]) => [
+          beat,
+          { ...f, slowFrames: f.slowFrames.join(' ') },
+        ]),
+      ),
+    );
   }
 
   if (want('stills')) {
+    // The timeline is read through the page, so a page must be open.
+    await open('&still=0');
     const beats = await js(
       `import('/src/trailer/timeline.ts').then((m) => m.BEATS.filter((b) => b.scene).map((b) => ({ id: b.id, start: b.start, length: b.length })))`,
     );

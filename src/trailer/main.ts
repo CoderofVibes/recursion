@@ -115,17 +115,44 @@ async function start(): Promise<void> {
 }
 
 let shown: TrailerScene | undefined;
+/**
+ * Seconds before a cut into a room shot that the shot is already being drawn, out of sight under
+ * the picture on screen. The room's WebGL canvas is hidden through the black beats and the
+ * montage's stills, and a canvas first shown at the cut costs its first frames (measured in the
+ * rehearsal: seven long frames at the console's cut after the montage).
+ */
+const PREROLL = 0.3;
+let warming: TrailerScene | undefined;
+/** The room shots share one canvas (rig/index.ts marks their elements). */
+const isRoom = (scene: TrailerScene | undefined): boolean =>
+  scene?.element.dataset.tvScene !== undefined;
 let lastBeat: string | null | undefined;
 let lastCaption: string | undefined;
 
 function draw(t: number): void {
   const beat = beatAt(t);
   const scene = beat?.scene ? scenes.get(beat.scene) : undefined;
+  // Never under another room shot: they share the canvas, so it would show the next shot early.
+  const ahead = t >= 0 ? beatAt(t + PREROLL) : null;
+  const next = ahead?.scene ? scenes.get(ahead.scene) : undefined;
+  const warm = next !== scene && isRoom(next) && !isRoom(scene) ? next : undefined;
+  if (warm !== warming) {
+    if (warming) {
+      warming.element.classList.remove('tr-preroll');
+      if (warming !== scene) warming.element.hidden = true;
+    }
+    if (warm) {
+      warm.element.classList.add('tr-preroll');
+      warm.element.hidden = false;
+    }
+    warming = warm;
+  }
   if (scene !== shown) {
-    if (shown) shown.element.hidden = true;
+    if (shown && shown !== warm) shown.element.hidden = true;
     if (scene) scene.element.hidden = false;
     shown = scene;
   }
+  if (ahead && warm) warm.render(ahead, 0);
   if (beat && scene) scene.render(beat, t - beat.start);
   veil.style.opacity = String(1 - levelAt(t));
   const text = beat?.caption;

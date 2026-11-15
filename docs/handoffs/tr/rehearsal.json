@@ -2,102 +2,102 @@
   "url": "/src/trailer/?quality=full",
   "state": "ended",
   "beatChanges": 19,
-  "worstLateS": 0.0058,
+  "worstLateS": 0.007,
   "record": [
     {
       "beat": "open",
       "sheet": 0,
-      "late": 0.0022
+      "late": 0.0017
     },
     {
       "beat": "title",
       "sheet": 0.5,
-      "late": 0.0051
+      "late": 0.0049
     },
     {
       "beat": "after-title",
       "sheet": 2,
-      "late": 0.0019
+      "late": 0.0014
     },
     {
       "beat": "slingshot",
       "sheet": 2.3,
-      "late": 0.0049
+      "late": 0.0044
     },
     {
       "beat": "wells",
       "sheet": 4.8,
-      "late": 0.0014
+      "late": 0.007
     },
     {
       "beat": "lattice",
       "sheet": 7.3,
-      "late": 0.004
+      "late": 0.0036
     },
     {
       "beat": "braid",
       "sheet": 10.3,
-      "late": 0.0036
+      "late": 0.0031
     },
     {
       "beat": "snap",
       "sheet": 12.8,
-      "late": 0.0001
+      "late": 0.0057
     },
     {
       "beat": "montage-flight",
       "sheet": 13.1,
-      "late": 0.0032
+      "late": 0.0029
     },
     {
       "beat": "montage-map",
       "sheet": 14.45,
-      "late": 0.0045
+      "late": 0.0041
     },
     {
       "beat": "montage-region",
       "sheet": 15.8,
-      "late": 0.0058
+      "late": 0.0054
     },
     {
       "beat": "montage-explore",
       "sheet": 17.15,
-      "late": 0.0009
+      "late": 0.0006
     },
     {
       "beat": "montage-model",
       "sheet": 18.5,
-      "late": 0.0023
+      "late": 0.002
     },
     {
       "beat": "montage-plan",
       "sheet": 19.85,
-      "late": 0.0036
+      "late": 0.0032
     },
     {
       "beat": "montage-blackbox",
       "sheet": 21.2,
-      "late": 0.0051
+      "late": 0.0045
     },
     {
       "beat": "montage-ship",
       "sheet": 22.55,
-      "late": 0.0002
+      "late": 0.0058
     },
     {
       "beat": "console",
       "sheet": 23.9,
-      "late": 0.0014
+      "late": 0.001
     },
     {
       "beat": "before-card",
       "sheet": 26.2,
-      "late": 0.0044
+      "late": 0.0038
     },
     {
       "beat": "card",
       "sheet": 26.5,
-      "late": 0.0014
+      "late": 0.0006
     }
   ],
   "missingSounds": [
@@ -131,143 +131,199 @@
   "frames": {
     "before": {
       "frames": 50,
-      "medianMs": 6,
-      "p95Ms": 6.2,
-      "worstMs": 6.2,
-      "over16_7": 0
-    },
-    "open": {
-      "frames": 83,
       "medianMs": 6.1,
       "p95Ms": 6.2,
       "worstMs": 6.3,
-      "over16_7": 0
+      "over16_7": 0,
+      "slowFrames": []
+    },
+    "open": {
+      "frames": 83,
+      "medianMs": 6,
+      "p95Ms": 6.2,
+      "worstMs": 6.3,
+      "over16_7": 0,
+      "slowFrames": []
     },
     "title": {
       "frames": 247,
       "medianMs": 6.1,
       "p95Ms": 6.3,
-      "worstMs": 6.4,
-      "over16_7": 0
+      "worstMs": 6.5,
+      "over16_7": 0,
+      "slowFrames": []
     },
     "after-title": {
-      "frames": 50,
+      "frames": 44,
       "medianMs": 6.1,
-      "p95Ms": 6.2,
-      "worstMs": 6.3,
-      "over16_7": 0
+      "p95Ms": 12.2,
+      "worstMs": 18.3,
+      "over16_7": 1,
+      "slowFrames": [
+        22
+      ]
     },
     "slingshot": {
-      "frames": 399,
+      "frames": 391,
       "medianMs": 6.1,
-      "p95Ms": 6.3,
-      "worstMs": 24.3,
-      "over16_7": 2
+      "p95Ms": 6.6,
+      "worstMs": 18.2,
+      "over16_7": 2,
+      "slowFrames": [
+        174,
+        377
+      ]
     },
     "wells": {
-      "frames": 405,
+      "frames": 371,
       "medianMs": 6.1,
-      "p95Ms": 6.3,
-      "worstMs": 24.2,
-      "over16_7": 1
+      "p95Ms": 12.1,
+      "worstMs": 30.5,
+      "over16_7": 7,
+      "slowFrames": [
+        0,
+        5,
+        296,
+        300,
+        310,
+        312,
+        327
+      ]
     },
     "lattice": {
-      "frames": 494,
+      "frames": 430,
       "medianMs": 6.1,
-      "p95Ms": 6.2,
-      "worstMs": 11.5,
-      "over16_7": 0
+      "p95Ms": 12.2,
+      "worstMs": 24.4,
+      "over16_7": 15,
+      "slowFrames": [
+        106,
+        122,
+        140,
+        155,
+        171,
+        173,
+        175,
+        201,
+        220,
+        224,
+        236,
+        252,
+        255,
+        295,
+        361
+      ]
     },
     "braid": {
-      "frames": 410,
+      "frames": 401,
       "medianMs": 6.1,
       "p95Ms": 6.2,
-      "worstMs": 12.2,
-      "over16_7": 0
+      "worstMs": 24.4,
+      "over16_7": 3,
+      "slowFrames": [
+        7,
+        24,
+        282
+      ]
     },
     "snap": {
-      "frames": 50,
+      "frames": 49,
       "medianMs": 6.1,
       "p95Ms": 6.2,
       "worstMs": 6.3,
-      "over16_7": 0
+      "over16_7": 0,
+      "slowFrames": []
     },
     "montage-flight": {
-      "frames": 223,
+      "frames": 218,
       "medianMs": 6.1,
-      "p95Ms": 6.2,
-      "worstMs": 6.4,
-      "over16_7": 0
+      "p95Ms": 6.3,
+      "worstMs": 12.2,
+      "over16_7": 0,
+      "slowFrames": []
     },
     "montage-map": {
-      "frames": 223,
+      "frames": 220,
       "medianMs": 6.1,
       "p95Ms": 6.2,
-      "worstMs": 6.4,
-      "over16_7": 0
+      "worstMs": 12.3,
+      "over16_7": 0,
+      "slowFrames": []
     },
     "montage-region": {
-      "frames": 222,
+      "frames": 219,
       "medianMs": 6.1,
       "p95Ms": 6.2,
-      "worstMs": 6.3,
-      "over16_7": 0
+      "worstMs": 12.1,
+      "over16_7": 0,
+      "slowFrames": []
     },
     "montage-explore": {
       "frames": 223,
       "medianMs": 6.1,
       "p95Ms": 6.2,
-      "worstMs": 6.7,
-      "over16_7": 0
+      "worstMs": 6.3,
+      "over16_7": 0,
+      "slowFrames": []
     },
     "montage-model": {
       "frames": 223,
       "medianMs": 6.1,
       "p95Ms": 6.3,
       "worstMs": 6.4,
-      "over16_7": 0
+      "over16_7": 0,
+      "slowFrames": []
     },
     "montage-plan": {
       "frames": 223,
       "medianMs": 6.1,
-      "p95Ms": 6.3,
-      "worstMs": 6.5,
-      "over16_7": 0
+      "p95Ms": 6.2,
+      "worstMs": 6.3,
+      "over16_7": 0,
+      "slowFrames": []
     },
     "montage-blackbox": {
-      "frames": 222,
-      "medianMs": 6.1,
-      "p95Ms": 6.3,
-      "worstMs": 6.7,
-      "over16_7": 0
-    },
-    "montage-ship": {
       "frames": 223,
       "medianMs": 6.1,
+      "p95Ms": 6.2,
+      "worstMs": 6.4,
+      "over16_7": 0,
+      "slowFrames": []
+    },
+    "montage-ship": {
+      "frames": 220,
+      "medianMs": 6.1,
       "p95Ms": 6.3,
-      "worstMs": 6.5,
-      "over16_7": 0
+      "worstMs": 12.1,
+      "over16_7": 0,
+      "slowFrames": []
     },
     "console": {
-      "frames": 299,
+      "frames": 371,
       "medianMs": 6.1,
-      "p95Ms": 18.2,
-      "worstMs": 36.3,
-      "over16_7": 23
+      "p95Ms": 6.2,
+      "worstMs": 24.2,
+      "over16_7": 2,
+      "slowFrames": [
+        93,
+        96
+      ]
     },
     "before-card": {
       "frames": 49,
-      "medianMs": 6,
-      "p95Ms": 6.3,
-      "worstMs": 6.4,
-      "over16_7": 0
+      "medianMs": 6.1,
+      "p95Ms": 6.2,
+      "worstMs": 6.3,
+      "over16_7": 0,
+      "slowFrames": []
     },
     "card": {
       "frames": 578,
       "medianMs": 6.1,
-      "p95Ms": 6.3,
-      "worstMs": 6.4,
-      "over16_7": 0
+      "p95Ms": 6.2,
+      "worstMs": 6.5,
+      "over16_7": 0,
+      "slowFrames": []
     }
   },
   "issues": []

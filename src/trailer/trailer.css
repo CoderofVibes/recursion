@@ -33,6 +33,11 @@ body {
   display: none !important;
 }
 
+/* A room shot drawn ahead of its cut sits under the picture on screen (main.ts, PREROLL). */
+.tr-preroll {
+  z-index: -1;
+}
+
 /* The whole frame's brightness: black beats, snaps and flickers (timeline.ts, levelAt). */
 .tr-veil {
   background: var(--rx-void);
