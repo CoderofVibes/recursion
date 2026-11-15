@@ -36,6 +36,16 @@ const final = recorder.end({ kind: 'lost', t, cause: 'collision' }, state.versio
 - Pass `archive.extensionTests` and `archive.extensionDecisions` to the model's `load()`; they carry to later encounters (A4, A5).
 - Record each attempt's briefing in `AttemptStart.briefing` (A10): the model takes that attempt's arrival geometry from it.
 
+New measurement channels need no migration: the store keeps each attempt record as plain JSON under its id and never looks at measurement kinds or channels, so 3C's `lattice.angular-fragments.v2` frames and `lattice.raw-tile.v1` tiles come back exactly as recorded (`lattice.test.ts`; R22). Reconstructions are never stored: the model rebuilds them from the records.
+
+## The lattice function (`lattice.ts`, A16)
+
+Once the player switches the function on (3C's `latticeModeCommands`: the science processor in `lattice` mode), the recorder keeps the camera's processed frames and raw diagnostic tiles. `latticeRetention(record, now?)` accounts for them per field from the record alone: frames and fragments retained, their bytes as recorded (each measurement's JSON), the acquisition span and mean rate, the age of the last acquisition, sequence numbers never retained (missing data stays visible as missing), frames truncated by the per-frame budget, and the latest raw tile with its age from its original acquisition, not its delivery (for the loss review: pass the loss time as `now`). `latticeFunctionLog(record, now?)` gives when the function was switched on and off. The reconstruction is the model's (`ModelService.lattice`), from the same records. The recorder's own packet and reserve accounting is not in the records yet (request to the ship's recorder owner in 2C's handoff), so bytes here are those of the retained measurements.
+
+## Equipment condition (`condition.ts`, R27)
+
+`equipmentTimeline(record, now?, knownIds?)`: per equipment id as the ship names it, its reported condition changes (`condition-changed`, whose `condition` is the reported condition by contract), faults, breaker trips, recoveries and load sheds in time order; the condition last reported; when it was first reported failed; its first fault; and `unknown` for an id the ship does not have. Ordered by when each one's trouble started. `failureOrder(record, now?)`: the first failure or fault of each, in order, which is what a loss review leads with (S17: the global failure is read through the first few local ones). Doses (`exposure` events) are not read.
+
 ## Comparing two attempts (`compare.ts`)
 
 ```ts
@@ -68,5 +78,9 @@ Saved items are the commands that reached the ship between `from` and `to` (not 
 In the game a procedure is kept with `GameControls.blackBox.saveProcedure(p)` (and forgotten with `removeProcedure(id)`): it goes into the archive's `procedures` and to the store (`putProcedure`, `deleteProcedure`), so it is there in the next attempt and after a reload (`src/game/belief/blackbox.ts`).
 
 ## Tests
+
+`condition.test.ts`: 3A's real condition events on the baseline ship: per-equipment timelines, failure order, the as-of cutoff, unknown ids.
+
+`lattice.test.ts`: retention counts, missing sequences, the latest tile's age from acquisition, the as-of cutoff, the function log, and both lattice channels round-tripping the store unchanged.
 
 `blackbox.test.ts`: recorder ordering, freezing and loss; storage round trip with forecasts reissued; model rebuilt from stored records equals the live model fed through the recorder; comparison finding where an outcome left a forecast (and not where it did not), divergence measured in 3D against a flat ellipsoid (3σ out of the plane, 1σ in it), plan and configuration diffs, residual split and missing data; procedure save, match and replay. The IndexedDB store was exercised in Chrome via the dev server (records written, read back, model rebuilt in a Web Worker).

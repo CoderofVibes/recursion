@@ -16,6 +16,7 @@ import {
   issueForecast,
   type AttemptId,
   type AttemptRecord,
+  type BelievedField,
   type ExtensionDecision,
   type ExtensionId,
   type Forecast,
@@ -57,7 +58,113 @@ export interface ModelClient {
   report(): Promise<ModelReport>;
   burns(attempts?: readonly AttemptId[]): Promise<BurnReport[]>;
   empirical(): Promise<EmpiricalReport | null>;
+  /**
+   * The lattice rebuilt from an attempt's records (A16): believed fields for
+   * `BelievedWorld.fields`, each `visual` in 3C's `lattice-observations-v1` display schema.
+   */
+  lattice(attemptId?: AttemptId, now?: number): Promise<BelievedField[]>;
+  /**
+   * What the model is doing now (S20): the call running and since when, how many wait behind
+   * it, and how many refreshes or refits were superseded while waiting.
+   */
+  busy(): ModelBusy;
   terminate(): void;
+}
+
+export interface ModelBusy {
+  readonly running: ServiceMethod | 'init' | null;
+  /** `performance.now()` (ms) when the running call started. */
+  readonly since: number | null;
+  readonly queued: number;
+  readonly coalesced: number;
+}
+
+/**
+ * One call at a time, in the order made (S20: bound redundant work without dropping records).
+ * A refresh or refit still waiting, with only appends queued after it, is superseded by a later
+ * refresh or refit: that one rebuilds from everything appended, and the earlier caller gets its
+ * result. A refit is superseded only by a refit. Nothing else is ever merged, dropped or
+ * reordered: appends always run, and no call crosses a forecast, a load or a rule decision.
+ * After `terminate`, waiting calls are refused.
+ */
+function serialize(
+  call: Call,
+  clock: () => number,
+): { call: Call; busy: () => ModelBusy; stop: () => void } {
+  interface Job {
+    readonly method: ServiceMethod | 'init';
+    readonly args: readonly unknown[];
+    resolve: (v: unknown) => void;
+    reject: (e: unknown) => void;
+  }
+  const waiting: Job[] = [];
+  let running: Job | null = null;
+  let since: number | null = null;
+  let coalesced = 0;
+  let stopped = false;
+  const pump = () => {
+    if (running || stopped) return;
+    const job = waiting.shift();
+    if (!job) return;
+    running = job;
+    since = clock();
+    // Free the slot before the caller hears back, so `busy()` is right the moment it does.
+    const settle = () => {
+      running = null;
+      since = null;
+    };
+    call(job.method, job.args).then(
+      (v) => {
+        settle();
+        job.resolve(v);
+        pump();
+      },
+      (e: unknown) => {
+        settle();
+        job.reject(e);
+        pump();
+      },
+    );
+  };
+  const enqueue: Call = (method, args) =>
+    new Promise((resolve, reject) => {
+      if (stopped) {
+        reject(new Error('model: terminated'));
+        return;
+      }
+      const job: Job = { method, args, resolve, reject };
+      if (method === 'refresh' || method === 'refit') {
+        for (let i = waiting.length - 1; i >= 0; i--) {
+          const w = waiting[i]!;
+          if (w.method === 'append') continue;
+          if (w.method === 'refresh' || (w.method === 'refit' && method === 'refit')) {
+            waiting.splice(i, 1);
+            coalesced++;
+            const done = job.resolve;
+            const failed = job.reject;
+            job.resolve = (v) => {
+              w.resolve(v);
+              done(v);
+            };
+            job.reject = (e) => {
+              w.reject(e);
+              failed(e);
+            };
+          }
+          break;
+        }
+      }
+      waiting.push(job);
+      pump();
+    });
+  return {
+    call: enqueue,
+    busy: () => ({ running: running?.method ?? null, since, queued: waiting.length, coalesced }),
+    stop: () => {
+      stopped = true;
+      for (const w of waiting.splice(0)) w.reject(new Error('model: terminated'));
+    },
+  };
 }
 
 type Call = (method: ServiceMethod | 'init', args: readonly unknown[]) => Promise<unknown>;
@@ -129,9 +236,21 @@ function localCall(): { call: Call; terminate: () => void } {
 
 export function createModelClient(opts: { worker?: boolean } = {}): ModelClient {
   const useWorker = (opts.worker ?? true) && typeof Worker !== 'undefined';
-  const { call, terminate } = useWorker ? workerCall() : localCall();
+  const inner = useWorker ? workerCall() : localCall();
+  // Arguments are copied when the call is made, as posting them at once would.
+  const queue = serialize(
+    (method, args) => inner.call(method, args),
+    () => performance.now(),
+  );
   const c = <T>(method: ServiceMethod | 'init', ...args: unknown[]) =>
-    call(method, args) as Promise<T>;
+    queue.call(
+      method,
+      method === 'init' ? args : args.map((a) => structuredClone(a)),
+    ) as Promise<T>;
+  const terminate = () => {
+    queue.stop();
+    inner.terminate();
+  };
   return {
     init: (ctx) => c('init', ctx),
     load: (input) => c('load', input),
@@ -154,6 +273,8 @@ export function createModelClient(opts: { worker?: boolean } = {}): ModelClient 
     report: () => c('report'),
     burns: (attempts) => c('burns', attempts),
     empirical: () => c('empirical'),
+    lattice: (attemptId, now) => c('lattice', attemptId, now),
+    busy: queue.busy,
     terminate,
   };
 }

@@ -19,7 +19,8 @@ export type ServiceMethod =
   | 'state'
   | 'extensions'
   | 'adopted'
-  | 'decisions';
+  | 'decisions'
+  | 'lattice';
 
 export interface RpcRequest {
   readonly id: number;
@@ -68,6 +69,8 @@ export function dispatch(service: ModelService, method: string, args: readonly u
       return service.burns(args[0] as string[] | undefined);
     case 'empirical':
       return service.empirical();
+    case 'lattice':
+      return service.lattice(args[0] as string | undefined, args[1] as number | undefined);
     default:
       throw new Error(`model: unknown method ${method}`);
   }
