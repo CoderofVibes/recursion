@@ -8,6 +8,7 @@ import {
   saveMotionPreference,
 } from './launch.ts';
 import { playOpening, type OpeningAudio } from './play.ts';
+import { TITLE_WORD } from './sequence.ts';
 import './opening.css';
 
 interface OpeningGateProps extends ControlRoomProps {
@@ -57,6 +58,10 @@ export function OpeningGate({
         fade.style.opacity = String(frame.blackout);
         heading.style.opacity = String(frame.title);
         heading.hidden = frame.beat !== 'title';
+        frame.letters.forEach((up, i) => {
+          const letter = heading.children[i] as HTMLElement | undefined;
+          if (letter) letter.style.opacity = String(up);
+        });
         if (frame.beat === 'end') setFinished(true);
       },
     });
@@ -82,8 +87,12 @@ export function OpeningGate({
       <canvas ref={canvas} className="rx-opening-canvas" aria-hidden="true" />
       <div ref={labels} className="rx-opening-labels" aria-hidden="true" />
       <div ref={curtain} className="rx-opening-black" />
-      <h1 ref={title} className="rx-opening-title" hidden>
-        RECURSION
+      <h1 ref={title} className="rx-opening-title" aria-label={TITLE_WORD} hidden>
+        {[...TITLE_WORD].map((letter, i) => (
+          <span key={i} aria-hidden="true">
+            {letter}
+          </span>
+        ))}
       </h1>
       <div className="rx-opening-controls">
         <label>

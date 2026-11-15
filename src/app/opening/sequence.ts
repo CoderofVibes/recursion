@@ -4,36 +4,50 @@ const TREMOR = 2.8;
 const STUMBLE = 4.1;
 const FAILURE = 5.65;
 const CUT = FAILURE + lossSequence.shakeEnd;
-const TITLE = 8;
-const ARRIVAL_SKY = 11.55;
-const REVEAL = 12.2;
-const SETTLED = 13.75;
-export const OPENING_END = 14;
+/** A held black after the cut, then the title builds (owner, 2026-11-14). */
+const TITLE = 8.25;
+const TITLE_BUILT = TITLE + 1.5;
+const ARRIVAL_SKY = 12.85;
+const REVEAL = 13.5;
+const SETTLED = 15.05;
+export const OPENING_END = 15.5;
 
 /**
- * The title (owner, 2026-11-14): it appears and holds steady, starts to flicker like a failing
- * screen, then goes out for good and leaves black. Each dip is [start, seconds, level during the
- * dip]; after a dip the title returns at `after`. Dips start at least 0.4 s apart and the title
- * goes out at TITLE_OUT, so any one second holds at most three flashes.
+ * The title (owner, 2026-11-14): after a held black it builds letter by letter over 1.5 s, holds
+ * steady, starts to flicker like a failing screen, then goes out for good and leaves black. Each
+ * dip is [start, seconds, level during the dip]; after a dip the title returns at `after`. Dips
+ * start at least 0.4 s apart and the title goes out at TITLE_OUT, so any one second holds at most
+ * three flashes.
  */
-const TITLE_IN = 8.35;
+export const TITLE_WORD = 'RECURSION';
+/** Seconds each letter takes to come up; letters start in turn so the last is up at TITLE_BUILT. */
+const LETTER_IN = 0.3;
+const LETTER_STEP = (TITLE_BUILT - TITLE - LETTER_IN) / (TITLE_WORD.length - 1);
 export const TITLE_FLICKERS = [
-  { at: 9.7, length: 0.07, level: 0, after: 1 },
-  { at: 10.12, length: 0.05, level: 0.25, after: 0.85 },
-  { at: 10.52, length: 0.09, level: 0, after: 0.6 },
+  { at: 11.0, length: 0.07, level: 0, after: 1 },
+  { at: 11.42, length: 0.05, level: 0.25, after: 0.85 },
+  { at: 11.82, length: 0.09, level: 0, after: 0.6 },
 ] as const;
-export const TITLE_OUT = 10.9;
+export const TITLE_OUT = 12.2;
+
+/** How far each letter of the title has come up, 0 to 1. */
+export function titleLetters(t: number): number[] {
+  return [...TITLE_WORD].map((_, i) =>
+    ease(range(t, TITLE + i * LETTER_STEP, TITLE + i * LETTER_STEP + LETTER_IN)),
+  );
+}
+
+const NO_LETTERS: readonly number[] = [...TITLE_WORD].map(() => 0);
 
 function titleAt(t: number, reducedMotion: boolean): number {
-  if (t >= TITLE_OUT) return 0;
-  const shown = ease(range(t, TITLE, TITLE_IN));
-  if (reducedMotion) return shown;
+  if (t < TITLE || t >= TITLE_OUT) return 0;
+  if (reducedMotion) return 1;
   let level = 1;
   for (const dip of TITLE_FLICKERS) {
     if (t < dip.at) break;
     level = t < dip.at + dip.length ? dip.level : dip.after;
   }
-  return shown * level;
+  return level;
 }
 
 /** S23 pulse starts. The envelope stays local to two room strips. */
@@ -47,9 +61,9 @@ const CUES = [
   { at: 4.77, id: 'opening-alarm' },
   { at: 5.65, id: 'loss-failure' },
   { at: 6.95, id: 'black-cut' },
-  { at: 8, id: 'opening-title' },
-  { at: 10.9, id: 'title-out' },
-  { at: 12.2, id: 'room-wake' },
+  { at: TITLE, id: 'opening-title' },
+  { at: TITLE_OUT, id: 'title-out' },
+  { at: REVEAL, id: 'room-wake' },
 ] as const;
 export type OpeningCue = (typeof CUES)[number]['id'];
 export const openingCues = (from: number, to: number) =>
@@ -64,7 +78,10 @@ export type OpeningBeat =
 export interface OpeningFrame {
   readonly beat: OpeningBeat;
   readonly blackout: number;
+  /** The title's brightness, 0 to 1 (its flicker). */
   readonly title: number;
+  /** How far each letter of TITLE_WORD has come up, 0 to 1. */
+  readonly letters: readonly number[];
   readonly alarm: number;
   readonly light: number;
   readonly console: 'cruise' | 'caution' | 'warning' | 'off';
@@ -151,6 +168,7 @@ export function sampleOpening(t: number, reducedMotion: boolean): OpeningFrame {
     beat: 'home',
     blackout: 0,
     title: 0,
+    letters: NO_LETTERS,
     alarm: 0,
     light: 1,
     console: 'cruise',
@@ -178,8 +196,15 @@ export function sampleOpening(t: number, reducedMotion: boolean): OpeningFrame {
     };
   }
   if (t < TITLE) return { ...base, beat: 'dark', blackout: 1, ambience: 0 };
-  if (t < 11.35) {
-    return { ...base, beat: 'title', blackout: 1, title: titleAt(t, reducedMotion), ambience: 0 };
+  if (t < TITLE_OUT) {
+    return {
+      ...base,
+      beat: 'title',
+      blackout: 1,
+      title: titleAt(t, reducedMotion),
+      letters: titleLetters(t),
+      ambience: 0,
+    };
   }
   if (t < ARRIVAL_SKY) return { ...base, beat: 'dark', blackout: 1, ambience: 0 };
   if (t < REVEAL) return { ...base, beat: 'arrival', blackout: 1, ambience: 0 };
