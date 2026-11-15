@@ -1,0 +1,88 @@
+{
+  "scope": "Physical timings on seeded planar checkpoint-1 geometry carried in 3D types. Stand-in belief model; does not establish real estimator test/adoption or browser pacing.",
+  "reviewedSourceCommit": "55d91c30fc715a92af116dcd35c085fcbf6667ca",
+  "sourceTree": "6f123ded2b7c21b36f632ee9d5cdf54f5f967230",
+  "dataTree": "8fe01542697fc8afeaf876544328e382de722b86",
+  "seed": "gravity-range-1",
+  "defaultWarp": 1,
+  "warpSteps": [
+    1,
+    10,
+    60,
+    300,
+    1000,
+    2000
+  ],
+  "lossSequenceWallSeconds": 6,
+  "viewTravelWallSeconds": 0.8,
+  "scenarios": [
+    {
+      "burnSeconds": 6.5,
+      "burnAtShipSeconds": 400,
+      "stopAtShipSeconds": 28800,
+      "outcome": {
+        "kind": "in-progress"
+      },
+      "lowestSampledAlphaRangeKm": 703.286,
+      "lowestSampledAtShipSeconds": 28800,
+      "sampleCadenceShipSeconds": 100,
+      "measurements": 24448,
+      "endWallSecondsAtDefaultWarpIgnoringCompute": 28800,
+      "endWallSecondsAt2000WarpIgnoringComputeOrAlerts": 14.4
+    },
+    {
+      "burnSeconds": 12.5,
+      "burnAtShipSeconds": 400,
+      "stopAtShipSeconds": 28800,
+      "outcome": {
+        "kind": "in-progress"
+      },
+      "lowestSampledAlphaRangeKm": 501.027,
+      "lowestSampledAtShipSeconds": 27100,
+      "sampleCadenceShipSeconds": 100,
+      "measurements": 24393,
+      "endWallSecondsAtDefaultWarpIgnoringCompute": 28800,
+      "endWallSecondsAt2000WarpIgnoringComputeOrAlerts": 14.4
+    },
+    {
+      "burnSeconds": 16,
+      "burnAtShipSeconds": 400,
+      "stopAtShipSeconds": 28800,
+      "outcome": {
+        "kind": "in-progress"
+      },
+      "lowestSampledAlphaRangeKm": 422.259,
+      "lowestSampledAtShipSeconds": 24600,
+      "sampleCadenceShipSeconds": 100,
+      "measurements": 24431,
+      "endWallSecondsAtDefaultWarpIgnoringCompute": 28800,
+      "endWallSecondsAt2000WarpIgnoringComputeOrAlerts": 14.4
+    },
+    {
+      "burnSeconds": 41,
+      "burnAtShipSeconds": 400,
+      "stopAtShipSeconds": 14752,
+      "outcome": {
+        "kind": "lost",
+        "t": 14751.926582378053,
+        "cause": "collision"
+      },
+      "lowestSampledAlphaRangeKm": 250.008,
+      "lowestSampledAtShipSeconds": 14752,
+      "sampleCadenceShipSeconds": 100,
+      "measurements": 13061,
+      "endWallSecondsAtDefaultWarpIgnoringCompute": 14752,
+      "endWallSecondsAt2000WarpIgnoringComputeOrAlerts": 7.376
+    }
+  ],
+  "prior2DScriptProtocol": {
+    "source": "prototypes/shots/capture.mjs",
+    "firstDiveShipSeconds": 28800,
+    "secondDiveShipSeconds": 28800,
+    "thirdObservationShipSeconds": 15000,
+    "totalShipSeconds": 72600,
+    "totalWallSecondsAtDefaultIgnoringCompute": 72600,
+    "totalWallSecondsAt2000IgnoringComputeOrAlerts": 36.3,
+    "caution": "The 2D harness used burn at 300 seconds and a different release delay, direct dev APIs, two Recalls and independent setup; this is its arithmetic, not an S9 cold-player reproduction."
+  }
+}
