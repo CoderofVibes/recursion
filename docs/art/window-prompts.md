@@ -33,12 +33,43 @@ Four prompts, one per big look, so a hero for `--sref` can come from any of them
 3. **B01** Twin Deeps. The first real place, and the bodies' look.
 4. **L03** the Turning Rim opening. The way home.
 
+Round 1 ran on 2026-11-14; verdicts are in [selections.md](selections.md).
+
+## Round 2: refinements
+
+Each fixes what round 1 got wrong. `<…>` marks the URL of a round-1 image in MidJourney (open the image, copy its link).
+
+### S01b — The unfamiliar sky, corrected
+- **Fixes:** no ground, no fisheye, no teal cast; two crossing bands. **Status:** to try.
+
+```
+ultra-wide panoramic view of deep space seen from open space with no ground and no horizon, an unfamiliar star sky with two galactic bands crossing in a shallow X, one bright band with a broad near-white bulge torn by black filamentary dust lanes and tiny deep red knots, one fainter thinner band crossing it, neutral grey starlight, stars mostly deep red and blue-white, pinpoint stars, large areas of true black, restrained and quiet, true colour astrophotography, high dynamic range --ar 21:9 --style raw --sref <S01 f2d993f6 #2> --sw 60 --no text, letters, people, spaceship interior, frame, purple, violet, teal, green tint, ground, horizon, landscape, fisheye, diffraction spikes, lens flare, planets
+```
+
+### W01b — The Well Garden in three dimensions
+- **Fixes:** funnels at random orientations through a volume, not parallel in a plane; keeps round 1's wireframe line language. **Status:** to try.
+
+```
+ultra-wide panoramic view in deep space, a vast three-dimensional field of long narrow funnels drawn as glowing violet wireframe, thin contour rings sparse at each wide mouth and crowding toward a long needle-thin bright throat, faint lines running along each funnel, every funnel pointing a different direction, some toward the viewer, some away, some above, some below, some sideways, one huge funnel close by, dozens at middle distance, hundreds far away as single threads of light, scattered dark rocks, black vacuum, unfamiliar stars visible through the funnels, cinematic, high dynamic range --ar 3:1 --style raw --sref <W01 8dcf1d92 #2> --sw 80 --no text, letters, people, spaceship interior, frame, parallel lines, ground, horizon, surface, swirl, spiral, solid funnels, lightning, smoke, fire
+```
+
+### L03b — The Turning Rim, oblique
+- **Fixes:** tilted, as C06 asks; round 1's ragged rim kept; no smoke. **Status:** to try.
+
+```
+ultra-wide panoramic view of deep space, a large oval hole in the sky seen at a steep oblique angle so it appears as a tilted narrow ellipse, its rim a thin ragged luminous white edge with a violet fringe and fine tendrils curling outward like frayed paper lit from behind, through it a rich warm Milky Way with dense star clouds and red-brown dust, outside it a sparse cold unfamiliar star field, black vacuum, no tunnel, quiet and impossible, cinematic, high dynamic range --ar 21:9 --style raw --sref <L03 0384aeb7 #2> --sw 80 --no text, letters, people, spaceship interior, frame, smoke, clouds, fog, vortex, swirl, tunnel, wormhole, sparks
+```
+
+### Next to try after these
+
+W03 (a funnel end-on), L01 (the radiation crescent), X02 (Shadow Observatory) and E01 (Earth). Each with `--sref <B01 ca1c5c59 #2>` once the owner confirms it as the hero.
+
 ---
 
 ## 1. The deep sky (sky targets)
 
 ### S01 — The unfamiliar sky (hero candidate)
-- **Region:** C01 Unfamiliar Sky, and the default sky behind every encounter. **Use:** sky target. **For:** 2D. **Status:** to try.
+- **Region:** C01 Unfamiliar Sky, and the default sky behind every encounter. **Use:** sky target. **For:** 2D. **Status:** tried (round 1; see selections.md).
 - **Intent:** beautiful, and subtly wrong. Our sky has one Milky Way band; this one has two faint bands crossing at a shallow angle, and its star colours lean to deep red and blue-white with few yellows.
 
 ```
@@ -91,7 +122,7 @@ ultra-wide panoramic view of the real night sky from space, the Milky Way band c
 These bodies pull the ship. The game draws them from their own data; the images set surface, lighting and mood only. Sizes in the prompts follow the data where it exists.
 
 ### B01 — Twin Deeps (hero candidate)
-- **Region:** C02 Twin Deeps. **Use:** look reference for Alpha, Beta and the belt. **For:** 2D. **Status:** to try.
+- **Region:** C02 Twin Deeps. **Use:** look reference for Alpha, Beta and the belt. **For:** 2D. **Status:** tried (round 1; see selections.md).
 - **Data:** Alpha 250 km radius, Beta 160 km, 4,000 km apart (P16). At the ship's working distances each spans roughly 10–18°: a clear disc, not a looming wall. Alpha sits above and forward, Beta below and to starboard. Beta has a prograde rock ring 600–1,000 km out, a few kilometres thick.
 
 ```
@@ -153,7 +184,7 @@ ultra-wide panoramic view of space, the brilliant sunlit limb of a large rocky w
 **Honesty:** the window may show shape and position only. It must not suggest what wells do (no visible streams of matter being sucked in unless the simulation advects them, no lightning, no damage beams). Note: the P03 page still says "no visible optical funnels"; A19 and S22 supersede that.
 
 ### W01 — The Well Garden (hero candidate)
-- **Region:** P03 Well Garden. **Use:** look reference. **For:** 3B, 2D. **Status:** to try.
+- **Region:** P03 Well Garden. **Use:** look reference. **For:** 3B, 2D. **Status:** tried (round 1; see selections.md).
 
 ```
 ultra-wide panoramic view of a vast field of thousands of long narrow luminous funnels drifting in deep space at random orientations, each funnel drawn as fine glowing violet contour rings that tighten along a long tapering throat with faint lines running its length, one enormous nearby funnel mouth spanning a third of the view, distant funnels shrinking to fine threads of light receding into depth in every direction, dark rocks scattered between them, unfamiliar stars behind, a whole field of destruction and beauty, cinematic, high dynamic range, scientific visualisation meets astrophotography --ar 3:1 --style raw --no text, letters, people, spaceship interior, frame, lightning, smoke, fire
@@ -223,7 +254,7 @@ ultra-wide panoramic view of deep space, high in the sky a single impossibly thi
 ```
 
 ### L03 — The Turning Rim opening (hero candidate)
-- **Region:** C06 Turning Rim. **Use:** look reference. **For:** 4D, 2D. **Status:** to try.
+- **Region:** C06 Turning Rim. **Use:** look reference. **For:** 4D, 2D. **Status:** tried (round 1; see selections.md).
 - **Data:** an oblique oval with a differently oriented sky inside it. It moves and turns. The far side shows only along clear sight lines through the opening. Earth may be visible through it whenever geometry allows (C06), never hidden for drama.
 - **Honesty:** the rim should be thin. No tunnel, no swirl, no wormhole vortex: it is a hole in the sky with another sky in it.
 
