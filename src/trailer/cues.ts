@@ -236,7 +236,9 @@ export const CUES: readonly SoundCue[] = [
     offset: 0.1,
     rate: 0.8,
     fadeOut: 0.25,
-    gain: 0.6 * UNDER,
+    // The braid's own sound leads it, over the bed and the alarm (owner, 2026-11-15: under the
+    // bed it could not be heard). Peaks near -2 dBFS before the master's limiter.
+    gain: 1,
   },
 
   // The snap: dead silence (owner, 2026-11-15: the game's black-cut take, a low thud with a

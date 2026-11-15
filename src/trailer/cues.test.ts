@@ -74,6 +74,8 @@ describe("the trailer's sound", () => {
     expect(at('warning').every((g) => g === 0.6 * UNDER)).toBe(true);
     expect(at('title-hit')).toEqual([0.7]);
     expect(at('black-cut')).toEqual([]);
+    // The braid's rush leads its scene, over the bed (owner).
+    expect(at('braid-rush')).toEqual([1]);
     // The owner's calls: no final hit under the card, and the wells' and the lattice's own
     // sounds a further 30% down.
     expect(at('final-hit')).toEqual([]);
