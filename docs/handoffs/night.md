@@ -99,11 +99,12 @@ npm run check
 npm run build
 npx vitest run src/view3d/room/loss.test.ts src/app/opening/opening.test.ts src/game/belief/model-bridge.test.ts src/game/lattice-loop.test.ts src/view3d/flight/flight.test.ts src/console
 npm run harness -- --suite smoke
+npm run harness -- --suite learning
 ```
 
 - `npm run check`: typecheck and lint pass; **1,254 tests pass, 1 skipped** (not mine), plus the speed suite. Main had 1,234.
 - `npm run build`: passes (the existing chunk-size and dynamic-import warnings).
-- `npm run harness -- --suite smoke`: its three flights pass (execution completed; acceptance incomplete, as 3E reports it). Its reports were not committed.
+- `npm run harness -- --suite smoke`: its three flights pass. `--suite learning` (the real model through the changed bridge): execution completed, no model errors, the held-out test, adoption and live adopt/revoke checks hold, and the fitted exponent is 2.4997512, the same as in 3E's handoff. Acceptance stays incomplete, as 3E reports it. The harness's reports were not committed.
 - No test, tolerance or claim was loosened. One assertion changed, for R44, which replaces what it stated: reduced motion now has no anomaly in the sky at all, where the test held the anomaly's dark under a cap.
 
 ## Playing it again the same way
