@@ -1,30 +1,373 @@
 # Recursion audio cues
 
-The owner generates these sounds in ElevenLabs (A22). Export MP3s under `public/audio/` with the exact names below. Across this set the target is about 32 seconds of source audio. At 128 kbit/s mono that is roughly 0.5 MB; use 96–128 kbit/s and audition the encoded loop seams. Audio is fetched after an interaction. Generate the room bed, console click, two propulsion loops, caution, and shared failure clip first for a playable first pass.
+Find the MP3 filename, copy the text under PASTE INTO ELEVENLABS, and use the
+settings above the prompt.
 
-[ASSUMED] Durations, mix and prompts are production targets. Set the duration in Sound Effects, enable looping for the loop rows, and trim one-shots to their transient. Keep peaks below clipping, make each cue legible on a laptop speaker at low volume, and audition warnings against the room bed. The times below use visible elapsed seconds. Ship warp does not speed up playback.
+The owner generates these sounds in ElevenLabs (A22). Export MP3s under
+`public/audio/` with the exact names below. Across this set the target is
+about 33 seconds of source audio. At 128 kbit/s mono that is roughly 0.53 MB.
+Use 96–128 kbit/s and audition the encoded loop seams. Audio is fetched after
+an interaction. Generate the room bed, console click, two propulsion loops,
+caution, and shared failure clip first for a playable first pass.
 
-| File in `public/audio/` | Trigger and mix | Type and duration | Mood | Paste into ElevenLabs Sound Effects |
-| --- | --- | --- | --- | --- |
-| `room-hum.mp3` | Opening ambience follows OP's gain envelope, drops out at black, and rises at the wake. One continuous bed carries into live play. Fade under the ordinary failure, mute under black and return at the room fade. | Seamless loop, 8 s | Familiar, occupied | Seamless quiet crewed spacecraft interior ventilation. A stable low-mid electrical transformer hum with very soft dry air through a grille, even level throughout and identical loop edges. No voices, music, beeps or rattles. |
-| `console-click.mp3` | On activation of room station buttons and console controls. One click per activation, including keyboard activation. | One-shot, 0.12 s | Tactile | One very short dry spacecraft console switch, a small mechanical detent and soft relay tic, rounded and close, ending cleanly. No tail, voice, tone or second click. |
-| `opening-rumble.mp3` | At 6.50 s, under the first alarms. Finishes before the shared failure starts at 9.35 s. | One-shot, 2.8 s | Uneasy | A restrained vibration rising through the deck of a metal spacecraft, felt as cabin structure flexing. Soft flutter into uneven mid-bass and a small dry tail, no exterior sound, voices, orchestra or impact. |
-| `opening-alarm.mp3` | At 6.60, 7.80 and 8.47 s. A later alarm takes over as the failure clip starts. The same cue timing applies with reduced motion. | One-shot, 0.45 s | Firm | A short low-mid amber double-pip through a slightly filtered spacecraft console speaker, two rounded pulses within 0.45 seconds. Dry and clear, no shrill edge, voice, siren sweep or third pulse. |
-| `loss-failure.mp3` | Opening at 9.35 s and fatal or homeward loss at shake start. One authored clip, with its electrical dips timed to the loss at +0.14, +0.60 and +1.10 s. Cut it at black. Recall skips it. | One-shot, 1.5 s | Sudden, physical | A single spacecraft interior systems failure. Begin with a short heavy deck shudder and strained metal, with three brief irregular power dropouts near 0.14, 0.60 and 1.10 seconds. Let the middle frequencies carry the weight, ending dry by 1.5 seconds. No screams, speech, music or explosion outside the hull. |
-| `black-cut.mp3` | Opening at 10.65 s. Ordinary loss and the homeward sequence at the black stage (+1.50 s); silence follows. | One-shot, 0.20 s | Final | One tiny dry low contactor snap as a spacecraft electrical bus goes dark, a short mid-bass tick with a clipped end. No reverberation, secondary click, voice or music. |
-| `opening-title.mp3` | At 11.95 s as the title fades in. Decays into the hold. | One-shot, 1.60 s | Quiet, unresolved | One soft low struck-metal tone, with one faint higher harmonic as it blooms and a short decay to silence. Restrained and legible on small speakers. No chord progression, drums, voice or trailing wash. |
-| `title-out.mp3` | At 15.90 s, then leave the two seconds of black quiet. | One-shot, 0.22 s | Fading | One soft dry phosphor discharge as a display turns off, a muted low-mid electrical tick dropping immediately to silence. No rise, flourish, voice or reverb. |
-| `room-wake.mp3` | At 17.90 s in the opening and on ordinary recurrence at the fade stage (+4.40 s). Recall uses the wake without a failure cue. Ventilation returns under it. | One-shot, 0.90 s | Recognizable, steady | A quiet relay engaging followed by a small enclosed vent spinning up for less than a second, soft low-mid texture that settles into an even floor. No alert, speech, music or big hiss. |
-| `main-engine.mp3` | While the snapshot shows positive main-engine thrust. Fade with firing and throttle, stop at coast, pause or loss. | Seamless loop, 4 s | Sustained, substantial | Seamless steady main engine vibration heard from inside the crew compartment, a heavy smooth mid-bass body and restrained mechanical grain. Match both loop ends. No start, shutdown, exterior roar, voice or music. |
-| `rcs-thruster.mp3` | While the snapshot shows any positive RCS thrust. Mix one bed for the firing group, release as thrust goes to zero. | Seamless loop, 2 s | Light, mechanical | Seamless interior vibration from a small attitude-control jet firing, tight dry air-and-metal texture with a light low-mid flutter. Stable loop edges, quieter and thinner than a main engine. No ignition hit, sharp treble, speech or music. |
-| `advisory.mp3` | On a new advisory such as the current forecast ending. One neutral note. No change to warp. | One-shot, 0.24 s | Informative | One soft rounded medium-low console acknowledgment tone, shorter than a quarter second, very gentle attack, no urgency, no second note, voice or music. |
-| `caution.mp3` | On a new caution such as low power or a visible well precursor. One cue for a group that arrives together. The existing game owns any 1× warp drop. | One-shot, 0.48 s | Attentive | Two short lower-mid console tones, firm and rounded with a small interval of silence between them. A subdued amber caution from a small cabin speaker. No piercing highs, siren, voice or long decay. |
-| `warning.mp3` | On a new warning or an escalation to warning, such as critical power shortfall. Wins over lesser alerts arriving together. | One-shot, 0.75 s | Urgent, controlled | Three firm rounded low-mid pulses through a small spacecraft annunciator, with a slightly lower last pulse. Immediate and clear over cabin ambience, restrained peaks, no siren sweep, clipping, speech or reverb. |
-| `black-box-record.mp3` | At the Black Box pip (+2.30 s) after loss or recall. A single signature for retained records, with silence between cues. | One-shot, 0.26 s | Precise, persistent | One quiet dry flight-recorder confirmation pip, a small relay tick fused with a short warm electronically produced note. A single event with a clean end. No alarm, voice, reverb or extra beeps. |
-| `well-hum.mp3` | A quiet tension bed in the Well Garden when a precursor is seen or a funnel is visibly ramping or active. Blend with the visible cue and fade when it passes. [FICTIONAL] Cabin sound design for the pull sequence; the level describes the visible cue. | Seamless loop, 5 s | Strange, gathering | Seamless subtle tension in a spacecraft cabin bulkhead, a bowed metallic low-mid tone with a slow even breathing texture and smooth loop edges. Keep it quiet, with no jumps, melody, outside-space whoosh or bass-only energy. |
-| `lattice-radiation.mp3` | In the Unseen Cathedral when the ship reports high radiation. Fade back when the caution clears or the attempt ends. This is an instrument sound keyed to the report. | Seamless loop, 3 s | Dry, unsettling | Seamless radiation monitor texture over a compact spacecraft speaker, irregular but restrained dry ticks and low filtered electrical grit, steady average level, smooth edges. No high whistle, voice, sweeping alarm or music. |
-| `home-reveal.mp3` | Future A17/H02 Earth-room reveal. Reuse the ordinary loss and Black Box cues through black, then use this quiet wake variation when the Earth room fades in. The submission's three previews do not contain H02. | One-shot, 1.10 s | Familiar, with relief | A close cabin relay and familiar ventilation returning after a blackout. Add one barely audible warm metallic resonance that settles into air in about one second. No victory sting, fanfare, chord, narration or music. |
+[ASSUMED] Durations, mix and prompts are production targets. Set the duration
+in Sound Effects, enable looping for the seamless loops, and trim one-shots to
+their transient. Keep peaks below clipping, make each cue legible on a laptop
+speaker at low volume, and audition warnings against the room bed. The times
+below use visible elapsed seconds. Ship warp does not speed up playback.
 
-The opening takes its edges and ambience from `src/app/opening/sequence.ts` and OP's playback clock (R42, R44). The live loss follows the stages based on `src/view3d/room/loss.ts` and the theme's loss sequence (R43). For a late gesture or file, start the current ambience and wait for future one-shots. Skip and hidden-tab behavior follow the picture.
+## room-hum.mp3
 
-Credit for the generated sound effects in the game, submission and AI-use disclosure: **ElevenLabs** (A22).
+Settings · Seamless loop, 8 s
+
+**PASTE INTO ELEVENLABS**
+
+Create a seamless loop lasting 8 seconds. Seamless quiet crewed spacecraft
+interior ventilation. A stable low-mid electrical transformer hum with very
+soft dry air through a grille, even level throughout and identical loop edges.
+No voices, music, beeps or rattles.
+
+**When it plays**
+
+Opening ambience follows OP's gain envelope, drops out at black, and rises at
+the wake. One continuous bed carries into live play. Fade under the ordinary
+failure, mute under black and return at the room fade.
+
+Mood · Familiar, occupied
+
+## console-click.mp3
+
+Settings · One-shot, 0.12 s
+
+**PASTE INTO ELEVENLABS**
+
+Create a one-shot sound effect lasting 0.12 seconds. One very short dry
+spacecraft console switch, a small mechanical detent and soft relay tic,
+rounded and close, ending cleanly. No tail, voice, tone or second click.
+
+**When it plays**
+
+On activation of room station buttons and console controls. One click per
+activation, including keyboard activation.
+
+Mood · Tactile
+
+## opening-rumble.mp3
+
+Settings · One-shot, 2.8 s
+
+**PASTE INTO ELEVENLABS**
+
+Create a one-shot sound effect lasting 2.8 seconds. A restrained vibration
+rising through the deck of a metal spacecraft, felt as cabin structure
+flexing. Soft flutter into uneven mid-bass and a small dry tail, no exterior
+sound, voices, orchestra or impact.
+
+**When it plays**
+
+At 6.50 s, under the first alarms. Finishes before the shared failure starts
+at 9.35 s.
+
+Mood · Uneasy
+
+## opening-alarm.mp3
+
+Settings · One-shot, 0.45 s
+
+**PASTE INTO ELEVENLABS**
+
+Create a one-shot sound effect lasting 0.45 seconds. A short low-mid amber
+double-pip through a slightly filtered spacecraft console speaker, two rounded
+pulses within 0.45 seconds. Dry and clear, no shrill edge, voice, siren sweep
+or third pulse.
+
+**When it plays**
+
+At 6.60, 7.80 and 8.47 s. A later alarm takes over as the failure clip starts.
+The same cue timing applies with reduced motion.
+
+Mood · Firm
+
+## loss-failure.mp3
+
+Settings · One-shot, 1.5 s
+
+**PASTE INTO ELEVENLABS**
+
+Create a one-shot sound effect lasting 1.5 seconds. A single spacecraft
+interior systems failure. Begin with a short heavy deck shudder and strained
+metal, with three brief irregular power dropouts near 0.14, 0.60 and 1.10
+seconds. Let the middle frequencies carry the weight, ending dry by 1.5
+seconds. No screams, speech, music or explosion outside the hull.
+
+**When it plays**
+
+Opening at 9.35 s and fatal or homeward loss at shake start. One authored
+clip, with its electrical dips timed to the loss at +0.14, +0.60 and +1.10 s.
+Cut it at black. Recall skips it.
+
+Mood · Sudden, physical
+
+## black-cut.mp3
+
+Settings · One-shot, 0.20 s
+
+**PASTE INTO ELEVENLABS**
+
+Create a one-shot sound effect lasting 0.20 seconds. One tiny dry low
+contactor snap as a spacecraft electrical bus goes dark, a short mid-bass tick
+with a clipped end. No reverberation, secondary click, voice or music.
+
+**When it plays**
+
+Opening at 10.65 s. Ordinary loss and the homeward sequence at the black stage
+(+1.50 s); silence follows.
+
+Mood · Final
+
+## opening-title.mp3
+
+Settings · One-shot, 1.60 s
+
+**PASTE INTO ELEVENLABS**
+
+Create a one-shot sound effect lasting 1.60 seconds. One soft low struck-metal
+tone, with one faint higher harmonic as it blooms and a short decay to
+silence. Restrained and legible on small speakers. No chord progression,
+drums, voice or trailing wash.
+
+**When it plays**
+
+At 11.95 s as the title fades in. Decays into the hold.
+
+Mood · Quiet, unresolved
+
+## title-out.mp3
+
+Settings · One-shot, 0.22 s
+
+**PASTE INTO ELEVENLABS**
+
+Create a one-shot sound effect lasting 0.22 seconds. One soft dry phosphor
+discharge as a display turns off, a muted low-mid electrical tick dropping
+immediately to silence. No rise, flourish, voice or reverb.
+
+**When it plays**
+
+At 15.90 s, then leave the two seconds of black quiet.
+
+Mood · Fading
+
+## room-wake.mp3
+
+Settings · One-shot, 0.90 s
+
+**PASTE INTO ELEVENLABS**
+
+Create a one-shot sound effect lasting 0.90 seconds. A quiet relay engaging
+followed by a small enclosed vent spinning up for less than a second, soft
+low-mid texture that settles into an even floor. No alert, speech, music or
+big hiss.
+
+**When it plays**
+
+At 17.90 s in the opening and on ordinary recurrence at the fade stage (+4.40
+s). Recall uses the wake without a failure cue. Ventilation returns under it.
+
+Mood · Recognizable, steady
+
+## main-engine.mp3
+
+Settings · Seamless loop, 4 s
+
+**PASTE INTO ELEVENLABS**
+
+Create a seamless loop lasting 4 seconds. Seamless steady main engine
+vibration heard from inside the crew compartment, a heavy smooth mid-bass body
+and restrained mechanical grain. Match both loop ends. No start, shutdown,
+exterior roar, voice or music.
+
+**When it plays**
+
+While the snapshot shows positive main-engine thrust. Fade with firing and
+throttle, stop at coast, pause or loss.
+
+Mood · Sustained, substantial
+
+## rcs-thruster.mp3
+
+Settings · Seamless loop, 2 s
+
+**PASTE INTO ELEVENLABS**
+
+Create a seamless loop lasting 2 seconds. Seamless interior vibration from a
+small attitude-control jet firing, tight dry air-and-metal texture with a
+light low-mid flutter. Stable loop edges, quieter and thinner than a main
+engine. No ignition hit, sharp treble, speech or music.
+
+**When it plays**
+
+While the snapshot shows any positive RCS thrust. Mix one bed for the firing
+group, release as thrust goes to zero.
+
+Mood · Light, mechanical
+
+## advisory.mp3
+
+Settings · One-shot, 0.24 s
+
+**PASTE INTO ELEVENLABS**
+
+Create a one-shot sound effect lasting 0.24 seconds. One soft rounded
+medium-low console acknowledgment tone, shorter than a quarter second, very
+gentle attack, no urgency, no second note, voice or music.
+
+**When it plays**
+
+Reserved for future advisories. One neutral note.
+
+Mood · Informative
+
+## caution.mp3
+
+Settings · One-shot, 0.48 s
+
+**PASTE INTO ELEVENLABS**
+
+Create a one-shot sound effect lasting 0.48 seconds. Two short lower-mid
+console tones, firm and rounded with a small interval of silence between them.
+A subdued amber caution from a small cabin speaker. No piercing highs, siren,
+voice or long decay.
+
+**When it plays**
+
+On a new caution such as Forecast ended, low power or a visible well
+precursor. One cue for a group that arrives together. The existing game owns
+any 1× warp drop.
+
+Mood · Attentive
+
+## warning.mp3
+
+Settings · One-shot, 0.75 s
+
+**PASTE INTO ELEVENLABS**
+
+Create a one-shot sound effect lasting 0.75 seconds. Three firm rounded
+low-mid pulses through a small spacecraft annunciator, with a slightly lower
+last pulse. Immediate and clear over cabin ambience, restrained peaks, no
+siren sweep, clipping, speech or reverb.
+
+**When it plays**
+
+On a new warning or an escalation to warning, such as critical power
+shortfall. Wins over lesser alerts arriving together.
+
+Mood · Urgent, controlled
+
+## equipment-damage.mp3
+
+Settings · One-shot, 0.55 s
+
+**PASTE INTO ELEVENLABS**
+
+Create a one-shot sound effect lasting 0.55 seconds. A circuit breaker snaps
+open inside a crewed spacecraft, a dry electrical clack followed immediately
+by one short muffled metallic thud through the nearby equipment rack. Firm
+low-mid body, close and clear on laptop speakers, with a quick dry decay. No
+alarm tone, explosion, rattling tail, voice or music.
+
+**When it plays**
+
+A recorded equipment fault, including a radiation upset, or a breaker trip
+during a surviving attempt. Nearby reports share one hit. The 30-second
+trailer uses the same file at the lattice strike (R55, R56).
+
+Mood · Sharp, contained
+
+## black-box-record.mp3
+
+Settings · One-shot, 0.26 s
+
+**PASTE INTO ELEVENLABS**
+
+Create a one-shot sound effect lasting 0.26 seconds. One quiet dry
+flight-recorder confirmation pip, a small relay tick fused with a short warm
+electronically produced note. A single event with a clean end. No alarm,
+voice, reverb or extra beeps.
+
+**When it plays**
+
+At the Black Box pip (+2.30 s) after loss or recall. A single signature for
+retained records, with silence between cues.
+
+Mood · Precise, persistent
+
+## well-hum.mp3
+
+Settings · Seamless loop, 5 s
+
+**PASTE INTO ELEVENLABS**
+
+Create a seamless loop lasting 5 seconds. Seamless subtle tension in a
+spacecraft cabin bulkhead, a bowed metallic low-mid tone with a slow even
+breathing texture and smooth loop edges. Keep it quiet, with no jumps, melody,
+outside-space whoosh or bass-only energy.
+
+**When it plays**
+
+A quiet tension bed in the Well Garden when a precursor is seen or a funnel is
+visibly ramping or active. Blend with the visible cue and fade when it passes.
+[FICTIONAL] Cabin sound design for the pull sequence; the level describes the
+visible cue.
+
+Mood · Strange, gathering
+
+## lattice-radiation.mp3
+
+Settings · Seamless loop, 3 s
+
+**PASTE INTO ELEVENLABS**
+
+Create a seamless loop lasting 3 seconds. Seamless radiation monitor texture
+over a compact spacecraft speaker, irregular but restrained dry ticks and low
+filtered electrical grit, steady average level, smooth edges. No high whistle,
+voice, sweeping alarm or music.
+
+**When it plays**
+
+In any region while the ship reports Radiation high, including the Unseen
+Cathedral and the clouds in Twin Deeps. Fade back when the caution clears or
+the attempt ends.
+
+Mood · Dry, unsettling
+
+## home-reveal.mp3
+
+Settings · One-shot, 1.10 s
+
+**PASTE INTO ELEVENLABS**
+
+Create a one-shot sound effect lasting 1.10 seconds. A close cabin relay and
+familiar ventilation returning after a blackout. Add one barely audible warm
+metallic resonance that settles into air in about one second. No victory
+sting, fanfare, chord, narration or music.
+
+**When it plays**
+
+Future A17/H02 Earth-room reveal. Reuse the ordinary loss and Black Box cues
+through black, then use this quiet wake variation when the Earth room fades
+in. The submission's three previews do not contain H02.
+
+Mood · Familiar, with relief
+
+## Timing and credits
+
+The opening takes its edges and ambience from `src/app/opening/sequence.ts`
+and OP's playback clock (R42, R44). The live loss follows the stages based on
+`src/view3d/room/loss.ts` and the theme's loss sequence (R43). For a late
+gesture or file, start the current ambience and wait for future one-shots.
+Skip and hidden-tab behavior follow the picture.
+
+Credit for the generated sound effects in the game, submission and AI-use
+disclosure: **ElevenLabs** (A22).

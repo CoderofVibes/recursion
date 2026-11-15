@@ -20,6 +20,7 @@ const SHOT_GAIN: Record<Shot, number> = {
   advisory: 0.38,
   caution: 0.53,
   warning: 0.64,
+  'equipment-damage': 0.47,
   'black-box-record': 0.36,
   'home-reveal': 0.4,
 };
