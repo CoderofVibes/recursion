@@ -1,0 +1,2560 @@
+{
+  "run": "quiet-confirmation",
+  "source": {
+    "commit": "19a9adafdf9c9e430fd2505ce087ace60065f554",
+    "srcTree": "e933bee0bbdd6af423144cad6088aa2205178222",
+    "dataTree": "c5a09fa693bf2132c89251682a05c9f567a49a8f",
+    "branch": "st/s20-3d-recheck",
+    "dirtyInputs": ""
+  },
+  "totalBytes": 1513143,
+  "gzipBytes": 444444,
+  "loads": [
+    {
+      "profile": "modest",
+      "cache": "cold",
+      "ready": {
+        "n": 5,
+        "median": 3392.5,
+        "p95": 6062.29999999702,
+        "worst": 6062.29999999702
+      },
+      "firstInteraction": {
+        "n": 5,
+        "median": 3732.8000000044703,
+        "p95": 6405.79999999702,
+        "worst": 6405.79999999702
+      },
+      "keyToAck": {
+        "n": 5,
+        "median": 99.29999999701977,
+        "p95": 137,
+        "worst": 137
+      },
+      "consoleReady": {
+        "n": 5,
+        "median": 4936.20000000298,
+        "p95": 7703.5,
+        "worst": 7703.5
+      },
+      "transfers": [
+        441817,
+        441817,
+        441817,
+        441817,
+        441817
+      ],
+      "fcp": {
+        "n": 5,
+        "median": 936,
+        "p95": 964,
+        "worst": 964
+      }
+    },
+    {
+      "profile": "modest",
+      "cache": "warm",
+      "ready": {
+        "n": 5,
+        "median": 3229.4000000059605,
+        "p95": 3778.6999999955297,
+        "worst": 3778.6999999955297
+      },
+      "firstInteraction": {
+        "n": 5,
+        "median": 3531.1999999955297,
+        "p95": 4237.10000000149,
+        "worst": 4237.10000000149
+      },
+      "keyToAck": {
+        "n": 5,
+        "median": 22.299999997019768,
+        "p95": 124.40000000596046,
+        "worst": 124.40000000596046
+      },
+      "consoleReady": {
+        "n": 5,
+        "median": 4788.29999999702,
+        "p95": 5403.60000000149,
+        "worst": 5403.60000000149
+      },
+      "transfers": [
+        1500,
+        1500,
+        1500,
+        1500,
+        1500
+      ],
+      "fcp": {
+        "n": 5,
+        "median": 732,
+        "p95": 864,
+        "worst": 864
+      }
+    }
+  ],
+  "frames": [
+    {
+      "key": "modest/room/1",
+      "profile": "modest",
+      "view": "room",
+      "warp": 1,
+      "n": 291,
+      "median": 48.600000000000364,
+      "p95": 85.19999999999891,
+      "worst": 181.8000000000011,
+      "wall": 15.907099999994038,
+      "ship": 16,
+      "shipPerWall": 1.0058401594260422,
+      "saturationPercent": 0,
+      "saturated": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "worst": null,
+        "shipPerWall": null
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        90.90000000000146,
+        84.79999999999927
+      ]
+    },
+    {
+      "key": "modest/room/2000",
+      "profile": "modest",
+      "view": "room",
+      "warp": 2000,
+      "n": 174,
+      "median": 84.90000000000146,
+      "p95": 139.39999999999964,
+      "worst": 188,
+      "wall": 15.895,
+      "ship": 1392,
+      "shipPerWall": 87.57470902799622,
+      "saturationPercent": 100,
+      "saturated": {
+        "n": 174,
+        "median": 84.90000000000146,
+        "p95": 139.39999999999964,
+        "worst": 188,
+        "shipPerWall": 87.73975581622553
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        145.39999999999964,
+        133.3000000000011
+      ]
+    }
+  ],
+  "cpu": [
+    {
+      "file": "worst-main.cpuprofile.gz",
+      "sampledMs": 10074.68,
+      "self": [
+        {
+          "name": "(program)",
+          "source": null,
+          "selfMs": 2298.5639999999967,
+          "inclusiveMs": 2298.5639999999967
+        },
+        {
+          "name": "dispatchPower",
+          "source": {
+            "source": "src/ship/power/index.ts",
+            "line": 107,
+            "column": 9,
+            "name": "dispatchPower"
+          },
+          "selfMs": 450.844,
+          "inclusiveMs": 676.2440000000003
+        },
+        {
+          "name": "targetVisibility",
+          "source": {
+            "source": "src/game/environment.ts",
+            "line": 105,
+            "column": 16,
+            "name": "targetVisibility"
+          },
+          "selfMs": 287.0879999999999,
+          "inclusiveMs": 291.4669999999999
+        },
+        {
+          "name": "stepPower",
+          "source": {
+            "source": "src/ship/power/index.ts",
+            "line": 36,
+            "column": 16,
+            "name": "stepPower"
+          },
+          "selfMs": 284.41400000000004,
+          "inclusiveMs": 973.2620000000002
+        },
+        {
+          "name": "setProgram",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 18220,
+            "column": 11,
+            "name": "setProgram"
+          },
+          "selfMs": 259.5700000000001,
+          "inclusiveMs": 1114.0569999999998
+        },
+        {
+          "name": "load",
+          "source": {
+            "source": "src/sim/simulation.ts",
+            "line": 376,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 160.006,
+          "inclusiveMs": 182.312
+        },
+        {
+          "name": "updateMatrixWorld",
+          "source": {
+            "source": "node_modules/three/build/three.core.js",
+            "line": 13071,
+            "column": 1,
+            "name": null
+          },
+          "selfMs": 151.001,
+          "inclusiveMs": 195.03399999999996
+        },
+        {
+          "name": "bindVertexArray",
+          "source": null,
+          "selfMs": 149.36100000000002,
+          "inclusiveMs": 149.36100000000002
+        },
+        {
+          "name": "projectObject",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17696,
+            "column": 11,
+            "name": "projectObject"
+          },
+          "selfMs": 147.84999999999994,
+          "inclusiveMs": 394.6179999999996
+        },
+        {
+          "name": "stepPropulsion",
+          "source": {
+            "source": "src/ship/propulsion/propulsion.ts",
+            "line": 232,
+            "column": 16,
+            "name": "stepPropulsion"
+          },
+          "selfMs": 146.60300000000004,
+          "inclusiveMs": 436.08200000000005
+        },
+        {
+          "name": "stepShipSystems",
+          "source": {
+            "source": "src/ship/index.ts",
+            "line": 50,
+            "column": 13,
+            "name": "stepShipSystems"
+          },
+          "selfMs": 144.42899999999997,
+          "inclusiveMs": 1896.6329999999973
+        },
+        {
+          "name": "renderBufferDirect",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17023,
+            "column": 28,
+            "name": null
+          },
+          "selfMs": 125.34300000000002,
+          "inclusiveMs": 2030.4940000000001
+        },
+        {
+          "name": "(garbage collector)",
+          "source": null,
+          "selfMs": 111.41000000000001,
+          "inclusiveMs": 111.41000000000001
+        },
+        {
+          "name": "drawElements",
+          "source": null,
+          "selfMs": 110.27599999999997,
+          "inclusiveMs": 110.27599999999997
+        },
+        {
+          "name": "multiplyMatrices",
+          "source": {
+            "source": "node_modules/three/build/three.core.js",
+            "line": 10564,
+            "column": 1,
+            "name": null
+          },
+          "selfMs": 109.73500000000001,
+          "inclusiveMs": 109.73500000000001
+        },
+        {
+          "name": "stepThermal",
+          "source": {
+            "source": "src/ship/thermal/index.ts",
+            "line": 16,
+            "column": 16,
+            "name": "stepThermal"
+          },
+          "selfMs": 103.38,
+          "inclusiveMs": 141.07099999999997
+        },
+        {
+          "name": "update",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 242,
+            "column": 10,
+            "name": "update"
+          },
+          "selfMs": 102.01600000000002,
+          "inclusiveMs": 224.554
+        },
+        {
+          "name": "build",
+          "source": {
+            "source": "src/ship/massprops/massprops.ts",
+            "line": 25,
+            "column": 9,
+            "name": "build"
+          },
+          "selfMs": 95.27600000000002,
+          "inclusiveMs": 164.85700000000003
+        },
+        {
+          "name": "store",
+          "source": {
+            "source": "src/sim/simulation.ts",
+            "line": 506,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 93.29400000000003,
+          "inclusiveMs": 93.29400000000003
+        },
+        {
+          "name": "advance",
+          "source": {
+            "source": "src/sim/simulation.ts",
+            "line": 836,
+            "column": 9,
+            "name": "advance"
+          },
+          "selfMs": 87.84999999999998,
+          "inclusiveMs": 215.11800000000005
+        },
+        {
+          "name": "uniformMatrix4fv",
+          "source": null,
+          "selfMs": 84.262,
+          "inclusiveMs": 84.262
+        },
+        {
+          "name": "getBindingState",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 1680,
+            "column": 10,
+            "name": "getBindingState"
+          },
+          "selfMs": 82.27300000000001,
+          "inclusiveMs": 92.91799999999999
+        },
+        {
+          "name": "allocate",
+          "source": {
+            "source": "src/ship/power/index.ts",
+            "line": 332,
+            "column": 8,
+            "name": "allocate"
+          },
+          "selfMs": 78.674,
+          "inclusiveMs": 78.674
+        },
+        {
+          "name": "setMaterial",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 10205,
+            "column": 10,
+            "name": "setMaterial"
+          },
+          "selfMs": 74.898,
+          "inclusiveMs": 125.65299999999999
+        },
+        {
+          "name": "step",
+          "source": {
+            "source": "src/game/truth-step.ts",
+            "line": 130,
+            "column": 4,
+            "name": null
+          },
+          "selfMs": 74.014,
+          "inclusiveMs": 3018.057999999998
+        },
+        {
+          "name": "renderObject",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17991,
+            "column": 11,
+            "name": "renderObject"
+          },
+          "selfMs": 69.90199999999997,
+          "inclusiveMs": 2184.4
+        },
+        {
+          "name": "bufferData",
+          "source": null,
+          "selfMs": 69.35400000000001,
+          "inclusiveMs": 69.35400000000001
+        },
+        {
+          "name": "needsUpdate",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 1759,
+            "column": 10,
+            "name": "needsUpdate"
+          },
+          "selfMs": 67.18500000000002,
+          "inclusiveMs": 68.34300000000002
+        },
+        {
+          "name": "sensorTargets",
+          "source": {
+            "source": "src/sim/snapshot.ts",
+            "line": 49,
+            "column": 16,
+            "name": "sensorTargets"
+          },
+          "selfMs": 65.55,
+          "inclusiveMs": 65.55
+        },
+        {
+          "name": "copyArray",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 4860,
+            "column": 9,
+            "name": "copyArray"
+          },
+          "selfMs": 65.074,
+          "inclusiveMs": 65.074
+        },
+        {
+          "name": "computeAccelerations",
+          "source": {
+            "source": "src/sim/simulation.ts",
+            "line": 619,
+            "column": 9,
+            "name": "computeAccelerations"
+          },
+          "selfMs": 64.01599999999998,
+          "inclusiveMs": 64.01599999999998
+        },
+        {
+          "name": "pull",
+          "source": {
+            "source": "src/game/belief/standin-model.ts",
+            "line": 251,
+            "column": 8,
+            "name": "pull"
+          },
+          "selfMs": 62.484,
+          "inclusiveMs": 65.55000000000001
+        },
+        {
+          "name": "(anonymous)",
+          "source": {
+            "source": "src/game/belief/standin-model.ts",
+            "line": 866,
+            "column": 27,
+            "name": null
+          },
+          "selfMs": 61.74600000000001,
+          "inclusiveMs": 102.70000000000003
+        },
+        {
+          "name": "renderObject",
+          "source": {
+            "source": "node_modules/three/examples/jsm/renderers/CSS2DRenderer.js",
+            "line": 225,
+            "column": 11,
+            "name": "renderObject"
+          },
+          "selfMs": 61.55400000000001,
+          "inclusiveMs": 89.94300000000001
+        },
+        {
+          "name": "setValueM4",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 5066,
+            "column": 9,
+            "name": "setValueM4"
+          },
+          "selfMs": 61.426999999999985,
+          "inclusiveMs": 212.86900000000003
+        },
+        {
+          "name": "preparePropulsion",
+          "source": {
+            "source": "src/ship/propulsion/propulsion.ts",
+            "line": 118,
+            "column": 16,
+            "name": "preparePropulsion"
+          },
+          "selfMs": 59.55899999999999,
+          "inclusiveMs": 115.594
+        },
+        {
+          "name": "renderObjects",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17964,
+            "column": 11,
+            "name": "renderObjects"
+          },
+          "selfMs": 58.84000000000001,
+          "inclusiveMs": 2253.234000000001
+        },
+        {
+          "name": "(anonymous)",
+          "source": {
+            "source": "src/game/belief/standin-model.ts",
+            "line": 903,
+            "column": 15,
+            "name": null
+          },
+          "selfMs": 56.615,
+          "inclusiveMs": 56.615
+        },
+        {
+          "name": "resize",
+          "source": {
+            "source": "src/view3d/room/RoomView.ts",
+            "line": 493,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 56.513999999999996,
+          "inclusiveMs": 56.513999999999996
+        },
+        {
+          "name": "setup",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 1623,
+            "column": 10,
+            "name": "setup"
+          },
+          "selfMs": 56.13099999999999,
+          "inclusiveMs": 461.2620000000001
+        },
+        {
+          "name": "upload",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 5941,
+            "column": 8,
+            "name": null
+          },
+          "selfMs": 51.74800000000001,
+          "inclusiveMs": 398.90099999999995
+        },
+        {
+          "name": "massProperties",
+          "source": {
+            "source": "src/game/belief/standin-model.ts",
+            "line": 311,
+            "column": 8,
+            "name": "massProperties"
+          },
+          "selfMs": 51.719,
+          "inclusiveMs": 81.89700000000002
+        },
+        {
+          "name": "massDetail",
+          "source": {
+            "source": "src/ship/massprops/massprops.ts",
+            "line": 125,
+            "column": 16,
+            "name": "massDetail"
+          },
+          "selfMs": 50.918000000000006,
+          "inclusiveMs": 246.6440000000001
+        },
+        {
+          "name": "param",
+          "source": {
+            "source": "src/game/belief/standin-model.ts",
+            "line": 243,
+            "column": 8,
+            "name": "param"
+          },
+          "selfMs": 50.888000000000005,
+          "inclusiveMs": 50.888000000000005
+        },
+        {
+          "name": "activeJets",
+          "source": {
+            "source": "src/ship/propulsion/jets.ts",
+            "line": 46,
+            "column": 16,
+            "name": "activeJets"
+          },
+          "selfMs": 48.832,
+          "inclusiveMs": 48.832
+        },
+        {
+          "name": "update",
+          "source": {
+            "source": "src/view3d/flight/FlightHolo.ts",
+            "line": 790,
+            "column": 11,
+            "name": "update"
+          },
+          "selfMs": 47.659000000000006,
+          "inclusiveMs": 237.6170000000001
+        },
+        {
+          "name": "setValueV3f",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 4941,
+            "column": 9,
+            "name": "setValueV3f"
+          },
+          "selfMs": 44.69299999999999,
+          "inclusiveMs": 94.33299999999996
+        },
+        {
+          "name": "update",
+          "source": {
+            "source": "src/ship/power/index.ts",
+            "line": 135,
+            "column": 8,
+            "name": "update"
+          },
+          "selfMs": 44.67900000000001,
+          "inclusiveMs": 44.67900000000001
+        },
+        {
+          "name": "setValueV1f",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 4900,
+            "column": 9,
+            "name": "setValueV1f"
+          },
+          "selfMs": 44.544000000000004,
+          "inclusiveMs": 61.68400000000002
+        },
+        {
+          "name": "clearanceAndContact",
+          "source": {
+            "source": "src/sim/simulation.ts",
+            "line": 996,
+            "column": 9,
+            "name": "clearanceAndContact"
+          },
+          "selfMs": 43.97899999999999,
+          "inclusiveMs": 47.217999999999996
+        }
+      ],
+      "inclusive": [
+        {
+          "name": "(root)",
+          "source": null,
+          "selfMs": 0,
+          "inclusiveMs": 10074.679999999993
+        },
+        {
+          "name": "v",
+          "source": {
+            "source": "src/app/loop.ts",
+            "line": 173,
+            "column": 16,
+            "name": null
+          },
+          "selfMs": 4.3020000000000005,
+          "inclusiveMs": 7533.2789999999895
+        },
+        {
+          "name": "_",
+          "source": {
+            "source": "src/app/loop.ts",
+            "line": 101,
+            "column": 17,
+            "name": null
+          },
+          "selfMs": 14.521,
+          "inclusiveMs": 7527.446999999989
+        },
+        {
+          "name": "frame",
+          "source": {
+            "source": "src/view3d/room/RoomView.ts",
+            "line": 246,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 22.976999999999997,
+          "inclusiveMs": 3732.106000000001
+        },
+        {
+          "name": "advance",
+          "source": {
+            "source": "src/game/session.ts",
+            "line": 444,
+            "column": 4,
+            "name": null
+          },
+          "selfMs": 7.561999999999999,
+          "inclusiveMs": 3171.0579999999995
+        },
+        {
+          "name": "tickOnce",
+          "source": {
+            "source": "src/game/session.ts",
+            "line": 259,
+            "column": 11,
+            "name": "tickOnce"
+          },
+          "selfMs": 33.08699999999999,
+          "inclusiveMs": 3158.649
+        },
+        {
+          "name": "step",
+          "source": {
+            "source": "src/game/truth-step.ts",
+            "line": 130,
+            "column": 4,
+            "name": null
+          },
+          "selfMs": 74.014,
+          "inclusiveMs": 3018.057999999998
+        },
+        {
+          "name": "render",
+          "source": {
+            "source": "node_modules/three/examples/jsm/postprocessing/EffectComposer.js",
+            "line": 214,
+            "column": 1,
+            "name": null
+          },
+          "selfMs": 9.673,
+          "inclusiveMs": 2957.024
+        },
+        {
+          "name": "render",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17464,
+            "column": 16,
+            "name": null
+          },
+          "selfMs": 33.34499999999999,
+          "inclusiveMs": 2848.3270000000007
+        },
+        {
+          "name": "render",
+          "source": {
+            "source": "node_modules/three/examples/jsm/postprocessing/RenderPass.js",
+            "line": 121,
+            "column": 1,
+            "name": null
+          },
+          "selfMs": 2.806,
+          "inclusiveMs": 2558.4720000000034
+        },
+        {
+          "name": "(program)",
+          "source": null,
+          "selfMs": 2298.5639999999967,
+          "inclusiveMs": 2298.5639999999967
+        },
+        {
+          "name": "renderScene",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17814,
+            "column": 11,
+            "name": "renderScene"
+          },
+          "selfMs": 1.632,
+          "inclusiveMs": 2254.781000000001
+        },
+        {
+          "name": "renderObjects",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17964,
+            "column": 11,
+            "name": "renderObjects"
+          },
+          "selfMs": 58.84000000000001,
+          "inclusiveMs": 2253.234000000001
+        },
+        {
+          "name": "renderObject",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17991,
+            "column": 11,
+            "name": "renderObject"
+          },
+          "selfMs": 69.90199999999997,
+          "inclusiveMs": 2184.4
+        },
+        {
+          "name": "renderBufferDirect",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17023,
+            "column": 28,
+            "name": null
+          },
+          "selfMs": 125.34300000000002,
+          "inclusiveMs": 2030.4940000000001
+        },
+        {
+          "name": "stepShipSystems",
+          "source": {
+            "source": "src/ship/index.ts",
+            "line": 50,
+            "column": 13,
+            "name": "stepShipSystems"
+          },
+          "selfMs": 144.42899999999997,
+          "inclusiveMs": 1896.6329999999973
+        },
+        {
+          "name": "setProgram",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 18220,
+            "column": 11,
+            "name": "setProgram"
+          },
+          "selfMs": 259.5700000000001,
+          "inclusiveMs": 1114.0569999999998
+        },
+        {
+          "name": "stepPower",
+          "source": {
+            "source": "src/ship/power/index.ts",
+            "line": 36,
+            "column": 16,
+            "name": "stepPower"
+          },
+          "selfMs": 284.41400000000004,
+          "inclusiveMs": 973.2620000000002
+        },
+        {
+          "name": "dispatchPower",
+          "source": {
+            "source": "src/ship/power/index.ts",
+            "line": 107,
+            "column": 9,
+            "name": "dispatchPower"
+          },
+          "selfMs": 450.844,
+          "inclusiveMs": 676.2440000000003
+        },
+        {
+          "name": "step",
+          "source": {
+            "source": "src/sim/simulation.ts",
+            "line": 1381,
+            "column": 4,
+            "name": null
+          },
+          "selfMs": 42.669,
+          "inclusiveMs": 624.7370000000003
+        },
+        {
+          "name": "snapshot",
+          "source": {
+            "source": "src/game/session.ts",
+            "line": 400,
+            "column": 4,
+            "name": null
+          },
+          "selfMs": 5.98,
+          "inclusiveMs": 577.8030000000001
+        },
+        {
+          "name": "believedWorld",
+          "source": {
+            "source": "src/game/belief/model-bridge.ts",
+            "line": 198,
+            "column": 4,
+            "name": null
+          },
+          "selfMs": 10.468,
+          "inclusiveMs": 553.1899999999999
+        },
+        {
+          "name": "believedWorld",
+          "source": {
+            "source": "src/game/belief/standin-model.ts",
+            "line": 1167,
+            "column": 4,
+            "name": null
+          },
+          "selfMs": 13.831,
+          "inclusiveMs": 542.7219999999999
+        },
+        {
+          "name": "setup",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 1623,
+            "column": 10,
+            "name": "setup"
+          },
+          "selfMs": 56.13099999999999,
+          "inclusiveMs": 461.2620000000001
+        },
+        {
+          "name": "stepPropulsion",
+          "source": {
+            "source": "src/ship/propulsion/propulsion.ts",
+            "line": 232,
+            "column": 16,
+            "name": "stepPropulsion"
+          },
+          "selfMs": 146.60300000000004,
+          "inclusiveMs": 436.08200000000005
+        },
+        {
+          "name": "upload",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 5941,
+            "column": 8,
+            "name": null
+          },
+          "selfMs": 51.74800000000001,
+          "inclusiveMs": 398.90099999999995
+        },
+        {
+          "name": "projectObject",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17696,
+            "column": 11,
+            "name": "projectObject"
+          },
+          "selfMs": 147.84999999999994,
+          "inclusiveMs": 394.6179999999996
+        },
+        {
+          "name": "buildEnvironment",
+          "source": {
+            "source": "src/game/environment.ts",
+            "line": 145,
+            "column": 16,
+            "name": "buildEnvironment"
+          },
+          "selfMs": 6.315,
+          "inclusiveMs": 363.29400000000004
+        },
+        {
+          "name": "render",
+          "source": {
+            "source": "node_modules/three/examples/jsm/postprocessing/UnrealBloomPass.js",
+            "line": 282,
+            "column": 1,
+            "name": null
+          },
+          "selfMs": 7.095,
+          "inclusiveMs": 352.3180000000001
+        },
+        {
+          "name": "render",
+          "source": {
+            "source": "node_modules/three/examples/jsm/postprocessing/Pass.js",
+            "line": 166,
+            "column": 1,
+            "name": null
+          },
+          "selfMs": 1.649,
+          "inclusiveMs": 302.4129999999999
+        }
+      ],
+      "groups": [
+        {
+          "group": "Three.js + addons",
+          "ms": 2640.763000000003
+        },
+        {
+          "group": "(program)",
+          "ms": 2298.5639999999967
+        },
+        {
+          "group": "src/ship",
+          "ms": 1849.3169999999975
+        },
+        {
+          "group": "src/game",
+          "ms": 1118.5079999999998
+        },
+        {
+          "group": "src/sim",
+          "ms": 660.114
+        },
+        {
+          "group": "src/view3d",
+          "ms": 287.92700000000013
+        },
+        {
+          "group": "bindVertexArray",
+          "ms": 149.36100000000002
+        },
+        {
+          "group": "(garbage collector)",
+          "ms": 111.41000000000001
+        },
+        {
+          "group": "drawElements",
+          "ms": 110.27599999999997
+        },
+        {
+          "group": "src/lib",
+          "ms": 102.24600000000002
+        },
+        {
+          "group": "uniformMatrix4fv",
+          "ms": 84.262
+        },
+        {
+          "group": "React + DOM + scheduler",
+          "ms": 74.50099999999996
+        },
+        {
+          "group": "bufferData",
+          "ms": 69.35400000000001
+        },
+        {
+          "group": "bindTexture",
+          "ms": 41.403000000000006
+        },
+        {
+          "group": "uniform3f",
+          "ms": 40.413000000000004
+        },
+        {
+          "group": "uniformMatrix3fv",
+          "ms": 37.841
+        },
+        {
+          "group": "src/contracts",
+          "ms": 30.525
+        },
+        {
+          "group": "uniform1fv",
+          "ms": 28.157000000000007
+        },
+        {
+          "group": "bindBuffer",
+          "ms": 24.087
+        },
+        {
+          "group": "drawElementsInstanced",
+          "ms": 21.064
+        },
+        {
+          "group": "drawArrays",
+          "ms": 19.813
+        },
+        {
+          "group": "src/app",
+          "ms": 18.823
+        },
+        {
+          "group": "useProgram",
+          "ms": 17.622999999999998
+        },
+        {
+          "group": "src/console",
+          "ms": 17.191999999999997
+        },
+        {
+          "group": "uniform1f",
+          "ms": 17.14
+        },
+        {
+          "group": "(idle)",
+          "ms": 16.8
+        },
+        {
+          "group": "createBuffer",
+          "ms": 16.661
+        },
+        {
+          "group": "postMessage",
+          "ms": 14.830999999999998
+        },
+        {
+          "group": "activeTexture",
+          "ms": 14.124999999999998
+        },
+        {
+          "group": "deleteVertexArray",
+          "ms": 13.663
+        },
+        {
+          "group": "bufferSubData",
+          "ms": 12.375
+        },
+        {
+          "group": "bindFramebuffer",
+          "ms": 12.222
+        },
+        {
+          "group": "createVertexArray",
+          "ms": 10.645
+        },
+        {
+          "group": "src/model",
+          "ms": 8.149000000000001
+        },
+        {
+          "group": "deleteBuffer",
+          "ms": 7.621
+        },
+        {
+          "group": "clear",
+          "ms": 7.361000000000001
+        },
+        {
+          "group": "(anonymous)",
+          "ms": 6.155
+        },
+        {
+          "group": "uniform3fv",
+          "ms": 5.914000000000001
+        },
+        {
+          "group": "enableVertexAttribArray",
+          "ms": 4.758
+        },
+        {
+          "group": "toggle",
+          "ms": 4.742
+        },
+        {
+          "group": "queueMicrotask",
+          "ms": 4.736000000000001
+        },
+        {
+          "group": "vertexAttribPointer",
+          "ms": 4.145
+        },
+        {
+          "group": "requestAnimationFrame",
+          "ms": 3.6290000000000004
+        },
+        {
+          "group": "uniform2f",
+          "ms": 3.621
+        },
+        {
+          "group": "src/theme",
+          "ms": 3.065
+        },
+        {
+          "group": "vertexAttribDivisor",
+          "ms": 2.7720000000000002
+        },
+        {
+          "group": "uniform2fv",
+          "ms": 2.6870000000000003
+        },
+        {
+          "group": "blendFunc",
+          "ms": 2.614
+        },
+        {
+          "group": "drawArraysInstanced",
+          "ms": 2.5060000000000002
+        },
+        {
+          "group": "tick",
+          "ms": 2.297
+        },
+        {
+          "group": "blendFuncSeparate",
+          "ms": 1.711
+        },
+        {
+          "group": "viewport",
+          "ms": 1.653
+        },
+        {
+          "group": "uniform4fv",
+          "ms": 1.64
+        },
+        {
+          "group": "colorMask",
+          "ms": 1.62
+        },
+        {
+          "group": "disable",
+          "ms": 1.613
+        },
+        {
+          "group": "now",
+          "ms": 1.575
+        },
+        {
+          "group": "createElement",
+          "ms": 1.558
+        },
+        {
+          "group": "enable",
+          "ms": 1.544
+        },
+        {
+          "group": "clearColor",
+          "ms": 1.16
+        },
+        {
+          "group": "probe.sample",
+          "ms": 1.136
+        },
+        {
+          "group": "PerformanceObserver.observe.type",
+          "ms": 0.587
+        },
+        {
+          "group": "probe.status",
+          "ms": 0.105
+        }
+      ]
+    },
+    {
+      "file": "worst-worker-0.cpuprofile.gz",
+      "sampledMs": 10358.777,
+      "self": [
+        {
+          "name": "(idle)",
+          "source": null,
+          "selfMs": 10177.398000000012,
+          "inclusiveMs": 10177.398000000012
+        },
+        {
+          "name": "simulate",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 682,
+            "column": 16,
+            "name": "simulate"
+          },
+          "selfMs": 61.385,
+          "inclusiveMs": 89.75000000000004
+        },
+        {
+          "name": "(garbage collector)",
+          "source": null,
+          "selfMs": 15.532,
+          "inclusiveMs": 15.532
+        },
+        {
+          "name": "residuals",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 1011,
+            "column": 16,
+            "name": "residuals"
+          },
+          "selfMs": 11.072,
+          "inclusiveMs": 95.62100000000004
+        },
+        {
+          "name": "rk4",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 868,
+            "column": 8,
+            "name": "rk4"
+          },
+          "selfMs": 10.32,
+          "inclusiveMs": 19.903999999999996
+        },
+        {
+          "name": "accel",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 808,
+            "column": 8,
+            "name": "accel"
+          },
+          "selfMs": 9.584,
+          "inclusiveMs": 9.584
+        },
+        {
+          "name": "residualAndJacobian",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 228,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 6.773,
+          "inclusiveMs": 96.13600000000002
+        },
+        {
+          "name": "solve",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 404,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 6.212999999999999,
+          "inclusiveMs": 121.84100000000002
+        },
+        {
+          "name": "resolve",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 626,
+            "column": 9,
+            "name": "resolve"
+          },
+          "selfMs": 5.9799999999999995,
+          "inclusiveMs": 6.832
+        },
+        {
+          "name": "buildOnce",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 851,
+            "column": 9,
+            "name": "buildOnce"
+          },
+          "selfMs": 4.786,
+          "inclusiveMs": 162.553
+        },
+        {
+          "name": "normal",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 495,
+            "column": 9,
+            "name": "normal"
+          },
+          "selfMs": 3.726,
+          "inclusiveMs": 3.726
+        },
+        {
+          "name": "fitWindows",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 925,
+            "column": 8,
+            "name": "fitWindows"
+          },
+          "selfMs": 3.3609999999999998,
+          "inclusiveMs": 31.018
+        },
+        {
+          "name": "st",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 167,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 3.2880000000000003,
+          "inclusiveMs": 7.633000000000001
+        },
+        {
+          "name": "rotateBy",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 314,
+            "column": 9,
+            "name": "rotateBy"
+          },
+          "selfMs": 3.218,
+          "inclusiveMs": 3.218
+        },
+        {
+          "name": "compileArc",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 439,
+            "column": 16,
+            "name": "compileArc"
+          },
+          "selfMs": 3.064,
+          "inclusiveMs": 4.064
+        },
+        {
+          "name": "solve",
+          "source": {
+            "source": "src/model/linalg.ts",
+            "line": 157,
+            "column": 16,
+            "name": "solve"
+          },
+          "selfMs": 2.4829999999999997,
+          "inclusiveMs": 2.4829999999999997
+        },
+        {
+          "name": "nonFinite",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 768,
+            "column": 9,
+            "name": "nonFinite"
+          },
+          "selfMs": 1.702,
+          "inclusiveMs": 1.702
+        },
+        {
+          "name": "(anonymous)",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 273,
+            "column": 30,
+            "name": null
+          },
+          "selfMs": 1.643,
+          "inclusiveMs": 1.643
+        },
+        {
+          "name": "luSolve",
+          "source": {
+            "source": "src/model/linalg.ts",
+            "line": 139,
+            "column": 16,
+            "name": "luSolve"
+          },
+          "selfMs": 1.632,
+          "inclusiveMs": 1.632
+        },
+        {
+          "name": "(anonymous)",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 735,
+            "column": 46,
+            "name": null
+          },
+          "selfMs": 1.629,
+          "inclusiveMs": 1.629
+        },
+        {
+          "name": "stagedFit",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 542,
+            "column": 16,
+            "name": "stagedFit"
+          },
+          "selfMs": 1.609,
+          "inclusiveMs": 111.08
+        },
+        {
+          "name": "historyIn",
+          "source": {
+            "source": "src/model/aging.ts",
+            "line": 178,
+            "column": 16,
+            "name": "historyIn"
+          },
+          "selfMs": 1.59,
+          "inclusiveMs": 1.59
+        },
+        {
+          "name": "hashState",
+          "source": {
+            "source": "src/lib/hash.ts",
+            "line": 116,
+            "column": 16,
+            "name": "hashState"
+          },
+          "selfMs": 1.563,
+          "inclusiveMs": 1.563
+        },
+        {
+          "name": "toModelState",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 1355,
+            "column": 9,
+            "name": "toModelState"
+          },
+          "selfMs": 1.56,
+          "inclusiveMs": 4.293
+        },
+        {
+          "name": "(anonymous)",
+          "source": {
+            "source": "src/model/tierL.ts",
+            "line": 296,
+            "column": 16,
+            "name": null
+          },
+          "selfMs": 1.541,
+          "inclusiveMs": 1.541
+        },
+        {
+          "name": "priorTerms",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 350,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 1.526,
+          "inclusiveMs": 1.526
+        },
+        {
+          "name": "stateAt",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 688,
+            "column": 16,
+            "name": null
+          },
+          "selfMs": 1.52,
+          "inclusiveMs": 4.811
+        },
+        {
+          "name": "briefingBodiesAt",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 237,
+            "column": 16,
+            "name": "briefingBodiesAt"
+          },
+          "selfMs": 1.498,
+          "inclusiveMs": 8.837
+        },
+        {
+          "name": "vr.onmessage",
+          "source": {
+            "source": "src/model/worker.ts",
+            "line": 17,
+            "column": 19,
+            "name": null
+          },
+          "selfMs": 1.417,
+          "inclusiveMs": 165.847
+        },
+        {
+          "name": "probeArcs",
+          "source": {
+            "source": "src/model/probes.ts",
+            "line": 183,
+            "column": 16,
+            "name": "probeArcs"
+          },
+          "selfMs": 1.369,
+          "inclusiveMs": 1.369
+        },
+        {
+          "name": "(anonymous)",
+          "source": {
+            "source": "src/model/tierL.ts",
+            "line": 176,
+            "column": 5,
+            "name": null
+          },
+          "selfMs": 1.302,
+          "inclusiveMs": 1.302
+        },
+        {
+          "name": "(anonymous)",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 1441,
+            "column": 13,
+            "name": null
+          },
+          "selfMs": 1.17,
+          "inclusiveMs": 1.17
+        },
+        {
+          "name": "me",
+          "source": {
+            "source": "src/model/adapt.ts",
+            "line": 349,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 1.165,
+          "inclusiveMs": 1.165
+        },
+        {
+          "name": "inverse",
+          "source": {
+            "source": "src/model/linalg.ts",
+            "line": 161,
+            "column": 16,
+            "name": "inverse"
+          },
+          "selfMs": 1.144,
+          "inclusiveMs": 2.776
+        },
+        {
+          "name": "slotOf",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 342,
+            "column": 9,
+            "name": "slotOf"
+          },
+          "selfMs": 1,
+          "inclusiveMs": 1
+        },
+        {
+          "name": "(anonymous)",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 665,
+            "column": 19,
+            "name": null
+          },
+          "selfMs": 0.852,
+          "inclusiveMs": 0.852
+        },
+        {
+          "name": "arcsFromRecord",
+          "source": {
+            "source": "src/model/adapt.ts",
+            "line": 721,
+            "column": 16,
+            "name": "arcsFromRecord"
+          },
+          "selfMs": 0.77,
+          "inclusiveMs": 2.871
+        },
+        {
+          "name": "estMeasurements",
+          "source": {
+            "source": "src/model/adapt.ts",
+            "line": 515,
+            "column": 16,
+            "name": "estMeasurements"
+          },
+          "selfMs": 0.698,
+          "inclusiveMs": 0.698
+        },
+        {
+          "name": "planMeasurements",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 967,
+            "column": 16,
+            "name": "planMeasurements"
+          },
+          "selfMs": 0.281,
+          "inclusiveMs": 0.281
+        },
+        {
+          "name": "pe",
+          "source": {
+            "source": "src/model/adapt.ts",
+            "line": 307,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 0.238,
+          "inclusiveMs": 0.238
+        },
+        {
+          "name": "postMessage",
+          "source": null,
+          "selfMs": 0.175,
+          "inclusiveMs": 0.175
+        },
+        {
+          "name": "(root)",
+          "source": null,
+          "selfMs": 0,
+          "inclusiveMs": 10358.777000000016
+        },
+        {
+          "name": "dispatch",
+          "source": {
+            "source": "src/model/rpc.ts",
+            "line": 35,
+            "column": 16,
+            "name": "dispatch"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 164.255
+        },
+        {
+          "name": "refresh",
+          "source": {
+            "source": "src/model/service.ts",
+            "line": 189,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 0,
+          "inclusiveMs": 164.255
+        },
+        {
+          "name": "build",
+          "source": {
+            "source": "src/model/service.ts",
+            "line": 118,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 0,
+          "inclusiveMs": 164.255
+        },
+        {
+          "name": "buildModel",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 813,
+            "column": 16,
+            "name": "buildModel"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 164.255
+        },
+        {
+          "name": "attempt",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 814,
+            "column": 8,
+            "name": "attempt"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 164.255
+        },
+        {
+          "name": "tierGProblem",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 315,
+            "column": 16,
+            "name": "tierGProblem"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 10.007000000000001
+        },
+        {
+          "name": "arcFit",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 580,
+            "column": 16,
+            "name": "arcFit"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 111.08
+        },
+        {
+          "name": "sl",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 447,
+            "column": 8,
+            "name": "sl"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 1
+        }
+      ],
+      "inclusive": [
+        {
+          "name": "(root)",
+          "source": null,
+          "selfMs": 0,
+          "inclusiveMs": 10358.777000000016
+        },
+        {
+          "name": "(idle)",
+          "source": null,
+          "selfMs": 10177.398000000012,
+          "inclusiveMs": 10177.398000000012
+        },
+        {
+          "name": "vr.onmessage",
+          "source": {
+            "source": "src/model/worker.ts",
+            "line": 17,
+            "column": 19,
+            "name": null
+          },
+          "selfMs": 1.417,
+          "inclusiveMs": 165.847
+        },
+        {
+          "name": "dispatch",
+          "source": {
+            "source": "src/model/rpc.ts",
+            "line": 35,
+            "column": 16,
+            "name": "dispatch"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 164.255
+        },
+        {
+          "name": "refresh",
+          "source": {
+            "source": "src/model/service.ts",
+            "line": 189,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 0,
+          "inclusiveMs": 164.255
+        },
+        {
+          "name": "build",
+          "source": {
+            "source": "src/model/service.ts",
+            "line": 118,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 0,
+          "inclusiveMs": 164.255
+        },
+        {
+          "name": "buildModel",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 813,
+            "column": 16,
+            "name": "buildModel"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 164.255
+        },
+        {
+          "name": "attempt",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 814,
+            "column": 8,
+            "name": "attempt"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 164.255
+        },
+        {
+          "name": "buildOnce",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 851,
+            "column": 9,
+            "name": "buildOnce"
+          },
+          "selfMs": 4.786,
+          "inclusiveMs": 162.553
+        },
+        {
+          "name": "solve",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 404,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 6.212999999999999,
+          "inclusiveMs": 121.84100000000002
+        },
+        {
+          "name": "arcFit",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 580,
+            "column": 16,
+            "name": "arcFit"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 111.08
+        },
+        {
+          "name": "stagedFit",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 542,
+            "column": 16,
+            "name": "stagedFit"
+          },
+          "selfMs": 1.609,
+          "inclusiveMs": 111.08
+        },
+        {
+          "name": "residualAndJacobian",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 228,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 6.773,
+          "inclusiveMs": 96.13600000000002
+        },
+        {
+          "name": "residuals",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 1011,
+            "column": 16,
+            "name": "residuals"
+          },
+          "selfMs": 11.072,
+          "inclusiveMs": 95.62100000000004
+        },
+        {
+          "name": "simulate",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 682,
+            "column": 16,
+            "name": "simulate"
+          },
+          "selfMs": 61.385,
+          "inclusiveMs": 89.75000000000004
+        },
+        {
+          "name": "(anonymous)",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 964,
+            "column": 44,
+            "name": null
+          },
+          "selfMs": 0,
+          "inclusiveMs": 31.018
+        },
+        {
+          "name": "fitWindows",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 925,
+            "column": 8,
+            "name": "fitWindows"
+          },
+          "selfMs": 3.3609999999999998,
+          "inclusiveMs": 31.018
+        },
+        {
+          "name": "localFitDetailed",
+          "source": {
+            "source": "src/model/tierL.ts",
+            "line": 447,
+            "column": 16,
+            "name": "localFitDetailed"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 21.523
+        },
+        {
+          "name": "rk4",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 868,
+            "column": 8,
+            "name": "rk4"
+          },
+          "selfMs": 10.32,
+          "inclusiveMs": 19.903999999999996
+        },
+        {
+          "name": "(garbage collector)",
+          "source": null,
+          "selfMs": 15.532,
+          "inclusiveMs": 15.532
+        },
+        {
+          "name": "tierGProblem",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 315,
+            "column": 16,
+            "name": "tierGProblem"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 10.007000000000001
+        },
+        {
+          "name": "accel",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 808,
+            "column": 8,
+            "name": "accel"
+          },
+          "selfMs": 9.584,
+          "inclusiveMs": 9.584
+        },
+        {
+          "name": "residual",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 209,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 0,
+          "inclusiveMs": 8.981
+        },
+        {
+          "name": "briefingBodiesAt",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 237,
+            "column": 16,
+            "name": "briefingBodiesAt"
+          },
+          "selfMs": 1.498,
+          "inclusiveMs": 8.837
+        },
+        {
+          "name": "st",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 167,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 3.2880000000000003,
+          "inclusiveMs": 7.633000000000001
+        },
+        {
+          "name": "resolve",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 626,
+            "column": 9,
+            "name": "resolve"
+          },
+          "selfMs": 5.9799999999999995,
+          "inclusiveMs": 6.832
+        },
+        {
+          "name": "normal",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 391,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 0,
+          "inclusiveMs": 5.2589999999999995
+        },
+        {
+          "name": "stateAt",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 688,
+            "column": 16,
+            "name": null
+          },
+          "selfMs": 1.52,
+          "inclusiveMs": 4.811
+        },
+        {
+          "name": "toModelState",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 1355,
+            "column": 9,
+            "name": "toModelState"
+          },
+          "selfMs": 1.56,
+          "inclusiveMs": 4.293
+        },
+        {
+          "name": "compileArc",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 439,
+            "column": 16,
+            "name": "compileArc"
+          },
+          "selfMs": 3.064,
+          "inclusiveMs": 4.064
+        }
+      ],
+      "groups": [
+        {
+          "group": "(idle)",
+          "ms": 10177.398000000012
+        },
+        {
+          "group": "src/model",
+          "ms": 164.109
+        },
+        {
+          "group": "(garbage collector)",
+          "ms": 15.532
+        },
+        {
+          "group": "src/lib",
+          "ms": 1.563
+        },
+        {
+          "group": "postMessage",
+          "ms": 0.175
+        }
+      ]
+    }
+  ],
+  "trace": [
+    {
+      "name": "RunTask",
+      "n": 17054,
+      "median": 0.029,
+      "p95": 6.046,
+      "worst": 192.999,
+      "totalMs": 18465.97800000177
+    },
+    {
+      "name": "v8.callFunction",
+      "n": 269,
+      "median": 0.625,
+      "p95": 150.922,
+      "worst": 181.194,
+      "totalMs": 7930.5769999999975
+    },
+    {
+      "name": "FunctionCall",
+      "n": 269,
+      "median": 0.431,
+      "p95": 147.955,
+      "worst": 180.738,
+      "totalMs": 7750.979999999997
+    },
+    {
+      "name": "FireAnimationFrame",
+      "n": 113,
+      "median": 98.085,
+      "p95": 158.66,
+      "worst": 181.397,
+      "totalMs": 7587.588000000002
+    },
+    {
+      "name": "GPUTask",
+      "n": 919,
+      "median": 0.49,
+      "p95": 1.498,
+      "worst": 2.931,
+      "totalMs": 615.4459999999998
+    },
+    {
+      "name": "HandlePostMessage",
+      "n": 28,
+      "median": 1.421,
+      "p95": 30.643,
+      "worst": 39.203,
+      "totalMs": 204.79200000000003
+    },
+    {
+      "name": "MinorGC",
+      "n": 36,
+      "median": 0.745,
+      "p95": 5.739,
+      "worst": 10.913,
+      "totalMs": 87.509
+    },
+    {
+      "name": "UpdateLayoutTree",
+      "n": 114,
+      "median": 0.63,
+      "p95": 1.054,
+      "worst": 2.118,
+      "totalMs": 79.42999999999998
+    },
+    {
+      "name": "V8.GCScavenger",
+      "n": 36,
+      "median": 0.685,
+      "p95": 5.336,
+      "worst": 9.289,
+      "totalMs": 78.78500000000003
+    },
+    {
+      "name": "V8.GC_SCAVENGER",
+      "n": 36,
+      "median": 0.642,
+      "p95": 5.32,
+      "worst": 9.095,
+      "totalMs": 74.886
+    },
+    {
+      "name": "Paint",
+      "n": 63,
+      "median": 1.025,
+      "p95": 2.886,
+      "worst": 3.634,
+      "totalMs": 73.683
+    },
+    {
+      "name": "V8.GC_SCAVENGER_SCAVENGE",
+      "n": 36,
+      "median": 0.561,
+      "p95": 4.935,
+      "worst": 9.069,
+      "totalMs": 71.162
+    },
+    {
+      "name": "Layout",
+      "n": 31,
+      "median": 2.035,
+      "p95": 3.463,
+      "worst": 3.478,
+      "totalMs": 63.81199999999999
+    },
+    {
+      "name": "Commit",
+      "n": 57,
+      "median": 0.838,
+      "p95": 1.845,
+      "worst": 3.307,
+      "totalMs": 57.543000000000006
+    },
+    {
+      "name": "PrePaint",
+      "n": 89,
+      "median": 0.623,
+      "p95": 1.464,
+      "worst": 2.734,
+      "totalMs": 54.635000000000005
+    },
+    {
+      "name": "Layerize",
+      "n": 57,
+      "median": 0.813,
+      "p95": 1.644,
+      "worst": 2.661,
+      "totalMs": 48.525
+    },
+    {
+      "name": "V8.GC_BACKGROUND_YOUNG_ARRAY_BUFFER_SWEEP",
+      "n": 36,
+      "median": 0.251,
+      "p95": 3.477,
+      "worst": 3.647,
+      "totalMs": 28.762999999999995
+    },
+    {
+      "name": "V8.GC_SCAVENGER_SCAVENGE_PARALLEL_PHASE",
+      "n": 36,
+      "median": 0.272,
+      "p95": 2.457,
+      "worst": 3.508,
+      "totalMs": 27.096999999999998
+    },
+    {
+      "name": "V8.GC_SCAVENGER_BACKGROUND_SCAVENGE_PARALLEL",
+      "n": 228,
+      "median": 0.093,
+      "p95": 0.287,
+      "worst": 0.674,
+      "totalMs": 25.183999999999994
+    },
+    {
+      "name": "V8.GC_BACKGROUND_SAFEPOINT",
+      "n": 16,
+      "median": 0.541,
+      "p95": 4.299,
+      "worst": 4.299,
+      "totalMs": 20.807000000000002
+    },
+    {
+      "name": "HitTest",
+      "n": 39,
+      "median": 0.408,
+      "p95": 1.032,
+      "worst": 1.055,
+      "totalMs": 17.747000000000003
+    },
+    {
+      "name": "V8.GC_SCAVENGER_SCAVENGE_FINALIZE",
+      "n": 36,
+      "median": 0.108,
+      "p95": 0.853,
+      "worst": 1.628,
+      "totalMs": 11.704000000000002
+    },
+    {
+      "name": "V8.GC_SCAVENGER_SCAVENGE_ROOTS",
+      "n": 36,
+      "median": 0.101,
+      "p95": 1.048,
+      "worst": 1.461,
+      "totalMs": 10.971000000000002
+    },
+    {
+      "name": "EventDispatch",
+      "n": 7,
+      "median": 1.436,
+      "p95": 2.071,
+      "worst": 2.071,
+      "totalMs": 9.876
+    },
+    {
+      "name": "V8.GC_SCAVENGER_SCAVENGE_WEAK_GLOBAL_HANDLES_IDENTIFY",
+      "n": 36,
+      "median": 0.054,
+      "p95": 0.617,
+      "worst": 2.249,
+      "totalMs": 7.977000000000001
+    },
+    {
+      "name": "V8.GC_SCAVENGER_SCAVENGE_PARALLEL",
+      "n": 24,
+      "median": 0.084,
+      "p95": 0.827,
+      "worst": 1.246,
+      "totalMs": 6.336000000000001
+    },
+    {
+      "name": "V8.DeoptimizeCode",
+      "n": 16,
+      "median": 0.059,
+      "p95": 1.213,
+      "worst": 1.213,
+      "totalMs": 5.851999999999999
+    },
+    {
+      "name": "V8.GC_BACKGROUND_UNPARK",
+      "n": 3,
+      "median": 0.491,
+      "p95": 4.034,
+      "worst": 4.034,
+      "totalMs": 4.917
+    },
+    {
+      "name": "V8.GC_SCAVENGER_SCAVENGE_WEAK_GLOBAL_HANDLES_PROCESS",
+      "n": 36,
+      "median": 0.031,
+      "p95": 0.438,
+      "worst": 0.622,
+      "totalMs": 4.673
+    },
+    {
+      "name": "RasterTask",
+      "n": 50,
+      "median": 0.088,
+      "p95": 0.131,
+      "worst": 0.14,
+      "totalMs": 4.612
+    },
+    {
+      "name": "EvaluateScript",
+      "n": 1,
+      "median": 3.91,
+      "p95": 3.91,
+      "worst": 3.91,
+      "totalMs": 3.91
+    },
+    {
+      "name": "UpdateLayer",
+      "n": 114,
+      "median": 0.005,
+      "p95": 0.177,
+      "worst": 0.408,
+      "totalMs": 3.4449999999999954
+    },
+    {
+      "name": "V8.GC_HEAP_EXTERNAL_EPILOGUE",
+      "n": 36,
+      "median": 0.012,
+      "p95": 0.416,
+      "worst": 1.039,
+      "totalMs": 2.773999999999999
+    },
+    {
+      "name": "V8.GC_SCAVENGER_SWEEP_ARRAY_BUFFERS",
+      "n": 36,
+      "median": 0.013,
+      "p95": 0.207,
+      "worst": 0.383,
+      "totalMs": 2.5839999999999996
+    },
+    {
+      "name": "V8.GC_SCAVENGER_FREE_REMEMBERED_SET",
+      "n": 36,
+      "median": 0.01,
+      "p95": 0.206,
+      "worst": 0.207,
+      "totalMs": 2.3209999999999997
+    },
+    {
+      "name": "V8.GC_SCAVENGER_TRACED_HANDLES_COMPUTE_WEAKNESS_PARALLEL",
+      "n": 25,
+      "median": 0.022,
+      "p95": 0.213,
+      "worst": 0.214,
+      "totalMs": 2.26
+    },
+    {
+      "name": "V8.GC_SCAVENGER_TRACED_HANDLES_RESET_PARALLEL",
+      "n": 26,
+      "median": 0.01,
+      "p95": 0.204,
+      "worst": 0.396,
+      "totalMs": 2.1959999999999997
+    },
+    {
+      "name": "V8.GC_TIME_TO_SAFEPOINT",
+      "n": 36,
+      "median": 0.004,
+      "p95": 0.204,
+      "worst": 0.599,
+      "totalMs": 1.9049999999999994
+    },
+    {
+      "name": "V8.GC_HEAP_EXTERNAL_PROLOGUE",
+      "n": 36,
+      "median": 0.011,
+      "p95": 0.199,
+      "worst": 0.216,
+      "totalMs": 1.7859999999999996
+    },
+    {
+      "name": "V8.GC_SCAVENGER_SCAVENGE_RESTORE_AND_QUARANTINE_PINNED",
+      "n": 36,
+      "median": 0.003,
+      "p95": 0.185,
+      "worst": 0.19,
+      "totalMs": 1.226
+    },
+    {
+      "name": "V8.GC_SCAVENGER_SCAVENGE_COLLECT_OLD_TO_NEW_PAGES",
+      "n": 36,
+      "median": 0.005,
+      "p95": 0.194,
+      "worst": 0.2,
+      "totalMs": 1.207
+    },
+    {
+      "name": "V8.GC_HEAP_EPILOGUE",
+      "n": 36,
+      "median": 0.003,
+      "p95": 0.179,
+      "worst": 0.186,
+      "totalMs": 1.0209999999999997
+    },
+    {
+      "name": "V8.GC_HEAP_EPILOGUE_SAFEPOINT",
+      "n": 36,
+      "median": 0.005,
+      "p95": 0.174,
+      "worst": 0.178,
+      "totalMs": 0.547
+    },
+    {
+      "name": "V8.GC_HEAP_PROLOGUE_SAFEPOINT",
+      "n": 35,
+      "median": 0.002,
+      "p95": 0.088,
+      "worst": 0.3,
+      "totalMs": 0.46699999999999997
+    },
+    {
+      "name": "V8.GC_SCAVENGER_BACKGROUND_TRACED_HANDLES_COMPUTE_WEAKNESS_PARALLEL",
+      "n": 7,
+      "median": 0.034,
+      "p95": 0.094,
+      "worst": 0.094,
+      "totalMs": 0.29400000000000004
+    },
+    {
+      "name": "ComputeWeaknessProcessor start",
+      "n": 36,
+      "median": 0.002,
+      "p95": 0.01,
+      "worst": 0.173,
+      "totalMs": 0.26300000000000007
+    },
+    {
+      "name": "ClearWeaknessProcessor start",
+      "n": 34,
+      "median": 0.002,
+      "p95": 0.012,
+      "worst": 0.172,
+      "totalMs": 0.25000000000000006
+    },
+    {
+      "name": "V8.GC_MINOR_MS_BACKGROUND_SWEEPING",
+      "n": 36,
+      "median": 0.006,
+      "p95": 0.019,
+      "worst": 0.033,
+      "totalMs": 0.24300000000000008
+    },
+    {
+      "name": "V8.GC_SCAVENGER_RESIZE_NEW_SPACE",
+      "n": 36,
+      "median": 0.003,
+      "p95": 0.008,
+      "worst": 0.008,
+      "totalMs": 0.13800000000000007
+    },
+    {
+      "name": "V8.GC_HEAP_PROLOGUE",
+      "n": 36,
+      "median": 0.003,
+      "p95": 0.008,
+      "worst": 0.013,
+      "totalMs": 0.13800000000000004
+    },
+    {
+      "name": "ArrayBufferSweeper Finished",
+      "n": 36,
+      "median": 0.002,
+      "p95": 0.009,
+      "worst": 0.011,
+      "totalMs": 0.12300000000000003
+    },
+    {
+      "name": "V8.GC_SCAVENGER_BACKGROUND_TRACED_HANDLES_RESET_PARALLEL",
+      "n": 5,
+      "median": 0.015,
+      "p95": 0.032,
+      "worst": 0.032,
+      "totalMs": 0.08800000000000001
+    },
+    {
+      "name": "Parallel scavenge started",
+      "n": 35,
+      "median": 0.002,
+      "p95": 0.009,
+      "worst": 0.01,
+      "totalMs": 0.07700000000000003
+    }
+  ],
+  "validity": {
+    "browserExceptions": 0,
+    "frames": 4,
+    "invalid": [],
+    "modelErrors": 0,
+    "maxObserverMsPerFrame": 0.10071942413882386
+  }
+}

@@ -1,0 +1,32 @@
+{
+  "run": "recheck",
+  "sourceCommit": "19a9adafdf9c9e430fd2505ce087ace60065f554",
+  "coordinatedS20Work": "S20's UI sampling and targeted tests were stopped before timed samples; documentation and bounded source reads continued.",
+  "hostIsolation": "not established",
+  "observations": [
+    {
+      "utcWindowStart": "2026-11-15T05:18:17Z",
+      "utcWindowEnd": "2026-11-15T05:27:29Z",
+      "precision": "bounded by observer clock reads; inventory time was not timestamped",
+      "observer": "S20 parent agent, read-only process inventory",
+      "finding": "Two independent Vitest process trees were present, neither belonging to S20's cancelled targeted test invocation. Other project sessions may have been executing test workloads during the benchmark.",
+      "handling": "No unrelated process was stopped. All timed values are retained and cannot isolate the causal performance effect of the 3D conversion."
+    },
+    {
+      "utc": "2026-11-15T05:33:02.2425593Z",
+      "observer": "S20 parent agent, read-only process CPU-delta inventory",
+      "sampleWallSeconds": 2,
+      "vitestRelatedProcesses": 19,
+      "cpuSecondsAcrossRelatedProcesses": 24.39,
+      "finding": "Approximately 12 logical cores of active Vitest-related host work during this two-second interval. This establishes active contention at the observed interval; it does not supply a complete workload history for every frame.",
+      "handling": "No command lines or account names retained; no unrelated process changed."
+    },
+    {
+      "utc": "2026-11-15T05:37:57.2476861Z",
+      "observer": "S20 parent agent, read-only process inventory",
+      "vitestRelatedProcesses": 0,
+      "cpuSecondsAcrossRelatedProcesses": null,
+      "finding": "No Vitest-related processes found. No CPU delta could be computed for the empty process set. A focused modest-profile confirmation follows this observation; absence of Vitest at one instant does not establish control of all host workload."
+    }
+  ]
+}

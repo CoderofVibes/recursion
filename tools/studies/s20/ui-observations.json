@@ -1,0 +1,136 @@
+{
+  "method": "ordinary controls; original viewport screenshots; no injected commands or private game handles; not novice or benchmark timing",
+  "pendingCommitLowerBoundSeconds": 186,
+  "finalOutcome": "Second directed commitment remained pending; successful held-out/adoption/new-flight capture not demonstrated; tab closed after bounded observation",
+  "shots": [
+    {
+      "file": "01-local-arrival.jpg",
+      "utc": "2026-11-15T05:43:30.151Z",
+      "elapsedSeconds": 8,
+      "note": "Fresh origin; attempt 1; undisclosed view shortcuts"
+    },
+    {
+      "file": "02-mission-setup.jpg",
+      "utc": "2026-11-15T05:46:23.682Z",
+      "elapsedSeconds": 182,
+      "note": "Fresh preparation, objective and recorder draft"
+    },
+    {
+      "file": "03-setup-empty-plan.jpg",
+      "utc": "2026-11-15T05:46:27.382Z",
+      "elapsedSeconds": 185,
+      "note": "Recorded design creates no burn plan"
+    },
+    {
+      "file": "04-default-preview.jpg",
+      "utc": "2026-11-15T05:46:44.763Z",
+      "elapsedSeconds": 203,
+      "note": "400-second default burn; forecast ends 10h"
+    },
+    {
+      "file": "05-model-empty-gate.jpg",
+      "utc": "2026-11-15T05:46:49.643Z",
+      "elapsedSeconds": 208,
+      "note": "Model v0, no measurements, two finished-attempt gate"
+    },
+    {
+      "file": "06-lost-plan-retained-preview.jpg",
+      "utc": "2026-11-15T05:46:56.142Z",
+      "elapsedSeconds": 214,
+      "note": "Navigation removes burn but retains draft forecast"
+    },
+    {
+      "file": "07-flight-one-times.jpg",
+      "utc": "2026-11-15T05:47:24.455Z",
+      "elapsedSeconds": 242,
+      "note": "ENTER starts at 1x; default burn still pending; 3D controls and projected heading"
+    },
+    {
+      "file": "08-recorder-preview-mismatch.jpg",
+      "utc": "2026-11-15T05:48:09.508Z",
+      "elapsedSeconds": 287,
+      "note": "0.2 Hz: predicted 17 W but observed 15 W; cadence 0.20 fixes/s"
+    },
+    {
+      "file": "09-hidden-console-focus.jpg",
+      "utc": "2026-11-15T05:48:15.048Z",
+      "elapsedSeconds": 293,
+      "note": "After Escape and Tab, DOM focus is 1x inside the aria-hidden=true console"
+    },
+    {
+      "file": "10-five-minute-boundary.jpg",
+      "utc": "2026-11-15T05:48:26.028Z",
+      "elapsedSeconds": 304,
+      "note": "304 wall seconds after arrival: T+1m14, no rule, TEST/ADOPT disabled; informed tool replay, not novice timing"
+    },
+    {
+      "file": "11-recalled-debrief.jpg",
+      "utc": "2026-11-15T05:49:09.547Z",
+      "elapsedSeconds": 348,
+      "note": "Attempt 1 recalled at 1m23, 347 records, held forecast 2.8 sigma, no burn; attempt 2 reset"
+    },
+    {
+      "file": "12-deep-forecast-issued.jpg",
+      "segment": "controlled",
+      "utc": "2026-11-15T05:50:28.581Z",
+      "elapsedSeconds": 73,
+      "note": "Fresh-origin attempt 1; 9.85 m/s retrograde In 600 s committed T+4m33; v1 forecast ends 5h38m33"
+    },
+    {
+      "file": "13-covered-forecast-comparison.jpg",
+      "segment": "controlled",
+      "utc": "2026-11-15T05:50:53.076Z",
+      "elapsedSeconds": 97,
+      "note": "Deep attempt at T+2h28m22 before the 5h38m33 horizon; 4,616 m miss within the envelope, rounded 1.0 sigma. The selected warp still displays 2000x; the preceding 1x click had not painted."
+    },
+    {
+      "file": "14-past-horizon.jpg",
+      "segment": "controlled",
+      "utc": "2026-11-15T05:52:18.601Z",
+      "elapsedSeconds": 183,
+      "note": "Deep collection exceeded the intended 8h24 endpoint during documentation; screenshot stopped at T+11h37m40. Past horizon is not disproof."
+    },
+    {
+      "file": "15-deep-debrief.jpg",
+      "segment": "controlled",
+      "utc": "2026-11-15T05:52:31.314Z",
+      "elapsedSeconds": 195,
+      "note": "Deep debrief: 11h37m40, 35,176 records, 501.8 km closest centre range, held worst 3.1 sigma; collection overshot the bounded protocol"
+    },
+    {
+      "file": "16-second-commit-wait.jpg",
+      "segment": "controlled",
+      "utc": "2026-11-15T05:53:43.873Z",
+      "elapsedSeconds": 268,
+      "note": "Shallow 5 m/s retrograde In 600 s committed T+4m32; COMMITTING holds the clock while the worker is pending"
+    },
+    {
+      "file": "17-model-report-pending.jpg",
+      "segment": "controlled",
+      "utc": "2026-11-15T05:55:13.145Z",
+      "elapsedSeconds": 357,
+      "note": "Second commit waiting: MODEL v2, 543 measurements, 9 local fits, report pending, one finished record; TEST disabled"
+    },
+    {
+      "file": "18-map-current-scope.jpg",
+      "segment": "controlled",
+      "utc": "2026-11-15T05:55:41.536Z",
+      "elapsedSeconds": 386,
+      "note": "MAP shows Gravity range, 329 catalogued rocks, 2 attempts, 1 recalled, model v3 and zero adopted rules"
+    },
+    {
+      "file": "19-ship-current-view.jpg",
+      "segment": "controlled",
+      "utc": "2026-11-15T05:55:55.413Z",
+      "elapsedSeconds": 399,
+      "note": "SHIP vehicle view with 3D model, numeric mass/inertia and configuration; no manual lift proof"
+    },
+    {
+      "file": "20-bounded-capture-still-pending.jpg",
+      "segment": "controlled",
+      "utc": "2026-11-15T05:56:50.328Z",
+      "elapsedSeconds": 454,
+      "note": "Final bounded observation: second commit still pending at T+4m32; menus responsive, no adoption or new flight demonstrated"
+    }
+  ]
+}

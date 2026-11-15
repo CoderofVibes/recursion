@@ -1,0 +1,151 @@
+{
+  "schema": 1,
+  "datePacific": "2026-11-14",
+  "source": {
+    "commit": "19a9adafdf9c9e430fd2505ce087ace60065f554",
+    "branch": "st/s20-3d-recheck",
+    "productionSourceEdited": false
+  },
+  "summary": {
+    "originalFullCheck": "failed",
+    "originalMainSuiteFiles": {
+      "passed": 67,
+      "failed": 2,
+      "total": 69
+    },
+    "originalMainSuiteTests": {
+      "passed": 784,
+      "failed": 2,
+      "total": 786
+    },
+    "allExistingTestsHavePassingResultsAcrossRuns": true,
+    "existingTestsTotalIncludingSeparatePerformanceSuite": 787,
+    "browserHeldOutAdoptionAndPostAdoptionFlight": "not demonstrated"
+  },
+  "fullCheck": {
+    "command": "npm run check",
+    "execution": "outside sandbox, after cancelling the sandbox attempt that emitted no test results; this run executed test workers",
+    "exitCode": 1,
+    "typecheck": "passed",
+    "lint": "passed",
+    "mainVitest": {
+      "command": "vitest run",
+      "startedPacific": "21:50:29",
+      "durationSeconds": 211.23,
+      "filesPassed": 67,
+      "filesFailed": 2,
+      "testsPassed": 784,
+      "testsFailed": 2
+    },
+    "separatePerformanceSuite": "skipped by && after main-suite failure",
+    "concurrency": "One animated local ordinary-UI replay overlapped the full regression run. No S15 performance measurement was running. Other host processes were not controlled. S20 process inspection found only the one current Vitest parent, not duplicate cancelled S20 suites.",
+    "failures": [
+      {
+        "file": "src/game/model-loop.test.ts",
+        "line": 149,
+        "test": "learns the distance law from two dives and forecasts a third it has never flown",
+        "durationSeconds": 188.32,
+        "message": "AssertionError: expected 2 to be 1 // Object.is equality",
+        "assertion": "expect(second.forecast.modelVersion).toBe(1)",
+        "expected": 1,
+        "received": 2,
+        "scope": "Stopped before the held-out/adoption assertions in this run."
+      },
+      {
+        "file": "src/ship/propulsion/control.test.ts",
+        "line": 259,
+        "test": "turns about an arbitrary axis on all three body axes at once",
+        "durationSeconds": 5.087,
+        "message": "Error: Test timed out in 5000ms.",
+        "timeoutMs": 5000
+      }
+    ]
+  },
+  "isolatedReruns": [
+    {
+      "command": "& '.\\node_modules\\.bin\\vitest.cmd' run src/ship/propulsion/control.test.ts --maxWorkers=1",
+      "startedPacific": "21:57:33",
+      "durationSeconds": 8.79,
+      "exitCode": 0,
+      "filesPassed": 1,
+      "testsPassed": 11,
+      "timeoutsUnchanged": true
+    },
+    {
+      "command": "& '.\\node_modules\\.bin\\vitest.cmd' run src/game/model-loop.test.ts --maxWorkers=1",
+      "startedPacific": "21:57:51",
+      "durationSeconds": 155.29,
+      "exitCode": 0,
+      "filesPassed": 1,
+      "testsPassed": 1,
+      "timeoutsUnchanged": true,
+      "scope": "Complete real-model held-out test, explicit adoption and subsequent forecast/flight assertions passed; fixture requests a 16 h forecast rather than production 48 h."
+    },
+    {
+      "command": "& '.\\node_modules\\.bin\\vitest.cmd' run --config vitest.perf.config.ts --maxWorkers=1",
+      "startedPacific": "22:00:43",
+      "durationSeconds": 0.76,
+      "exitCode": 0,
+      "filesPassed": 1,
+      "testsPassed": 1,
+      "timeoutsUnchanged": true
+    }
+  ],
+  "isolatedRerunConcurrency": "These commands ran sequentially, after the animated local UI tab and preview server were closed. No other S20 test suite or timed benchmark ran concurrently. General host background work was not controlled.",
+  "gmat": {
+    "gameRegression": {
+      "file": "src/sim/gmat.test.ts",
+      "result": "passed in original main suite",
+      "cases": 7,
+      "acceptanceBounds": {
+        "positionMetres": 0.05,
+        "velocityMetresPerSecond": 5e-05,
+        "massKilograms": 1e-06
+      },
+      "note": "13/13/14 mm inclined maxima and 22 mm planar maximum remain earlier recorded measurements, not newly instrumented maxima from this S20 run. No GMAT executable run was performed."
+    },
+    "storedVectorVerifier": {
+      "command": "python -B tools/gmat/reference.py verify",
+      "exitCode": 0,
+      "cases": 7,
+      "totalSamples": 21939,
+      "rows": {
+        "c1-circular.csv": 1801,
+        "c2-eccentric.csv": 7201,
+        "c3-hyperbolic.csv": 4001,
+        "c4-finite_burn.csv": 613,
+        "c5-inclined_eccentric.csv": 3601,
+        "c6-inclined_burn.csv": 721,
+        "c7-inclined_hyperbolic.csv": 4001
+      }
+    },
+    "pythonIntegrityTests": {
+      "command": "python -B -m unittest discover -s tools/gmat -p 'test_*.py'",
+      "exitCode": 0,
+      "testsPassed": 35,
+      "reportedDurationSeconds": 3.74
+    }
+  },
+  "cancelledAttempts": [
+    {
+      "command": "& '.\\node_modules\\.bin\\vitest.cmd' run --configLoader runner --no-cache src/sim/gmat.test.ts src/console/console.test.ts src/game/session.test.ts src/contracts/boundary.test.ts src/game/model-loop.test.ts src/model/short-attempts.test.ts",
+      "result": "Cancelled sandbox session after RUN with no test results; neither pass nor assertion failure. Before timed performance matrix."
+    },
+    {
+      "command": "npm run check",
+      "result": "Sandbox typecheck and lint passed; cancelled Vitest after RUN with no test results before launching outside sandbox. No duplicate S20 Vitest process remained."
+    }
+  ],
+  "diagnosis": {
+    "classification": "source-supported inference, not instrumented root-cause proof",
+    "evidence": [
+      "src/game/belief/model-bridge.ts defaults to performance.now",
+      "In-flight global refit threshold is 60000 ms; pre-forecast threshold is 5000 ms",
+      "src/model/service.ts increments version after each global refit",
+      "src/game/model-loop.test.ts does not inject the bridge clock",
+      "All failed tests pass unchanged in isolated reruns"
+    ],
+    "inference": "The literal modelVersion=1 assertion and the 5000 ms controller limit are load-sensitive. Fresh isolated success does not erase the original full-check failure.",
+    "requestedOwnerAction": "2F/2C: make the model-loop fixture clock/version expectation deterministic without changing runtime model behavior; integrator/ship owner: evaluate test scheduling/timeout evidence without weakening physics assertions."
+  }
+}
