@@ -8,7 +8,7 @@
  * It takes plain numbers in chart metres (`chartMath.ts`); the console decides what to show.
  * Display semantics follow P10: the forecast is frozen and dotted, the trail solid.
  */
-import { useId } from 'react';
+import { useId, useMemo } from 'react';
 import { boundsAbout, boundsOf, envelopeRuns, scaleLength } from './chartMath.ts';
 import type { Bounds, P2, PathPoint } from './chartMath.ts';
 
@@ -105,6 +105,37 @@ const kilometres = (m: number): string =>
     ? `${Math.round(m)} m`
     : `${(m / 1000).toLocaleString('en-US', { maximumFractionDigits: m < 10_000 ? 1 : 0 })} km`;
 
+/** Nothing to draw: one array, so a chart given none sees the same one each time. */
+const NO_POINTS: readonly P2[] = [];
+const NO_PATH: readonly PathPoint[] = [];
+
+/** Chart metres to drawing units: one scale for both axes, north up. */
+interface Projection {
+  readonly scale: number;
+  readonly cx: number;
+  readonly cy: number;
+  readonly width: number;
+  readonly height: number;
+}
+
+/** A line through points as an SVG path; `breaks` are the indices where a new stroke starts. */
+export function lineD(points: readonly P2[], p: Projection, breaks?: ReadonlySet<number>): string {
+  let d = '';
+  for (let i = 0; i < points.length; i++) {
+    const [x, y] = points[i]!;
+    d +=
+      (i && !breaks?.has(i) ? 'L' : 'M') +
+      (p.width / 2 + (x - p.cx) * p.scale).toFixed(1) +
+      ' ' +
+      (p.height / 2 - (y - p.cy) * p.scale).toFixed(1);
+  }
+  return d;
+}
+
+/** What says whether a list of points rebuilt each refresh has changed: its length and ends. */
+const pointsKey = (points: readonly P2[], breaks: readonly number[] = []): string =>
+  `${points.length}|${points[0]?.join() ?? ''}|${points.at(-1)?.join() ?? ''}|${breaks.join()}`;
+
 /**
  * Where on a chart's edge to point at something outside it: on the line from the chart's middle
  * to where the thing would be drawn, a margin inside the edge, with the way it points. Null for
@@ -132,11 +163,11 @@ export function TrajectoryChart({
   bodies,
   bands = [],
   regions = [],
-  rocks = [],
-  forecast = [],
-  earlier = [],
-  trail = [],
-  previousTrail = [],
+  rocks = NO_POINTS,
+  forecast = NO_PATH,
+  earlier = NO_PATH,
+  trail = NO_POINTS,
+  previousTrail = NO_POINTS,
   trailBreaks = [],
   previousBreaks = [],
   marks = [],
@@ -149,18 +180,22 @@ export function TrajectoryChart({
   height = 400,
 }: TrajectoryChartProps) {
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
-  const everything: P2[] = [
-    ...bodies.map((b): P2 => [b.x, b.y]),
-    ...forecast.map((p): P2 => [p.x, p.y]),
-    ...earlier.map((p): P2 => [p.x, p.y]),
-    ...trail,
-    ...previousTrail,
-    ...rocks,
-  ];
   const box: Bounds =
     follow !== undefined && cursor
       ? boundsAbout(cursor.x, cursor.y, follow)
-      : boundsOf(fit && fit.length ? fit : everything, 0.1);
+      : boundsOf(
+          fit && fit.length
+            ? fit
+            : [
+                ...bodies.map((b): P2 => [b.x, b.y]),
+                ...forecast.map((p): P2 => [p.x, p.y]),
+                ...earlier.map((p): P2 => [p.x, p.y]),
+                ...trail,
+                ...previousTrail,
+                ...rocks,
+              ],
+          0.1,
+        );
   // One scale for both axes (a chart, not a graph); north up.
   const scale = Math.min(width / (box.x1 - box.x0), height / (box.y1 - box.y0));
   const cx = (box.x0 + box.x1) / 2;
@@ -173,10 +208,63 @@ export function TrajectoryChart({
         ([x, y], i) => `${i && !breaks?.has(i) ? 'L' : 'M'}${sx(x).toFixed(1)} ${sy(y).toFixed(1)}`,
       )
       .join('');
-  const closed = (points: readonly P2[]): string => (points.length ? `${line(points)}Z` : '');
-  const path = (points: readonly PathPoint[]): string => line(points.map((p): P2 => [p.x, p.y]));
 
-  const runs = envelopeRuns(forecast, sigmas);
+  // The long shapes (the forecast, its envelope, the trails, the rocks) are worked out only
+  // when what they draw or the framing changes. The console redraws five times a second, and on
+  // a modest machine rebuilding them every time was a hitch in every refresh (S15's views).
+  const projection = useMemo(
+    (): Projection => ({ scale, cx, cy, width, height }),
+    [scale, cx, cy, width, height],
+  );
+  const forecastD = useMemo(
+    () =>
+      forecast.length > 1
+        ? lineD(
+            forecast.map((p): P2 => [p.x, p.y]),
+            projection,
+          )
+        : '',
+    [forecast, projection],
+  );
+  const earlierD = useMemo(
+    () =>
+      earlier.length > 1
+        ? lineD(
+            earlier.map((p): P2 => [p.x, p.y]),
+            projection,
+          )
+        : '',
+    [earlier, projection],
+  );
+  const envelope = useMemo(
+    () =>
+      envelopeRuns(forecast, sigmas).map((run) => ({
+        kind: run.kind,
+        d: run.outline.length ? `${lineD(run.outline, projection)}Z` : '',
+      })),
+    [forecast, sigmas, projection],
+  );
+  // The trails and the rocks are handed over as new lists each refresh: their length and ends
+  // say whether they have changed.
+  const trailKey = pointsKey(trail, trailBreaks);
+  const trailD = useMemo(
+    () => (trail.length > 1 ? lineD(trail, projection, new Set(trailBreaks)) : ''),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [trailKey, projection],
+  );
+  const previousKey = pointsKey(previousTrail, previousBreaks);
+  const previousD = useMemo(
+    () =>
+      previousTrail.length > 1 ? lineD(previousTrail, projection, new Set(previousBreaks)) : '',
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [previousKey, projection],
+  );
+  const rocksKey = pointsKey(rocks);
+  const rocksD = useMemo(
+    () => rocks.map(([x, y]) => `M${sx(x).toFixed(1)} ${sy(y).toFixed(1)}h0.01`).join(''),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rocksKey, projection],
+  );
   const bar = scaleLength((box.x1 - box.x0) * 0.9);
   const bodyOf = (id: string): ChartBody | undefined => bodies.find((b) => b.id === id);
 
@@ -257,39 +345,22 @@ export function TrajectoryChart({
             <path key={`${b.id}-track`} className="ci-chart__track" d={line(b.track)} />
           ) : null,
         )}
-        {rocks.length ? (
-          <path
-            className="ci-chart__rocks"
-            d={rocks.map(([x, y]) => `M${sx(x).toFixed(1)} ${sy(y).toFixed(1)}h0.01`).join('')}
-          />
-        ) : null}
+        {rocks.length ? <path className="ci-chart__rocks" d={rocksD} /> : null}
 
-        {previousTrail.length > 1 ? (
-          <path
-            className="ci-chart__trail"
-            data-previous=""
-            d={line(previousTrail, new Set(previousBreaks))}
-          />
-        ) : null}
-        {earlier.length > 1 ? <path className="ci-chart__earlier" d={path(earlier)} /> : null}
+        {previousD ? <path className="ci-chart__trail" data-previous="" d={previousD} /> : null}
+        {earlierD ? <path className="ci-chart__earlier" d={earlierD} /> : null}
 
         {/* The envelope: 2σ either side; hatched where the model is beyond its data. */}
-        {runs.map((run, i) => (
+        {envelope.map((run, i) => (
           <g key={i}>
-            <path className="ci-chart__envelope" data-kind={run.kind} d={closed(run.outline)} />
+            <path className="ci-chart__envelope" data-kind={run.kind} d={run.d} />
             {run.kind === 'extrapolating' ? (
-              <path
-                className="ci-chart__envelope-hatch"
-                fill={`url(#${uid}-hatch)`}
-                d={closed(run.outline)}
-              />
+              <path className="ci-chart__envelope-hatch" fill={`url(#${uid}-hatch)`} d={run.d} />
             ) : null}
           </g>
         ))}
-        {forecast.length > 1 ? <path className="ci-chart__forecast" d={path(forecast)} /> : null}
-        {trail.length > 1 ? (
-          <path className="ci-chart__trail" d={line(trail, new Set(trailBreaks))} />
-        ) : null}
+        {forecastD ? <path className="ci-chart__forecast" d={forecastD} /> : null}
+        {trailD ? <path className="ci-chart__trail" d={trailD} /> : null}
 
         {bodies.map((b) => (
           <g key={b.id}>

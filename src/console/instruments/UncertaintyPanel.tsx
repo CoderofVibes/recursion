@@ -6,6 +6,7 @@
  *
  * The sources add in quadrature, so each one's share is its share of the variance.
  */
+import { useMemo } from 'react';
 import { SOURCES, limiting, shares } from './chartMath.ts';
 import type { SigmaBySource } from './chartMath.ts';
 
@@ -21,12 +22,44 @@ export interface UncertaintyPanelProps {
 const W = 320;
 const H = 64;
 
+/**
+ * The envelope's size against time as stacked areas, one per source: stacked by share of the
+ * variance and scaled to the total's size, so the top edge is the envelope itself.
+ */
+export function uncertaintyLayers(
+  series: readonly SigmaBySource[],
+): { readonly id: string; readonly d: string }[] {
+  if (series.length === 0) return [];
+  const t0 = series[0]!.t;
+  const t1 = series.at(-1)!.t;
+  const top = Math.max(1, ...series.map((s) => s.total));
+  const x = (time: number): string => (((time - t0) / Math.max(1e-9, t1 - t0)) * W).toFixed(1);
+  const y = (sigma: number): string => (H - (sigma / top) * H).toFixed(1);
+  // Each moment's shares once, then each layer from them.
+  const split = series.map((s) => shares(s));
+  return SOURCES.map((source, layer) => {
+    const upper: string[] = [];
+    const lower: string[] = [];
+    series.forEach((s, n) => {
+      const parts = split[n]!;
+      let below = 0;
+      for (let i = 0; i < layer; i++) below += parts[i]!.share;
+      const above = below + parts[layer]!.share;
+      upper.push(`${x(s.t)} ${y(above * s.total)}`);
+      lower.push(`${x(s.t)} ${y(below * s.total)}`);
+    });
+    return { id: source.id, d: `M${upper.join('L')}L${lower.reverse().join('L')}Z` };
+  });
+}
+
 export function UncertaintyPanel({
   series,
   t,
   format,
   label = 'What the uncertainty is made of',
 }: UncertaintyPanelProps) {
+  // Worked out once for a forecast: the console redraws five times a second (S15).
+  const layers = useMemo(() => uncertaintyLayers(series), [series]);
   if (series.length === 0)
     return (
       <div className="ci-unc" role="img" aria-label={`${label}: no forecast`}>
@@ -35,23 +68,7 @@ export function UncertaintyPanel({
     );
   const t0 = series[0]!.t;
   const t1 = series.at(-1)!.t;
-  const top = Math.max(1, ...series.map((s) => s.total));
   const x = (time: number): number => ((time - t0) / Math.max(1e-9, t1 - t0)) * W;
-  const y = (sigma: number): number => H - (sigma / top) * H;
-  // Stacked by share of variance, scaled to the total's size, so the top edge is the envelope.
-  const layers = SOURCES.map((source, layer) => {
-    const upper: string[] = [];
-    const lower: string[] = [];
-    for (const s of series) {
-      const parts = shares(s);
-      let below = 0;
-      for (let i = 0; i < layer; i++) below += parts[i]!.share;
-      const above = below + parts[layer]!.share;
-      upper.push(`${x(s.t).toFixed(1)} ${y(above * s.total).toFixed(1)}`);
-      lower.push(`${x(s.t).toFixed(1)} ${y(below * s.total).toFixed(1)}`);
-    }
-    return { id: source.id, d: `M${upper.join('L')}L${lower.reverse().join('L')}Z` };
-  });
   let now = series[0]!;
   for (const s of series) if (s.t <= t + 1e-6) now = s;
   const parts = shares(now);

@@ -222,6 +222,9 @@ export function RadiationPanel({ desk }: { readonly desk: Desk }) {
 export function SystemsPage({ desk }: { readonly desk: Desk }) {
   const { game } = desk;
   const [selected, setSelected] = useState('camera');
+  // Every unit, folded: drawn only once it is opened (34 rows redrawn five times a second,
+  // unseen, were most of this page's cost on a modest machine: S15's views).
+  const [unitsOpen, setUnitsOpen] = useState(false);
   const snapshot = desk.snapshot();
   const ship = snapshot.world.ship;
   const status = game.status();
@@ -342,47 +345,53 @@ export function SystemsPage({ desk }: { readonly desk: Desk }) {
           />
         </Panel>
 
-        <details className="cp-fold">
+        <details
+          className="cp-fold"
+          open={unitsOpen}
+          onToggle={(event) => setUnitsOpen(event.currentTarget.open)}
+        >
           <summary>
             every unit · {active.length} assemblies · modes, allocation, readings, condition
           </summary>
-          <div className="cp-fold__body cp-units">
-            <div className="cs-scroll" ref={list}>
-              <ComponentList label="Equipment">
-                {active.map((e) => {
-                  const s = ship.equipment[e.id];
-                  const set = desk.unitSetting(e.id);
-                  return (
-                    <ComponentRow
-                      key={e.id}
-                      name={e.name}
-                      mode={set?.mode ?? s?.mode ?? '—'}
-                      value={`${whole(s?.powerDraw ?? 0)} W`}
-                      status={equipmentStatus(ship, e.id)}
-                      tone={e.kind === 'recorder' ? 'blackbox' : 'measured'}
-                      selected={e.id === selected}
-                      onSelect={() => setSelected(e.id)}
-                    />
-                  );
-                })}
-              </ComponentList>
-            </div>
-            {spec ? (
-              <div
-                ref={detail}
-                tabIndex={-1}
-                className="cs-anchor"
-                aria-label={`${spec.name} controls`}
-              >
-                <Caption>
-                  {spec.name} · {spec.kind}
-                </Caption>
-                <EquipmentDetail desk={desk} spec={spec} />
+          {unitsOpen ? (
+            <div className="cp-fold__body cp-units">
+              <div className="cs-scroll" ref={list}>
+                <ComponentList label="Equipment">
+                  {active.map((e) => {
+                    const s = ship.equipment[e.id];
+                    const set = desk.unitSetting(e.id);
+                    return (
+                      <ComponentRow
+                        key={e.id}
+                        name={e.name}
+                        mode={set?.mode ?? s?.mode ?? '—'}
+                        value={`${whole(s?.powerDraw ?? 0)} W`}
+                        status={equipmentStatus(ship, e.id)}
+                        tone={e.kind === 'recorder' ? 'blackbox' : 'measured'}
+                        selected={e.id === selected}
+                        onSelect={() => setSelected(e.id)}
+                      />
+                    );
+                  })}
+                </ComponentList>
               </div>
-            ) : (
-              <p className="cs-note">choose an assembly</p>
-            )}
-          </div>
+              {spec ? (
+                <div
+                  ref={detail}
+                  tabIndex={-1}
+                  className="cs-anchor"
+                  aria-label={`${spec.name} controls`}
+                >
+                  <Caption>
+                    {spec.name} · {spec.kind}
+                  </Caption>
+                  <EquipmentDetail desk={desk} spec={spec} />
+                </div>
+              ) : (
+                <p className="cs-note">choose an assembly</p>
+              )}
+            </div>
+          ) : null}
         </details>
       </div>
 

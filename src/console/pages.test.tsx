@@ -477,6 +477,18 @@ describe('the loop on the console', () => {
     expect(render('systems').html).not.toContain('nothing runs until you enter');
   });
 
+  it('keeps every unit a fold away, and draws that list only once it is opened', () => {
+    const { html } = render('systems');
+    // The fold is there to open, with how many units it holds; closed, none of them is drawn
+    // (the page is redrawn five times a second: S15's views).
+    expect(html).toMatch(
+      /<details class="cp-fold"><summary>every unit · \d+ assemblies · modes, allocation, readings, condition<\/summary><\/details>/,
+    );
+    expect(html).not.toContain('aria-label="Equipment"');
+    // The loads the player sets are still on the board, outside the fold.
+    expect(tags(html, 'role="slider"').length).toBeGreaterThan(0);
+  });
+
   it('leads BLACK BOX with the flight as measured, over the attempt before, and keeps RECALL in sight', () => {
     const { html } = render('blackbox');
     expect(html).toContain('the flight as measured against its forecast, seen from');
