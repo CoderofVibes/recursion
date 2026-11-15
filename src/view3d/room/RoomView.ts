@@ -291,6 +291,56 @@ export class RoomView {
     this.cone.visible = hadCone;
   }
 
+  /**
+   * TV's opt-in frame sampler (owner-authorized additive hook). The game never calls this.
+   * Explicit camera, light, hologram and loss time; no walking, transitions or room-clock step.
+   * Callers supply a prepared snapshot with no accumulated coverage history. The large display
+   * step settles configuration and heading immediately; it never advances simulation time.
+   */
+  renderScriptedFrame(
+    data: RoomFrame,
+    shot: RoomShot & { readonly hologram?: boolean; readonly lossTime?: number },
+    time: number,
+  ): void {
+    this.resize();
+    if (this.width === 0 || this.height === 0) return;
+    const { camera } = this;
+    const loss = shot.lossTime === undefined ? undefined : sampleLoss(shot.lossTime, false);
+    const hologram = shot.hologram !== false && (loss?.hologram ?? true);
+    this.outside.update(data.snapshot);
+    camera.position.set(...shot.position);
+    camera.rotation.set(...shot.rotation, 'YXZ');
+    camera.fov = VIEW.room.fov;
+    camera.updateProjectionMatrix();
+    if (loss) {
+      camera.position.y += loss.lift;
+      camera.rotateZ(loss.roll);
+    }
+    this.shell.setLevel(shot.light * (loss?.light ?? 1), shot.alarm);
+    this.shell.setConsole(shot.console, null);
+    this.shell.setConsoleMap(shot.consoleMap);
+    this.shell.setHologramLight(hologram ? VIEW.room.holo : 0);
+    this.shell.setRecorderLamp(holoWire.shipSymbol);
+    this.veil.visible = false;
+    this.holoRoot.position.set(HOLO.x, HOLO.y, HOLO.z);
+    this.holoTilt.rotation.set(0, 0, 0);
+    this.holoRoot.visible = hologram;
+    this.cone.visible = hologram;
+    this.cone.scale.y = HOLO.y - this.cone.position.y;
+    this.flight.group.visible = hologram;
+    this.ship.group.visible = false;
+    this.map.group.visible = false;
+    this.flight.setPixelsPerUnit(
+      pixelsPerUnit(camera.fov, camera.position.distanceTo(this.holoRoot.position), this.height),
+    );
+    if (hologram)
+      this.flight.update(data, (2 * Math.PI * roomMotion.travel) / roomMotion.frameOrbit, time);
+    this.outside.followEye(camera, this.renderer);
+    this.composer.render();
+    this.labels.domElement.style.visibility = '';
+    this.labels.render(this.scene, camera);
+  }
+
   mode(): ViewMode {
     return this.current;
   }
