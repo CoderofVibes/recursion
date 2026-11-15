@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CUES, LATTICE_STRIKE } from './cues.ts';
+import { BED_ACCENTS, BED_LEAD, CUES, LATTICE_STRIKE, UNDER } from './cues.ts';
 import { SNAPS, TOTAL, beat } from './timeline.ts';
 
 describe("the trailer's sound", () => {
@@ -34,6 +34,45 @@ describe("the trailer's sound", () => {
     expect(alarm.length).toBeGreaterThanOrEqual(3);
     for (const cue of alarm) expect(cue.until).toBe(12.8);
     expect(SNAPS[0]).toBe(12.8);
+  });
+
+  it('cuts the montage bed on its accents: every scene starts on one, none falls inside a scene', () => {
+    const bed = CUES.filter((c) => c.file === 'montage-bed');
+    // Under every scene from the slingshot to the console: four action scenes, eight shots, one.
+    expect(bed).toHaveLength(13);
+    expect(bed[0]!.at).toBe(beat('slingshot').start);
+    expect(Math.max(...bed.map((c) => c.until!))).toBe(SNAPS[1]);
+    for (const cue of bed) {
+      const rate = cue.rate ?? 1;
+      const hit = (cue.offset ?? 0) + BED_LEAD;
+      // Never across a snap: everything stops dead there.
+      for (const snap of SNAPS) expect(cue.at >= snap || cue.until! <= snap).toBe(true);
+      // The next big accent in the take falls at or after this cue's cut, never just before it;
+      // the one exception is the lattice's, which is placed on the strike.
+      for (const accent of BED_ACCENTS.filter((a) => a > hit + 0.1)) {
+        const lands = cue.at + (accent - hit) / rate;
+        if (Math.abs(lands - LATTICE_STRIKE) < 1e-9) continue;
+        expect(lands).toBeGreaterThanOrEqual(cue.until!);
+      }
+      // It starts on an accent, or (the lattice) on a hit that brings an accent onto the strike.
+      if (!BED_ACCENTS.some((a) => Math.abs(a - hit) < 1e-9)) {
+        expect(cue.at).toBe(beat('lattice').start);
+        expect(cue.at + (BED_ACCENTS[3] - hit) / rate).toBeCloseTo(LATTICE_STRIKE, 9);
+      }
+    }
+    // Consecutive: each scene's bed ends where the next begins, except across the first snap.
+    for (let i = 1; i < bed.length; i++)
+      if (bed[i]!.at !== beat('montage-flight').start)
+        expect(bed[i]!.at).toBeCloseTo(bed[i - 1]!.until!, 9);
+  });
+
+  it('puts the effects under the bed, and leaves the title, the snaps and the final hit alone', () => {
+    const at = (file: string) => CUES.filter((c) => c.file === file).map((c) => c.gain);
+    expect(at('main-engine')).toEqual([0.5 * UNDER]);
+    expect(at('warning').every((g) => g === 0.6 * UNDER)).toBe(true);
+    expect(at('title-hit')).toEqual([0.7]);
+    expect(at('black-cut')).toEqual([0.6, 0.6]);
+    expect(at('final-hit')).toEqual([0.7]);
   });
 
   it("reuses the game's cues R56 names, where R56 puts them", () => {

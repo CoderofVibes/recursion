@@ -9,6 +9,10 @@ Two sets of files:
 
 Mix: aim each export to peak around −3 dBFS. The page's master runs through a limiter that keeps the mix below about −1 dBFS; the gains in `src/trailer/cues.ts` are first guesses, to be balanced once real files are in.
 
+## The bed leads (owner, 2026-11-15)
+
+The montage's bed plays under every scene from the slingshot to the console, and the effects sit under it at half their level (`UNDER` in `cues.ts`); the title's sounds, the snaps' cut and the final hit keep theirs. The take has no steady tempo, but its four big accents fall about every 2.24 s of the file (2.07, 4.37, 6.59, 8.81 s). At 0.88 speed they fall every 2.5 s, a scene's length, so each scene starts the bed on one of them: every cut lands on an accent, and the next accent falls after the next cut. The montage's eight shots each start on one in turn. The lattice starts on a lighter hit (7.37 s) and runs a little slower, so its big accent lands on the strike at 9.0 s. `cues.test.ts` checks all of it.
+
 ## Snaps to black
 
 At 12.8 s and 26.2 s **everything stops dead** and only the game's `black-cut` plays, then silence until the next shot. The alarm cuts at 12.8 s with it. The page enforces this, and a test checks it (`src/trailer/cues.test.ts`).
@@ -41,7 +45,7 @@ Times are seconds on the trailer's timeline. **Keep prompts simple** (owner, 202
 | `ship-creak.mp3` | 5.4 s · 1.8 s | Cut at 7.3 s | Twisting | Spaceship metal frame creaking as it twists. |
 | `lattice-strike.mp3` | 9.0 s · 1.2 s | Plays out; cut dead at 12.8 s at the latest | Sudden, invisible | Sudden electrical impact hitting a metal spaceship hull. |
 | `braid-rush.mp3` | 10.3 s · 2.5 s | Cut dead at 12.8 s | Fast, rising, dangerous | Fast whoosh of debris streaking past on both sides. |
-| `montage-bed.mp3` | 13.1 s · 10.8 s | Cut at 23.9 s (the console) | Determined, quietly driving | Low, steady pulsing synth drone, calm and determined. |
+| `montage-bed.mp3` | **Under every scene, 2.3–26.2 s** (owner, 2026-11-15), restarted on each cut · the owner's take is 11.0 s | Cut dead at both snaps | Determined, quietly driving | Low, steady pulsing synth drone, calm and determined. |
 | `final-hit.mp3` | 26.5 s · 3.5 s | Plays out by 30.0 s | Final, resonant | Huge deep cinematic boom with a long dark tail. |
 
 **The montage's bed, if the owner prefers music:** use ElevenLabs Music instead, with the same file name and an 11 s length: "Minimal dark ambient electronic underscore, 90 BPM, steady and determined."
