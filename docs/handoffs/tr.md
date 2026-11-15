@@ -38,9 +38,9 @@ The title's flicker; the slingshot's shake; the wells' turn and the wells on FLI
 
 ## Requests outside my ownership
 
-- **Integrator:** fold the owner's beat updates (`docs/trailer/beats.md`) into `docs/submission/video.md`; record thread TV in the ledger (worktree `.worktrees/tv` on `p3/tr-visuals` from `p3/tr-trailer`).
-- **Integrator (optional):** `vite.config.ts` `optimizeDeps.entries` could add `src/trailer/*.html`, so the first dev load of the trailer doesn't trigger a dependency re-scan. Not needed today.
-- **Integrator: TV's scoped exception (owner authorized, 2026-11-15).** TV may add one additive scripted-frame method to `src/view3d/room/RoomView.ts` for the trailer (holograms visible, frame data and lights at a given time, no clock advance; every existing method unchanged; the game never calls it), placed apart from PF's renderer setup and 3F's region-range code, both unmerged in that file. If needed, an optional explicit time step for the sky's exposure adaptation in `src/view3d/sky/` (VX's), defaulting to today's behaviour. Record it in the ledger and tell 3F, PF and VX.
+- **Done (integrator, 2026-11-15):** the owner's beat updates folded into `docs/submission/video.md`; TV's worktree and ledger row; R56; TV's scoped exception in `RoomView.ts` and the sky (R64).
+- **Open, R59 (PF):** a pin that holds the room's render scale at full quality. PF's adaptive scale (0.85 or 0.70 when frames run long) acts only through the room's live `frame()` path; the trailer's scripted frames must not feed it, and the trailer uses the pin once it lands and never loads with `?perf`.
+- **Optional (integrator):** `vite.config.ts` `optimizeDeps.entries` could add `src/trailer/*.html`, so the first dev load of the trailer doesn't trigger a dependency re-scan.
 
 ## Credit
 

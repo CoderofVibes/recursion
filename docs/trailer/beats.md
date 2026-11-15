@@ -2,7 +2,7 @@
 
 The owner's beat sheet is [`docs/submission/video.md`](../submission/video.md). This page records the owner's later updates, given to TR directly, so the page and the sheet can be reconciled. The numbers live in code in `src/trailer/timeline.ts` (picture) and `src/trailer/cues.ts` (sound); the tests in the same folder hold them to this page.
 
-**Proposed for the integrator:** fold the updates below into `video.md` (its Beats table and "Labels").
+**Folded into `video.md`** by the integrator (2026-11-15).
 
 ## Owner's updates (2026-11-15)
 
