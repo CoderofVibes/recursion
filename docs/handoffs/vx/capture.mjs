@@ -5,7 +5,9 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { launchChrome, sleep } from '../../../tools/studies/s15/cdp.mjs';
 
 const label = process.argv[2] ?? 'after';
-if (!['before', 'after', 'art-before', 'art-after'].includes(label))
+if (
+  !['before', 'after', 'art-before', 'art-after', 'mission-before', 'mission-after'].includes(label)
+)
   throw new Error('Invalid capture label');
 const server = await preview({ preview: { host: '127.0.0.1', port: 4186, strictPort: true } });
 const browser = await launchChrome();
@@ -41,7 +43,7 @@ try {
     'Page.addScriptToEvaluateOnNewDocument',
     {
       source:
-        (label.startsWith('art-') ? "localStorage.setItem('recursion:opening-seen','1');\n" : '') +
+        (label.includes('-') ? "localStorage.setItem('recursion:opening-seen','1');\n" : '') +
         probe,
     },
     sessionId,

@@ -1,0 +1,161 @@
+diff --git a/src/game/funnels.ts b/src/game/funnels.ts
+index c722830..4d7339b 100644
+--- a/src/game/funnels.ts
++++ b/src/game/funnels.ts
+@@ -21,7 +21,6 @@
+ 
+ import type { FieldInstanceSpec } from '../contracts/truth/index.ts';
+ import type { JsonValue } from '../contracts/units.ts';
+-import { createFunnelWindow } from './funnel-window.ts';
+ import {
+   advanceFunnelLifecycle,
+   createFunnelHullHazards,
+@@ -116,10 +115,5 @@ export function funnelHazards(specs: readonly FieldInstanceSpec[]): EncounterHaz
+ export function withFunnels(setup: InverseWellsSetup): EncounterSetup {
+   const lifecycle = setup.funnelLifecycle;
+   if (!lifecycle) return setup;
+-  return {
+-    ...setup,
+-    dynamics: funnelDynamics(lifecycle),
+-    hazards: funnelHazards,
+-    window: createFunnelWindow(setup),
+-  };
++  return { ...setup, dynamics: funnelDynamics(lifecycle), hazards: funnelHazards };
+ }
+diff --git a/src/view3d/fx/funnels.ts b/src/view3d/fx/funnels.ts
+index 623c3bc..67a6c8c 100644
+--- a/src/view3d/fx/funnels.ts
++++ b/src/view3d/fx/funnels.ts
+@@ -252,11 +252,10 @@ export function makeFunnelLight(options: FunnelSkyOptions): FunnelSky {
+       b.culled++;
+       return;
+     }
+-    // Sparse distant support carries less integrated filament light. Keep that separate
+-    // from observed brightness, which also drives the uninterrupted birth progression.
+-    const detailGain = segments.length <= 4 ? 0.14 : segments.length <= 72 ? 0.65 : 1;
+-    const k = lineStyles.wellMouth.opacity * v.brightness * detailGain;
+-    mouth.set(colour.well).multiplyScalar(k * 0.35);
++    // The theme's colour rule is linear in depth over [0, 1]: take it at the mouth and the
++    // throat once, then interpolate per segment.
++    const k = lineStyles.wellMouth.opacity * v.brightness;
++    mouth.set(colour.well).multiplyScalar(k * 0.48);
+     throat.set(colour.latticeCore).multiplyScalar(k * 1.5);
+     const r0 = mouth.r;
+     const g0 = mouth.g;
+@@ -287,8 +286,7 @@ export function makeFunnelLight(options: FunnelSkyOptions): FunnelSky {
+         b.culled++;
+         return;
+       }
+-      // 3B's optical contract: depth 0 is the bright throat, 1 is the mouth.
+-      const d = 1 - (s?.depth ?? NaN);
++      const d = s?.depth ?? NaN;
+       if (!p || !q || !(d >= 0 && d <= 1)) {
+         b.culled++;
+         return;
+@@ -312,10 +310,9 @@ export function makeFunnelLight(options: FunnelSkyOptions): FunnelSky {
+       positions[o + 3] = qx * radius;
+       positions[o + 4] = qz * radius;
+       positions[o + 5] = -qy * radius;
+-      const hot = d * d * d;
+-      colours[o] = colours[o + 3] = r0 + dr * hot;
+-      colours[o + 1] = colours[o + 4] = g0 + dg * hot;
+-      colours[o + 2] = colours[o + 5] = b0 + db * hot;
++      colours[o] = colours[o + 3] = r0 + dr * d;
++      colours[o + 1] = colours[o + 4] = g0 + dg * d;
++      colours[o + 2] = colours[o + 5] = b0 + db * d;
+       n++;
+     }
+     b.n = n;
+diff --git a/src/view3d/room/outside.ts b/src/view3d/room/outside.ts
+index 2399ef3..5b0b54b 100644
+--- a/src/view3d/room/outside.ts
++++ b/src/view3d/room/outside.ts
+@@ -9,6 +9,7 @@
+  * to the believed world and a display sun.
+  */
+ import {
++  Color,
+   Group,
+   IcosahedronGeometry,
+   InstancedMesh,
+@@ -20,9 +21,8 @@ import {
+ } from 'three';
+ import type { Camera, Object3D, Scene, ShaderMaterial, WebGLRenderer } from 'three';
+ import type { ViewSnapshot, WindowView } from '../../contracts/index.ts';
+-import { render } from '../../theme/index.ts';
+-import { setSun } from '../../theme/three/index.ts';
+-import { airlessMaterial } from '../fx/airless.ts';
++import { hex, outsideStyle, render } from '../../theme/index.ts';
++import { bodyMaterial, rockMaterial, setSun } from '../../theme/three/index.ts';
+ import { attitudeToScene, toScene, type WindowField } from '../adapter.ts';
+ import { windowViewFor } from '../windowViews.ts';
+ import { FUNNEL_KIND, makeFunnelLight } from '../fx/funnels.ts';
+@@ -76,10 +76,9 @@ export function buildOutside(scene: Scene): Outside {
+   const bodyMesh = (id: string, index: number): Mesh => {
+     let m = bodies.get(id);
+     if (!m) {
+-      const mat = airlessMaterial(false, index > 0);
++      const mat = bodyMaterial(index > 0 ? { lit: outsideStyle.bodyLitCool } : {});
+       materials.push(mat);
+       m = new Mesh(sphere, mat);
+-      m.name = `window-body:${id}`;
+       m.rotation.z = 0.3;
+       world.add(m);
+       bodies.set(id, m);
+@@ -96,12 +95,13 @@ export function buildOutside(scene: Scene): Outside {
+       const y = p.getY(i);
+       const z = p.getZ(i);
+       const k =
+-        0.74 + 0.26 * Math.abs((Math.sin(x * 12.9898 + y * 78.233 + z * 37.719) * 43758.5453) % 1);
++        0.78 + 0.42 * Math.abs((Math.sin(x * 12.9898 + y * 78.233 + z * 37.719) * 43758.5453) % 1);
+       p.setXYZ(i, x * k, y * k, z * k);
+     }
+     rockGeo.computeVertexNormals();
+   }
+-  const rockMat = airlessMaterial(true);
++  const rockMat = rockMaterial();
++  (rockMat.uniforms.cRock!.value as Color).set(hex(outsideStyle.rock));
+   materials.push(rockMat);
+   const rocks = new InstancedMesh(rockGeo, rockMat, MAX_ROCKS);
+   rocks.frustumCulled = false;
+@@ -137,7 +137,9 @@ export function buildOutside(scene: Scene): Outside {
+     const u = (mesh.material as ShaderMaterial).uniforms;
+     if (mesh.userData.lit === lit) return;
+     mesh.userData.lit = lit;
+-    u.uLit!.value = lit ? 1 : 0;
++    mesh.userData.cLit ??= (u.cLit!.value as Color).clone();
++    (u.cLit!.value as Color).copy(lit ? (mesh.userData.cLit as Color) : (u.cDark!.value as Color));
++    u.uRimStrength!.value = lit ? render.rimStrength : 0;
+   };
+ 
+   /**
+@@ -158,17 +160,16 @@ export function buildOutside(scene: Scene): Outside {
+         mesh.visible = true;
+         const drawn = NEAR + SPAN * (0.45 + 0.55 / (1 + a * 20));
+         mesh.position.copy(d).multiplyScalar(drawn);
+-        // A sphere subtends asin(radius / centre-distance), unlike a flat sprite.
+-        mesh.scale.setScalar(drawn * Math.sin(Math.min(a, Math.PI / 2)));
++        mesh.scale.setScalar(drawn * Math.tan(Math.min(a, 1.4)));
+         setLit(mesh, o.lit);
+       } else if (o.lit && n < MAX_ROCKS) {
+         // An unlit rock is not seen at all.
+         const drawn = NEAR + SPAN * (0.1 + 0.3 / (1 + a * 2000));
+-        const r = drawn * Math.sin(Math.min(a, Math.PI / 2));
++        const r = drawn * Math.tan(Math.min(a, 1.4));
+         let h = 0;
+         for (let k = 0; k < o.id.length; k++) h = (h * 31 + o.id.charCodeAt(k)) % 6283;
+         spin.setFromAxisAngle(axis, h / 1000);
+-        m4.compose(d.multiplyScalar(drawn), spin, scale.set(r, r * 0.8, r));
++        m4.compose(d.multiplyScalar(drawn), spin, scale.set(r, r * 0.8, r * 1.1));
+         rocks.setMatrixAt(n++, m4);
+       }
+     }
+@@ -226,8 +227,6 @@ export function buildOutside(scene: Scene): Outside {
+       rot.visible = scenery === null;
+     },
+     followEye(camera, renderer) {
+-      // Optical directions are from the ship's eye; walking must not shift the sky/bodies.
+-      rot.position.copy(camera.position);
+       deepSky.followEye(camera, renderer);
+     },
+     update(snapshot) {

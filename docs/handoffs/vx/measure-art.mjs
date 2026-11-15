@@ -9,10 +9,15 @@ const temporary = new URL('vx-returning.mjs', runner);
 const original = readFileSync(runner, 'utf8');
 const needle = "source: readFileSync(join(here, 'page-probe.js'), 'utf8')";
 if (!original.includes(needle)) throw new Error('S15 injection point changed');
-const source = original.replace(
-  needle,
-  `source: "localStorage.setItem('recursion:opening-seen','1');\\n" + readFileSync(join(here, 'page-probe.js'), 'utf8')`,
-);
+const port = Number(process.env.VX_PREVIEW_PORT ?? 4175);
+if (!Number.isInteger(port) || port < 1024 || port > 65535) throw new Error('Invalid preview port');
+const source = original
+  .replace(
+    needle,
+    `source: "localStorage.setItem('recursion:opening-seen','1');\\n" + readFileSync(join(here, 'page-probe.js'), 'utf8')`,
+  )
+  .replace('port: 4175,', `port: ${port},`)
+  .replace('127.0.0.1:4175/', `127.0.0.1:${port}/`);
 let created = false;
 try {
   writeFileSync(temporary, source, { flag: 'wx' });

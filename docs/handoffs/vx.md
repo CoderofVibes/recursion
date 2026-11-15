@@ -1,4 +1,6 @@
-# Handoff: VX — Window and sky visuals**Latest follow-through:** [Art brief pass, screenshots and verification](vx-art.md). The report below preserves the first overnight pass.
+# Handoff: VX — Window and sky visuals
+
+**Latest follow-through:** [Mission views, live Garden producer and production screenshots](vx-missions.md). The [art brief pass](vx-art.md) and report below preserve the earlier work.
 
 Thread: GPT/Codex · Branch: `p3/vx-visuals` · Worktree: `.worktrees/vx` · Date: 2026-11-15 (Pacific).
 
