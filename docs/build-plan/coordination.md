@@ -65,7 +65,9 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 | R10 | 3C ↔ 3A | Component faults from radiation: electrics and instruments (A16) | **Open:** 3C running; 3A gated | |
 | R11 | 2G → integrator | Release check from A18 (7) on 2G's speed pass: rerun S15's script, modest profile | **Open:** with 2G's merge | |
 
-| R12 | S22 → 3B | Wells as real funnels (A19): pull, reversal inside, crush at the throat; a big field through 3D at random orientations; wells that appear with a precursor; a reuse map | **Open:** S22 ready to launch | 3B keeps its reversal maths, registry and loading; generalises to an oriented funnel; adds the pull and the crush; doesn't tune a layout until S22 lands |
+| R12 | S22 → 3B | Wells as real funnels (A19), visible through the window: pull, reversal inside, crush at the throat; a big field through 3D at random orientations; wells that appear with a precursor; a reuse map | **Open:** S22 ready to launch | 3B keeps its reversal maths, registry and loading; generalises to an oriented funnel; adds the pull and the crush; doesn't tune a layout until S22 lands |
+
+| R13 | 3B → 2D | The funnels in the window view (A19: wells are visible, with striking visuals). 3B draws them in `src/view3d/fields/wells/`; 2D mounts them in the room's window and FLIGHT | **Open:** to relay | Folds into R4 |
 
 Add new rows at the bottom with the next ID. Never renumber.
 

@@ -16,6 +16,7 @@ The owner's wells are **real, long, narrow funnels**. The earlier studies built 
 - **The trap:** inside it, the radial effect of the ship's own propulsion reverses (brief §7), so burning away can drag the ship in. Sideways burns stay ordinary, and they're the way out.
 - **The crush:** the narrow throat crushes the ship.
 - **The field:** wells lie at random orientations through 3D, in a big field, "destruction and beauty". New ones appear, each warned of by a precursor, and going around means going a very long way.
+- **They're visible.** The player sees the funnels through the window, with striking visuals, so shape and position come from sight. What a well does (the pull, the reversal, the crush) must still be learned from evidence.
 
 What physics, field and rules deliver that, fairly and learnably?
 
@@ -42,7 +43,11 @@ In `docs/studies/s22/`, with a deterministic Python reference in `tools/studies/
    - more than one way through;
    - no seed lethal on arrival;
    - a first-time player who burns away by instinct gets dragged in readably, with time to try something else.
-5. **Beauty:** what the field, a funnel, a precursor and a well's arrival look like to the ship's sensors and on FLIGHT. Start from 1E's funnel drawing (contour rings tightening toward a long throat), now pointing in random directions and drawn from belief-side data only (P11).
+5. **Beauty:** what the field, a funnel, a precursor and a well's arrival look like:
+   - **through the window:** visible light, the player's own eyes, and the encounter's showpiece;
+   - **on FLIGHT,** from 1E's funnel drawing (contour rings tightening toward a long throat), pointing in random directions.
+
+   Say what the camera can measure from what it sees (position, axis, size), and what only the ship's motion can reveal. FLIGHT draws belief-side data only (P11).
 6. **Seeds:** S16's catalogue and certificate approach, applied to funnels, with rejection rules and rates.
 7. **Performance:** the cost per funnel per simulation tick. Keep a large field within S15's frame budget, and use spatial indexing if it's needed.
 8. **A reuse map for 3B:** what carries over unchanged from S5, S16 and 3B's current work (the reflection maths, the edge smoothing, the field registry and loading, the seed tools, the accelerometer rule), what changes, and what's new (the pull, the funnel shape, the crush, appearing wells).
