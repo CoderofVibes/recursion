@@ -117,6 +117,11 @@ export function openingRange(nearest: number | undefined, floor = RANGE_MIN): nu
   if (nearest === undefined || !Number.isFinite(nearest) || nearest <= 0) return RANGE_DEFAULT;
   return clamp(Number((1.5 * nearest).toPrecision(2)), floor, RANGE_DEFAULT);
 }
+/**
+ * A body is drawn in the volume only while its centre, and this much of its radius beyond, is
+ * inside the rim; farther out it is a bearing mark on the rim.
+ */
+export const BODY_IN_VOLUME = 0.35;
 /** Seconds between rebuilds of clipped paths as the ship moves through the volume. */
 const RECLIP = 0.25;
 
@@ -1256,7 +1261,7 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
       const mark = bodyMark(b.id, b.name);
       const p = toScene(b.position, tmp3);
       const h = tmp.copy(p).applyMatrix4(toHolo);
-      const inVolume = h.length() + b.radius * Sh * 0.35 < Rh;
+      const inVolume = h.length() + b.radius * Sh * BODY_IN_VOLUME < Rh;
       mark.g.visible = inVolume;
       mark.marker.visible = !inVolume;
       if (inVolume) {

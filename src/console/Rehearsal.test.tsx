@@ -14,7 +14,14 @@ import {
 import type { ViewSnapshot } from '../contracts/index.ts';
 import type { GameControls } from '../game/belief/controls.ts';
 import { Desk } from './desk.ts';
-import { RehearsalPanel, followRange, wholeRange } from './Rehearsal.tsx';
+import {
+  HOLO_INTO_BODY,
+  HOLO_MARGIN,
+  RehearsalPanel,
+  followRange,
+  wholeRange,
+} from './Rehearsal.tsx';
+import { BODY_IN_VOLUME } from '../view3d/flight/FlightHolo.ts';
 
 function game(snapshot: ViewSnapshot = viewSnapshot): GameControls {
   const current = attempts.at(-1)!;
@@ -60,6 +67,22 @@ describe('framing a step', () => {
     ).toBeCloseTo(0.5 * 250_000 * 1.15, 6);
     // Nothing to frame against is no range at all.
     expect(followRange({ ranges: [] }, radii)).toBe(0);
+  });
+
+  it('in the hologram reaches just far enough for the body to be drawn, not a mark on the rim', () => {
+    const radii = new Map([['alpha', 250_000]]);
+    const ranges = [{ id: 'alpha', name: 'Alpha', clearance: 125_000, sigma: 12_000 }];
+    const range = followRange({ ranges }, radii, HOLO_INTO_BODY, HOLO_MARGIN);
+    expect(range).toBeCloseTo((125_000 + 1.35 * 250_000) * 1.05, 6);
+    // The hologram's own rule for drawing a body: its centre, and a part of its radius beyond,
+    // inside the rim. The body here passes it, with little to spare, so it is as large as the
+    // volume allows: its radius is more than half the range, and its far side is past the rim.
+    const centre = 125_000 + 250_000;
+    expect(centre + BODY_IN_VOLUME * 250_000).toBeLessThan(range);
+    expect(250_000 / range).toBeGreaterThan(0.5);
+    expect(centre + 250_000).toBeGreaterThan(range);
+    // The flat chart's own, tighter view would leave it a mark on the rim there.
+    expect(centre + BODY_IN_VOLUME * 250_000).toBeGreaterThan(followRange({ ranges }, radii));
   });
 
   it('holds the whole forecast from where the ship is now when the view stays', () => {

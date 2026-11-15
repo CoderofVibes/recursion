@@ -17,30 +17,40 @@ import type { Desk } from './desk.ts';
 import { forecastClock, readForecast } from './forecastReading.ts';
 import type { ShipAt } from './forecastReading.ts';
 import { dist, fixed } from './format.ts';
+import { BODY_IN_VOLUME } from '../view3d/flight/FlightHolo.ts';
 import { StepBar } from './instruments/StepBar.tsx';
 import { UncertaintyPanel } from './instruments/UncertaintyPanel.tsx';
 
-/** How much of the nearest body's radius the view reaches into it when it follows the ship. */
+/**
+ * On a flat chart, how much of the nearest body's radius the view reaches into it when it
+ * follows the ship, and the room left around that. The chart cuts a body off at its edge, so
+ * half a radius shows its near side large.
+ */
 export const FOLLOW_INTO_BODY = 0.5;
-/** Room left around that, as a factor. */
 export const FOLLOW_MARGIN = 1.15;
+/**
+ * In the hologram a body is drawn only while its centre and a part of its radius beyond are
+ * inside the volume (`BODY_IN_VOLUME`); farther out it is only a mark on the rim. So there the
+ * view reaches just that far and little more: the body is drawn, as large as it can be.
+ */
+export const HOLO_INTO_BODY = 1 + BODY_IN_VOLUME;
+export const HOLO_MARGIN = 1.05;
 
 /**
  * The range that frames a step when the view follows the ship: out to the nearest body's
- * surface and half a radius into it, so the body is large beside the ship, with only its near
- * side in view (the owner: the planet should be big on the screen; part of it will do).
+ * surface and `into` of its radius beyond, with a margin, so the body is large beside the ship
+ * (the owner: the planet should be big on the screen; part of it will do).
  */
 export function followRange(
   ship: Pick<ShipAt, 'ranges'>,
   radii: ReadonlyMap<string, number>,
+  into = FOLLOW_INTO_BODY,
+  margin = FOLLOW_MARGIN,
 ): number {
   let nearest = Infinity;
   for (const r of ship.ranges)
-    nearest = Math.min(
-      nearest,
-      Math.max(r.clearance, 0) + FOLLOW_INTO_BODY * (radii.get(r.id) ?? 0),
-    );
-  return Number.isFinite(nearest) ? Math.max(nearest, 1) * FOLLOW_MARGIN : 0;
+    nearest = Math.min(nearest, Math.max(r.clearance, 0) + into * (radii.get(r.id) ?? 0));
+  return Number.isFinite(nearest) ? Math.max(nearest, 1) * margin : 0;
 }
 
 /** The range that holds a whole forecast from where the ship is now. */
@@ -111,7 +121,9 @@ export function RehearsalPanel({ desk, still, range, onRange, onPlan }: Rehearsa
    */
   const go = (time: number, following = follow, glideThere = false): void => {
     cancelAnimationFrame(glide.current);
-    const wanted = following ? followRange(reading.shipAt(time), radii) : wholeRange(reading.path);
+    const wanted = following
+      ? followRange(reading.shipAt(time), radii, HOLO_INTO_BODY, HOLO_MARGIN)
+      : wholeRange(reading.path);
     const from = desk.rehearsal?.t;
     const rangeFrom = range?.();
     if (!glideThere || still || from === undefined || rangeFrom === undefined || !(wanted > 0)) {
