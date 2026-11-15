@@ -4,7 +4,7 @@ The live state of the build between threads: who is running, who holds which sha
 
 **Integrator, after a compaction:** read this file first, then `git log --oneline -15`, then the handoffs of any thread marked running.
 
-**Last updated:** 2026-11-14, S19 merged and Tidal Orchard deferred.
+**Last updated:** 2026-11-14, S16 merged; S22 (the big well field) written.
 
 ## Threads
 
@@ -20,7 +20,8 @@ The live state of the build between threads: who is running, who holds which sha
 | 3A power and thermal | GPT/Codex | not created yet · `p3/3a-power-thermal` | **Gated** | After 2G's speed pass merges; integrator creates the worktree then | — |
 | 3D expedition | Opus 5.5 | not created yet · `p3/3d-expedition` | **Gated** | After 2F's and 2C's first checkpoints merge | — |
 | 3F console v2 | Claude | — | **Gated** | After 2D hands off | — |
-| S16 Well Garden layout | GPT/Codex | `.worktrees/s16` · `st/s16-well-garden` | Running | Feeds 3B | — |
+| S16 Well Garden layout | GPT/Codex | `.worktrees/s16` · `st/s16-well-garden` | **Done**: three-well prototype, 25-entry catalogue, garden budget (A15 Q05) | — | `e6eb51d` |
+| S22 big well field | GPT/Codex | `.worktrees/s22` · `st/s22-big-well-field` | Ready to launch | Feeds 3B (R12); its orientation comparison goes to the owner | — |
 | S17 lattice first contact | GPT/Codex | `.worktrees/s17` · `st/s17-lattice-first-contact` | Running | Feeds 3C; its landing starts 3C | — |
 | S18 tether gate | GPT/Codex | `.worktrees/s18` · `st/s18-tether-gate` | Running | Future tether work | — |
 | S19 tidal check | GPT/Codex | `.worktrees/s19` · `st/s19-tidal-check` | **Done**: Tidal Orchard deferred (A15 Q21) | — | merged, see log |
@@ -58,11 +59,13 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 | R4 | 3B, 3C → 2D | Mount points for encounter UI in `src/console/encounters/` and `src/view3d/fields/` | **Open:** 2D told to expect it | |
 | R5 | S20 → 2D | S9 replayed on the 3D build: fixed, still there or new | **Open:** waits on S20 | Integrator forwards |
 | R6 | S21 → 2F, 3A | Belt size (A18 (2)) and power values (A18 (5)) | **Open:** waits on S21 | 2F builds the mechanisms first |
-| R7 | S16 → 3B | Well Garden layout, seeds and vectors | **Open:** waits on S16 | |
+| R7 | S16 → 3B | Well Garden layout, seeds and vectors | **Done** `e6eb51d`: the three-well prototype for 3B's mechanics | The owner then asked for a big field (R12) |
 | R8 | S17 → 3C | First-contact numbers: dose, failure order, Black Box function cost, reconstruction | **Open:** waits on S17 | Its landing starts 3C |
 | R9 | 3C → 2C | The Black Box function in A16 (records sensors; FLIGHT shows the rebuilt lattice) | **Open:** 3C running | |
 | R10 | 3C ↔ 3A | Component faults from radiation: electrics and instruments (A16) | **Open:** 3C running; 3A gated | |
 | R11 | 2G → integrator | Release check from A18 (7) on 2G's speed pass: rerun S15's script, modest profile | **Open:** with 2G's merge | |
+
+| R12 | S22 → 3B | The big well field: many wells through 3D, random orientations, wells that appear with a precursor | **Open:** S22 ready to launch | 3B builds for many wells and time-varying wells now; the field contract already passes `t` |
 
 Add new rows at the bottom with the next ID. Never renumber.
 
@@ -78,7 +81,8 @@ Decided: A15 (S11's queue), A16 (the lattice), A17 (the ending) and A18 (the Gra
 
 | Commit | What |
 |---|---|
-| (this commit) | S19 merged; Tidal Orchard deferred (A15 Q21) |
+| (this commit) | S16 merged (`e6eb51d`); owner's S16 answers in A15 Q05; S22 written |
+| `108f4fc` | S19 merged; Tidal Orchard deferred (A15 Q21) |
 | `ae562fe` | 3C reassigned to GPT/Codex and launched |
 | `682957b` | This ledger |
 | `5b94ed2` | `npm run harness`; wells and lattice paths split between 3B and 3C |
