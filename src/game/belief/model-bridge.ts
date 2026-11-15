@@ -23,6 +23,7 @@ import type {
   AttemptRecord,
   ExecutedCommand,
   ExtensionId,
+  ForecastDetail,
   ForecastDraft,
   Measurement,
   ModelState,
@@ -206,16 +207,21 @@ export function createModelBridge(client: ModelClient, options: ModelBridgeOptio
       handover(forecastRefitAfter);
       const massProperties = navigator.believedWorld(request.issuedAt).ship.massProperties;
       return run(async () => {
-        const { forecast } = await client.forecast({
-          id: request.id,
-          attemptId: request.attemptId,
-          issuedAt: request.issuedAt,
-          plan: request.plan,
-          massProperties,
-          duration: request.span,
-        });
+        // The model puts the forecast's detail inside the draft; an older client returns it
+        // beside the forecast. Either way the draft that leaves here carries it, so previews,
+        // committed forecasts and Black Box records all keep it.
+        const answer: { readonly forecast: unknown; readonly detail?: ForecastDetail } =
+          await client.forecast({
+            id: request.id,
+            attemptId: request.attemptId,
+            issuedAt: request.issuedAt,
+            plan: request.plan,
+            massProperties,
+            duration: request.span,
+          });
         // Already issued by the client; the loop issues its own frozen copy from this.
-        return forecast as unknown as ForecastDraft;
+        const draft = answer.forecast as ForecastDraft;
+        return draft.detail || !answer.detail ? draft : { ...draft, detail: answer.detail };
       });
     },
 
@@ -245,6 +251,8 @@ export function createModelBridge(client: ModelClient, options: ModelBridgeOptio
           return next;
         }),
       report: () => run(() => client.report()),
+      burns: (attempts) => run(() => client.burns(attempts)),
+      empirical: () => run(() => client.empirical()),
     },
 
     lastError: () => error,

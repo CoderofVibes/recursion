@@ -6,14 +6,24 @@
 import type { ObjectiveId } from '../contracts/ids.ts';
 import type { ShipEvent } from '../contracts/measurements.ts';
 import type { TruthWorld } from '../contracts/truth/index.ts';
+import type { Vec3 } from '../lib/vec3.ts';
 import type { ObjectiveRule } from './encounter.ts';
 
 /** Progress of one orbit-band rule. Plain data, part of the game's truth state. */
 export interface BandProgress {
   readonly inside: boolean;
-  /** Direction from the body to the ship at the last tick, rad. */
-  readonly angle: number;
-  /** Signed angle swept about the body since entering the band, rad. */
+  /** Unit vector from the body to the ship at the last tick. */
+  readonly direction: Vec3;
+  /**
+   * Unit normal of the plane the ship is sweeping in, pointing the way that counts as positive.
+   * Absent until the ship has moved about the body inside the band.
+   */
+  readonly normal?: Vec3;
+  /**
+   * Angle swept about the body since entering the band, rad: the angles between successive
+   * directions, added while the ship keeps going round the same way and subtracted when it
+   * turns back. Positive for the way round that is counter-clockwise seen from +z.
+   */
   readonly swept: number;
 }
 
@@ -49,6 +59,8 @@ export function departStatus(world: TruthWorld): DepartStatus {
     px += b.gm * b.position.x;
     py += b.gm * b.position.y;
     pz += b.gm * b.position.z;
+    // A fixed body does not move, whatever velocity it was given (as the simulation has it).
+    if (b.fixed) continue;
     vx += b.gm * b.velocity.x;
     vy += b.gm * b.velocity.y;
     vz += b.gm * b.velocity.z;
@@ -67,13 +79,52 @@ export function departStatus(world: TruthWorld): DepartStatus {
 
 export const initialObjectiveProgress: ObjectiveProgress = { bands: {} };
 
-const wrap = (a: number): number => {
-  const twoPi = 2 * Math.PI;
-  let w = a % twoPi;
-  if (w <= -Math.PI) w += twoPi;
-  else if (w > Math.PI) w -= twoPi;
-  return w;
-};
+/** A sweep must pass its full turns by this much, rad: far above rounding, far below a tick. */
+const FULL_TURN_MARGIN = 1e-9;
+
+/**
+ * One more tick of an orbit-band rule: the ship is at `offset` from the body, `inside` the
+ * band or not. The sweep is counted in three dimensions: each tick adds the angle between the
+ * last direction and this one, signed by whether the turn goes the same way round as the sweep
+ * so far (the cross product of the two directions against the running normal). The normal
+ * follows the plane as it precesses, so an inclined or wobbling orbit counts in full.
+ */
+function sweep(before: BandProgress | undefined, offset: Vec3, inside: boolean): BandProgress {
+  const r = Math.hypot(offset.x, offset.y, offset.z);
+  const direction =
+    r > 0 ? { x: offset.x / r, y: offset.y / r, z: offset.z / r } : { x: 1, y: 0, z: 0 };
+  // Leaving the band, or entering it, starts the count again.
+  if (!inside || !before?.inside) return { inside, direction, swept: 0 };
+  const a = before.direction;
+  const cx = a.y * direction.z - a.z * direction.y;
+  const cy = a.z * direction.x - a.x * direction.z;
+  const cz = a.x * direction.y - a.y * direction.x;
+  const sine = Math.hypot(cx, cy, cz);
+  if (sine === 0) return { ...before, direction };
+  const angle = Math.atan2(sine, a.x * direction.x + a.y * direction.y + a.z * direction.z);
+  /** The axis of this tick's turn, or its opposite. (+ 0: the state never holds a negative zero.) */
+  const axis = (sign: 1 | -1): Vec3 => ({
+    x: (sign * cx) / sine + 0,
+    y: (sign * cy) / sine + 0,
+    z: (sign * cz) / sine + 0,
+  });
+  // Which way round is positive is set by the first movement: counter-clockwise seen from +z
+  // (then from +y, then from +x, for a sweep that is edge-on to the axis before).
+  const n = before.normal;
+  const forward = n
+    ? cx * n.x + cy * n.y + cz * n.z >= 0
+    : cz !== 0
+      ? cz > 0
+      : cy !== 0
+        ? cy > 0
+        : cx > 0;
+  return {
+    inside,
+    direction,
+    normal: axis(forward ? 1 : -1),
+    swept: before.swept + (forward ? angle : -angle),
+  };
+}
 
 /**
  * Advance objective progress to the world's current state. Returns the new progress and the
@@ -113,16 +164,17 @@ export function evaluateObjectives(
     if (rule.kind !== 'orbit-band') continue;
     const body = world.bodies.find((b) => b.id === rule.body);
     if (!body) continue;
-    // LIFT(2G): the band distance and the swept angle are measured in the x–y plane (z ignored).
-    const dx = world.ship.kinematics.position.x - body.position.x;
-    const dy = world.ship.kinematics.position.y - body.position.y;
-    const r = Math.hypot(dx, dy);
-    const angle = Math.atan2(dy, dx);
-    const inside = r >= rule.inner && r <= rule.outer;
-    const before = bands[rule.objective];
-    const swept = inside && before?.inside ? before.swept + wrap(angle - before.angle) : 0;
-    bands[rule.objective] = { inside, angle, swept };
-    if (!completed && Math.abs(swept) >= 2 * Math.PI * rule.revolutions) {
+    const offset = {
+      x: world.ship.kinematics.position.x - body.position.x,
+      y: world.ship.kinematics.position.y - body.position.y,
+      z: world.ship.kinematics.position.z - body.position.z,
+    };
+    const r = Math.hypot(offset.x, offset.y, offset.z);
+    const band = sweep(bands[rule.objective], offset, r >= rule.inner && r <= rule.outer);
+    bands[rule.objective] = band;
+    // Past the full turns, by more than rounding: a sweep that ends exactly on a full turn is
+    // decided on the next tick, however the angles happened to round.
+    if (!completed && Math.abs(band.swept) > 2 * Math.PI * rule.revolutions + FULL_TURN_MARGIN) {
       completed = rule.objective;
       events.push({ kind: 'objective', t: world.t, objective: rule.objective, status: 'reached' });
     }

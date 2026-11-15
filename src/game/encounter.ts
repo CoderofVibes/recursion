@@ -22,8 +22,9 @@ import type {
  */
 export type ObjectiveRule =
   /**
-   * Stay between `inner` and `outer` from a body's centre while sweeping `revolutions` full
-   * turns about it. Leaving the band starts the count again. Reaching it completes the attempt.
+   * Stay between `inner` and `outer` from a body's centre (a spherical shell) while sweeping
+   * `revolutions` full turns about it, in whatever plane the orbit lies. Turning back undoes
+   * what was swept; leaving the band starts the count again. Reaching it completes the attempt.
    */
   | {
       readonly kind: 'orbit-band';
@@ -73,6 +74,11 @@ export interface PlayValues {
   readonly recorderRate: Hertz;
   /** Longest forecast requested when a plan is committed. */
   readonly forecastSpan: Seconds;
+  /**
+   * The smallest asteroid the unaided eye makes out through the window: half the angle it
+   * spans from the ship. Smaller ones are left out of `ViewSnapshot.window`. Bodies always show.
+   */
+  readonly windowMinAngularRadius: Radians;
 }
 
 export interface EncounterSetup {
@@ -100,4 +106,5 @@ export const DEFAULT_PLAY: PlayValues = {
   telemetryKeepalive: 600,
   recorderRate: 0.05,
   forecastSpan: 16 * 3600,
+  windowMinAngularRadius: 2e-4,
 };

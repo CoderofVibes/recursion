@@ -176,7 +176,11 @@ describe('plan helpers', () => {
       [600, 'burn'],
       [617, 'attitude'],
     ]);
-    expect(steps[2]!.command).toEqual({ kind: 'attitude', target: { reference: 'free' } });
+    // Released to a zero-rate hold, not free: a ship left free after a burn keeps turning.
+    expect(steps[2]!.command).toEqual({
+      kind: 'attitude',
+      target: { reference: 'rate', rate: { x: 0, y: 0, z: 0 } },
+    });
   });
 
   it('clips the turn to the plan epoch and can keep holding', () => {

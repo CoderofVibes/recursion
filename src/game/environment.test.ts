@@ -132,6 +132,119 @@ describe('what the camera can see', () => {
   });
 });
 
+describe('three dimensions (A11): shadow cylinders, the glare cone and spheres in the way', () => {
+  const planet = body('p', 0, 0, 100);
+  /** A sun 30° above the bodies' plane, on the −x side: shadows slope down toward +x. */
+  const HIGH: Sun = {
+    direction: { x: -Math.cos(Math.PI / 6), y: 0, z: Math.sin(Math.PI / 6) },
+    irradiance: 600,
+  };
+  const exclusion = (20 * Math.PI) / 180;
+  const visible = (w: TruthWorld): Record<string, boolean> =>
+    targetVisibility(w, sensorTargets(w), exclusion);
+  const rock = (id: string, x: number, y: number, z: number) => ({
+    id,
+    position: { x, y, z },
+    velocity: { x: 0, y: 0, z: 0 },
+    radius: 1,
+  });
+
+  it('a shadow is a cylinder: it ends above and below the body as well as beside it', () => {
+    // The sun in the plane: 99 m above the axis of the shadow is dark, 101 m is lit.
+    expect(inShadow({ x: 500, y: 0, z: 99 }, [planet], SUN)).toBe(true);
+    expect(inShadow({ x: 500, y: 0, z: 101 }, [planet], SUN)).toBe(false);
+    expect(inShadow({ x: 500, y: 70, z: 70 }, [planet], SUN)).toBe(true);
+    expect(inShadow({ x: 500, y: 72, z: 72 }, [planet], SUN)).toBe(false);
+  });
+
+  it('with the sun above the plane the shadow slopes below it, so sunlight depends on height', () => {
+    // 2,000 m behind the body in the plane, the shadow's axis is 1,155 m below the plane.
+    const behind = { x: 2000, y: 0, z: 0 };
+    expect(inShadow(behind, [planet], HIGH)).toBe(false);
+    expect(inShadow({ x: 2000, y: 0, z: -2000 * Math.tan(Math.PI / 6) }, [planet], HIGH)).toBe(
+      true,
+    );
+    // The same place in the plane is dark when the sun is in the plane too.
+    expect(inShadow(behind, [planet], SUN)).toBe(true);
+    // And the ship's sunlight follows: lit in the plane, dark down in the cylinder.
+    const up = world({ bodies: [planet], sun: HIGH }, behind);
+    const down = world({ bodies: [planet], sun: HIGH }, { x: 2000, y: 0, z: -1155 });
+    expect(sunlightAt(up, up.ship.kinematics.position).irradiance).toBe(600);
+    expect(sunlightAt(down, down.ship.kinematics.position)).toEqual({
+      direction: HIGH.direction,
+      irradiance: 0,
+    });
+    // 120 m higher is 104 m across the rays from the cylinder's axis: back in the light.
+    expect(inShadow({ x: 2000, y: 0, z: -1155 + 120 }, [planet], HIGH)).toBe(false);
+  });
+
+  it('glare is a cone about the direction to the sun, in every direction around it', () => {
+    // The sun is toward −x. 10° off it upward, sideways and diagonally: all lost; 30° up: seen.
+    const at = (angle: number, around: number) => ({
+      x: -1000 * Math.cos(angle),
+      y: 1000 * Math.sin(angle) * Math.cos(around),
+      z: 1000 * Math.sin(angle) * Math.sin(around),
+    });
+    const place = (id: string, angle: number, around: number) => {
+      const p = at(angle, around);
+      return rock(id, p.x, p.y, p.z);
+    };
+    const w = world({
+      asteroids: [
+        place('up', 0.17, Math.PI / 2),
+        place('side', 0.17, 0),
+        place('diagonal', 0.17, 2.2),
+        place('clear-up', 0.52, Math.PI / 2),
+        place('clear-down', 0.52, -Math.PI / 2),
+      ],
+    });
+    expect(visible(w)).toEqual({
+      up: false,
+      side: false,
+      diagonal: false,
+      'clear-up': true,
+      'clear-down': true,
+    });
+    // With the sun 30° above the plane, the rock 30° up is the one in the glare.
+    const lifted = world({
+      sun: HIGH,
+      asteroids: [place('clear-up', Math.PI / 6, Math.PI / 2), place('side', 0.17, 0)],
+    });
+    expect(visible(lifted)).toEqual({ 'clear-up': false, side: true });
+  });
+
+  it('a body hides what is behind its sphere, not what is above or below it', () => {
+    // The body is 500 m ahead (+y) with radius 100; the line to each rock passes it at 500 m.
+    const w = world({
+      bodies: [body('near', 0, 500, 100)],
+      asteroids: [
+        rock('behind', 0, 1500, 0),
+        // The line of sight clears the sphere by passing 120 m above its centre...
+        rock('over', 0, 1500, 360),
+        // ...and is cut when it passes 80 m above it.
+        rock('grazing', 0, 1500, 240),
+        rock('under', 0, 1500, -360),
+      ],
+    });
+    expect(visible(w)).toEqual({
+      near: true,
+      behind: false,
+      over: true,
+      grazing: false,
+      under: true,
+    });
+  });
+
+  it('a rock above a body is lit when the shadow passes beneath it', () => {
+    // Both rocks are 400 m behind the body; one is in the plane, one 150 m above it.
+    const w = world(
+      { bodies: [planet], asteroids: [rock('low', 400, 0, 0), rock('high', 400, 0, 150)] },
+      { x: 400, y: 1000, z: 0 },
+    );
+    expect(visible(w)).toMatchObject({ low: false, high: true });
+  });
+});
+
 describe('buildEnvironment', () => {
   it('describes the tick start: time, kinematics, last specific force, scene and sunlight', () => {
     const setup = createGravityRange();

@@ -29,8 +29,15 @@ export interface BurnOptions {
    */
   readonly lead?: number;
   /**
-   * Let the attitude go free this long after the burn ends [ASSUMED 5 s], so the ship coasts
-   * without firing jets. Pass `null` to keep holding (a quiet hold costs under 1.2 kg/h).
+   * This long after the burn ends [ASSUMED 5 s], stop holding the burn attitude and null the
+   * turn rate instead: the ship coasts without turning, at whatever attitude it has. Pass
+   * `null` to keep holding the burn attitude (a quiet hold costs under 1.2 kg/h).
+   *
+   * Not `free`: a burn leaves the ship turning (the RCS and the gimbal trimming against the
+   * thrust's lever arm; 2×10⁻³ rad/s after a 6 s burn), and a ship left free keeps turning,
+   * which smears the camera for hours: in a 5 m/s dive at Alpha it kept 229 fixes on Alpha in
+   * 8.4 h instead of about 1,350 (2G handoff). A rate hold costs a few tenths of a kilogram to
+   * null the rate and nothing after, since nothing torques a coasting ship.
    */
   readonly release?: number | null;
 }
@@ -62,7 +69,7 @@ export function burnSteps(options: BurnOptions): PlanStep[] {
   if (options.release !== null)
     steps.push({
       at: options.at + options.duration + (options.release ?? 5),
-      command: { kind: 'attitude', target: { reference: 'free' } },
+      command: { kind: 'attitude', target: { reference: 'rate', rate: { x: 0, y: 0, z: 0 } } },
     });
   return steps;
 }
