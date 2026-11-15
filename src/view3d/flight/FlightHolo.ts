@@ -64,6 +64,7 @@ import {
   planeStyle,
   setHoloPlane,
 } from '../../theme/three/index.ts';
+import type { EarlierSector } from '../../theme/three/index.ts';
 import {
   attitudeToScene,
   bodyToDrawing,
@@ -93,6 +94,16 @@ const MAX_RUNS = 3;
 export const RANGE_MIN = 5_000;
 export const RANGE_MAX = 12_000_000;
 export const RANGE_DEFAULT = 1_500_000;
+
+/**
+ * Encounters studied at close range: the shortest range FLIGHT allows there, in true metres
+ * (3C, ledger R4: the Chain Link's lattice is studied at about 120–500 m, the whole ship in
+ * view). Elsewhere the floor stays at `RANGE_MIN`. [ASSUMED] 120 m, from 3C's handoff.
+ */
+export const NEAR_RANGE: Readonly<Record<string, number>> = { 'chain-link': 120 };
+
+/** The shortest range FLIGHT allows in an encounter. */
+export const rangeMinFor = (encounterId: string): number => NEAR_RANGE[encounterId] ?? RANGE_MIN;
 /** Seconds between rebuilds of clipped paths as the ship moves through the volume. */
 const RECLIP = 0.25;
 
@@ -133,6 +144,8 @@ export interface FlightHolo {
   update(frame: FlightFrame, dt: number, time: number): void;
   range(): number;
   setRange(metres: number): void;
+  /** The shortest range allowed (true metres): `rangeMinFor` the encounter. */
+  setRangeMin(metres: number): void;
   headingUp(): boolean;
   setHeadingUp(on: boolean): void;
   /** The map's region view: chart-up, no large ship. */
@@ -147,6 +160,70 @@ export interface FlightHolo {
   /** Screen pixels covered by one hologram metre at the hologram's distance from the camera. */
   setPixelsPerUnit(pixels: number): void;
   dispose(): void;
+}
+
+/**
+ * Coverage from earlier attempts (`ViewSnapshot.coverageEarlier`, from Black Box) joined to this
+ * attempt's own. Every attempt starts at the same arrival on the same encounter clock, so a look
+ * taken near this moment of an earlier attempt covered this space at this time of the encounter:
+ * it counts as fresh as it is near in encounter time, fading over the same memory as this
+ * attempt's own looks. Only looks that can reach the hologram's range are kept, the freshest
+ * first, up to what the plane can draw.
+ */
+export function withEarlierAttempts(
+  own: readonly EarlierSector[],
+  snapshot: Pick<ViewSnapshot, 't' | 'world' | 'coverageEarlier'>,
+  range: number,
+): EarlierSector[] {
+  const looks = snapshot.coverageEarlier;
+  if (!looks?.length) return [...own];
+  const ship = snapshot.world.ship.position;
+  const memory = planeStyle.earlierMemory;
+  const out: EarlierSector[] = [...own];
+  for (const look of looks) {
+    const at = (look.from + look.to) / 2;
+    const fresh = 1 - Math.max(0, Math.abs(snapshot.t - at) - (look.to - look.from) / 2) / memory;
+    if (fresh <= 0) continue;
+    const dx = look.origin.x - ship.x;
+    const dy = look.origin.y - ship.y;
+    if (Math.hypot(dx, dy) > range + look.range) continue;
+    out.push({
+      center: Math.atan2(look.axis.y, look.axis.x),
+      halfWidth: look.halfAngle,
+      range: look.range,
+      dx,
+      dy,
+      fresh: Math.min(1, fresh),
+    });
+  }
+  return out.sort((a, b) => b.fresh - a.fresh).slice(0, MAX_EARLIER);
+}
+
+/**
+ * A forecast's positions split at `now`: the stretch already flown and the stretch ahead, each
+ * ending where the other starts (at the forecast's own position for `now`, interpolated).
+ */
+export function pastAndAhead(
+  samples: readonly { readonly t: number; readonly position: GameVec }[],
+  now: number,
+): { past: GameVec[]; ahead: GameVec[] } {
+  const first = samples[0];
+  const last = samples[samples.length - 1];
+  if (!first || !last || now <= first.t) return { past: [], ahead: samples.map((s) => s.position) };
+  if (now >= last.t) return { past: samples.map((s) => s.position), ahead: [] };
+  const i = samples.findIndex((s) => s.t > now);
+  const a = samples[i - 1]!;
+  const b = samples[i]!;
+  const k = (now - a.t) / (b.t - a.t);
+  const at: GameVec = {
+    x: a.position.x + (b.position.x - a.position.x) * k,
+    y: a.position.y + (b.position.y - a.position.y) * k,
+    z: (a.position.z ?? 0) + ((b.position.z ?? 0) - (a.position.z ?? 0)) * k,
+  };
+  return {
+    past: [...samples.slice(0, i).map((s) => s.position), at],
+    ahead: [at, ...samples.slice(i).map((s) => s.position)],
+  };
 }
 
 const niceStep = (x: number): number => {
@@ -184,6 +261,7 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
   const linesE = new LineSet(); // drawn in game metres, inside `trans`
 
   let range = RANGE_DEFAULT;
+  let rangeMin = RANGE_MIN;
   let headingUp = true;
   let chart = false;
   let pixelsPerMetre = 600;
@@ -257,9 +335,7 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
       g.add(tag);
       trans.add(g);
       const marker = new Group(); // bearing mark on the rim when the body is outside the volume
-      marker.add(
-        linesH.fat([-0.03, 0, 0.035, 0, 0, 0, 0.03, 0, 0.035], holoLines.bodyBearing),
-      );
+      marker.add(linesH.fat([-0.03, 0, 0.035, 0, 0, 0, 0.03, 0, 0.035], holoLines.bodyBearing));
       const markerTag = label('', 'dim');
       markerTag.position.set(0, 0.05, 0.02);
       marker.add(markerTag);
@@ -347,6 +423,7 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
   const trailHead = linesE.fat([], lineStyles.trail, { order: order.abovePlane });
   trans.add(trailHead);
   const forecastPath = new Path(lineStyles.forecast, order.abovePlane);
+  const forecastPast = new Path(holoLines.forecastPast, order.abovePlane);
   const forecastOld = new Path(holoLines.forecastOld, order.abovePlane);
   const previewPath = new Path(holoLines.preview, order.abovePlane);
   const compareA = new Path(lineStyles.previousAttempt, order.abovePlane);
@@ -476,7 +553,14 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
     for (let d = 0; d < 360; d += 15) {
       const a = (d * Math.PI) / 180;
       const r1 = RING * (d % 90 === 0 ? 0.9 : 0.95);
-      ticks.push(Math.sin(a) * RING, 0, -Math.cos(a) * RING, Math.sin(a) * r1, 0, -Math.cos(a) * r1);
+      ticks.push(
+        Math.sin(a) * RING,
+        0,
+        -Math.cos(a) * RING,
+        Math.sin(a) * r1,
+        0,
+        -Math.cos(a) * r1,
+      );
     }
     ring.add(thin(ticks, colour.ink, holoWire.tick));
   }
@@ -509,10 +593,7 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
   const pickables: { id: string; p: Vector3 }[] = [];
 
   /** The forecast's position at time `t`, by linear interpolation; null outside its span. */
-  const forecastAt = (
-    f: AnyForecast,
-    t: number,
-  ): { p: GameVec; sigma: number } | null => {
+  const forecastAt = (f: AnyForecast, t: number): { p: GameVec; sigma: number } | null => {
     const s = f.samples;
     const first = s[0];
     const last = s[s.length - 1];
@@ -567,6 +648,68 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
     }
   };
 
+  /**
+   * A section of the envelope across the path (P10, R5): the k-sigma ellipse of the 3D
+   * covariance projected onto the plane perpendicular to `tangent`. A planar covariance (three
+   * terms) has nothing out of the plane, so it falls back to a circle of its longest axis.
+   */
+  const sectionAround = (
+    centre: Vector3,
+    tangent: Vector3,
+    cov: readonly number[],
+    k: number,
+    n: number,
+    out: number[],
+    asSegments: boolean,
+  ): void => {
+    if (cov.length < 6) {
+      ringAround(centre, tangent, k * sigmaMajor(cov), n, out, asSegments);
+      return;
+    }
+    const u = tmp2.set(0, 1, 0).cross(tangent);
+    if (u.lengthSq() < 1e-12) u.set(1, 0, 0);
+    u.normalize();
+    const v = tmp3.copy(tangent).cross(u).normalize();
+    // Scene (x, y, z) is game (x, z, -y): back to game axes to read the covariance.
+    const [xx = 0, xy = 0, xz = 0, yy = 0, yz = 0, zz = 0] = cov;
+    const quad = (a: Vector3, b: Vector3): number => {
+      const ax = a.x;
+      const ay = -a.z;
+      const az = a.y;
+      const bx = b.x;
+      const by = -b.z;
+      const bz = b.y;
+      return (
+        ax * (xx * bx + xy * by + xz * bz) +
+        ay * (xy * bx + yy * by + yz * bz) +
+        az * (xz * bx + yz * by + zz * bz)
+      );
+    };
+    const cuu = Math.max(quad(u, u), 0);
+    const cuv = quad(u, v);
+    const cvv = Math.max(quad(v, v), 0);
+    // Cholesky of the 2×2: the section is L·(cos a, sin a), scaled by k.
+    const l11 = Math.sqrt(cuu);
+    const l21 = l11 > 0 ? cuv / l11 : 0;
+    const l22 = Math.sqrt(Math.max(cvv - l21 * l21, 0));
+    let px = 0;
+    let py = 0;
+    let pz = 0;
+    for (let i = 0; i <= n; i++) {
+      const a = (TAU * i) / n;
+      const pu = k * l11 * Math.cos(a);
+      const pv = k * (l21 * Math.cos(a) + l22 * Math.sin(a));
+      const x = centre.x + u.x * pu + v.x * pv;
+      const y = centre.y + u.y * pu + v.y * pv;
+      const z = centre.z + u.z * pu + v.z * pv;
+      if (!asSegments) out.push(x, y, z);
+      else if (i > 0) out.push(px, py, pz, x, y, z);
+      px = x;
+      py = y;
+      pz = z;
+    }
+  };
+
   function drawForecast(f: AnyForecast | undefined, now: number, clearance: number): void {
     latestAlerts = [];
     for (const r of ribbons) r.visible = false;
@@ -578,10 +721,15 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
     setThin(tube.validated, []);
     if (!f || f.samples.length < 2) {
       forecastPath.hide();
+      forecastPast.hide();
       return;
     }
     const Sh = Rh / range;
-    forecastPath.set(f.samples.map((s) => s.position));
+    // A18: the forecast describes its plan from the moment of commitment, and time runs while it
+    // is worked out. What the ship has already flown of it is drawn as past; the rest ahead.
+    const split = pastAndAhead(f.samples, now);
+    forecastPast.set(split.past);
+    forecastPath.set(split.ahead);
 
     // Envelope: ribbon per run, and rings spaced evenly along the path.
     const parts = runs(f.samples, (s) => insideGame(s.position));
@@ -599,7 +747,11 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
         })),
       );
     });
-    const rings = { sampled: [] as number[], extrapolated: [] as number[], validated: [] as number[] };
+    const rings = {
+      sampled: [] as number[],
+      extrapolated: [] as number[],
+      validated: [] as number[],
+    };
     const centre = new Vector3();
     const next = new Vector3();
     const tangent = new Vector3();
@@ -622,7 +774,7 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
           : s.validated
             ? rings.validated
             : rings.extrapolated;
-        ringAround(centre, tangent, radius, 20, into, true);
+        sectionAround(centre, tangent, s.positionCov, envelopeStyle.sigmas, 20, into, true);
       }
     }
     setThin(tube.sampled, rings.sampled);
@@ -636,8 +788,11 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
       toScene(last.position, centre);
       tangent.subVectors(centre, toScene(before.position, next)).normalize();
       const flat: number[] = [];
-      const r = Math.max(envelopeStyle.sigmas * sigmaMajor(last.positionCov), 0.012 / Sh);
-      ringAround(centre, tangent, r, 32, flat, false);
+      const major = envelopeStyle.sigmas * sigmaMajor(last.positionCov);
+      const r = Math.max(major, 0.012 / Sh);
+      // Across the envelope: its own section, or a ring big enough to see when it is tiny.
+      if (major * Sh < 0.012) ringAround(centre, tangent, r, 32, flat, false);
+      else sectionAround(centre, tangent, last.positionCov, envelopeStyle.sigmas, 32, flat, false);
       setFat(horizonRing, flat);
       horizonRing.visible = true;
       horizonTag.position.copy(centre);
@@ -652,8 +807,9 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
       toScene(knee.position, centre);
       tangent.subVectors(centre, toScene(f.samples[kneeIndex - 1]!.position, next)).normalize();
       const flat: number[] = [];
-      const r = Math.max(envelopeStyle.sigmas * sigmaMajor(knee.positionCov), 0.008 / Sh);
-      ringAround(centre, tangent, r, 24, flat, false);
+      const major = envelopeStyle.sigmas * sigmaMajor(knee.positionCov);
+      if (major * Sh < 0.008) ringAround(centre, tangent, 0.008 / Sh, 24, flat, false);
+      else sectionAround(centre, tangent, knee.positionCov, envelopeStyle.sigmas, 24, flat, false);
       setFat(kneeRing, flat);
       kneeRing.visible = true;
     }
@@ -664,7 +820,11 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
     // Closest approaches still ahead.
     latestAlerts = f.closestApproaches
       // Still ahead, and a real pass: a body the path merely recedes from is not an approach.
-      .filter((c) => c.t > now && (bodyRadius.get(c.id) === undefined || c.distance < 12 * bodyRadius.get(c.id)!))
+      .filter(
+        (c) =>
+          c.t > now &&
+          (bodyRadius.get(c.id) === undefined || c.distance < 12 * bodyRadius.get(c.id)!),
+      )
       .map((c): ApproachAlert => {
         const body = bodyMarks.has(c.id);
         const near = c.distance - 2 * c.sigma;
@@ -823,7 +983,12 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
       snapshot.t,
       ship.position.x,
       ship.position.y,
-      sensed.map((c) => ({ sensor: c.sensor, center: c.bearing, halfWidth: c.halfAngle, range: c.range })),
+      sensed.map((c) => ({
+        sensor: c.sensor,
+        center: c.bearing,
+        halfWidth: c.halfAngle,
+        range: c.range,
+      })),
     );
     (planeMat.uniforms.uToVolume!.value as Matrix4).copy(rot.matrix);
     setHoloPlane(
@@ -837,7 +1002,11 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
         range: c.range,
         quality: c.quality,
       })),
-      seen.earlier(snapshot.t, ship.position.x, ship.position.y),
+      withEarlierAttempts(
+        seen.earlier(snapshot.t, ship.position.x, ship.position.y),
+        snapshot,
+        range,
+      ),
     );
     setTag(rangeTag, `RANGE ${formatRange(range)}`);
 
@@ -953,9 +1122,7 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
     selectRing.visible = selectTag.visible = showChosen;
     if (showChosen && chosen && chosenHolo) {
       selectRing.position.copy(chosenHolo);
-      selectRing.scale.setScalar(
-        Math.max(1, (chosen.radius * Sh * 1.6) / holoSize.selection),
-      );
+      selectRing.scale.setScalar(Math.max(1, (chosen.radius * Sh * 1.6) / holoSize.selection));
       selectTag.position.copy(chosenHolo).y -= holoSize.selection * 1.4;
       const closing = Math.hypot(
         chosen.velocity.x - ship.velocity.x,
@@ -1051,10 +1218,21 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
       const by = v.y * 0.86;
       const bz = v.z * 0.86;
       setFat(velocity, [
-        0, 0, 0, v.x, v.y, v.z,
-        bx + side.x, by + side.y, bz + side.z,
-        v.x, v.y, v.z,
-        bx - side.x, by - side.y, bz - side.z,
+        0,
+        0,
+        0,
+        v.x,
+        v.y,
+        v.z,
+        bx + side.x,
+        by + side.y,
+        bz + side.z,
+        v.x,
+        v.y,
+        v.z,
+        bx - side.x,
+        by - side.y,
+        bz - side.z,
       ]);
     } else velocity.visible = false;
 
@@ -1083,7 +1261,8 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
         const half = Math.min(s.halfAngle, 1.4);
         const along = tmp.copy(axis).applyQuaternion(rot.quaternion);
         const b = along.dot(rot.position);
-        const toEdge = -b + Math.sqrt(Math.max(0, b * b - rot.position.lengthSq() + (Rh * 0.97) ** 2));
+        const toEdge =
+          -b + Math.sqrt(Math.max(0, b * b - rot.position.lengthSq() + (Rh * 0.97) ** 2));
         const reach = Math.min(s.range * Sh, toEdge * Math.cos(half) * 0.92);
         const r = Math.tan(half) * reach;
         const u = tmp2.set(0, 1, 0).cross(axis);
@@ -1165,7 +1344,12 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
     update,
     range: () => range,
     setRange(metres) {
-      range = clamp(metres, RANGE_MIN, RANGE_MAX);
+      range = clamp(metres, rangeMin, RANGE_MAX);
+      reclip = 0;
+    },
+    setRangeMin(metres) {
+      rangeMin = clamp(metres, 1, RANGE_MAX);
+      range = clamp(range, rangeMin, RANGE_MAX);
       reclip = 0;
     },
     headingUp: () => headingUp,
@@ -1213,6 +1397,7 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
       for (const p of [
         trail,
         forecastPath,
+        forecastPast,
         forecastOld,
         previewPath,
         compareA,

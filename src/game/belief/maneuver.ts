@@ -6,6 +6,8 @@
  */
 
 import type { AttitudeTarget, Command, ShipDefinition } from '../../contracts/index.ts';
+import { axisX, type Quat } from '../../lib/quat.ts';
+import type { Vec3 } from '../../lib/vec3.ts';
 
 const G0 = 9.80665;
 
@@ -48,6 +50,59 @@ export interface BurnOptions {
  * in data/ship-baseline.json), and a half turn settles in about 420 s; this leaves a minute.
  */
 export const TURN_LEAD = 480;
+
+/**
+ * The burn time, after commitment, a plan editor should offer by default (S20, R17): the full
+ * turn allowance and two minutes more, so a default burn never fires before a half turn has
+ * settled (2G's dive test also used 600 s). The player may still plan a burn sooner; a burn
+ * planned sooner than its turn needs shows as not ready (`turnReadiness`), and nothing delays it.
+ */
+export const DEFAULT_BURN_AT = 600;
+
+/** [ASSUMED] Settling after a slew, s: a half turn slews in 393 s and settles in about 420 (2G). */
+export const TURN_SETTLE = 30;
+
+/** The design's slew-rate limit, rad/s (`propulsion.attitudeControl.slewRate`, 0.008). */
+export function slewRate(definition: ShipDefinition): number {
+  const propulsion = definition.systems?.propulsion as
+    { readonly attitudeControl?: { readonly slewRate?: number } } | undefined;
+  return propulsion?.attitudeControl?.slewRate ?? 0.008;
+}
+
+/** Seconds to turn the nose (body +x) through `angle` rad at the slew limit and settle. */
+export function turnTime(definition: ShipDefinition, angle: number): number {
+  return angle > 0 ? angle / slewRate(definition) + TURN_SETTLE : 0;
+}
+
+export interface TurnReadiness {
+  /** The turn from the attitude now to the burn's direction, rad. */
+  readonly angle: number;
+  /** What the turn needs, s, and what the plan gives it, s. */
+  readonly needed: number;
+  readonly lead: number;
+  /** The ship will have turned and settled by the burn. */
+  readonly ready: boolean;
+}
+
+/**
+ * Whether a planned burn leaves the ship time to turn to it (S20, R17): from the believed
+ * attitude now to the direction the burn will thrust along (the nose, body +x), at the design's
+ * slew limit. `lead` is the time from now to the burn. The plan editor shows a burn that is not
+ * ready; the game never delays a committed command.
+ */
+export function turnReadiness(
+  definition: ShipDefinition,
+  attitude: Quat,
+  direction: Vec3,
+  lead: number,
+): TurnReadiness {
+  const nose = axisX(attitude);
+  const n = Math.hypot(direction.x, direction.y, direction.z);
+  const cos = n > 0 ? (nose.x * direction.x + nose.y * direction.y + nose.z * direction.z) / n : 1;
+  const angle = Math.acos(Math.min(1, Math.max(-1, cos)));
+  const needed = turnTime(definition, angle);
+  return { angle, needed, lead, ready: lead >= needed };
+}
 
 /** Turn, burn, release: the commands for one burn, in time order. */
 export function burnSteps(options: BurnOptions): PlanStep[] {

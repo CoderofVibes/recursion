@@ -47,6 +47,11 @@ export const holoLines = {
   preview: dashed(colour.forecast, 1.4, dash.forecast, 0.55),
   /** An earlier issued forecast of this attempt, kept for comparison with the trail. */
   forecastOld: dashed(colour.forecast, 1.2, dash.forecast, 0.35),
+  /**
+   * The stretch of the issued forecast the ship has already flown (A18): still drawn, frozen,
+   * so it can be held against the trail, but quieter than the stretch still ahead.
+   */
+  forecastPast: dashed(colour.forecast, 1.2, dash.forecast, 0.4),
   /** The second attempt in a two-attempt comparison (the first is `previousAttempt`). */
   compareB: solid(colour.ink, line.previousAttempt, 0.6),
   compareForecast: dashed(colour.blackbox, 1.2, dash.forecast, 0.5),

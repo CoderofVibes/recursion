@@ -12,13 +12,16 @@
  * Belief side only: the game is reached through `GameControls`.
  */
 import { flightAlerts, freshAlerts } from '../console/alerts.ts';
-import { buildChart } from '../console/chart.ts';
 import type { Desk } from '../console/desk.ts';
+import { isHandsOnNeutral } from '../contracts/index.ts';
 import type { GameControls } from '../game/belief/controls.ts';
+import { chartView } from '../view3d/adapter.ts';
 import type { Chart } from '../view3d/map/MapHolo.ts';
 import type { Hotspot, ViewMode } from '../view3d/room/layout.ts';
+import { rangeMinFor } from '../view3d/flight/FlightHolo.ts';
 import { RoomView } from '../view3d/room/RoomView.ts';
 import type { LossStage } from '../view3d/room/RoomView.ts';
+import { coastCadence } from '../theme/index.ts';
 import { createHandsOn } from './hands.ts';
 
 /** What the room's overlays need to know about the view. */
@@ -70,16 +73,30 @@ export function startControlRoom(
     blackBox: () => desk.setPage('blackbox'),
   });
   desk.keys = view.keys;
+  // Some encounters are studied at close range: FLIGHT may zoom in that far there (3C, R4).
+  view.flight.setRangeMin(rangeMinFor(game.briefing.id));
   const hands = createHandsOn(game);
 
   let raf = 0;
   let last = performance.now();
   let sinceInstruments = 0;
   let sinceChart = Infinity;
-  let chart: Chart = buildChart(game, game.blackBox.archive());
+  let chart: Chart = chartView(game.chart());
   let attemptSeen = '';
   let endHandled = '';
   let alertsShowing: ReadonlySet<string> = new Set();
+
+  // A20: while coasting at high warp with nobody at the controls, draw fewer frames so the
+  // simulation gets more of each wall second. Any input, or warp dropping, draws every frame.
+  let lastInput = performance.now();
+  let lastDraw = 0;
+  let sinceDraw = 0;
+  let sinceNotify = 0;
+  const touched = (): void => {
+    lastInput = performance.now();
+  };
+  const inputs = ['keydown', 'pointerdown', 'pointermove', 'wheel'] as const;
+  for (const type of inputs) window.addEventListener(type, touched, { passive: true });
 
   // A hidden page holds the game (A12) and lets it go when the page is shown again.
   let heldByPage = false;
@@ -113,7 +130,10 @@ export function startControlRoom(
       if (!first) {
         // The attempt before this one ended: its debrief is on the console, and the player
         // walks back in from the door (A9). A Recall arrives here without a loss sequence.
-        const before = game.blackBox.archive().attempts.filter((a) => a.id !== status.attemptId).at(-1);
+        const before = game.blackBox
+          .archive()
+          .attempts.filter((a) => a.id !== status.attemptId)
+          .at(-1);
         if (before) desk.debriefOf = before.id;
         desk.page = 'blackbox';
         if (!view.dying()) view.lose(false);
@@ -121,11 +141,15 @@ export function startControlRoom(
     }
     if (!view.dying()) game.advance(dt);
     status = game.status();
-    const snapshot = game.snapshot();
 
     // The flight controls answer only inside the encounter.
     const flying = view.mode() === 'flight' && !view.dying() && status.phase === 'operate';
+    const warpBefore = status.warp;
     const hand = hands.update(view.keys, flying, dt);
+    // Flying by hand runs at 1× (a burn lasts as long as the key is held): say so beside time.
+    if (warpBefore > 1 && game.status().warp === 1) desk.dropWarp('flying by hand');
+    // The player raised warp again: the last reason it dropped no longer applies.
+    else if (desk.warpDrop && game.status().warp > 1) desk.warpDrop = null;
 
     if (status.phase === 'ended' && endHandled !== status.attemptId) {
       endHandled = status.attemptId;
@@ -137,12 +161,32 @@ export function startControlRoom(
       desk.notify();
     }
 
-    sinceChart += dt;
+    // A20: a quiet coast at high warp draws only every so often; the game, the keys and the
+    // alerts above and below run every frame regardless.
+    sinceDraw += dt;
+    const coasting =
+      status.phase === 'operate' &&
+      !status.paused &&
+      game.status().warp >= coastCadence.warp &&
+      isHandsOnNeutral(hand.input) &&
+      view.settled() &&
+      now - lastInput > coastCadence.quietAfterInput;
+    if (coasting && now - lastDraw < 1000 / coastCadence.drawRate) {
+      instruments(dt, true);
+      return;
+    }
+    lastDraw = now;
+    const drawDt = Math.min(0.1, sinceDraw);
+    sinceDraw = 0;
+    const snapshot = game.snapshot();
+    desk.setFrame(snapshot);
+
+    sinceChart += drawDt;
     if (sinceChart > 1) {
       sinceChart = 0;
-      chart = buildChart(game, game.blackBox.archive());
+      chart = chartView(game.chart());
     }
-    view.frame(dt, {
+    view.frame(drawDt, {
       snapshot,
       ...(desk.preview ? { preview: desk.preview } : {}),
       selected: desk.selected,
@@ -152,8 +196,14 @@ export function startControlRoom(
       recording: !status.paused && status.phase !== 'ended',
     });
 
+    desk.sample(drawDt, snapshot, view.flight.miss()?.metres ?? null);
+    instruments(dt, coasting);
+  };
+
+  /** The instruments' refresh and A12's alert rule: every frame, drawn or not. */
+  const instruments = (dt: number, coasting: boolean): void => {
+    const status = game.status();
     const miss = view.flight.miss();
-    desk.sample(dt, snapshot, miss?.metres ?? null);
     sinceInstruments += dt;
     if (sinceInstruments >= INSTRUMENT_PERIOD) {
       sinceInstruments = 0;
@@ -165,9 +215,15 @@ export function startControlRoom(
       const first = seen.fresh[0];
       if (first && status.phase === 'operate' && game.status().warp > 1) {
         game.setWarp(1);
-        desk.say(`warp to 1× · ${first.text.toLowerCase()}`);
+        desk.dropWarp(first.text.toLowerCase());
       }
-      desk.notify();
+      // The instruments redraw less often on a quiet coast (A20); an alert above has already
+      // dropped warp, so the next refresh is a full one.
+      sinceNotify += INSTRUMENT_PERIOD;
+      if (!coasting || sinceNotify >= 1 / coastCadence.instrumentRate || game.status().warp === 1) {
+        sinceNotify = 0;
+        desk.notify();
+      }
     }
   };
   const loop = (now: number): void => {
@@ -192,7 +248,14 @@ export function startControlRoom(
     if (wanted === 'map' || wanted === 'ship' || wanted === 'console' || wanted === 'flight')
       view.go(wanted, true);
     const page = query.get('page');
-    if (page === 'mission' || page === 'plan' || page === 'model' || page === 'blackbox' || page === 'systems')
+    if (
+      page === 'mission' ||
+      page === 'plan' ||
+      page === 'model' ||
+      page === 'blackbox' ||
+      page === 'systems' ||
+      page === 'credits'
+    )
       desk.page = page;
   }
 
@@ -201,6 +264,7 @@ export function startControlRoom(
     stop() {
       cancelAnimationFrame(raf);
       document.removeEventListener('visibilitychange', onVisibility);
+      for (const type of inputs) window.removeEventListener(type, touched);
       hands.release();
       view.dispose();
     },

@@ -62,7 +62,7 @@ There is **no C03 → C04 outer bypass**, and no required return from Stillwater
 | V08 | Stillwater expanse | C04; R04 deliberately entered maneuver pocket |
 | V09 | Braided Crossing | C05 combined well, debris and lattice transfer |
 | V10 | Moving homeward rim | C06 standoff and H01 commitment are phases of the **same** opening |
-| V11 | Earth-side space | H02 with the surviving ship |
+| V11 | Earth-side space | H02: the reveal through the window (A17); no flying task |
 | V12, optional | Countercurrent streamer | A01; gas physics is not implicit in V03's eclipse |
 | V13, optional | Borrowed Spin structure | A03; proposed tether hardware/dynamics |
 
@@ -136,7 +136,7 @@ On loss/Recall, Black Box keeps acquired records up to loss, original forecasts,
 | R03 | Missing Room, optional | 3–5 | 0.5–1 |
 | R04 | Crooked Ship, optional | 2–4 | 0.5–1 |
 | H01 | Passage | 4–6 | 2–3 |
-| H02 | Familiar Sky | 2–3 | 1–2 |
+| H02 | Familiar Sky (the ending, A17: the loss sequence, then Earth in the window) | under 1 | under 1 |
 | A01 | Countercurrent, optional | 4–7 | 2–3 |
 | A02 | Tidal Orchard, optional | 3–5 | 1–2 |
 | A03 | Borrowed Spin, optional | 6–10 | 3–5 |

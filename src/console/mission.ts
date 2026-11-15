@@ -141,7 +141,13 @@ export interface Debrief {
   /** What differs from the attempt before, in plain instrument words. */
   readonly changed: readonly string[];
   /** Where each issued forecast left what was measured. */
-  readonly forecasts: readonly { readonly label: string; readonly value: string; readonly bad: boolean }[];
+  readonly forecasts: readonly {
+    readonly label: string;
+    readonly value: string;
+    readonly bad: boolean;
+    /** A measurement shown beside the forecasts, not a forecast. */
+    readonly measured?: boolean;
+  }[];
 }
 
 /** First and last recorded reading of a telemetry channel in an attempt. */
@@ -360,11 +366,20 @@ export function changes(record: AttemptRecord, previous: AttemptRecord | undefin
   return out;
 }
 
+/** The comparison point with the largest miss in σ, if any. */
+export function worstOf<T extends { readonly t: number; readonly sigmas: number }>(
+  points: readonly T[],
+): T | undefined {
+  let worst: T | undefined;
+  for (const p of points) if (!worst || p.sigmas > worst.sigmas) worst = p;
+  return worst;
+}
+
 /** Judge an attempt against its own design, from its record. */
 export function debrief(
   record: AttemptRecord,
   archive: BlackBoxArchive,
-  bodies: readonly { readonly id: string; readonly radius: number }[],
+  bodies: readonly { readonly id: string; readonly radius: number; readonly name?: string }[],
 ): Debrief {
   const design = designOf(record)?.design;
   const previous = archive.attempts.filter((a) => a.index < record.index).at(-1);
@@ -378,6 +393,14 @@ export function debrief(
   const stored = channelSpan(record, 'black-box.bytes');
   const closest = closestMeasured(record);
 
+  // Clearance can only be judged against objects the ship ranged.
+  let tightest: { id: string; clearance: number } | undefined;
+  for (const [id, r] of closest) {
+    const radius = bodies.find((b) => b.id === id)?.radius ?? 0;
+    const c = r - radius;
+    if (!tightest || c < tightest.clearance) tightest = { id, clearance: c };
+  }
+
   const constraints: DebriefLine[] = [];
   if (design) {
     constraints.push({
@@ -386,13 +409,6 @@ export function debrief(
       measured: main ? `${whole(main.last)} kg` : 'not recorded',
       met: main ? main.last >= design.reserve : null,
     });
-    // Clearance can only be judged against objects the ship ranged.
-    let tightest: { id: string; clearance: number } | undefined;
-    for (const [id, r] of closest) {
-      const radius = bodies.find((b) => b.id === id)?.radius ?? 0;
-      const c = r - radius;
-      if (!tightest || c < tightest.clearance) tightest = { id, clearance: c };
-    }
     constraints.push({
       label: 'clearance',
       planned: `≥ ${dist(design.clearance)}`,
@@ -432,7 +448,9 @@ export function debrief(
       fly: {
         label: 'evidence',
         planned: EVIDENCE.fly.detail,
-        measured: objective.length ? `${objective.length} objective events` : 'objective not reached',
+        measured: objective.length
+          ? `${objective.length} objective events`
+          : 'objective not reached',
         met: record.outcome.kind === 'completed',
       },
     };
@@ -447,13 +465,19 @@ export function debrief(
     .filter((x) => x.d.firstBeyond3Sigma !== null)
     .sort((a, b) => a.d.firstBeyond3Sigma! - b.d.firstBeyond3Sigma!)[0];
   if (record.outcome.kind === 'lost') {
+    const lostAt = record.outcome.t;
+    const forecastAtLoss = record.forecasts.some(
+      (f) => f.issuedAt <= lostAt && f.horizon >= lostAt,
+    );
     limiting = {
       label: `ship lost · ${record.outcome.cause}`,
       detail:
-        `T+${clock(record.outcome.t)}` +
+        `T+${clock(lostAt)}` +
         (contact && contact.kind === 'contact'
-          ? ` · contact with ${contact.with ?? 'an object the ship could not identify'}`
-          : ''),
+          ? // The game names a briefed body on contact, seen or not; an unbriefed rock only if seen.
+            ` · contact with ${contact.with ? (bodies.find((b) => b.id === contact.with)?.name ?? contact.with) : 'an object the ship could not identify'}`
+          : '') +
+        (forecastAtLoss ? '' : ' · outside forecast coverage'),
     };
   } else if (firstLeft) {
     limiting = {
@@ -466,11 +490,13 @@ export function debrief(
 
   const used = (span: { first: number; last: number } | undefined): number | undefined =>
     span ? span.first - span.last : undefined;
-  const rcsUsed =
-    rcsL || rcsR ? (used(rcsL) ?? 0) + (used(rcsR) ?? 0) : undefined;
+  const rcsUsed = rcsL || rcsR ? (used(rcsL) ?? 0) + (used(rcsR) ?? 0) : undefined;
   const cost = [
     { label: 'main propellant', value: main ? `${fixed(used(main)!, 1)} kg` : 'not recorded' },
-    { label: 'rcs propellant', value: rcsUsed !== undefined ? `${fixed(rcsUsed, 1)} kg` : 'not recorded' },
+    {
+      label: 'rcs propellant',
+      value: rcsUsed !== undefined ? `${fixed(rcsUsed, 1)} kg` : 'not recorded',
+    },
     { label: 'hydrogen', value: hydrogen ? `${fixed(used(hydrogen)!, 2)} kg` : 'not recorded' },
     { label: 'ship time', value: `T+${clock(lastT)}` },
     {
@@ -479,15 +505,51 @@ export function debrief(
     },
   ];
 
-  const forecasts = divergences.map(({ f, d }) => ({
-    label: `forecast T+${clock(f.issuedAt)} · v${f.modelVersion}`,
-    value: d.unmeasured
-      ? 'nothing measured while it was valid'
-      : d.firstBeyond3Sigma !== null
-        ? `left at T+${clock(d.firstBeyond3Sigma)} · worst ${fixed(d.maxSigmas ?? 0, 1)}σ`
-        : `held · worst ${fixed(d.maxSigmas ?? 0, 1)}σ`,
-    bad: d.firstBeyond3Sigma !== null,
-  }));
+  // Each forecast is judged only over what it covered and what was measured inside it (S9 R5):
+  // "held" says through when, and nothing after its end is credited to it or held against it.
+  const forecasts: Debrief['forecasts'][number][] = divergences.map(({ f, d }) => {
+    const ends = `ends T+${clock(f.horizon)}`;
+    const firstCompared = d.points[0]?.t;
+    const lastCompared = d.points.at(-1)?.t;
+    // The worst miss with its moment, and the stretch it was compared over (S20).
+    const worst = worstOf(d.points);
+    const worstText = `worst ${fixed(d.maxSigmas ?? 0, 1)}σ${worst ? ` at T+${clock(worst.t)}` : ''}`;
+    const over =
+      firstCompared !== undefined && lastCompared !== undefined
+        ? `compared T+${clock(firstCompared)}–T+${clock(lastCompared)}`
+        : '';
+    return {
+      label: `forecast T+${clock(f.issuedAt)} · v${f.modelVersion}`,
+      value: d.unmeasured
+        ? `not recorded: nothing measured while it ran · ${ends}`
+        : d.firstBeyond3Sigma !== null
+          ? `left at T+${clock(d.firstBeyond3Sigma)} · ${worstText} · ${over} · ${ends}`
+          : `within envelope through T+${clock(lastCompared ?? f.issuedAt)} · ${worstText} · ${over} · ${ends}`,
+      bad: d.firstBeyond3Sigma !== null,
+    };
+  });
+  // After the last forecast's end nothing was predicted: say so, rather than let "held" stand
+  // for the whole attempt, or a loss out there read as a disproved prediction.
+  const covered = Math.max(-Infinity, ...record.forecasts.map((f) => f.horizon));
+  if (Number.isFinite(covered) && lastT > covered)
+    forecasts.push({
+      label: 'no forecast after',
+      value:
+        `T+${clock(covered)}` +
+        (record.outcome.kind === 'lost'
+          ? ` · lost at T+${clock(lastT)}, outside forecast coverage`
+          : ` · flown to T+${clock(lastT)}`),
+      bad: record.outcome.kind === 'lost',
+    });
+  else if (!Number.isFinite(covered) && record.outcome.kind === 'lost')
+    forecasts.push({ label: 'forecast', value: 'none was issued this attempt', bad: true });
+  // Beside the forecasts, what was actually measured: the closest the ship came to anything it ranged.
+  forecasts.push({
+    label: 'closest measured',
+    value: tightest ? `${dist(tightest.clearance)} from ${tightest.id}` : 'nothing ranged',
+    bad: false,
+    measured: true,
+  });
 
   return {
     attemptId: record.id,

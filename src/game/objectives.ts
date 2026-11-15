@@ -5,6 +5,7 @@
 
 import type { BodyId, ObjectiveId } from '../contracts/ids.ts';
 import type { ShipEvent } from '../contracts/measurements.ts';
+import { hullReach } from '../contracts/ship.ts';
 import type { TruthWorld } from '../contracts/truth/index.ts';
 import type { Vec3 } from '../lib/vec3.ts';
 import { accelerationFrom, coupling } from '../sim/index.ts';
@@ -150,6 +151,31 @@ function regionCentre(
   };
 }
 
+/**
+ * When in a tick the whole ship first lies inside a sphere: its centre of mass within
+ * `inner` (the sphere's radius less the hull's reach from the centre of mass) of the sphere's
+ * centre. `a` and `b` are the centre of mass less the sphere's centre at the tick's start and
+ * end; both move straight over the tick. Returns the fraction of the tick, 0 to 1, or undefined
+ * if the ship never fits inside within it. A pass that enters and leaves within one tick counts.
+ */
+export function sweptAdmission(a: Vec3, b: Vec3, inner: number): number | undefined {
+  if (!(inner > 0)) return undefined;
+  const r2 = inner * inner;
+  const aa = a.x * a.x + a.y * a.y + a.z * a.z;
+  if (aa <= r2) return 0;
+  const dx = b.x - a.x;
+  const dy = b.y - a.y;
+  const dz = b.z - a.z;
+  const dd = dx * dx + dy * dy + dz * dz;
+  if (dd === 0) return undefined;
+  // |a + τ d|² = inner²: the first root is the way in.
+  const ad = a.x * dx + a.y * dy + a.z * dz;
+  const disc = ad * ad - dd * (aa - r2);
+  if (disc < 0) return undefined;
+  const tau = (-ad - Math.sqrt(disc)) / dd;
+  return tau >= 0 && tau <= 1 ? tau : undefined;
+}
+
 export const initialObjectiveProgress: ObjectiveProgress = { bands: {} };
 
 /** A sweep must pass its full turns by this much, rad: far above rounding, far below a tick. */
@@ -209,6 +235,8 @@ export function evaluateObjectives(
   progress: ObjectiveProgress,
   world: TruthWorld,
   spent = 0,
+  /** The world at the tick's start: `reach-region` sweeps the tick from it. Absent: end only. */
+  before?: TruthWorld,
 ): { progress: ObjectiveProgress; events: ShipEvent[] } {
   if (progress.completed) return { progress, events: [] };
   const events: ShipEvent[] = [];
@@ -287,21 +315,53 @@ export function evaluateObjectives(
     if (rule.window && world.t < rule.window.from) continue;
     const centre = regionCentre(rule, world);
     if (!centre) continue;
+    // Swept whole-ship admission (3C, R20): the hull's farthest corner inside the sphere at
+    // some instant of the tick, not only the centre of mass at its end.
     const k = world.ship.kinematics;
-    const d = Math.hypot(
-      k.position.x - centre.position.x,
-      k.position.y - centre.position.y,
-      k.position.z - centre.position.z,
-    );
-    if (d > rule.radius) continue;
+    const systems = world.ship.systems;
+    const reach = hullReach(systems.massProperties.hull, systems.massProperties.centerOfMass);
+    const end = {
+      x: k.position.x - centre.position.x,
+      y: k.position.y - centre.position.y,
+      z: k.position.z - centre.position.z,
+    };
+    const was = before ? regionCentre(rule, before) : undefined;
+    const kb = before?.ship.kinematics;
+    const start =
+      was && kb
+        ? {
+            x: kb.position.x - was.position.x,
+            y: kb.position.y - was.position.y,
+            z: kb.position.z - was.position.z,
+          }
+        : end;
+    const tau = sweptAdmission(start, end, rule.radius - reach);
+    if (tau === undefined) continue;
+    // Relative speed at that instant, the velocities taken as changing straight over the tick.
+    const v1 = {
+      x: k.velocity.x - centre.velocity.x,
+      y: k.velocity.y - centre.velocity.y,
+      z: k.velocity.z - centre.velocity.z,
+    };
+    const v0 =
+      was && kb
+        ? {
+            x: kb.velocity.x - was.velocity.x,
+            y: kb.velocity.y - was.velocity.y,
+            z: kb.velocity.z - was.velocity.z,
+          }
+        : v1;
     const speed = Math.hypot(
-      k.velocity.x - centre.velocity.x,
-      k.velocity.y - centre.velocity.y,
-      k.velocity.z - centre.velocity.z,
+      v0.x + tau * (v1.x - v0.x),
+      v0.y + tau * (v1.y - v0.y),
+      v0.z + tau * (v1.z - v0.z),
     );
     if (rule.maxSpeed !== undefined && speed > rule.maxSpeed) continue;
+    const t0 = before?.t ?? world.t;
+    const at = t0 + tau * (world.t - t0);
+    if (rule.window && at < rule.window.from) continue;
     completed = rule.objective;
-    events.push({ kind: 'objective', t: world.t, objective: rule.objective, status: 'reached' });
+    events.push({ kind: 'objective', t: at, objective: rule.objective, status: 'reached' });
   }
 
   for (const rule of rules) {

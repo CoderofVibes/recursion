@@ -63,7 +63,12 @@ describe('hands-on flight', () => {
     const { game, flown } = fakeGame();
     const hands = createHandsOn(game);
     hands.update(keys('a', 'r', 'arrowup', 'q'), true, 0.016);
-    expect(flown.at(-1)).toEqual({ translate: { x: 0, y: 1, z: 1 }, yaw: 1, pitch: 1, throttle: 0 });
+    expect(flown.at(-1)).toEqual({
+      translate: { x: 0, y: 1, z: 1 },
+      yaw: 1,
+      pitch: 1,
+      throttle: 0,
+    });
     hands.update(keys('s', 'd', 'f', 'arrowdown', 'e'), true, 0.016);
     expect(flown.at(-1)).toEqual({
       translate: { x: -1, y: -1, z: -1 },

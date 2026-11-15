@@ -19,6 +19,7 @@ import { loadShipDefinition } from '../../ship/index.ts';
 import { DEPART, briefing } from './briefing.ts';
 import { geometryForRun, NOMINAL, type ArrivalGeometry } from './geometry.ts';
 import { ARRIVAL_ANGLE, arrivalWorld } from './world.ts';
+import { cloudEnvironment } from './clouds.ts';
 
 export { DEPART, ENCOUNTER_ID, OBJECTIVES, PRIORS } from './briefing.ts';
 export { GEOMETRIES, NOMINAL, geometryForRun, type ArrivalGeometry } from './geometry.ts';
@@ -41,7 +42,7 @@ export const SEED = 'gravity-range-1';
  * Bump whenever a change here would make earlier Black Box records describe a different world
  * or ship (law, bodies, field, sensors). The app keeps one save slot per value.
  */
-export const SAVE_FORMAT = 5;
+export const SAVE_FORMAT = 6;
 
 /**
  * [ASSUMED] 1 s suits the P16 scale (2A: orbits of hours; worst error 11 mm over 20,000 s).
@@ -133,5 +134,7 @@ export function createGravityRange(
     arrivalMass: world.ship.systems.massProperties.mass,
     objectiveRules: OBJECTIVE_RULES,
     play: PLAY,
+    // The radiation crescent beyond the belt (A18 (2), S21): intensity at each equipment item.
+    environment: cloudEnvironment(ship),
   };
 }
