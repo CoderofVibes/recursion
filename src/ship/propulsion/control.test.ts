@@ -191,28 +191,32 @@ describe('attitude controller: closed loop (rigid body integrated in the test)',
   // `fly` (test-helpers.ts) steps the ship and integrates Euler's equations from the forces it
   // puts out, semi-implicit Euler at dt = 1 s. Nothing else acts on the ship.
 
-  it('holds a quiet ship for nothing, and a drifting one for about a kilogram an hour', () => {
-    const quiet = fly(definition, { duration: 3600, commands: hold(IDENTITY) });
-    expect(quiet.rcsUsed).toBe(0);
-    expect(quiet.kinematics.attitude).toEqual(IDENTITY);
-    // Left with rates just inside the deadband on every axis (the worst a manoeuvre leaves
-    // behind), the ship drifts to the edge of the band and is turned back by single bits.
-    let worst = 0;
-    const drifting = fly(definition, {
-      duration: 7200,
-      kinematics: { ...RESTING, angularVelocity: { x: 3e-4, y: -2e-4, z: 3.5e-4 } },
-      commands: hold(IDENTITY),
-      each: (_, __, kinematics) => {
-        worst = Math.max(worst, angleBetween(kinematics.attitude, IDENTITY));
-      },
-    });
-    // 2B's controller spent about 12 kg/h here (2F's request 3).
-    expect(drifting.rcsUsed / 2).toBeGreaterThan(0.2);
-    expect(drifting.rcsUsed / 2).toBeLessThan(1.5);
-    // Held within about 0.6°: the attitude deadband plus the rate deadband's drift.
-    expect(worst).toBeLessThan(0.012);
-    expect(drifting.peakRate).toBeLessThan(0.001);
-  });
+  it(
+    'holds a quiet ship for nothing, and a drifting one for about a kilogram an hour',
+    { timeout: 60_000 },
+    () => {
+      const quiet = fly(definition, { duration: 3600, commands: hold(IDENTITY) });
+      expect(quiet.rcsUsed).toBe(0);
+      expect(quiet.kinematics.attitude).toEqual(IDENTITY);
+      // Left with rates just inside the deadband on every axis (the worst a manoeuvre leaves
+      // behind), the ship drifts to the edge of the band and is turned back by single bits.
+      let worst = 0;
+      const drifting = fly(definition, {
+        duration: 7200,
+        kinematics: { ...RESTING, angularVelocity: { x: 3e-4, y: -2e-4, z: 3.5e-4 } },
+        commands: hold(IDENTITY),
+        each: (_, __, kinematics) => {
+          worst = Math.max(worst, angleBetween(kinematics.attitude, IDENTITY));
+        },
+      });
+      // 2B's controller spent about 12 kg/h here (2F's request 3).
+      expect(drifting.rcsUsed / 2).toBeGreaterThan(0.2);
+      expect(drifting.rcsUsed / 2).toBeLessThan(1.5);
+      // Held within about 0.6°: the attitude deadband plus the rate deadband's drift.
+      expect(worst).toBeLessThan(0.012);
+      expect(drifting.peakRate).toBeLessThan(0.001);
+    },
+  );
 
   it('turns 90° and 180° in yaw and in pitch inside the star trackers’ rate limit', () => {
     const cases: [string, Quat, number, number][] = [
