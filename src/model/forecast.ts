@@ -192,6 +192,10 @@ export function buildForecast(
     presentState(d, model, req.record.id) ??
     arrivalState(ctx, spec);
   const tNow = present.t;
+  // Nothing after the last sample can change the forecast, so every burn stops there at the
+  // latest: a held burn is commanded for far longer than any forecast.
+  const tStop = req.issuedAt + (req.duration ?? s.forecastMaxDuration);
+  const untilStop = (b: Burn): Burn => (b.t1 > tStop ? { ...b, t1: tStop } : b);
   const arcId = d.problem.builds.get(req.record.id)?.arcs.at(-1)?.id ?? req.record.id;
   const ref = referenceFor(d, spec.primary, arcId, model);
   const muOf = (id: string) => d.values[`body.${id}.mu`] ?? 0;
@@ -201,11 +205,15 @@ export function buildForecast(
   const mass = new MassLog(ctx.ship, req.record.measurements, arrivalMassOf(ctx));
   const adaptCtx = { ship: ctx.ship, settings: s, bodies: spec.bodies, primary: spec.primary };
   // LIFT(2G): a hands-on burn still open when the forecast is issued stops at the last record.
+  // A commanded burn of the attempt in progress runs on as commanded; once the attempt has
+  // ended, nothing thrusts past its end.
   const executed = burnsFromExecuted(
     req.record.executed,
-    Infinity,
+    req.record.outcome.kind === 'in-progress' ? Infinity : req.record.outcome.t,
     handsOnThrust(ctx.ship, recordEnd(req.record)),
-  ).filter((b) => b.t1 > tNow);
+  )
+    .map(untilStop)
+    .filter((b) => b.t1 > tNow && b.t1 > b.t0);
   const commands: ThrustSegment[] = segmentsFor(executed, adaptCtx, att, mass).segments;
 
   const bc = barycentre(ctx, spec.bodies, muOf);
@@ -299,11 +307,8 @@ export function buildForecast(
   const attitudes = planAttitudes(req.plan);
   let mPlan = req.massProperties.mass;
   // A planned hands-on burn left open runs to the end of the forecast.
-  const planHandsOn = handsOnThrust(
-    ctx.ship,
-    req.issuedAt + (req.duration ?? s.forecastMaxDuration),
-  );
-  for (const b of plannedBurns(req.plan, planHandsOn)) {
+  const planHandsOn = handsOnThrust(ctx.ship, tStop);
+  for (const b of plannedBurns(req.plan, planHandsOn).map(untilStop)) {
     const info = thrusterInfo(ctx.ship, b.thruster);
     if (!info) continue;
     const target = b.attitude ?? attitudes.get(b.t0);
@@ -440,7 +445,8 @@ export function buildForecast(
       (o, j) => (dist[o.id] = Math.hypot(rel[0]! - bodies[4 * j]!, rel[1]! - bodies[4 * j + 1]!)),
     );
     const nearest = Math.min(...Object.values(dist));
-    if (total > s.horizonFraction * nearest) break;
+    // The line ends at the horizon, and wherever a number stops being finite.
+    if (!(total <= s.horizonFraction * nearest) || !rel.every(Number.isFinite)) break;
     const t = fc.times[k]!;
     const frame = frameAt(rel, bodies, t);
     // Extrapolating: outside the covered range of the body that pulls hardest here.
@@ -522,14 +528,21 @@ export function buildForecast(
       continue;
     }
     const aref = referenceFor(d, spec.primary, arc.id, model);
-    const anc = anchorState(aref, primaryProfile, arc, wins, s.dt, {
-      h: s.fdStep,
-      gPrior: [1, s.localScalePriorSigma],
-      slopeSigma: s.anchorSlopePriorSigma,
-      extraProfiles: d.profiles.filter((p) => p.body !== spec.primary),
-    });
+    // A track whose present state cannot be fitted is not forecast; the ship's forecast stands.
+    let anc: ReturnType<typeof anchorState>;
+    try {
+      anc = anchorState(aref, primaryProfile, arc, wins, s.dt, {
+        h: s.fdStep,
+        gPrior: [1, s.localScalePriorSigma],
+        slopeSigma: s.anchorSlopePriorSigma,
+        extraProfiles: d.profiles.filter((p) => p.body !== spec.primary),
+      });
+    } catch {
+      asteroidNotes.push({ id: ast, forecast: false });
+      continue;
+    }
     const aTimes = samples.map((q) => q.t).filter((t) => t >= anc.tNow);
-    if (aTimes.length === 0) {
+    if (aTimes.length === 0 || ![...anc.state, ...anc.covariance.data].every(Number.isFinite)) {
       asteroidNotes.push({ id: ast, forecast: false });
       continue;
     }
@@ -559,7 +572,7 @@ export function buildForecast(
       let nearest = Math.hypot(rel[0]!, rel[1]!);
       for (let j = 0; j < nOthers; j++)
         nearest = Math.min(nearest, Math.hypot(rel[0]! - ob[4 * j]!, rel[1]! - ob[4 * j + 1]!));
-      if (majorSigma(cv.total) > s.horizonFraction * nearest) break;
+      if (!(majorSigma(cv.total) <= s.horizonFraction * nearest)) break;
       const t = afc.times[k]!;
       const p0 = primaryAt.get(t)!;
       const position = { x: p0.x + rel[0]!, y: p0.y + rel[1]! };

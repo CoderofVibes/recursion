@@ -66,6 +66,8 @@ export interface ResidualPoint {
 
 export interface DataCoverage {
   readonly attempt: AttemptId;
+  /** False when none of the attempt's tracking is in the fits; `missing` then says why. */
+  readonly used: boolean;
   readonly coastFixes: number;
   readonly poweredFixes: number;
   readonly accelSamples: number;
@@ -81,6 +83,12 @@ export interface ModelReport {
   readonly residuals: readonly ResidualPoint[];
   readonly residualSummary: Readonly<Record<string, ResidualClass>>;
   readonly confounding: Confounding | null;
+  /**
+   * Set when the global fit ran and could not be solved: the reason. The numbers are then held
+   * at their priors and each attempt is fitted on its own.
+   */
+  readonly fitFailure: string | null;
+  /** Per attempt, used or not: an attempt the model cannot use is listed with the reason. */
   readonly coverage: readonly DataCoverage[];
   readonly noiseScale: number;
   /** Default hedge σ_h0 outside sampled distances (§8.2). */
@@ -157,14 +165,18 @@ export function modelReport(snap: ModelSnapshot): ModelReport {
         }
       }
     const missing: string[] = [];
-    if (b.arcs.length === 0)
+    const unusable = d.unusable.get(attempt);
+    if (unusable !== undefined) missing.push(`not used by the model: ${unusable}`);
+    else if (b.arcs.length === 0)
       missing.push('no fittable tracking (fewer than 3 range fixes on the primary)');
+    else for (const q of b.skipped) missing.push(`${q.arc} not fitted: ${q.reason}`);
     if (coast === 0) missing.push('no coasting fixes');
     if (b.burns.length > 0 && powered === 0) missing.push('no fixes while thrusting');
     if (b.burns.length > 0 && accel === 0) missing.push('no accelerometer record during burns');
     if (b.unknownAttitude.length > 0) missing.push('burns without an attitude record');
     return {
       attempt,
+      used: b.arcs.length > 0,
       coastFixes: coast,
       poweredFixes: powered,
       accelSamples: accel,
@@ -179,6 +191,7 @@ export function modelReport(snap: ModelSnapshot): ModelReport {
     residuals,
     residualSummary: fit ? residualSummary(fit) : {},
     confounding: conf,
+    fitFailure: d.fitFailure ?? null,
     coverage,
     noiseScale: d.noiseScale,
     defaultHedge: d.sigmaH0,

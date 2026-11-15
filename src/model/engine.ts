@@ -42,7 +42,9 @@ import {
 } from './aging.ts';
 import { arcsFromRecord, planarCov, type ArcBuild, type Burn } from './adapt.ts';
 import {
+  MIN_ARC_FIXES,
   compileArc,
+  rangeFixTimes,
   simulate,
   usable,
   SHIP_REFS,
@@ -272,6 +274,8 @@ export function tierGProblem(
   opts: {
     /** Tracked asteroids' probe arcs to fit as well (rule tests, §10 and A5). */
     readonly probes?: ReadonlyMap<AttemptId, readonly Arc[]>;
+    /** Attempts the model cannot use, with the reason: they give no arcs (`ModelDerived.unusable`). */
+    readonly unusable?: ReadonlyMap<AttemptId, string>;
   } = {},
 ): TierGProblem {
   const s = spec.settings;
@@ -281,20 +285,30 @@ export function tierGProblem(
   const arcs: Arc[] = [];
   const levels: string[] = [];
   for (const rec of attempts) {
-    const b = arcsFromRecord(rec, {
-      ship: ctx.ship,
-      settings: s,
-      ...(ctx.arrivalMass !== undefined ? { arrivalMass: ctx.arrivalMass } : {}),
-      bodies: spec.bodies,
-      primary: spec.primary,
-    });
+    const unusable = opts.unusable?.get(rec.id);
+    const b: ArcBuild =
+      unusable !== undefined
+        ? {
+            arcs: [],
+            burns: [],
+            limitedLevels: [],
+            unknownAttitude: [],
+            skipped: [{ arc: rec.id, reason: unusable }],
+          }
+        : arcsFromRecord(rec, {
+            ship: ctx.ship,
+            settings: s,
+            ...(ctx.arrivalMass !== undefined ? { arrivalMass: ctx.arrivalMass } : {}),
+            bodies: spec.bodies,
+            primary: spec.primary,
+          });
     builds.set(rec.id, b);
     arcs.push(...b.arcs);
     levels.push(...b.limitedLevels);
   }
   for (const rec of attempts)
-    for (const p of opts.probes?.get(rec.id) ?? [])
-      if (rangeFixes(p, spec.primary).length >= 3) arcs.push(p);
+    for (const p of opts.unusable?.has(rec.id) ? [] : (opts.probes?.get(rec.id) ?? []))
+      if (rangeFixTimes(p.meas, spec.primary).length >= MIN_ARC_FIXES) arcs.push(p);
   const thrusters = thrustersOf(arcs);
   const accelSource = attempts
     .flatMap((r) => r.measurements)
@@ -572,6 +586,13 @@ export interface ModelDerived {
   readonly spec: ModelSpec;
   readonly problem: TierGProblem;
   readonly fit: FitResult | null;
+  /** Why Tier G gave no result although it ran: the values are then held at their priors. */
+  readonly fitFailure?: string;
+  /**
+   * Attempts the model could not be built with, each with the reason. They are left out of every
+   * fit and the rest are fitted: one bad attempt never stops the model (`buildModel`).
+   */
+  readonly unusable: ReadonlyMap<AttemptId, string>;
   /** Global values in force (Tier G when converged, else priors). */
   readonly values: Readonly<Record<string, number>>;
   readonly sigmas: Readonly<Record<string, number>>;
@@ -690,21 +711,119 @@ export interface BuildOptions {
   readonly cache?: TierLCache;
 }
 
-/** Tier G + Tier L + present state: the full rebuild (§11.3). Pure and deterministic. */
+const reasonOf = (e: unknown): string => (e instanceof Error ? e.message : String(e));
+
+/** Path of the first number in `v` that is not finite, or null. */
+function nonFinite(v: unknown, path = ''): string | null {
+  if (typeof v === 'number') return Number.isFinite(v) ? null : path;
+  if (v === null || typeof v !== 'object') return null;
+  if (ArrayBuffer.isView(v) || Array.isArray(v)) {
+    const list = v as unknown as ArrayLike<unknown>;
+    for (let i = 0; i < list.length; i++) {
+      const q = list[i];
+      if (typeof q === 'number' ? Number.isFinite(q) : nonFinite(q) === null) continue;
+      return nonFinite(q, `${path}[${i}]`);
+    }
+    return null;
+  }
+  for (const [k, q] of Object.entries(v)) {
+    const bad = nonFinite(q, path ? `${path}.${k}` : k);
+    if (bad !== null) return bad;
+  }
+  return null;
+}
+
+/** What a snapshot derives from the attempts: none of it may be NaN or infinite. */
+function nonFiniteIn(snap: ModelSnapshot): string | null {
+  const { parameters, covariance, support, residuals, fit, calibration, noiseScale } = snap.state;
+  const p = snap.derived.present;
+  return nonFinite({
+    parameters,
+    covariance,
+    support,
+    residuals,
+    fit,
+    calibration,
+    noiseScale,
+    present: p ? { t: p.t, state: p.state, covariance: p.covariance.data } : null,
+  });
+}
+
+/**
+ * Tier G + Tier L + present state: the full rebuild (§11.3). Pure and deterministic.
+ *
+ * One bad attempt never stops the model. If the build fails, or gives a number that is not
+ * finite, every attempt is built on its own; those that fail alone are left out with the reason
+ * (`ModelDerived.unusable`, which the report carries) and the rest are fitted. Attempts that
+ * fail only together are all left out, so the model then stands on its priors and says why. The
+ * verdicts are a function of the records like everything else, so a rebuild still equals the
+ * live state.
+ */
 export function buildModel(input: ModelInput, opts: BuildOptions = {}): ModelSnapshot {
+  const attempt = (
+    inp: ModelInput,
+    unusable: ReadonlyMap<AttemptId, string>,
+  ): { readonly snap?: ModelSnapshot; readonly reason: string } => {
+    try {
+      const snap = buildOnce(inp, opts, unusable);
+      const bad = nonFiniteIn(snap);
+      return bad === null
+        ? { snap, reason: '' }
+        : { reason: `${bad} would not be a finite number` };
+    } catch (e) {
+      return { reason: reasonOf(e) };
+    }
+  };
+  const mine = input.attempts.filter((a) => a.encounterId === input.context.encounterId);
+  // An in-flight refresh keeps the verdicts of the last full build, except on the attempt in
+  // progress, whose record is still growing.
+  const unusable = new Map(
+    [...(opts.reuse?.unusable ?? [])].filter(
+      ([id]) => id !== input.current && mine.some((a) => a.id === id),
+    ),
+  );
+  const whole = attempt(input, unusable);
+  if (whole.snap) return whole.snap;
+  for (const rec of mine) {
+    if (unusable.has(rec.id)) continue;
+    const alone = attempt({ ...input, attempts: [rec] }, new Map());
+    if (!alone.snap) unusable.set(rec.id, alone.reason);
+  }
+  const rest = attempt(input, unusable);
+  if (rest.snap) return rest.snap;
+  for (const rec of mine)
+    if (!unusable.has(rec.id))
+      unusable.set(rec.id, `could not be fitted together with the other attempts: ${rest.reason}`);
+  return buildOnce(input, opts, unusable);
+}
+
+function buildOnce(
+  input: ModelInput,
+  opts: BuildOptions,
+  unusable: ReadonlyMap<AttemptId, string>,
+): ModelSnapshot {
   const ctx = input.context;
   const spec = modelSpec(ctx, input.adopted);
   const s = spec.settings;
   const attempts = [...input.attempts]
     .filter((a) => a.encounterId === ctx.encounterId)
     .sort((a, b) => a.index - b.index || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-  const problem = tierGProblem(ctx, spec, attempts);
+  const problem = tierGProblem(ctx, spec, attempts, { unusable });
   const reuse = opts.reuse;
   let fit: FitResult | null = reuse ? reuse.fit : null;
-  if (!reuse && problem.arcs.length > 0)
-    fit = stagedFit(problem.structure, problem.arcs, problem.params, { dt: s.dt, h: s.fdStep });
+  let fitFailure = reuse?.fitFailure;
+  if (!reuse && problem.arcs.length > 0) {
+    // A global fit that cannot be solved leaves the values at their priors (§11.2: a Tier G
+    // result becomes the reference law only if it converged), and each arc is then fitted alone.
+    try {
+      fit = stagedFit(problem.structure, problem.arcs, problem.params, { dt: s.dt, h: s.fdStep });
+    } catch (e) {
+      fitFailure = reasonOf(e);
+    }
+  }
   const priorX = Float64Array.from(problem.params, (p) => p.init);
-  const useFit = !reuse && fit !== null && fit.converged;
+  const useFit =
+    !reuse && fit !== null && fit.converged && nonFinite([fit.x, fit.P.data, fit.chi2]) === null;
   const x = useFit ? fit!.x : priorX;
   const idx = new Map(problem.params.map((p, i) => [p.name, i]));
   const values: Record<string, number> = {};
@@ -862,6 +981,8 @@ export function buildModel(input: ModelInput, opts: BuildOptions = {}): ModelSna
     spec,
     problem,
     fit,
+    ...(fitFailure !== undefined ? { fitFailure } : {}),
+    unusable,
     values,
     sigmas,
     solutions,
@@ -972,14 +1093,22 @@ export function presentState(
   const prof = d.profiles.find((p) => p.body === d.spec.primary) ?? null;
   const extra = d.profiles.filter((p) => p.body !== d.spec.primary);
   const ref = referenceFor(d, d.spec.primary, arc.id, ctx);
-  const anc = anchorState(ref, prof, arc, wins, s.dt, {
-    h: s.fdStep,
-    gPrior: [1, s.localScalePriorSigma],
-    slopeSigma: s.anchorSlopePriorSigma,
-    extraProfiles: extra,
-  });
+  // A present-state fit that cannot be solved leaves the arrival state, the best state the
+  // model then has: a forecast is always available.
+  let anc: Anchor;
+  try {
+    anc = anchorState(ref, prof, arc, wins, s.dt, {
+      h: s.fdStep,
+      gPrior: [1, s.localScalePriorSigma],
+      slopeSigma: s.anchorSlopePriorSigma,
+      extraProfiles: extra,
+    });
+  } catch {
+    return arrivalState(actx, d.spec);
+  }
   const cov = zeros(4, 4);
   for (let i = 0; i < 16; i++) cov.data[i] = anc.covariance.data[i]! * d.noiseScale;
+  if (nonFinite([anc.tNow, anc.state, cov.data]) !== null) return arrivalState(actx, d.spec);
   return { source: 'anchor', t: anc.tNow, state: anc.state, covariance: cov, anchor: anc };
 }
 

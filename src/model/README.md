@@ -118,6 +118,15 @@ Extensions: `distance-law` (adds the exponent; a law shared by every body) and `
 
 **Missing data.** `report().coverage[i].missing` names what an attempt lacks ("no coasting fixes", "no accelerometer record during burns", "burns without an attitude record", …). No windows means no strength points; `strength[].points[].probe` marks points from an asteroid.
 
+**Attempts the model cannot use.** One bad attempt never stops the model; a call succeeds and the report says what was left out.
+
+- *Too short.* An arc needs three range fixes on the primary at different times (`MIN_ARC_FIXES`; normal points count once). With fewer it is not fitted: `coverage[i].used` is false and `missing` says so. No arc-growing stage cuts an arc below those three fixes (a quarter of a three-fix arc is one fix, which gives no velocity: the cause of the "singular matrix" report).
+- *Cut off.* Thrust never runs past the end of its record: a held burn or an open hands-on throttle stops at the last thing recorded, in flight and after a reload alike, so the live arcs equal the rebuilt ones. A forecast carries an executed burn on as commanded, to the forecast's end at most.
+- *Unusable.* If the model cannot be built with an attempt (a fit that cannot be solved, or a number that would not be finite), `buildModel` builds every attempt on its own, leaves out those that fail (`ModelDerived.unusable`; `coverage[i].missing` gives "not used by the model: …") and fits the rest. A present-state fit that fails leaves the arrival estimate, so a forecast is always available.
+- *Global fit.* If Tier G itself cannot be solved, the numbers stay at their priors, every attempt is fitted on its own, Tier L goes on, and `report().fitFailure` gives the reason.
+
+The verdicts are a function of the records, so a rebuild still equals the live model. A solver error names what the data leave undetermined ("fit: the data do not determine attempt-0001.ship.vx, …").
+
 ## Performance (demonstrated in Chrome via the dev server, model in a Web Worker)
 
 Rebuild with two attempts (12 h and 16 h, 482 records each): 348 ms. In-flight refresh: 19 ms. 12 h forecast, 721 samples: 25 ms. A later encounter with a carried rule (24 h of tracking): load and refresh 151 ms, 10 h forecast 16 ms. Local fits are cached by window and reference law, so refreshes stay cheap as attempts accumulate.
@@ -128,4 +137,5 @@ Rebuild with two attempts (12 h and 16 h, 482 records each): 348 ms. In-flight r
 - `service.test.ts`: the vectors as Black Box records through the game layer (GM, thrust and accelerometer calibration, confounding, forecast honesty and horizon, rebuild = live, extension lifecycle with validated spans, forecast immutability, fixtures, P11 lint on every real file).
 - `probes.test.ts`: a tracked asteroid at 0.55–0.7 r₀ while the ship flies 1.0–1.3 r₀ in the inverse-2.5 world: its windows follow the true law, its forecast is honest, the clearance is right, and a dive to 0.6 r₀ is forecast without the hedge.
 - `runs.test.ts`: attempts from different runs at different binary phases fit together only with their own briefings (A10), and a forecast follows its attempt's geometry; adopt and revoke survive a reload as decisions; asteroids tracked in a rule test widen its validated span (0.6–1.4 r₀ to 0.45–1.79 r₀).
+- `short-attempts.test.ts`: the control-room failure (a reload during a held burn, a 40 s attempt, a dive lost at the primary) fed live and rebuilt; attempts with zero to nine fixes; records that end inside a burn or a hands-on throttle, burns with no end, a burn from before the first fix; 150 random short attempts; a record with a fix that is not a number among good ones; a global fit that fails (injected). Nothing throws, nothing is NaN, the reasons are in the report, and rebuild = live throughout.
 - `revision2.test.ts`: aging and per-attempt engine values through records (a damaged engine in the second attempt), aged engine terms in forecasts, transit aging, and a carried rule in a later encounter (earned hedge inside its span around a new body, default beyond; none with the same-body reading).

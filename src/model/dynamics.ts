@@ -175,6 +175,22 @@ export interface Arc {
   readonly meas: readonly EstMeasurement[];
 }
 
+/**
+ * Range fixes on the primary, at distinct times, that an arc needs before it can be fitted: no
+ * prior holds a ship state (§3.6), and the initial quadratic of §4.5 needs three. An arc with
+ * fewer is left out of the fits (adapt.ts), and no arc-growing stage cuts an arc below them
+ * (solve.ts): a state the data do not determine is never solved for.
+ */
+export const MIN_ARC_FIXES = 3;
+
+/** Distinct times of the range fixes on `body`, ascending. */
+export function rangeFixTimes(meas: readonly EstMeasurement[], body: string): number[] {
+  const times = new Set<number>();
+  for (const m of meas)
+    if (m.kind === 'opnav' && m.target === body && m.z.length === 2) times.add(m.t);
+  return [...times].sort((a, b) => a - b);
+}
+
 export const TWO_PI = 2 * Math.PI;
 
 /** Wrap to [−π, π) (numpy-compatible modulo). */

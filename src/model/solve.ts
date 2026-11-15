@@ -6,10 +6,12 @@
  */
 
 import {
+  MIN_ARC_FIXES,
   compileArc,
   flatten,
   poweredAt,
   predict,
+  rangeFixTimes,
   timeIndex,
   usable,
   wrap,
@@ -118,6 +120,8 @@ export interface SolverOptions {
   readonly maxIterations?: number;
   readonly tolerance?: number;
 }
+
+const NOT_FINITE = 'fit: a measurement or a prediction is not a finite number';
 
 function tagKind(m: EstMeasurement, c: number): ResidualKind {
   if (m.kind === 'opnav') return c === 0 ? 'bearing' : 'range';
@@ -273,6 +277,23 @@ export class Problem {
     return { H, g, cost };
   }
 
+  /**
+   * A solve or inverse of the normal matrix. When it cannot be done, the error says what the
+   * data and the priors leave undetermined, so a caller can name it as the reason a fit was
+   * left out: such a fit is never returned as if it had been solved.
+   */
+  private normal<T>(H: Matrix, op: (m: Matrix) => T): T {
+    try {
+      return op(H);
+    } catch {
+      if (H.data.some((v) => !Number.isFinite(v))) throw new Error(NOT_FINITE);
+      const free = this.names.filter((_, i) => H.data[i * H.cols + i] === 0);
+      throw new Error(
+        `fit: the data do not determine ${free.length > 0 ? free.join(', ') : 'every parameter'}`,
+      );
+    }
+  }
+
   /** Levenberg–Marquardt from x0 (§4.4), then covariance and outputs (§4.6). */
   solve(x0: ArrayLike<number>, maxit = 60, tol = 1e-3): FitResult {
     let x = Float64Array.from(x0);
@@ -281,6 +302,9 @@ export class Problem {
     let { r, J } = this.residualAndJacobian(x);
     let pt = this.priorTerms(x);
     let cost = dot(r, r) + pt.cost;
+    // A cost that is not finite cannot be reduced: no step would be accepted, and the start
+    // would come back marked converged.
+    if (!Number.isFinite(cost)) throw new Error(NOT_FINITE);
     let lam = 1e-3;
     let converged = false;
     let it: number;
@@ -297,7 +321,7 @@ export class Problem {
       for (let tries = 0; tries < 12; tries++) {
         const A = { rows: p, cols: p, data: new Float64Array(H.data) };
         for (let i = 0; i < p; i++) A.data[i * p + i]! += lam * D[i]!;
-        delta = solve(A, g);
+        delta = this.normal(A, (m) => solve(m, g));
         xn = Float64Array.from(x, (v, i) => v + S[i]! * delta[i]!);
         const rn = this.residual(xn);
         cn = dot(rn, rn) + this.priorTerms(xn).cost;
@@ -311,7 +335,7 @@ export class Problem {
         converged = true; // no descent available: at a minimum to working precision
         break;
       }
-      const Hi = inverse(H);
+      const Hi = this.normal(H, inverse);
       let stepSig = 0;
       for (let i = 0; i < p; i++)
         stepSig = Math.max(
@@ -331,7 +355,7 @@ export class Problem {
     }
     if (it > maxit) it = maxit;
     const { H, Hd } = normal(J, r, S, pt.H, pt.g, this.m, p);
-    const Hi = inverse(H);
+    const Hi = this.normal(H, inverse);
     const P = zeros(p, p);
     for (let i = 0; i < p; i++)
       for (let j = 0; j < p; j++) P.data[i * p + j] = S[i]! * Hi.data[i * p + j]! * S[j]!;
@@ -402,6 +426,11 @@ function normal(
 /**
  * Arc growing (§4.5): fit the first 25%, 50%, then all of each arc's usable data, each stage
  * starting from the previous solution.
+ *
+ * A stage never cuts an arc below the fixes that determine its state: the arc keeps at least its
+ * first MIN_ARC_FIXES range fixes on the gauge body, or all of its data if it has fewer. A
+ * quarter of a short arc can hold a single fix, which gives a position and no velocity; the
+ * stage's normal matrix is then singular, and no later stage could run.
  */
 export function stagedFit(
   st: Structure,
@@ -413,6 +442,7 @@ export function stagedFit(
 ): FitResult {
   let x: ArrayLike<number> = x0 ?? params.map((p) => p.init);
   let res: FitResult | null = null;
+  const gauge = st.bodies.find((b) => b.state === 'gauge')?.id;
   for (const f of fracs) {
     let tmax: Map<string, number> | undefined;
     if (f < 1) {
@@ -422,7 +452,9 @@ export function stagedFit(
         if (ts.length === 0) continue;
         const lo = Math.min(...ts);
         const hi = Math.max(...ts);
-        tmax.set(a.id, lo + f * (hi - lo));
+        const fixes = gauge === undefined ? [] : rangeFixTimes(a.meas, gauge);
+        const determined = fixes.length >= MIN_ARC_FIXES ? fixes[MIN_ARC_FIXES - 1]! : hi;
+        tmax.set(a.id, Math.max(lo + f * (hi - lo), determined));
       }
     }
     const prob = new Problem(st, arcs, params, { ...opts, ...(tmax ? { tmax } : {}) });

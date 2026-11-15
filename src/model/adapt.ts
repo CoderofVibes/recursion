@@ -22,7 +22,13 @@ import type {
   ShipDefinition,
 } from '../contracts/index.ts';
 import * as quat from '../lib/quat.ts';
-import type { Arc, EstMeasurement, ThrustSegment } from './dynamics.ts';
+import {
+  MIN_ARC_FIXES,
+  rangeFixTimes,
+  type Arc,
+  type EstMeasurement,
+  type ThrustSegment,
+} from './dynamics.ts';
 import type { ModelSettings } from './settings.ts';
 
 // LIFT(2G): the estimator is planar; a contract Cov3 enters as its x–y block [xx, xy, yy].
@@ -230,6 +236,12 @@ export class MassLog {
   }
 }
 
+/** A stretch of an attempt that is not fitted, and why (the report carries the reason). */
+export interface SkippedArc {
+  readonly arc: string;
+  readonly reason: string;
+}
+
 export interface ArcBuild {
   readonly arcs: Arc[];
   readonly burns: Burn[];
@@ -237,8 +249,8 @@ export interface ArcBuild {
   readonly limitedLevels: string[];
   /** Burns that had no attitude record (direction assumed). */
   readonly unknownAttitude: number[];
-  /** Arcs skipped for want of ≥ 3 range fixes on the primary. */
-  readonly skipped: string[];
+  /** Stretches with measurements that are left out of the fits (too few fixes, or unusable). */
+  readonly skipped: SkippedArc[];
 }
 
 export interface AdaptContext {
@@ -281,6 +293,9 @@ export function segmentsFor(
   for (const b of burns) {
     const info = thrusterInfo(ctx.ship, b.thruster);
     if (!info) continue;
+    // A burn is cut into segments, so it must end: callers stop an open one at the end of its
+    // record (fits) or of the forecast.
+    if (!Number.isFinite(b.t1)) throw new Error(`burn ${b.index} of ${b.thruster} has no end`);
     const force = info.thrust * b.throttle;
     const cuts = new Set<number>([b.t0, b.t1]);
     for (let t = b.t0 + s.maxSegment; t < b.t1 - 1e-6; t += s.maxSegment) cuts.add(t);
@@ -404,12 +419,16 @@ export function estMeasurements(
     const sigma = Math.sqrt(mean(acc.s2) / n + settings.accelBiasSigma ** 2);
     out.push({ kind: 'accel', t, z: [mean(acc.fx), mean(acc.fy)], sigma: [sigma, sigma] });
   }
-  // Stable sort: equal times keep record order.
-  const sorted = out
+  // Stable sort: equal times keep record order. Sorted again after averaging, because a normal
+  // point sits at the mean time of its fixes and an arc's epoch is its first measurement (§3.5).
+  return byTime(normalPoints(byTime(out), burns, settings.normalPointInterval));
+}
+
+function byTime(meas: readonly EstMeasurement[]): EstMeasurement[] {
+  return meas
     .map((m, i) => [m, i] as const)
     .sort((a, b) => a[0].t - b[0].t || a[1] - b[1])
     .map((p) => p[0]);
-  return normalPoints(sorted, burns, settings.normalPointInterval);
 }
 
 /**
@@ -424,7 +443,17 @@ export function normalPoints(
   interval: number,
 ): EstMeasurement[] {
   if (!(interval > 0)) return [...meas];
-  const phase = (t: number) => burns.find((b) => t >= b.t0 && t < b.t1)?.index ?? -1;
+  // Flight phase: inside burn k, or coasting after n burns have ended. Coasting fixes on either
+  // side of a burn are not averaged together (the velocity changed between them, and their mean
+  // time can fall on a fix taken during the burn).
+  const phase = (t: number) => {
+    let ended = 0;
+    for (const b of burns) {
+      if (t >= b.t0 && t < b.t1) return b.index;
+      if (b.t1 <= t) ended++;
+    }
+    return -1 - ended;
+  };
   const groups = new Map<string, Extract<EstMeasurement, { kind: 'opnav' }>[]>();
   const order: (EstMeasurement | string)[] = [];
   for (const m of meas) {
@@ -464,9 +493,12 @@ function wrapAngle(a: number): number {
 
 /** Arcs of one attempt (§3.5). */
 export function arcsFromRecord(rec: AttemptRecord, ctx: AdaptContext): ArcBuild {
-  // A burn still running when the attempt ended stops there; in progress, it runs to its end.
-  const tEnd = rec.outcome.kind === 'in-progress' ? Infinity : rec.outcome.t;
-  const burns = burnsFromExecuted(rec.executed, tEnd, handsOnThrust(ctx.ship, recordEnd(rec)));
+  // A thrust segment never extends past the end of its record (§3.3: thrust is what was
+  // recorded): a burn still running when the attempt ended, or at the last thing recorded so
+  // far, stops there. A held burn is commanded for far longer than it runs, and a reload closes
+  // its attempt as recalled at that same time, so the live arcs equal the rebuilt ones.
+  const tEnd = recordEnd(rec);
+  const burns = burnsFromExecuted(rec.executed, tEnd, handsOnThrust(ctx.ship, tEnd));
   const att = new AttitudeLog(rec.measurements);
   const mass = new MassLog(ctx.ship, rec.measurements, arrivalMassOf(ctx));
   const breaks = rec.events
@@ -476,7 +508,7 @@ export function arcsFromRecord(rec: AttemptRecord, ctx: AdaptContext): ArcBuild 
   const bounds = [-Infinity, ...breaks, Infinity];
   const arcs: Arc[] = [];
   const limitedLevels: string[] = [];
-  const skipped: string[] = [];
+  const skipped: SkippedArc[] = [];
   const bodySet = new Set(ctx.bodies);
   const all = estMeasurements(rec.measurements, bodySet, burns, ctx.settings);
   let unknownAttitude: number[] = [];
@@ -485,11 +517,14 @@ export function arcsFromRecord(rec: AttemptRecord, ctx: AdaptContext): ArcBuild 
     const hi = bounds[k + 1]!;
     const id = k === 0 ? rec.id : `${rec.id}~${k}`;
     const meas = all.filter((m) => m.t >= lo && m.t < hi);
-    const nRange = meas.filter(
-      (m) => m.kind === 'opnav' && m.target === ctx.primary && m.z.length === 2,
-    ).length;
-    if (nRange < 3) {
-      if (meas.length > 0) skipped.push(id);
+    // An arc that cannot determine its state is left out, with the reason (§3.5).
+    const nRange = rangeFixTimes(meas, ctx.primary).length;
+    if (nRange < MIN_ARC_FIXES) {
+      if (meas.length > 0)
+        skipped.push({
+          arc: id,
+          reason: `${nRange} range ${nRange === 1 ? 'fix' : 'fixes'} on the primary, ${MIN_ARC_FIXES} at different times are needed to fit a path`,
+        });
       continue;
     }
     const arcBurns = burns.filter((b) => b.t1 > lo && b.t0 < hi);
