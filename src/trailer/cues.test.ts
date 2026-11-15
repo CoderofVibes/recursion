@@ -45,6 +45,9 @@ describe("the trailer's sound", () => {
     expect(at('loss-failure')).toEqual([LATTICE_STRIKE]);
     expect(at('black-cut')).toEqual([...SNAPS]);
     expect(at('room-hum')).toEqual([beat('lattice').start, beat('console').start]);
-    expect(at('home-reveal')).toEqual([beat('console').start]);
+    // The owner's two cuts (2026-11-15): the title goes out in silence, and the console with
+    // Earth keeps the room's hum alone, the same cabin sound as the lattice shot.
+    expect(at('home-reveal')).toEqual([]);
+    expect(at('title-out')).toEqual([]);
   });
 });

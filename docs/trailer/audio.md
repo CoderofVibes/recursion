@@ -26,7 +26,7 @@ At 12.8 s and 26.2 s **everything stops dead** and only the game's `black-cut` p
 | `warning.mp3` | The alarm: 9.0, 9.9, 10.8, 11.7, 12.6 s | The last is cut dead at 12.8 s |
 | `black-cut.mp3` | 12.8 s and 26.2 s, the snaps | Then silence |
 | `room-hum.mp3` (loop) | 7.3–9.0 s, quietly, while the camera looks at FLIGHT and the empty window; and 23.9–26.2 s, the console with Earth | Cut by the strike at 9.0 s, and at 26.2 s |
-| `home-reveal.mp3` | 23.9 s, the console with Earth | Cut at 26.2 s |
+| ~~`home-reveal.mp3`~~ | Not used (owner, 2026-11-15) | Skipped: the console with Earth keeps the room's hum alone, so it is the same cabin sound as the rest of the video |
 
 ## The trailer's own cues (`src/trailer/audio/`)
 

@@ -168,7 +168,8 @@ export const CUES: readonly SoundCue[] = [
     loop: true,
     gain: 0.45,
   },
-  { from: 'game', file: 'home-reveal', at: start('console'), until: CARD_SNAP, gain: 0.5 },
+  // No `home-reveal` here (owner, 2026-11-15): the console shot keeps the one cabin sound the
+  // video already has, the room's hum above, so it sounds like the same cabin as the lattice shot.
   { from: 'game', file: 'black-cut', at: CARD_SNAP, until: start('card'), gain: 0.6 },
 
   // The final card.
