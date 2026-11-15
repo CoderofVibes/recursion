@@ -92,6 +92,12 @@ export function startControlRoom(
   let lastDraw = 0;
   let sinceDraw = 0;
   let sinceNotify = 0;
+  // The simulation's bigger slice (2F's `FrameBudget`) goes with the thinned frames and only
+  // with them: the game counts coasting from the same warp, and the slice is raised while the
+  // loop thins and put back the moment it stops, so a touch gives back the full frame rate.
+  const ordinary = game.setFrameBudget({ coastingFrom: coastCadence.warp }).ms;
+  game.setFrameBudget({ coastingMs: ordinary });
+  let thinning = false;
   const touched = (): void => {
     lastInput = performance.now();
   };
@@ -178,6 +184,10 @@ export function startControlRoom(
       isHandsOnNeutral(hand.input) &&
       view.settled() &&
       now - lastInput > coastCadence.quietAfterInput;
+    if (coasting !== thinning) {
+      thinning = coasting;
+      game.setFrameBudget({ coastingMs: coasting ? coastCadence.simulationMs : ordinary });
+    }
     if (coasting && now - lastDraw < 1000 / coastCadence.drawRate) {
       instruments(dt, true);
       return;

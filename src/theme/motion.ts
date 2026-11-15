@@ -40,7 +40,7 @@ export const motion = {
  * A20, faster coasting on slow machines: while coasting at high warp with nobody at the
  * controls, fewer frames are drawn so the simulation gets more of each wall second. Any touch of
  * a key or the pointer, or warp dropping (an alert drops it to 1×, A12), draws every frame again
- * at once. [ASSUMED] values, to agree with 2F's per-frame simulation budget.
+ * at once. [ASSUMED] values; the simulation's slice is agreed with 2F through the integrator.
  */
 export const coastCadence = {
   /** Warp at or above which a quiet coast draws fewer frames. */
@@ -51,4 +51,9 @@ export const coastCadence = {
   instrumentRate: 2,
   /** ms after the last key, click, wheel or pointer move before frames thin out. */
   quietAfterInput: 1500,
+  /**
+   * ms of each drawn frame the simulation may take while frames are thinned (2F's
+   * `FrameBudget.coastingMs`; approved by the integrator). Just under a 60 Hz frame.
+   */
+  simulationMs: 14,
 } as const;
