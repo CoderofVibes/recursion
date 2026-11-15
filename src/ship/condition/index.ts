@@ -207,8 +207,14 @@ export function stepCondition(
         events.push({ kind: 'equipment-recovered', t: at, equipment: id });
     }
     if (condition !== e.condition)
-      events.push({ kind: 'condition-changed', t: at, equipment: id, condition });
-    if (amount > 0) events.push({ kind: 'exposure', t: at, equipment: id, amount });
+      events.push({
+        kind: 'condition-changed',
+        t: at,
+        equipment: id,
+        condition: values.reportedCondition ?? condition,
+      });
+    // P11/A24: component dose is truth state, not a recorded observation.
+    // The radiation monitor's sensor channel supplies measured dose rate.
     equipment[id] = { ...e, condition, tripped, faults, values };
   }
   const rank = (e: ShipEvent) =>

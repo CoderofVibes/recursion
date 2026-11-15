@@ -65,7 +65,11 @@ stored-energy ledger. It does not appear as generated bus energy.
 `functionAvailable(e,t)` gates valid sensing/control during reboot or cold
 inhibition. The sensor owner must use this before emitting fresh measurements;
 stale observations retain their original timestamp. Standard `condition-changed`
-events use the actual equipment IDs, so existing A5 aging consumes observed drops.
+events use the actual equipment IDs and `values.reportedCondition ?? condition`,
+so existing A5 aging consumes reported drops even when true damage differs (R34).
+True cumulative component dose remains only in `state.exposure`; this module emits
+no recorded `exposure` events (R35/P11). A24's radiation monitor, owned by 3C,
+supplies its measured local dose-rate channel, not each component's absorbed dose.
 No truth import or alternate aging implementation is added to the model.
 
 ## Thermal network and faults
