@@ -1,0 +1,7 @@
+Please review docs/handoffs/region-proposal/README.md and regions.md, and open flow.html for the interactive overview. flow.fragment.html is the editable diagram source.
+
+This is the region and expedition proposal developed with Codex, covering all 20 original catalogue entries plus Countercurrent, Tidal Orchard and Borrowed Spin. Keep confirmed owner direction distinct from proposed routes, names and physics additions.
+
+Key clarifications: full 3D manual flight; layout variation BETWEEN expeditions, with no required repeat visits within one run; learned passages become easier but still require pressure and skill; Black Box evidence and model learning persist after ship loss. A separate thread owns the 3D UI. I particularly liked Borrowed Spin, but its implementation scope is still to be assessed.
+
+Start with a high-level review of the two forward learning branches, the optional Well Garden / Unseen Cathedral cross-transfer, and the optional detours that rejoin farther ahead. Check how this fits the current project, identify any consequential conflict, and bring me the first major design decision before diving into detailed implementation. Treat this as a proposal, not blanket approval to build every region or add every new physics system.

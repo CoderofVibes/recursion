@@ -26,3 +26,6 @@ Thumbs.db
 
 # Local Claude Code preview config (each worktree makes its own; ports differ)
 .claude/launch.json
+
+# Codex diagram export: bundles OpenAI viewer code; keep the editable fragment instead
+docs/handoffs/region-proposal/flow.html
