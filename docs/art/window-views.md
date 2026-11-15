@@ -33,6 +33,7 @@ Internal names only. Nothing is ever labelled on screen (Night Watch §8).
 | **Pair** | Two interacting galaxies | Small, faint, joined by a thin tidal tail; 1–2° in all |
 | **Ember** | One bright deep-red star | The brightest star in the sky, unmistakably red |
 | **Hollow** | A starless dark cloud | A soft-edged patch of near-black about 15° across, few stars in front of it |
+| **Ember Wheel** (proposed, owner to decide) | A second, tilted spiral on the opposite side of the sky (X03b `027eec67` #0) | About 30–40° across, its rim lined with bright star-forming points like embers |
 | **Deep pole** | The sky farthest from the Galaxy's disc | Very sparse stars, many faint galaxies (S03 style), the darkest sky |
 
 ## The views, region by region
@@ -83,6 +84,7 @@ Each layer stands alone and can merge alone. Tokens go in `src/theme/` (Conventi
 - **Determinism.** The atlas is identical on every run and every machine (fixed seed, no `Math.random`).
 - **Modest laptop (A18 item 7).** Cold load still within 2.5 s with the bake included; frame p95 unchanged within noise.
 - **Honesty.** Nothing drawn that the window channel or a phenomenon's own product doesn't supply, apart from the fixed distant sky. No lattice in N03.
+- **Non-spherical bodies (open question for the integrator).** The chosen looks for the Red Wall, Listening Shelf, Hinge, Shadow Observatory's overhang and the Borrowed Spin structure are slabs, ridges, overhangs and wheels. The physics treats massive bodies as point masses with **spherical** collision radii (P4, P16). If the window draws a slab while the collision shape is a sphere, the player will strike invisible space or pass through visible rock, which breaks the window's promise that it shows what is there. Either those bodies get collision shapes that match their look, or the visible rock is shaped to fill its sphere. This is a physics and content decision, not an art one.
 - **Proof.** A headless-Chrome screenshot of each region's nominal arrival (C01, C02 and the Well Garden first, since they're playable now), for the owner to judge against the bible.
 
 ## Ready to paste (for the owner to relay)

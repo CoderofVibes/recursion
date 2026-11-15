@@ -69,4 +69,22 @@ For the disclosure: MidJourney was used to make reference images that guided the
 
 **Pattern after three rounds:** MidJourney adds a ground, a horizon or an atmosphere whenever a prompt has a large body or many rocks. Round 4 prompts say "seen from far out in open space" and put `ground, horizon, atmosphere, planet surface, landscape` in `--no`.
 
+## Round 4 (2026-11-15): X04c, X03b, X06b, L06b, with MidJourney's weirdness raised
+
+**Owner direction (2026-11-15):** "I upped the weirdness of these ones. We can make the environment the player sees look really cool and different." The owner raised MidJourney's weirdness for this round. The art bible records what that means for the game.
+
+| Prompt | Job ID | # | Verdict | Use | Why |
+|---|---|---|---|---|---|
+| X04c | `969f9ba6-f7d0-4951-816e-dbc0c748a190` | 1 | **chosen** | Red Wall | Finally in open space: a vast layered slab of rust rock in hard warm light, black sky, a small edge-on galaxy far off. Nothing beneath it. |
+| X04c | `6042ea07-6a8f-471b-a5ce-31e2ad1f582c` | 3 | partial | Composition for any lone massive body | A pale slab adrift, a small warm sun, a tiny galaxy: lonely and huge. Too pale for the Red Wall; a good model for Listening Shelf's face or Hinge's ridge. |
+| X03b | `027eec67-565e-46f9-9407-21b11d39b783` | 1 | **chosen** | Borrowed Spin structure | A colossal thin wheel with a dark hub, lit only along its edge, a galaxy glowing behind it. It reads as abandoned, impossibly large, and turning. Rotation will show clearly as the lit edge moves. |
+| X03b | `5b9c5425-9735-4ea3-bd04-7666cb2234dc` | 0 | partial | A broken hull arc | A weathered curved hull segment, lit edge-on: a strong alternative silhouette for the structure. Drop the glowing ring of embers around it: nothing in the physics makes it. |
+| X03b | `027eec67-565e-46f9-9407-21b11d39b783` | 0 | **proposed sky landmark** | A second galaxy | A big tilted spiral whose outer rim burns with points of light. As a second landmark, on the opposite side of the sky from the edge-on Galaxy, it makes the sky stranger still. Distant sky, so honest. Owner to decide. |
+| X03b | `027eec67-565e-46f9-9407-21b11d39b783` | 2, 3 | dropped | | A bare luminous ring (it competes with the openings' look) and a glowing disc. |
+| X06b | `cb93a8bc-9af3-4fc2-8126-720448f922c2` | 0 | **chosen** | Twin Deeps belt and shadow | A near-black sphere with a hair-thin warm crescent, the belt a river of sparks, and a dark gap in the ring where the sphere's shadow falls. The best Twin Deeps image since the hero. Rocks should be sharp points, not out-of-focus bokeh. |
+| X06b | `cb93a8bc-9af3-4fc2-8126-720448f922c2` | 2 | partial, for X07 | The belt edge-on | The ring seen exactly edge-on as a single blazing line through the sphere: the "false hairline" that later echoes the Turning Rim. The red halo round the sphere (an atmosphere) and the saturated red haze are wrong. |
+| L06b | `88a5797e-1112-42b1-ab99-55b51c8c1653` | 3 | **chosen** | Petal Gallery | Openings scattered at different distances and angles, white fibrous rims matching the Turning Rim, and inside each one the same blue-white galaxy turned a different way. Exactly the puzzle. |
+| L06b | `b3495a44-cbba-4b9b-b3df-a10feb866733` | 2 | partial | More petals, more variety | Many openings of many sizes, each with the landmark inside. Rims too orange and blue; keep them white and violet. |
+| L06b | `7ac3af06-b35f-4042-9867-e53fc61f2bc8` | 1 | partial | Rim texture | Rims like burning paper with smoky veils: striking, but it reads as fire. Take the ragged inner edge only. |
+
 Images shipped as textures: **none** (A23).

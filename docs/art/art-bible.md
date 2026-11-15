@@ -4,7 +4,8 @@ For the threads that build the window's visuals: 2D (window and sky), 3B (funnel
 
 ## General rules
 
-1. **Real space first.** True-colour astrophotography: pinpoint stars, black vacuum, high dynamic range, no lens flare, no diffraction spikes (the window is an eye, not a telescope), no light beams in vacuum. Light shows only where it falls on a surface (P02).
+0. **Strange, not fake** (owner, 2026-11-15: "We can make the environment the player sees look really cool and different"). The window should be striking and unlike any sky the player knows. Where the game is free (the distant sky, and the fictional phenomena: funnels, clouds, openings, the abandoned structure), push the strangeness. Where the simulation models something (bodies, rocks, light, shadow, Earth), keep it physically true: the strangeness there comes from the universe's own shapes and lighting, never from breaking them. The rules below keep the two apart.
+1. **Real space first, for what's real.** True-colour astrophotography: pinpoint stars, black vacuum, high dynamic range, no lens flare, no diffraction spikes (the window is an eye, not a telescope), no light beams in vacuum. Light shows only where it falls on a surface (P02).
 2. **Violet means fiction.** Night Watch's `well`/`lattice` violet (`#9b8cff`, cores toward `#ece6ff`) is for the funnels, the radiation clouds and the openings' rims only. Nothing natural is violet.
 3. **The hologram must read on top.** The flight hologram is drawn in front of the window. Keep the sky dim and low in saturation, and keep it clear of the instrument hues: forecast teal, thrust magenta, velocity lime, Black Box orange, caution yellow and warning red. Nebulae stay faint and small.
 4. **Warm room, cold outside, warm light.** The room is warm near-black (Night Watch). Space is neutral black. The far sun's light is warm, so lit edges carry a faint warm tone, which ties the outside to the room.
@@ -23,6 +24,7 @@ For the threads that build the window's visuals: 2D (window and sky), 3B (funnel
 - **Its red knots.** Dozens of **emission knots** sit along and inside the lane, clustered most densely where the lane crosses the core. Each is 0.1–1° across. They're deep, dim garnet (low saturation), never bright crimson: they must not look like a warning behind the hologram.
 - **Halo.** A faint grey glow of unresolved stars surrounds the disc, fading over 20–30°.
 - **Beyond the galaxy.** Mostly black sky with sparse field stars, a few faint distant galaxies, and the other landmarks in window-views.md.
+- **Proposed second galaxy** (owner to decide; X03b `027eec67…` #0). On the opposite side of the sky, a large tilted spiral, about 30–40° across, whose outer rim is lined with bright points of star formation like embers. Two great galaxies in one sky, one edge-on and one tilted, is something no human sky has.
 - **Colour.** Galaxy light is neutral white-grey toward warm, never teal or green. Field stars: deep red (about 35 %), blue-white (about 35 %), white (25 %), yellow (5 % at most).
 - **Stars.** Point sprites, never blurred discs. Brightness follows a steep power law: almost all faint, a handful bright. Density rises sharply inside the bands (about 8× at a band's centre) and is lowest at the poles of the primary band. Faint stars should be one or two pixels wide.
 - **Landmarks.** A few distant galaxies (S03 style) at fixed places: small, elliptical smudges, edge-on spirals, one interacting pair; and one cold blue-white star cloud (from S01 `6afb7728…` #3) beside the bulge.
@@ -74,7 +76,19 @@ Lit rocks read as **sparks**: tiny warm points, brightest where the sun is behin
 
 An unlit body is known only by the stars it hides: a sharp boundary where the star field and the galaxy's light simply stop, with nothing drawn on the body itself. Small fragments crossing the band are moving black holes in the stars. The scene works only where the sky behind is dense, so it faces the galaxy. The current renderer already draws unlit bodies as black discs; this scene needs the sky behind them to be rich enough to show it.
 
-### Red Wall (2D) — surface from X04b `79f27860…` #3
+### Twin Deeps belt and shadow (2D) — X06b `cb93a8bc…` #0; edge-on from #2
+
+The belt is a river of sharp warm sparks around a near-black sphere with a hair-thin crescent. Behind the sphere, the ring goes dark where the sphere's shadow crosses it (A3), and the rocks reappear beyond. Seen exactly edge-on, the whole belt collapses into one blazing line through the sphere, which later echoes the Turning Rim's hairline. Sparks stay sharp points (no bokeh: the eye focuses at infinity).
+
+### Borrowed Spin structure (2D) — X03b `027eec67…` #1; alternative silhouette `5b9c5425…` #0
+
+A colossal thin wheel around a dark, blocky hub, so large its scale can't be judged. It has no lights of its own: it's lit only along the sunward edge of its rim, a bright line that slides round the wheel as it turns, so the rotation reads from the light alone. Weathered and broken in places. Behind it, the sky's galaxy. (A03 calls for arms that sweep above and below; a wheel with spokes, or the broken hull arc of `5b9c5425…` #0, both satisfy that. 2D and S1–S3 choose the shape that matches the tether's capture targets.)
+
+### Petal Gallery (4D, 2D) — L06b `88a5797e…` #3; variety from `b3495a44…` #2
+
+A dozen small openings scattered through the volume at different distances and tilts, each with the same white fibrous rim as the Turning Rim (one shared opening system, S6), and inside every one the same remote galaxy, turned to a different angle in each. Near petals larger, far ones tiny. The repetition is the puzzle; nothing labels it.
+
+### Red Wall (2D) — X04c `969f9ba6…` #1 (chosen); surface also from X04b `79f27860…` #3
 
 A sheer face of layered, fractured rock in rust and garnet, lit low and warm so each ledge throws a long black shadow, deep vertical clefts in near-black. It hangs in open space, with cold black sky and sparse stars above and below: no horizon, no atmosphere, no ground beneath it. A small distant edge-on galaxy in the black beside it is a good touch (the Galaxy's far tip).
 
@@ -88,4 +102,4 @@ Not pursued. Earth is about five seconds of the game (owner), and OP already dra
 
 ### Still to be chosen
 
-Petal Gallery (4D) and every look in groups 2–7 not named above.
+Every look in groups 2–7 not named above.
