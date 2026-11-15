@@ -10,6 +10,11 @@ Design and physics studies that run in parallel with the build. Each one answers
 | S4 | The expedition in 3D: regions and route | [S4-expedition.md](S4-expedition.md) |
 | S5 | Inverse wells and the lattice in 3D | [S5-wells-lattice-3d.md](S5-wells-lattice-3d.md) |
 | S6 | Paired openings (system X) | [S6-paired-openings.md](S6-paired-openings.md) |
+| S7 | The model fault and the slow tests | [S7-model-fault.md](S7-model-fault.md) |
+| S8 | Twin Deeps in 3D: the varied geometry and the slingshot exit | [S8-twin-deeps.md](S8-twin-deeps.md) |
+| S9 | The first five minutes: a cold player in the Gravity range | [S9-first-five-minutes.md](S9-first-five-minutes.md) |
+| S10 | Submission groundwork: assets, licences, NASA data, AI use | [S10-submission-audit.md](S10-submission-audit.md) |
+| S11 | The owner's decision queue from S1–S6 | [S11-decision-queue.md](S11-decision-queue.md) |
 
 ## Rules for every study
 1. **Read first:**
@@ -19,7 +24,7 @@ Design and physics studies that run in parallel with the build. Each one answers
    - `docs/handoffs/region-proposal/` (`README.md` and `regions.md`);
    - your prompt.
 2. **The world is 3D** (A11). The gravity law is P4: a = (GM/r₀²)(r₀/r)^2.5 with one shared r₀ = 1,000 km. Thread 2G is converting the game to 3D now; `src/contracts/README.md` shows the 3D types. Earlier planar documents give you vocabulary, not limits.
-3. **Ownership:** you write only `docs/studies/<your id>/`, `tools/studies/<your id>/` and `docs/handoffs/<your id>.md`. Everything else is a request in your handoff. Never edit `src/`; 2D and 2G own it.
+3. **Ownership:** you write only `docs/studies/<your id>/`, `tools/studies/<your id>/` and `docs/handoffs/<your id>.md`. Everything else is a request in your handoff. Never commit changes under `src/`; 2D and 2G own it (S7 delivers its fix as a patch file).
 4. **Software:**
    - Python 3.14 with the standard library and numpy (both installed). Don't install anything else without the owner's OK.
    - Reference scripts are deterministic, rerun from one command, and write their vectors as JSON next to the script.
