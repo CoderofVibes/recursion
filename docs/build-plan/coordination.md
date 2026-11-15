@@ -24,7 +24,7 @@ The live state of the build between threads: who is running, who holds which sha
 | S23 the opening | GPT/Codex | `.worktrees/s23` · `st/s23-the-opening` | Ready to launch | Feeds OP and AU | — |
 | OP the opening | Opus 5.5 | `.worktrees/op` · `p3/op-opening` | Ready to launch | S23's beats when they land; room hooks via R23 | — |
 | AU basic audio | GPT/Codex | `.worktrees/au` · `p3/au-audio` | Ready to launch | Cue list first, so the owner can generate in ElevenLabs; mount via R24 | — |
-| ART window references | Owner's choice (Claude or GPT) | `.worktrees/art` · `art/window-references` | Ready: MidJourney prompt library for the window views, worked through with the owner | Outputs `docs/art/`; feeds 2D, 3B, OP | — |
+| ART window references | Owner's choice (Claude or GPT) | `.worktrees/art` · `art/window-references` | Ready: MidJourney prompt library for the window views, worked through with the owner. **References only (A23): no image ships or is committed** | Outputs `docs/art/`; feeds 2D, 3B, OP | — |
 | S22 well field (real funnels) | GPT/Codex | `.worktrees/s22` · `st/s22-big-well-field` | **Done**: funnels 120 km long, 20 km mouth, 1 km throat, pull 0.02–0.10 m/s²; 2,601 sites, 650 appearing; owner questions open | Feeds 3B (R12) | `15171df` |
 | S17 lattice first contact | GPT/Codex | `.worktrees/s17` · `st/s17-lattice-first-contact` | **Done**; five owner questions open | Feeds 3C (R8), 3A, 2C | `ba7568e` |
 | S18 tether gate | GPT/Codex | `.worktrees/s18` · `st/s18-tether-gate` | **Done**: the load gate passes as a slower turning manoeuvre; four owner questions open | Future tether work | `32a8b67` |
