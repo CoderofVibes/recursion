@@ -1,0 +1,608 @@
+{
+  "baseline": "6ac2485625157d1a908c9cd5b3dcf1a38f763981",
+  "branch_2g_document_snapshot": "13df747b3be4e425b153c1cc9a580453a1d39a66",
+  "claim_count": 72,
+  "field_counts": {
+    "summary": {
+      "words_whitespace_split": 66,
+      "unicode_characters_including_spaces": 422,
+      "utf16_code_units_including_spaces": 422,
+      "verified_portal_cap": null,
+      "claim_ids": [
+        "S01",
+        "S02",
+        "S03",
+        "S04"
+      ]
+    },
+    "opening-engineering": {
+      "words_whitespace_split": 18,
+      "unicode_characters_including_spaces": 108,
+      "utf16_code_units_including_spaces": 108,
+      "verified_portal_cap": null,
+      "claim_ids": [
+        "O01"
+      ]
+    },
+    "opening-recurrence": {
+      "words_whitespace_split": 17,
+      "unicode_characters_including_spaces": 92,
+      "utf16_code_units_including_spaces": 92,
+      "verified_portal_cap": null,
+      "claim_ids": [
+        "O02"
+      ]
+    },
+    "opening-science": {
+      "words_whitespace_split": 18,
+      "unicode_characters_including_spaces": 121,
+      "utf16_code_units_including_spaces": 121,
+      "verified_portal_cap": null,
+      "claim_ids": [
+        "O03"
+      ]
+    },
+    "description": {
+      "words_whitespace_split": 392,
+      "unicode_characters_including_spaces": 2670,
+      "utf16_code_units_including_spaces": 2670,
+      "verified_portal_cap": null,
+      "claim_ids": [
+        "D01",
+        "D02",
+        "D03",
+        "D04",
+        "D05",
+        "D06",
+        "D07",
+        "D08",
+        "D09",
+        "D10",
+        "D11",
+        "D12",
+        "D13",
+        "D14",
+        "D15",
+        "D16",
+        "D17",
+        "D18",
+        "D19",
+        "D20",
+        "D21",
+        "D22"
+      ]
+    },
+    "nasa": {
+      "words_whitespace_split": 188,
+      "unicode_characters_including_spaces": 1253,
+      "utf16_code_units_including_spaces": 1253,
+      "verified_portal_cap": null,
+      "claim_ids": [
+        "N01",
+        "N02",
+        "N03",
+        "N04",
+        "N05",
+        "N06",
+        "N07",
+        "N08",
+        "N09"
+      ]
+    },
+    "nasa-after-2g": {
+      "words_whitespace_split": 54,
+      "unicode_characters_including_spaces": 318,
+      "utf16_code_units_including_spaces": 318,
+      "verified_portal_cap": null,
+      "claim_ids": [
+        "N10",
+        "N11"
+      ]
+    },
+    "ai": {
+      "words_whitespace_split": 204,
+      "unicode_characters_including_spaces": 1531,
+      "utf16_code_units_including_spaces": 1531,
+      "verified_portal_cap": null,
+      "claim_ids": [
+        "A01",
+        "A02",
+        "A03",
+        "A04",
+        "A05",
+        "A06",
+        "A07",
+        "A08",
+        "A09",
+        "A10"
+      ]
+    },
+    "credits": {
+      "words_whitespace_split": 117,
+      "unicode_characters_including_spaces": 843,
+      "utf16_code_units_including_spaces": 843,
+      "verified_portal_cap": null,
+      "claim_ids": [
+        "C01",
+        "C02",
+        "C03",
+        "C04",
+        "C05",
+        "C06",
+        "C07"
+      ]
+    },
+    "notices": {
+      "words_whitespace_split": 78,
+      "unicode_characters_including_spaces": 555,
+      "utf16_code_units_including_spaces": 555,
+      "verified_portal_cap": null,
+      "claim_ids": [
+        "T01",
+        "T02",
+        "T03",
+        "T04"
+      ]
+    }
+  },
+  "count_convention": "Copy only, sentences joined by one space; excludes IDs, Markdown, paragraph breaks and attached URLs. Verify final pasted text plus links in the portal.",
+  "storyboard_seconds": 30,
+  "shot_durations_seconds": [
+    3,
+    5,
+    5,
+    5,
+    6,
+    6
+  ],
+  "slide_count_including_title_and_close": 7,
+  "checked_local_links": 28,
+  "source_hashes": {
+    "brief": [
+      {
+        "path": "docs/CREATIVE_BRIEF.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "6d89464390f8130d4d2fb0e479e0e77067b8c65f4df5051ab06d5a162f3ec637"
+      },
+      {
+        "path": "docs/DECISIONS.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "a181cddddf14d8c41b36e69e0267f0b08aff1929214c1518599e370670cc1213"
+      }
+    ],
+    "ui": [
+      {
+        "path": "docs/handoffs/2D.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "68c12038cf350b7ca0076715b34601d7e909ba6f2624f7fbc1884cba2c8d898a"
+      },
+      {
+        "path": "docs/studies/s9/README.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "12d1db29bddc652013321108c238d2c78c949b3a8bb910794f1668d621c22aac"
+      },
+      {
+        "path": "docs/studies/s9/browser-observations.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "1fa7f15e3d01de61d16fcacb6eb2529c010c1513e97040ab72bb10a1e42cae80"
+      }
+    ],
+    "mission": [
+      {
+        "path": "src/console/mission.ts",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "ed043f6403dc4aebddcbc3e5eed3f38022e2727dcd9edb74da25bc0236cbca6b"
+      },
+      {
+        "path": "src/console/console.test.ts",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "25c8eee9f35c2c1e28846461301b0c3a62a21e9039bb4bfd453b7fe31ca99aad"
+      },
+      {
+        "path": "src/console/pages/MissionPage.tsx",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "61fef7641b3cd76f7827989d4389f67c3ad2d16b480e42eb4ebcd986b74cb08f"
+      },
+      {
+        "path": "src/console/pages/PlanPage.tsx",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "8a203d442e7d6d2c61071287c985347575aa6e999e187232cd4a017580cd54e8"
+      }
+    ],
+    "session": [
+      {
+        "path": "src/game/session.test.ts",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "275f2b385da497eb7e43816d08ee87aa88dec4a5a83116738ed034d839487c17"
+      },
+      {
+        "path": "src/game/session.ts",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "26db439b6cb9797f38c63efe5c599cffc0f69f97304295f15fc255aca8ea4846"
+      }
+    ],
+    "model": [
+      {
+        "path": "src/model/README.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "69c96e0a603004820fe02a2f0282692634df875358ca474afe72fca9019784bd"
+      },
+      {
+        "path": "src/model/settings.ts",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "b965999a0133f450d01c1dda33865a3d1681ac06ad9e735ff8267c5378cf8d81"
+      },
+      {
+        "path": "src/model/forecast.ts",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "c207a0012139e00d11ff09b2f212cd48e901494297062677c0c444e71bb615e0"
+      },
+      {
+        "path": "src/model/extensions.ts",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "b6ba70773acd3ddd01d9b57d79b5f3dc5cb52cbc6398360a26bb6601f5fae0dd"
+      },
+      {
+        "path": "src/console/pages/ModelPage.tsx",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "908f71b9408d39a893123b81230cab621b0ee5746aca6fbfd4e05472669ed2e5"
+      },
+      {
+        "path": "src/game/model-loop.test.ts",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "27de50ed579df5d84e108f9614062ba3ac2c085b34a6cf4235bd378a0d5ae4d3"
+      }
+    ],
+    "boundary": [
+      {
+        "path": "src/contracts/README.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "0a7bb79428ee83958720dfde95c5a68d5b546a94e4d772a6af2efa0583b93708"
+      },
+      {
+        "path": "src/contracts/boundary.test.ts",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "cba0620e4f64a18c4eb4bc914e289e858639343399f5f81e7b9186dc0b07471d"
+      },
+      {
+        "path": "eslint.config.js",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "65da8c3bfb05111a1140fa2a957f2567100f1bb3e6fe7acfa9c1be5d4e2648ec"
+      }
+    ],
+    "ship": [
+      {
+        "path": "src/ship/README.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "16bb98ee4dc8e6a0dcce0ce425c56f3fc5516ae502069ac08d9d5f6a32464986"
+      },
+      {
+        "path": "src/ship/ship.test.ts",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "f2064ce8fe2adba5a08956bc060cbec4b1c1ecaa268541c008fe445714767e55"
+      },
+      {
+        "path": "src/ship/sensors/index.ts",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "130ef5f2daa5f9774aee04f36434545ae7d94473ac9d9cd83a4c9a1265aef9c7"
+      },
+      {
+        "path": "src/ship/sensors/sensors.test.ts",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "508ad3876704b10d672216ae718eba20899ea1b4d517699d765ab50bfb4d9748"
+      },
+      {
+        "path": "data/ship-baseline.json",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "faf9dc50f6f3631520bbc93a579e15b6aca7e5eb16c35c5901659d9d112d003b"
+      }
+    ],
+    "scope": [
+      {
+        "path": "docs/studies/s10/gaps.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "f5cb67fc8a64529f6753bc56f4900b19adcbf9bf4d43d0cc52125fe1cdd070f6"
+      },
+      {
+        "path": "docs/studies/s9/README.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "12d1db29bddc652013321108c238d2c78c949b3a8bb910794f1668d621c22aac"
+      },
+      {
+        "path": "src/content/gravity-range/README.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "117bf4d985da18647c16ed614e1c340110778fdc5c0b347fd654acbd9fffdec7"
+      },
+      {
+        "path": "docs/build-plan/README.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "13f24fa4542ccad5d5841fb322bd264711d72926e533eb146f5418a8950cce24"
+      }
+    ],
+    "challenge": [
+      {
+        "path": "docs/submission/challenge-fit.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "58830ae5099b9a9464a1dfea6a7255eca52c00818fc8bf38e1bd8745ae732223"
+      }
+    ],
+    "gmat": [
+      {
+        "path": "docs/verification/gmat.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "d530cd413e50ce8a9db12ca0b2d083d3a5aeb368a06265a12316f0fef6c7c5ed"
+      },
+      {
+        "path": "docs/studies/s10/nasa-evidence.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "4a6d8771ca65d5bbf6d7f1fd83ac92cfb441eb4a47a861f89ff404ce911f9de8"
+      },
+      {
+        "path": "src/sim/gmat.test.ts",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "3d60f0a467f8a952178bd9025895e6ad9fd41027e165a54c144e1c061fb61b26"
+      },
+      {
+        "path": "tools/gmat/reference.py",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "2d3bb909c64a38e6e6b1de47fe4259bc7952e304b5772e92e5aa5cd021db2757"
+      },
+      {
+        "path": "tests/vectors/gmat/c1-circular.csv",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "34c2b263492cebf9e91f36b54a92fb2bb36b1f5eda68cc413bcf5078b2f440c5"
+      },
+      {
+        "path": "tests/vectors/gmat/c2-eccentric.csv",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "4c6fcdbe826c2fa84160804f22c4e55ff66fb6f13da63083937bcf7d7dec8d1d"
+      },
+      {
+        "path": "tests/vectors/gmat/c3-hyperbolic.csv",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "15557b395bb8286b7fbdec13578ef4d9aa6d8e575a98c80a2bdd56b805bc1948"
+      },
+      {
+        "path": "tests/vectors/gmat/c4-finite_burn.csv",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "eb127d8c65c24aed0ec20c4abae4d831508e11cd6f1160a8f09cd73b04760b6b"
+      }
+    ],
+    "gmat_limits": [
+      {
+        "path": "docs/studies/s10/nasa-evidence.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "4a6d8771ca65d5bbf6d7f1fd83ac92cfb441eb4a47a861f89ff404ce911f9de8"
+      },
+      {
+        "path": "docs/verification/gmat.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "d530cd413e50ce8a9db12ca0b2d083d3a5aeb368a06265a12316f0fef6c7c5ed"
+      },
+      {
+        "path": "src/model/dynamics.ts",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "bd7cc0c9be0662fad03b5b38f88be224b2ac36afed95aef59513236b70b3217d"
+      },
+      {
+        "path": "src/model/forecast.ts",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "c207a0012139e00d11ff09b2f212cd48e901494297062677c0c444e71bb615e0"
+      }
+    ],
+    "2g_handoff": [
+      {
+        "path": "docs/handoffs/2G.md",
+        "ref": "13df747b3be4e425b153c1cc9a580453a1d39a66",
+        "sha256_lf_normalized_text_or_original_image": "ea6a85278c36453f7c121d02549e4bc69d92cd6e0c40f23f5bfdfca16a9ec14a"
+      }
+    ],
+    "2g_method": [
+      {
+        "path": "docs/verification/gmat.md",
+        "ref": "13df747b3be4e425b153c1cc9a580453a1d39a66",
+        "sha256_lf_normalized_text_or_original_image": "61811d7f1a5e7d80656bc6595042db022cdef51758d49a1ee17e9a29a515414e"
+      }
+    ],
+    "nasa_register": [
+      {
+        "path": "docs/studies/s10/nasa-evidence.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "4a6d8771ca65d5bbf6d7f1fd83ac92cfb441eb4a47a861f89ff404ce911f9de8"
+      },
+      {
+        "path": "References/BIBLIOGRAPHY.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "fa372f9caaa4d3d0cf4870471734ad2830711f3aa0a6afec93d0cbc12c68a82d"
+      },
+      {
+        "path": "docs/engineering/ship-baseline.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "7507f54906adbf040e8df94d78ac8e7506644be07bd2b661b4b8940d96a04ca7"
+      },
+      {
+        "path": "docs/engineering/gameplay-couplings.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "416d87b34012d4aeb0f54d1230c6ea625b37e89ed60cffc27e01256ffcce6a99"
+      }
+    ],
+    "ai": [
+      {
+        "path": "docs/studies/s10/ai-provenance.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "f887f5e6c16d6a586af77ff9ede75034c57fb1a8afb85743d46fa45953701426"
+      },
+      {
+        "path": "docs/handoffs/1D.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "865df31c4f074d3a53de6dc8c51d50bc20b3df00a979019a4aff384e7eef328c"
+      },
+      {
+        "path": "docs/handoffs/1G.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "ecda76f164d610cade4535ec2d5774ab267179fcf921b2a1fe66737beb736e4f"
+      },
+      {
+        "path": "docs/handoffs/s9.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "b5e232ff8d2fa4c933606606697c2f5563bf648cd407b050e32db415defe9c38"
+      },
+      {
+        "path": "docs/handoffs/s10.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "45923601f1d58f6ab275ebf9385979cbf02eabb65fe047ff8d3f66e73dc5b9c2"
+      },
+      {
+        "path": "docs/handoffs/s11.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "d0ad51fbca4886bd7557bb78ad608b7f6369169c433c2906a5e96b149eed7e9f"
+      }
+    ],
+    "s12": [
+      {
+        "path": "docs/studies/s12/README.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "9690b1b332469f602123a63889bf7cfd7131eefaaa4768bef4ecb235e4473065"
+      },
+      {
+        "path": "docs/handoffs/s12.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "28fd8e626efc8b4dfcd6d4c00b4cf45d90fcefe3865d1a6bb0b79424149baac8"
+      }
+    ],
+    "runtime": [
+      {
+        "path": "src/model/client.ts",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "64540298ca02ea2e1af7f1b7dd49cc5b870537c7201f61c0aa1d0afc39a85af2"
+      },
+      {
+        "path": "src/model/engine.ts",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "922ed5312f40f860e091b9986d5d9ce35a52df2d1712628737aa6fd708a270a2"
+      },
+      {
+        "path": "package.json",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "bcd0a8956823dc223c961baa8de40230950f1995404cb980c27c7b580d8cde12"
+      },
+      {
+        "path": "docs/studies/s10/ai-provenance.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "f887f5e6c16d6a586af77ff9ede75034c57fb1a8afb85743d46fa45953701426"
+      }
+    ],
+    "dependencies": [
+      {
+        "path": "package.json",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "bcd0a8956823dc223c961baa8de40230950f1995404cb980c27c7b580d8cde12"
+      },
+      {
+        "path": "package-lock.json",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "34a4c2ea6734384ebe70e0d946965b4ffc7ca7a5eeac765fc5e43cdce93e3b1c"
+      },
+      {
+        "path": "docs/studies/s10/dependencies.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "ee10cf327ff92269d3a3e364161d6c29cbb5e8e621a2cf859a56858dfc080595"
+      },
+      {
+        "path": "docs/studies/s10/third-party-notices.txt",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "c7873bb60228b70006e5a93c7e02c995501a94327698e4de192d02e4a1322cd3"
+      }
+    ],
+    "assets": [
+      {
+        "path": "docs/studies/s10/assets.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "c7b1760088ea76390f5b6f89efe88b5b2d526a289ae3b134065004718908cccb"
+      },
+      {
+        "path": "docs/handoffs/1E.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "ed1ea0ae91ecdbf3c7df54e27d6b401df4f1a90c78d6264f6306245e0bc8acb0"
+      },
+      {
+        "path": "src/theme/type.ts",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "ffe5df743b6768f8497328df88f658738a9c20d20c8a781c11c98e8bfe0a9474"
+      },
+      {
+        "path": "src/view3d/room/textures.ts",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "1677c9cce3a614dc3336814ec8b8da0e379a2db8307c1e5068cce86a166992c6"
+      },
+      {
+        "path": "src/view3d/ship/parts.ts",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "aec9693b6e26535f868a8501bb53764f7899d634eac1cc7ce3f1ecd4a19fea78"
+      },
+      {
+        "path": "prototypes/room/index.html",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "ae6deda20a050b4cad0698c8c91ad2a37b424e84434bc7d3e01dbfd23ccafe4b"
+      },
+      {
+        "path": "prototypes/visual/index.html",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "a8478d98ce1dd2d2d8b094c068abeffa85d1da6585e457defcec34d08eba3257"
+      }
+    ],
+    "tools": [
+      {
+        "path": "docs/studies/s10/external-toolchain.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "431e8c17467713a2d5a5be709fa5dcbe449e15f64142d78c7cb331b4612f853d"
+      },
+      {
+        "path": "package.json",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "bcd0a8956823dc223c961baa8de40230950f1995404cb980c27c7b580d8cde12"
+      }
+    ],
+    "licence": [
+      {
+        "path": "docs/studies/s10/licence-options.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "e7cd943a04f25e0d68e63a184de4bc99da8a96692cdbffe6be03543aaf26385c"
+      },
+      {
+        "path": "package.json",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "bcd0a8956823dc223c961baa8de40230950f1995404cb980c27c7b580d8cde12"
+      }
+    ],
+    "s9_pending": [
+      {
+        "path": "docs/studies/s9/browser-observations.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "1fa7f15e3d01de61d16fcacb6eb2529c010c1513e97040ab72bb10a1e42cae80"
+      },
+      {
+        "path": "docs/studies/s9/screenshots/09-live-held-out-test.jpg",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "683b9d894e226974498a04badbc73b00d6a11033ab9f3e132e4d2a8f2842a1dc"
+      }
+    ],
+    "s9_miss": [
+      {
+        "path": "docs/studies/s9/browser-observations.md",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "1fa7f15e3d01de61d16fcacb6eb2529c010c1513e97040ab72bb10a1e42cae80"
+      },
+      {
+        "path": "docs/studies/s9/screenshots/08-live-second-attempt-miss.jpg",
+        "ref": "working-tree",
+        "sha256_lf_normalized_text_or_original_image": "750ced76ec2959d476d05e096a9043996d80acaaf5c6d5d62987a0dc23370d7d"
+      }
+    ]
+  },
+  "limits": [
+    "No text cap is verified",
+    "No browser, export, publication or eligibility check performed by this checker",
+    "Evidence existence and coverage are checked; semantic support requires editorial review"
+  ]
+}
