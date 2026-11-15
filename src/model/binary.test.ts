@@ -513,7 +513,7 @@ describe('a forecast computed from the moment of commitment (A18 (1))', () => {
     expect(after.detail.presentTime).toBeLessThanOrEqual(T);
     // The refresh refitted the arc alone with an hour more of fixes. Beta, never looked at, then
     // comes from the briefing rather than the global fit, with a wider prior, so the present
-    // state as of commitment moves and widens (σ 280 m → 533 m at its first sample). Both are
+    // state as of commitment moves and widens (by about a quarter at its first sample). Both are
     // honest, and they agree within their envelopes. Compared relative to Alpha, which is what
     // the covariances describe (the frame moves with Beta's believed position).
     const relA = (d: ForecastDraft, i: number) => {
