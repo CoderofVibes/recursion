@@ -4,7 +4,7 @@ The live state of the build between threads: who is running, who holds which sha
 
 **Integrator, after a compaction:** read this file first, then `git log --oneline -15`, then the handoffs of any thread marked running.
 
-**Last updated:** 2026-11-14, main at `5b94ed2` plus this commit.
+**Last updated:** 2026-11-14, 3C reassigned to GPT and launched.
 
 ## Threads
 
@@ -15,7 +15,7 @@ The live state of the build between threads: who is running, who holds which sha
 | 2F game loop | Opus 5.5 | `.worktrees/2f` · `p2/2f-game` | Running: A18 (commit keeps time running, `depart` rule, power death, rate-only release, seed catalogue), S8's vectors | Belt and power values wait on S21 | before 2G |
 | 2C model and Black Box | Opus 5.5 | `.worktrees/2c` · `p2/2c-model` | Running: WIP committed, then redone on the 3D model; bodies' track uncertainty; A18 (1) with 2F | — | before 2G |
 | 3B Inverse Wells | GPT/Codex | `.worktrees/3b` · `p3/3b-wells` | Running: field mechanics first | Layout from S16; loading via R1 | — |
-| 3C Chain Link Fence | Opus 5.5 or Fable (owner's call) | `.worktrees/3c` · `p3/3c-lattice` | **Held by the owner** to save Claude usage | Start when S17 lands | — |
+| 3C Chain Link Fence | GPT/Codex (GPT-6 Astra), reassigned by the owner | `.worktrees/3c` · `p3/3c-lattice` | Running: field and exposure mechanics first | S17's numbers when they land (R8) | — |
 | 3E playability harness | GPT/Codex | `.worktrees/3e` · `p3/3e-harness` | Running | — | — |
 | 3A power and thermal | GPT/Codex | not created yet · `p3/3a-power-thermal` | **Gated** | After 2G's speed pass merges; integrator creates the worktree then | — |
 | 3D expedition | Opus 5.5 | not created yet · `p3/3d-expedition` | **Gated** | After 2F's and 2C's first checkpoints merge | — |
@@ -60,8 +60,8 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 | R6 | S21 → 2F, 3A | Belt size (A18 (2)) and power values (A18 (5)) | **Open:** waits on S21 | 2F builds the mechanisms first |
 | R7 | S16 → 3B | Well Garden layout, seeds and vectors | **Open:** waits on S16 | |
 | R8 | S17 → 3C | First-contact numbers: dose, failure order, Black Box function cost, reconstruction | **Open:** waits on S17 | Its landing starts 3C |
-| R9 | 3C → 2C | The Black Box function in A16 (records sensors; FLIGHT shows the rebuilt lattice) | **Open:** 3C not started | |
-| R10 | 3C ↔ 3A | Component faults from radiation: electrics and instruments (A16) | **Open:** neither started | |
+| R9 | 3C → 2C | The Black Box function in A16 (records sensors; FLIGHT shows the rebuilt lattice) | **Open:** 3C running | |
+| R10 | 3C ↔ 3A | Component faults from radiation: electrics and instruments (A16) | **Open:** 3C running; 3A gated | |
 | R11 | 2G → integrator | Release check from A18 (7) on 2G's speed pass: rerun S15's script, modest profile | **Open:** with 2G's merge | |
 
 Add new rows at the bottom with the next ID. Never renumber.
@@ -78,6 +78,8 @@ Decided: A15 (S11's queue), A16 (the lattice), A17 (the ending) and A18 (the Gra
 
 | Commit | What |
 |---|---|
+| (this commit) | 3C reassigned to GPT/Codex and launched |
+| `682957b` | This ledger |
 | `5b94ed2` | `npm run harness`; wells and lattice paths split between 3B and 3C |
 | `393b5a8` | A18 (3): learning burns free, `depart` requires a real Beta assist |
 | `0b5cc25` | A18; study S21 |
