@@ -50,7 +50,7 @@ The room, its holograms and the overlays laid over them take their look from her
 | `room.ts` | Surfaces, finishes and lights of the compartment, the loss sequence's timings, walking speeds |
 | `dressing.ts` | The set dressing: wall screens, plates, lamps, seats |
 | `three/holo.ts` | Hologram line styles, wire opacities and sizes (the volume's radius, how far back the ship sits) |
-| `three/holo-plane.ts` | The hologram's reference plane: grid, coverage, hatch where nothing is sensed |
+| `three/holo-plane.ts` | The hologram's reference plane: grid, coverage now, coverage sensed earlier (fading over `planeStyle.earlierMemory`), hatch where nothing has been sensed |
 | `three/ship-holo.ts`, `three/map-holo.ts` | The ship drawing's and the map's own styles |
 | `hud.ts` | Overlays: margins, column widths, key caps, the cursor, plate surfaces, glows, timings |
 | `motion.ts` | `maxDisplayTurn` (time warp never spins a display), `coastForecastDelay` |

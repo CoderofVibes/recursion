@@ -41,7 +41,7 @@ export function DebriefView({ report }: { readonly report: Debrief }) {
     <>
       <ReadoutGrid columns={3}>
         <Readout label="Attempt" value={report.index} tone="blackbox" />
-        <Readout label="Outcome" value={report.outcome} tone="blackbox" />
+        <Readout label="Outcome" value={report.outcome === 'in-progress' ? 'flying' : report.outcome} tone="blackbox" />
         <Readout label="Ship time" value={clock(report.duration)} />
       </ReadoutGrid>
       {report.design ? (

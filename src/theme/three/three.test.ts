@@ -7,15 +7,18 @@ import {
   envelopeMaterial,
   envelopeStyle,
   ghostWireMaterial,
+  holoPlaneMaterial,
   latticeMaterial,
   LineKit,
   lineMaterial,
   lineStyles,
+  MAX_EARLIER,
   MAX_SECTORS,
   pixelsPerUnit,
   planeMaterial,
   planeStyle,
   rockMaterial,
+  setHoloPlane,
   setPlaneCoverage,
   setSun,
   wellColour,
@@ -131,6 +134,26 @@ describe('flight plane', () => {
     expect(first?.y).toBeCloseTo(0.1 + (MAX_SECTORS + 2) * 0.01);
     setPlaneCoverage(m, [0, 0], []);
     expect(m.uniforms.uSectorCount?.value).toBe(0);
+  });
+
+  it('in the hologram, also takes what was sensed earlier, freshest first, up to its limit', () => {
+    const m = holoPlaneMaterial(0.5);
+    const earlier = Array.from({ length: MAX_EARLIER + 4 }, (_, i) => ({
+      center: i,
+      halfWidth: 0.5,
+      range: 6e6,
+      dx: -1000 * i,
+      dy: 250,
+      fresh: 1 - i / (MAX_EARLIER + 4),
+    }));
+    setHoloPlane(m, [1e6, 2e6], 1e-7, 5e5, [], earlier);
+    expect(m.uniforms.uEarlierCount?.value).toBe(MAX_EARLIER);
+    const [first] = m.uniforms.uEarlier?.value as Vector4[];
+    expect(first?.toArray()).toEqual([0, 0.5, 6e6, 1]);
+    expect((m.uniforms.uEarlierAt?.value as Vector2[])[3]?.toArray()).toEqual([-3000, 250]);
+    setHoloPlane(m, [1e6, 2e6], 1e-7, 5e5, []);
+    expect(m.uniforms.uEarlierCount?.value).toBe(0);
+    expect(m.fragmentShader).toContain('uEarlier');
   });
 });
 
