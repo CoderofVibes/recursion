@@ -15,7 +15,7 @@ The live state of the build between threads: who is running, who holds which sha
 | 2F game loop | Opus 5.5 | `.worktrees/2f` · `p2/2f-game` | Running. Merged: fields reach the simulation (R1), S21's 120 s power rule in the tick, swept whole-ship exits, believed departure progress and turn allowance | Next, in order: wells crush loss and lifecycle (R30), A20 budget (R18), 3A wiring (R26), the cloud crescent (R14), R20's acquisition scheduling, R29 | `82f906b` |
 | 2C model and Black Box | Opus 5.5 | `.worktrees/2c` · `p2/2c-model` | Round done and merged: bodies' track uncertainty, two moving bodies, forecast as of its issue time (A18 (1)), S8 checks with two fixes, lazy fallback | Next: 3C's reconstruction and Black Box function (R9), S17's requests, S20's (R17); 5% range-noise robustness still open | `4bf5359` |
 | 3B Inverse Wells | GPT/Codex | `.worktrees/3b` · `p3/3b-wells` | **Merged**: S22's funnels as an indexed field, the 900 s precursor lifecycle, the downstream exit sphere, registration (`?encounter=inverse-wells`) | Playable needs: crush loss, lifecycle in the tick, window funnels (R30, R31) | `91a666a` |
-| 3C Chain Link Fence | GPT/Codex (GPT-6 Astra) | `.worktrees/3c` · `p3/3c-lattice` | **Done**: twenty fences qualified (≤25.5 kg RCS of 100 kg, ≥21.6 m clearance), recorded reveal, raw diagnostics, stale readings, additive contracts, registration, save format 2. Integrator gave one slow test a 30 s timeout | Playable in the app once 2F wires fields (R1, R20) and 2C reconstructs (R9) | `acc648d` |
+| 3C Chain Link Fence | GPT/Codex (GPT-6 Astra) | `.worktrees/3c` · `p3/3c-lattice` | **Done**: twenty fences qualified; sensors on 3A's shared availability; leakage heat no longer boosts sensing or recording; 13 integration tests | Playable in the app once 2F (R20 acquisition scheduling, panel data) and 2C (R9 reconstruction) land | `43e18d9` |
 | 3E playability harness | GPT/Codex | `.worktrees/3e` · `p3/3e-harness` | **Done**: `npm run harness` (smoke, reference, learning, routes, all); its pending-acceptance list names the gaps | — | `44db2fc` |
 | 3A power and thermal | GPT/Codex | `.worktrees/3a` · `p3/3a-power-thermal` | **Done**: causal radiation and thermal faults, heaters, physical service signals (`electricalService`, `energizedEquipment`); command tape identical; 72 h transit sustainable | Its wiring is 2F's (R26) | `767100b` |
 | 3D expedition | Opus 5.5 | not created yet · `p3/3d-expedition` | **Gated** | After 2F's and 2C's first checkpoints merge | — |
@@ -117,7 +117,8 @@ Decided: A15 (S11's queue), A16 (the lattice), A17 (the ending) and A18 (the Gra
 
 | Commit | What |
 |---|---|
-| (this commit) | Integrator fixes on merging 3B (R33); ledger R30–R33 |
+| `43e18d9` | 3C follow-up: shared availability, leakage fix, integration tests |
+| `1f0dfef` | Integrator fixes on merging 3B (R33); ledger R30–R33 |
 | `91a666a`, `82f906b` | 3B (Inverse Wells); 2F (fields wired, power rule, swept exits) |
 | `1d000f9` | Chain-link abort test gets a 30 s timeout (load); ledger |
 | `635245f`, `acc648d` | 2D (S9, S15 fixes, screens, A20 half); 3C (Chain Link Fence) |
