@@ -220,7 +220,7 @@ This replaces 3F in [phase-3.md](phase-3.md), which extended the console for an 
 
 **Owns** (2D hands over its whole lane; it is paused and does not resume on these paths):
 - `src/console/` except `encounters/`. You may change the **layout and presentation** of the encounter panels in `src/console/encounters/` (3B and 3C are done), keeping their data and commands unchanged.
-- `src/view3d/` except `fields/` and VX's paths: `sky/`, `fx/`, `opening/`, `room/outside.ts`, and VX's two `outside.followEye(...)` calls in `room/RoomView.ts`.
+- `src/view3d/` except `fields/` and VX's paths: `sky/`, `fx/`, `opening/`, `room/outside.ts`, and VX's two `outside.followEye(...)` calls in `room/RoomView.ts`. PF (speed, GPT) holds `src/view3d/perf/` and may change `RoomView.ts`'s renderer and composer setup and add one quality hook in `frame()`, telling you first through the integrator. PF sends you measured requests for FLIGHT's hologram.
 - The UI lane: `src/theme/`, `prototypes/`, `docs/design/visual-direction.md`.
 - `src/app/` except `game.ts`.
 - In `docs/handoffs/night/judge-run/`, the click targets only, to follow renamed labels.
@@ -282,4 +282,51 @@ This replaces 3F in [phase-3.md](phase-3.md), which extended the console for an 
 > 4. **The Well Garden, finishable:** the funnels' lifecycle survives save and reload (3B's request 3), with the pull's work ledger (request 4), enough that an attempt, a RECALL and a reload never break the field.
 > 5. Anything else in the game loop that stops a judge finishing the Well Garden or the Cathedral, found by playing them with NIGHT's driver.
 >
-> **Owns:** `src/game/` (including `truth-step.ts`), `src/content/gravity-range/`, `src/app/game.ts`. VX adds one call in `withFunnels` (`src/game/funnels.ts`) for the wells' window producer: leave that call alone. **The bar is lighter (A26)**, except that no test, tolerance or claim is loosened. Checkpoint as you go; write handoff update 4.
+> **Owns:** `src/game/` (including `truth-step.ts`), `src/content/gravity-range/`, `src/app/game.ts`. VX adds one call in `withFunnels` (`src/game/funnels.ts`) for the wells' window producer: leave that call alone. PF (speed) holds `src/game/belief/standin-model.ts`: keep out of it, and ask PF through the integrator if you need a change there. **The bar is lighter (A26)**, except that no test, tolerance or claim is loosened. Checkpoint as you go; write handoff update 4.
+
+---
+
+## PF — Speed: pass S15's release check
+
+**Thread:** GPT/Codex (GPT-6 Astra) · **Branch:** `p3/pf-speed` · **Worktree:** `.worktrees/pf`
+
+**Read:**
+- DECISIONS **A18 (7)**, the gate: on S15's modest profile, cold load within 2.5 s and 1× frame p95 within 33 ms in every view, any frame over 100 ms investigated, plus one check on a real modest laptop. Also A12 (time keeps running), A20 (faster coasting) and A26 (the lighter bar);
+- S15: `docs/studies/s15/`, `docs/handoffs/s15.md` and `tools/studies/s15/README.md` (the runner and what each setting means);
+- 2G's speed pass (`docs/handoffs/2G.md`), VX's performance section (`docs/handoffs/vx.md`, `docs/handoffs/vx/performance.json`) and NIGHT's report (`docs/handoffs/night.md`, finding 8: a 0.6 s hitch as the opening hands off to the room);
+- ledger rows R11, R18, R48 and R49.
+
+**Where it stands** (VX's run on its own branch, 4× CPU throttle, Intel UHD, an uncontrolled host): frame p95 Room 54.7 ms, FLIGHT 109.1, SHIP 97.0, MAP 72.8, SYSTEMS 42.3, PLAN 30.3, MISSION 18.1, BLACK BOX 18.0, MODEL 12.2 (one 163 ms long task); cold room readiness 3.4 s and 2.4 s in two runs. Profiles pointed at Three's program setup and draw submission, the belief-side snapshot helpers in `src/game/belief/standin-model.ts`, and cloud transforms. Room, FLIGHT, MAP and SHIP all had long tasks. Facts from the code, to confirm rather than assume as causes: the app ships as one 1.47 MB main chunk; the room renders an antialiased scene through a full-resolution bloom pass (`RoomView.ts`, `EffectComposer` with `UnrealBloomPass`).
+
+**Goal:** the production build passes A18 (7) on S15's modest profile, measured honestly, without changing what the player sees in meaning. Where a view can't pass, your handoff says exactly what is left, what it costs and why.
+
+1. **First, fix the runners for the opening (R48).** S15's and S20's runners and `prototypes/shots/capture.mjs` wait for the room on a fresh profile, which now meets the 19.5 s opening first. Set `localStorage['recursion:opening-seen'] = '1'` with `Page.addScriptToEvaluateOnNewDocument` before page scripts run. Measure cold load two ways: the opening's first frame on a fresh profile (what a first-time judge waits for), and the room's readiness with the marker set.
+2. **Rebaseline merged `main`** with every view, all three regions (the Well Garden's 2,600 sites and the Cathedral's lattice may cost more than Twin Deeps), cold and warm loads, and profiles of the worst cells. Other threads build and test on this machine while you run: record the machine's load before each run, repeat runs, report medians with their spread, and flag contention. Don't call a number quiet when it wasn't.
+3. **Fix, biggest measured cost first.** Candidates, to confirm by profile:
+   - render cost on an integrated GPU: bloom resolution, antialiasing under post-processing, render scale; perhaps a quality governor that lowers render scale or bloom detail when frames run long, and restores it when they don't;
+   - FLIGHT's hologram: line counts and per-frame rebuilds;
+   - the belief-side snapshot helpers in `standin-model.ts`;
+   - shader compilation at load and on first view (precompile, warm up);
+   - load: split the main chunk so each region's heavy code (the lattice, the wells) loads with its region;
+   - the 0.6 s hitch at the opening's hand-off, and any other frame over 100 ms.
+4. **Re-measure after each fix** with the same settings, and keep a before-and-after table per view and region. Also report achieved warp at 2000× on the modest profile (R11, R18).
+5. **The real-laptop check:** give the owner a simple way to run it, for example a `?perf` readout of frame p95 and load time (in your `src/view3d/perf/`, mounted with one line agreed through the integrator), and a short procedure in your handoff.
+
+**Owns:**
+- `tools/studies/s15/`, `tools/studies/s20/` and `prototypes/shots/capture.mjs` (R48); port 4175 is yours;
+- `src/view3d/perf/` (new): the quality governor, the readout and any other speed helpers;
+- `docs/handoffs/pf.md` and `docs/handoffs/pf/`.
+
+**Scoped exceptions** (other threads are working near these files now; keep each change small and say what you changed in your checkpoint line):
+- `src/game/belief/standin-model.ts` (2F's lane; 2F keeps out of it while you hold it);
+- in 3F's `src/view3d/room/RoomView.ts`: the renderer and composer setup in the constructor, and one quality hook in `frame()`. Tell 3F through the integrator before you commit; VX's `followEye` calls stay;
+- `vite.config.ts`: build and chunking options only (root config is the integrator's).
+
+**Everything else goes as a request**, with the measured saving and a proposed diff in your handoff, through the integrator: FLIGHT's hologram and the rest of `src/view3d/` to 3F; the sky, clouds and funnels in `src/view3d/sky/` and `fx/` to VX; the truth tick and environment to 2F.
+
+**Rules:**
+- **The gate's numbers stay as they are:** 2.5 s and 33 ms are the target, and the report says plainly which views pass and which don't. Never loosen a test, tolerance or claim.
+- Lower resolution, bloom or detail when you must, but never remove information the player needs, and never change the simulation: the command tape and its fingerprints stay identical (2G's and 3A's tests).
+- No visual value hard-coded outside `src/theme/` (Convention 11); at most three flashes in any second; reduced motion respected.
+- **The lighter bar (A26) applies to process:** S15's runner is your evidence; no new evidence suites.
+- Keep `npm run check` and `npm run build` green; commit checkpoints and announce each in one line.
