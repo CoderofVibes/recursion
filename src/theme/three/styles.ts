@@ -87,6 +87,12 @@ export const planeStyle = {
   veilColour: colour.viewBackground,
   /** Hatch spacing over never-sensed space, world units. */
   unknownSpacing: hatch.unknownSpacing,
+  /**
+   * Ship seconds after which space sensed earlier reads as unknown again: the hatch returns as
+   * the look ages, because rocks move [ASSUMED 2 h; an 8 h dive outlasts it unless the camera
+   * keeps looking, which is the point of P12].
+   */
+  earlierMemory: 7200,
 } as const;
 
 /** Asteroid and object marks by what the ship knows about them. */

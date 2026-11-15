@@ -23,6 +23,10 @@ Everything on screen in three dimensions: the walkable control room (DECISIONS A
 - **FLIGHT** follows P10: the issued forecast is dotted and frozen, the measured trail solid. The envelope is a tube of 2σ radius around the path with a ribbon in the reference plane; it is fainter and hatched where the model extrapolates, drawn distinctly inside a validated span (`ForecastSample.validated`, A5), and ends at a ring at the horizon. Nothing is drawn beyond it.
 - **Rocks.** Tracked rocks are bright, carry the forecast's track and closest-approach marks. Rocks that are only seen are dim, sit where they are believed to be with a ring of 2σ, and are never drawn as if forecast. A rock the ship has never catalogued is not drawn.
 - **The ship** in FLIGHT is a large symbol set back toward the player. Its true position is the ring at the centre of mass; its true hull is drawn there at true scale. Thrust is drawn at its points of application with its line of action.
+- **Coverage.** Each sensor's field of view is a cone from the ship. The reference plane reads three ways:
+  - tinted where the ship senses now;
+  - plain where it sensed earlier in this attempt (`flight/coverageHistory.ts` remembers each sector where the ship was; the hatch returns as the look ages);
+  - hatched where it has not looked.
 - **Depth.** A level reference plane passes through the ship; anything off it carries a stalk to it. Heading-up follows the ship but never turns faster than `motion.maxDisplayTurn`, so time warp cannot spin the display.
 
 ## Field view plugins
