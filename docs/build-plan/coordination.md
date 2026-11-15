@@ -4,16 +4,16 @@ The live state of the build between threads: who is running, who holds which sha
 
 **Integrator, after a compaction:** read this file first, then `git log --oneline -15`, then the handoffs of any thread marked running.
 
-**Last updated:** 2026-11-14, 2F (fields wired) and 3B merged; all three encounters load in the production build. Unannounced checkpoints sit on 2D, 3B and 3C; merge them when announced.
+**Last updated:** 2026-11-15 night. 2D, 2F and 2C paused and merged (`0ee3d1c`, 1,234 tests green). The overnight plan below is live. Next merges, in the morning: NIGHT, VX, 3C, 3B, AU.
 
 ## Threads
 
 | Thread | Model | Worktree · branch | Status | Gate or next step | Last merged into main |
 |---|---|---|---|---|---|
-| 2D control room | Opus 5.5 | `.worktrees/2d` · `p2/2d-control-room` | Running. Merged: S9 R1–R15, S15 console fixes, 2G's screen data, 2C's forecast fields, S20 items, encounter panel mount and 120 m zoom (R4), A20 frame cadence (12 fps while coasting at 60×+), credits tab, elliptical envelopes | Next: OP's hooks (R23), AU's mount (R24), funnels in the window (R13); re-measure SYSTEMS | `635245f` |
+| 2D control room | Opus 5.5 | `.worktrees/2d` · `p2/2d-control-room` | **Paused overnight**; all merged (`0ee3d1c`): region picker (A25), 2F's screen data, funnels in the window, A24 monitor on SYSTEMS, A20 slice | Resumes from main; waiting on: 2F's new fields drawn, the monitor reading, truth-side funnel projection, 3C registering ChainLinkPanel | `0ee3d1c` |
 | 2G speed pass | Opus 5.5 | `.worktrees/2g` · `p2/2g-3d-flight` | **Done**, evidence and handoff merged. Next per-tick target: the environment step (rock visibility); a quiet-machine rebaseline is still to run (R11) | — | `bc292a9` |
-| 2F game loop | Opus 5.5 | `.worktrees/2f` · `p2/2f-game` | Running. Merged: wells in the tick (crush, pop-ups with a precursor warp drop), lattice environment per 0.1 s tick, ChainLinkPanel data, 3A's conditioned step and one power-loss watch, the clouds harm, A20 budget (14 ms coasting), S20's departure status, swept exits | Next: the radiation monitor's caution (R37), sensors acquiring within the tick (R20 remainder), the wells' save seam | `920a9ed` |
-| 2C model and Black Box | Opus 5.5 | `.worktrees/2c` · `p2/2c-model` | Running. Merged: the lattice rebuilt from recorded frames (R9), the Black Box lattice function, condition events by the ship's own ids (R27), coalesced model work (S20) | R32 (funnels) waits on a funnel camera channel (R36) | `e4df230` |
+| 2F game loop | Opus 5.5 | `.worktrees/2f` · `p2/2f-game` | **Paused overnight**; all merged (`0ee3d1c`), including R38's contract fields | Resumes from main with: the monitor's caution (R37, restore the tripwire), sensors within the tick, the wells' save seam | `0ee3d1c` |
+| 2C model and Black Box | Opus 5.5 | `.worktrees/2c` · `p2/2c-model` | **Paused overnight**; all merged | Resumes with: R32 once the funnel channel lands, R37's monitor in the Black Box | `0ee3d1c` |
 | 3B Inverse Wells | GPT/Codex | `.worktrees/3b` · `p3/3b-wells` | **Merged**: S22's funnels as an indexed field, the 900 s precursor lifecycle, the downstream exit sphere, registration (`?encounter=inverse-wells`) | Playable needs: crush loss, lifecycle in the tick, window funnels (R30, R31) | `91a666a` |
 | 3C Chain Link Fence | GPT/Codex (GPT-6 Astra) | `.worktrees/3c` · `p3/3c-lattice` | **Done**: twenty fences qualified; sensors on 3A's shared availability; leakage heat no longer boosts sensing or recording; 13 integration tests | Playable in the app once 2F (R20 acquisition scheduling, panel data) and 2C (R9 reconstruction) land | `43e18d9` |
 | 3E playability harness | GPT/Codex | `.worktrees/3e` · `p3/3e-harness` | **Done**: `npm run harness` (smoke, reference, learning, routes, all); its pending-acceptance list names the gaps | — | `44db2fc` |
@@ -121,10 +121,10 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 
 | R37 | Owner → 3C, 2F, 2C, 2D | The radiation monitor (A24). 3C: the sensor, a point-sampling helper and a decoded radiation caution in `src/ship/sensors/`. **2F:** the environment supplies the monitor's point signal from all active fields, including the Gravity range's clouds; `session.ts` consumes the recorded caution at once, drops warp to 1× and stops that frame's remaining ticks. 2C records it and shows it in the loss review; 2D shows the dose rate and caution | **Open**: 3C building; relay to 2F | 3C publishes the exact APIs in its handoff |
 
-| R38 | 2F → integrator | Additive contract fields: a `WindowView` slot so the clouds (and, with 3B, the funnels) can be drawn; the departure's assist condition and why a departure missed | **Granted to 2F as a scoped exception**: additive fields only, reviewed at merge; 2D draws them | |
+| R38 | 2F → integrator | Contract fields for clouds and funnels in the window and the departure | **Done** `0ee3d1c` (2F, scoped exception); 2D to draw the clouds | |
 | R39 | Integrator | On merging 2F: its radiation caution was driven by true per-component dose (removed in R35). `clouds.test.ts` now asserts no caution until the monitor's caution (R37) lands; that tripwire then fails and 2F restores the 20 s figure | **Done** (this commit) | |
 
-| R40 | Owner → 2D (OP, integrator) | The region picker (A25): Twin Deeps, Well Garden, Unseen Cathedral, through 2F's `?encounter=` loader, labelled as previews with the route between them not yet built. **OP:** the opening plays once per browser, not per region. **Integrator:** the judge README explains the picker once it lands | **Open**: relay; top of 2D's list | |
+| R40 | Owner → 2D | The region picker (A25) | **Done** `0ee3d1c`: a Regions panel at the top of MISSION, with the owner's label | NIGHT: item 2 is already done |
 
 | R41 | OP → 2D, OP | Put the opening in the game: 2D mounts `OpeningGate` in the app entry (`src/app/App.tsx`) ahead of the room, waking into the Gravity range. OP changes its gate (`src/app/opening/launch.ts`) from once per save to once per browser (A25) | **Open**: relay; with the picker (R40) | The owner wants judges to see it first |
 | R42 | OP → AU | Cue times moved with the 19.5 s opening: opening-rumble 6.5 s, alarms 6.6/7.8/8.47, loss-failure 9.35, black-cut 10.65, opening-title 11.95, **new** title-out 15.9, room-wake 17.9 | **Open**: relay | |
