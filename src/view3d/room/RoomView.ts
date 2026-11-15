@@ -116,6 +116,8 @@ export class RoomView {
   };
   private current: ViewMode = 'room';
   private inRegion = false;
+  /** FLIGHT's range before the map's region view took the hologram over. */
+  private rangeBeforeRegion: number | undefined;
   private trans: {
     t: number;
     from: { pos: Vector3; quat: Quaternion };
@@ -340,6 +342,10 @@ export class RoomView {
     else if (mode === 'map' || mode === 'ship')
       this.tiltUser = clamp(this.tiltUser + radians, -0.25, 0.8);
   }
+  /** The region view's range, metres: stepping through a forecast there follows the ship. */
+  setRegionRange(metres: number): void {
+    if (this.current === 'map' && this.inRegion) this.flight.setRange(metres);
+  }
   /** The range FLIGHT starts at and a reset returns to: the host sets it to the encounter's scale. */
   setFlightRange(metres: number): void {
     this.flight.setRange(metres);
@@ -554,9 +560,13 @@ export class RoomView {
   // ---- Internals -----------------------------------------------------------------------------
 
   private applyRegion(on: boolean): void {
+    if (on && !this.inRegion) this.rangeBeforeRegion = this.flight.range();
     this.inRegion = on;
     this.flight.setChart(on);
-    if (!on) this.flight.setRange(Math.min(this.flight.range(), RANGE_DEFAULT));
+    // Leaving the region gives FLIGHT back the range it had: the region view's zooming, and a
+    // forecast stepped through there, are not FLIGHT's framing.
+    if (!on)
+      this.flight.setRange(this.rangeBeforeRegion ?? Math.min(this.flight.range(), RANGE_DEFAULT));
   }
 
   private syncVisibility(): void {

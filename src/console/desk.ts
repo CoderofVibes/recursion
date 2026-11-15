@@ -86,6 +86,11 @@ export class Desk {
   setAside: { readonly edit: PlanEdit; readonly attempt: number } | undefined;
   /** The draft forecast of the plan as edited, if previewed; cleared by any edit. */
   preview: ForecastDraft | undefined;
+  /**
+   * Stepping through the forecast in the MAP's region view: the moment of it being looked at,
+   * and whether the view follows the ship there. Undefined: the region is shown as it is now.
+   */
+  rehearsal: { readonly t: number; readonly follow: boolean } | undefined;
   /** Object chosen in the flight view. */
   selected: string | null = null;
   compare: readonly [AttemptId, AttemptId] | undefined;
@@ -189,6 +194,11 @@ export class Desk {
     this.selected = id;
     this.notify();
   }
+  /** Step to a moment of the forecast, or (undefined) stop stepping. */
+  setRehearsal(next: { readonly t: number; readonly follow: boolean } | undefined): void {
+    this.rehearsal = next;
+    this.notify();
+  }
 
   // ---- Mission design ------------------------------------------------------------------------
   setDesign(patch: Partial<MissionDesign>): void {
@@ -229,6 +239,8 @@ export class Desk {
     }
     this.designedAt = undefined;
     this.preview = undefined;
+    // The forecast being stepped through belonged to the attempt that ended.
+    this.rehearsal = undefined;
     this.warpDrop = null;
     this.selected = null;
     this.compare = undefined;

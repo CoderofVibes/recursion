@@ -513,7 +513,27 @@ body,
   right: var(--rx-hud-margin);
   top: var(--rx-hud-top);
   width: var(--rx-hud-plate);
+  max-height: calc(100% - var(--rx-hud-top) - var(--rx-hud-margin) * 1.5);
+  overflow-y: auto;
   pointer-events: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--rx-panel-edge) transparent;
+}
+/* The predictive model, stepped through, on the other side of the region from its plate. */
+.mp-plate.mp-left {
+  left: var(--rx-hud-margin);
+  right: auto;
+  width: var(--rx-hud-column);
+}
+.mp-framing {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--rx-unit) * 2);
+}
+.mp-framing .rx-chip[data-on] {
+  color: var(--rx-forecast);
+  border-color: var(--rx-forecast);
+  background: var(--rx-wash-forecast);
 }
 
 /* ---- Loss of the ship: black, then one orange pip that survives --------------------------------- */

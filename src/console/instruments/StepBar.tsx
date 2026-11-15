@@ -18,7 +18,8 @@ export interface StepBarProps {
   readonly steps: readonly Step[];
   /** The moment shown. */
   readonly t: number;
-  readonly onTime: (t: number) => void;
+  /** `stepped`: the time is a step's (a chip or a STEP button), not a place on the scrubber. */
+  readonly onTime: (t: number, stepped: boolean) => void;
   /** How the model stands along the forecast. */
   readonly spans?: readonly TimeSpan[];
   /** A time as the console writes it (T+hh:mm:ss). */
@@ -41,7 +42,7 @@ export function StepBar({
   const pct = (time: number): string => `${(((time - from) / length) * 100).toFixed(2)}%`;
   const go = (i: number): void => {
     const step = steps[Math.min(steps.length - 1, Math.max(0, i))];
-    if (step) onTime(step.t);
+    if (step) onTime(step.t, true);
   };
   // On a step exactly, NEXT moves on; between steps, it goes to the one ahead.
   const onStep = Math.abs((steps[index]?.t ?? t) - t) < 1e-6;
@@ -109,7 +110,7 @@ export function StepBar({
           value={Math.min(to, Math.max(from, t))}
           aria-label="Forecast time"
           aria-valuetext={format(t)}
-          onChange={(e) => onTime(Number(e.target.value))}
+          onChange={(e) => onTime(Number(e.target.value), false)}
         />
       </div>
       <p className="ci-steps__now">

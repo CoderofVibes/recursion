@@ -222,8 +222,14 @@ export function startControlRoom(
       sinceChart = 0;
       chart = chartView(game.chart());
     }
+    // Stepping through the forecast (the MAP's region view): the plan as previewed, or failing
+    // that the forecast last issued, at the moment the desk holds.
+    const rehearsed = desk.preview ?? snapshot.forecasts.at(-1);
     view.frame(drawDt, {
       snapshot,
+      ...(desk.rehearsal && rehearsed
+        ? { rehearsal: { forecast: rehearsed, t: desk.rehearsal.t, follow: desk.rehearsal.follow } }
+        : {}),
       ...(desk.preview ? { preview: desk.preview } : {}),
       selected: desk.selected,
       clearance: desk.design.clearance,

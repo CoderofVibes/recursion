@@ -19,6 +19,7 @@ import { HOTSPOT_NAME, PADS } from '../view3d/room/layout.ts';
 import type { ViewMode } from '../view3d/room/layout.ts';
 import type { RoomView } from '../view3d/room/RoomView.ts';
 import { AVAILABLE } from './hands.ts';
+import { readMotionPreference } from './opening/launch.ts';
 import { onSoundMuted, setSoundMuted, soundAvailable, soundMuted } from './sound.ts';
 
 /** Before the encounter the flight controls do not answer (A12). */
@@ -234,6 +235,16 @@ export function ControlRoom({ game, modelError, erase }: ControlRoomProps) {
             region={ui.region}
             onRegion={(on) => room.setRegion(on)}
             framing={room}
+            onRange={(metres) => room.setRegionRange(metres)}
+            range={() => room.flight.range()}
+            still={
+              readMotionPreference() ??
+              window.matchMedia('(prefers-reduced-motion: reduce)').matches
+            }
+            onPlan={() => {
+              desk.setPage('plan');
+              room.go('console');
+            }}
           />
         ) : null}
       </div>

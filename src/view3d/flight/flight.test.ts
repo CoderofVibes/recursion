@@ -131,6 +131,71 @@ describe('flight hologram', () => {
     expect(levelHeading(about(new Vector3(1, 0, 0), Math.PI / 2), 1.2)).toBe(1.2);
   });
 
+  it('steps through a forecast in the region view, centred on where it puts the ship', () => {
+    const issued = viewSnapshot.forecasts.at(-1)!;
+    const sample = issued.samples[Math.floor(issued.samples.length / 2)]!;
+    const rehearsal = (follow: boolean) => ({ forecast: issued, t: sample.t, follow });
+    /** The group that scales game metres to the hologram and centres them. */
+    const centred = (holo: ReturnType<typeof make>) => {
+      const trans = holo.group.children[0]!.children[0]!;
+      // Undo the scale and the sign: the game point the view is centred on, in scene axes.
+      return trans.position.clone().divideScalar(-trans.scale.x);
+    };
+    const ship = viewSnapshot.world.ship.position;
+    const inScene = (p: { x: number; y: number; z?: number }) => new Vector3(p.x, p.z ?? 0, -p.y);
+
+    const region = make();
+    region.setChart(true);
+    region.update({ ...frame(viewSnapshot), rehearsal: rehearsal(true) }, 0.016, 0);
+    expect(centred(region).distanceTo(inScene(sample.position))).toBeLessThan(1e-3);
+
+    // Not following: the forecast is walked, but the view stays on the ship as it is now.
+    const staying = make();
+    staying.setChart(true);
+    staying.update({ ...frame(viewSnapshot), rehearsal: rehearsal(false) }, 0.016, 0);
+    expect(centred(staying).distanceTo(inScene(ship))).toBeLessThan(1e-3);
+
+    // Outside the region view a rehearsal is ignored: FLIGHT is always centred on the ship.
+    const flying = make();
+    flying.update({ ...frame(viewSnapshot), rehearsal: rehearsal(true) }, 0.016, 0);
+    expect(centred(flying).distanceTo(inScene(ship))).toBeLessThan(1e-3);
+    for (const holo of [region, staying, flying]) holo.dispose();
+  });
+
+  it('never lets a draft being stepped through change the alerts (they are the issued forecast’s)', () => {
+    const issued = viewSnapshot.forecasts.at(-1)!;
+    const plain = make();
+    plain.setChart(true);
+    plain.update(frame(viewSnapshot), 0.016, 0);
+    const before = plain.alerts();
+
+    // A draft that would graze the first body: a pass well inside any clearance.
+    const body = viewSnapshot.world.bodies[0]!;
+    const mid = issued.samples[Math.floor(issued.samples.length / 2)]!.t;
+    const draft = {
+      ...issued,
+      id: 'draft-graze',
+      closestApproaches: [{ id: body.id, t: mid, distance: 10, sigma: 1 }],
+    } as unknown as typeof issued;
+    const stepping = make();
+    stepping.setChart(true);
+    stepping.update(
+      { ...frame(viewSnapshot), rehearsal: { forecast: draft, t: mid, follow: true } },
+      0.016,
+      0,
+    );
+    expect(stepping.alerts()).toEqual(before);
+    // Gliding between steps redraws only the path's split: it must not throw or change them.
+    stepping.update(
+      { ...frame(viewSnapshot), rehearsal: { forecast: draft, t: mid + 5, follow: true } },
+      0.016,
+      0.016,
+    );
+    expect(stepping.alerts()).toEqual(before);
+    plain.dispose();
+    stepping.dispose();
+  });
+
   it('draws the fixture snapshot and the two-attempt overlay', () => {
     const holo = make();
     holo.setRange(400_000);
