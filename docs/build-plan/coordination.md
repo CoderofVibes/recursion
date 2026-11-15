@@ -4,7 +4,7 @@ The live state of the build between threads: who is running, who holds which sha
 
 **Integrator, after a compaction or in a new main thread:** read this file first (the "Morning" section, if it's still there), then `git log --oneline -15`, then the handoffs of any thread marked running.
 
-**Last updated:** 2026-11-15 morning, new main thread. Merging the overnight branches in the Morning section's order: **NIGHT, VX, 3C, 3B and ART merged**; S23 to follow.
+**Last updated:** 2026-11-15 morning, new main thread. **All the overnight branches are merged** (NIGHT, VX, 3C, 3B, ART, S23; AU had nothing). Next: the owner's decisions for today, at the end of the Morning section.
 
 ## Threads
 
@@ -21,12 +21,12 @@ The live state of the build between threads: who is running, who holds which sha
 | 3D expedition | Opus 5.5 | not created yet · `p3/3d-expedition` | **Gated** | After 2F's and 2C's first checkpoints merge | — |
 | 3F console v2 | Claude | — | **Gated** | After 2D hands off | — |
 | S16 Well Garden layout | GPT/Codex | `.worktrees/s16` · `st/s16-well-garden` | **Done**: three-well prototype, 25-entry catalogue, garden budget (A15 Q05) | — | `e6eb51d` |
-| S23 the opening | GPT/Codex | `.worktrees/s23` · `st/s23-the-opening` | **Done, unmerged** (`3d93895`, 1 ahead) | OP built from it; merge for the record | — |
+| S23 the opening | GPT/Codex | `.worktrees/s23` · `st/s23-the-opening` | **Done, merged for the record** (this commit, from `3d93895`) | — | (this commit) |
 | OP the opening | GPT (base) then Opus 5.5 | `.worktrees/op` · `p3/op-opening` | **Merged** (`6ac2397`): the 19.5 s opening, replay and Skip, reduced motion, room hooks (R23), the home window shared with the ending. Not yet in the game: only the dev preview plays it (R41). Its dev server and launch entry are removed | Gate once per browser (A25) | `6ac2397` |
 | VX window and sky visuals | GPT/Codex (GPT-6 Astra) | `.worktrees/vx` · `p3/vx-visuals` | **Done, merged** (`01a0947`, from `ac5be1e`): the deep sky (baked cubemap), the opening's Earth and title, cloud and funnel optics wired into the window. Handoff `docs/handoffs/vx.md` | Window side of R31 is complete for `WindowFunnel` entries; the Well Garden's producer is not (R31). S15 gate fails (R49). Theme owner may adopt `sky/style.ts` | `01a0947` |
 | NIGHT judge's run | Claude (Fable 5.2) | `.worktrees/night` · `p3/night-hardening` | **Done, merged** (`42b5c36`, from `cb1ace1`); report `docs/handoffs/night.md`; judge-run driver in `docs/handoffs/night/judge-run/` | Its found-not-fixed list feeds R46–R48 | `42b5c36` |
 | AU basic audio | GPT/Codex | `.worktrees/au` · `p3/au-audio` | **No work on the branch**: 0 ahead of main, worktree clean at `b5f84ac` | Ask the owner whether AU ran, or where its work is | — |
-| ART window references | Owner's choice (Claude or GPT) | `.worktrees/art` · `art/window-references` | **Merged** (this commit, from `49cfd09`; through round 7 prompts): `docs/art/` only, no images (checked). **References only (A23): no image ships or is committed** | If it runs again, merge docs only | (this commit) |
+| ART window references | Owner's choice (Claude or GPT) | `.worktrees/art` · `art/window-references` | **Merged** (`0e9bf1b`, from `49cfd09`; through round 7 prompts): `docs/art/` only, no images (checked). **References only (A23): no image ships or is committed** | If it runs again, merge docs only | `0e9bf1b` |
 | S22 well field (real funnels) | GPT/Codex | `.worktrees/s22` · `st/s22-big-well-field` | **Done**: funnels 120 km long, 20 km mouth, 1 km throat, pull 0.02–0.10 m/s²; 2,601 sites, 650 appearing; owner questions open | Feeds 3B (R12) | `15171df` |
 | S17 lattice first contact | GPT/Codex | `.worktrees/s17` · `st/s17-lattice-first-contact` | **Done**; five owner questions open | Feeds 3C (R8), 3A, 2C | `ba7568e` |
 | S18 tether gate | GPT/Codex | `.worktrees/s18` · `st/s18-tether-gate` | **Done**: the load gate passes as a slower turning manoeuvre; four owner questions open | Future tether work | `32a8b67` |
@@ -49,7 +49,7 @@ In the morning the integrator merges in this order: the paused threads' checkpoi
 
 ## Morning (2026-11-15): the overnight results, for the new main thread
 
-Nothing below is merged. **Merge in this order**, each `--no-ff`, with `npm run check`, `npm run build` and a smoke test of the production build after each, updating this ledger in the same commit:
+**All merged** by the new main thread (`42b5c36` … this commit), each with check, build and a production smoke test. The decisions at the end of this section are being taken with the owner. **Merge in this order**, each `--no-ff`, with `npm run check`, `npm run build` and a smoke test of the production build after each, updating this ledger in the same commit:
 
 1. **Merged.** **NIGHT** `p3/night-hardening` (`cb1ace1`, 10 commits; 1,254 tests). Report: `docs/handoffs/night.md`, 14 screenshots and the replay driver in `docs/handoffs/night/`.
    - Fixed: R43 (the loss sequence's busiest second went from ~13 flashes to at most 3, on an authored schedule, tested; reduced motion neither shakes nor flickers). R41 and R44 (the opening plays in the game once per browser and wakes into the Gravity range; reduced motion is a still sky and a plain fade). Twin Deeps blockers: the model fell minutes behind after a long attempt, so TEST hung for 9+ minutes (now under 30 s); no off-forecast or close-pass alert fired on CONSOLE, SHIP or MAP, so warp never dropped there (now it does). Cathedral dead ends: FLIGHT opened at 1,500 km in a region a few km across (now per-region scale); the Black Box function was on no screen (now beside FLIGHT, wired to the model's lattice). Smaller: the hologram after a loss, MODEL's sideways scroll, objectives on MISSION, one counted line for 216 precursors, two labels.
@@ -60,7 +60,7 @@ Nothing below is merged. **Merge in this order**, each `--no-ff`, with `npm run 
 2. **Merged.** **VX** `p3/vx-visuals` (`ac5be1e`, 4 commits). One conflict in `RoomView.ts` (the render tail): kept NIGHT's cut to black, then VX's `followEye`. The shared sky, the opening's look, fx helpers, wired into the window (scoped exception: `outside.ts`, the window parts of `RoomView.ts`). Zero console errors in all three regions. Handoff has before-and-after screenshots. **Limits:** live funnels wait for the Well Garden's optical-data producer; **S15's modest-profile release check fails** (evidence in its handoff). Expect conflicts with NIGHT in `src/view3d/` and the opening.
 3. **Merged.** **3C** `p3/3c-lattice` (`8a1713b`, 6 commits; 1,296 tests). Took over `src/ship/sensors/wells*`, merged 3B's `4692625` and fixed it (R45): funnel acquisition uses 3A's availability and useful-power helpers, records total draw, shares recorder capacity fairly with lattice data. Remaining for others: live scenes, reconstruction, radiation-triggered warp drop.
 4. **Merged.** **3B** `p3/3b-wells` (`a6887f0`, 9 commits; 1,329 tests). Consumed 3C's fix unchanged. 26 harness cases repeat exactly; 11 of 14 nominal flights complete (three miss the ten-hour window); crush and birth-veto controls pass. Admission incomplete; findings and owner requests in its `ADMISSION.md`.
-5. **ART merged** `art/window-references` (`49cfd09`, docs only; no images committed) and **S23** `st/s23-the-opening` (`3d93895`).
+5. **ART merged** `art/window-references` (`49cfd09`, docs only; no images committed) and **S23 merged** `st/s23-the-opening` (`3d93895`).
 6. **AU:** nothing to merge (see Threads).
 
 **Then** give the owner a short "here's the game now" and settle today's plan with them, one decision at a time. Open for today:
@@ -179,7 +179,8 @@ Decided: A15 (S11's queue), A16 (the lattice), A17 (the ending) and A18 (the Gra
 
 | Commit | What |
 |---|---|
-| (this commit) | ART merged (`49cfd09`): `docs/art/` (art bible, references, selections, window prompts and views, VX brief), no images. Check 1,356 tests + speed test, build, production smoke of the opening and all three regions, no page errors |
+| (this commit) | S23 merged for the record (`3d93895`): the opening's study, reference script and vectors. Check 1,356 tests + speed test, build, production smoke of the opening and all three regions, no page errors. **All overnight branches now merged** |
+| `0e9bf1b` | ART merged (`49cfd09`): `docs/art/` (art bible, references, selections, window prompts and views, VX brief), no images. Check 1,356 tests + speed test, build, production smoke of the opening and all three regions, no page errors |
 | `5c442ce` | 3B merged (`a6887f0`): live-field admission evidence (`src/content/inverse-wells/admission-reports/`, 8.5 MB of JSON, not imported by the app). Check 1,356 tests + speed test, build, harness smoke (3 pass), production smoke of the opening and all three regions, a Well Garden flight to its designed loss, and **Twin Deeps' full learning loop** (two dives, TEST passes 1.02 against 1.11, exponent 2.5001, RMS 543 m → 26 m, ADOPT), no page errors |
 | `e2137be` | 3C merged (`8a1713b`): the funnel channel fixed (R45) and wired (R36); the radiation monitor's sensor and caution (R37, 3C's half); two additive contracts reviewed. Check 1,355 tests + speed test, build, harness smoke (3 pass), production smoke of the opening and all three regions, live flights in the Well Garden (designed loss at T+00:29) and the Cathedral (power, heat, Black Box live), no page errors |
 | `01a0947` | VX merged (`ac5be1e`): the deep sky, the opening's Earth and title, window optics; `RoomView.ts` conflict resolved keeping both. Check 1,260 tests + speed test, build, harness smoke (3 pass), production smoke of the opening, reduced-motion opening and all three regions with no page errors |
