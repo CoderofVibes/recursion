@@ -50,7 +50,8 @@ export const atlasShader = /* glsl */ `
     if(kind==0) {
       // Needle: tightly wound light along a thin taper. The tip is a point sprite.
       float spine=exp(-q.y*q.y*30.0)*(1.0-smoothstep(0.5,1.0,abs(q.x)));
-      return cWhite*edge*(exp(-r*4.0)*0.08+spine*0.12);
+      float arms=pow(0.5+0.5*cos(a*2.0-log(r+0.035)*4.5),3.0);
+      return cWhite*edge*(exp(-r*2.8)*(0.045+arms*0.16)+spine*0.035);
     }
     if(kind==1) {
       // Hollow: tilted thin galaxy, empty oval, a single rim knot. No glow in the hole.
