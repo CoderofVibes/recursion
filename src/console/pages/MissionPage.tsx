@@ -12,6 +12,7 @@ import {
   departMet,
   departure,
   fixRate,
+  objectiveLine,
   recorder,
   recorderEstimate,
   spendable,
@@ -59,18 +60,15 @@ export function MissionPage({ desk }: { readonly desk: Desk }) {
     <Columns>
       <RegionsPanel current={game.briefing.id} currentName={game.briefing.name} />
       <Panel title="Objective" aside={game.briefing.name}>
-        {snapshot.objectives.map((o, i) => (
-          <Line key={o.id} label={o.kind === 'custom' ? `objective ${i + 1}` : o.kind}>
-            {o.label}
-            {/* Its conditions, not just its name (S20). */}
-            {o.depart
-              ? ` · ${whole(o.depart.minSpeed)} m/s from the centre of mass, beyond ${dist(o.depart.beyond)}`
-              : ''}
-            {o.maxDeltaV !== undefined
-              ? ` · at most ${fixed(o.maxDeltaV, 0)} m/s spent on leaving`
-              : ''}
-          </Line>
-        ))}
+        {snapshot.objectives.map((o, i) => {
+          // Its conditions, not just its name (S20).
+          const line = objectiveLine(o, i, ship.position);
+          return (
+            <Line key={o.id} label={line.label}>
+              {line.text}
+            </Line>
+          );
+        })}
         {depart ? (
           <>
             {/* The frame the objective is judged in, as the ship believes it (S20). */}

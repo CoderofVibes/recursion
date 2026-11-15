@@ -5,7 +5,7 @@
  */
 import { describe, expect, it } from 'vitest';
 import type { Sighting } from '../game/belief/controls.ts';
-import { newlyRaised, raisedAlerts } from './alerts.ts';
+import { newlyRaised, raisedAlerts, sightingAlerts } from './alerts.ts';
 import { doseRate, doseRateView } from './radiation.ts';
 
 const reading = {
@@ -114,5 +114,35 @@ describe("the session's own alerts", () => {
       detail: 'due in 00:15:00',
     });
     expect(newlyRaised(at([], [precursor]), at([], [precursor]))).toBeUndefined();
+  });
+
+  it('counts sightings due together as one line, not a stack of the same line', () => {
+    const well = (field: string, until = 1200): Sighting => ({
+      kind: 'precursor',
+      field,
+      seenAt: 300,
+      until,
+    });
+    const field = Array.from({ length: 216 }, (_, i) => well(`w-${i}`));
+    expect(sightingAlerts(field, 300)).toEqual([
+      {
+        id: 'sighting-precursor-1200-216',
+        level: 'caution',
+        text: '216 precursors in the window',
+        detail: 'due in 00:15:00',
+      },
+    ]);
+    // A later batch is its own line, and a new alert for the warp drop to name.
+    const later = [...field, well('late', 1500)];
+    expect(sightingAlerts(later, 600).map((a) => a.text)).toEqual([
+      '216 precursors in the window',
+      'Precursor in the window',
+    ]);
+    const at = (sightings: Sighting[]) => ({ alerts: [], sightings, t: 600 });
+    expect(newlyRaised(at(field), at(later))?.id).toBe('sighting-late');
+    // One more joining a batch already on show is new too.
+    expect(newlyRaised(at(field), at([...field, well('w-216')]))?.text).toBe(
+      '217 precursors in the window',
+    );
   });
 });
