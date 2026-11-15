@@ -206,28 +206,32 @@ export function coverageCones(coverage: {
 /**
  * The outline of the ship in the body x-y plane, for drawing its true hull and footprint.
  * Planar: the `footprint` polygon of the configuration. Three-dimensional: the `hull` is a
- * union of prisms; the outline drawn is that of the widest prism.
+ * union of prisms. One prism: its outline. Several (the 3D ship is a pressure hull and four
+ * wings): the convex envelope of all of them, counter-clockwise, which is the occupied footprint
+ * the planar game drew (2G).
  */
 export function hullOutline(source: {
   readonly footprint?: readonly GameVec[];
   readonly hull?: readonly { readonly outline: readonly GameVec[] }[];
 }): readonly GameVec[] {
   if (source.footprint) return source.footprint;
-  let best: readonly GameVec[] = [];
-  let bestSpan = -1;
-  for (const prism of source.hull ?? []) {
-    let lo = Infinity;
-    let hi = -Infinity;
-    for (const p of prism.outline) {
-      lo = Math.min(lo, p.y);
-      hi = Math.max(hi, p.y);
+  const prisms = source.hull ?? [];
+  if (prisms.length <= 1) return prisms[0]?.outline ?? [];
+  const points = prisms
+    .flatMap((prism) => prism.outline.map((p) => ({ x: p.x, y: p.y })))
+    .sort((p, q) => p.x - q.x || p.y - q.y);
+  const turn = (o: GameVec, p: GameVec, q: GameVec): number =>
+    (p.x - o.x) * (q.y - o.y) - (p.y - o.y) * (q.x - o.x);
+  const chain = (items: readonly { x: number; y: number }[]): { x: number; y: number }[] => {
+    const out: { x: number; y: number }[] = [];
+    for (const point of items) {
+      while (out.length > 1 && turn(out[out.length - 2]!, out[out.length - 1]!, point) <= 0)
+        out.pop();
+      out.push(point);
     }
-    if (hi - lo > bestSpan) {
-      bestSpan = hi - lo;
-      best = prism.outline;
-    }
-  }
-  return best;
+    return out.slice(0, -1);
+  };
+  return [...chain(points), ...chain([...points].reverse())];
 }
 
 /**

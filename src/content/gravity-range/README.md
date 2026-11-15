@@ -19,7 +19,7 @@ Owner: 2F; 2G for the 3D conversion. Truth side. `createGravityRange()` returns 
 - [ASSUMED] One sun (A3): azimuth 200°, 12° above the plane, 600 W/m². Brightness is an owner content value (P14 item 3).
 - [ASSUMED] Hidden: main engine at 97.5% of rated thrust with a 3 mrad mount error; IMU biases within 1C's 5×10⁻⁵ m/s².
 - [ASSUMED] One sensor value retuned (`rangeShip()`): camera range noise per fix 0.2% of range (1G spec §2.1) in place of the baseline's 5% (2F handoff, request 1).
-- `SAVE_FORMAT` names the save slot; bump it when a change here would make earlier Black Box records describe a different world or ship. It is 3 since the ring and the third dimension.
+- `SAVE_FORMAT` names the save slot; bump it when a change here would make earlier Black Box records describe a different world or ship. It is 4 since the ring, the 3D simulation and the 3D ship (3 was the lift to 3D types).
 
 ## Objective (owner, A6): leave on a slingshot past Beta
 
