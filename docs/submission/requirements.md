@@ -28,6 +28,15 @@ Checked **2026-11-14 (Pacific)**. This is a preparation checklist for Recursion,
 | [ ] | Terms and final submission | Team Owner checks the terms, submits through the portal before the applicable deadline and verifies the submitted state. Saving or providing a local pitch alone does not satisfy the portal step. |
 | [ ] | Optional / verify in edit form | Prepare a clean cover image and a few gameplay stills only if useful or requested. A distinct required image or team photo, image count/size/aspect ratio, allowed embeds, file/codec restrictions, alternate link counts, and any additional section are **unverified**. Prepare English text and narration/captions as a safe default; verify the formal language and subtitle rule. [ASSUMED] |
 
+**Owner's notes from the submission instruction video (2026-11-15):**
+- **Summary** answers three questions: what did you develop; how does it address the challenge; why is it important.
+- **Demo video: 30 seconds or less.** The link must be publicly accessible, with no password, permission or registration needed.
+- **Project details** answer: what the project does and how it works; its benefits; its intended impact; the tools used; how it was creative; and the factors considered (for example energy, accessibility, cost).
+- **SI (AI) use is acceptable.** Say clearly where and how it was used. Put a visible watermark on images and videos that are SI-generated. Acknowledge SI-generated audio, code and data in the descriptive text and in metadata. Judges weigh originality, intent and execution in SI-assisted work.
+- **A global award needs NASA data or resources to be used.**
+- Choose **Letter** paper size for the certificate download.
+- **Judging criteria:** impact, creativity, validity, relevance and presentation.
+
 ## Compliance and release checks
 
 - [ ] **Disclose development AI and generated content.** GO Team permits AI, expects clear disclosure of use, and says judges consider human originality, intent and execution. Disclose Claude/Claude Code and OpenAI Codex by actual task (e.g. research/documentation, code/tests as confirmed by owners), plus any image, video or audio generator. Maintain a short software/media provenance file and include the applicable notices in repository/file or dataset metadata. For AI-generated images and video, use a visible AI watermark; for AI-generated audio, code and data, acknowledge in descriptive text **and metadata**. Review capture for generated assets that need a visible label. Explain the in-game statistical estimator separately from the AI tools used to build the game. [ESTABLISHED: https://github.com/nasa/spaceapps/discussions/1849]

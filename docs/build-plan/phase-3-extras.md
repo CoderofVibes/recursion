@@ -175,6 +175,7 @@ GPT threads keep their own lanes: VX (visuals), AU (audio), 3C (sensors, includi
 - **The opening's cue times** moved with the 19.5 s opening (R42): opening-rumble 6.5 s, alarms 6.6, 7.8 and 8.47 s, loss-failure 9.35 s, black-cut 10.65 s, opening-title 11.95 s, **new** title-out 15.9 s, room-wake 17.9 s. With reduced motion the opening is a still sky and a plain fade (R44); the loss holds at most three flashes a second (R43), so its sounds follow NIGHT's schedule in `src/view3d/room/loss.ts`.
 - **The cue list comes first, as before**, because the owner generates every file in ElevenLabs from it. Commit `docs/audio/cues.md` as your first checkpoint and say so in one line.
 - **The lighter bar applies** (A26, below): done means a judge hears the game respond to what happens, and nothing breaks without the files. Keep check and build green; never loosen a test.
+- **The demo video shares some of your sounds.** Thread TR owns the 30-second video's sound and will reuse your alarm and rumble (file names and prompts) so the video and the game match. Put those two near the top of your cue list.
 
 ---
 
@@ -330,3 +331,66 @@ This replaces 3F in [phase-3.md](phase-3.md), which extended the console for an 
 - No visual value hard-coded outside `src/theme/` (Convention 11); at most three flashes in any second; reduced motion respected.
 - **The lighter bar (A26) applies to process:** S15's runner is your evidence; no new evidence suites.
 - Keep `npm run check` and `npm run build` green; commit checkpoints and announce each in one line.
+
+---
+
+## TR — The 30-second trailer
+
+**Thread:** GPT/Codex (GPT-6 Astra) by default; the owner may choose Claude · **Branch:** `p3/tr-trailer` · **Worktree:** `.worktrees/tr`
+
+**Starts now** (owner, 2026-11-15). TR owns the 30-second demo video end to end: the page that plays it, the staged visuals, and its sound. Real scenes from other threads arrive as they merge; build with stand-ins until then.
+
+**Read:**
+- **`docs/submission/video.md`: the owner's beat sheet, which this video follows exactly**, and `docs/submission/requirements.md` (the organizer's rules: 30 seconds or less, labels on AI-generated media, AI audio acknowledged in text and metadata);
+- `docs/art/art-bible.md`; DECISIONS A16, A21, A22 (audio from ElevenLabs, credited) and A26; ledger R43 (flashes);
+- the handoffs of VX (the sky, the fx helpers, and its preview page, which isn't part of the app), OP (the room's hooks for scripted shots: `RoomView`'s `scripted` option and its scripted-frame method) and NIGHT; 3F's as it lands;
+- AU's cue list, `docs/audio/cues.md`, once AU's first checkpoint merges;
+- NIGHT's driver in `docs/handoffs/night/judge-run/`, to prepare real sessions.
+
+**Goal:** the owner records the finished video in one take from your page, picture and sound together, and it is the owner's vision. The snap to black is the core of Recursion, the constant death loop: make every cut land.
+
+**The page**
+1. **Separate from the game:** `src/trailer/index.html`, with its code in `src/trailer/`, served by the dev server. The game never imports it and it isn't in the production build, so the game's bundle and S15's numbers don't change.
+2. **Start and replay:** a black page; Space or a click starts it (so the owner starts recording first); R replays it; every run plays the same, exactly 30.0 s.
+3. **Cuts:** the snaps to black are hard cuts. No black between the montage and the console shot.
+4. **Captions and the final card** in the page, with the theme's fonts and the labels from `video.md`. A key hides the captions for a clean take.
+5. **At most three flashes in any second**, the title's flicker and the snaps included: a black snap between two bright shots counts as a flash.
+6. **Smooth enough to record:** 60 frames a second at 1920 × 1080 on the owner's machine. Compile shaders and load every scene and sound before Start, so nothing hitches.
+
+**The visuals**
+- **Staged, yours to build now**, in the art bible's style with VX's helpers:
+  - the title: RECURSION appears all at once, flickers, gone;
+  - the slingshot's shake: the view shaking up and down, the planet turning slightly with the motion;
+  - the wells' rotation: one well dragging the ship's tail, the ship turning, everything in the window moving with it;
+  - the braid: fast motion streaking past both sides of the window;
+  - FLIGHT's lattice, only if 2C's R46 hasn't landed.
+- **Real, from other threads as they merge:** Twin Deeps' pass and the wells in the window (VX, R50), the lattice in FLIGHT (2C, R46), the redesigned screens including EXPLORE (3F). The console with Earth in the window is already on `main` (the opening's first frame). Until each lands, use the closest thing on `main` as a stand-in, list it in your handoff, and swap it in when it merges (`git merge main`).
+- **Real sessions for the montage:** prepare them by playing (NIGHT's driver can), and load them as saved states. Never fabricate a record and show it on a real instrument.
+- List every staged element in your handoff; the final card's "some shots staged" label covers them.
+
+**The sound** (A22: the owner generates every file in ElevenLabs)
+1. **Your first checkpoint: the cue sheet**, `docs/trailer/audio.md`, so the owner can generate files while you build. One row per sound, timed to the beats: its start and length, what it does at the cuts, its mood, and a ready-to-paste ElevenLabs prompt (sound effects; and music for the montage's bed, if the owner wants it). Cover at least:
+   - the title's hit and the crackle of its flicker;
+   - the slingshot's roar and the hull straining;
+   - the wells' deep groan and the ship creaking as it turns;
+   - the lattice's strike and the alarm;
+   - the braid's rush, the alarm still going;
+   - **dead silence on every snap to black** (the alarm cuts at 12.8 s);
+   - the montage's bed;
+   - the console's hum, with Earth in the window;
+   - the final hit under RECURSION.
+2. **Where the game has the same sound** (the alarm, the rumble), use AU's cue, its file name and prompt, so the video and the game match. Ask through the integrator rather than making a second version: AU owns the game's sounds, you own the video's.
+3. **In sync:** the page schedules every sound on the timeline with Web Audio, locked to the picture, so Game Bar records both together. A missing file plays as silence. Keep the loudness even and the peaks below clipping (about −1 dBFS).
+4. **Credit ElevenLabs** on the final card and in your handoff, and note the AI-generated audio for the submission's text and metadata.
+
+**Owns:** `src/trailer/` (the page, the staged effects, the timeline, and the video's sound files in `src/trailer/audio/`), `docs/trailer/`, `docs/handoffs/tr.md` and `docs/handoffs/tr/`. Read anything; ask the integrator for changes elsewhere, and prefer the room's existing scripted-shot hooks to new ones. The beat sheet is the owner's: propose changes in a checkpoint line, don't make them.
+
+**Order:**
+1. The cue sheet.
+2. The page: timeline, cuts, captions and final card, with stand-ins.
+3. The staged visuals.
+4. The sound, as the owner's files arrive.
+5. Real scenes, swapped in as they merge.
+6. A rehearsal: a timestamped run showing each beat within 0.05 s of the sheet, one still per beat, and a short screen capture of the page for the owner.
+
+**The bar is lighter (A26):** done when the owner records a take they're happy with. Keep `npm run check` and `npm run build` green, leave the game's bundle and S15's numbers unchanged, and never loosen a test. Commit checkpoints and announce each in one line.
