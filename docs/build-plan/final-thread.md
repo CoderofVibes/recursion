@@ -35,7 +35,7 @@ Write `docs/submission/sounds-to-make.md` and show it to the owner: **12 files**
 - The video's six, into `src/trailer/audio/` on the trailer branch: `lattice-strike`, `braid-rush`, `well-groan`, `ship-creak`, `montage-bed`, `final-hit`.
 - Put the sounds that both the game and the video use first (`warning` is the video's alarm).
 
-The owner leaves files in Downloads. Copy each into place under its name, check it decodes, play it where it belongs, and tell the owner it's in. **R65:** the game's `opening-alarm` take is 3 s, where the game wants about 0.45 s. Don't wait on a new take: make the game play only its first double pip (a duration cap for that cue in `src/audio/`, with a test), so the long take stays usable in the video.
+The owner leaves files in Downloads. **If TR's continued thread is running, it places every file, the game's too (on its branch, which brings them to `main` when it merges); you only write the list.** Otherwise copy each into place under its name, check it decodes, play it where it belongs, and tell the owner it's in. **R65:** the game's `opening-alarm` take is 3 s, where the game wants about 0.45 s. Don't wait on a new take: make the game play only its first double pip (a duration cap for that cue in `src/audio/`, with a test), so the long take stays usable in the video.
 
 ## Step 2 — the public demo site, early (its link goes on the video's final card and in the portal)
 
