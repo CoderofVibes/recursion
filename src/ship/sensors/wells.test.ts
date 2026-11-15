@@ -12,6 +12,7 @@ import { getGeometry } from '../config/index.ts';
 import { loadShipDefinition } from '../definition.ts';
 import { createShipSystemsState } from '../state.ts';
 import { stepShipSystems } from '../index.ts';
+import { stepPower } from '../power/index.ts';
 import { stepSensors } from './index.ts';
 import {
   decodeWellCameraFrame,
@@ -90,6 +91,22 @@ const acquire = (s = initial(), e = environment(), budget = 16384, dt = 0.1, rat
   stepWellAcquisition(s, definition, e, dt, budget, rate);
 const frame = (s = initial(), e = environment()) =>
   decodeWellCameraFrame(acquire(s, e).measurements[0]!)!;
+
+/** Real dispatch keeps leakage in electrical draw and heat, outside useful camera work. */
+function dispatchedCamera(allocation: number, leakage = 0.25): ShipSystemsState {
+  let s = initial();
+  for (const id of Object.keys(s.equipment).filter((id) => id.startsWith('fuel-cell')))
+    s = change(s, id, { values: { ...s.equipment[id]!.values, output: 6000 } });
+  s = change(s, 'camera', {
+    mode: 'detail',
+    allocation,
+    values: { ...s.equipment.camera!.values, radiationLeakage: leakage },
+  });
+  const delivered = stepPower(s, definition, environment(), 0.1).state;
+  expect(delivered.equipment.camera!.powerDraw).toBeCloseTo(allocation * (1 + leakage), 10);
+  expect(delivered.equipment.camera!.values.heat).toBeCloseTo(allocation * (1 + leakage), 10);
+  return delivered;
+}
 
 describe('R36 funnel camera hardware and recorded evidence', () => {
   it('acquires S22 funnel contours independently of hidden ID, pull and activation status', () => {
@@ -350,9 +367,12 @@ describe('R36 funnel camera hardware and recorded evidence', () => {
     const r = acquire(s);
     for (const key of Object.keys(s.rng).filter((k) => k !== WELL_CAMERA_STREAM))
       expect(r.state.rng[key]).toBe(s.rng[key]);
-    expect(stepSensors(r.state, definition, environment(), 0.1).measurements).toEqual(
-      stepSensors(s, definition, environment(), 0.1).measurements,
-    );
+    const afterCapture = stepSensors(r.state, definition, environment(), 0.1);
+    const fresh = stepSensors(s, definition, environment(), 0.1);
+    const ordinary = (m: Measurement) => !decodeWellCameraFrame(m);
+    expect(afterCapture.measurements.filter(ordinary)).toEqual(fresh.measurements.filter(ordinary));
+    expect(afterCapture.measurements.filter((m) => decodeWellCameraFrame(m))).toEqual([]);
+    expect(fresh.measurements.filter((m) => decodeWellCameraFrame(m))).toEqual(r.measurements);
   });
   it('bounds frame size and rotates extraction so dense support is not permanently starved', () => {
     let s = initial();
@@ -383,20 +403,62 @@ describe('R36 funnel camera hardware and recorded evidence', () => {
     }
     expect(observed.size).toBe(180);
   });
-  it('uses delivered ship power and ordinary warmup before capturing into volatile memory', () => {
+  it('uses delivered ship power and ordinary warmup before recording through the dispatcher', () => {
     let s = initializeWellCameraStream(createShipSystemsState(definition, 'pipeline'), 'pipeline');
     let first: number | undefined;
     for (let t = 0; t < 36; t++) {
       const e = environment(t);
-      // Dispatcher remains 3C-owned. No invented spare bytes: this test captures only.
-      const r = acquire(s, e, 0, 1, 1);
-      s = stepShipSystems(r.state, definition, [], e, 1).state;
-      expect(r.measurements).toEqual([]);
-      if (s.ext?.wellCamera && (s.ext.wellCamera as { pending?: unknown }).pending) first ??= t;
+      const r = stepShipSystems(s, definition, [], e, 1);
+      s = r.state;
+      const frames = r.measurements.flatMap((m) => decodeWellCameraFrame(m) ?? []);
+      if (t < 30) expect(frames).toEqual([]);
+      for (const f of frames) {
+        first ??= f.acquisition[0];
+        expect(f.acquisition[0]).toBeGreaterThanOrEqual(30);
+        expect(f.availableAt).toBe(t);
+      }
     }
     expect(first).toBe(30);
     expect(s.equipment.camera!.powerDraw).toBeGreaterThanOrEqual(60);
     expect(s.recorder.bytesUsed).toBeGreaterThan(0);
+  });
+  it('does not let 50 useful watts plus leakage cross the 60 W camera threshold', () => {
+    const s = dispatchedCamera(50);
+    expect(s.equipment.camera!.powerDraw).toBe(62.5);
+    expect(wellCameraSchedule(s, definition, environment(), 10).rate).toBe(0);
+    expect(acquire(s).measurements).toEqual([]);
+    const recorded = stepSensors(s, definition, environment(), 0.1).measurements;
+    expect(recorded.some((m) => decodeWellCameraFrame(m))).toBe(false);
+    expect(recorded.find((m) => m.channel === 'camera.power')!.value).toEqual([62.5]);
+  });
+  it('keeps the 96 useful watt camera at 0.8 Hz despite 120 W total draw', () => {
+    const s = dispatchedCamera(96);
+    const r = acquire(s);
+    const f = decodeWellCameraFrame(r.measurements[0]!)!;
+    expect(f.effectiveRate).toBe(0.8);
+    expect(f.cameraPower).toBe(120);
+    expect(wellCameraSchedule(r.state, definition, environment(101), 10).due).toBe(false);
+    expect(wellCameraSchedule(r.state, definition, environment(101.25), 10).due).toBe(true);
+  });
+  it('cannot buy better contour or pointing accuracy by burning leakage power', () => {
+    const clean = frame(dispatchedCamera(100, 0));
+    const leaking = frame(dispatchedCamera(100));
+    expect(clean.cameraPower).toBe(100);
+    expect(leaking.cameraPower).toBe(125);
+    expect(clean.contours.length).toBeGreaterThan(0);
+    expect(leaking).toEqual({ ...clean, cameraPower: 125 });
+  });
+  it('loses volatile imagery when useful power falls below tracking despite leakage draw', () => {
+    const pending = acquire(initial(), environment(), 0);
+    const weak = dispatchedCamera(50);
+    const lost = acquire({ ...pending.state, equipment: weak.equipment }, environment(100.1));
+    expect(lost.measurements).toEqual([]);
+    const recovered = acquire(
+      { ...lost.state, equipment: initial().equipment },
+      environment(100.2),
+    );
+    expect(recovered.measurements).toEqual([]);
+    expect(recovered.state.rng).toEqual(pending.state.rng);
   });
   it('records retained camera products in the real AttemptRecorder and survives JSON archive', () => {
     const setup = createInverseWells('camera-record');
