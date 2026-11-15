@@ -12,7 +12,9 @@
  * - Tracked rocks are solid marks with forecast tracks and closest-approach alerts. Rocks that
  *   are only seen are dim, sit where they were last believed with their uncertainty, and are
  *   never drawn as if forecast.
- * - Sensor coverage is a cone from the ship; the plane is hatched where nothing is sensed.
+ * - Sensor coverage is a cone from the ship. The plane is tinted where the ship senses now, plain
+ *   where it sensed earlier in this attempt (the hatch returning as that look ages), and hatched
+ *   where it has not looked.
  *
  * Also used, zoomed out and without the large ship, as the MAP's region view (`setChart`).
  */
@@ -58,6 +60,8 @@ import {
   envelopeGeometry,
   envelopeMaterial,
   holoPlaneMaterial,
+  MAX_EARLIER,
+  planeStyle,
   setHoloPlane,
 } from '../../theme/three/index.ts';
 import {
@@ -79,6 +83,7 @@ import type { FieldView } from '../fieldViews.ts';
 import { arcXZ, clamp, label, LineSet, setFat, setFatSegs, setTag, setThin, thin } from '../gfx.ts';
 import type { Tag } from '../gfx.ts';
 import { makeShipModel } from '../ship/model.ts';
+import { CoverageHistory } from './coverageHistory.ts';
 
 const TAU = Math.PI * 2;
 const MAX_ROCKS = 512;
@@ -192,6 +197,8 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
 
   // ---- Reference plane ---------------------------------------------------------------------
   const planeMat = holoPlaneMaterial(Rh);
+  /** What the sensors covered earlier in this attempt (cleared when the clock runs backwards). */
+  const seen = new CoverageHistory(planeStyle.earlierMemory, MAX_EARLIER);
   const plane = new Mesh(new CircleGeometry(Rh * 2.2, 96).rotateX(-Math.PI / 2), planeMat);
   plane.renderOrder = order.plane;
   plane.frustumCulled = false;
@@ -809,8 +816,15 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
     toHolo.multiplyMatrices(rot.matrix, trans.matrix);
     linesE.setPixelsPerUnit(pixelsPerMetre * Sh);
 
-    // Reference plane: grid at a spacing that suits the range, and what is sensed right now.
+    // Reference plane: grid at a spacing that suits the range, what is sensed right now, and
+    // what was sensed earlier in this attempt.
     const sensed = coverageCones(snapshot.coverage);
+    seen.note(
+      snapshot.t,
+      ship.position.x,
+      ship.position.y,
+      sensed.map((c) => ({ sensor: c.sensor, center: c.bearing, halfWidth: c.halfAngle, range: c.range })),
+    );
     (planeMat.uniforms.uToVolume!.value as Matrix4).copy(rot.matrix);
     setHoloPlane(
       planeMat,
@@ -823,6 +837,7 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
         range: c.range,
         quality: c.quality,
       })),
+      seen.earlier(snapshot.t, ship.position.x, ship.position.y),
     );
     setTag(rangeTag, `RANGE ${formatRange(range)}`);
 

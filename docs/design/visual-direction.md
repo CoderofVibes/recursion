@@ -113,7 +113,7 @@ The flight plane shows three states, never filled in:
 | State | Look |
 |---|---|
 | Sensed **now** (inside a `SensorSector`) | Full grid, faint `coverage` tint, thin `coverage` edge on the sector boundary |
-| Sensed **earlier** (this attempt, or an earlier attempt via Black Box) | Grid at 42 % |
+| Sensed **earlier** (this attempt, or an earlier attempt via Black Box) | Grid at 42 %, no hatch. The hatch returns as the look ages, over `planeStyle.earlierMemory` (2 h of ship time), because things move. Built for this attempt (`src/view3d/flight/coverageHistory.ts`); earlier attempts need Black Box data in the snapshot. |
 | **Never** sensed | No grid. Faint 45° hatch in `unknown` |
 
 Objects follow what the ship knows:
