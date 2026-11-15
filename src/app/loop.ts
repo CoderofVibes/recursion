@@ -206,7 +206,8 @@ export function startControlRoom(
       page === 'plan' ||
       page === 'model' ||
       page === 'blackbox' ||
-      page === 'systems'
+      page === 'systems' ||
+      page === 'credits'
     )
       desk.page = page;
   }

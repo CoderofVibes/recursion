@@ -6,8 +6,9 @@
  */
 import type { EquipmentSpec } from '../../contracts/index.ts';
 import { LevelBar, ModeChips, Panel, Readout, ReadoutGrid } from '../../theme/components/index.ts';
+import { Columns } from '../Columns.tsx';
 import { Actions, Button, Caption, Line, NumberField, enter } from '../controls.tsx';
-import { deltaV, fixRate, recorder, stores } from '../data.ts';
+import { fixRate, recorder, spendable, stores } from '../data.ts';
 import type { Desk } from '../desk.ts';
 import { clock, duration, fixed, whole } from '../format.ts';
 import { APPROACH, EVIDENCE } from '../mission.ts';
@@ -28,9 +29,8 @@ export function MissionPage({ desk }: { readonly desk: Desk }) {
   const recorderSpec = game.ship.equipment.find((e) => e.kind === 'recorder');
   const rec = recorder(ship, game.ship);
   const main = stores(ship, game.ship, design.reserve).find((s) => s.id === 'main-propellant');
-  const spendable = main ? Math.max(0, main.value - design.reserve) : 0;
-  const dvAll = deltaV(ship, game.ship);
-  const dvSpendable = main && main.value > 0 ? dvAll * (spendable / main.value) : 0;
+  // What the propellant above the reserve buys (the same figure FLIGHT shows as "to spend").
+  const budget = spendable(ship, game.ship, design.reserve);
   const targets = [
     ...snapshot.world.bodies.map((b) => ({ value: b.id, label: b.name.toUpperCase() })),
     ...snapshot.world.asteroids.map((a) => ({ value: a.id, label: a.id.toUpperCase() })),
@@ -48,7 +48,7 @@ export function MissionPage({ desk }: { readonly desk: Desk }) {
     : 'no maneuver scheduled';
 
   return (
-    <div className="cs-grid">
+    <Columns>
       <Panel title="Objective" aside={game.briefing.name}>
         {snapshot.objectives.map((o, i) => (
           <Line key={o.id} label={o.kind === 'custom' ? `objective ${i + 1}` : o.kind}>
@@ -100,8 +100,8 @@ export function MissionPage({ desk }: { readonly desk: Desk }) {
           />
         ) : null}
         <ReadoutGrid columns={2}>
-          <Readout label="Spendable" value={whole(spendable)} unit="kg" />
-          <Readout label="Buys" value={fixed(dvSpendable, 1)} unit="m/s" />
+          <Readout label="Spendable" value={whole(budget.kg)} unit="kg" />
+          <Readout label="Buys" value={fixed(budget.deltaV, 1)} unit="m/s" />
         </ReadoutGrid>
         <NumberField
           label="Clearance"
@@ -218,6 +218,6 @@ export function MissionPage({ desk }: { readonly desk: Desk }) {
           ) : null}
         </Actions>
       </Panel>
-    </div>
+    </Columns>
   );
 }

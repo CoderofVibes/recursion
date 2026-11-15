@@ -13,7 +13,18 @@ import {
 } from '../contracts/fixtures/index.ts';
 import type { AttemptRecord, ExecutedCommand } from '../contracts/index.ts';
 import { cssVariables } from '../theme/index.ts';
-import { batteries, busLoads, deltaV, heat, stores, validatedSpans, visited } from './data.ts';
+import {
+  batteries,
+  busLoads,
+  deltaV,
+  heat,
+  hullReach,
+  nearestClearance,
+  spendable,
+  stores,
+  validatedSpans,
+  visited,
+} from './data.ts';
 import { bytes, clock, dist, duration, km, sci, whole } from './format.ts';
 import { changes, debrief, defaultDesign, designMark, designOf, setupCommands } from './mission.ts';
 
@@ -281,5 +292,31 @@ describe('overlay stylesheets', () => {
       for (const name of used)
         if (!local.has(name)) expect(Object.keys(cssVariables), name).toContain(name);
     }
+  });
+});
+
+describe('margin to act (S8)', () => {
+  it("takes the whole hull's reach off a distance, not the centre of mass", () => {
+    const reach = hullReach(viewSnapshot.ship);
+    expect(reach).toBeGreaterThan(0);
+    const near = nearestClearance(viewSnapshot);
+    expect(near).not.toBeNull();
+    const all = [
+      ...viewSnapshot.world.bodies.map((b) => ({ p: b.position, r: b.radius })),
+      ...viewSnapshot.world.asteroids.map((a) => ({ p: a.position, r: a.radius })),
+    ];
+    const s = viewSnapshot.world.ship.position;
+    const best = Math.min(
+      ...all.map(({ p, r }) => Math.hypot(p.x - s.x, p.y - s.y, (p.z ?? 0) - (s.z ?? 0)) - r),
+    );
+    expect(near!.clearance).toBeCloseTo(best - reach, 6);
+  });
+
+  it('counts only the propellant above the reserve as something to spend', () => {
+    const ship = viewSnapshot.world.ship;
+    const none = spendable(ship, shipDefinition, 1e9);
+    expect(none).toEqual({ kg: 0, deltaV: 0 });
+    const some = spendable(ship, shipDefinition, 0);
+    expect(some.deltaV).toBeCloseTo(deltaV(ship, shipDefinition), 6);
   });
 });

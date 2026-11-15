@@ -89,7 +89,7 @@ function stubGame(options: { model?: ModelState; snapshot?: ViewSnapshot; ended?
   return { game, commands };
 }
 
-const PAGES: readonly PageId[] = ['mission', 'plan', 'model', 'blackbox', 'systems'];
+const PAGES: readonly PageId[] = ['mission', 'plan', 'model', 'blackbox', 'systems', 'credits'];
 
 describe('console pages on the fixtures', () => {
   for (const page of PAGES)
@@ -119,6 +119,17 @@ describe('console pages on the fixtures', () => {
     desk.page = 'blackbox';
     const html = renderToStaticMarkup(<ConsoleScreen desk={desk} visible />);
     expect(html).toContain('BEGIN AGAIN');
+  });
+
+  it('links the licence and notices under the deployment base (S13)', () => {
+    const { game } = stubGame();
+    const desk = new Desk(game);
+    desk.page = 'credits';
+    const html = renderToStaticMarkup(<ConsoleScreen desk={desk} visible />);
+    const base = import.meta.env.BASE_URL;
+    for (const file of ['LICENSE', 'NOTICE', 'THIRD-PARTY-NOTICES.txt'])
+      expect(html).toContain(`href="${base}${file}"`);
+    expect(html).toContain('#what-we-verified');
   });
 
   it('mounts no page while the screen is down', () => {

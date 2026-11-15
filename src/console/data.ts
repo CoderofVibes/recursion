@@ -18,6 +18,59 @@ import { whole } from './format.ts';
 
 const G0 = 9.80665;
 
+/** How far the hull reaches from the centre of mass in any direction, m: the whole hull, not a point. */
+export function hullReach(ship: Pick<ViewSnapshot['ship'], 'hull' | 'centerOfMass'>): number {
+  const c = ship.centerOfMass;
+  let reach = 0;
+  for (const prism of ship.hull)
+    for (const p of prism.outline)
+      for (const z of [prism.zMin, prism.zMax])
+        reach = Math.max(reach, Math.hypot(p.x - c.x, p.y - c.y, z - (c.z ?? 0)));
+  return reach;
+}
+
+/**
+ * The sensed object nearest the hull now (S8): believed position, its radius and the hull's
+ * reach taken off the distance. Only what the ship senses; tracked says whether it is ranged.
+ */
+export function nearestClearance(
+  snapshot: Pick<ViewSnapshot, 'world' | 'ship'>,
+): { id: string; name: string; clearance: number; tracked: boolean } | null {
+  const ship = snapshot.world.ship.position;
+  const reach = hullReach(snapshot.ship);
+  let best: { id: string; name: string; clearance: number; tracked: boolean } | null = null;
+  const consider = (
+    id: string,
+    name: string,
+    at: typeof ship,
+    radius: number,
+    tracked: boolean,
+  ) => {
+    const clearance = distance(ship, at) - radius - reach;
+    if (!best || clearance < best.clearance) best = { id, name, clearance, tracked };
+  };
+  for (const b of snapshot.world.bodies) consider(b.id, b.name, b.position, b.radius, b.tracked);
+  for (const a of snapshot.world.asteroids)
+    consider(a.id, a.id.toUpperCase(), a.position, a.radius, a.tracked);
+  return best;
+}
+
+/** Main propellant above the planned reserve, kg, and the speed change it buys, m/s. */
+export function spendable(
+  ship: BelievedShip,
+  definition: ShipDefinition,
+  reserve: number,
+): { kg: number; deltaV: number } {
+  const engine = definition.equipment.find((e) => e.id === 'main-engine');
+  const tank = definition.tanks.find((t) => t.feeds.includes('main-engine'));
+  const onBoard = tank ? (ship.propellant[tank.id]?.mean ?? 0) : 0;
+  const kg = Math.max(0, onBoard - reserve);
+  const isp = engine?.params.isp ?? 0;
+  const mass = ship.massProperties.mass;
+  if (!(kg > 0) || !(isp > 0) || !(mass > kg)) return { kg, deltaV: 0 };
+  return { kg, deltaV: isp * G0 * Math.log(mass / (mass - kg)) };
+}
+
 export interface Level {
   readonly id: string;
   readonly label: string;

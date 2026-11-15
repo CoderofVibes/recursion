@@ -8,6 +8,7 @@ import { TimeControls } from './controls.tsx';
 import { useDesk } from './desk.ts';
 import type { Desk, PageId } from './desk.ts';
 import { BlackBoxPage } from './pages/BlackBoxPage.tsx';
+import { CreditsPage } from './pages/CreditsPage.tsx';
 import { MissionPage } from './pages/MissionPage.tsx';
 import { ModelPage } from './pages/ModelPage.tsx';
 import { PlanPage } from './pages/PlanPage.tsx';
@@ -19,6 +20,7 @@ const PAGES: readonly { id: PageId; label: string }[] = [
   { id: 'model', label: 'MODEL' },
   { id: 'blackbox', label: 'BLACK BOX' },
   { id: 'systems', label: 'SYSTEMS' },
+  { id: 'credits', label: 'CREDITS' },
 ];
 
 export function ConsoleScreen({
@@ -53,6 +55,7 @@ export function ConsoleScreen({
               aria-current={desk.page === p.id ? 'page' : undefined}
               data-on={desk.page === p.id ? '' : undefined}
               data-tone={p.id === 'blackbox' ? 'blackbox' : undefined}
+              data-quiet={p.id === 'credits' ? '' : undefined}
               data-flag={p.id === 'blackbox' && desk.debriefOf ? '' : undefined}
               onClick={() => go(p.id)}
             >
@@ -74,6 +77,7 @@ export function ConsoleScreen({
           {visible && desk.page === 'model' ? <ModelPage desk={desk} /> : null}
           {visible && desk.page === 'blackbox' ? <BlackBoxPage desk={desk} /> : null}
           {visible && desk.page === 'systems' ? <SystemsPage desk={desk} /> : null}
+          {visible && desk.page === 'credits' ? <CreditsPage /> : null}
         </div>
         <footer className="cs-foot">
           <TimeControls game={game} forecasts={desk.snapshot().forecasts} reason={desk.warpDrop} />

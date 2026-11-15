@@ -19,6 +19,7 @@ import {
   ReadoutGrid,
   Trend,
 } from '../../theme/components/index.ts';
+import { Columns } from '../Columns.tsx';
 import { Actions, Button, Caption, Line, SelectField } from '../controls.tsx';
 import { recorder } from '../data.ts';
 import type { Desk } from '../desk.ts';
@@ -164,15 +165,10 @@ const debriefFor = memoLast(
     record: AttemptRecord,
     archive: BlackBoxArchive,
     attempts: readonly AttemptRecord[],
+    /** The bodies as JSON (a string, so an unchanged list memoizes). */
     bodyKey: string,
   ): Debrief => {
-    const bodies = bodyKey
-      .split('|')
-      .filter(Boolean)
-      .map((s) => {
-        const at = s.lastIndexOf(':');
-        return { id: s.slice(0, at), radius: Number(s.slice(at + 1)) };
-      });
+    const bodies = JSON.parse(bodyKey) as { id: string; radius: number; name: string }[];
     return debrief(record, { ...archive, attempts }, bodies);
   },
 );
@@ -218,7 +214,9 @@ export function BlackBoxPage({ desk }: { readonly desk: Desk }) {
   const [focus, setFocus] = useState<string | undefined>(undefined);
   const focusId = focus ?? desk.debriefOf ?? finished.at(-1)?.id ?? attempts.at(-1)?.id;
   const focused = attempts.find((a) => a.id === focusId);
-  const bodyKey = snapshot.world.bodies.map((b) => `${b.id}:${b.radius}`).join('|');
+  const bodyKey = JSON.stringify(
+    snapshot.world.bodies.map((b) => ({ id: b.id, radius: b.radius, name: b.name })),
+  );
   const report = focused ? debriefFor(focused, archive, attempts, bodyKey) : undefined;
   const choices = [
     { value: '', label: '—' },
@@ -256,7 +254,7 @@ export function BlackBoxPage({ desk }: { readonly desk: Desk }) {
   const ended = status.phase === 'ended';
 
   return (
-    <div className="cs-grid">
+    <Columns>
       <Panel title="Attempts" tone="blackbox" aside={`${attempts.length} on record`}>
         <BlackBoxMark
           state={rec.rate > 0 && !status.paused && !ended ? 'recording' : 'idle'}
@@ -459,6 +457,6 @@ export function BlackBoxPage({ desk }: { readonly desk: Desk }) {
           model keep their records
         </p>
       </Panel>
-    </div>
+    </Columns>
   );
 }

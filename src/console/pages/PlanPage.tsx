@@ -9,13 +9,14 @@
  * back, unscheduled.
  */
 import { useEffect, useRef } from 'react';
-import type { AttitudeTarget, Procedure } from '../../contracts/index.ts';
+import type { AttitudeTarget, ForecastSigmaBySource, Procedure } from '../../contracts/index.ts';
 import { matchProcedure, saveProcedure } from '../../blackbox/index.ts';
 import type { PlanDraft } from '../../game/belief/controls.ts';
 import { burnDuration, burnSteps } from '../../game/belief/maneuver.ts';
 import type { PlanStep } from '../../game/belief/maneuver.ts';
-import { ModeChips, Panel, Readout, ReadoutGrid } from '../../theme/components/index.ts';
+import { LevelBar, ModeChips, Panel, Readout, ReadoutGrid } from '../../theme/components/index.ts';
 import { holdFromNose } from '../../view3d/adapter.ts';
+import { Columns } from '../Columns.tsx';
 import { Actions, Button, Caption, Line, NumberField, SelectField } from '../controls.tsx';
 import { visited } from '../data.ts';
 import type { BurnDirection, BurnRow, Desk, DraftState, PlanEdit, PointRow } from '../desk.ts';
@@ -27,6 +28,15 @@ const DIRECTIONS: readonly { value: BurnDirection; label: string }[] = [
   { value: 'toward', label: 'TOWARD' },
   { value: 'away', label: 'AWAY FROM' },
   { value: 'axis', label: 'BODY AXIS' },
+];
+
+/** The sources of a forecast's uncertainty, in the words the console uses for them. */
+const SOURCES: readonly (readonly [keyof Omit<ForecastSigmaBySource, 't' | 'total'>, string])[] = [
+  ['state', 'tracking now'],
+  ['profile', 'measured pull'],
+  ['hedge', 'beyond the data'],
+  ['engine', 'engine'],
+  ['mass', 'mass'],
 ];
 
 const DRAFT_LINE: Readonly<Record<DraftState, string>> = {
@@ -161,6 +171,8 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
   const reach = visited(shown, snapshot);
   const last = shown?.samples.at(-1);
   const extrapolating = shown ? shown.samples.filter((s) => s.extrapolating).length : 0;
+  const detail = shown?.detail;
+  const endSigma = detail?.sigmaMajor.at(-1);
 
   const save = (): void => {
     // Read only when asked: reading the record in progress copies all of it.
@@ -203,296 +215,329 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
   };
 
   return (
-    <div className="cs-grid" ref={root}>
-      <Panel
-        title="Burns"
-        aside={`${burns.length} planned`}
-        tone="measured"
-        statusLine={DRAFT_LINE[draftState]}
-        status={draftState === 'committed' ? 'nominal' : undefined}
-      >
-        {desk.setAside ? (
-          <div className="cs-item">
-            <Line label="set aside" status="caution">
-              attempt {desk.setAside.attempt}&apos;s draft: {desk.setAside.edit.burns.length} burns,{' '}
-              {desk.setAside.edit.points.length} pointings, timed from that attempt&apos;s commit
-            </Line>
-            <Actions>
-              <Button disabled={ended} onClick={() => desk.restoreSetAside()}>
-                RESTORE AS DRAFT
-              </Button>
-            </Actions>
-          </div>
-        ) : null}
-        {burns.map((b, i) => (
-          <div
-            className="cs-item"
-            key={b.key}
-            data-row={b.key}
-            role="group"
-            aria-label={`Burn ${i + 1}`}
-          >
-            <div className="cs-item__head">
-              <span>BURN {i + 1}</span>
-              <span className="cs-item__value">{fixed(durationOf(b), 1)} s · main engine</span>
-            </div>
-            <div className="cs-fields">
-              <NumberField
-                label="In"
-                unit="s"
-                min={0}
-                step={60}
-                value={b.at}
-                onChange={(v) => patchBurn(b.key, { at: v })}
-              />
-              <SelectField
-                label="Direction"
-                value={b.direction}
-                options={DIRECTIONS}
-                onChange={(v) => patchBurn(b.key, { direction: v as BurnDirection })}
-              />
-              {b.direction === 'toward' || b.direction === 'away' ? (
-                <SelectField
-                  label="Body"
-                  value={b.target}
-                  options={bodyOptions}
-                  onChange={(v) => patchBurn(b.key, { target: v })}
-                />
-              ) : null}
-              {b.direction === 'axis' ? (
-                <NumberField
-                  label="Turn"
-                  unit="° left"
-                  step={5}
-                  value={b.offset}
-                  onChange={(v) => patchBurn(b.key, { offset: v })}
-                />
-              ) : null}
-              <SelectField
-                label="By"
-                value={b.sizing}
-                options={[
-                  { value: 'deltaV', label: 'SPEED CHANGE' },
-                  { value: 'duration', label: 'DURATION' },
-                ]}
-                onChange={(v) => patchBurn(b.key, { sizing: v as BurnRow['sizing'] })}
-              />
-              <NumberField
-                label={b.sizing === 'deltaV' ? 'Δv' : 'For'}
-                unit={b.sizing === 'deltaV' ? 'm/s' : 's'}
-                min={0.1}
-                step={0.5}
-                value={b.amount}
-                onChange={(v) => patchBurn(b.key, { amount: v })}
-              />
-              <NumberField
-                label="Throttle"
-                unit="%"
-                min={5}
-                max={100}
-                step={5}
-                value={Math.round(b.throttle * 100)}
-                onChange={(v) =>
-                  patchBurn(b.key, { throttle: Math.min(1, Math.max(0.05, v / 100)) })
-                }
-              />
-              {/* Removing comes after editing, in the order the keyboard meets them. */}
-              <button
-                type="button"
-                className="cs-item__close"
-                aria-label={`Remove burn ${i + 1}`}
-                onClick={() => removeBurn(b.key)}
-              >
-                ×
-              </button>
-            </div>
-          </div>
-        ))}
-        <Actions>
-          <Button onClick={addBurn} disabled={ended} mark="add-burn">
-            + BURN
-          </Button>
-          {burns.length + points.length > 0 ? (
-            <Button
-              onClick={() => {
-                focusNext.current = '[data-mark="add-burn"]';
-                edit(() => ({ burns: [], points: [] }));
-              }}
-            >
-              CLEAR DRAFT
-            </Button>
-          ) : null}
-        </Actions>
-      </Panel>
-
-      <Panel title="Sensor pointing" aside={`${points.length} planned`}>
-        {points.map((p, i) => (
-          <div
-            className="cs-item"
-            key={p.key}
-            data-row={p.key}
-            role="group"
-            aria-label={`Pointing ${i + 1}`}
-          >
-            <div className="cs-fields">
-              <NumberField
-                label="In"
-                unit="s"
-                min={0}
-                step={60}
-                value={p.at}
-                onChange={(v) => patchPoint(p.key, { at: v })}
-              />
-              <SelectField
-                label="Camera at"
-                value={p.target}
-                options={targets}
-                onChange={(v) => patchPoint(p.key, { target: v })}
-              />
-              <button
-                type="button"
-                className="cs-item__close"
-                aria-label={`Remove pointing ${i + 1}`}
-                onClick={() => removePoint(p.key)}
-              >
-                ×
-              </button>
-            </div>
-          </div>
-        ))}
-        <p className="cs-note">
-          tracking a rock is how the ship measures the pull at distances it has not flown
-        </p>
-        <Actions>
-          <Button onClick={addPoint} disabled={ended} mark="add-point">
-            + POINTING
-          </Button>
-        </Actions>
-        <Caption>now</Caption>
-        <Actions>
-          {targets.slice(0, 6).map((t) => (
-            <Button
-              key={t.value}
-              disabled={ended}
-              onClick={() => game.command({ kind: 'point', sensor: 'camera', target: t.value })}
-            >
-              {t.label}
-            </Button>
-          ))}
-        </Actions>
-      </Panel>
-
-      <Panel
-        title="Forecast"
-        tone="forecast"
-        aside={desk.preview ? 'draft' : shown ? 'issued' : 'none'}
-        statusLine={
-          status.committing
-            ? 'committing: time holds until the forecast arrives'
-            : status.planId
-              ? `${status.planId} · ${status.pending} commands pending`
-              : 'no plan scheduled'
-        }
-      >
-        {shown && last ? (
-          <>
-            <ReadoutGrid columns={2}>
-              <Readout label="Ends" value={`T+${clock(last.t)}`} tone="forecast" />
-              <Readout
-                label="Looks ahead"
-                value={duration(last.t - shown.issuedAt)}
-                tone="forecast"
-              />
-              <Readout label="Model" value={`v${shown.modelVersion}`} tone="forecast" />
-              <Readout
-                label="Extrapolating"
-                value={`${Math.round((extrapolating / Math.max(1, shown.samples.length)) * 100)}%`}
-                tone="forecast"
-                status={extrapolating > 0 ? 'caution' : 'nominal'}
-              />
-            </ReadoutGrid>
-            {[...reach].map(([id, [lo, hi]]) => (
-              <Line key={id} label={`${id} range`} tone="forecast">
-                {dist(lo)} – {dist(hi)}
-              </Line>
-            ))}
-            {shown.closestApproaches.slice(0, 5).map((c) => (
-              <Line key={`${c.id}-${c.t}`} label={`${name(c.id)} closest`} tone="forecast">
-                {dist(c.distance)} ±{dist(c.sigma)} · T+{clock(c.t)}
-              </Line>
-            ))}
-          </>
-        ) : (
-          <p className="cs-note">no forecast yet: preview a plan, or commit one</p>
-        )}
-        <Actions>
-          <Button onClick={() => desk.previewPlan(draft())} disabled={ended} tone="forecast">
-            PREVIEW
-          </Button>
-          <Button
-            primary
-            tone="forecast"
-            disabled={ended || status.committing}
-            onClick={() => desk.commitPlan(draft())}
-          >
-            COMMIT
-          </Button>
-          <Button
-            onClick={() => game.command({ kind: 'cutoff', thruster: 'all' })}
-            disabled={ended}
-            status="caution"
-          >
-            CUTOFF
-          </Button>
-        </Actions>
-      </Panel>
-
-      <Panel title="Procedures" tone="blackbox" aside={`${procedures.length} saved`}>
-        {procedures.map((p) => {
-          const match = matchProcedure(p, {
-            encounterId: game.briefing.id,
-            configuration: ship.configuration,
-            estimate: ship,
-          });
-          const off = match.checks.filter((c) => !c.ok).map((c) => c.name);
-          return (
-            <div className="cs-item" key={p.id} role="group" aria-label={p.name}>
-              <div className="cs-item__head">
-                <span>{p.name}</span>
-                <span className="cs-item__value">{p.items.length} commands</span>
-              </div>
-              <Line label="conditions" status={match.matches ? 'nominal' : 'caution'}>
-                {match.matches ? 'match: replays exactly' : `differ: ${off.join(', ')}`}
+    <div ref={root}>
+      <Columns>
+        <Panel
+          title="Burns"
+          aside={`${burns.length} planned`}
+          tone="measured"
+          statusLine={DRAFT_LINE[draftState]}
+          status={draftState === 'committed' ? 'nominal' : undefined}
+        >
+          {desk.setAside ? (
+            <div className="cs-item">
+              <Line label="set aside" status="caution">
+                attempt {desk.setAside.attempt}&apos;s draft: {desk.setAside.edit.burns.length}{' '}
+                burns, {desk.setAside.edit.points.length} pointings, timed from that attempt&apos;s
+                commit
               </Line>
               <Actions>
-                <Button tone="blackbox" disabled={ended} onClick={() => replay(p)}>
-                  REPLAY FROM NOW
+                <Button disabled={ended} onClick={() => desk.restoreSetAside()}>
+                  RESTORE AS DRAFT
                 </Button>
-                <Button onClick={() => forget(p.id)}>FORGET</Button>
               </Actions>
             </div>
-          );
-        })}
-        <Actions>
-          <Button tone="blackbox" onClick={save}>
-            SAVE THIS ATTEMPT SO FAR
-          </Button>
-        </Actions>
-        <Caption>recurrence</Caption>
-        <ModeChips label="Attempt" options={[`ATTEMPT ${status.attemptIndex}`]} value="" />
-        <Actions>
-          <Button
-            tone="blackbox"
-            onClick={() => (ended ? game.restart() : game.recall())}
-            title="End this attempt and begin again at arrival. Black Box and the model keep what they have."
-          >
-            {ended ? 'BEGIN AGAIN' : 'RECALL'}
-          </Button>
-        </Actions>
-        <p className="cs-note">
-          starts a new attempt at arrival; Black Box and the model keep their records
-        </p>
-      </Panel>
+          ) : null}
+          {burns.map((b, i) => (
+            <div
+              className="cs-item"
+              key={b.key}
+              data-row={b.key}
+              role="group"
+              aria-label={`Burn ${i + 1}`}
+            >
+              <div className="cs-item__head">
+                <span>BURN {i + 1}</span>
+                <span className="cs-item__value">{fixed(durationOf(b), 1)} s · main engine</span>
+              </div>
+              <div className="cs-fields">
+                <NumberField
+                  label="In"
+                  unit="s"
+                  min={0}
+                  step={60}
+                  value={b.at}
+                  onChange={(v) => patchBurn(b.key, { at: v })}
+                />
+                <SelectField
+                  label="Direction"
+                  value={b.direction}
+                  options={DIRECTIONS}
+                  onChange={(v) => patchBurn(b.key, { direction: v as BurnDirection })}
+                />
+                {b.direction === 'toward' || b.direction === 'away' ? (
+                  <SelectField
+                    label="Body"
+                    value={b.target}
+                    options={bodyOptions}
+                    onChange={(v) => patchBurn(b.key, { target: v })}
+                  />
+                ) : null}
+                {b.direction === 'axis' ? (
+                  <NumberField
+                    label="Turn"
+                    unit="° left"
+                    step={5}
+                    value={b.offset}
+                    onChange={(v) => patchBurn(b.key, { offset: v })}
+                  />
+                ) : null}
+                <SelectField
+                  label="By"
+                  value={b.sizing}
+                  options={[
+                    { value: 'deltaV', label: 'SPEED CHANGE' },
+                    { value: 'duration', label: 'DURATION' },
+                  ]}
+                  onChange={(v) => patchBurn(b.key, { sizing: v as BurnRow['sizing'] })}
+                />
+                <NumberField
+                  label={b.sizing === 'deltaV' ? 'Δv' : 'For'}
+                  unit={b.sizing === 'deltaV' ? 'm/s' : 's'}
+                  min={0.1}
+                  step={0.5}
+                  value={b.amount}
+                  onChange={(v) => patchBurn(b.key, { amount: v })}
+                />
+                <NumberField
+                  label="Throttle"
+                  unit="%"
+                  min={5}
+                  max={100}
+                  step={5}
+                  value={Math.round(b.throttle * 100)}
+                  onChange={(v) =>
+                    patchBurn(b.key, { throttle: Math.min(1, Math.max(0.05, v / 100)) })
+                  }
+                />
+                {/* Removing comes after editing, in the order the keyboard meets them. */}
+                <button
+                  type="button"
+                  className="cs-item__close"
+                  aria-label={`Remove burn ${i + 1}`}
+                  onClick={() => removeBurn(b.key)}
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          ))}
+          <Actions>
+            <Button onClick={addBurn} disabled={ended} mark="add-burn">
+              + BURN
+            </Button>
+            {burns.length + points.length > 0 ? (
+              <Button
+                onClick={() => {
+                  focusNext.current = '[data-mark="add-burn"]';
+                  edit(() => ({ burns: [], points: [] }));
+                }}
+              >
+                CLEAR DRAFT
+              </Button>
+            ) : null}
+          </Actions>
+        </Panel>
+
+        <Panel title="Sensor pointing" aside={`${points.length} planned`}>
+          {points.map((p, i) => (
+            <div
+              className="cs-item"
+              key={p.key}
+              data-row={p.key}
+              role="group"
+              aria-label={`Pointing ${i + 1}`}
+            >
+              <div className="cs-fields">
+                <NumberField
+                  label="In"
+                  unit="s"
+                  min={0}
+                  step={60}
+                  value={p.at}
+                  onChange={(v) => patchPoint(p.key, { at: v })}
+                />
+                <SelectField
+                  label="Camera at"
+                  value={p.target}
+                  options={targets}
+                  onChange={(v) => patchPoint(p.key, { target: v })}
+                />
+                <button
+                  type="button"
+                  className="cs-item__close"
+                  aria-label={`Remove pointing ${i + 1}`}
+                  onClick={() => removePoint(p.key)}
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          ))}
+          <p className="cs-note">
+            tracking a rock is how the ship measures the pull at distances it has not flown
+          </p>
+          <Actions>
+            <Button onClick={addPoint} disabled={ended} mark="add-point">
+              + POINTING
+            </Button>
+          </Actions>
+          <Caption>now</Caption>
+          <Actions>
+            {targets.slice(0, 6).map((t) => (
+              <Button
+                key={t.value}
+                disabled={ended}
+                onClick={() => game.command({ kind: 'point', sensor: 'camera', target: t.value })}
+              >
+                {t.label}
+              </Button>
+            ))}
+          </Actions>
+        </Panel>
+
+        <Panel
+          title="Forecast"
+          tone="forecast"
+          aside={desk.preview ? 'draft' : shown ? 'issued' : 'none'}
+          statusLine={
+            status.committing
+              ? 'committing: the forecast is on its way'
+              : status.planId
+                ? `${status.planId} · ${status.pending} commands pending`
+                : 'no plan scheduled'
+          }
+        >
+          {shown && last ? (
+            <>
+              <ReadoutGrid columns={2}>
+                <Readout label="Ends" value={`T+${clock(last.t)}`} tone="forecast" />
+                <Readout
+                  label="Looks ahead"
+                  value={duration(last.t - shown.issuedAt)}
+                  tone="forecast"
+                />
+                <Readout label="Model" value={`v${shown.modelVersion}`} tone="forecast" />
+                <Readout
+                  label="Extrapolating"
+                  value={`${Math.round((extrapolating / Math.max(1, shown.samples.length)) * 100)}%`}
+                  tone="forecast"
+                  status={extrapolating > 0 ? 'caution' : 'nominal'}
+                />
+              </ReadoutGrid>
+              {[...reach].map(([id, [lo, hi]]) => (
+                <Line key={id} label={`${id} range`} tone="forecast">
+                  {dist(lo)} – {dist(hi)}
+                </Line>
+              ))}
+              {shown.closestApproaches.slice(0, 5).map((c) => (
+                <Line key={`${c.id}-${c.t}`} label={`${name(c.id)} closest`} tone="forecast">
+                  {dist(c.distance)} ±{dist(c.sigma)} · T+{clock(c.t)}
+                </Line>
+              ))}
+              {detail && endSigma ? (
+                // What the envelope is made of (ForecastDraft.detail): why it is as wide as it is.
+                <>
+                  <Caption>envelope at its end · 1σ, longest axis</Caption>
+                  <Line label="total" tone="forecast">
+                    {dist(endSigma.total)}
+                  </Line>
+                  {SOURCES.map(([key, label]) => (
+                    <LevelBar
+                      key={key}
+                      label={label}
+                      value={endSigma[key]}
+                      max={Math.max(endSigma.total, 1)}
+                      text={dist(endSigma[key])}
+                      tone="forecast"
+                    />
+                  ))}
+                  <Line label="present state" tone="forecast">
+                    {detail.presentSource} · T+{clock(detail.presentTime)}
+                  </Line>
+                  {detail.asteroids.length ? (
+                    <Line label="rocks" tone="forecast">
+                      {detail.asteroids.filter((a) => a.forecast).length} forecast
+                      {detail.asteroids.some((a) => !a.forecast)
+                        ? ` · ${detail.asteroids.filter((a) => !a.forecast).length} with too short a track`
+                        : ''}
+                    </Line>
+                  ) : null}
+                </>
+              ) : null}
+            </>
+          ) : (
+            <p className="cs-note">no forecast yet: preview a plan, or commit one</p>
+          )}
+          <Actions>
+            <Button onClick={() => desk.previewPlan(draft())} disabled={ended} tone="forecast">
+              PREVIEW
+            </Button>
+            <Button
+              primary
+              tone="forecast"
+              disabled={ended || status.committing}
+              onClick={() => desk.commitPlan(draft())}
+            >
+              COMMIT
+            </Button>
+            <Button
+              onClick={() => game.command({ kind: 'cutoff', thruster: 'all' })}
+              disabled={ended}
+              status="caution"
+            >
+              CUTOFF
+            </Button>
+          </Actions>
+        </Panel>
+
+        <Panel title="Procedures" tone="blackbox" aside={`${procedures.length} saved`}>
+          {procedures.map((p) => {
+            const match = matchProcedure(p, {
+              encounterId: game.briefing.id,
+              configuration: ship.configuration,
+              estimate: ship,
+            });
+            const off = match.checks.filter((c) => !c.ok).map((c) => c.name);
+            return (
+              <div className="cs-item" key={p.id} role="group" aria-label={p.name}>
+                <div className="cs-item__head">
+                  <span>{p.name}</span>
+                  <span className="cs-item__value">{p.items.length} commands</span>
+                </div>
+                <Line label="conditions" status={match.matches ? 'nominal' : 'caution'}>
+                  {match.matches ? 'match: replays exactly' : `differ: ${off.join(', ')}`}
+                </Line>
+                <Actions>
+                  <Button tone="blackbox" disabled={ended} onClick={() => replay(p)}>
+                    REPLAY FROM NOW
+                  </Button>
+                  <Button onClick={() => forget(p.id)}>FORGET</Button>
+                </Actions>
+              </div>
+            );
+          })}
+          <Actions>
+            <Button tone="blackbox" onClick={save}>
+              SAVE THIS ATTEMPT SO FAR
+            </Button>
+          </Actions>
+          <Caption>recurrence</Caption>
+          <ModeChips label="Attempt" options={[`ATTEMPT ${status.attemptIndex}`]} value="" />
+          <Actions>
+            <Button
+              tone="blackbox"
+              onClick={() => (ended ? game.restart() : game.recall())}
+              title="End this attempt and begin again at arrival. Black Box and the model keep what they have."
+            >
+              {ended ? 'BEGIN AGAIN' : 'RECALL'}
+            </Button>
+          </Actions>
+          <p className="cs-note">
+            starts a new attempt at arrival; Black Box and the model keep their records
+          </p>
+        </Panel>
+      </Columns>
     </div>
   );
 }

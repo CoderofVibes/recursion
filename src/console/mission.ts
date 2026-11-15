@@ -370,7 +370,7 @@ export function changes(record: AttemptRecord, previous: AttemptRecord | undefin
 export function debrief(
   record: AttemptRecord,
   archive: BlackBoxArchive,
-  bodies: readonly { readonly id: string; readonly radius: number }[],
+  bodies: readonly { readonly id: string; readonly radius: number; readonly name?: string }[],
 ): Debrief {
   const design = designOf(record)?.design;
   const previous = archive.attempts.filter((a) => a.index < record.index).at(-1);
@@ -465,7 +465,8 @@ export function debrief(
       detail:
         `T+${clock(lostAt)}` +
         (contact && contact.kind === 'contact'
-          ? ` · contact with ${contact.with ?? 'an object the ship could not identify'}`
+          ? // The game names a briefed body on contact, seen or not; an unbriefed rock only if seen.
+            ` · contact with ${contact.with ? (bodies.find((b) => b.id === contact.with)?.name ?? contact.with) : 'an object the ship could not identify'}`
           : '') +
         (forecastAtLoss ? '' : ' · outside forecast coverage'),
     };

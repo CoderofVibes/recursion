@@ -16,6 +16,7 @@ import {
   ReadoutGrid,
   Trend,
 } from '../../theme/components/index.ts';
+import { Columns } from '../Columns.tsx';
 import { Actions, Button, Caption, Line, NumberField } from '../controls.tsx';
 import {
   batteries,
@@ -135,7 +136,7 @@ export function SystemsPage({ desk }: { readonly desk: Desk }) {
   const list = useRef<HTMLDivElement>(null);
 
   return (
-    <div className="cs-grid">
+    <Columns>
       <Panel
         title="Power"
         aside={`${whole(balance.generated)} W made · ${whole(balance.load)} W drawn`}
@@ -277,6 +278,6 @@ export function SystemsPage({ desk }: { readonly desk: Desk }) {
           <p className="cs-note">choose an assembly</p>
         )}
       </Panel>
-    </div>
+    </Columns>
   );
 }

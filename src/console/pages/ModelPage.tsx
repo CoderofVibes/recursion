@@ -18,10 +18,11 @@ import {
   ReadoutGrid,
 } from '../../theme/components/index.ts';
 import type { Status } from '../../theme/components/index.ts';
+import { Columns } from '../Columns.tsx';
 import { Actions, Button, Caption, Line, SelectField } from '../controls.tsx';
 import { validatedSpans, visited } from '../data.ts';
 import type { Desk } from '../desk.ts';
-import { dist, duration, fixed, sci, whole } from '../format.ts';
+import { clock, dist, duration, fixed, sci, whole } from '../format.ts';
 import { StrengthPlot } from '../StrengthPlot.tsx';
 import type { StrengthDot } from '../StrengthPlot.tsx';
 
@@ -210,7 +211,7 @@ export function ModelPage({ desk }: { readonly desk: Desk }) {
   const latest = snapshot.forecasts.at(-1);
 
   return (
-    <div className="cs-grid">
+    <Columns>
       <Panel
         title="Model"
         tone="forecast"
@@ -522,6 +523,136 @@ export function ModelPage({ desk }: { readonly desk: Desk }) {
           <p className="cs-note">diagnostics arrive with the model's next report</p>
         ) : null}
       </Panel>
-    </div>
+
+      <BurnsAndPull desk={desk} indexOf={indexOf} />
+    </Columns>
+  );
+}
+
+/**
+ * Two questions the player can put to the model when a forecast and the flight disagree (spec
+ * §9.4, §9.5): did each burn deliver what was commanded, and is there a pull the law in force
+ * does not explain? Each costs fits, so each runs only when asked.
+ */
+function BurnsAndPull({
+  desk,
+  indexOf,
+}: {
+  readonly desk: Desk;
+  readonly indexOf: (id: string) => number | string;
+}) {
+  const { game } = desk;
+  const version = game.model.state().version;
+  const burns = desk.burnCheck;
+  const pull = desk.unexplained;
+  const off = (value: number, sigma: number, expected: number): boolean =>
+    Math.abs(value - expected) > 3 * Math.max(sigma, 1e-9);
+  return (
+    <Panel title="Burns and unexplained pull" tone="forecast" aside="asked for">
+      <Actions>
+        <Button tone="forecast" disabled={!game.rules} onClick={() => desk.checkBurns()}>
+          CHECK BURNS
+        </Button>
+        <Button tone="forecast" disabled={!game.rules} onClick={() => desk.findUnexplained()}>
+          FIND UNEXPLAINED PULL
+        </Button>
+      </Actions>
+      {burns ? (
+        <>
+          <Caption>
+            burns · achieved ÷ commanded · model v{burns.version}
+            {burns.version !== version ? ' (older than the model)' : ''}
+          </Caption>
+          {burns.burns.length === 0 ? (
+            <p className="cs-note">no recorded burn had enough fixes around it to judge</p>
+          ) : (
+            burns.burns.slice(-6).map((b) => (
+              <Line
+                key={`${b.attempt}-${b.t0}-${b.thruster}`}
+                label={`attempt ${indexOf(b.attempt)} · ${b.kind === 'rcs' ? 'rcs' : 'engine'} T+${clock(b.t0)}`}
+                status={
+                  !b.converged
+                    ? 'stale'
+                    : off(b.along, b.alongSigma, 1) ||
+                        (b.kind === 'engine' &&
+                          (off(b.across, b.acrossSigma, 0) || off(b.up, b.upSigma, 0)))
+                      ? 'caution'
+                      : 'nominal'
+                }
+              >
+                {fixed(b.along, 3)} ±{fixed(b.alongSigma, 3)}
+                {b.kind === 'engine'
+                  ? ` · across ${fixed(b.across, 3)} · up ${fixed(b.up, 3)}`
+                  : ''}
+              </Line>
+            ))
+          )}
+        </>
+      ) : null}
+      {pull ? (
+        pull.result ? (
+          <>
+            <Caption>
+              pull the law does not explain · {pull.result.body} · model v{pull.version}
+            </Caption>
+            <Line
+              label="along the track"
+              status={pull.result.maxAbsTangentialZ > 3 ? 'caution' : 'nominal'}
+            >
+              largest {fixed(pull.result.maxAbsTangentialZ, 1)}σ
+            </Line>
+            <Line
+              label="out of the plane"
+              status={pull.result.maxAbsNormalZ > 3 ? 'caution' : 'nominal'}
+            >
+              largest {fixed(pull.result.maxAbsNormalZ, 1)}σ
+            </Line>
+            <Line label="fit χ²/ν">{fixed(pull.result.chi2PerDof, 2)}</Line>
+            <p className="cs-note">
+              a wrong strength with distance leaves no pull along the track; a mass the model lacks
+              does, and a body off the plane shows out of it
+            </p>
+            <details className="cs-details">
+              <summary>data · {pull.result.rows.length} windows</summary>
+              <table className="cs-table">
+                <thead>
+                  <tr>
+                    <th scope="col">window</th>
+                    <th scope="col">radial ±σ</th>
+                    <th scope="col">along ±σ</th>
+                    <th scope="col">normal ±σ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pull.result.rows.map((r) => (
+                    <tr key={r.window}>
+                      <td>
+                        attempt {indexOf(r.attempt)} · T+{clock(r.t0)}
+                      </td>
+                      <td>
+                        {sci(r.aR, 2)} ±{sci(r.sigmaR, 1)}
+                      </td>
+                      <td>
+                        {sci(r.aT, 2)} ±{sci(r.sigmaT, 1)}
+                      </td>
+                      <td>
+                        {sci(r.aN, 2)} ±{sci(r.sigmaN, 1)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </details>
+          </>
+        ) : (
+          <p className="cs-note">nothing to fit yet: no tracked arc</p>
+        )
+      ) : null}
+      {!burns && !pull ? (
+        <p className="cs-note">
+          ask when a forecast and the flight disagree: was it the engine, or the pull?
+        </p>
+      ) : null}
+    </Panel>
   );
 }

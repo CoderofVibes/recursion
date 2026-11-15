@@ -14,13 +14,13 @@ import type {
   ViewSnapshot,
 } from '../contracts/index.ts';
 import type { GameControls, PlanDraft } from '../game/belief/controls.ts';
-import type { ExtensionRecord, ModelReport } from '../model/index.ts';
+import type { BurnReport, EmpiricalReport, ExtensionRecord, ModelReport } from '../model/index.ts';
 import { distance, length } from '../view3d/adapter.ts';
 import type { ApproachAlert } from '../view3d/flight/FlightHolo.ts';
 import { defaultDesign, designMark, setupCommands } from './mission.ts';
 import type { MissionDesign } from './mission.ts';
 
-export type PageId = 'mission' | 'plan' | 'model' | 'blackbox' | 'systems';
+export type PageId = 'mission' | 'plan' | 'model' | 'blackbox' | 'systems' | 'credits';
 
 /** A burn's direction: along or against the believed velocity, toward or away from a body, or the body axis. */
 export type BurnDirection = 'prograde' | 'retrograde' | 'toward' | 'away' | 'axis';
@@ -89,6 +89,13 @@ export class Desk {
   selected: string | null = null;
   compare: readonly [AttemptId, AttemptId] | undefined;
   report: ModelReport | undefined;
+  /**
+   * The model's look at each recorded burn and at any pull it cannot explain (RuleControls.burns
+   * and .empirical), asked for on MODEL: each costs fits, so they run only when asked. Kept with
+   * the model version they were worked out on.
+   */
+  burnCheck: { readonly version: number; readonly burns: readonly BurnReport[] } | undefined;
+  unexplained: { readonly version: number; readonly result: EmpiricalReport | null } | undefined;
   /** The latest test of each rule in this session. */
   readonly tests = new Map<string, ExtensionRecord | { error: string }>();
   /** A short line about the last thing the console did, for its footer. */
@@ -328,6 +335,35 @@ export class Desk {
   dropWarp(reason: string): void {
     this.warpDrop = reason;
     this.say(`warp to 1× · ${reason}`);
+  }
+
+  /** Ask the model how each recorded burn went against what it expected (costs a fit per burn). */
+  checkBurns(): void {
+    const rules = this.game.rules;
+    if (!rules) return;
+    const version = this.game.model.state().version;
+    this.say('checking burns');
+    rules.burns().then(
+      (burns) => {
+        this.burnCheck = { version, burns };
+        this.say(`burns checked: ${burns.length}`);
+      },
+      (reason: unknown) => this.say(`no burn check · ${message(reason)}`),
+    );
+  }
+  /** Ask the model for any pull it cannot explain with the law it has. */
+  findUnexplained(): void {
+    const rules = this.game.rules;
+    if (!rules) return;
+    const version = this.game.model.state().version;
+    this.say('looking for unexplained pull');
+    rules.empirical().then(
+      (result) => {
+        this.unexplained = { version, result };
+        this.say(result ? 'unexplained pull: fitted' : 'unexplained pull: nothing to fit yet');
+      },
+      (reason: unknown) => this.say(`no fit · ${message(reason)}`),
+    );
   }
 
   say(text: string): void {

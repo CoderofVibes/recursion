@@ -52,6 +52,22 @@
   color: var(--rx-ink);
   border-color: var(--rx-ink-dim);
 }
+/* Credits: there to be found, not asking to be. */
+.cs-tab[data-quiet] {
+  color: var(--rx-ink-faint);
+}
+.cs-link {
+  color: var(--rx-ink);
+  text-decoration: underline;
+  text-decoration-color: var(--rx-ink-faint);
+}
+.cs-link:hover {
+  text-decoration-color: var(--rx-ink);
+}
+.cs-link:focus-visible {
+  outline: var(--rx-line-rule) solid var(--rx-ink);
+  outline-offset: var(--rx-unit);
+}
 .cs-tab[data-tone='blackbox'] {
   color: var(--rx-blackbox);
 }
@@ -81,14 +97,18 @@
 .cs-page:focus-visible {
   box-shadow: inset 0 0 0 var(--rx-line-rule) var(--rx-ink-faint);
 }
+/* Panels down balanced columns (Columns.tsx works out the split; plain flex boxes lay it out). */
 .cs-grid {
-  /* Panels flow down columns, so a short panel does not leave a hole beside a tall one. */
-  column-width: var(--rx-hud-panel-min);
-  column-gap: var(--rx-gap);
+  display: flex;
+  align-items: flex-start;
+  gap: var(--rx-gap);
 }
-.cs-grid > * {
-  break-inside: avoid;
-  margin-bottom: var(--rx-gap);
+.cs-col {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--rx-gap);
 }
 .cs-foot {
   display: flex;

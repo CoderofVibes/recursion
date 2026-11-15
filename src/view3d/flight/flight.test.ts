@@ -12,7 +12,13 @@ import {
 } from '../../contracts/fixtures/index.ts';
 import type { ViewSnapshot } from '../../contracts/index.ts';
 import { registerFieldView } from '../fieldViews.ts';
-import { makeFlightHolo, RANGE_MAX, RANGE_MIN } from './FlightHolo.ts';
+import {
+  makeFlightHolo,
+  pastAndAhead,
+  RANGE_MAX,
+  RANGE_MIN,
+  withEarlierAttempts,
+} from './FlightHolo.ts';
 
 /** Just enough of an element for a hologram tag. */
 class FakeElement {
@@ -150,5 +156,63 @@ describe('flight hologram', () => {
     // Far off in a corner there is nothing to find.
     expect(holo.pick(5, 5, camera, 720)).toBeNull();
     holo.dispose();
+  });
+});
+
+describe('a forecast flown partly before it arrived (A18)', () => {
+  const samples = [0, 100, 200, 300].map((t) => ({ t, position: { x: t, y: 0, z: t / 10 } }));
+
+  it('draws what is already flown as past, meeting the rest at the forecast for now', () => {
+    const { past, ahead } = pastAndAhead(samples, 150);
+    expect(past.map((p) => p.x)).toEqual([0, 100, 150]);
+    expect(ahead.map((p) => p.x)).toEqual([150, 200, 300]);
+    expect(past.at(-1)).toEqual(ahead[0]);
+    expect(ahead[0]?.z).toBeCloseTo(15, 9);
+  });
+
+  it('is all ahead before it starts, and all past after it ends', () => {
+    expect(pastAndAhead(samples, -5).past).toEqual([]);
+    expect(pastAndAhead(samples, 999).ahead).toEqual([]);
+  });
+});
+
+describe('coverage from earlier attempts (2G coverageEarlier)', () => {
+  const look = (t: number, x: number) => ({
+    attemptId: 'a1',
+    sensor: 'camera',
+    from: t - 30,
+    to: t + 30,
+    origin: { x, y: 0, z: 0 },
+    axis: { x: 0, y: 1, z: 0 },
+    halfAngle: 0.5,
+    range: 6e6,
+  });
+  const at = (t: number, looks: ReturnType<typeof look>[]) => ({
+    t,
+    world: {
+      ...viewSnapshot.world,
+      ship: { ...viewSnapshot.world.ship, position: { x: 0, y: 0, z: 0 } },
+    },
+    coverageEarlier: looks,
+  });
+
+  it('counts a look taken near this moment of the encounter, fading with encounter time', () => {
+    const near = withEarlierAttempts([], at(1000, [look(1000, 0)]), 1.5e6);
+    expect(near).toHaveLength(1);
+    expect(near[0]?.fresh).toBeCloseTo(1, 9);
+    expect(near[0]?.center).toBeCloseTo(Math.PI / 2, 9);
+    const later = withEarlierAttempts([], at(1000 + 3600, [look(1000, 0)]), 1.5e6);
+    expect(later[0]?.fresh).toBeGreaterThan(0);
+    expect(later[0]?.fresh).toBeLessThan(near[0]!.fresh);
+    expect(withEarlierAttempts([], at(1000 + 1e6, [look(1000, 0)]), 1.5e6)).toEqual([]);
+  });
+
+  it('drops looks that cannot reach the view, and keeps the freshest the plane can draw', () => {
+    expect(withEarlierAttempts([], at(1000, [look(1000, 1e9)]), 1.5e6)).toEqual([]);
+    const many = Array.from({ length: 60 }, (_, i) => look(1000 + i * 60, 0));
+    const kept = withEarlierAttempts([], at(1000, many), 1.5e6);
+    expect(kept.length).toBeLessThanOrEqual(24);
+    for (let i = 1; i < kept.length; i++)
+      expect(kept[i - 1]!.fresh).toBeGreaterThanOrEqual(kept[i]!.fresh);
   });
 });

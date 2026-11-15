@@ -4,15 +4,30 @@
  * object the player has chosen. Everything here is belief: the navigation estimate, gauged
  * stores, and the forecast as issued.
  */
-import { AlertStack, LevelBar, Panel, Readout, ReadoutGrid } from '../theme/components/index.ts';
+import {
+  AlertStack,
+  LevelBar,
+  Panel,
+  Readout,
+  ReadoutGrid,
+  Trend,
+} from '../theme/components/index.ts';
 import { distance, heading, length } from '../view3d/adapter.ts';
 import { flightAlerts } from './alerts.ts';
-import { Actions, Button, Line, SelectField, TimeControls } from './controls.tsx';
+import { Actions, Button, Line, SelectField, TimeControls, wallTime } from './controls.tsx';
 import { FramingControls } from './Framing.tsx';
 import type { Framing } from './Framing.tsx';
-import { batteries, busLoads, heat, recorder, stores } from './data.ts';
+import {
+  batteries,
+  busLoads,
+  heat,
+  nearestClearance,
+  recorder,
+  spendable,
+  stores,
+} from './data.ts';
 import type { Desk } from './desk.ts';
-import { bytes, clock, degrees, dist, fixed, whole } from './format.ts';
+import { bytes, clock, degrees, dist, fixed, name, whole } from './format.ts';
 
 export interface FlightKeys {
   /** Keys held down, lower case. */
@@ -82,6 +97,17 @@ export function FlightHud({
   const rec = recorder(ship, game.ship);
   const forecast = snapshot.forecasts.at(-1);
   const end = forecast?.samples.at(-1);
+  const nearest = nearestClearance(snapshot);
+  const budget = spendable(ship, game.ship, desk.design.reserve);
+  let pass: NonNullable<typeof forecast>['closestApproaches'][number] | undefined;
+  for (const c of forecast?.closestApproaches ?? [])
+    if (c.t > status.t && (!pass || c.t < pass.t)) pass = c;
+  const actStatus =
+    (miss && miss.sigmas > 3) ||
+    (nearest && nearest.clearance < desk.design.clearance) ||
+    (pass && pass.distance - 2 * pass.sigma < desk.design.clearance)
+      ? 'caution'
+      : 'nominal';
 
   const items = flightAlerts(desk);
 
@@ -167,6 +193,57 @@ export function FlightHud({
               onChange={(v) => desk.select(v || null)}
             />
             {framing ? <FramingControls view={framing} orbit={false} /> : null}
+          </Panel>
+
+          {/* S8: what the ship measures against what was forecast, how close the hull is to
+              anything sensed, and what is left to act with, and how long there is to act. */}
+          <Panel
+            title="Margin to act"
+            status={actStatus}
+            statusLine={
+              miss && miss.sigmas > 3
+                ? `▲ off the forecast: ${dist(miss.metres)}, ${fixed(miss.sigmas, 1)}σ`
+                : undefined
+            }
+          >
+            {nearest ? (
+              <Line
+                label="nearest now"
+                status={nearest.clearance < desk.design.clearance ? 'caution' : undefined}
+              >
+                {nearest.name} · {dist(nearest.clearance)} from the hull ·{' '}
+                {nearest.tracked ? 'tracked' : 'seen'}
+              </Line>
+            ) : null}
+            {pass ? (
+              <Line
+                label="next pass"
+                tone="forecast"
+                status={
+                  pass.distance - 2 * pass.sigma < desk.design.clearance ? 'caution' : undefined
+                }
+              >
+                {name(pass.id)} {dist(pass.distance)} ±{dist(pass.sigma)} · in{' '}
+                {wallTime(pass.t - status.t, 1)}
+                {status.warp > 1
+                  ? ` (${wallTime(pass.t - status.t, status.warp)} at ${status.warp}×)`
+                  : ''}
+              </Line>
+            ) : (
+              <Line label="next pass" tone="forecast">
+                {forecast ? 'none forecast ahead' : 'no forecast issued'}
+              </Line>
+            )}
+            <Line label="to spend" status={budget.deltaV < 1 ? 'caution' : undefined}>
+              {fixed(budget.deltaV, 1)} m/s · {whole(budget.kg)} kg above the reserve
+            </Line>
+            <Trend
+              title="Off the forecast"
+              unit="km"
+              value={miss ? fixed(miss.metres / 1000, 2) : '—'}
+              data={desk.history('miss').map((m) => m / 1000)}
+              tone="forecast"
+            />
           </Panel>
 
           <Panel title="Margins">
