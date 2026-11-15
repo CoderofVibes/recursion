@@ -53,6 +53,13 @@ export interface MissionDesign {
     /** Black Box sample rate, Hz. */
     readonly recorderRate: number;
     readonly configuration: string;
+    /**
+     * Any other unit the player set while preparing: its mode, the most power it may draw, or
+     * both. Absent in designs recorded before the systems could be set in preparation.
+     */
+    readonly units?: Readonly<
+      Record<string, { readonly mode?: string; readonly allocation?: number }>
+    >;
   };
 }
 
@@ -114,6 +121,15 @@ export function setupCommands(design: MissionDesign, ship: ShipDefinition): Comm
   }
   commands.push({ kind: 'recorder', sampleRate: design.setup.recorderRate });
   commands.push({ kind: 'configure', configuration: design.setup.configuration });
+  // Every other unit as set, in the ship's own order (the camera's mode is sent above).
+  for (const spec of ship.equipment) {
+    const set = design.setup.units?.[spec.id];
+    if (!set) continue;
+    if (set.mode !== undefined && spec.id !== camera?.id)
+      commands.push({ kind: 'mode', equipment: spec.id, mode: set.mode });
+    if (set.allocation !== undefined)
+      commands.push({ kind: 'power', equipment: spec.id, allocation: set.allocation });
+  }
   return commands;
 }
 

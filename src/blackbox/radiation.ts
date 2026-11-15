@@ -6,11 +6,11 @@
  * measure each component's dose (that stays truth-side, P11). After the lattice's sudden first
  * contact the record then honestly shows a spike before the failures.
  *
- * The monitor's reading is the contracts' `lattice-intensity` measurement ("field intensity at
- * the sensing equipment": [I] in lattice units, which in this game is the dose rate in U), from
- * the equipment that carries the monitor. A `telemetry` reading on the channel `dose-rate` is read
- * the same way. `readDoseRate` is the one place that decides what a reading is: when 3C's sensor
- * lands (R37), its channel is read here and nowhere else.
+ * The monitor's reading is 3C's `radiation.dose-rate.v1` channel (R37, R58), decoded with 3C's
+ * own belief-safe decoder: its rate, σ, host and saturation flag. The older forms are still read:
+ * the contracts' `lattice-intensity` measurement ([I] in lattice units: the dose rate in U, at
+ * the equipment that carries the monitor) and a `telemetry` reading on the channel `dose-rate`.
+ * `readDoseRate` is the one place that decides what a reading is.
  *
  * `lossReview` puts what the loss review leads with in one place: the monitor's readings before
  * the loss, the spike's onset and peak and how long before the first failure it came, the first
@@ -19,6 +19,8 @@
  */
 
 import type { AttemptOutcome, AttemptRecord, Measurement } from '../contracts/index.ts';
+import { decodeRadiationReading } from '../ship/sensors/radiation-observations.ts';
+import { RADIATION_MONITOR } from '../ship/sensors/radiation-spec.ts';
 import { equipmentTimeline, failureOrder, type EquipmentTimeline } from './condition.ts';
 import { latticeRetention, type LatticeRetention } from './lattice.ts';
 
@@ -36,6 +38,8 @@ export const DOSE_RATE_CHANNEL = 'dose-rate';
 
 /** A radiation-monitor reading, or undefined for any other measurement. */
 export function readDoseRate(m: Measurement, saturation = Infinity): DoseRateReading | undefined {
+  const r = decodeRadiationReading(m);
+  if (r) return { t: r.t, rate: r.rate, sigma: r.sigma, source: r.source, saturated: r.saturated };
   const reading =
     m.kind === 'lattice-intensity' || (m.kind === 'telemetry' && m.channel === DOSE_RATE_CHANNEL);
   const rate = m.value[0];
@@ -100,7 +104,10 @@ export interface LossReview {
 }
 
 export interface LossReviewOptions {
-  /** The monitor's hazard threshold, U. Absent: the onset is found as a rise. */
+  /**
+   * The monitor's hazard threshold, U. Absent: 3C's monitor's own (`RADIATION_MONITOR`) when its
+   * channel is in the record; otherwise the onset is found as a rise.
+   */
   readonly threshold?: number;
   /** The monitor's saturation limit, U. */
   readonly saturation?: number;
@@ -133,6 +140,8 @@ export function lossReview(rec: AttemptRecord, opts: LossReviewOptions = {}): Lo
   const readings = all.filter((r) => r.t >= at - window);
   const failures = failureOrder(rec, at);
   const monitors = [...new Set(all.map((r) => r.source))].sort();
+  const fromMonitor = rec.measurements.some((m) => decodeRadiationReading(m) !== undefined);
+  const threshold = opts.threshold ?? (fromMonitor ? RADIATION_MONITOR.hazardThreshold : undefined);
   let radiation: RadiationReview;
   if (all.length === 0)
     radiation = { monitors, readings, note: 'No radiation monitor reading in the record.' };
@@ -142,8 +151,8 @@ export function lossReview(rec: AttemptRecord, opts: LossReviewOptions = {}): Lo
       undefined,
     );
     let onset: RadiationReview['onset'];
-    if (opts.threshold !== undefined) {
-      const hit = readings.find((r) => r.rate >= opts.threshold!);
+    if (threshold !== undefined) {
+      const hit = readings.find((r) => r.rate >= threshold);
       if (hit) onset = { t: hit.t, rate: hit.rate, rule: 'threshold' };
     } else
       for (let i = 1; i < readings.length; i++) {
@@ -167,7 +176,7 @@ export function lossReview(rec: AttemptRecord, opts: LossReviewOptions = {}): Lo
       ...(!onset
         ? {
             note:
-              opts.threshold !== undefined
+              threshold !== undefined
                 ? 'No reading reached the hazard threshold.'
                 : 'No reading rose clearly above those before it.',
           }

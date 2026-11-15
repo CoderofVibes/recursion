@@ -373,12 +373,12 @@ export function ShipPanels({
               value: c.id,
               label: configurationName(c.name),
             }))}
-            value={ship.configuration}
+            value={desk.configuration()}
             {...(ended
               ? {}
               : {
-                  onChange: (configuration: string) =>
-                    game.command({ kind: 'configure', configuration }),
+                  // As SYSTEMS sets it: part of the design before the encounter, a command in it.
+                  onChange: (configuration: string) => desk.setConfiguration(configuration),
                 })}
           />
           {framing ? <FramingControls view={framing} orbit /> : null}

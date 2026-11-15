@@ -56,6 +56,7 @@ import type { Hotspot, ViewMode } from './layout.ts';
 import { buildOutside } from './outside.ts';
 import type { Outside } from './outside.ts';
 import { buildRoom } from './shell.ts';
+import { coveredByVeil } from './veil.ts';
 
 export type LossStage = 'start' | 'black' | 'pip' | 'reset' | 'fade' | 'end';
 
@@ -103,6 +104,10 @@ export class RoomView {
   private readonly quality: ReturnType<typeof createQualityHook>;
   private readonly labels: CSS2DRenderer;
   private readonly shell;
+  /** The room's own scene parts (shell, console, dressing): not drawn while the veil covers them. */
+  private readonly roomParts: readonly Object3D[];
+  /** Those of them hidden for the frame being drawn; emptied when it is (kept, not remade: S15). */
+  private readonly coveredParts: Object3D[] = [];
   private readonly outside;
   private readonly veil: Mesh<SphereGeometry, MeshBasicMaterial>;
   private readonly holoRoot = new Group();
@@ -116,6 +121,8 @@ export class RoomView {
   };
   private current: ViewMode = 'room';
   private inRegion = false;
+  /** FLIGHT's range before the map's region view took the hologram over. */
+  private rangeBeforeRegion: number | undefined;
   private trans: {
     t: number;
     from: { pos: Vector3; quat: Quaternion };
@@ -195,6 +202,9 @@ export class RoomView {
     this.labels = new CSS2DRenderer({ element: labels });
 
     this.shell = buildRoom(this.scene);
+    // The room's own parts, as built: what the veil covers in MAP and SHIP. Its lights are not
+    // among them (they light the holograms too), nor is anything added after this.
+    this.roomParts = this.scene.children.filter((child) => !('isLight' in child));
     this.outside = buildOutside(this.scene);
 
     // Holograms: a veil that hides the room behind MAP and SHIP, the projector's cone of light,
@@ -390,6 +400,10 @@ export class RoomView {
     if (mode === 'flight') this.tiltUser = clamp(this.tiltUser + radians, -0.3, 0.6);
     else if (mode === 'map' || mode === 'ship')
       this.tiltUser = clamp(this.tiltUser + radians, -0.25, 0.8);
+  }
+  /** The region view's range, metres: stepping through a forecast there follows the ship. */
+  setRegionRange(metres: number): void {
+    if (this.current === 'map' && this.inRegion) this.flight.setRange(metres);
   }
   /** The range FLIGHT starts at and a reset returns to: the host sets it to the encounter's scale. */
   setFlightRange(metres: number): void {
@@ -594,8 +608,24 @@ export class RoomView {
     }
 
     this.outside.followEye(this.camera, this.renderer);
-    this.composer.render();
-    this.labels.render(this.scene, camera);
+    // A8: settled, MAP and SHIP cover the room with an opaque veil, so the room's own parts
+    // are not sent to be drawn behind it (PF's measured proposal, R63). The sky outside still
+    // is: its stars show through the veil, behind the hologram, as they always have. The lights
+    // stay. Moving between views, and through a loss, everything is drawn.
+    const hidden = this.coveredParts;
+    if (coveredByVeil(mode, cur.veil, this.trans !== null || this.death !== null))
+      for (const part of this.roomParts)
+        if (part.visible) {
+          part.visible = false;
+          hidden.push(part);
+        }
+    try {
+      this.composer.render();
+      this.labels.render(this.scene, camera);
+    } finally {
+      for (const part of hidden) part.visible = true;
+      hidden.length = 0;
+    }
   }
 
   dispose(): void {
@@ -612,9 +642,13 @@ export class RoomView {
   // ---- Internals -----------------------------------------------------------------------------
 
   private applyRegion(on: boolean): void {
+    if (on && !this.inRegion) this.rangeBeforeRegion = this.flight.range();
     this.inRegion = on;
     this.flight.setChart(on);
-    if (!on) this.flight.setRange(Math.min(this.flight.range(), RANGE_DEFAULT));
+    // Leaving the region gives FLIGHT back the range it had: the region view's zooming, and a
+    // forecast stepped through there, are not FLIGHT's framing.
+    if (!on)
+      this.flight.setRange(this.rangeBeforeRegion ?? Math.min(this.flight.range(), RANGE_DEFAULT));
   }
 
   private syncVisibility(): void {

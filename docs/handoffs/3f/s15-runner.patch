@@ -1,0 +1,22 @@
+diff --git a/tools/studies/s15/measure.mjs b/tools/studies/s15/measure.mjs
+index 891551f..1b6c90d 100644
+--- a/tools/studies/s15/measure.mjs
++++ b/tools/studies/s15/measure.mjs
+@@ -278,7 +278,7 @@ try {
+     result.loads.push(row); save();
+     console.log(`load ${region} ${p} ${cache} #${repeat}: ready ${ready.toFixed(0)} ms; interaction paint ${metrics.interaction.paint.toFixed(0)} ms`);
+   }
+-  const labels = { mission: 'MISSION', plan: 'PLAN', model: 'MODEL', blackbox: 'BLACK BOX', systems: 'SYSTEMS' };
++  const labels = { mission: 'EXPLORATION', plan: 'PLAN', model: 'MODEL', blackbox: 'BLACK BOX', systems: 'SYSTEMS' };
+   async function prepare(p, view, warp, region = 'gravity-range') {
+     await tab(p); await navigate(region); await consoleView();
+     const enter = await js(`document.querySelector('.cs-foot .cs-button')?.textContent.trim()`);
+@@ -289,7 +289,7 @@ try {
+       await click('.cs-foot .rx-chip', `${warp}×`);
+       await waitFor(`__s15.status().warp === ${warp}`);
+     }
+-    if (labels[view]) await click('.cs-tab', labels[view]);
++    if (labels[view]) await click('.ci-rail__label', labels[view]);
+     else {
+       await key('Escape', 'Escape');
+       if (view !== 'room') await key({ flight: '4', map: '1', ship: '2' }[view]);

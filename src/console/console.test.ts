@@ -64,6 +64,40 @@ describe('mission design', () => {
     expect(kinds.filter((k) => k === 'mark')).toHaveLength(0);
   });
 
+  it('sends every unit as set, in the ship’s order, and the camera’s mode only once', () => {
+    const camera = shipDefinition.equipment.find((e) => e.kind === 'optical-tracker')!;
+    const set = {
+      ...design,
+      setup: {
+        ...design.setup,
+        cameraMode: 'standby',
+        units: {
+          comms: { mode: 'on', allocation: 120 },
+          [camera.id]: { mode: 'track', allocation: 40 },
+          processor: { allocation: 300 },
+        },
+      },
+    };
+    const commands = setupCommands(set, shipDefinition);
+    // The camera's mode is the design's own; a mode kept for it by unit is never sent as well.
+    expect(commands.filter((c) => c.kind === 'mode' && c.equipment === camera.id)).toEqual([
+      { kind: 'mode', equipment: camera.id, mode: 'standby' },
+    ]);
+    expect(commands).toContainEqual({ kind: 'power', equipment: camera.id, allocation: 40 });
+    expect(commands).toContainEqual({ kind: 'mode', equipment: 'comms', mode: 'on' });
+    expect(commands).toContainEqual({ kind: 'power', equipment: 'comms', allocation: 120 });
+    // An allocation alone changes no mode.
+    expect(commands).toContainEqual({ kind: 'power', equipment: 'processor', allocation: 300 });
+    expect(commands.some((c) => c.kind === 'mode' && c.equipment === 'processor')).toBe(false);
+    // In the ship's own order: the camera's unit before the processor before comms.
+    const order = commands
+      .filter((c) => c.kind === 'power')
+      .map((c) => (c as { equipment: string }).equipment);
+    expect(order).toEqual([camera.id, 'processor', 'comms']);
+    // A design with no unit settings sends exactly what it always did.
+    expect(setupCommands(design, shipDefinition).some((c) => c.kind === 'power')).toBe(false);
+  });
+
   it('keeps the latest design when the player records another', () => {
     const later = { ...design, reserve: 1234 };
     const base = attempts[0]!;
@@ -341,6 +375,7 @@ describe('readings not yet taken', () => {
 describe('overlay stylesheets', () => {
   const sheets = [
     readFileSync(new URL('./console.css', import.meta.url), 'utf8'),
+    readFileSync(new URL('./instruments/instruments.css', import.meta.url), 'utf8'),
     readFileSync(new URL('../app/control-room.css', import.meta.url), 'utf8'),
     readFileSync(new URL('../app/app.css', import.meta.url), 'utf8'),
   ];
