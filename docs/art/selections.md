@@ -107,4 +107,23 @@ For the disclosure: MidJourney was used to make reference images that guided the
 
 **Note on weirdness:** raised weirdness made the places stranger and better, but on W05b it pulled the funnel away from the wireframe look entirely. For funnel prompts, keep weirdness low and lean on the style references.
 
+## Round 6 (2026-11-15): L07b, X16b, S02b, W05c
+
+**Owner direction (2026-11-15):** "The quiet sky between encounters should have plenty of cool weird views. Can use the ones we already have." Answered in window-views.md, *Transit views*.
+
+| Prompt | Job ID | # | Verdict | Use | Why |
+|---|---|---|---|---|---|
+| L07b | `f80f640f-21ef-4ef1-896a-48c592d14aa4` | 2 | **chosen** (sky only) | Ember Wheel | The second galaxy exactly: a tilted spiral, soft bright core, its whole rim a ring of ember points. Ignore the rock-strewn ground, the dark limb and the hazy horizon below it. |
+| L07b | `f80f640f-21ef-4ef1-896a-48c592d14aa4` | 0 | chosen (sky only) | Ember Wheel; lanterns | A flatter Ember Wheel with embers along its arms, and below it rocks lit warm on one side like lanterns. The ground under the rocks must go. |
+| L07b | `94002ddd-04d0-4630-9f2c-3718ef60808b` | 2 | partial | Ember Wheel, tightly wound | Concentric arms crowded with embers. Ground and haze again. |
+| X16b | `6a12a7aa-a675-4cf0-a968-28b7c49d6f75` | 0 | partial | Stillwater composition | A dark limb with a hairline rim on the left and the Galaxy's lane low beside it. The lane is drawn as glowing rubble; in the game it stays distant light. |
+| X16b | `062b35c1-4d1c-488e-b4d6-1ba2b5800f56` | 0 | partial | A dark limb with the Galaxy beside it | Strong silhouette and a small galaxy core along the lane. The saturated red is alert-red; take it to garnet. |
+| X16b | `6a12a7aa-a675-4cf0-a968-28b7c49d6f75` | 2 | dropped | | An atmosphere and a ground. |
+| S02b | `06ba5626-8b15-4e92-b05e-9ed9a21ca2fc` | 2 | **chosen** | The quiet base sky | Pure star field: faint red, white and blue-white points, density rising gently to one side, one brighter warm star. The calm layer every transit view sits on. |
+| S02b | `06ba5626-8b15-4e92-b05e-9ed9a21ca2fc` | 1 | chosen | The quiet base sky, with a tiny galaxy | The same calm field with one tiny distant galaxy near the middle. |
+| W05c | `59418971-bbdd-4f87-adcc-0e2a66917723` | 3 | **chosen** (recolour to violet) | A well's birth | Exactly S22's ramp: rings of loose dots at the wide end, crowding and joining toward a brilliant white throat point. It's blue-white; in the game the rings are violet. Fills the library's birth gap. |
+| W05c | `59418971-bbdd-4f87-adcc-0e2a66917723` | 0 | chosen (recolour) | A precursor seen mouth-on | Dotted rings receding into a funnel toward a bright point, seen from near the mouth. |
+| W05c | `55b11529-baba-4f5a-9408-91b5ac10757a` | 3 | partial | Meridian line language | A pale wireframe tear-shape of fine meridians converging on a brilliant point, trailing a long thread. The cleanest meridians yet. The shape is reversed (a funnel's bright point is at its narrow end) and it's colourless. |
+| W05c | `55b11529-baba-4f5a-9408-91b5ac10757a` | 1 | dropped | | Star spikes and a lens flare; reads as a comet. |
+
 Images shipped as textures: **none** (A23).

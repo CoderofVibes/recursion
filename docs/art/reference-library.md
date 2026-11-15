@@ -16,14 +16,15 @@ Every usable MidJourney reference, grouped by the scene or element it guides, so
 
 ### The Ember Wheel (second galaxy, owner approved)
 - **Primary:** `027eec67` #0.
-- **Gap:** only one. Prompt **S07** below gives alternates.
+- **Also:** `f80f640f` #2 (the whole rim a ring of embers), `f80f640f` #0 (flatter, embers along the arms), `94002ddd` #2 (tightly wound). Sky only in all three: ignore their ground and haze.
 
 ### Sky oddities (owner approved all three)
 - **Needle** `a4516a95` #3 · **Hollow** `a4516a95` #0 · **Eye** `2050f52c` #0.
 
 ### Star field and other landmarks
 - **Blue Cloud:** detail from `6afb7728` #3.
-- **Transit sky (S02):** **gap**. Prompt **S02b** below.
+- **Quiet base sky:** **primary** `06ba5626` #2; **also** `06ba5626` #1 (with a tiny galaxy).
+- **Transit views:** composed from the landmarks; see window-views.md, *Transit views*.
 
 ### The far sun
 - **Primary:** `ca1c5c59` #3 (hard warm point, no flare).
@@ -68,7 +69,8 @@ Every usable MidJourney reference, grouped by the scene or element it guides, so
 
 ### Precursor and birth
 - **Precursor (dotted rings):** `a5aac057` #0.
-- **Birth:** **gap**. W05b drifted into galaxies. Prompt **W05c** below, with weirdness low.
+- **Birth:** **primary** `59418971` #3 (recolour violet); **also** `59418971` #0 (mouth-on).
+- **Meridians:** detail from `55b11529` #3.
 
 ## Openings (4D)
 
@@ -96,7 +98,7 @@ Every usable MidJourney reference, grouped by the scene or element it guides, so
 |---|---|---|
 | C01 Unfamiliar Sky | **Primary** `02429124` #0; **also** `16145e4e` #3, `16145e4e` #1/#2 | 3+ |
 | C02 Twin Deeps | see above | 3+ |
-| C03 Lantern Field | none | **gap**: prompt **L07b** |
+| C03 Lantern Field | **partial** `f80f640f` #0 (lantern rocks, with a ground to remove) | 1 partial |
 | N01 Shadow Observatory | **Primary** `8bbe8eef` #2; **also** `5713ccd3` #1, `5713ccd3` #2 | 3 |
 | N02 Far Aperture | none | **gap**: prompt **X09b** |
 | N03 Unseen Cathedral | none | **gap**: prompt **X10b** |
@@ -110,7 +112,7 @@ Every usable MidJourney reference, grouped by the scene or element it guides, so
 | R02 Hinge | none | **gap**: prompt **X12b** |
 | P04 Back of the World | **detail** `2adef2fe` #0 (bead on the limb) | 1: prompt B06 in the library |
 | A01 Countercurrent | none | gap (gas is deferred; prompt B05 for the dark moon) |
-| C04 Stillwater | none | **gap**: prompt **X16b** |
+| C04 Stillwater | **partial** `6a12a7aa` #0, `062b35c1` #0 | 2 partial: prompt X16b again without ground |
 | R04 Crooked Ship | none | gap (an open rock field; low priority) |
 | C05 Braided Crossing | **Primary** `4bef5e21` #0; **also** `27c82348` #0, `27c82348` #1 | 3 |
 | C06 Turning Rim | see openings | 3+ |

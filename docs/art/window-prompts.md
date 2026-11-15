@@ -167,7 +167,7 @@ ultra-wide panoramic view in black deep space, a long narrow funnel in the momen
 Each prompt fills a scene with no reference yet; see [reference-library.md](reference-library.md). Keep weirdness raised for places and sky, low for funnels.
 
 ### S02b — Transit: the quiet sky
-- **Gap:** the sky while preparing between encounters. **Style ref:** `57c10c4c` #0. **Status:** to try.
+- **Gap:** the sky while preparing between encounters. **Style ref:** `57c10c4c` #0. **Status:** tried (round 6; see selections.md).
 
 ```
 ultra-wide panoramic view of deep space, mostly pure black with sparse faint stars in deep red and blue-white, low along one edge the faint far tip of an enormous edge-on galaxy fading into darkness, one tiny distant galaxy alone in the black, nothing else, profound stillness and loneliness, true colour astrophotography, high dynamic range --ar 21:9 --style raw --no text, letters, people, spaceship interior, frame, ground, horizon, atmosphere, planet surface, landscape, purple, violet, nebula, planets, lens flare, diffraction spikes
@@ -181,7 +181,7 @@ ultra-wide panoramic view of deep space, a large spiral galaxy tilted steeply so
 ```
 
 ### W05c — A well being born, with weirdness low
-- **Gap:** W05b drifted into galaxies. Run with weirdness low or off. **Style refs:** `c29febbf` #1 and `a5aac057` #0. **Status:** to try.
+- **Gap:** W05b drifted into galaxies. Run with weirdness low or off. **Style refs:** `c29febbf` #1 and `a5aac057` #0. **Status:** tried (round 6; see selections.md).
 
 ```
 ultra-wide panoramic view in black deep space, one long narrow funnel drawn in thin violet wire lines seen from the side, its wide end still only faint dotted rings like frost, its middle where the dots are joining into thin continuous rings, its narrow end complete with crowded rings converging on a brilliant white point just ignited, black vacuum all around, a few sparse stars, clean and precise, cinematic --ar 21:9 --style raw --no text, letters, people, spaceship interior, frame, ground, horizon, atmosphere, planet surface, landscape, galaxy, spiral, swirl, comet, nebula, explosion, smoke, fire, pink, lightning
@@ -195,7 +195,7 @@ ultra-wide panoramic view of deep space, an enormous tilted oval opening filling
 ```
 
 ### L07b — Lantern Field
-- **Gap:** C03, lit rocks like lanterns before the Ember Wheel. **Style refs:** `cb93a8bc` #0 and `027eec67` #0. **Status:** to try.
+- **Gap:** C03, lit rocks like lanterns before the Ember Wheel. **Style refs:** `cb93a8bc` #0 and `027eec67` #0. **Status:** tried (round 6; see selections.md).
 
 ```
 ultra-wide panoramic view seen from far out in open space, a scattering of small rocks at many depths each lit warm on one side by a small distant sun so they glow softly like lanterns hanging in the dark, high on the left the edge of an unseen dark body catching a thin arc of dawn light, beyond them a large tilted spiral galaxy whose rim is lined with ember-like points, one pale point of light slipping behind a rock, calm and inviting, cinematic, high dynamic range --ar 21:9 --style raw --no text, letters, people, spaceship interior, frame, ground, horizon, atmosphere, planet surface, landscape, purple, violet, lens flare, lanterns, fire, flames, paper lanterns
@@ -230,10 +230,35 @@ ultra-wide panoramic view seen from far out in open space, a long knife-thin rid
 ```
 
 ### X16b — Stillwater
-- **Gap:** C04, calm before Braided Crossing, facing the Ember Wheel. **Style refs:** `02429124` #0 and `027eec67` #0. **Status:** to try.
+- **Gap:** C04, calm before Braided Crossing, facing the Ember Wheel. **Style refs:** `02429124` #0 and `027eec67` #0. **Status:** tried (round 6; see selections.md).
 
 ```
 ultra-wide panoramic view seen from far out in open space, the massive dark limb of an airless world along the left side with a soft thin warm rim, a few distant rocks hanging perfectly still, low beyond them a large tilted spiral galaxy with an ember-lined rim, far below one faint point of light, very few stars, a deep calm like still water at night, realistic, cinematic, high dynamic range --ar 21:9 --style raw --no text, letters, people, spaceship interior, frame, ground, horizon, atmosphere, planet surface, landscape, purple, violet, lens flare, water, reflection, airglow
+```
+
+## Round 7: transit views
+
+Transit is composed from landmarks we already have (window-views.md, *Transit views*). These three prompts are references for its three most striking moments. Keep weirdness raised.
+
+### T01 — A galaxy eclipsed by a body you can't see
+- **Leg:** C03 → N01. **Style refs:** `57c10c4c` #2 and `8bbe8eef` #2. **Status:** to try.
+
+```
+ultra-wide panoramic view seen from far out in open space, an enormous edge-on galaxy with a blazing white core and a torn dark dust lane spanning the sky, and a vast unlit body drifting in front of it, invisible except as a sharp curved black shape where the galaxy's light and the stars simply stop, half the core already hidden, eerie and beautiful, astrophotography, high dynamic range --ar 21:9 --style raw --no text, letters, people, spaceship interior, frame, ground, horizon, atmosphere, planet surface, landscape, purple, violet, lens flare, rim light, glow, planet
+```
+
+### T02 — The Well Garden from afar
+- **Leg:** P02 → P03. **Style refs:** `bce5f206` #1 and `130bc062` #0. Weirdness low. **Status:** to try.
+
+```
+ultra-wide panoramic view of black deep space, far ahead a wide faint field of thousands of tiny crossed violet threads pointing every direction like frost on glass, each thread ending in a tiny white spark, too far to see any funnel shape, above it a tilted spiral galaxy and a dark empty oval galaxy, quiet sparse stars elsewhere, a strange place ahead, cinematic, high dynamic range --ar 3:1 --style raw --no text, letters, people, spaceship interior, frame, ground, horizon, atmosphere, planet surface, landscape, aurora, nebula, fog, rain, spiral, pink, lightning
+```
+
+### T03 — Looking back at Twin Deeps
+- **Leg:** C02 → C03, aft. **Style refs:** `cb93a8bc` #0 and `836473b2` #1. **Status:** to try.
+
+```
+ultra-wide panoramic view seen from far out in open space, far behind two small near-black worlds with hair-thin warm crescents, one ringed by a thin line of sparks, a faint violet curtain curving beside the ring, both small in a huge dark sky, above them a large tilted spiral galaxy with an ember-lined rim, sparse stars, the feeling of leaving a place behind, cinematic, high dynamic range --ar 21:9 --style raw --no text, letters, people, spaceship interior, frame, ground, horizon, atmosphere, planet surface, landscape, purple haze, lens flare, pink
 ```
 
 ## 1. The deep sky (sky targets)

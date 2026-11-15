@@ -46,7 +46,7 @@ Internal names only. Nothing is ever labelled on screen (Night Watch §8).
 | Region | The window shows (from data) | Faces | Why | References |
 |---|---|---|---|---|
 | C01 Unfamiliar Sky | A dark limb below, fragments above and aside, one "star" that's really a nearby rock | **Galaxy**, whole | The first view after the black hole: the wrongness right ahead | S01, B03 |
-| Transit legs | Open sky; the next region's bodies as small discs or points if the window channel has them | Whatever the heading gives | The quiet sky while preparing (A12) | S02 |
+| Transit legs | The richest sky in the game; see *Transit views* below | A different landmark per leg | Where the player spends the most time looking out (A12) | `06ba5626` #2 base sky, plus the landmarks |
 | C02 Twin Deeps | Alpha upper left, Beta lower right, the belt a thin ring of sparks, the radiation crescent | **Deep pole** | Dark sky makes the crescents and sparks the whole picture | B01 (hero), B02, L01, X06, X07 |
 | C03 Lantern Field | A rim brightening high to port, lit rocks like lanterns, a repeated silhouette astern | **Ember Wheel** | Lit rocks like lanterns in front of a galaxy rimmed with embers: the lanterns rhyme with the sky | L07, X08 |
 | N01 Shadow Observatory | An unlit overhang above, black fragments below | **Bulge** | Black bodies are seen only by the stars they hide, so put them in front of the densest stars | X02 |
@@ -69,6 +69,50 @@ Internal names only. Nothing is ever labelled on screen (Night Watch §8).
 | H01 Passage | The opening filling the forward view, strange stars around its rim | **Deep pole** | Same | L05 |
 | Opening and ending | Earth in the distance under our real sky (OP's `HOME_SHOT`) | Our sky | The bookends | E01–E04, S06 |
 
+## Transit views: the quiet sky between encounters
+
+**Owner direction (2026-11-15):** the quiet sky between encounters should have plenty of cool, weird views, using the references we already have.
+
+Transit is where the player spends the most time looking out (A12: time runs, nothing is dangerous, they prepare as long as they like). So it gets the richest sky, built honestly from three things.
+
+### 1. No dead direction
+
+The sky atlas is laid out so that **wherever the ship points, something is in the window**. Treat the sphere as about a dozen 60° cones. Every cone holds at least one landmark (the Galaxy's disc, Bulge, Scar or a Tip; the Ember Wheel; the Needle, Hollow or Eye; the Blue Cloud, Pair or Ember) or a stretch of band light. The space between landmarks is the quiet base sky (S02b `06ba5626` #2), never empty black. During transit the player can turn the ship freely and look around: each turn is a new view.
+
+### 2. Each leg points at something
+
+The regions' 3D positions are authored (A13). Since the distant sky is free to arrange, **place the landmarks to suit the legs**: the default heading of each transit leg (nose along the course) frames its own landmark, so no two legs look alike. Proposed, along A13's route:
+
+| Leg | Ahead (the landmark the course faces) | Also in the window (from data) | References |
+|---|---|---|---|
+| C01 → C02 | The whole edge-on **Galaxy** | Twin Deeps growing from two points into two crescents | `02429124` #0, `ca1c5c59` #2 |
+| C02 → C03 | The **Ember Wheel** rising | Aft: Twin Deeps shrinking, the radiation crescent a faint violet curve | `f80f640f` #2, `836473b2` #1 |
+| C03 → N01 | The **Bulge** | N01's unlit overhang growing as a starless patch that slowly eats into the Galaxy: an eclipse of a galaxy by a body you can't see | `8bbe8eef` #2 |
+| N01 → N02 | The **Blue Cloud** | Far Aperture's dark edges, a point of light winking between them | `5713ccd3` #2 |
+| N02 → N03 | The **Needle** beside a **Tip** | Two needles of light pointing the same way | `a4516a95` #3 |
+| C03 → P01 | The **Scar** | The Listening Shelf's pale slab growing, its glints flickering | `99085f82` #2 |
+| P01 → P02 | The far sun | A brilliant limb rising; the sky dimming as the eye adapts | layer 2 |
+| P02 → P03 | The **Hollow** | The Well Garden from afar: a faint violet frost of crossed threads, each ending in a spark, slowly resolving into funnels | `bce5f206` #1, `130bc062` #0 |
+| P03 → P04 | **Deep pole** | Aft: the Garden receding into violet frost; ahead, a black disc eating stars | `8bbe8eef` #2 |
+| P03 ↔ N03 (cross-transfer) | The **Pair** | The Garden's frost on one side, a calm rock field on the other | — |
+| P04 or N03 → C04 | The **Ember Wheel**, low | Stillwater's limb with its hairline rim | `6a12a7aa` #0 |
+| C04 → C05 | The **Hollow** again, from a new angle | Braided debris ahead, funnels glinting beyond | `4bef5e21` #0 |
+| C05 → C06 | **Deep pole**, darkest sky | If geometry allows (4D, C06), the first faint hairline far ahead | `c3c1278a` #0 |
+| C06 → H01 | The opening itself | Home's warm sky inside the oval | `9dcfe97b` #0 |
+
+The **Eye** stays at C01's arrival (low and easy to miss), so it's the first strange thing the player sees and the one they find again only by looking for it.
+
+### 3. Things that change while you coast
+
+All honest, all from data or the eye:
+
+- **Arriving and leaving.** The next region grows from a point to a disc ahead; the last one shrinks behind. Every body is drawn at its true angular size, so the approach itself is the show.
+- **Occultations.** As the ship moves, a near body slides across a landmark and hides it: a dark disc crossing the Ember Wheel, an overhang eating the Bulge. The parallax is real.
+- **Eye adaptation.** When the sun drops behind a body the stars and the galaxies come up over a few seconds (layer 2).
+- **Distant phenomena.** The Well Garden's precursors brighten far off, and a funnel being born is visible across the field (S22: the window sees phase without the camera).
+
+Because the sky never moves between legs, a player who has learned it can navigate by it: the Ember Wheel ahead means Lantern Field is behind them.
+
 ## Build plan, layer by layer
 
 Each layer stands alone and can merge alone. Tokens go in `src/theme/` (Convention 11), in `outsideStyle`.
@@ -84,6 +128,7 @@ Each layer stands alone and can merge alone. Tokens go in `src/theme/` (Conventi
 ## Checks
 
 - **Hologram contrast.** A theme test in the style of `theme.test.ts`: the sky's brightest pixel (the Bulge) stays below a set fraction of the hologram's line brightness, and the sky's mean hue keeps ΔE76 > 20 from `forecast`, `thrust`, `velocity`, `blackbox`, `caution` and `warning`.
+- **No dead direction.** A test samples the atlas in about a dozen 60° cones and asserts each holds a landmark or band light above a set brightness.
 - **Determinism.** The atlas is identical on every run and every machine (fixed seed, no `Math.random`).
 - **Modest laptop (A18 item 7).** Cold load still within 2.5 s with the bake included; frame p95 unchanged within noise.
 - **Honesty.** Nothing drawn that the window channel or a phenomenon's own product doesn't supply, apart from the fixed distant sky. No lattice in N03.
