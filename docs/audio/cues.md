@@ -22,9 +22,10 @@ Settings · Seamless loop, 8 s
 
 **PASTE INTO ELEVENLABS**
 
-Seamless quiet crewed spacecraft interior ventilation. A stable low-mid
-electrical transformer hum with very soft dry air through a grille, even level
-throughout and identical loop edges. No voices, music, beeps or rattles.
+Create a seamless loop lasting 8 seconds. Seamless quiet crewed spacecraft
+interior ventilation. A stable low-mid electrical transformer hum with very
+soft dry air through a grille, even level throughout and identical loop edges.
+No voices, music, beeps or rattles.
 
 **When it plays**
 
@@ -40,9 +41,9 @@ Settings · One-shot, 0.12 s
 
 **PASTE INTO ELEVENLABS**
 
-One very short dry spacecraft console switch, a small mechanical detent and
-soft relay tic, rounded and close, ending cleanly. No tail, voice, tone or
-second click.
+Create a one-shot sound effect lasting 0.12 seconds. One very short dry
+spacecraft console switch, a small mechanical detent and soft relay tic,
+rounded and close, ending cleanly. No tail, voice, tone or second click.
 
 **When it plays**
 
@@ -57,9 +58,10 @@ Settings · One-shot, 2.8 s
 
 **PASTE INTO ELEVENLABS**
 
-A restrained vibration rising through the deck of a metal spacecraft, felt as
-cabin structure flexing. Soft flutter into uneven mid-bass and a small dry
-tail, no exterior sound, voices, orchestra or impact.
+Create a one-shot sound effect lasting 2.8 seconds. A restrained vibration
+rising through the deck of a metal spacecraft, felt as cabin structure
+flexing. Soft flutter into uneven mid-bass and a small dry tail, no exterior
+sound, voices, orchestra or impact.
 
 **When it plays**
 
@@ -74,9 +76,10 @@ Settings · One-shot, 0.45 s
 
 **PASTE INTO ELEVENLABS**
 
-A short low-mid amber double-pip through a slightly filtered spacecraft
-console speaker, two rounded pulses within 0.45 seconds. Dry and clear, no
-shrill edge, voice, siren sweep or third pulse.
+Create a one-shot sound effect lasting 0.45 seconds. A short low-mid amber
+double-pip through a slightly filtered spacecraft console speaker, two rounded
+pulses within 0.45 seconds. Dry and clear, no shrill edge, voice, siren sweep
+or third pulse.
 
 **When it plays**
 
@@ -91,11 +94,11 @@ Settings · One-shot, 1.5 s
 
 **PASTE INTO ELEVENLABS**
 
-A single spacecraft interior systems failure. Begin with a short heavy deck
-shudder and strained metal, with three brief irregular power dropouts near
-0.14, 0.60 and 1.10 seconds. Let the middle frequencies carry the weight,
-ending dry by 1.5 seconds. No screams, speech, music or explosion outside the
-hull.
+Create a one-shot sound effect lasting 1.5 seconds. A single spacecraft
+interior systems failure. Begin with a short heavy deck shudder and strained
+metal, with three brief irregular power dropouts near 0.14, 0.60 and 1.10
+seconds. Let the middle frequencies carry the weight, ending dry by 1.5
+seconds. No screams, speech, music or explosion outside the hull.
 
 **When it plays**
 
@@ -111,9 +114,9 @@ Settings · One-shot, 0.20 s
 
 **PASTE INTO ELEVENLABS**
 
-One tiny dry low contactor snap as a spacecraft electrical bus goes dark, a
-short mid-bass tick with a clipped end. No reverberation, secondary click,
-voice or music.
+Create a one-shot sound effect lasting 0.20 seconds. One tiny dry low
+contactor snap as a spacecraft electrical bus goes dark, a short mid-bass tick
+with a clipped end. No reverberation, secondary click, voice or music.
 
 **When it plays**
 
@@ -128,9 +131,10 @@ Settings · One-shot, 1.60 s
 
 **PASTE INTO ELEVENLABS**
 
-One soft low struck-metal tone, with one faint higher harmonic as it blooms
-and a short decay to silence. Restrained and legible on small speakers. No
-chord progression, drums, voice or trailing wash.
+Create a one-shot sound effect lasting 1.60 seconds. One soft low struck-metal
+tone, with one faint higher harmonic as it blooms and a short decay to
+silence. Restrained and legible on small speakers. No chord progression,
+drums, voice or trailing wash.
 
 **When it plays**
 
@@ -144,9 +148,9 @@ Settings · One-shot, 0.22 s
 
 **PASTE INTO ELEVENLABS**
 
-One soft dry phosphor discharge as a display turns off, a muted low-mid
-electrical tick dropping immediately to silence. No rise, flourish, voice or
-reverb.
+Create a one-shot sound effect lasting 0.22 seconds. One soft dry phosphor
+discharge as a display turns off, a muted low-mid electrical tick dropping
+immediately to silence. No rise, flourish, voice or reverb.
 
 **When it plays**
 
@@ -160,9 +164,10 @@ Settings · One-shot, 0.90 s
 
 **PASTE INTO ELEVENLABS**
 
-A quiet relay engaging followed by a small enclosed vent spinning up for less
-than a second, soft low-mid texture that settles into an even floor. No alert,
-speech, music or big hiss.
+Create a one-shot sound effect lasting 0.90 seconds. A quiet relay engaging
+followed by a small enclosed vent spinning up for less than a second, soft
+low-mid texture that settles into an even floor. No alert, speech, music or
+big hiss.
 
 **When it plays**
 
@@ -177,9 +182,10 @@ Settings · Seamless loop, 4 s
 
 **PASTE INTO ELEVENLABS**
 
-Seamless steady main engine vibration heard from inside the crew compartment,
-a heavy smooth mid-bass body and restrained mechanical grain. Match both loop
-ends. No start, shutdown, exterior roar, voice or music.
+Create a seamless loop lasting 4 seconds. Seamless steady main engine
+vibration heard from inside the crew compartment, a heavy smooth mid-bass body
+and restrained mechanical grain. Match both loop ends. No start, shutdown,
+exterior roar, voice or music.
 
 **When it plays**
 
@@ -194,10 +200,10 @@ Settings · Seamless loop, 2 s
 
 **PASTE INTO ELEVENLABS**
 
-Seamless interior vibration from a small attitude-control jet firing, tight
-dry air-and-metal texture with a light low-mid flutter. Stable loop edges,
-quieter and thinner than a main engine. No ignition hit, sharp treble, speech
-or music.
+Create a seamless loop lasting 2 seconds. Seamless interior vibration from a
+small attitude-control jet firing, tight dry air-and-metal texture with a
+light low-mid flutter. Stable loop edges, quieter and thinner than a main
+engine. No ignition hit, sharp treble, speech or music.
 
 **When it plays**
 
@@ -212,9 +218,9 @@ Settings · One-shot, 0.24 s
 
 **PASTE INTO ELEVENLABS**
 
-One soft rounded medium-low console acknowledgment tone, shorter than a
-quarter second, very gentle attack, no urgency, no second note, voice or
-music.
+Create a one-shot sound effect lasting 0.24 seconds. One soft rounded
+medium-low console acknowledgment tone, shorter than a quarter second, very
+gentle attack, no urgency, no second note, voice or music.
 
 **When it plays**
 
@@ -228,9 +234,10 @@ Settings · One-shot, 0.48 s
 
 **PASTE INTO ELEVENLABS**
 
-Two short lower-mid console tones, firm and rounded with a small interval of
-silence between them. A subdued amber caution from a small cabin speaker. No
-piercing highs, siren, voice or long decay.
+Create a one-shot sound effect lasting 0.48 seconds. Two short lower-mid
+console tones, firm and rounded with a small interval of silence between them.
+A subdued amber caution from a small cabin speaker. No piercing highs, siren,
+voice or long decay.
 
 **When it plays**
 
@@ -246,9 +253,10 @@ Settings · One-shot, 0.75 s
 
 **PASTE INTO ELEVENLABS**
 
-Three firm rounded low-mid pulses through a small spacecraft annunciator, with
-a slightly lower last pulse. Immediate and clear over cabin ambience,
-restrained peaks, no siren sweep, clipping, speech or reverb.
+Create a one-shot sound effect lasting 0.75 seconds. Three firm rounded
+low-mid pulses through a small spacecraft annunciator, with a slightly lower
+last pulse. Immediate and clear over cabin ambience, restrained peaks, no
+siren sweep, clipping, speech or reverb.
 
 **When it plays**
 
@@ -263,11 +271,11 @@ Settings · One-shot, 0.55 s
 
 **PASTE INTO ELEVENLABS**
 
-A circuit breaker snaps open inside a crewed spacecraft, a dry electrical
-clack followed immediately by one short muffled metallic thud through the
-nearby equipment rack. Firm low-mid body, close and clear on laptop speakers,
-with a quick dry decay. No alarm tone, explosion, rattling tail, voice or
-music.
+Create a one-shot sound effect lasting 0.55 seconds. A circuit breaker snaps
+open inside a crewed spacecraft, a dry electrical clack followed immediately
+by one short muffled metallic thud through the nearby equipment rack. Firm
+low-mid body, close and clear on laptop speakers, with a quick dry decay. No
+alarm tone, explosion, rattling tail, voice or music.
 
 **When it plays**
 
@@ -283,9 +291,10 @@ Settings · One-shot, 0.26 s
 
 **PASTE INTO ELEVENLABS**
 
-One quiet dry flight-recorder confirmation pip, a small relay tick fused with
-a short warm electronically produced note. A single event with a clean end. No
-alarm, voice, reverb or extra beeps.
+Create a one-shot sound effect lasting 0.26 seconds. One quiet dry
+flight-recorder confirmation pip, a small relay tick fused with a short warm
+electronically produced note. A single event with a clean end. No alarm,
+voice, reverb or extra beeps.
 
 **When it plays**
 
@@ -300,9 +309,10 @@ Settings · Seamless loop, 5 s
 
 **PASTE INTO ELEVENLABS**
 
-Seamless subtle tension in a spacecraft cabin bulkhead, a bowed metallic
-low-mid tone with a slow even breathing texture and smooth loop edges. Keep it
-quiet, with no jumps, melody, outside-space whoosh or bass-only energy.
+Create a seamless loop lasting 5 seconds. Seamless subtle tension in a
+spacecraft cabin bulkhead, a bowed metallic low-mid tone with a slow even
+breathing texture and smooth loop edges. Keep it quiet, with no jumps, melody,
+outside-space whoosh or bass-only energy.
 
 **When it plays**
 
@@ -319,9 +329,10 @@ Settings · Seamless loop, 3 s
 
 **PASTE INTO ELEVENLABS**
 
-Seamless radiation monitor texture over a compact spacecraft speaker,
-irregular but restrained dry ticks and low filtered electrical grit, steady
-average level, smooth edges. No high whistle, voice, sweeping alarm or music.
+Create a seamless loop lasting 3 seconds. Seamless radiation monitor texture
+over a compact spacecraft speaker, irregular but restrained dry ticks and low
+filtered electrical grit, steady average level, smooth edges. No high whistle,
+voice, sweeping alarm or music.
 
 **When it plays**
 
@@ -337,9 +348,10 @@ Settings · One-shot, 1.10 s
 
 **PASTE INTO ELEVENLABS**
 
-A close cabin relay and familiar ventilation returning after a blackout. Add
-one barely audible warm metallic resonance that settles into air in about one
-second. No victory sting, fanfare, chord, narration or music.
+Create a one-shot sound effect lasting 1.10 seconds. A close cabin relay and
+familiar ventilation returning after a blackout. Add one barely audible warm
+metallic resonance that settles into air in about one second. No victory
+sting, fanfare, chord, narration or music.
 
 **When it plays**
 
