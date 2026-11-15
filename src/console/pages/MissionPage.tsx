@@ -52,6 +52,13 @@ export function MissionPage({ desk }: { readonly desk: Desk }) {
         {snapshot.objectives.map((o, i) => (
           <Line key={o.id} label={o.kind === 'custom' ? `objective ${i + 1}` : o.kind}>
             {o.label}
+            {/* Its conditions, not just its name (S20). */}
+            {o.depart
+              ? ` · ${whole(o.depart.minSpeed)} m/s from the centre of mass, beyond ${dist(o.depart.beyond)}`
+              : ''}
+            {o.maxDeltaV !== undefined
+              ? ` · at most ${fixed(o.maxDeltaV, 0)} m/s spent on leaving`
+              : ''}
           </Line>
         ))}
         {depart ? (

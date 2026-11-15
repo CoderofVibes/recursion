@@ -193,6 +193,14 @@ export function heading(attitude: unknown): number {
   return 0;
 }
 
+/** Elevation of the nose (body +x) above the reference plane, rad. Planar: 0. */
+export function pitch(attitude: unknown): number {
+  if (!isQuaternion(attitude)) return 0;
+  const { w, x, y, z } = attitude;
+  // The z component of body +x after rotation: 2(xz − wy).
+  return Math.asin(Math.max(-1, Math.min(1, 2 * (x * z - w * y))));
+}
+
 /** Moment of inertia about the body's up axis, kg·m². Planar: the one scalar. */
 export function yawInertia(inertia: unknown): number {
   if (typeof inertia === 'number') return inertia;

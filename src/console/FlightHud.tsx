@@ -12,7 +12,7 @@ import {
   ReadoutGrid,
   Trend,
 } from '../theme/components/index.ts';
-import { distance, heading, length } from '../view3d/adapter.ts';
+import { distance, heading, length, pitch } from '../view3d/adapter.ts';
 import { flightAlerts } from './alerts.ts';
 import { Actions, Button, Line, SelectField, TimeControls, wallTime } from './controls.tsx';
 import { FramingControls } from './Framing.tsx';
@@ -175,6 +175,12 @@ export function FlightHud({
                 value={String(Math.round(degrees(heading(ship.attitude)))).padStart(3, '0')}
                 unit="°"
                 size="readout"
+              />
+              {/* In 3D the nose also points up or down (S20: heading alone told half). */}
+              <Readout
+                label="Pitch"
+                value={fixed((pitch(ship.attitude) * 180) / Math.PI, 1)}
+                unit="°"
               />
               {snapshot.world.bodies.map((b) => (
                 <Readout
