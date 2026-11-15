@@ -112,6 +112,8 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 | R38 | 2F → integrator | Additive contract fields: a `WindowView` slot so the clouds (and, with 3B, the funnels) can be drawn; the departure's assist condition and why a departure missed | **Granted to 2F as a scoped exception**: additive fields only, reviewed at merge; 2D draws them | |
 | R39 | Integrator | On merging 2F: its radiation caution was driven by true per-component dose (removed in R35). `clouds.test.ts` now asserts no caution until the monitor's caution (R37) lands; that tripwire then fails and 2F restores the 20 s figure | **Done** (this commit) | |
 
+| R40 | Owner → 2D (OP, integrator) | The region picker (A25): Twin Deeps, Well Garden, Unseen Cathedral, through 2F's `?encounter=` loader, labelled as previews with the route between them not yet built. **OP:** the opening plays once per browser, not per region. **Integrator:** the judge README explains the picker once it lands | **Open**: relay; top of 2D's list | |
+
 Add new rows at the bottom with the next ID. Never renumber.
 
 ## Owner decisions still open
