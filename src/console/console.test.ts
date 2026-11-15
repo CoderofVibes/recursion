@@ -341,6 +341,7 @@ describe('readings not yet taken', () => {
 describe('overlay stylesheets', () => {
   const sheets = [
     readFileSync(new URL('./console.css', import.meta.url), 'utf8'),
+    readFileSync(new URL('./instruments/instruments.css', import.meta.url), 'utf8'),
     readFileSync(new URL('../app/control-room.css', import.meta.url), 'utf8'),
     readFileSync(new URL('../app/app.css', import.meta.url), 'utf8'),
   ];

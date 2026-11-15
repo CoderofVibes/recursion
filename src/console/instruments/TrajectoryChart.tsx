@@ -1,0 +1,300 @@
+/**
+ * The trajectory chart: the region seen chart-up, with what the model says will happen (the
+ * forecast, dotted, with its 2σ envelope, hatched where the model has no data) against what did
+ * happen (the measured trail, solid). Range bands around a body show where its pull has been
+ * measured and where an adopted rule has been tested, so the forecast can be read against the
+ * evidence it stands on. A cursor walks the forecast step by step.
+ *
+ * It takes plain numbers in chart metres (`chartMath.ts`); the console decides what to show.
+ * Display semantics follow P10: the forecast is frozen and dotted, the trail solid.
+ */
+import { useId } from 'react';
+import { boundsAbout, boundsOf, envelopeRuns, scaleLength } from './chartMath.ts';
+import type { Bounds, P2, PathPoint } from './chartMath.ts';
+
+export interface ChartBody {
+  readonly id: string;
+  readonly name: string;
+  /** Where it is drawn (at the cursor's time), chart metres. */
+  readonly x: number;
+  readonly y: number;
+  /** Collision radius, m. */
+  readonly radius: number;
+  /** Its forecast path, if it moves. */
+  readonly track?: readonly P2[];
+}
+
+/** A band of distances around a body: where its pull was measured, or a rule was tested. */
+export interface ChartBand {
+  readonly body: string;
+  readonly rMin: number;
+  readonly rMax: number;
+  readonly kind: 'measured' | 'validated';
+}
+
+export interface ChartMark {
+  readonly x: number;
+  readonly y: number;
+  readonly kind: 'burn' | 'closest' | 'ends' | 'now' | 'left';
+  readonly label: string;
+}
+
+export interface ChartCursor {
+  readonly x: number;
+  readonly y: number;
+  /** Heading in the chart plane, radians (0 along +x, counter-clockwise). */
+  readonly heading: number;
+  /** One-sigma ellipse there, metres and radians. */
+  readonly ellipse?: { readonly a: number; readonly b: number; readonly angle: number };
+  readonly label?: string;
+}
+
+export interface TrajectoryChartProps {
+  readonly label: string;
+  readonly bodies: readonly ChartBody[];
+  readonly bands?: readonly ChartBand[];
+  /** Small catalogued objects (rocks), as dots where the ship believes they are. */
+  readonly rocks?: readonly P2[];
+  /** The forecast being read: dotted, with its envelope. */
+  readonly forecast?: readonly PathPoint[];
+  /** An earlier forecast of the same plan, for comparison: its centre line only. */
+  readonly earlier?: readonly PathPoint[];
+  /** The measured path of the attempt. */
+  readonly trail?: readonly P2[];
+  /** An earlier attempt's measured path, kept by Black Box. */
+  readonly previousTrail?: readonly P2[];
+  readonly marks?: readonly ChartMark[];
+  readonly cursor?: ChartCursor;
+  /** Half-width of the view about the cursor, m. Absent: the whole picture is fitted. */
+  readonly follow?: number;
+  /** Points the view must hold, instead of everything drawn (the plan, not the whole region). */
+  readonly fit?: readonly P2[];
+  /** Sigmas drawn either side of the forecast. */
+  readonly sigmas?: number;
+  /** Choose a moment by pointing at the forecast: the chart reports the nearest sample's time. */
+  readonly onPick?: (t: number) => void;
+  /** Drawing size in SVG units; the chart scales to its container. */
+  readonly width?: number;
+  readonly height?: number;
+}
+
+const kilometres = (m: number): string =>
+  m < 1000
+    ? `${Math.round(m)} m`
+    : `${(m / 1000).toLocaleString('en-US', { maximumFractionDigits: m < 10_000 ? 1 : 0 })} km`;
+
+export function TrajectoryChart({
+  label,
+  bodies,
+  bands = [],
+  rocks = [],
+  forecast = [],
+  earlier = [],
+  trail = [],
+  previousTrail = [],
+  marks = [],
+  cursor,
+  follow,
+  fit,
+  sigmas = 2,
+  onPick,
+  width = 640,
+  height = 400,
+}: TrajectoryChartProps) {
+  const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
+  const everything: P2[] = [
+    ...bodies.map((b): P2 => [b.x, b.y]),
+    ...forecast.map((p): P2 => [p.x, p.y]),
+    ...earlier.map((p): P2 => [p.x, p.y]),
+    ...trail,
+    ...previousTrail,
+  ];
+  const box: Bounds =
+    follow !== undefined && cursor
+      ? boundsAbout(cursor.x, cursor.y, follow)
+      : boundsOf(fit && fit.length ? fit : everything, 0.1);
+  // One scale for both axes (a chart, not a graph); north up.
+  const scale = Math.min(width / (box.x1 - box.x0), height / (box.y1 - box.y0));
+  const cx = (box.x0 + box.x1) / 2;
+  const cy = (box.y0 + box.y1) / 2;
+  const sx = (x: number): number => width / 2 + (x - cx) * scale;
+  const sy = (y: number): number => height / 2 - (y - cy) * scale;
+  const line = (points: readonly P2[]): string =>
+    points.map(([x, y], i) => `${i ? 'L' : 'M'}${sx(x).toFixed(1)} ${sy(y).toFixed(1)}`).join('');
+  const closed = (points: readonly P2[]): string => (points.length ? `${line(points)}Z` : '');
+  const path = (points: readonly PathPoint[]): string => line(points.map((p): P2 => [p.x, p.y]));
+
+  const runs = envelopeRuns(forecast, sigmas);
+  const bar = scaleLength((box.x1 - box.x0) * 0.9);
+  const bodyOf = (id: string): ChartBody | undefined => bodies.find((b) => b.id === id);
+
+  const pick = onPick
+    ? (event: React.PointerEvent<SVGSVGElement>): void => {
+        const rect = event.currentTarget.getBoundingClientRect();
+        const px = ((event.clientX - rect.left) / rect.width) * width;
+        const py = ((event.clientY - rect.top) / rect.height) * height;
+        let best: PathPoint | undefined;
+        let bestD = Infinity;
+        for (const p of forecast) {
+          const d = Math.hypot(sx(p.x) - px, sy(p.y) - py);
+          if (d < bestD) {
+            bestD = d;
+            best = p;
+          }
+        }
+        if (best) onPick(best.t);
+      }
+    : undefined;
+
+  return (
+    <svg
+      className="ci-chart"
+      viewBox={`0 0 ${width} ${height}`}
+      role="img"
+      aria-label={label}
+      preserveAspectRatio="xMidYMid meet"
+      {...(pick ? { onPointerDown: pick, 'data-pick': '' } : {})}
+    >
+      <defs>
+        {/* Hatch: where the model has no data (the theme's sign for the unknown). */}
+        <pattern
+          id={`${uid}-hatch`}
+          width="6"
+          height="6"
+          patternUnits="userSpaceOnUse"
+          patternTransform="rotate(45)"
+        >
+          <line x1="0" y1="0" x2="0" y2="6" className="ci-chart__hatch" />
+        </pattern>
+        <clipPath id={`${uid}-clip`}>
+          <rect x="0" y="0" width={width} height={height} />
+        </clipPath>
+      </defs>
+      <g clipPath={`url(#${uid}-clip)`}>
+        {/* Evidence: distances from each body where the pull is measured, or a rule tested. */}
+        {bands.map((band, i) => {
+          const b = bodyOf(band.body);
+          if (!b) return null;
+          const ring = (r: number): string => {
+            const R = r * scale;
+            const x = sx(b.x);
+            const y = sy(b.y);
+            return `M${x - R} ${y}A${R} ${R} 0 1 0 ${x + R} ${y}A${R} ${R} 0 1 0 ${x - R} ${y}Z`;
+          };
+          return (
+            <path
+              key={`${band.body}-${band.kind}-${i}`}
+              className="ci-chart__band"
+              data-kind={band.kind}
+              fillRule="evenodd"
+              d={`${ring(band.rMax)}${ring(band.rMin)}`}
+            />
+          );
+        })}
+        {bodies.map((b) =>
+          b.track && b.track.length > 1 ? (
+            <path key={`${b.id}-track`} className="ci-chart__track" d={line(b.track)} />
+          ) : null,
+        )}
+        {rocks.length ? (
+          <path
+            className="ci-chart__rocks"
+            d={rocks.map(([x, y]) => `M${sx(x).toFixed(1)} ${sy(y).toFixed(1)}h0.01`).join('')}
+          />
+        ) : null}
+
+        {previousTrail.length > 1 ? (
+          <path className="ci-chart__trail" data-previous="" d={line(previousTrail)} />
+        ) : null}
+        {earlier.length > 1 ? <path className="ci-chart__earlier" d={path(earlier)} /> : null}
+
+        {/* The envelope: 2σ either side; hatched where the model is beyond its data. */}
+        {runs.map((run, i) => (
+          <g key={i}>
+            <path className="ci-chart__envelope" data-kind={run.kind} d={closed(run.outline)} />
+            {run.kind === 'extrapolating' ? (
+              <path
+                className="ci-chart__envelope-hatch"
+                fill={`url(#${uid}-hatch)`}
+                d={closed(run.outline)}
+              />
+            ) : null}
+          </g>
+        ))}
+        {forecast.length > 1 ? <path className="ci-chart__forecast" d={path(forecast)} /> : null}
+        {trail.length > 1 ? <path className="ci-chart__trail" d={line(trail)} /> : null}
+
+        {bodies.map((b) => (
+          <g key={b.id}>
+            <circle
+              className="ci-chart__body"
+              cx={sx(b.x)}
+              cy={sy(b.y)}
+              r={Math.max(3, b.radius * scale)}
+            />
+            <text
+              className="ci-chart__name"
+              x={sx(b.x)}
+              y={sy(b.y) - Math.max(3, b.radius * scale) - 5}
+              textAnchor="middle"
+            >
+              {b.name}
+            </text>
+          </g>
+        ))}
+
+        {marks.map((m, i) => (
+          <g key={i} className="ci-chart__mark" data-kind={m.kind}>
+            {m.kind === 'burn' ? (
+              <path
+                d={`M${sx(m.x) - 5} ${sy(m.y) + 4}L${sx(m.x)} ${sy(m.y) - 5}L${sx(m.x) + 5} ${sy(m.y) + 4}Z`}
+              />
+            ) : m.kind === 'ends' ? (
+              <path
+                d={`M${sx(m.x) - 6} ${sy(m.y) - 6}L${sx(m.x) + 6} ${sy(m.y) + 6}M${sx(m.x) + 6} ${sy(m.y) - 6}L${sx(m.x) - 6} ${sy(m.y) + 6}`}
+              />
+            ) : (
+              <circle cx={sx(m.x)} cy={sy(m.y)} r="3.5" />
+            )}
+            <text x={sx(m.x) + 9} y={sy(m.y) + 3}>
+              {m.label}
+            </text>
+          </g>
+        ))}
+
+        {cursor ? (
+          <g className="ci-chart__cursor">
+            {cursor.ellipse ? (
+              <ellipse
+                cx={sx(cursor.x)}
+                cy={sy(cursor.y)}
+                rx={Math.max(2, cursor.ellipse.a * sigmas * scale)}
+                ry={Math.max(2, cursor.ellipse.b * sigmas * scale)}
+                transform={`rotate(${(-cursor.ellipse.angle * 180) / Math.PI} ${sx(cursor.x)} ${sy(cursor.y)})`}
+              />
+            ) : null}
+            {/* The ship: a dart along its heading. */}
+            <path
+              className="ci-chart__ship"
+              transform={`translate(${sx(cursor.x)} ${sy(cursor.y)}) rotate(${(-cursor.heading * 180) / Math.PI})`}
+              d="M9 0L-6 5L-3 0L-6 -5Z"
+            />
+            {cursor.label ? (
+              <text x={sx(cursor.x) + 12} y={sy(cursor.y) - 10}>
+                {cursor.label}
+              </text>
+            ) : null}
+          </g>
+        ) : null}
+      </g>
+
+      {/* Scale. */}
+      <g className="ci-chart__scale">
+        <path d={`M12 ${height - 12}h${bar * scale}m0 -4v8m${-bar * scale} -8v8`} />
+        <text x={12} y={height - 20}>
+          {kilometres(bar)}
+        </text>
+      </g>
+    </svg>
+  );
+}
