@@ -49,6 +49,23 @@ export type AttitudeMode = 'free' | 'hands-on' | 'steady' | 'hold' | 'pointing' 
  */
 export type Phase = 'prepare' | 'operate' | 'ended';
 
+/**
+ * How much of each frame `advance` may spend stepping the simulation (A20). The step itself
+ * never changes (P2): a bigger slice runs more of the same fixed ticks per frame, so the same
+ * flight gives the same results however it is sliced.
+ */
+export interface FrameBudget {
+  /** Ordinarily, ms. Default 10. */
+  readonly ms: number;
+  /**
+   * While coasting (`SessionStatus.coasting`), ms: the bigger slice a loop that draws fewer
+   * frames while coasting gives the simulation. Default: the same as `ms`.
+   */
+  readonly coastingMs: number;
+  /** The lowest warp that counts as coasting. Default 300. */
+  readonly coastingFrom: number;
+}
+
 export interface SessionStatus {
   readonly phase: Phase;
   readonly attemptId: AttemptId;
@@ -61,6 +78,14 @@ export interface SessionStatus {
   readonly warpSteps: readonly number[];
   /** True when the last `advance` ran out of frame time and ran slower than `warp`. */
   readonly saturated: boolean;
+  /**
+   * Coasting (A20): running at `FrameBudget.coastingFrom` warp or more with nobody flying by
+   * hand. `advance` then takes the coasting slice, and the loop may draw fewer frames. Any
+   * alert drops warp to 1× (A12), which ends it and restores the full frame rate.
+   */
+  readonly coasting: boolean;
+  /** The slice `advance` takes now, ms. */
+  readonly frameBudget: number;
   /**
    * True while a committed plan's forecast is still being computed. Time does not wait for it
    * (A12, A18 (1)): the plan runs from the moment of commitment, and the forecast, when it
@@ -100,8 +125,16 @@ export interface GameControls {
   setPaused(paused: boolean): void;
   /** Choose a warp; snaps to the nearest offered step. Warp never changes the step size. */
   setWarp(warp: number): void;
-  /** Call once per frame with the real seconds elapsed. Returns the ticks run. */
+  /**
+   * Call once per frame with the real seconds elapsed. Runs the ticks that time is owed, within
+   * the frame budget (`frameBudget`), and drops any backlog beyond it. Returns the ticks run.
+   */
   advance(realSeconds: number): number;
+  /**
+   * Set the frame budget, or part of it, alongside the loop's frame cadence (A20). Values are
+   * clamped to 1–1,000 ms. Returns the budget now in force.
+   */
+  setFrameBudget(budget: Partial<FrameBudget>): FrameBudget;
 
   /** A draft forecast of the plan from the present state. Nothing is recorded or scheduled. */
   preview(plan: PlanDraft): Promise<ForecastDraft>;

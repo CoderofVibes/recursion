@@ -46,6 +46,7 @@ import { buildChart } from './belief/chart.ts';
 import { earlierCoverage, type CoverageReplayOptions } from './belief/coverage.ts';
 import type {
   AttitudeMode,
+  FrameBudget,
   GameControls,
   Phase,
   PlanDraft,
@@ -89,6 +90,8 @@ export interface SessionOptions {
   readonly clock?: () => number;
   /** Longest time `advance` may spend stepping in one call, ms. Default 10. */
   readonly frameBudget?: number;
+  /** The same while coasting (A20), ms. Default: `frameBudget`. Settable with `setFrameBudget`. */
+  readonly coastingBudget?: number;
 }
 
 export interface GameSession extends GameControls {
@@ -147,7 +150,12 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
   const dt = stepper.dt;
   const now = options.now ?? (() => new Date().toISOString());
   const clock = options.clock ?? (() => performance.now());
-  const frameBudget = options.frameBudget ?? 10;
+  const clampBudget = (ms: number): number => Math.min(1000, Math.max(1, ms));
+  let budget: FrameBudget = {
+    ms: clampBudget(options.frameBudget ?? 10),
+    coastingMs: clampBudget(options.coastingBudget ?? options.frameBudget ?? 10),
+    coastingFrom: 300,
+  };
   const telemetry = createTelemetryFilter(play.telemetryDeadband, play.telemetryKeepalive);
   const trailEvery = Math.max(1, Math.round(play.trailInterval / dt));
 
@@ -192,6 +200,10 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
 
   const time = (): number => tick * dt;
   const running = (): boolean => outcome.kind === 'in-progress';
+  /** A20: high warp and nobody flying by hand. */
+  const coasting = (): boolean =>
+    running() && !paused && warp >= budget.coastingFrom && sameControls(flown, HANDS_ON_NEUTRAL);
+  const sliceNow = (): number => (coasting() ? budget.coastingMs : budget.ms);
 
   /**
    * Which thrusters a hands-on input fires, as designed: the ship's own control law and jet
@@ -500,6 +512,8 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
         warp,
         warpSteps: play.warpSteps,
         saturated,
+        coasting: coasting(),
+        frameBudget: sliceNow(),
         committing: committing > 0,
         attitude: attitudeMode,
         alerts,
@@ -557,13 +571,16 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
       saturated = false;
       if (paused || !running()) return 0;
       debt += Math.max(0, realSeconds) * warp;
+      // The slice is chosen once per frame: nothing within it can start hands-on flying, and an
+      // alert that drops warp ends the frame's run of ticks anyway.
+      const slice = sliceNow();
       const started = clock();
       let ran = 0;
       while (debt >= dt && running() && !paused) {
         tickOnce();
         debt -= dt;
         ran += 1;
-        if (ran % 8 === 0 && clock() - started > frameBudget) {
+        if (ran % 8 === 0 && clock() - started > slice) {
           // Out of frame time: drop the backlog instead of spiralling.
           saturated = debt >= dt;
           debt = Math.min(debt, dt);
@@ -571,6 +588,19 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
         }
       }
       return ran;
+    },
+
+    setFrameBudget(change) {
+      budget = {
+        ms: change.ms === undefined ? budget.ms : clampBudget(change.ms),
+        coastingMs:
+          change.coastingMs === undefined ? budget.coastingMs : clampBudget(change.coastingMs),
+        coastingFrom:
+          change.coastingFrom === undefined
+            ? budget.coastingFrom
+            : Math.max(1, change.coastingFrom),
+      };
+      return budget;
     },
 
     stepTicks(n) {
