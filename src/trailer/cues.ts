@@ -139,7 +139,9 @@ export const CUES: readonly SoundCue[] = [
     at: LATTICE_STRIKE,
     until: SNAP,
     loop: true,
-    gain: 0.4,
+    // The owner's take is very quiet (peak -26 dBFS, mean -47; owner's note: higher volume):
+    // lifted so its ticks peak near -8 dBFS under the alarm.
+    gain: 8,
   },
   ...alarms,
   { from: 'trailer', file: 'braid-rush', at: start('braid'), until: SNAP, gain: 0.6 },
