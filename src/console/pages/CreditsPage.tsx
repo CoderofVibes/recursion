@@ -21,9 +21,35 @@ const FILES: readonly { readonly label: string; readonly file: string; readonly 
   },
 ];
 
+/** Who and what the build owes, as the README credits them (A22: the audio is AI-generated). */
+const MADE_WITH: readonly {
+  readonly label: string;
+  readonly who: string;
+  readonly what: string;
+}[] = [
+  {
+    label: 'development',
+    who: 'Claude (Anthropic) and OpenAI Codex',
+    what: 'development assistance, under the owner’s creative direction',
+  },
+  {
+    label: 'verification',
+    who: 'NASA GMAT R2026a',
+    what: 'reference trajectories the simulator is tested against',
+  },
+  { label: 'audio', who: 'ElevenLabs', what: 'sound effects, AI-generated' },
+];
+
 export function CreditsPage() {
   return (
     <Columns>
+      <Panel title="Made with">
+        {MADE_WITH.map((m) => (
+          <Line key={m.label} label={m.label}>
+            {m.who} · {m.what}
+          </Line>
+        ))}
+      </Panel>
       <Panel title="Credits and licences">
         {FILES.map((f) => (
           <Line key={f.file} label={f.label}>
@@ -43,7 +69,7 @@ export function CreditsPage() {
             README · credits and licence
           </a>
         </Line>
-        <Line label="verification">
+        <Line label="verified">
           <a className="cs-link" href={`${README}what-we-verified`} target="_blank" rel="noopener">
             README · what we verified
           </a>
