@@ -104,6 +104,8 @@ const dive = (seconds, name) => `${R}.desk.commitPlan({name:'${name}', items:[
   {at:300, command:{kind:'burn', thruster:'main-engine', throttle:1, duration:${seconds}, attitude:{reference:'retrograde'}}},
   {at:${306 + seconds}, command:{kind:'attitude', target:{reference:'free'}}}]})`;
 const key = (type, k) => js(`window.dispatchEvent(new KeyboardEvent('${type}', {key:'${k}'}))`);
+// Each attempt waits at arrival until the player enters (DECISIONS A12).
+const enterRange = () => js(`(() => { const g = ${R}.game; if (g.status().phase === 'prepare') { g.setWarp(1); g.setPaused(false); } })()`);
 const view = async (mode) => { await js(`${R}.view.go('${mode}')`); await sleep(1400); };
 
 try {
@@ -136,6 +138,7 @@ try {
 
   // ---- Fly by hand: a short burn, then the coasting forecast -------------------------------
   await view('flight');
+  await enterRange();
   await key('keydown', 'w');
   await sleep(2500);
   await shot('room-flight-hands-on');
@@ -151,10 +154,12 @@ try {
   await view('flight');
   await js(dive(6.5, 'shallow dive'));
   await sleep(3000);
+  await enterRange();
   await js(`${R}.game.setWarp(2000)`);
   await waitSim(19000, 'dive 1');
   await js(`${R}.game.setWarp(60)`);
   await shot('room-flight-forecast-and-trail');
+  await enterRange();
   await js(`${R}.game.setWarp(2000)`);
   await waitSim(28800, 'dive 1 end');
   await js(`${R}.game.recall()`);
@@ -167,6 +172,7 @@ try {
   await js(`${R}.desk.setDesign({evidence:'validate', reserve: 5300}); ${R}.desk.commitDesign()`);
   await js(dive(12.5, 'deep dive'));
   await sleep(3000);
+  await enterRange();
   await js(`${R}.game.setWarp(2000)`);
   await waitSim(28800, 'dive 2');
   await js(`${R}.game.recall()`);
@@ -211,6 +217,7 @@ try {
   await view('console');
   await shot('room-console-plan');
   await view('flight');
+  await enterRange();
   await js(`${R}.game.setWarp(2000)`);
   await waitSim(15000, 'dive 3');
   await js(`${R}.game.setWarp(60)`);
@@ -257,6 +264,7 @@ try {
   await view('flight');
   await js(dive(41, 'newtonian dive'));
   await sleep(3500);
+  await enterRange();
   await js(`${R}.game.setWarp(2000)`);
   let lost = false;
   for (let i = 0; i < 240 && !lost; i++) {

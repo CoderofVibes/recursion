@@ -50,12 +50,8 @@ export function createHandsOn(game: GameControls): HandsOn {
       };
       if (active && keys.has('x')) game.command({ kind: 'cutoff', thruster: 'all' });
       const busy = !isHandsOnNeutral(input);
-      if (busy) {
-        // Hands on: real time, so a burn lasts as long as the key is held.
-        const status = game.status();
-        if (status.warp !== 1) game.setWarp(1);
-        if (status.paused) game.setPaused(false);
-      }
+      // Hands on: real time, so a burn lasts as long as the key is held.
+      if (busy && game.status().warp !== 1) game.setWarp(1);
       // The game ignores an input equal to the last one, so this is cheap to call every frame.
       if (busy || flying) game.fly(busy ? input : HANDS_ON_NEUTRAL);
       flying = busy;

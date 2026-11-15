@@ -16,12 +16,12 @@ Run it with `npm run dev`.
 ## Playing the Gravity range
 
 1. Walk to the console (WASD; click to look) and aim at a pad, or press `1` MAP, `2` SHIP, `3` CONSOLE, `4` FLIGHT. `Esc` steps back.
-2. **CONSOLE › MISSION:** choose what the attempt is for and its margins, then RECORD DESIGN AND SET UP.
+2. **CONSOLE › MISSION:** choose what the attempt is for and its margins, then RECORD DESIGN AND SET UP. Prepare as long as you like: the encounter clock waits at arrival. ENTER starts it.
 3. **FLIGHT:** hold `W` for the main engine, `Q` / `E` to yaw, `↑` / `↓` to pitch, `A` `D` `R` `F` `S` to translate. When the hands come off, a coasting forecast is issued: dotted, frozen. Or plan a timed burn in **CONSOLE › PLAN** and COMMIT. Choose a warp and watch the solid trail against the dotted forecast.
 4. **CONSOLE › BLACK BOX:** RECALL ends the attempt. Its debrief is there when you walk back in. Fly a different dive, then choose two attempts to compare, and OVERLAY IN FLIGHT.
 5. **CONSOLE › MODEL:** strength against distance shows the pull departing from the model's law. Hold out an attempt, TEST the distance law, ADOPT it if it holds. The next forecast reaches further.
 
-Time runs while you are in the room (owner, A8). HOLD on the console stops it.
+Time (A12): before entering, nothing is dangerous and the clock waits. Inside the encounter there is no pause: every adjustment happens in real time, and the warp steps compress long coasts, never slower than 1×. Hiding the page holds the game; a new caution or warning drops warp to 1×.
 
 ## Hands-on flying
 

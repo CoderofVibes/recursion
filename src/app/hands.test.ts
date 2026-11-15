@@ -38,11 +38,12 @@ describe('hands-on flight', () => {
     expect(flown).toHaveLength(sent);
   });
 
-  it('brings the clock to real time when the hands go on', () => {
+  it('brings the clock to real time when the hands go on, and never starts or pauses it', () => {
     const { game, state } = fakeGame();
     createHandsOn(game).update(keys('w'), true, 0.016);
     expect(state.warp).toBe(1);
-    expect(state.paused).toBe(false);
+    // Entering the encounter is the player's own act (A12); the hands do not do it.
+    expect(state.paused).toBe(true);
   });
 
   it('gives a quarter throttle with Shift', () => {

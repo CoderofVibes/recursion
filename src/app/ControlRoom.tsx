@@ -18,6 +18,9 @@ import { HOTSPOT_NAME } from '../view3d/room/layout.ts';
 import type { ViewMode } from '../view3d/room/layout.ts';
 import type { RoomView } from '../view3d/room/RoomView.ts';
 import { AVAILABLE } from './hands.ts';
+
+/** Before the encounter the flight controls do not answer (A12). */
+const NOT_YET = { throttle: false, yaw: false, pitch: false, translate: false } as const;
 import { INITIAL_UI, startControlRoom } from './loop.ts';
 import type { RoomUi } from './loop.ts';
 import '../console/console.css';
@@ -95,7 +98,7 @@ export function ControlRoom({ game, modelError, erase }: ControlRoomProps) {
         {ui.mode === 'flight' && room ? (
           <FlightHud
             desk={desk}
-            available={AVAILABLE}
+            available={status.phase === 'operate' ? AVAILABLE : NOT_YET}
             headingUp={room.flight.headingUp()}
             range={room.flight.range()}
             onHeadingUp={() => {

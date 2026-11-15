@@ -6,7 +6,7 @@
  */
 import type { EquipmentSpec } from '../../contracts/index.ts';
 import { LevelBar, ModeChips, Panel, Readout, ReadoutGrid } from '../../theme/components/index.ts';
-import { Actions, Button, Caption, Line, NumberField } from '../controls.tsx';
+import { Actions, Button, Caption, Line, NumberField, enter } from '../controls.tsx';
 import { deltaV, fixRate, recorder, stores } from '../data.ts';
 import type { Desk } from '../desk.ts';
 import { clock, duration, fixed, whole } from '../format.ts';
@@ -198,6 +198,11 @@ export function MissionPage({ desk }: { readonly desk: Desk }) {
           <Button primary tone="blackbox" disabled={ended} onClick={() => desk.commitDesign()}>
             RECORD DESIGN AND SET UP
           </Button>
+          {status.phase === 'prepare' ? (
+            <Button primary disabled={status.committing} onClick={() => enter(game)}>
+              ENTER {game.briefing.name}
+            </Button>
+          ) : null}
         </Actions>
       </Panel>
     </div>

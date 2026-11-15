@@ -128,40 +128,46 @@ export function Actions({ children }: { readonly children: ReactNode }) {
 }
 
 /**
- * Time. It runs while the player is in the room (A8); HOLD stops it, the warp steps compress it.
- * Warp never changes the simulation's step.
+ * Time (DECISIONS A12). Before the encounter the player prepares as long as they like and
+ * ENTER starts it. Inside it there is no pause: every adjustment happens in real time, and the
+ * warp steps compress long coasts, never slower than 1×. Warp never changes the simulation's step.
  */
 export function TimeControls({ game, compact }: { readonly game: GameControls; readonly compact?: boolean }) {
   const status = game.status();
+  if (status.phase === 'prepare')
+    return (
+      <div className="cs-time" data-compact={compact ? '' : undefined}>
+        <span className="cs-time__met">T+{clock(status.t)}</span>
+        <Button primary onClick={() => enter(game)} disabled={status.committing}>
+          ENTER {game.briefing.name}
+        </Button>
+      </div>
+    );
   const ended = status.phase === 'ended';
   return (
     <div className="cs-time" data-compact={compact ? '' : undefined}>
       <span className="cs-time__met">T+{clock(status.t)}</span>
-      <button
-        type="button"
-        className="rx-chip"
-        data-on={status.paused ? '' : undefined}
-        disabled={ended}
-        onClick={() => game.setPaused(!status.paused)}
-      >
-        {status.paused ? 'HELD' : 'HOLD'}
-      </button>
       {status.warpSteps.map((step) => (
         <button
           key={step}
           type="button"
           className="rx-chip"
-          data-on={!status.paused && step === status.warp ? '' : undefined}
+          data-on={step === status.warp ? '' : undefined}
           disabled={ended}
-          onClick={() => {
-            game.setWarp(step);
-            game.setPaused(false);
-          }}
+          onClick={() => game.setWarp(step)}
         >
           {step}×
         </button>
       ))}
+      {status.committing ? <span className="cs-time__note">forecasting</span> : null}
       {status.saturated ? <span className="cs-time__note">▲ limited</span> : null}
     </div>
   );
+}
+
+/** Enter the encounter: the clock starts at 1×, and from here there is no pause (A12). */
+export function enter(game: GameControls): void {
+  if (game.status().phase !== 'prepare') return;
+  game.setWarp(1);
+  game.setPaused(false);
 }

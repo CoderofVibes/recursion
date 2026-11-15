@@ -5,8 +5,8 @@
  * stores, and the forecast as issued.
  */
 import { AlertStack, LevelBar, Panel, Readout, ReadoutGrid } from '../theme/components/index.ts';
-import type { AlertItem } from '../theme/components/index.ts';
 import { distance, heading, length } from '../view3d/adapter.ts';
+import { flightAlerts } from './alerts.ts';
 import { Actions, Button, Line, TimeControls } from './controls.tsx';
 import { batteries, busLoads, heat, recorder, stores } from './data.ts';
 import type { Desk } from './desk.ts';
@@ -49,7 +49,6 @@ const CAPS: readonly {
 export function FlightHud({ desk, available, headingUp, range, onHeadingUp }: FlightHudProps) {
   const { game } = desk;
   const keys: FlightKeys = { held: desk.keys, available };
-  const alerts = desk.flightAlerts;
   const miss = desk.flightMiss;
   const status = game.status();
   const snapshot = game.snapshot();
@@ -68,29 +67,7 @@ export function FlightHud({ desk, available, headingUp, range, onHeadingUp }: Fl
   const forecast = snapshot.forecasts.at(-1);
   const end = forecast?.samples.at(-1);
 
-  const items: AlertItem[] = [];
-  const failure = desk.modelError();
-  if (failure) items.push({ id: 'model', level: 'caution', text: 'Model fault', detail: failure });
-  for (const a of alerts) {
-    if (a.level === 'advisory' && !a.body) continue;
-    items.push({
-      id: `cpa-${a.id}-${Math.round(a.t)}`,
-      level: a.level,
-      text: `${a.name} closest ${dist(a.distance)} ±${dist(a.sigma)}`,
-      detail: `T−${clock(a.t - status.t)}`,
-    });
-  }
-  if (miss && miss.sigmas > 3)
-    items.push({
-      id: 'miss',
-      level: 'caution',
-      text: 'Off the forecast',
-      detail: `${dist(miss.metres)} · ${fixed(miss.sigmas, 1)}σ`,
-    });
-  if (main && main.value < desk.design.reserve)
-    items.push({ id: 'reserve', level: 'caution', text: 'Reserve broken', detail: `${whole(main.value)} kg` });
-  if (forecast && end && end.t < status.t)
-    items.push({ id: 'ended', level: 'advisory', text: 'Past the forecast horizon', detail: `ended T+${clock(end.t)}` });
+  const items = flightAlerts(desk);
 
   const chosen = desk.selected
     ? (snapshot.world.asteroids.find((a) => a.id === desk.selected) ??
@@ -122,7 +99,9 @@ export function FlightHud({ desk, available, headingUp, range, onHeadingUp }: Fl
       </div>
 
       <div className="fh-forecast" data-tone="forecast">
-        {forecast && end ? (
+        {status.phase === 'prepare' ? (
+          <>AT ARRIVAL · THE CLOCK STARTS WHEN YOU ENTER</>
+        ) : forecast && end ? (
           <>
             FORECAST v{forecast.modelVersion} · ISSUED T+{clock(forecast.issuedAt)} · ENDS T+
             {clock(end.t)}
