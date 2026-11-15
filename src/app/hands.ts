@@ -24,7 +24,11 @@ export interface HandsOn {
    * Returns what the hands are doing now. `coast` is always false: the game issues the coasting
    * forecast when the controls are released.
    */
-  update(keys: ReadonlySet<string>, active: boolean, realDt: number): {
+  update(
+    keys: ReadonlySet<string>,
+    active: boolean,
+    realDt: number,
+  ): {
     readonly input: HandsOnInput;
     readonly coast: boolean;
   };

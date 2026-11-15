@@ -9,6 +9,7 @@
  * A local primitive on theme tokens (console.css); listed in docs/handoffs/2D.md.
  */
 import { extent } from '../theme/components/index.ts';
+import { whole } from './format.ts';
 
 export interface StrengthDot {
   /** Distance from the body's centre, m. */
@@ -52,8 +53,11 @@ export function StrengthPlot({ label, points, validated = [], visits }: Strength
   const [s0, s1] = extent([[...scales, 0.8, 1.2]], 0.08);
   // Distance on a log axis: the law is a power of distance, so it plots as a straight line.
   const lx = (d: number): number =>
-    PAD.l + ((Math.log(d) - Math.log(d0)) / Math.max(1e-9, Math.log(d1) - Math.log(d0))) * (W - PAD.l - PAD.r);
-  const ly = (s: number): number => PAD.t + (1 - (s - s0) / Math.max(1e-9, s1 - s0)) * (H - PAD.t - PAD.b);
+    PAD.l +
+    ((Math.log(d) - Math.log(d0)) / Math.max(1e-9, Math.log(d1) - Math.log(d0))) *
+      (W - PAD.l - PAD.r);
+  const ly = (s: number): number =>
+    PAD.t + (1 - (s - s0) / Math.max(1e-9, s1 - s0)) * (H - PAD.t - PAD.b);
   const ticks = [d0, Math.sqrt(d0 * d1), d1];
   const bandY = H - PAD.b + 5;
 
@@ -74,7 +78,7 @@ export function StrengthPlot({ label, points, validated = [], visits }: Strength
       </text>
       {ticks.map((d) => (
         <text key={d} className="cs-plot__tick" x={lx(d)} y={H - 2} textAnchor="middle">
-          {Math.round(d / 1000).toLocaleString('en-US')} km
+          {whole(d / 1000)} km
         </text>
       ))}
       {validated.map((v, i) => (
@@ -98,8 +102,18 @@ export function StrengthPlot({ label, points, validated = [], visits }: Strength
       ) : null}
       {points.map((p, i) => (
         <g key={i} className="cs-plot__point" data-current={p.current ? '' : undefined}>
-          <line x1={lx(p.distance)} x2={lx(p.distance)} y1={ly(p.scale - p.sigma)} y2={ly(p.scale + p.sigma)} />
-          <circle cx={lx(p.distance)} cy={ly(p.scale)} r={2.6} data-probe={p.probe ? '' : undefined} />
+          <line
+            x1={lx(p.distance)}
+            x2={lx(p.distance)}
+            y1={ly(p.scale - p.sigma)}
+            y2={ly(p.scale + p.sigma)}
+          />
+          <circle
+            cx={lx(p.distance)}
+            cy={ly(p.scale)}
+            r={2.6}
+            data-probe={p.probe ? '' : undefined}
+          />
         </g>
       ))}
     </svg>

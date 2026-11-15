@@ -13,7 +13,8 @@
  * scene "up", and the plane seen from above is not mirrored (visual-direction.md § 9).
  */
 import { Quaternion, Vector3 } from 'three';
-import type { AttitudeTarget } from '../contracts/index.ts';
+import type { AttitudeTarget, Chart } from '../contracts/index.ts';
+import type { Chart as HoloChart } from './map/layout.ts';
 
 /** A game-frame vector, planar or 3D. */
 export interface GameVec {
@@ -25,6 +26,35 @@ export interface GameVec {
 /** Game position or direction → scene. */
 export function toScene(v: GameVec, out = new Vector3()): Vector3 {
   return out.set(v.x, v.z ?? 0, -v.y);
+}
+
+/**
+ * The game's chart (`GameControls.chart()`: the expedition's frame, metres) as the MAP hologram
+ * draws it: the same axes as everything else on screen, so a bearing taken in flight points the
+ * same way on the chart.
+ */
+export function chartView(chart: Chart): HoloChart {
+  const v = (p: GameVec): readonly [number, number, number] => [p.x, p.z ?? 0, -p.y];
+  return {
+    regions: chart.regions.map((r) => ({
+      id: r.id,
+      name: r.name,
+      position: v(r.position),
+      radius: r.radius,
+      surveyed: r.surveyed,
+      current: r.current,
+      attempts: r.attempts.map((a) => ({ index: a.index, outcome: a.outcome })),
+    })),
+    corridors: chart.corridors.map((c) => ({ from: c.from, to: c.to })),
+    leads: chart.leads.map((l) => ({
+      id: l.id,
+      name: l.name,
+      from: l.from,
+      direction: v(l.direction),
+      spread: l.spread,
+    })),
+    ...(chart.reach !== undefined ? { reach: chart.reach } : {}),
+  };
 }
 
 /** Game position → scene, appended to a flat point list. */

@@ -7,7 +7,15 @@
  * space sensed earlier in the attempt shows the dimmed grid without the hatch, and the hatch
  * returns as that look ages (`planeStyle.earlierMemory`).
  */
-import { AdditiveBlending, Color, DoubleSide, Matrix4, ShaderMaterial, Vector2, Vector4 } from 'three';
+import {
+  AdditiveBlending,
+  Color,
+  DoubleSide,
+  Matrix4,
+  ShaderMaterial,
+  Vector2,
+  Vector4,
+} from 'three';
 import { hex } from '../colour.ts';
 import { MAX_SECTORS } from './plane.ts';
 import type { PlaneSector } from './plane.ts';

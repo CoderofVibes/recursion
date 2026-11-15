@@ -6,10 +6,11 @@
  */
 import type { EquipmentSpec } from '../../contracts/index.ts';
 import { LevelBar, ModeChips, Panel, Readout, ReadoutGrid } from '../../theme/components/index.ts';
+import { Columns } from '../Columns.tsx';
 import { Actions, Button, Caption, Line, NumberField, enter } from '../controls.tsx';
-import { deltaV, fixRate, recorder, stores } from '../data.ts';
+import { departProgress, fixRate, recorder, recorderEstimate, spendable, stores } from '../data.ts';
 import type { Desk } from '../desk.ts';
-import { clock, duration, fixed, whole } from '../format.ts';
+import { clock, dist, duration, fixed, whole } from '../format.ts';
 import { APPROACH, EVIDENCE } from '../mission.ts';
 import type { Approach, EvidenceGoal } from '../mission.ts';
 
@@ -22,36 +23,51 @@ const modePower = (spec: EquipmentSpec | undefined, mode: string): number =>
 export function MissionPage({ desk }: { readonly desk: Desk }) {
   const { game, design } = desk;
   const status = game.status();
-  const snapshot = game.snapshot();
+  const snapshot = desk.snapshot();
   const ship = snapshot.world.ship;
   const camera = game.ship.equipment.find((e) => e.kind === 'optical-tracker');
   const recorderSpec = game.ship.equipment.find((e) => e.kind === 'recorder');
   const rec = recorder(ship, game.ship);
   const main = stores(ship, game.ship, design.reserve).find((s) => s.id === 'main-propellant');
-  const spendable = main ? Math.max(0, main.value - design.reserve) : 0;
-  const dvAll = deltaV(ship, game.ship);
-  const dvSpendable = main && main.value > 0 ? dvAll * (spendable / main.value) : 0;
+  // What the propellant above the reserve buys (the same figure FLIGHT shows as "to spend").
+  const budget = spendable(ship, game.ship, design.reserve);
+  const depart = departProgress(snapshot, game.model.state());
   const targets = [
     ...snapshot.world.bodies.map((b) => ({ value: b.id, label: b.name.toUpperCase() })),
     ...snapshot.world.asteroids.map((a) => ({ value: a.id, label: a.id.toUpperCase() })),
   ];
-  // What the recorder setting will cost: power from the ratings, storage from its sample size.
-  const systems = game.ship.systems?.recorder as { bytesPerSample?: number } | undefined;
-  const fill = design.setup.recorderRate * (systems?.bytesPerSample ?? 0);
-  const recorderWatts =
-    design.setup.recorderRate <= 1
-      ? 15 + (35 - 15) * Math.max(0, (design.setup.recorderRate - 1 / 10) / (1 - 1 / 10))
-      : 35 + ((100 - 35) * (design.setup.recorderRate - 10)) / 40;
+  // What the recorder setting will cost and record, as the ship works it out (S20): power from
+  // its operating points, at most one sample a second, storage from the sample size.
+  const estimate = recorderEstimate(design.setup.recorderRate, game.ship);
+  const fill = estimate.bytesPerSecond;
+  const recorderWatts = estimate.watts;
   const ended = status.phase === 'ended';
+  const scheduled = status.planId
+    ? `${status.planId} · ${status.pending} commands pending`
+    : 'no maneuver scheduled';
 
   return (
-    <div className="cs-grid">
+    <Columns>
       <Panel title="Objective" aside={game.briefing.name}>
         {snapshot.objectives.map((o, i) => (
           <Line key={o.id} label={o.kind === 'custom' ? `objective ${i + 1}` : o.kind}>
             {o.label}
           </Line>
         ))}
+        {depart ? (
+          // The frame the objective is judged in, as the ship believes it (S20).
+          <Line
+            label="from the centre of mass"
+            status={
+              depart.speed >= depart.minSpeed && depart.distance >= depart.beyond
+                ? 'nominal'
+                : undefined
+            }
+          >
+            {fixed(depart.speed, 1)} of {whole(depart.minSpeed)} m/s · {dist(depart.distance)} of{' '}
+            {dist(depart.beyond)} out
+          </Line>
+        ) : null}
         <Caption>evidence goal</Caption>
         <ModeChips
           label="Evidence goal"
@@ -97,8 +113,8 @@ export function MissionPage({ desk }: { readonly desk: Desk }) {
           />
         ) : null}
         <ReadoutGrid columns={2}>
-          <Readout label="Spendable" value={whole(spendable)} unit="kg" />
-          <Readout label="Buys" value={fixed(dvSpendable, 1)} unit="m/s" />
+          <Readout label="Spendable" value={whole(budget.kg)} unit="kg" />
+          <Readout label="Buys" value={fixed(budget.deltaV, 1)} unit="m/s" />
         </ReadoutGrid>
         <NumberField
           label="Clearance"
@@ -155,7 +171,7 @@ export function MissionPage({ desk }: { readonly desk: Desk }) {
             label="Fixes"
             value={fixed(
               Math.min(
-                design.setup.recorderRate,
+                estimate.samplesPerSecond,
                 modePower(camera, design.setup.cameraMode) / (modePower(camera, 'track') || 120),
               ),
               2,
@@ -168,6 +184,13 @@ export function MissionPage({ desk }: { readonly desk: Desk }) {
             tone="blackbox"
           />
         </ReadoutGrid>
+        {design.setup.recorderRate > 1 ? (
+          <p className="cs-note">
+            ▲ the ship takes at most one sample a second: a faster rate costs more power and records
+            no more
+          </p>
+        ) : null}
+        {/* The estimate above is for the setting chosen; this is what the ship does now. */}
         <p className="cs-note">
           now: {fixed(fixRate(ship, camera), 2)} fixes per s · recorder{' '}
           {recorderSpec ? whole(ship.equipment[recorderSpec.id]?.powerDraw ?? 0) : '—'} W
@@ -178,7 +201,7 @@ export function MissionPage({ desk }: { readonly desk: Desk }) {
         title="Configuration"
         statusLine={
           desk.designedAt !== undefined
-            ? `design recorded T+${clock(desk.designedAt)}`
+            ? `design recorded T+${clock(desk.designedAt)} · ${scheduled}`
             : 'design not yet recorded for this attempt'
         }
         status={desk.designedAt !== undefined ? 'nominal' : 'caution'}
@@ -194,10 +217,20 @@ export function MissionPage({ desk }: { readonly desk: Desk }) {
           {status.attemptIndex} · {status.phase}
         </Line>
         <Line label="model">v{game.model.state().version}</Line>
+        <Line label="plan" status={status.planId ? 'nominal' : undefined}>
+          {scheduled}
+        </Line>
+        {/* Setting up changes equipment and records intent; it never plans a burn (S9 R2). */}
+        <p className="cs-note">
+          {status.phase === 'prepare'
+            ? 'prepare first; ENTER starts time. Recording the design sets the ship up; burns are planned on PLAN. Entering with no plan is allowed: the ship coasts'
+            : 'recording the design sets the ship up; burns are planned on PLAN'}
+        </p>
         <Actions>
           <Button primary tone="blackbox" disabled={ended} onClick={() => desk.commitDesign()}>
             RECORD DESIGN AND SET UP
           </Button>
+          <Button onClick={() => desk.setPage('plan')}>OPEN PLAN</Button>
           {status.phase === 'prepare' ? (
             <Button primary disabled={status.committing} onClick={() => enter(game)}>
               ENTER {game.briefing.name}
@@ -205,6 +238,6 @@ export function MissionPage({ desk }: { readonly desk: Desk }) {
           ) : null}
         </Actions>
       </Panel>
-    </div>
+    </Columns>
   );
 }
