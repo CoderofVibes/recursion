@@ -81,8 +81,8 @@ The owner selected a finite destination sphere entirely beyond S22's forward
 disc for this prototype, with 1 km between the plane and the sphere. The source disc remains a separate exact numerical
 reference. Both nominal reference exits coast into the destination sphere.
 The optional exterior N03 sphere is an assumed connector awaiting actual transit
-and surviving-ship admission. Shared `reach-region` currently evaluates COM;
-whole-ship transfer admission remains an integration requirement.
+and surviving-ship admission. Shared `reach-region` now uses 2F's swept hull-bound
+admission; continuous destination-frame transfer remains an integration requirement.
 
 `funnel-experiments.ts` supplies seven independent controlled starts for actual
 ship/sensor comparison: axial-away, two transverse directions, outside, coast,
@@ -96,6 +96,12 @@ The window renderer accepts only that optical product; FLIGHT uses fitted v2
 geometry with lineage, uncertainty and freshness. Neither implies rule adoption.
 
 ## Verification and limits
+
+The content-owned [admission report](ADMISSION.md) runs 22 finite-control cases
+through 3E's existing harness API. Reproduce with
+`node src/content/inverse-wells/admission-runner.mjs all`; the current
+`npm run harness` CLI has no P03 selector. Findings and missing whole-field
+coverage are retained separately from encounter admission.
 
 ```
 npm exec -- vitest run src/sim/fields/wells.test.ts src/content/inverse-wells src/view3d/fields/wells src/console/encounters/inverse-wells

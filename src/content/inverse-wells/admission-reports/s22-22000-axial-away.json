@@ -1,0 +1,1932 @@
+{
+  "protocol": "s22-production-harness-v1",
+  "command": [
+    "node",
+    "src/content/inverse-wells/admission-runner.mjs",
+    "s22-22000-axial-away"
+  ],
+  "provenance": {
+    "revision": "1f0dfeffd28b8181ef80c1a318e3cc3a816acf73",
+    "node": "v24.22.1",
+    "contentHash": "7c354c371ebeac1a8fded26ed796535478f0531ce5454fc41b5410903c5b4402",
+    "files": {
+      "src/app/App.tsx": "ba5e1fcd691cfc9305b375187e59694b999ed6544ab30e0bca331e60e22b3cfe",
+      "src/app/ControlRoom.tsx": "389255203b2db0ac64be17f5437605f415da56ae96d87c9e2434899ba6639856",
+      "src/app/game.ts": "0a12c33b17c70f87a3232ea4a725b78514e26011f264d3f6d903ceb020cdeaad",
+      "src/app/globals.d.ts": "d7a6103b719f0ae28144baaaea37f89c58bfab3cca1df7cdfc5ec2dc2264c1ab",
+      "src/app/hands.test.ts": "e309c6038a838780836b9360bc56a829a72de99fdf2cf8deae303083e146a1db",
+      "src/app/hands.ts": "f11a4975e083d68ff4119af97297a8c2291d75174ae70d77ed0e3afe3cf9cd1a",
+      "src/app/loop.ts": "fa6db9d6f9360b0195989ac5c296baccd3afbe6845c6ad9db622f0ab06fc2be5",
+      "src/blackbox/archive.ts": "038c1c74c6151ff0547dfa3bcc2eae266f26668f4ab5a5aa1c11c32bab24dfbb",
+      "src/blackbox/blackbox.test.ts": "624d38a214e1ac51f7e186cc9a4713871f91997407dc783729edad3e37741d0a",
+      "src/blackbox/compare.ts": "5a106f40a1119f166436fb370a24c75a9a20ce1aefebde1587e90e0c9f2df401",
+      "src/blackbox/index.ts": "0bcae32822589ab2f3101eb3d7d5ffcd6d7fd28335940f546aa3f70a7e38ddb0",
+      "src/blackbox/procedures.ts": "ecf4be6123e64c2602ad1cf6dca49e878a01fced5fb9fdfdee32ef9c56a34bcc",
+      "src/blackbox/recorder.ts": "d657ba8028d8fa084f593f596d8b6208f16fe307a66f9f48a6125a59a7123e22",
+      "src/blackbox/store.ts": "06ccff775d49353c3a76da655a99066657cda9774244fb21313f021487337ca7",
+      "src/console/alerts.ts": "d24d4c879592e38657242318d47df4449387413b083aecf5db90281afa267e40",
+      "src/console/chart.ts": "d74cf6fcd36ade465b7fd0b464b7f4003fccc6db8936c8e314cc821d07d80125",
+      "src/console/Columns.tsx": "89fb4cf4dc3a98df01331ddb83ef9101a88aa5c29767ff0988988785b6dfe2df",
+      "src/console/console.test.ts": "4b867fa2a60f45fd64fc4bd71cd2996095041308e641872cba48307d28f61ef6",
+      "src/console/ConsoleScreen.tsx": "943e859af85cd9a302c1d2692aff1bc9c590de6091a183724e817a888ccfca89",
+      "src/console/controls.tsx": "6e3556028bc7636b5d33736ad9d1bbcb732b2ab5cd38112c64abc0a6d8bf0c0a",
+      "src/console/data.ts": "d0603e2bd5bd7492d30b382758ee9af143968bc4c25c46ce57efb58d0b162eae",
+      "src/console/desk.test.ts": "b62e558c35c8eeccacff5f94b06d60e4516942dd50e6166a72283b6dd521ac74",
+      "src/console/desk.ts": "3aff1c7960540cf21388be8872b6a7c268074da16de8f7b9e198b9022f21685c",
+      "src/console/encounterPanels.ts": "0a3710f2c75ade19362617c631949e12ba1ab3067350920ca7b08af56226ed98",
+      "src/console/encounters/chain-link/chain-link.test.tsx": "2332af469b34c2b13d903cd846075607d227fbbb082f9b06695f02f599d1bb11",
+      "src/console/encounters/chain-link/ChainLinkPanel.tsx": "52a994dbdae5d1141bc646cbfaee015df100b6619cd0fcb647189825b993e9f9",
+      "src/console/encounters/chain-link/commands.ts": "213e58e56d412177fa3a89e0d03a985704ff6989a5baafe301c2bb04e4e79428",
+      "src/console/encounters/chain-link/index.ts": "693cb10483d61785fabf703c51eaad5e58b68d390be2f7cae2daede584d9a5ba",
+      "src/console/encounters/inverse-wells/index.tsx": "abe85bd9e549abd7f0434bb592213232c2ef723b41a4149e7ea68d3a1fca3aff",
+      "src/console/encounters/inverse-wells/panel.test.tsx": "b8175a6c08d92323e55d83fcb7efd3195a5710c627ee3ae6f423fca7d1699cb6",
+      "src/console/FlightHud.tsx": "d8a1948a1aba493a1749d1e8bc8efaca029ae109155ab60bd1bf7d2c21fa8ff4",
+      "src/console/format.ts": "c1e99030c42621c8d2cb4ac028dde47d7724b14d161660a5b7de1aacdc415536",
+      "src/console/Framing.tsx": "a3b585ac891629509d49913d878b3959bb70b3928805d13dc76dbecf481c085e",
+      "src/console/MapPlate.tsx": "2f27e82745d7357ef3d09ab685de2aadeaf9eb982d404cb1e0c5cd62672f5300",
+      "src/console/mission.ts": "c2f013c0ad812941dd4db52b62cec37e0ddc35cfa0a7fdf578681a2fd9c8d200",
+      "src/console/pages/BlackBoxPage.tsx": "94128c239cb52daf67081458ff7a64491f243123c2a8ad484b3a260b8d854d10",
+      "src/console/pages/CreditsPage.tsx": "15b257e4b6329dcb5d0e54aa1a7ecffa9ed2789a2b68284b669a6502169f42b9",
+      "src/console/pages/MissionPage.tsx": "6138b0643c64baed4255664425e60d75b25a3a4a614078c3e2d5d1e6844a3dff",
+      "src/console/pages/ModelPage.tsx": "c2e57ba485f09502a065e3e97668485acfc9ce15dcfea4fc2cfaf08f0e70665e",
+      "src/console/pages/PlanPage.tsx": "d9e05710df2a9a2f6adaf71b81bc69c918eaf9ac4dc47ea27f6ee8c5c1df1d97",
+      "src/console/pages/SystemsPage.tsx": "fbc57c057f2de6496140b0806acadacef6c5e0421dd3e82d53d803f6bd07b501",
+      "src/console/pages.test.tsx": "9836e4930d5fd34143ac37a097a9deb208b11009faca3474a2b9218d158ee822",
+      "src/console/ShipPanels.tsx": "897861a0cf1cc309f0c1b3b5344292de2cf5039d92b8948cbca136753bf98a93",
+      "src/console/StrengthPlot.tsx": "451ad68eafda5e1b3af5dfe1d5d6891c3d450347966d55ceb9cbcd3ea7c0c73b",
+      "src/console/time.test.tsx": "91679b4ecabcd5ad9002a86a291820367188ba15b995def0b6eddb0ce1cc7d52",
+      "src/content/chain-link/chain-link.test.ts": "4c2505cc2342d56028bdb067ed8ac1c0d6b14e98b95245c2aeda4a88d8e0335a",
+      "src/content/chain-link/environment.ts": "09edf84ce1dea960f0dd7a99b8b198ef79b55d9d095610e19aa50c0d469e6ba2",
+      "src/content/chain-link/index.ts": "3841ccd194494663038ac3db434733a2b31e0bdece7d29cade7d927f97fd3e36",
+      "src/content/chain-link/layout.ts": "2480592e772985e71b4a926b0a82739cd4f90a9e90d8159770d5953d8e0d59bd",
+      "src/content/chain-link/qualification-results.json": "43183f47a35c072f999cf025bd55e763e7f9a5091bfa1e0dae9c22bcbc487da3",
+      "src/content/chain-link/qualification-runner.mjs": "d2de604a1135b30a6bf0a11275e0dcd3c207f0c67352f473056b8f2162609b78",
+      "src/content/chain-link/qualification.test.ts": "7a6632bd3b488dc41f3e59f3e496fcd891a5e70c761ad090e5c445a0cf06a4f3",
+      "src/content/chain-link/qualification.ts": "8df455c30911b459d1c7b92be9a84ef915e97efa72fccdd95f261938641562f9",
+      "src/content/gravity-range/briefing.ts": "e2c7c398c793992e2c19a976562d29af98bd6c55fe97a540923d569485fdaf2c",
+      "src/content/gravity-range/clouds.test.ts": "8a33d06c73dbed0fca1720ce99de9681474f23668e43a6cedbd6b602e3e483bd",
+      "src/content/gravity-range/clouds.ts": "85503b950f3842b2671bae3df81a22f1ca25f23e1f32b420f7ab704e6ae0f77e",
+      "src/content/gravity-range/geometry.test.ts": "e03205011247d1b7ac4e502f4c5af8df5b0b21f9519b0a70a35bc626213d6be3",
+      "src/content/gravity-range/geometry.ts": "6fa5035e5c470e6dc0394c89a48393bf2db0c157c798ac53b63368da4ccd0adb",
+      "src/content/gravity-range/gravity-range.test.ts": "d49a32d26334ce48e300665560b173d137106567890365c10634736d26897a65",
+      "src/content/gravity-range/index.ts": "a807e30e8eb715e7b3cf6883cb69b4d7aa903df9a5ab530a3bf802576d51a34f",
+      "src/content/gravity-range/s21-vectors.test.ts": "a7b48b0857a3421bceb7915206ed0504e40d9ee67e030e629e92b8a10dfb9e1d",
+      "src/content/gravity-range/s8-vectors.test.ts": "a822f2b1d55088d5b29d05c10765bb0e622734c38e5f398ccdbbdab5d4883365",
+      "src/content/gravity-range/slingshot.test.ts": "88ff030aa602f02d54c49e5a4cc18ec9dca496e040c612f28c2e9601b463cb54",
+      "src/content/gravity-range/world.ts": "36d8b1b1aa0ce4df17aa180afb938e4dc9aa9d97c3fe9b6946d442009b79cb8c",
+      "src/content/inverse-wells/acquisition.test.ts": "179db6ef575dd93049c9e42cc88ce08441083a347f4ae5f1c3d31bceb2ac478c",
+      "src/content/inverse-wells/admission-runner.mjs": "c539a79543f90a0fbd51552e82381d79238ec3fe106654b96ba17cb2d5bf8f10",
+      "src/content/inverse-wells/admission.ts": "46af9c3618dd2a5db17abd4e68aefcd559db19cf8f5e9ee11ac1a4e51642bd93",
+      "src/content/inverse-wells/experiments.ts": "f8b121f19f3a42769c0b9889b006c2bf218594b9474b2b8f9661b6ae44e0ea37",
+      "src/content/inverse-wells/funnel-experiments.test.ts": "e2d05ff8aba15fc2bbf40b8047673deac5ffcb49a62522d9f719aac43d71e6cc",
+      "src/content/inverse-wells/funnel-experiments.ts": "a5647ab26ff182d4bdfc67c04bb99c0efada5224b00a7f28bf22427b6ab84329",
+      "src/content/inverse-wells/hazards.test.ts": "3eb43239b28f91896333ede860a061ce21b8957648c53682a291b7da88c0cd7d",
+      "src/content/inverse-wells/hazards.ts": "40b2e2b6178fad83081a56321a571bb066d87c4529ac830fefa1d235d0cf0723",
+      "src/content/inverse-wells/import-s16.mjs": "df21e714d4d6fa71a8f178d35b1e783143cd1776e3592bf582fa757441d50bd0",
+      "src/content/inverse-wells/import-s22.mjs": "a7816bc1bd7506213cf7778d7036dd433bfe12b124ae2775349ef46c5f2cd6c0",
+      "src/content/inverse-wells/index.ts": "b35c0a00b62088e8b6840905554181b200d37bdde25ff7e260989fcc6a325a1b",
+      "src/content/inverse-wells/inverse-wells.test.ts": "c20f491822d6fb64ba1eb52ef99addc9e1017a757caa0a31d1ee580bff908c60",
+      "src/content/inverse-wells/layout.ts": "ece743403377537dcfc180bf9cec74c07e47cc0e323cde962faa541358e9bd86",
+      "src/content/inverse-wells/lifecycle.test.ts": "8d3f23f489a19f96b150ca4abd82bee0db49d5e12123ea191c93d08d8a940d22",
+      "src/content/inverse-wells/lifecycle.ts": "691522214c4c31e5495b0c2c3767d5ee9c81916f7ccaad10ba23e7395845d74c",
+      "src/content/inverse-wells/loading.test.ts": "af445b506d6c0f2f03db5ba10c30edc373fc3fdaf862091551d67a0f32e31419",
+      "src/content/inverse-wells/optics.test.ts": "332332b634d1e058a92635e77494d38fb829c64f1eaafb06405f2dbff250a7ae",
+      "src/content/inverse-wells/optics.ts": "6602dcd14dc13ec6ceb16a85df6a602ccaa621e808fd2a0bdb3555b5aad2f192",
+      "src/content/inverse-wells/s16-catalogue.json": "e388d6fb8a1384c9a41fa360ddb9ed6db4c2ce1371209cec7e7d188dafc93403",
+      "src/content/inverse-wells/s16-layout.test.ts": "f092655578e02c363356edb023da22ead442a7d360bdb801e233c472adeff40d",
+      "src/content/inverse-wells/s16-layout.ts": "0a908088c95963313a477f4cf864816d17030303b00ab183d3ba62f72b2dbc9e",
+      "src/content/inverse-wells/s16-reference.json": "c6c1a40756318f7718cac59e1c587795b4a71ed71a9a38dbd052c4e0767a086d",
+      "src/content/inverse-wells/s22-catalogue.json": "ec7fd824c118c1a9c07a12f91e93386aa8d1808913f2805923db6736a12e7875",
+      "src/content/inverse-wells/s22-layout.test.ts": "02f21b11e58b5b3d2b5666373a07cee81f5371a7e69d718d2675bf59f959ce72",
+      "src/content/inverse-wells/s22-layout.ts": "0cd0b7a44f0422c03b07cc7726216300cde1247dcea1e08402ae72725ce207fd",
+      "src/content/inverse-wells/s22-reference.json": "936d5dcdb2d0bddfb9368081a7c366840032b26228c20dd6d8e0506c49d3fb5c",
+      "src/content/inverse-wells/s22-routes.test.ts": "12b79ab6e3fa849b64f2fb73ea857e59f2e651cafdd460dacc3b361bb212bf9d",
+      "src/contracts/attempt.ts": "68ecde8b27278a5a29e0df0d0c0b91b48c0e9fd057afa072d26cbc30ebcf8ea0",
+      "src/contracts/belief.ts": "053f34ff2f1cbe172c191f70508cad22e6c8a6c8d244f6b01fdedefc41c5d423",
+      "src/contracts/boundary.test.ts": "2440a1f25a08e39621e10a63b64a6212fd480b4868142128720b73cd1be0bd56",
+      "src/contracts/chart.ts": "fd7bbc8dc176afe6b074eac706e74682d62e89620f494089beafc648495d80c1",
+      "src/contracts/commands.ts": "a114dea4b9b5ef2a9922e1b3c6d04c4d8298e1208c462f58c8fb8c9d69a4cdf0",
+      "src/contracts/encounter.ts": "629419522fbc0444a7de071b2029d5f2595dd9a05808bf21c9a34fe7b19f48e0",
+      "src/contracts/estimates.ts": "02da0476e965698e11b233626f57b273eecc041b310c759d4142a06b75d44efb",
+      "src/contracts/fixtures/fixtures.test.ts": "b3e06580c30d2e786c7ef7950e80836b083704727ebf9fc270cc3f73a9908469",
+      "src/contracts/fixtures/generate.ts": "b6467778a3433dcb892394575d841fed982873eb152f8df751bfb78a192619cf",
+      "src/contracts/fixtures/index.ts": "b3c569eadc1b3963f207c3b8c47f206adc4cef3d35a37b2e8a74dfc8e79e1cfc",
+      "src/contracts/fixtures/truth.ts": "ae207dcae6fdd3792cb4626cc1b635395913ba818eeb7e7392f52d3517fc7cd3",
+      "src/contracts/forecast.ts": "efd20d76ab2d31e4cdc6e5dbbbec7eeb14f454a30be5445558da6715e22de8d8",
+      "src/contracts/ids.ts": "c2e06a0ee9502720f7fcc2c12e9c93c20a98cbc0e8f6f97d9b20f0b0810d8857",
+      "src/contracts/index.ts": "25040af0c7d904aceb953f6d1410656a6aab555d7024a1b44bb557119e56bb64",
+      "src/contracts/lattice-acquisition.ts": "4a57d2a8c6f8746886f8298bda6fb54381632455463d3262d4620847b83002eb",
+      "src/contracts/lattice-coverage.ts": "134c71f954463145dc7bbab0686c7185fabae0f84427a600e0a6e2692c142917",
+      "src/contracts/measurements.ts": "9311ce393df0cf5cd35625e536e1ab7eb66c7cdd7c941f78b410971bab0e4d94",
+      "src/contracts/model.ts": "f42650e222c619c676a829bb6211a4641959451ca5e40a968f82181e85d77e99",
+      "src/contracts/ship.ts": "efc62f739564abaaade50890ef17a2d8abda053a40e61373fef5bc9d01ede8fe",
+      "src/contracts/truth/encounter.ts": "8b726536df094a27caee2a77c7d44f4a63e1119594b64ae838ff3691824f83fb",
+      "src/contracts/truth/events.ts": "6168f8ff3715231b743d2464366ba635bce6f4d2036f5afb398227ccca7e09fc",
+      "src/contracts/truth/fields.ts": "8d8b86c4f4a5112325fe1f846f3c004c9244df847f9acdcb999a1dac03cfa02b",
+      "src/contracts/truth/index.ts": "0c328eeac9280e6a563c2e168baf378ddf155bac22e4de0f149066947929551d",
+      "src/contracts/truth/ship.ts": "8117492bd3e04b01ef9502ce8b11f665347743c944e9b1c6d87bea08734a2b4d",
+      "src/contracts/truth/world.ts": "c339372eb389b9236d7703da1a7703206e996608fe7002045918c251257ce156",
+      "src/contracts/units.ts": "bdb82a372578362ffca736ab5ebfdce58a6c5210ff0ccac9a6ce17accd4e7042",
+      "src/contracts/view.ts": "b337028216e07625ab571a1c73d6bd8d8a03c8eda18dcb8f3eb5ca5683088f8f",
+      "src/game/arrival.test.ts": "fdac32b1b53538d18dd35ea0014c9e91abd8f6e8ce2a77e1f1c673b7e93ca02b",
+      "src/game/arrival.ts": "4e1fbcc6f20fa4f3c97a31bd9777b2c6901847b828619642322b359532ae2b0d",
+      "src/game/belief/belief.test.ts": "b7a737eae09a9c8f9d66282c3089cdd15d93612d1a3ca7d9244aeb043523c87d",
+      "src/game/belief/blackbox.test.ts": "8cd481fbdca5966934953e22b2e09912f335490efd9d749016413327381ca780",
+      "src/game/belief/blackbox.ts": "fb5f472d444381146e2b5909d98bd21f9b76abb1451e24f454cd7151f2c8c3a2",
+      "src/game/belief/chart.ts": "c82f1dd68241d703001e04fd80eea34a0b25a78b97017d7392570966a01ffb83",
+      "src/game/belief/controls.ts": "fa9bc83cd795578a479f4b908afb8c7b79a9048b171064895f40dc29ff80e130",
+      "src/game/belief/coverage.ts": "12e5889d7c6bc446e13d24f8492cf35100266a5ac9f43665ab2ba44629e8819c",
+      "src/game/belief/departure.ts": "475f852ec95c2ff3eb637329c1b7164997effe2de5c60878533134e8e858691d",
+      "src/game/belief/maneuver.ts": "d535c6d6a9d8ff73b4e3f98d9e1fffbdfba785d908dc2b441823ffcd228bade0",
+      "src/game/belief/model-bridge.test.ts": "94cd9086b157e6d5f078f4fb3311b4e67751a02fd88cebb496779604b110e7e3",
+      "src/game/belief/model-bridge.ts": "7db6ff0a0c0ba46282e2f4db8ea23abb7866ea40fc6e6e2a535ff3d4154b7a75",
+      "src/game/belief/ports.ts": "72fccb9516ee6d764a33b1a7a2fb49f332181a2e6de8402fe15f928047eb4f1d",
+      "src/game/belief/power.ts": "5b73292c864505f63cb1bbb3079b75ac288c342357996d2ebf44d38ad3b9c817",
+      "src/game/belief/resolve.ts": "e0062e06b53b7a883683d7ca1f96ed6f5c3462d3e5c35c073b045605543d1602",
+      "src/game/belief/standin-model.ts": "06c4589439a868a61d70374ef377da9b42abc0aa5a5cf388d29d56c46a37448b",
+      "src/game/belief/telemetry.ts": "f4abbf9b59531ed6a4e61494cba5b255e985454563ce6503496ac28dd18d369b",
+      "src/game/belief/view.ts": "f17b068ad26471637e42c739568f78fb0b3dbf6776f9e8189a29d70f6ac67007",
+      "src/game/command-tape.test.ts": "09f2194e2c04b619262a6aac943a7c036ea0948e15bcbb1f331af53d6c983ab5",
+      "src/game/command-tape.ts": "850671125e599cca6d9a09f0875bb07fc770ba4c8c387d655885e8502b793371",
+      "src/game/coverage.test.ts": "2de1025c03e9ccec42f019bbcbb6b9757e59d6ff08b9c0d51feffdd83f3113a1",
+      "src/game/depart.test.ts": "938b97bdef3d24a4996865a638dee40d123873a70f5bcf23ec563fab9baec703",
+      "src/game/departure.test.ts": "c80912479eb78237d9b5cf1efbc385bafd9e4831de58b16c99d7b9e72126a784",
+      "src/game/encounter.ts": "4947f6ca42c6975d59197d76315cefef03dfb0483e2bbb039cfcd30db9fd576e",
+      "src/game/encounters.ts": "c3d4bc2dc2652dedb3f2d452d261c75271f87603aca5f202d9a051f5c122bcf8",
+      "src/game/environment.test.ts": "b2270b86c84f191564048452f9e3f732c0226d8b2e6168f2c8dc4902810ce97d",
+      "src/game/environment.ts": "bea734ee3660bc6c8594adb698979a20a9937d3e698026a3a93acdaf74e90cec",
+      "src/game/fields.test.ts": "4bdaad422467e3a28082a072eaab95087e5a4e7a6be6009e647df4e99afa2703",
+      "src/game/flight3d.test.ts": "6de30b0029f00fbf8eea6facf8adcf9bbf36117198b268e4bccd1c7942281aff",
+      "src/game/frame-budget.test.ts": "469835ec95e199863d797d9ca11bb6dd7290d201ee6713b60962f47750933204",
+      "src/game/jacobi.ts": "d4f0248b393c2453b95221cd95fbb0973ba5eac3288476e63afdcf5859339ac2",
+      "src/game/maneuver.test.ts": "0516fb9da5f4cc404fd1563ae6d0d21566a86ef580fb59168c5528797bcceff4",
+      "src/game/model-loop.test.ts": "bc9a5818abc6c720af5e63acad42a1b1a35657007114a8aea78d9b739f94d78e",
+      "src/game/objectives.test.ts": "0556b494e3273d5c2362a830118932ac7aa606f77e609391a87879230c00f117",
+      "src/game/objectives.ts": "a538d83d61547cd902d79964ad08f25a05535571c4805f703511d2965a6f735a",
+      "src/game/power.test.ts": "61c20ab74635bc291f194be8cb02bf38d9b2fc6498bbbe15be8a67ebf65dfe18",
+      "src/game/power.ts": "199b215fa40d2ce09fe835b420dd4b0f2b558ae1873c3325fa0c7c1ede8cf2b9",
+      "src/game/rocks.test.ts": "c565326d342bc225a3d6c409f6c5a750d72a1e92247f7765a116202d067ede69",
+      "src/game/session.test.ts": "b02e7bf90b0d45ec0f83199e191558ac500adcd3b99b9b2ba8373f544ac51b10",
+      "src/game/session.ts": "bed99840ea0376562a6467ca90ad1b190ac74f7299e8923638b099a247586495",
+      "src/game/truth-step.test.ts": "4ad0d6bee64cb356db379e816a332992584d5805fe35e42f17921bc03cd8d456",
+      "src/game/truth-step.ts": "cbf3b7e786a79b4bebdbe56c822d68263cb3cd272ca9ff7063a702cd9ef6e7ee",
+      "src/game/window.test.ts": "6f3881bc724b2b451cfaad6d97f89c04395bc09fc074dddd8229e754933a4080",
+      "src/game/window.ts": "159678b162f225795bdae6d04433f2a2be71fd91f676bf764952a92d7e91bb1b",
+      "src/lib/clock.ts": "72f4b69a635a1c6e9fcb9701a6e67e220168112c8db298ceadb958af66d493df",
+      "src/lib/freeze.ts": "cf3d79bb0972888a5d38423495f7b3207ad94912a85f9f95a1aa35550a09e233",
+      "src/lib/hash.ts": "d97915977c494cdf6527ac551fea0efac606914bedf4b1ca72d3eaaf64250978",
+      "src/lib/index.ts": "7ebca9245c4dd53bef46d5402430f7c33ae0232062c41632080267273e9bcf5b",
+      "src/lib/lib.test.ts": "cc2c378f4f51ccb7438094c714883d04c30558165046084c402b8176c213ab0f",
+      "src/lib/math3.test.ts": "a1d9b5eeadf13e94588e5f26a02f7e9fb279b753dcac550b821bf3bb8d1ad13e",
+      "src/lib/quat.ts": "6b6fdc21d9800fd09bf632d83f28353be8783cb88928f3457173fb819c395cf6",
+      "src/lib/rng.ts": "a0eb0e55c7f3d5ac04305d59009e7fe07ec24de8d6f84a332a4044a8a1b734fe",
+      "src/lib/sym3.ts": "4ae03641891ecd483adfc49249bb675cb627db5ea2d12616ed50fe49b8370677",
+      "src/lib/vec2.ts": "df48bb00bd9ad563f80ddd68abed1ef3e704a082c79320ab3f387078c40b3deb",
+      "src/lib/vec3.ts": "3e8fbd46711b572a996a9eac5820117e03ef1318965abfb5202fc974765a95e4",
+      "src/main.tsx": "dc2bb6ab9b90c4213dab69fd0120f7c403ad06918d9a6224894e8e5896b61a0e",
+      "src/model/adapt.ts": "d213d1bcd639ed101f464fe8cefaca527d549c28f055d274e0c53d38ab4bd0e2",
+      "src/model/aging.ts": "ee845878a36f9e0b3f9f77e50d27e6e1c34ccac4f2d72b8770420b578865cc93",
+      "src/model/binary.test.ts": "b10cc74a3a5a9b820fda789874344b77ce726f190c3281a6fe316d77f3b11c52",
+      "src/model/client.test.ts": "a534397c991266402dc16d8e26ebf7550120c6b2c4c9ddf36516e5525449846a",
+      "src/model/client.ts": "fbab32b4ba470bea29ad94799a15879037406834f51bcddc75781a939a9a7936",
+      "src/model/context.ts": "1fccf49b81f1ba711515aabeb04d1da85ac140ac7778e0ac4c9b92235576a918",
+      "src/model/diagnostics.ts": "391ced2fddc025b801a92cff62ae3537e078cb9e4b2ffbd988d2a056904774a9",
+      "src/model/dynamics.ts": "246cf4c2600392e667f3c7b4df70368f6c6408147663708752f666ea8a26ffb9",
+      "src/model/engine.ts": "c2d0990e2b872a3a69727b271485bd25f923154a446f78f3d424f4d83b30b6a8",
+      "src/model/extensions.ts": "d2dbd61ce01603801251e64677acb5e93795f4329f10ca3d7857c31ce1b40da4",
+      "src/model/forecast.ts": "389917efe22dfbc5789f6f26a3ea13e31dcc12932543eb1a002095270affa8e6",
+      "src/model/index.ts": "9eccf4f458b61d9f5af0986dae410767ed2ac1330053cf64b26db4f7c3cf5638",
+      "src/model/linalg.ts": "cd514d48e5cb4629da9a6640eef54f1be07b02586537db3da2881580082e6e36",
+      "src/model/probes.test.ts": "ca001a2e652bef251822159b2eacbc0dc0cb1dac4fabcfa96f5b9417ef43cba9",
+      "src/model/probes.ts": "f6402d149f72a8dcbd687ecfe72aec7db6a27a8c730f205e65060764c95c7e3a",
+      "src/model/report.ts": "5e6da410064a80e46229d601d80ce4b13db4ba5be4abbea0fb45b97b7bc2023a",
+      "src/model/revision2.test.ts": "c0b9769ffaf90dca3eb31280c3ee152a8ec398f5062c7784c630261406f3e967",
+      "src/model/rpc.ts": "e20ffa17e93cec2f8d533b04b7f475cfe3b566f5d8e1ae74a6d19b8510fd867c",
+      "src/model/runs.test.ts": "84864ebdb436e671faf240f4bcca20eb6f27f59dbaad259c1e061240a9409947",
+      "src/model/s8.test.ts": "eeadad3dd83508656deae8ebcca3bca23c22239d26aac6f1392d350fd4d073f2",
+      "src/model/service.test.ts": "c657a604efd85914e79bebdbe039343964aafc8e5cc50d51eea3fb7bf4bc0cb1",
+      "src/model/service.ts": "7fb0328d84bb29d195a8b764d89e68958b1897d01b5145cf9ac5c9540749a52e",
+      "src/model/service3d.test.ts": "058da30491471e5434909dc042fb7874cee060a94fde8b9ec7d0aaf8598b63f4",
+      "src/model/settings.ts": "717e3ca9140151d883cade0517626e8fe771736921238ab03150d6c33f98eddf",
+      "src/model/short-attempts.test.ts": "e3355176ec9645c6920fe29eb177e93616e2e64ca8d11fb8d3fec8dfc228544f",
+      "src/model/solve.ts": "57309c13a1a9f10ac8fd558bcf28163ae2e370a3d49fd52870c0e06ed9b37e3b",
+      "src/model/tierL.ts": "35a8590fe4f2b051ee85c6f459ac69dcbac3d228057e1170854c7f7580c296a0",
+      "src/model/vector-harness.ts": "0564c76d514426dfba8231c11ed0453c08943949f7f5701250dd5cc20da5118f",
+      "src/model/vectors.test.ts": "c20d49f8f59bede71cd85a801c1e2cecb40d41a8572077c6d667df52e88975b5",
+      "src/model/vectors3d.test.ts": "ad668ceb57ba9eb73dab634af9389af62714df96c91ca9b74246e1c0b8973904",
+      "src/model/worker.ts": "de893bc935e094a4d053665b65b12aa280b0ba1c20172e3156bc661bc13c3c89",
+      "src/ship/commands.ts": "e399ef0cfb7b2bbe9cff5184f707d3221592b871817491aae524f85240f93522",
+      "src/ship/condition/condition.test.ts": "f154346f03ed3e08b5bc85a07717f2e69ce86a311c24faf284cbd8350576245d",
+      "src/ship/condition/index.ts": "b856602751c888b1f2424617e3545cce72d9c3f6a4dadf19b60fb9c209a429b6",
+      "src/ship/condition/integrate.ts": "73ef1514243aaf721386eecb3c6f0e490c0c5e8cad777c8c090ebc0091aba947",
+      "src/ship/condition/s17.test.ts": "1b1b7169eeb4c6dba2bff70e8652c0ad942548fa11bb01a8d734f55965fd8978",
+      "src/ship/config/configuration.test.ts": "bdffb588403ac10e38185176476955adcfcf03b5eb47066a9e581d519e63ed40",
+      "src/ship/config/configuration.ts": "b2e8caff351e9f097c3659a3da758e1e85bce091260f798fec5e57375a79d891",
+      "src/ship/config/faults.test.ts": "49e84e3f2ab864148a0a472cff3807d4d3a5619f93ce9f572a7eabbcccde8db9",
+      "src/ship/config/index.ts": "3d941223cdcfac4acf4bf5fdbdf3d63b7e50ddfe147b7a969b78060d6880cfdb",
+      "src/ship/definition.ts": "c4eabc8ffb1468e2930b80d0ed14fa5eac05727e40816de09bf1100af65f73c1",
+      "src/ship/handson.test.ts": "fa7cc573c252c0d6ce8237da2ee5a08068b7fc14ce693af83f3a55672bee36fe",
+      "src/ship/index.ts": "7ff99e6571848c1deadab3b3f99d770fb2c3e790429e87d7408a27a9ab44efe9",
+      "src/ship/massprops/index.ts": "c35d09cec75c3b8f393aefe1634a038abb64cbd71f52651ea5d493d7c5435429",
+      "src/ship/massprops/massprops.test.ts": "01eecdfc69771439bbb0c060f0a586c546386aaa783e3790188a3935d7e75325",
+      "src/ship/massprops/massprops.ts": "6354a1d5c3670a10a158fe7bccf190499fa30794d314bd36240ecb5697fb83d9",
+      "src/ship/power/baseline.ts": "939ece2ff0b8cb206167ddee160ce7ef4ca4b7c36895adff9d63ed27aecad0d4",
+      "src/ship/power/index.ts": "59e34998c63681cd9c9d4cba1ee27a1bd00c5db3558801f02f958b1f3b4235af",
+      "src/ship/power/power.test.ts": "470af8074ca40508dbb3c19578ad8d40f870f5c32ef9a389b7eede4b217e8387",
+      "src/ship/power/service.test.ts": "8037e6d7e14689af611bc6782d8b06e1765df398e98c5be2fd5def61dafbdb50",
+      "src/ship/power/service.ts": "734f48123eeb34d2135eb7db5d78be5b08ea75af343e26b2c2602c9509bdca3a",
+      "src/ship/power/sun.test.ts": "a9eb163bc0ef853bfd45413629bb8160d8d163ce9022ed93d48749b11c8b563e",
+      "src/ship/power/sun.ts": "139f8c4ba075a6ec6043752b70951364e04479528d2a4c31b4fd9350edc17125",
+      "src/ship/propulsion/allocator.test.ts": "d12d5dd0176a4099ad227c05da2b9aa2834b02b3a9e3b4e3c29dee0a00a6ec31",
+      "src/ship/propulsion/allocator.ts": "60b8745dfc2549aeb35132dcf9cebf070ff52f08061a91ac5c680d77d760cd9c",
+      "src/ship/propulsion/control.test.ts": "2bc4d8b97c471a873b5c66c62842962bc15f998344a73ffc53717b74ecfc2ad0",
+      "src/ship/propulsion/control.ts": "adb4ed9e32d002a9da9a9727601e8ef7dc41b8233b833e0354ccb2b8fabab101",
+      "src/ship/propulsion/index.ts": "0c00bcbad1712d22dcd44db150b7d6af6dfb7573727bf18f02807752312efe52",
+      "src/ship/propulsion/jets.ts": "9ab4e05a7ba2c8767fcca5f50dcb7dfd859221e1bb8c4f7473cbd6b264145b14",
+      "src/ship/propulsion/nominal.test.ts": "f6e1d3aa1141e189ca6a7e3db2d8d749c2b02716d806068a76015d09170004cb",
+      "src/ship/propulsion/nominal.ts": "095459055ca6031f4b20a36262a3fb34653f7ecc772b999044a92940c85b5701",
+      "src/ship/propulsion/propulsion.test.ts": "3b3818d1c15df81d7566d9262ba333205466f26e9102270f92d08996b6deeab7",
+      "src/ship/propulsion/propulsion.ts": "8dd616bc10079b2c414ca1a3530f8c99026f37ccc0f9150bef4a56e9442b074f",
+      "src/ship/propulsion/thrust3d.test.ts": "cb53a3f10fae0df469d115140734cd8af836b367a24ed6678a5a96cfeb7847de",
+      "src/ship/sensors/function-available.ts": "60a61b6027f3482c1e6f28b0a8211bc4a33cb653419c15203e5023347aab0e47",
+      "src/ship/sensors/index.ts": "912edaedd2145f65b14f774f70354a3aebb6e0492b202f0dda96b2365bc3c910",
+      "src/ship/sensors/lattice-diagnostic-observations.ts": "07d8e2884cda63c8ce6ee45815d87fecb059e71cee91deac6678fbd38c2eb110",
+      "src/ship/sensors/lattice-diagnostic.test.ts": "4411b80e1dd02a0d2ccfe9ed5bd4eba2808e88c3f7c6114cfaecfcdd31b707a5",
+      "src/ship/sensors/lattice-diagnostic.ts": "11cb8fe6c91c11f5097aacbf08aa31d4881b7335cff5ab0aad28aace9bf1da0f",
+      "src/ship/sensors/lattice-observations.ts": "a726f16ff930ffa9b05de7687d92a7e37b520ee4485ce5db1f4dd10e20ab2578",
+      "src/ship/sensors/lattice.test.ts": "0830104eca40581fe607e9e563ec3030a72969d19d8912ffcb07bcd36ad2e684",
+      "src/ship/sensors/lattice.ts": "80d4f6790944772bb8bb3a40e97f7267fd2001eb7ffaeac71486820d8e7b0b17",
+      "src/ship/sensors/sensing3d.test.ts": "96145f11619bcbc4e0b7ab10ab97fceafc1c84223364c5dd4d18eb350f19ebea",
+      "src/ship/sensors/sensors.test.ts": "508ad3876704b10d672216ae718eba20899ea1b4d517699d765ab50bfb4d9748",
+      "src/ship/ship.test.ts": "3fca00cf8e97994bbdea0d931f1553f280644c062433580bdd980b4022bc634f",
+      "src/ship/state.ts": "c28933dac7b295c7bb57562316297cdb4b31406cc500f89997552ab90304e82e",
+      "src/ship/test-helpers.ts": "e1eb8e04ce8a26f39d901882a088bfa43d80fee0193dc254d6bdac9906022219",
+      "src/ship/thermal/depth.test.ts": "aebfc7c6db3753a19afcfa407b6650c292bfd243ec819c1ea82ab6c8a0f807c0",
+      "src/ship/thermal/index.ts": "02f21d9d32d91aca35622e126cccb0ea69e63c9ca7226d92828c0ab886be8a96",
+      "src/ship/thermal/protection.ts": "4a2799f1b09a1e2d1494cacc0e63519248ea0929a4945293b71295ae8ef9a7fb",
+      "src/ship/thermal/thermal.test.ts": "0acbd90e3a87d741b3f86c986f07f4ac9ea2e31edef00f89424523e54313d23b",
+      "src/ship/thermal/transit.test.ts": "9eeb5b747e0b4267fb7fd5097e13e46506b3331e89931b6f1f377ee38c61b076",
+      "src/sim/analytic.ts": "7bc945c0a349117e3f3db6b835033f150cee124ac09e3acc995494f886621037",
+      "src/sim/contact-3d.test.ts": "2d8288a48756202c09cbecab811b7a92a203cdae161dfd1279d7966928394879",
+      "src/sim/contact.test.ts": "9e15a0b5c31d3c49a54b2a5fd5298c8ed08ecf31b9268e5e33c7d640670c89c1",
+      "src/sim/determinism-3d.test.ts": "b44d138d9d6562ab4d92a7e17f6425975b9d942ed4e7e739b392055a9bfd7c20",
+      "src/sim/determinism.test.ts": "72e88afe16a876fc3a02f053563d23e8e3326bf8a4a267d0bbd55cfc9a2d8438",
+      "src/sim/fields/lattice.test.ts": "fa7b06a71cd4f08dd4b58bb5f8204bdf8f2a37b8f95c59ea54b253920505a59e",
+      "src/sim/fields/lattice.ts": "d0bf2d222217fbfc756573479b694dd56f56feb0c9c9b4ef5aa44c65eacba0ab",
+      "src/sim/fields/wells.test.ts": "d1ddc1d8b23547b9e6b4863d1bb42adf4a02b54fbb1a1a93284fd83aa3bdd909",
+      "src/sim/fields/wells.ts": "3e3475c1942d0885a12978b29de340a8ddc192580f591c684c57177e06077dbc",
+      "src/sim/fields-3d.test.ts": "9fd55bb00342783652309eda7f15c86d728b9c9a9dc9f2f90dc6d4ec7b79fce0",
+      "src/sim/fields.test.ts": "640a91d04e2455749175b89093575d1b3b6b4915bd30a6ddaf354f5a5149ff62",
+      "src/sim/geometry.ts": "229e4bcabb23db80b63d8b8e751794ffa5268135e97d469d2e87a78755a9e9d8",
+      "src/sim/gmat.test.ts": "4255a9c4c405672dece6571115643c61a72560f3fd40e5f826540cf2884e8d2f",
+      "src/sim/gravity.ts": "12a527dd79455f70fdf6e52f67513e4dc8a82a9e30f518f7e69d98bd8ed1e1b3",
+      "src/sim/inclined.test.ts": "115a2587d7e33729ebd2b3d44a1fd00991d8089c166264e12ef1501d9baaa2ac",
+      "src/sim/index.ts": "9fd50ff6e3418fd4279b7fd4600bdd876de6e6ce7a1f470341f6f62db8e68406",
+      "src/sim/invariants.test.ts": "5096e2262530d651fab20bbec0cad814b84454a6997a6eeebcc50e984d8d5446",
+      "src/sim/invariants.ts": "de29eb062915cf16f4d2a6e95dcb2de3b84f1a4ee3e38356fdd7c006db5e5076",
+      "src/sim/performance.test.ts": "55a8230dc3c0d1871c11ff38bacfa80323f80cadce3d92aaee9cf75da6356418",
+      "src/sim/rigid-body-3d.test.ts": "586a11616a9358145858d55043494e5f5e902cf2e9f289bbe4bbaa23c9ebc36f",
+      "src/sim/rigid-body.test.ts": "d88090d3ce0cabf3868f3caba0eff835ef7aadfd670ce52bc13a08edc4c01242",
+      "src/sim/simulation.ts": "d09e05f0afe894f9ecab3d796e7f55f72cff14b5cc7006e4fcaa9f7c207835b7",
+      "src/sim/snapshot.test.ts": "380a12958f894555ccda4e9866d00a17d197b1715907cb1746c72ada7851136a",
+      "src/sim/snapshot.ts": "fec37ebe1605ee217e829e0a1251775ab42ba42df00599d153d4ff3d0e00fc8c",
+      "src/sim/test-helpers.ts": "f43aa907608273c0813fb404edad3b00eb10ada788ed69dc0f27a6038aafb39d",
+      "src/sim/types.ts": "ea8f99ff8881a89101da7800319780aace38e02399b7a89f0586fdee3d89c3ae",
+      "src/sim/vectors.test.ts": "b1913b96f0c98b40c7beb70260167c60a8c3b628de292388b846a1d19daa2345",
+      "src/sim/vectors3d.test.ts": "5e539865fa2a2a5c62147be54d9b6d7a0eb7b562b0d5f50451f872b08a2e549b",
+      "src/theme/colour.ts": "9023dc9d045252f1c38d6eaa5ca362bd88636c546f063b06664cfbc74eb6361a",
+      "src/theme/components/Alert.tsx": "cd2de42756a38001001427489f800632f6f226d6a1d0b87bfc564d186d869242",
+      "src/theme/components/BlackBoxMark.tsx": "dfd3cf11bdb820f2fb1380e892356e744785267da60d13c8708083ce9c179ef1",
+      "src/theme/components/ComponentRow.tsx": "a04a9e7dde3024d88ebc1906fdfefbd5d5fdad730860225f60f2b86a862d0a0c",
+      "src/theme/components/components.test.tsx": "065c190d6dc8bacb2a71758abf061fd9cad394e5c6776ce9ae538d05b3d9b0a0",
+      "src/theme/components/controls.test.tsx": "63ede53ce44419e9f8dd3b84491e32158bec43d9ff8457f01fce92c8f6aa9e2a",
+      "src/theme/components/Gauge.tsx": "2ed1c6f1e39238bade30e55d5f7d641de129914d855140fdff30b04d8ec5ab41",
+      "src/theme/components/index.ts": "f3df4a892b4d4cfc4ea15243d1ea32752d97768a846fc0ca44f00b6e6dc87578",
+      "src/theme/components/LevelBar.tsx": "d42fe91118a99a84f2ac4329235e7fe1cec7d1375c77a6198272b6dfd4c6f1ca",
+      "src/theme/components/ModeChips.tsx": "a4e49ffc7d23b16a39b43ce20fcc1f330bcc981debbeabb78d1146444119e93f",
+      "src/theme/components/Panel.tsx": "4be4f74682c528a5c42227c3be7f0ee363daffa0945c211ed86a3aac93d2d478",
+      "src/theme/components/Readout.tsx": "008e7efbbb0f288879b854942b9289145c97a1487a7096553442911c319d8222",
+      "src/theme/components/scale.ts": "bc4459256c2ce185dd7bbbb2e05630d25369624f9ac4242e4b18d2d6eef1e84c",
+      "src/theme/components/Schematic.tsx": "542a694bef12a3a36db15b4d70d62854f5fdb46969a8cf8f37411688a36cc2b9",
+      "src/theme/components/Trend.tsx": "878ba0bceae601ffa80df3a2a93d58ff51ced0fe7a813acc31535193630ccef9",
+      "src/theme/css.ts": "f9bce8bbee66ed6a4bddefc56a1885404bb7a37d4758842545096e9356c4bcaf",
+      "src/theme/dressing.ts": "53b03d92fbb88ff0044ba58fae14ab98f4b9c41e42d1e97cc83e50b63073fdcc",
+      "src/theme/hud.ts": "e310847958f3ce2846412c209d05271a9865f2444b35e91f3aabcb936f0578b4",
+      "src/theme/index.ts": "0bf80f9c026844653cbb53a7544810880f38cc891b8f61a9aa1cb3df1b731458",
+      "src/theme/instrument.ts": "f84b4d6383c6ab12337eda65d52bd7bad69ceb78854e9af9e7d168e6edd9f0b5",
+      "src/theme/lab/data.ts": "eb1d73b28298ea1c940a697ac080ffc286f56125f841d326994532c7ba9a0822",
+      "src/theme/lab/lab.tsx": "246a1fc273a95c5bb143d7232f7383eaa1ae291254575393370c77c7afd0b795",
+      "src/theme/lab/more.tsx": "5311d64751d58a7414c2c5aa32da7da2356b2dd17ec254b6ccea07546684b201",
+      "src/theme/lab/scene.ts": "ff3cac1ef75626f259f8cac40dcd4cbf917890cb69c542d84a8d253647c3d52d",
+      "src/theme/line.ts": "0c56a0eb2ccb46b5cc3daa0fcb14321f5cde800f3f4b0f047d2596fefdc43c7c",
+      "src/theme/motion.ts": "185f6d4fbacdc89f6b75929a069e32a6c930cd9e7cc7c387b9e5d71e3679c60e",
+      "src/theme/render.ts": "85c6e418ae4150dadf02a9bf5e1b5bade5523bf20283171054c1aba11f769ed5",
+      "src/theme/room.ts": "acc08293f4dff113b890af81738b4c78b05d8e4c7e04c2b0fa475cdd4a8c55a8",
+      "src/theme/space.ts": "fb26eeb92950f38e89c925a2b1180fec5f91684da4cfd9c3c2feaedf6e073d36",
+      "src/theme/theme.test.ts": "235fa29703eb09dc0e6eb3b074439384bf22b8b38f5683a0308f13cd62ffcff6",
+      "src/theme/three/bodies.ts": "069bd9c1f81b49930b5fbe715cefa1e66a6d8259c93e9051431833ac7b4d76a6",
+      "src/theme/three/envelope.ts": "838cfb4347d06ba9d30b1a6ca3364d872997e572c6c8f0f4cc766a4bd652ad2a",
+      "src/theme/three/fields.ts": "d75c3c25e0e82a86691f777c58e233a7a318632c8ff3fe92e054c3d4a8085e51",
+      "src/theme/three/holo-plane.ts": "1bdeb50003a2e0568d3908fdefd0ec240592b4103b3c6cd45f164846a060651a",
+      "src/theme/three/holo.ts": "3218bfe50d93ca8dad914dd901e8e409e4fe4b8a9bb11b0ac36c5312eaf69a1d",
+      "src/theme/three/index.ts": "2c32b853c233cf91ba876f1e1107f6d60814b48f1fcad946713b6961b381fd81",
+      "src/theme/three/lines.ts": "8317989852d1401074e5fc8699b61166880080750436b0bb88e4de1b77f56ed1",
+      "src/theme/three/map-holo.ts": "ddc12572277149d00d70cb69cd646bd85d47e3d170ce3fa82de0ad8dfce157aa",
+      "src/theme/three/plane.ts": "2116876b9b64fbd684b03ad2433c2ef1dc8b40b6acfc0b09d8754d593decd8e6",
+      "src/theme/three/ship-holo.ts": "b077cea79a2435312582633d3abf9eafc1f2f87001859e1b66d3a16327731c13",
+      "src/theme/three/styles.ts": "bbc5a92adda096dd691685ef051e7721ce2d1856aeaa6e8acc5ecf4cf9533836",
+      "src/theme/three/three.test.ts": "7b08b1f8d7368b4f739ea1038829c7d8dc2a09ed3c018004427bcf144c63c6f1",
+      "src/theme/type.ts": "ffe5df743b6768f8497328df88f658738a9c20d20c8a781c11c98e8bfe0a9474",
+      "src/view3d/adapter.test.ts": "54030e8ce428cb3f29519620ea6bcfed5f9becd9cca2854a975506523e8c59c6",
+      "src/view3d/adapter.ts": "8548e572b5da110c06db37f639d1cc31cdd7005a2f22108d7451161f3462d3b2",
+      "src/view3d/fields/lattice/data.ts": "c51da275e1606cafa539d9aa1009717f6427980ed33b33b798d80cb91ded7cfb",
+      "src/view3d/fields/lattice/geometry.ts": "b655a8efc28288088eaf9d2b5ac88da11f9090a6ad804d69cb4c7ee5edeb8051",
+      "src/view3d/fields/lattice/index.ts": "e1ff658da88c4daf36d2d86a242bc56706d2a7093b12db7ef93f87f0ba5a9b3b",
+      "src/view3d/fields/lattice/lattice.test.ts": "c2feb1b86c879b0ba05b613c08b3895cf8a54cbc449f7e64d61c6cb7400191ce",
+      "src/view3d/fields/lattice/LatticeView.ts": "8eca831609d7917822d62fd81ec3102664001b323d083b72d06e2c0a18cf17da",
+      "src/view3d/fields/lattice/preview.tsx": "86998c5af4c65f438325105d900f43e1a5cae39815a88f7add0772d38651f469",
+      "src/view3d/fields/wells/evidence.ts": "1ce54f592a0ff1ee33c984decec6ac7ef4c29de13458e6ffdf63c9cc674e6c07",
+      "src/view3d/fields/wells/funnel.test.ts": "3778173cc06797b3309664cbf375a4ea60bde492d4342f19ea2ece5d6a7d54d1",
+      "src/view3d/fields/wells/funnel.ts": "2a793ddfef56f2d9184ae3403e06b3f2680599482240a4534a9f94e95e600571",
+      "src/view3d/fields/wells/index.ts": "ccb6eed820690e8347f129757af7c0c78e1027453ae0c6b9d2960bdbb6ec7e6c",
+      "src/view3d/fields/wells/wells.test.ts": "d070fa93adcd0e513576edbc88f7a98c3db103b59dada7abeef4127865c8296d",
+      "src/view3d/fieldViews.ts": "f44750224e397699bcf4da090ddabb74be0d3c95981ec91a62ab4fc43eebff17",
+      "src/view3d/flight/coverageHistory.test.ts": "ba6425f564437cdb8720b4e1372d995311f3faa7ad3fccbce35e5f8a867fe638",
+      "src/view3d/flight/coverageHistory.ts": "e9614836b2fceaceca127a9ef0ecdc286e3c4bfd87ccd335b2087a02015f3788",
+      "src/view3d/flight/flight.test.ts": "a1d3fba6f3af6734727de007fcdaabec7dac0b87deb6ac4c131d1d8083a1c615",
+      "src/view3d/flight/FlightHolo.ts": "9512ac7d41a9c8398d533874526700304b04509ba4976d5d7d6b15310e905ccb",
+      "src/view3d/gfx.ts": "0d96534371550d47263a9614b64f6c76e0618f061cb5826a55971cacb6ea1a8a",
+      "src/view3d/map/layout.ts": "523f01018f8316b1c88643362da2cb570b6b5b5593fe6fcfd7a387e85db0f9a4",
+      "src/view3d/map/map.test.ts": "6e625e17e79fb79660d08d07d57c7139a62157f581fb66ea8aed2024c89b555d",
+      "src/view3d/map/MapHolo.ts": "f0538204d556ee93f2ee1f250e637abdf789208199a73accc2c0a04b188f8c47",
+      "src/view3d/room/dress.ts": "1d8b27d1bac6718ac16656ee958f8a0f1e33ff534fddc142555f2c270cc500b6",
+      "src/view3d/room/layout.ts": "d0cdb0e430b95047b9b2f76908e29ac339cf65fc59208ebe71d6a4353aa273f0",
+      "src/view3d/room/outside.ts": "b25b75c5b6fbc391f52216fcd4623e262ad5ac66c2b18f9eb3521bd1f33f230c",
+      "src/view3d/room/RoomView.ts": "2286ada99ae3c70593df3bb12506c6d623e60e4cae56dc88af788099631b299e",
+      "src/view3d/room/shell.ts": "e05328249f3a1cb1a6439dc5fcf630ba2ea9909a4fceadae17126496e6580482",
+      "src/view3d/room/textures.ts": "1677c9cce3a614dc3336814ec8b8da0e379a2db8307c1e5068cce86a166992c6",
+      "src/view3d/ship/model.ts": "c29587b9829438a9bb84704899d7910c9662dba5358ed9ba02e95c75d60e7f5a",
+      "src/view3d/ship/parts.ts": "aec9693b6e26535f868a8501bb53764f7899d634eac1cc7ce3f1ecd4a19fea78",
+      "src/view3d/ship/ship.test.ts": "4b9351614e6e6d6e28a86f80777a27e1e084a5a544b527e6e6d43bddd87ee3cb",
+      "src/view3d/ship/ShipHolo.ts": "94a91f301fa455e71e856c647a04d90251d22bfc113068943fc85043e0de22e4",
+      "src/view3d/ship/wire.ts": "bbd7d5e40fb2e70a8aa0035eccc0767c6b6737b3bfa07c5866f7c81bcb96aa55",
+      "data/ship-baseline.json": "0912882fc43b487e7c349c637ba0881935714ccc345e1eb49d4ab5a25c50b9d6",
+      "tools/harness/flight.test.ts": "a87bc036752d90097d8257b35174958066ce53f589b4c6d8a60ce8a9a301403d",
+      "tools/harness/flight.ts": "2e7b9a1713e8ca48fbfce8f426c9cbcb4b52c0d8374e9f3700cea1129e862ba0",
+      "tools/harness/integration.test.ts": "2b05fcc5b107ba14eb193d3897b8c1ba8fd6158f50c33f2c0a70849d439c912b",
+      "tools/harness/integration.ts": "eaf3c7f492f22b3314713b4e4a37fcfd1cbaa97e1b2cc4cb345e54176b8fdcb3",
+      "tools/harness/learning.ts": "ba37f191fba252d488417b69c096e30ae9d94e7c9830828e3047b307cd007d57",
+      "tools/harness/metrics.test.ts": "5a457ac4bd09cfd5fb1517dfed78f2463224983c0646d66830e709004672ab4f",
+      "tools/harness/metrics.ts": "c92647b7c428a6370a899ca365bfce83da17ea1f203cb8f8601eada580fa431f",
+      "tools/harness/references.test.ts": "b29681c86f98a707a1991b4a180a065939928fa70103ddd648abf5ec966bb746",
+      "tools/harness/references.ts": "1a4d9c3404f97323b86f4cb3167146742676a3af3b0ac59d879c0a41d35de5a3",
+      "tools/harness/run.mjs": "7f74a058481b310f2d7b0d487e26345fafef54c637d54da7ff6aa7eccb76852b",
+      "tools/harness/scenarios.ts": "439277e97daeb6c423bbd81903f9a26e391f4f1383ac0eeb5d69a3370f34e847",
+      "tools/harness/tsconfig.json": "05598b58ac3739f8bd1aec740ecc3e65a0feb2fbfde7cdabf8ba8bd9d5d83cdb",
+      "tools/harness/vitest.config.ts": "f3ae1d070fba4b7781fccd6e3103c41a51f32b94f93aa7ea4d5cdff30bec9c7d",
+      "package-lock.json": "34a4c2ea6734384ebe70e0d946965b4ffc7ca7a5eeac765fc5e43cdce93e3b1c"
+    }
+  },
+  "entry": {
+    "catalogueSeed": 22000,
+    "variant": "axial-away",
+    "condition": 1,
+    "contentVersion": "s22-48309d4-1-22000"
+  },
+  "acceptance": {
+    "status": "incomplete",
+    "blockers": [
+      "R30: births, precursor warp policy, saved lifecycle, whole-hull throat loss and work ledger are not wired in this baseline.",
+      "R31/R32: optical funnels and acquired field geometry/response are not mounted/produced. Packet counts do not certify precursor coverage.",
+      "3E clearance covers bodies/asteroids only: its wholeFlightSweptMinimumMeters is NOT all-funnel clearance.",
+      "Continuous late arrivals, both branch orders, cross-transfer and carried-rule comparison need the retained owners' integration."
+    ]
+  },
+  "result": {
+    "id": "s22-22000-axial-away",
+    "seed": "s22-admission/22000",
+    "encounter": "inverse-wells",
+    "mode": "navigation-probe",
+    "knowledge": "[ASSUMED] Author-supplied inertial direction from S22 geometry; no acquired funnel rule or player inference is claimed. The nominal +/-y controls port S22's 16 s, 24 kN burn at t=600 through actual main propulsion, with a real roll-held direction command 480 s beforehand and rate nulling 5 s after cutoff. Navigator stand-in only; forecasts are not fitted-model evidence.",
+    "dtSeconds": 1,
+    "stopAt": 3600,
+    "controls": [
+      {
+        "at": 120,
+        "command": {
+          "kind": "attitude",
+          "target": {
+            "reference": "direction",
+            "direction": {
+              "x": -0.5053618787065621,
+              "y": -0.8353143054794451,
+              "z": 0.21647028112784034
+            }
+          }
+        }
+      },
+      {
+        "at": 600,
+        "command": {
+          "kind": "burn",
+          "thruster": "main-engine",
+          "throttle": 1,
+          "duration": 16,
+          "attitude": {
+            "reference": "direction",
+            "direction": {
+              "x": -0.5053618787065621,
+              "y": -0.8353143054794451,
+              "z": 0.21647028112784034
+            }
+          }
+        }
+      },
+      {
+        "at": 621,
+        "command": {
+          "kind": "attitude",
+          "target": {
+            "reference": "rate",
+            "rate": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          }
+        }
+      }
+    ],
+    "acquisitionSchedule": {
+      "arrival": [
+        {
+          "kind": "recorder",
+          "sampleRate": 1
+        },
+        {
+          "kind": "point",
+          "sensor": "camera",
+          "target": "funnel-0-core"
+        }
+      ],
+      "changes": [],
+      "settledEverySeconds": null,
+      "modelClock": "deterministic 300x: 300 simulation seconds per 1000 logical wall milliseconds; production handover/refit intervals unchanged"
+    },
+    "actualStop": 1622,
+    "outcome": {
+      "kind": "lost",
+      "t": 1621.8166606579175,
+      "cause": "collision"
+    },
+    "expectation": "lost",
+    "expectationMatched": true,
+    "judgment": "pass",
+    "marginStatus": "negative-control",
+    "metrics": {
+      "audience": "truth-side evaluation only",
+      "interval": {
+        "start": 0,
+        "end": 1622,
+        "ticks": 1622,
+        "dt": 1
+      },
+      "outcome": {
+        "kind": "lost",
+        "cause": "collision"
+      },
+      "firstFailedMargin": {
+        "t": 1621.8166606579175,
+        "kind": "hull-contact",
+        "subject": "funnel-0-core",
+        "detail": "Relative speed 115.03079501742701 m/s"
+      },
+      "clearance": {
+        "minimumReportedPass": {
+          "t": 1621.8166606579175,
+          "with": "funnel-0-core",
+          "distance": 0,
+          "source": "impact"
+        },
+        "completedPasses": 0,
+        "impacts": 1,
+        "maxHullReachMeters": 10.657461567953902,
+        "reportedPassHullLowerBoundMeters": 0,
+        "wholeFlightSweptMinimumMeters": null,
+        "evaluatedSweepMinimumMeters": 0,
+        "swept": {
+          "minimum": {
+            "t": 1621.8166606579175,
+            "with": "funnel-0-core",
+            "distance": 0,
+            "source": "impact"
+          },
+          "wholeFlightMinimumMeters": null,
+          "evaluatedBoundingSphereLowerBoundMeters": 88.95356444396687,
+          "complete": false,
+          "coverage": {
+            "intervals": 1622,
+            "objectIntervals": 1621,
+            "refined": 1621,
+            "culled": 0,
+            "contactIntervals": 1,
+            "unpairedObjectIntervals": 0,
+            "unpairedIds": []
+          },
+          "method": "Production segmentHull on body-frame endpoint chords, using production midpoint COM and end-of-tick hull. A conservative hull bounding-sphere test culls segments that cannot improve the retained minimum. Spheres are bodies/asteroids; local fields and apertures need their authored evaluators.",
+          "limitation": "This measures the production fixed-tick geometry approximation, requiring |omega|*dt << 1, not an exact continuous trajectory. End-hull geometry is held fixed during each tick as in production, so sub-tick appendage motion is not certified. Contact-relocated or missing/new/radius-changing object endpoints make full coverage incomplete; authoritative impacts still report zero. Missing absorbed-object trajectories require TickResult to expose the original Simulation.minClearance/absorbed result. A negative bounding-sphere bound alone is not a collision."
+        },
+        "limitation": "Pass-event figures can omit receding and unfinished far passes and use CoM distance beyond 5000 m. The separate swept report evaluates every available endpoint pair with production hull geometry and documents incomplete coverage and fixed-tick limits."
+      },
+      "resources": {
+        "main": {
+          "initialKg": 6000,
+          "remainingKg": 5877.634054442649,
+          "consumedKg": 122.36594555735064
+        },
+        "rcs": {
+          "initialKg": 300,
+          "remainingKg": 299.3232792404786,
+          "consumedKg": 0.6767207595214018
+        },
+        "tanks": {
+          "main-propellant": {
+            "initialKg": 6000,
+            "remainingKg": {
+              "min": 5877.634054442649,
+              "max": 6000,
+              "final": 5877.634054442649
+            }
+          },
+          "rcs-left": {
+            "initialKg": 150,
+            "remainingKg": {
+              "min": 149.6616396202393,
+              "max": 150,
+              "final": 149.6616396202393
+            }
+          },
+          "rcs-right": {
+            "initialKg": 150,
+            "remainingKg": {
+              "min": 149.6616396202393,
+              "max": 150,
+              "final": 149.6616396202393
+            }
+          },
+          "xenon": {
+            "initialKg": 20,
+            "remainingKg": {
+              "min": 20,
+              "max": 20,
+              "final": 20
+            }
+          },
+          "fuel-cell-hydrogen": {
+            "initialKg": 6,
+            "remainingKg": {
+              "min": 5.931319043736653,
+              "max": 6,
+              "final": 5.931319043736653
+            }
+          },
+          "fuel-cell-oxygen": {
+            "initialKg": 48,
+            "remainingKg": {
+              "min": 47.45055234989322,
+              "max": 48,
+              "final": 47.45055234989322
+            }
+          },
+          "product-water": {
+            "initialKg": 0,
+            "remainingKg": {
+              "min": 0,
+              "max": 0.6181286063750953,
+              "final": 0.6181286063750953
+            }
+          }
+        },
+        "ledgers": {
+          "power.generated": {
+            "min": 710,
+            "max": 3161.0526315789466,
+            "final": 3003.1578947368416,
+            "integral": 4876347.894736746,
+            "sampledSeconds": 1622
+          },
+          "power.fuelGenerated": {
+            "min": 710,
+            "max": 3161.0526315789466,
+            "final": 3003.1578947368416,
+            "integral": 4876347.894736746,
+            "sampledSeconds": 1622
+          },
+          "power.discharged": {
+            "min": 0,
+            "max": 2293.1578947368416,
+            "final": 0,
+            "integral": 3879.473684210525,
+            "sampledSeconds": 1622
+          },
+          "power.charged": {
+            "min": 0,
+            "max": 0,
+            "final": 0,
+            "integral": 0,
+            "sampledSeconds": 1622
+          },
+          "power.load": {
+            "min": 2865,
+            "max": 3015,
+            "final": 2865,
+            "integral": 4655680,
+            "sampledSeconds": 1622
+          },
+          "power.conversionLoss": {
+            "min": 138.1578947368419,
+            "max": 146.05263157894717,
+            "final": 138.1578947368419,
+            "integral": 224547.3684210596,
+            "sampledSeconds": 1622
+          },
+          "power.batteryLoss": {
+            "min": 0,
+            "max": 120.69252077562311,
+            "final": 0,
+            "integral": 204.1828254847642,
+            "sampledSeconds": 1622
+          },
+          "power.unmet": {
+            "min": 0,
+            "max": 0,
+            "final": 0,
+            "integral": 0,
+            "sampledSeconds": 1622
+          },
+          "thermal.heatInput": {
+            "min": 4233.850415512465,
+            "max": 10722.105263157893,
+            "final": 6406.315789473683,
+            "integral": 10470309.445983253,
+            "sampledSeconds": 1622
+          },
+          "thermal.radiated": {
+            "min": 4234.734210389563,
+            "max": 8971.241294129808,
+            "final": 6396.890305829247,
+            "integral": 9926563.898211427,
+            "sampledSeconds": 1622
+          },
+          "thermal.storedEnergyRate": {
+            "min": -2239.7192792892456,
+            "max": 4834.324279785156,
+            "final": 9.425482749938965,
+            "integral": 543745.547879219,
+            "sampledSeconds": 1622
+          },
+          "thermal.energyResidualRate": {
+            "min": -0.000002608591785246972,
+            "max": 0.000002280856278957799,
+            "final": 8.944971341406927e-7,
+            "integral": -0.00010726759319368284,
+            "sampledSeconds": 1622
+          }
+        },
+        "ledgerUnits": "min/max/final are W; integral is J. sampledSeconds states coverage. Missing keys mean unavailable, never zero.",
+        "thermalNodesK": {
+          "cabin": {
+            "min": 294.9999716575775,
+            "max": 295,
+            "final": 294.9999716575775
+          },
+          "service": {
+            "min": 294.9996880790705,
+            "max": 295,
+            "final": 294.9996880790705
+          },
+          "external-loop": {
+            "min": 284.9091545879779,
+            "max": 285.32219310748275,
+            "final": 285.32219310748275
+          },
+          "hx-water": {
+            "min": 290,
+            "max": 292.6450382085121,
+            "final": 292.64502686147745
+          }
+        },
+        "thermalOperatingMarginsK": {
+          "cabin": {
+            "min": 18,
+            "max": 18.000028342422524,
+            "final": 18.000028342422524
+          },
+          "service": {
+            "min": 38,
+            "max": 38.000311920929505,
+            "final": 38.000311920929505
+          },
+          "external-loop": {
+            "min": 54.67780689251725,
+            "max": 55.09084541202208,
+            "final": 54.67780689251725
+          },
+          "hx-water": {
+            "min": 16.850000000000023,
+            "max": 19.495038208512142,
+            "final": 19.49502686147747
+          }
+        },
+        "recorder": {
+          "sampleRate": 1,
+          "bytesUsed": 6643712,
+          "capacity": 8000000000
+        }
+      },
+      "components": {
+        "crew": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "occupied",
+          "powerDrawW": {
+            "min": 0,
+            "max": 0,
+            "final": 0
+          },
+          "temperatureK": {
+            "min": 294.9999716575775,
+            "max": 295,
+            "final": 294.9999716575775
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "cabin-stores": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "off",
+          "powerDrawW": {
+            "min": 0,
+            "max": 0,
+            "final": 0
+          },
+          "temperatureK": {
+            "min": 294.9999716575775,
+            "max": 295,
+            "final": 294.9999716575775
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "main-tank": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "off",
+          "powerDrawW": {
+            "min": 0,
+            "max": 0,
+            "final": 0
+          },
+          "temperatureK": {
+            "min": 294.9996880790705,
+            "max": 295,
+            "final": 294.9996880790705
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "rcs-tanks": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "off",
+          "powerDrawW": {
+            "min": 0,
+            "max": 0,
+            "final": 0
+          },
+          "temperatureK": {
+            "min": 294.9996880790705,
+            "max": 295,
+            "final": 294.9996880790705
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "xenon-tank": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "off",
+          "powerDrawW": {
+            "min": 0,
+            "max": 0,
+            "final": 0
+          },
+          "temperatureK": {
+            "min": 294.9996880790705,
+            "max": 295,
+            "final": 294.9996880790705
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "reactant-tanks": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "off",
+          "powerDrawW": {
+            "min": 0,
+            "max": 0,
+            "final": 0
+          },
+          "temperatureK": {
+            "min": 294.9996880790705,
+            "max": 295,
+            "final": 294.9996880790705
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "product-water-tank": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "off",
+          "powerDrawW": {
+            "min": 0,
+            "max": 0,
+            "final": 0
+          },
+          "temperatureK": {
+            "min": 294.9996880790705,
+            "max": 295,
+            "final": 294.9996880790705
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "solar-left": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "stowed",
+          "powerDrawW": {
+            "min": 0,
+            "max": 0,
+            "final": 0
+          },
+          "temperatureK": {
+            "min": 284.9091545879779,
+            "max": 285.32219310748275,
+            "final": 285.32219310748275
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "radiator-left": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "hold",
+          "powerDrawW": {
+            "min": 0,
+            "max": 0,
+            "final": 0
+          },
+          "temperatureK": {
+            "min": 284.9091545879779,
+            "max": 285.32219310748275,
+            "final": 285.32219310748275
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "solar-right": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "stowed",
+          "powerDrawW": {
+            "min": 0,
+            "max": 0,
+            "final": 0
+          },
+          "temperatureK": {
+            "min": 284.9091545879779,
+            "max": 285.32219310748275,
+            "final": 285.32219310748275
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "radiator-right": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "hold",
+          "powerDrawW": {
+            "min": 0,
+            "max": 0,
+            "final": 0
+          },
+          "temperatureK": {
+            "min": 284.9091545879779,
+            "max": 285.32219310748275,
+            "final": 285.32219310748275
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "fuel-cell-a": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "following",
+          "powerDrawW": {
+            "min": 0,
+            "max": 0,
+            "final": 0
+          },
+          "temperatureK": {
+            "min": 294.9996880790705,
+            "max": 295,
+            "final": 294.9996880790705
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "battery-a": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "idle",
+          "powerDrawW": {
+            "min": 0,
+            "max": 0,
+            "final": 0
+          },
+          "temperatureK": {
+            "min": 294.9996880790705,
+            "max": 295,
+            "final": 294.9996880790705
+          },
+          "chargeJ": {
+            "min": 28795916.343490306,
+            "max": 28800000,
+            "final": 28795916.343490306
+          },
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "pdu-a": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "active",
+          "powerDrawW": {
+            "min": 0,
+            "max": 30,
+            "final": 30
+          },
+          "temperatureK": {
+            "min": 294.9996880790705,
+            "max": 295,
+            "final": 294.9996880790705
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "eclss-a": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "active",
+          "powerDrawW": {
+            "min": 0,
+            "max": 1800,
+            "final": 1800
+          },
+          "temperatureK": {
+            "min": 294.9999716575775,
+            "max": 295,
+            "final": 294.9999716575775
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "internal-pump-a": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "active",
+          "powerDrawW": {
+            "min": 0,
+            "max": 120,
+            "final": 120
+          },
+          "temperatureK": {
+            "min": 294.9999716575775,
+            "max": 295,
+            "final": 294.9999716575775
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "external-pump-a": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "active",
+          "powerDrawW": {
+            "min": 0,
+            "max": 180,
+            "final": 180
+          },
+          "temperatureK": {
+            "min": 294.9996880790705,
+            "max": 295,
+            "final": 294.9996880790705
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "flight-cpu-a": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "active",
+          "powerDrawW": {
+            "min": 0,
+            "max": 120,
+            "final": 120
+          },
+          "temperatureK": {
+            "min": 294.9999716575775,
+            "max": 295,
+            "final": 294.9999716575775
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "imu-a": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "active",
+          "powerDrawW": {
+            "min": 0,
+            "max": 15,
+            "final": 15
+          },
+          "temperatureK": {
+            "min": 294.9999716575775,
+            "max": 295,
+            "final": 294.9999716575775
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "star-tracker-a": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "active",
+          "powerDrawW": {
+            "min": 0,
+            "max": 20,
+            "final": 20
+          },
+          "temperatureK": {
+            "min": 294.9996880790705,
+            "max": 295,
+            "final": 294.9996880790705
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "fuel-cell-b": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "following",
+          "powerDrawW": {
+            "min": 0,
+            "max": 0,
+            "final": 0
+          },
+          "temperatureK": {
+            "min": 294.9996880790705,
+            "max": 295,
+            "final": 294.9996880790705
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "battery-b": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "idle",
+          "powerDrawW": {
+            "min": 0,
+            "max": 0,
+            "final": 0
+          },
+          "temperatureK": {
+            "min": 294.9996880790705,
+            "max": 295,
+            "final": 294.9996880790705
+          },
+          "chargeJ": {
+            "min": 28800000,
+            "max": 28800000,
+            "final": 28800000
+          },
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "pdu-b": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "active",
+          "powerDrawW": {
+            "min": 0,
+            "max": 30,
+            "final": 30
+          },
+          "temperatureK": {
+            "min": 294.9996880790705,
+            "max": 295,
+            "final": 294.9996880790705
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "eclss-b": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "standby",
+          "powerDrawW": {
+            "min": 0,
+            "max": 80,
+            "final": 80
+          },
+          "temperatureK": {
+            "min": 294.9999716575775,
+            "max": 295,
+            "final": 294.9999716575775
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "internal-pump-b": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "standby",
+          "powerDrawW": {
+            "min": 0,
+            "max": 5,
+            "final": 5
+          },
+          "temperatureK": {
+            "min": 294.9999716575775,
+            "max": 295,
+            "final": 294.9999716575775
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "external-pump-b": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "standby",
+          "powerDrawW": {
+            "min": 0,
+            "max": 5,
+            "final": 5
+          },
+          "temperatureK": {
+            "min": 294.9996880790705,
+            "max": 295,
+            "final": 294.9996880790705
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "flight-cpu-b": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "standby",
+          "powerDrawW": {
+            "min": 0,
+            "max": 20,
+            "final": 20
+          },
+          "temperatureK": {
+            "min": 294.9999716575775,
+            "max": 295,
+            "final": 294.9999716575775
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "imu-b": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "active",
+          "powerDrawW": {
+            "min": 0,
+            "max": 15,
+            "final": 15
+          },
+          "temperatureK": {
+            "min": 294.9999716575775,
+            "max": 295,
+            "final": 294.9999716575775
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "star-tracker-b": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "active",
+          "powerDrawW": {
+            "min": 0,
+            "max": 20,
+            "final": 20
+          },
+          "temperatureK": {
+            "min": 294.9996880790705,
+            "max": 295,
+            "final": 294.9996880790705
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "interface-hx": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "regulated",
+          "powerDrawW": {
+            "min": 0,
+            "max": 20,
+            "final": 20
+          },
+          "temperatureK": {
+            "min": 290,
+            "max": 292.6450382085121,
+            "final": 292.64502686147745
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "main-engine": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "ready",
+          "powerDrawW": {
+            "min": 0,
+            "max": 180,
+            "final": 30
+          },
+          "temperatureK": {
+            "min": 294.9996880790705,
+            "max": 295,
+            "final": 294.9996880790705
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "rcs-forward-left": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "ready",
+          "powerDrawW": {
+            "min": 0,
+            "max": 65,
+            "final": 15
+          },
+          "temperatureK": {
+            "min": 294.9996880790705,
+            "max": 295,
+            "final": 294.9996880790705
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "rcs-forward-right": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "ready",
+          "powerDrawW": {
+            "min": 0,
+            "max": 65,
+            "final": 15
+          },
+          "temperatureK": {
+            "min": 294.9996880790705,
+            "max": 295,
+            "final": 294.9996880790705
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "rcs-aft-left": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "ready",
+          "powerDrawW": {
+            "min": 0,
+            "max": 65,
+            "final": 15
+          },
+          "temperatureK": {
+            "min": 294.9996880790705,
+            "max": 295,
+            "final": 294.9996880790705
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "rcs-aft-right": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "ready",
+          "powerDrawW": {
+            "min": 0,
+            "max": 65,
+            "final": 15
+          },
+          "temperatureK": {
+            "min": 294.9996880790705,
+            "max": 295,
+            "final": 294.9996880790705
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "ion-drive": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "idle",
+          "powerDrawW": {
+            "min": 0,
+            "max": 0,
+            "final": 0
+          },
+          "temperatureK": {
+            "min": 294.9996880790705,
+            "max": 295,
+            "final": 294.9996880790705
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "camera": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "track",
+          "powerDrawW": {
+            "min": 0,
+            "max": 120,
+            "final": 120
+          },
+          "temperatureK": {
+            "min": 294.9996880790705,
+            "max": 295,
+            "final": 294.9996880790705
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "science-processor": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "idle",
+          "powerDrawW": {
+            "min": 0,
+            "max": 40,
+            "final": 40
+          },
+          "temperatureK": {
+            "min": 294.9996880790705,
+            "max": 295,
+            "final": 294.9996880790705
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "black-box": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "minimum",
+          "powerDrawW": {
+            "min": 0,
+            "max": 15,
+            "final": 15
+          },
+          "temperatureK": {
+            "min": 294.9999716575775,
+            "max": 295,
+            "final": 294.9999716575775
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "comms": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "listen",
+          "powerDrawW": {
+            "min": 0,
+            "max": 20,
+            "final": 20
+          },
+          "temperatureK": {
+            "min": 294.9996880790705,
+            "max": 295,
+            "final": 294.9996880790705
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        },
+        "console": {
+          "initialCondition": 1,
+          "condition": {
+            "min": 1,
+            "max": 1,
+            "final": 1
+          },
+          "everTripped": false,
+          "finalTripped": false,
+          "finalMode": "active",
+          "powerDrawW": {
+            "min": 0,
+            "max": 100,
+            "final": 100
+          },
+          "temperatureK": {
+            "min": 294.9999716575775,
+            "max": 295,
+            "final": 294.9999716575775
+          },
+          "chargeJ": null,
+          "initialExposure": null,
+          "finalExposure": null,
+          "exposureAdded": null
+        }
+      },
+      "control": {
+        "maxAngularSpeedRadPerSecond": 23.748552602933472,
+        "maxAbsoluteBodyRollRateRadPerSecond": 18.76488911251255,
+        "maxAngularStepRadians": 23.748552602933472,
+        "deliveredImpulseNs": {
+          "main-engine": 384000,
+          "rcs-forward-left": 360,
+          "rcs-forward-right": 400,
+          "rcs-aft-left": 360,
+          "rcs-aft-right": 340
+        },
+        "unservedImpulseNs": {
+          "main-engine": 0,
+          "rcs-forward-left": 0.5312719279439603,
+          "rcs-forward-right": 0,
+          "rcs-aft-left": 0,
+          "rcs-aft-right": 0
+        },
+        "quantifiedReachabilityMargin": null,
+        "limitation": "Rates, delivered/unserved impulses and component condition are diagnostics. They do not establish remaining directional control authority or roll-held reachability; those require an authored maneuver and acceptance envelope."
+      },
+      "observations": {
+        "packets": 394852,
+        "byKind": {
+          "accel": 3244,
+          "rate": 3244,
+          "attitude": 3244,
+          "telemetry": 382792,
+          "bearing": 1164,
+          "range": 1164
+        },
+        "byTarget": {
+          "target:funnel-0-core": {
+            "packets": 2328,
+            "firstAt": 30,
+            "lastAt": 1596,
+            "maxGapSeconds": 404,
+            "byKind": {
+              "bearing": 1164,
+              "range": 1164
+            },
+            "freshnessSeconds": 26
+          }
+        },
+        "limitation": "Counts and acquisition gaps are from recorded production packets. Packet counts do not prove spatial coverage; unseen targets and fields are unresolved. Forecast horizon belongs to the separate real-model result."
+      },
+      "events": {
+        "contact": 1,
+        "ship-lost": 1
+      }
+    },
+    "departure": {
+      "distance": 119021.9922894572,
+      "speed": 30.55872947475199,
+      "outward": true
+    },
+    "deltaVSpent": 12.672159493843543,
+    "executed": [
+      {
+        "t": 0,
+        "command": {
+          "kind": "recorder",
+          "sampleRate": 1
+        },
+        "source": "procedure",
+        "status": "executed"
+      },
+      {
+        "t": 0,
+        "command": {
+          "kind": "point",
+          "sensor": "camera",
+          "target": "funnel-0-core"
+        },
+        "source": "procedure",
+        "status": "executed"
+      },
+      {
+        "t": 120,
+        "command": {
+          "kind": "attitude",
+          "target": {
+            "reference": "inertial",
+            "attitude": {
+              "w": -0.48125715344896364,
+              "x": 0.1253419837943563,
+              "y": -0.001055480402059411,
+              "z": 0.8675712220410593
+            }
+          }
+        },
+        "source": "manual",
+        "status": "executed"
+      },
+      {
+        "t": 600,
+        "command": {
+          "kind": "burn",
+          "thruster": "main-engine",
+          "throttle": 1,
+          "duration": 16,
+          "attitude": {
+            "reference": "inertial",
+            "attitude": {
+              "w": 0.4811208412262893,
+              "x": -0.12586419977271793,
+              "y": 0.0019970212942202834,
+              "z": -0.8675695656598562
+            }
+          }
+        },
+        "source": "manual",
+        "status": "executed"
+      },
+      {
+        "t": 621,
+        "command": {
+          "kind": "attitude",
+          "target": {
+            "reference": "rate",
+            "rate": {
+              "x": 0,
+              "y": 0,
+              "z": 0
+            }
+          }
+        },
+        "source": "manual",
+        "status": "executed"
+      }
+    ],
+    "physicalStateHash": "9a63c70920f1c130b9a7f89fd75b972deabf929f54ff636afa3303351af90977",
+    "recordHash": "f6d2388dfab96425a07a17d87eee7953c212908a4c0878789af59237959541cb",
+    "forecasts": [],
+    "modelError": null,
+    "pendingControls": [],
+    "limits": [
+      "A finite survival window is not encounter completion.",
+      "No route or condition fixture is a human playtest.",
+      "No forecast receives these truth-side metrics."
+    ]
+  },
+  "execution": "completed",
+  "budgetTargets": {
+    "mainKg": 1000,
+    "rcsKg": 30,
+    "mainWithin": true,
+    "rcsWithin": true,
+    "scope": "Measured consumption only; incomplete flights do not pass route admission."
+  }
+}

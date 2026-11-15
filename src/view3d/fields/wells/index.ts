@@ -3,7 +3,7 @@ import { BufferGeometry, Float32BufferAttribute, LineSegments } from 'three';
 import { lineStyles, opacity, render, envelopeStyle } from '../../../theme/index.ts';
 import { wellColour, wellLineMaterial } from '../../../theme/three/index.ts';
 import { toScene } from '../../adapter.ts';
-import type { FieldView, FieldViewFactory } from '../../fieldViews.ts';
+import { registerFieldView, type FieldView, type FieldViewFactory } from '../../fieldViews.ts';
 import { setFatSegs } from '../../gfx.ts';
 import { readWellVisual, wellDisplayState, WELL_VIEW_KIND, type WellVisual } from './evidence.ts';
 import { makeFunnelView, readWellFunnelVisual } from './funnel.ts';
@@ -144,12 +144,9 @@ export const makeWellView: FieldViewFactory = (context) => {
   };
 };
 
-export async function registerWellView(): Promise<void> {
-  const { registerFieldView } = await import('../../fieldViews.ts');
+export function registerWellView(): void {
   registerFieldView(WELL_VIEW_KIND, makeWellView);
 }
 
-// Vite hoists the registry's eager glob imports above its const initialization. Complete the
-// import cycle before registering. A dynamic import waits for registry initialization even
-// under asynchronous module loaders. The flight view picks up newly registered views each frame.
-void registerWellView();
+// The shared registry is safe during eager plugin loading (integrator 1f0dfef).
+registerWellView();
