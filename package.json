@@ -18,7 +18,8 @@
     "typecheck": "tsc -b",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "check": "npm run typecheck && npm run lint && npm test"
+    "check": "npm run typecheck && npm run lint && npm test",
+    "harness": "node tools/harness/run.mjs"
   },
   "dependencies": {
     "react": "19.3.1",
