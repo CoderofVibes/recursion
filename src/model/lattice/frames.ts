@@ -1,134 +1,41 @@
 /**
  * The lattice's recorded channels as the model reads them (DECISIONS A16; 3C's handoff, R9).
  *
- * `lattice.angular-fragments.v2` frames arrive as ordinary `field-signal` measurements. Their
- * layout is 3C's (`src/ship/sensors/lattice-observations.ts`, `encodeLatticeFrame`); this module
- * decodes it with the same validation, so a malformed or unknown frame is rejected rather than
- * guessed at. The types mirror 3C's frame structurally; when its typed contracts land
- * (`src/contracts/lattice-acquisition.ts`, R15) they can replace these with no change here.
+ * `lattice.angular-fragments.v2` frames and `lattice.raw-tile.v1` tiles arrive as ordinary
+ * `field-signal` measurements. They are decoded with 3C's own decoders
+ * (`src/ship/sensors/lattice-observations.ts`, `lattice-diagnostic-observations.ts`, recorded data
+ * only), into 3C's typed contracts (`src/contracts/lattice-acquisition.ts`), so the model and the
+ * sensor share one definition of the wire format. A malformed or unknown frame is rejected,
+ * never guessed at.
  *
  * Recorded data only (P11): an angular frame carries anonymous image fragments in a measured
  * body-frame camera basis, never truth strands, layers, world coordinates or the true pose.
  */
 
-import type { AttemptRecord, Measurement, Vec3 } from '../../contracts/index.ts';
+import type {
+  AttemptRecord,
+  LatticeAngularFragment,
+  LatticeObservationFrame,
+  Measurement,
+} from '../../contracts/index.ts';
+import {
+  LATTICE_DIAGNOSTIC_CHANNEL,
+  decodeLatticeDiagnostic,
+} from '../../ship/sensors/lattice-diagnostic-observations.ts';
+import { LATTICE_CHANNEL, decodeLatticeFrame } from '../../ship/sensors/lattice-observations.ts';
 
-export const LATTICE_CHANNEL = 'lattice.angular-fragments.v2';
-export const LATTICE_TILE_CHANNEL = 'lattice.raw-tile.v1';
+export { LATTICE_CHANNEL, decodeLatticeFrame };
+export const LATTICE_TILE_CHANNEL = LATTICE_DIAGNOSTIC_CHANNEL;
 
-export interface AngularFragment {
-  /** Observation-local identity (`<frame id>:fragment:<i>`), never a truth strand. */
-  readonly id: string;
-  /** Gnomonic image slopes (right/forward, up/forward) in the recorded camera basis. */
-  readonly start: readonly [number, number];
-  readonly end: readonly [number, number];
-  readonly sigma: number;
-}
-
-export interface AngularFrame {
-  readonly version: 2;
-  /** `<field>:frame:<sequence>`. */
-  readonly id: string;
-  readonly field: string;
-  readonly sequence: number;
-  /** When the source rays were acquired: the pose that matters (3C). */
-  readonly acquisition: readonly [number, number];
-  /** When the processed product became available (`Measurement.t`). */
-  readonly availableAt: number;
-  readonly source: string;
-  readonly processorPower: number;
-  readonly cameraPower: number;
-  readonly effectiveRate: number;
-  readonly exposure: number;
-  /** Measured camera basis in the body frame; one error rotates every ray of the frame. */
-  readonly basis: { readonly forward: Vec3; readonly right: Vec3; readonly up: Vec3 };
-  /** One-σ of that common rotation, rad. */
-  readonly basisSigma: number;
-  readonly basisCorrelation: 'frame-common-rotation';
-  readonly coverage: {
-    readonly status: 'unresolved';
-    readonly halfAngle: number;
-    readonly rangeLimit: number;
-    readonly angularResolution: number;
-    readonly truncated: boolean;
-  };
-  readonly fragments: readonly AngularFragment[];
-}
-
-const vector = (a: readonly number[], i: number): Vec3 => ({
-  x: a[i]!,
-  y: a[i + 1]!,
-  z: a[i + 2]!,
-});
-
-/** Decode a v2 frame; undefined for anything else or anything malformed (never a guess). */
-export function decodeLatticeFrame(m: Measurement): AngularFrame | undefined {
-  if (m.kind !== 'field-signal' || m.channel !== LATTICE_CHANNEL || !m.field) return;
-  const a = m.value;
-  if (a.length < 23 || a[0] !== 2 || !a.every(Number.isFinite) || !Number.isFinite(m.t)) return;
-  const count = a[22]!;
-  if (
-    !Number.isInteger(count) ||
-    count < 0 ||
-    count > 128 ||
-    a.length !== 23 + count * 5 ||
-    !Number.isInteger(a[1]) ||
-    a[1]! < 0 ||
-    a[2]! > a[3]! ||
-    a[3]! > m.t ||
-    a[4]! < 0 ||
-    a[5]! < 0 ||
-    a[6]! <= 0 ||
-    a[7]! <= 0 ||
-    a[8]! <= 0 ||
-    a[8]! >= Math.PI / 2 ||
-    a[9]! <= 0 ||
-    a[10]! <= 0 ||
-    a[21]! <= 0
-  )
-    return;
-  const id = `${m.field}:frame:${a[1]}`;
-  const fragments: AngularFragment[] = [];
-  for (let i = 0; i < count; i++) {
-    const j = 23 + i * 5;
-    if (a[j + 4]! <= 0) return;
-    fragments.push({
-      id: `${id}:fragment:${i}`,
-      start: [a[j]!, a[j + 1]!],
-      end: [a[j + 2]!, a[j + 3]!],
-      sigma: a[j + 4]!,
-    });
-  }
-  return {
-    version: 2,
-    id,
-    field: m.field,
-    sequence: a[1]!,
-    source: m.source,
-    acquisition: [a[2]!, a[3]!],
-    availableAt: m.t,
-    processorPower: a[4]!,
-    cameraPower: a[5]!,
-    effectiveRate: a[6]!,
-    exposure: a[7]!,
-    basis: { forward: vector(a, 12), right: vector(a, 15), up: vector(a, 18) },
-    basisSigma: a[21]!,
-    basisCorrelation: 'frame-common-rotation',
-    coverage: {
-      status: 'unresolved',
-      halfAngle: a[8]!,
-      rangeLimit: a[9]!,
-      angularResolution: a[10]!,
-      truncated: a[11] !== 0,
-    },
-    fragments,
-  };
-}
+/** 3C's fragment and frame (`src/contracts/lattice-acquisition.ts`). */
+export type AngularFragment = LatticeAngularFragment;
+export type AngularFrame = LatticeObservationFrame;
 
 /**
  * An attempt's angular frames, decoded, in canonical acquisition order (end of the acquisition
- * interval, then field, then sequence), each with its measurement's place in the record. Only
- * frames available by `asOf` are returned: a product not yet delivered is not yet known.
+ * interval, then field, then sequence), each with its measurement's place in the record and its
+ * size as recorded. Only frames available by `asOf` are returned: a product not yet delivered
+ * is not yet known.
  */
 export function latticeFrames(
   rec: Pick<AttemptRecord, 'measurements'>,
@@ -149,7 +56,7 @@ export function latticeFrames(
   );
 }
 
-/** The parts of a raw diagnostic tile (3C's `lattice.raw-tile.v1`) a loss review needs. */
+/** The parts of a raw diagnostic tile a loss review needs. */
 export interface TileSummary {
   readonly id: string;
   readonly field: string;
@@ -160,28 +67,18 @@ export interface TileSummary {
 }
 
 /**
- * Read a raw tile's identity and times only. The tile is an 8×8 camera-local diagnostic image
- * (3C): it never becomes a point, a fit or a clear-space certificate here.
+ * A raw tile's identity, times and size, through 3C's decoder. The tile is an 8×8 camera-local
+ * diagnostic image (3C): it never becomes a point, a fit or a clear-space certificate here.
  */
 export function readTile(m: Measurement): TileSummary | undefined {
-  if (m.kind !== 'field-signal' || m.channel !== LATTICE_TILE_CHANNEL || !m.field) return;
-  const a = m.value;
-  if (
-    a.length !== 76 ||
-    a[0] !== 1 ||
-    !Number.isInteger(a[1]) ||
-    a[1]! < 0 ||
-    !Number.isFinite(a[2]) ||
-    a[2] !== a[3] ||
-    a[3]! > m.t
-  )
-    return;
+  const tile = decodeLatticeDiagnostic(m);
+  if (!tile) return;
   return {
-    id: `${m.field}:diagnostic:${a[1]}`,
-    field: m.field,
-    sequence: a[1]!,
-    acquisition: [a[2]!, a[3]!],
-    availableAt: m.t,
+    id: tile.id,
+    field: tile.field,
+    sequence: tile.sequence,
+    acquisition: tile.acquisition,
+    availableAt: tile.availableAt,
     bytes: new TextEncoder().encode(JSON.stringify(m)).length,
   };
 }

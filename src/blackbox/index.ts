@@ -59,3 +59,9 @@ export {
   type LatticeFunctionLog,
   type LatticeRetention,
 } from './lattice.ts';
+export {
+  equipmentTimeline,
+  failureOrder,
+  type EquipmentEntry,
+  type EquipmentTimeline,
+} from './condition.ts';
