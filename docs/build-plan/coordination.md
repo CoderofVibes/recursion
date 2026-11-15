@@ -4,15 +4,15 @@ The live state of the build between threads: who is running, who holds which sha
 
 **Integrator, after a compaction:** read this file first, then `git log --oneline -15`, then the handoffs of any thread marked running.
 
-**Last updated:** 2026-11-14, 2G's speed pass, 2F's checkpoint, S18 and S20 merged; 3A's gate open. Unannounced checkpoints sit on 2D, 2C and 3B; merge them when announced.
+**Last updated:** 2026-11-14, 2F's third checkpoint merged; 20 lattice fences and S18's answers recorded. Unannounced checkpoints sit on 2D, 2C and 3B; merge them when announced.
 
 ## Threads
 
 | Thread | Model | Worktree · branch | Status | Gate or next step | Last merged into main |
 |---|---|---|---|---|---|
 | 2D control room | Opus 5.5 | `.worktrees/2d` · `p2/2d-control-room` | Running: S9's requests, S15's console fixes, 2G's screen data, S8's displays, credits link | — | `c7e8568` (update 4) |
-| 2G speed pass | Opus 5.5 | `.worktrees/2g` · `p2/2g-3d-flight` | **Done**: ship step −61% coasting, −32% active; truth tick −31%/−15%; command tape identical over 30,000 ticks. Its handoff update is still uncommitted in its worktree | Commit the handoff update | `83704bc` |
-| 2F game loop | Opus 5.5 | `.worktrees/2f` · `p2/2f-game` | Running. Merged: commit keeps time running, rate-only release, `depart` (real assist, learning burns free), seed catalogue, encounter registry | Next: power death with S21's values (A18 (5)), the cloud crescent (R14), registry wiring for 3B/3C (R1), S8's vectors | `7b01be8` |
+| 2G speed pass | Opus 5.5 | `.worktrees/2g` · `p2/2g-3d-flight` | **Done** (`83704bc`). Finishing evidence: S15's CPU-profile phase, waiting for 2D's S15 run to free port 4175; then commits its handoff and `docs/engineering/s15-rank1/` | Commit the evidence | `83704bc` |
+| 2F game loop | Opus 5.5 | `.worktrees/2f` · `p2/2f-game` | Running. Merged: A18 (1), (3), (4), (5) with placeholder power values, (6); S8's 70 catalogue flights as tests; encounter registry | Next: S21's power values and the cloud crescent (R14); fields into the simulation via `truth-step.ts` (R1), power-loss check next to collision loss | `7036c60` |
 | 2C model and Black Box | Opus 5.5 | `.worktrees/2c` · `p2/2c-model` | Running: WIP committed, then redone on the 3D model; bodies' track uncertainty; A18 (1) with 2F | — | before 2G |
 | 3B Inverse Wells | GPT/Codex | `.worktrees/3b` · `p3/3b-wells` | Running: field mechanics first | Layout from S16; loading via R1 | — |
 | 3C Chain Link Fence | GPT/Codex (GPT-6 Astra), reassigned by the owner | `.worktrees/3c` · `p3/3c-lattice` | Running: field and exposure mechanics first | S17's numbers when they land (R8) | — |
@@ -53,7 +53,7 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 
 | ID | From → to | What | Status | Notes |
 |---|---|---|---|---|
-| R1 | 3B → 2F | Loading interface: `createInverseWells(seed, options)` returns `EncounterSetup` plus a field registry (`createFieldRegistry`); 2F wires it into `createTruthStepper`, loads via `?encounter=inverse-wells` with its own save slot, and adds a `reach-region` objective | **Agreed**: 2F's encounter registry and loader merged (`7b01be8`); the registry wiring is unblocked now that 2G has released `truth-step.ts` | 3C reuses it (`?encounter=chain-link`) |
+| R1 | 3B, 3C → 2F | Loading interface: one line per encounter in `src/game/encounters.ts`, loaded via `?encounter=<id>` with its own save slot; the setup takes `run` and returns an `EncounterSetup` with `fields`; exits use `reach-region`, with an optional speed limit and time window | **Confirmed by 2F**; fields reach the simulation once 2F wires `truth-step.ts`, which it now holds | |
 | R2 | 3E → integrator | `npm run harness` → `node tools/harness/run.mjs` | **Done** `5b94ed2` | |
 | R3 | 2F ↔ 2C | A18 (1): the forecast is computed from the moment of commitment while time keeps running | **Agreed** (both prompted) | Model side is 2C's; game side is 2F's |
 | R4 | 3B, 3C → 2D | Mount points for encounter UI in `src/console/encounters/` and `src/view3d/fields/` | **Open:** 2D told to expect it | |
@@ -63,7 +63,7 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 | R8 | S17 → 3C | First-contact numbers: dose, failure order, Black Box function cost, reconstruction | **Landed** `ba7568e`; relay with the owner's answers to S17's five questions | Also asks 3A (causal failures), 2C (reconstruction and retention), integrator (subtick acquisition schedule in `truth-step.ts`, contracts) |
 | R9 | 3C → 2C | The Black Box function in A16 (records sensors; FLIGHT shows the rebuilt lattice) | **Open:** 3C running | |
 | R10 | 3C ↔ 3A | Component faults from radiation: electrics and instruments (A16) | **Open:** 3C running; 3A gated | |
-| R11 | 2G → integrator | Release check from A18 (7): S15's browser script on the modest profile, after 2G's speed pass | **Open**: 2G measured per tick, not achieved warp in the browser | Rerun S15's script before the submission switch |
+| R11 | 2G → integrator | Release check from A18 (7): achieved warp on the modest profile | **Measured; the limit is frames, not the ship.** Each frame runs exactly 8 ticks (the 10 ms budget is checked every 8 ticks, and 8 ticks already exceed it), so achieved warp = 8 ÷ frame interval: 67–264 ship-s per wall-s at best, under S15's pre-3D 270–490. 2G's cut saves about 2.7 ms per frame. See R18 | Rebaseline on a quiet machine; a real-laptop check |
 
 | R12 | S22 → 3B | Wells as real funnels (A19), visible through the window: pull, reversal inside, crush at the throat; a big field through 3D at random orientations; wells that appear with a precursor; a reuse map | **Open:** S22 ready to launch | 3B keeps its reversal maths, registry and loading; generalises to an oriented funnel; adds the pull and the crush; doesn't tune a layout until S22 lands |
 
@@ -75,14 +75,15 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 | R16 | 3C → integrator | Land 2F's deterministic-clock fix so 3C's full check goes green | **Done** `7b01be8` | |
 | R17 | S20 → 2F, 2C | Expose believed departure/progress, keep command and forecast epochs while time runs, reconcile PLAN's 400 s default with the 480 s turn allowance; make the real-model loop test deterministic; investigate the populated-archive commit wait | **Open**: relay | |
 
+| R18 | Owner → 2F, 2D | Top warp on slow machines: 3D frames cap it near 70–260×, so the 64 h slingshot coast can take 15–60 minutes on a weak laptop | **Open: owner decision** | Options: a bigger simulation slice per frame at high warp, fewer frames drawn while coasting, the simulation in a worker |
+
 Add new rows at the bottom with the next ID. Never renumber.
 
 ## Owner decisions still open
 
 - **Submission:** the summary's opening and the demo format (S12, `docs/studies/s12/`). Taken at the submission switch.
 - **S9:** whether the five-minute target means insight plus a fresh observed forecast (recommended yes); whether to allow a shorter evidence opportunity if the UI fixes miss it (recommended yes). Show the 1–4 view shortcuts: folded into 2D's R1.
-- **S17 Q4:** the eight-fence reference lattice (fences 300 m apart, threaded at about 1.4 m/s, 125 kg RCS test budget). The owner asked what "eight layers" means; awaiting confirmation. S17's other four and S21's two are answered (A16, A18).
-- **S18 (tether):** accept the slower direction-changing manoeuvre as the gate pass; the 275 kg kit; three fixed-mass layouts; a jammed, damaged mast plus a lost kit as the abort's lasting damage. All recommended yes.
+- **R18, top warp on slow machines:** how to speed it up (see the requests table).
 - **S10:** keep the four reference pictures out of the release (recommended yes); confirm the live challenge listing and GMAT data eligibility (owner check).
 
 Decided: A15 (S11's queue), A16 (the lattice), A17 (the ending) and A18 (the Gravity range after 3D).
@@ -91,7 +92,9 @@ Decided: A15 (S11's queue), A16 (the lattice), A17 (the ending) and A18 (the Gra
 
 | Commit | What |
 |---|---|
-| (this commit) | A16 and A18 after S17 and S21; ledger; 3A's gate open |
+| (this commit) | A16: twenty fences; A15 after S18; ledger (R1 confirmed, R11 measured, R18) |
+| `7036c60` | 2F checkpoint: power death (placeholders), S8's flights as tests |
+| `50654b2` | A16 and A18 after S17 and S21; ledger; 3A's gate open |
 | `6267a53`, `32a8b67` | S20; S18 |
 | `7b01be8` | 2F checkpoint (A18 (1), (3), (4), (6); encounter registry) |
 | `83704bc` | 2G's speed pass |
