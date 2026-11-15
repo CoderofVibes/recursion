@@ -40,6 +40,8 @@ The owner wraps up every thread, then everything is committed and merged, the in
 
 **4. Then** the owner submits through the portal. The integrator doesn't submit or post anything.
 
+**The final thread's prompt:** `docs/build-plan/final-thread.md` (Claude, in the main checkout, taking over as integrator).
+
 ## Threads
 
 | Thread | Model | Worktree · branch | Status | Gate or next step | Last merged into main |
@@ -238,7 +240,8 @@ Decided: A15 (S11's queue), A16 (the lattice), A17 (the ending) and A18 (the Gra
 
 | Commit | What |
 |---|---|
-| (this commit) | AU's R62 merged (`3b08bc8`): the opening's black-cut at the picture's cut. Check 1,562 tests + speed test, build, production smoke |
+| (this commit) | The final thread's prompt (`final-thread.md`): the sounds, the public site, the video, the submission text |
+| `270b292` | AU's R62 merged (`3b08bc8`): the opening's black-cut at the picture's cut. Check 1,562 tests + speed test, build, production smoke |
 | `ef2fb15` | 3F merged (`64cabb2`). Check 1,561 tests + speed test, build, production smoke of the opening and all three regions, no page errors. 3F's own cold judge's run (on `5de7239`): Twin Deeps through ADOPT, the Garden completed with STEER, the Cathedral's loss review. Learning loop and S15 patch skipped for time |
 | `651ee00` | 2C merged (`881ffc6`): R61 (incremental rebuilds; the production check passes here at T+96 s) and R58. Check 1,396 tests + speed test, build, harness smoke, production smoke, Twin Deeps' learning loop (alone: TEST 1.03 against 1.12; ADOPT; a run alongside the Cathedral check failed at the script's fixed waits under load). R66 |
 | `d5c8cb6` | Ledger: the final assembly checklist |
