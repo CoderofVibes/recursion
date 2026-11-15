@@ -76,6 +76,8 @@ import {
   type TickResult,
 } from './truth-step.ts';
 import { buildWindowView } from './window.ts';
+import { powerAlerts, type PowerAlert } from './belief/power.ts';
+import { evaluatePower, initialPowerProgress, type PowerProgress } from './power.ts';
 
 export interface SessionOptions {
   readonly model: ModelPort;
@@ -163,6 +165,11 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
   let committing = 0;
   /** What the attitude controller was last told, from executed commands. */
   let attitudeMode: AttitudeMode = 'free';
+  /** TRUTH: how long life support has gone without power (A18 (5)). */
+  let power: PowerProgress = initialPowerProgress;
+  /** What the gauges warn about now, and when they were last read. */
+  let alerts: readonly PowerAlert[] = [];
+  const checkEvery = Math.max(1, Math.round(setup.play.power.checkEvery / stepper.dt));
   let outcome: AttemptOutcome = { kind: 'in-progress' };
   let queue: Scheduled[] = [];
   let planId: PlanId | undefined;
@@ -254,6 +261,8 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
     planId = undefined;
     flown = HANDS_ON_NEUTRAL;
     attitudeMode = 'free';
+    power = initialPowerProgress;
+    alerts = [];
     commanded = initialCommandedState;
     drawn = undefined;
     trail = [];
@@ -332,6 +341,23 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
     last = result;
     tick += 1;
 
+    // Running out of power (A18 (5)): judged on truth after the tick, like a collision.
+    const lostEvents: ShipEvent[] = [];
+    if (!truth.lost) {
+      const judged = evaluatePower(
+        power,
+        truth.sim.world.ship.systems,
+        definition.ship,
+        dt,
+        play.power.lossGrace,
+      );
+      power = judged.progress;
+      if (judged.lost) {
+        truth = { ...truth, lost: 'power' };
+        lostEvents.push({ kind: 'ship-lost', t: time(), cause: 'power' });
+      }
+    }
+
     for (const done of result.executed) {
       if (done.status === 'rejected') continue;
       commanded = applyCommanded(commanded, done.t, done.command);
@@ -340,12 +366,31 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
 
     const measurements = telemetry.filter(result.measurements);
     const executed = refused.length > 0 ? [...result.executed, ...refused] : result.executed;
-    const events = refusals.length > 0 ? [...refusals, ...result.events] : result.events;
+    const events =
+      refusals.length > 0 || lostEvents.length > 0
+        ? [...refusals, ...result.events, ...lostEvents]
+        : result.events;
     if (executed.length > 0 || measurements.length > 0 || events.length > 0)
       record({ attemptId, t, executed, measurements, events });
 
     if (tick % trailEvery === 0)
       trail.push({ t: time(), position: model.believedWorld(time()).ship.position });
+
+    // The gauges' cautions (belief only). A new one, or one that worsened, drops warp to 1×
+    // and ends the frame's run of ticks, so the player meets it in real time (A12).
+    if (tick % checkEvery === 0) {
+      const now = powerAlerts(
+        model.believedWorld(time()).ship,
+        definition.ship,
+        play.power.cautionLead,
+      );
+      const before = new Set(alerts.map((a) => `${a.id}:${a.level}`));
+      if (now.some((a) => !before.has(`${a.id}:${a.level}`)) && warp > 1) {
+        warp = 1;
+        debt = Math.min(debt, dt);
+      }
+      alerts = now;
+    }
 
     if (truth.lost) {
       const lost = result.events.find((e) => e.kind === 'ship-lost');
@@ -435,6 +480,7 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
         saturated,
         committing: committing > 0,
         attitude: attitudeMode,
+        alerts,
         outcome,
         ...(planId ? { planId } : {}),
         pending: queue.filter((item) => item.source === 'plan').length,

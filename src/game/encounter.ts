@@ -111,6 +111,16 @@ export interface PlayValues {
    * spans from the ship. Smaller ones are left out of `ViewSnapshot.window`. Bodies always show.
    */
   readonly windowMinAngularRadius: Radians;
+  /**
+   * Power (A18 (5)): a caution when the stored energy will run out within `cautionLead` at the
+   * present drain; loss when life support has gone `lossGrace` without power. Study S21 sets
+   * the values; how often the gauges are read for the caution is `checkEvery`.
+   */
+  readonly power: {
+    readonly cautionLead: Seconds;
+    readonly lossGrace: Seconds;
+    readonly checkEvery: Seconds;
+  };
 }
 
 export interface EncounterSetup {
@@ -152,4 +162,6 @@ export const DEFAULT_PLAY: PlayValues = {
   recorderRate: 0.05,
   forecastSpan: 16 * 3600,
   windowMinAngularRadius: 2e-4,
+  // [ASSUMED] until S21: six hours' warning, half an hour without life support.
+  power: { cautionLead: 6 * 3600, lossGrace: 1800, checkEvery: 60 },
 };
