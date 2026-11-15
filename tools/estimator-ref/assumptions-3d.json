@@ -1,0 +1,48 @@
+{
+  "version": 1,
+  "note": "Inputs the 3D reference adds to assumptions.json (spec revision 3, DECISIONS A11). They live in their own file because every planar vector records a hash of assumptions.json: adding anything there would change that hash and the nine planar files could no longer be reproduced byte for byte. The 3D vectors record both hashes. Everything not listed here (scale, sensors, priors, window rule, hedge, aging rates, validation, integrator) is read from assumptions.json unchanged. Edit here and run `python tools/estimator-ref/generate.py --3d`.",
+  "truthShip": {
+    "dP": 0.003,
+    "kR": 1.04,
+    "camBias": [1.5e-5, -1.0e-5, 2.0e-5],
+    "label": "ASSUMED",
+    "source": "Scenario truth. dP: 3 mrad thrust misalignment about body -y (toward +z). kR: RCS translation 4% over nominal. camBias: camera-to-star-tracker misalignment as a rotation vector in the body frame [x, y, z]; the z component equals the planar truthShip.camBias."
+  },
+  "priors": {
+    "dP": { "mean": 0.0, "sigma": 0.01, "note": "as dE" },
+    "kR": { "mean": 1.0, "sigma": 0.1, "note": "nominal jet ratings; small pulses repeat poorly" },
+    "camBiasXY": { "mean": 0.0, "sigma": 1.0e-4, "note": "as the planar camera bias, per component" },
+    "label": "ASSUMED"
+  },
+  "aging": {
+    "note": "Classes the 3D parameters add to assumptions.json `aging.classes` (spec 3.7). Not exercised by the 3D vectors; the arithmetic is the planar one.",
+    "classes": {
+      "engine.dP": { "sameAs": "engine.dE" },
+      "camera.bias.x": { "sameAs": "camera.bias" },
+      "camera.bias.y": { "sameAs": "camera.bias" },
+      "rcs.kR": { "sigmaPerRootDay": 0.005, "sigmaPerRootUse": 0.02, "useRef": 10.0, "useUnit": "m/s of commanded RCS delta-v", "sigmaPerCondition": 0.20, "equipment": "rcs" }
+    },
+    "label": "ASSUMED"
+  },
+  "rotationInvariance": {
+    "axis": [0.48, -0.6, 0.64],
+    "angle": 1.1,
+    "poleFix": 40,
+    "tolerance": {
+      "rotatedVsFlat": { "estimateOverSigma": 1.0e-3, "sigmaRelative": 1.0e-3, "chi2Relative": 1.0e-6 },
+      "flatVsPlanar": { "estimateOverSigma": 1.0e-3, "sigmaRelative": 1.0e-3, "chi2InPlaneRelative": 1.0e-4 }
+    },
+    "label": "ASSUMED",
+    "source": "A fixed rotation applied to a whole planar scenario (bodies, ship, attitude, measured directions). The pole case uses the smallest rotation that puts the line of sight of fix number `poleFix` exactly on the +z pole."
+  },
+  "seeds": {
+    "inclined-newton-recovers-gm": 3101,
+    "inv25-two-planes": 3201,
+    "inv25-exponent-planes": 3301,
+    "offplane-body-signature": 3401,
+    "thrust-3d-confounded": 3501,
+    "forecast-envelope-3d": 3701,
+    "carried-rule-other-plane": 3801,
+    "rotation-invariance": 3901
+  }
+}
