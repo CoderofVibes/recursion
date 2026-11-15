@@ -114,7 +114,7 @@ export function ControlRoom({ game, modelError, erase }: ControlRoomProps) {
   const dying = ui.loss !== null;
   // Finished attempts Black Box holds, counted only while the loss screen is up.
   const kept = dying
-    ? game.blackBox.archive().attempts.filter((a) => a.outcome.kind !== 'in-progress').length
+    ? desk.archive().attempts.filter((a) => a.outcome.kind !== 'in-progress').length
     : 0;
 
   return (

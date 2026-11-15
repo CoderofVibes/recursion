@@ -45,7 +45,7 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
   const bodies = snapshot.world.bodies;
   const primary = bodies[0]?.id ?? '';
   const ended = status.phase === 'ended';
-  const procedures = game.blackBox.archive().procedures;
+  const procedures = desk.archive().procedures;
   const draftState = desk.draftState();
 
   // Keyboard: a new row takes focus at its first field; a removed row hands it to the nearest
@@ -162,8 +162,9 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
   const last = shown?.samples.at(-1);
   const extrapolating = shown ? shown.samples.filter((s) => s.extrapolating).length : 0;
 
-  const record = game.blackBox.attempt(status.attemptId);
   const save = (): void => {
+    // Read only when asked: reading the record in progress copies all of it.
+    const record = game.blackBox.attempt(status.attemptId);
     if (!record) return;
     const id = `procedure-${Date.now().toString(36)}`;
     try {
@@ -177,6 +178,7 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
       });
       // Black Box keeps it with the records, across attempts and reloads (P9).
       game.blackBox.saveProcedure(procedure);
+      desk.archive(true);
       desk.say(`procedure saved: ${procedure.items.length} commands`);
     } catch (reason) {
       desk.say(`not saved · ${reason instanceof Error ? reason.message : String(reason)}`);
@@ -196,6 +198,7 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
   };
   const forget = (id: string): void => {
     game.blackBox.removeProcedure(id);
+    desk.archive(true);
     desk.say('procedure forgotten');
   };
 
@@ -471,7 +474,7 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
           );
         })}
         <Actions>
-          <Button tone="blackbox" onClick={save} disabled={!record}>
+          <Button tone="blackbox" onClick={save}>
             SAVE THIS ATTEMPT SO FAR
           </Button>
         </Actions>

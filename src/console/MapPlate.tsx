@@ -70,7 +70,7 @@ export function MapPlate({ desk, holo, region, onRegion, framing }: MapPlateProp
     );
   }
   if (id !== here) return null;
-  const facts = regionFacts(game, game.blackBox.archive(), desk.snapshot());
+  const facts = regionFacts(game, desk.archive(), desk.snapshot());
   return (
     <aside className="mp-plate">
       <Panel title={game.briefing.name} aside={region ? 'region view' : 'charted'}>

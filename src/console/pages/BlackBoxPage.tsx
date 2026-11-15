@@ -6,7 +6,8 @@
  * storage are shown where they can be seen changing.
  */
 import { useState } from 'react';
-import type { AttemptRecord } from '../../contracts/index.ts';
+import type { AttemptRecord, BlackBoxArchive } from '../../contracts/index.ts';
+import type { ModelReport } from '../../model/index.ts';
 import { compareAttempts } from '../../blackbox/index.ts';
 import {
   BlackBoxMark,
@@ -139,17 +140,76 @@ export function DebriefView({
   );
 }
 
+/**
+ * Worked out once per change of input, not once per refresh (S15): the console refreshes five
+ * times a second, and a debrief or comparison walks every measurement of the records. Inputs
+ * are compared by identity; the desk hands back the same archive objects between its reads.
+ */
+function memoLast<A extends readonly unknown[], R>(fn: (...args: A) => R): (...args: A) => R {
+  let last: { args: A; value: R } | undefined;
+  return (...args: A): R => {
+    if (last && args.every((v, i) => Object.is(v, last!.args[i]))) return last.value;
+    const value = fn(...args);
+    last = { args, value };
+    return value;
+  };
+}
+
+const sortedAttempts = memoLast((archive: BlackBoxArchive): AttemptRecord[] =>
+  [...archive.attempts].sort((a, b) => a.index - b.index),
+);
+
+const debriefFor = memoLast(
+  (
+    record: AttemptRecord,
+    archive: BlackBoxArchive,
+    attempts: readonly AttemptRecord[],
+    bodyKey: string,
+  ): Debrief => {
+    const bodies = bodyKey
+      .split('|')
+      .filter(Boolean)
+      .map((s) => {
+        const at = s.lastIndexOf(':');
+        return { id: s.slice(0, at), radius: Number(s.slice(at + 1)) };
+      });
+    return debrief(record, { ...archive, attempts }, bodies);
+  },
+);
+
+const comparisonFor = memoLast(compareAttempts);
+
+const measuredFor = memoLast((strength: ModelReport['strength'], attempt: string): MeasuredSpan[] =>
+  strength.flatMap((s) => {
+    const mine = s.points.filter((p) => p.attempt === attempt && p.converged);
+    if (mine.length === 0) return [];
+    const lo = Math.min(...mine.map((p) => p.rMin));
+    const hi = Math.max(...mine.map((p) => p.rMax));
+    const rel = mine.map((p) => p.scaleSigma / Math.max(1e-9, Math.abs(p.scale)));
+    const best = Math.min(...rel);
+    const worst = Math.max(...rel);
+    return [
+      {
+        body: s.body,
+        text:
+          `${dist(lo)} – ${dist(hi)} · ${mine.length} fit${mine.length === 1 ? '' : 's'} · ±` +
+          (worst - best < 0.005
+            ? `${fixed(best * 100, 1)}%`
+            : `${fixed(best * 100, 1)}–${fixed(worst * 100, 1)}%`),
+      },
+    ];
+  }),
+);
+
 export function BlackBoxPage({ desk }: { readonly desk: Desk }) {
   const { game } = desk;
   const status = game.status();
   const snapshot = desk.snapshot();
-  const archive = game.blackBox.archive();
-  const live = game.blackBox.attempt(status.attemptId);
-  // The archive holds finished attempts; the one in progress is read as it stands.
-  const attempts: AttemptRecord[] = [
-    ...archive.attempts.filter((a) => a.id !== status.attemptId),
-    ...(live ? [live] : []),
-  ].sort((a, b) => a.index - b.index);
+  // Every attempt, the one in progress as it stood at the desk's last read (S15: every two
+  // seconds while it runs, at once when it ends). The same objects come back between reads, so
+  // the debrief and the comparison below are worked out once per read, not once per refresh.
+  const archive = desk.archive();
+  const attempts = sortedAttempts(archive);
   const finished = attempts.filter((a) => a.outcome.kind !== 'in-progress');
   // A row chooses the debrief; A and B are chosen apart, in Compare (S9 R14).
   const [picked, setPicked] = useState<readonly [string, string]>(() =>
@@ -158,8 +218,8 @@ export function BlackBoxPage({ desk }: { readonly desk: Desk }) {
   const [focus, setFocus] = useState<string | undefined>(undefined);
   const focusId = focus ?? desk.debriefOf ?? finished.at(-1)?.id ?? attempts.at(-1)?.id;
   const focused = attempts.find((a) => a.id === focusId);
-  const bodies = snapshot.world.bodies.map((b) => ({ id: b.id, radius: b.radius }));
-  const report = focused ? debrief(focused, { ...archive, attempts }, bodies) : undefined;
+  const bodyKey = snapshot.world.bodies.map((b) => `${b.id}:${b.radius}`).join('|');
+  const report = focused ? debriefFor(focused, archive, attempts, bodyKey) : undefined;
   const choices = [
     { value: '', label: '—' },
     ...attempts.map((x) => ({ value: x.id, label: `ATTEMPT ${x.index} · ${outcomeText(x)}` })),
@@ -168,7 +228,7 @@ export function BlackBoxPage({ desk }: { readonly desk: Desk }) {
   const a = attempts.find((x) => x.id === picked[0]);
   const b = attempts.find((x) => x.id === picked[1]);
   desk.refreshReport();
-  const comparison = a && b ? compareAttempts(a, b, desk.report ?? null) : undefined;
+  const comparison = a && b ? comparisonFor(a, b, desk.report ?? null) : undefined;
   const changed = comparison
     ? comparison.executed
         .filter((d) =>
@@ -183,28 +243,9 @@ export function BlackBoxPage({ desk }: { readonly desk: Desk }) {
     desk.compare !== undefined && a && b && desk.compare[0] === a.id && desk.compare[1] === b.id;
 
   // The distances this attempt measured the pull at, with their uncertainty (S9 R6).
+  const strength = desk.report?.strength;
   const measured: MeasuredSpan[] | undefined =
-    desk.report && focused
-      ? desk.report.strength.flatMap((s) => {
-          const mine = s.points.filter((p) => p.attempt === focused.id && p.converged);
-          if (mine.length === 0) return [];
-          const lo = Math.min(...mine.map((p) => p.rMin));
-          const hi = Math.max(...mine.map((p) => p.rMax));
-          const rel = mine.map((p) => p.scaleSigma / Math.max(1e-9, Math.abs(p.scale)));
-          const best = Math.min(...rel);
-          const worst = Math.max(...rel);
-          return [
-            {
-              body: s.body,
-              text:
-                `${dist(lo)} – ${dist(hi)} · ${mine.length} fit${mine.length === 1 ? '' : 's'} · ±` +
-                (worst - best < 0.005
-                  ? `${fixed(best * 100, 1)}%`
-                  : `${fixed(best * 100, 1)}–${fixed(worst * 100, 1)}%`),
-            },
-          ];
-        })
-      : undefined;
+    strength && focused ? measuredFor(strength, focused.id) : undefined;
 
   const rec = recorder(
     snapshot.world.ship,

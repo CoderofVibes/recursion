@@ -85,7 +85,7 @@ export function ModelPage({ desk }: { readonly desk: Desk }) {
   const model: ModelState = game.model.state();
   const snapshot = desk.snapshot();
   const status = game.status();
-  const archive = game.blackBox.archive();
+  const archive = desk.archive();
   const finished = archive.attempts.filter((a) => a.outcome.kind !== 'in-progress');
   const held = finished.some((a) => a.id === heldOut) ? heldOut : (finished.at(-1)?.id ?? '');
   desk.refreshReport();

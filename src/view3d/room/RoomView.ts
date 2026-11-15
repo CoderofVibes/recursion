@@ -35,6 +35,7 @@ import {
   colour,
   hex,
   holoWire,
+  hudMotion,
   lossSequence,
   roomBloom,
   roomMotion,
@@ -71,6 +72,9 @@ export interface RoomEvents {
   /** Black Box's recorder was opened from the room. */
   blackBox(): void;
 }
+
+/** Seconds after the console view arrives before its screen is fully up and opaque. */
+const SCREEN_SETTLED = hudMotion.screenIn / 1000 + 0.25;
 
 /** What the room draws this frame. */
 export interface RoomFrame extends FlightFrame {
@@ -134,6 +138,12 @@ export class RoomView {
   private time = 0;
   private width = 0;
   private height = 0;
+  /** The canvas's size as last observed; read here, never from layout during a frame (S15). */
+  private observed = { w: 0, h: 0 };
+  /** Real seconds the console view has been settled (arrived, its screen fully up). */
+  private consoleFor = 0;
+  /** The chart the map was last given: rebuilt only when the loop hands over a new one. */
+  private lastChart: RoomFrame['chart'] | null = null;
   private readonly cleanup: (() => void)[] = [];
   private readonly canvas: HTMLCanvasElement;
   private readonly events: RoomEvents;
@@ -209,6 +219,17 @@ export class RoomView {
     };
 
     this.bind();
+    // The canvas's size, from an observer: reading clientWidth every frame forced a layout of
+    // the whole page (the console included) inside the frame (S15).
+    this.observed = { w: canvas.clientWidth, h: canvas.clientHeight };
+    if (typeof ResizeObserver !== 'undefined') {
+      const watch = new ResizeObserver((entries) => {
+        const box = entries[0]?.contentRect;
+        if (box) this.observed = { w: Math.round(box.width), h: Math.round(box.height) };
+      });
+      watch.observe(canvas);
+      this.cleanup.push(() => watch.disconnect());
+    }
     this.resize();
     const pose = this.poseOf('room');
     this.camera.position.copy(pose.pos);
@@ -315,8 +336,17 @@ export class RoomView {
     const { camera, cur } = this;
     const mode = this.current;
 
+    // Settled at the console: its opaque screen covers the whole view, so nothing behind it is
+    // drawn (S15). The game, the recorder and alerts run on in the loop regardless; any
+    // transition, a loss, or a view change brings the room back on its first frame.
+    this.consoleFor = mode === 'console' && !this.trans && !this.death ? this.consoleFor + dt : 0;
+    if (this.consoleFor > SCREEN_SETTLED) return;
+
     this.outside.update(data.snapshot);
-    this.map.setChart(data.chart);
+    if (data.chart !== this.lastChart) {
+      this.lastChart = data.chart;
+      this.map.setChart(data.chart);
+    }
     // The drawing follows the ship as it reports itself: wings out when they are out.
     this.ship.setConfig(data.snapshot.world.ship.configuration);
 
@@ -565,8 +595,7 @@ export class RoomView {
   }
 
   private resize(): void {
-    const w = this.canvas.clientWidth;
-    const h = this.canvas.clientHeight;
+    const { w, h } = this.observed;
     if (w === this.width && h === this.height) return;
     this.width = w;
     this.height = h;

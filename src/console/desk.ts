@@ -7,7 +7,12 @@
  * Belief side (P11): it sees the game only through `GameControls`.
  */
 import { useSyncExternalStore } from 'react';
-import type { AttemptId, ForecastDraft, ViewSnapshot } from '../contracts/index.ts';
+import type {
+  AttemptId,
+  BlackBoxArchive,
+  ForecastDraft,
+  ViewSnapshot,
+} from '../contracts/index.ts';
 import type { GameControls, PlanDraft } from '../game/belief/controls.ts';
 import type { ExtensionRecord, ModelReport } from '../model/index.ts';
 import { distance, length } from '../view3d/adapter.ts';
@@ -51,6 +56,9 @@ export const EMPTY_PLAN: PlanEdit = { burns: [], points: [] };
 
 /** Where the draft stands: nothing yet, edited, shown in a preview, or committed as it is. */
 export type DraftState = 'empty' | 'edited' | 'previewed' | 'committed';
+
+/** Real milliseconds the console keeps one read of Black Box's archive while an attempt runs. */
+const ARCHIVE_PERIOD = 2000;
 
 /** Readings kept for trend graphs: a short ring of samples per channel. */
 const HISTORY = 160;
@@ -100,6 +108,7 @@ export class Desk {
 
   /** The snapshot the frame loop took this frame (`snapshot()`). */
   private frameSnapshot: ViewSnapshot | undefined;
+  private archived: { key: string; at: number; value: BlackBoxArchive } | undefined;
   /** Bumped by every edit of the plan; a preview or commit remembers the edit it was made from. */
   private edits = 0;
   private previewedEdit = -1;
@@ -146,6 +155,22 @@ export class Desk {
   /** The frame loop hands over each frame's snapshot. */
   setFrame(snapshot: ViewSnapshot): void {
     this.frameSnapshot = snapshot;
+  }
+
+  /**
+   * Black Box's archive for the console, read at most every ARCHIVE_PERIOD while an attempt runs
+   * (S15: reading it copies the whole record in progress). A new attempt, a change of phase or
+   * `fresh` (after saving a procedure) reads it at once; the same objects come back in between,
+   * so pages can memoize on them.
+   */
+  archive(fresh = false): BlackBoxArchive {
+    const s = this.game.status();
+    const key = `${s.attemptId}|${s.phase}`;
+    const now = performance.now();
+    const c = this.archived;
+    if (fresh || !c || c.key !== key || now - c.at > ARCHIVE_PERIOD)
+      this.archived = { key, at: now, value: this.game.blackBox.archive() };
+    return this.archived!.value;
   }
 
   setPage(page: PageId): void {
