@@ -14,6 +14,13 @@ import { stepLatticeAcquisition } from './lattice.ts';
 import { latticeDiagnosticSchedule, stepLatticeDiagnostic } from './lattice-diagnostic.ts';
 import { functionAvailable } from '../condition/index.ts';
 import { functionalPower } from './functional-power.ts';
+import {
+  advanceRadiationMonitor,
+  radiationMonitorDue,
+  recordRadiationMonitor,
+} from './radiation.ts';
+import { RADIATION_MONITOR } from './radiation-spec.ts';
+import { isWellsSensorScene, stepWellAcquisition, WELL_CAMERA_STREAM } from './wells.ts';
 
 type Sensing = typeof baseline.sensing;
 type Recorder = typeof baseline.recorder;
@@ -36,6 +43,8 @@ interface SensorMemory {
   /** Recorder dictionary state: repeated telemetry uses a channel reference, not another payload. */
   readonly packetValues?: Readonly<Record<string, readonly number[]>>;
   readonly nextPhysicalPacketAt?: number;
+  /** Alternate first claim on real spare packets when both optical products are active. */
+  readonly nextOpticalProduct?: 'lattice' | 'wells';
 }
 
 const clamp = (n: number, low: number, high: number) => Math.min(high, Math.max(low, n));
@@ -99,6 +108,10 @@ export function sensorStreamNames(definition: ShipDefinition): string[] {
   return [
     ...instruments.map((e) => `sensors.${e.id}`),
     ...instruments.map((e) => outOfPlaneStream(e.id)),
+    ...(instruments.some((e) => e.id === 'camera') ? [WELL_CAMERA_STREAM] : []),
+    ...(definition.equipment.some((e) => e.id === RADIATION_MONITOR.host)
+      ? [RADIATION_MONITOR.stream]
+      : []),
   ];
 }
 
@@ -199,6 +212,7 @@ export function stepSensors(
   env: EnvironmentEffects,
   dt: number,
 ): { state: ShipSystemsState; measurements: Measurement[]; events: ShipEvent[] } {
+  state = advanceRadiationMonitor(state, definition, env, dt);
   const sensing = sensingOf(definition);
   const recorder = recorderOf(definition);
   const memory = (state.ext?.sensors as unknown as SensorMemory | undefined) ?? {};
@@ -225,8 +239,16 @@ export function stepSensors(
   const diagnostic = latticeAvailable
     ? latticeDiagnosticSchedule(state, definition, env)
     : { due: false, rate: 0 };
+  const wellsAvailable =
+    Object.values(env.fieldSignals).some(isWellsSensorScene) || state.ext?.wellCamera !== undefined;
+  const monitorDue = radiationMonitorDue(state, env.t);
+  const packetClock =
+    latticeAvailable ||
+    wellsAvailable ||
+    state.ext?.radiationMonitor !== undefined ||
+    memory.nextPhysicalPacketAt !== undefined;
   const physicalPacketReady =
-    !latticeAvailable || env.t + 1e-10 >= (memory.nextPhysicalPacketAt ?? env.t);
+    !packetClock || env.t + 1e-10 >= (memory.nextPhysicalPacketAt ?? env.t);
   const scienceCapacity = Math.max(0, state.recorder.capacity - recorder.reservedEventCapacity);
   const capacityAvailable = state.recorder.bytesUsed + recorder.bytesPerSample <= scienceCapacity;
   const capacityWarning = !capacityAvailable;
@@ -267,7 +289,9 @@ export function stepSensors(
   const packetDue =
     capacityAvailable &&
     physicalPacketReady &&
-    (due || (diagnostic.due && physicalRate >= diagnostic.rate));
+    (due ||
+      (diagnostic.due && physicalRate >= diagnostic.rate) ||
+      (monitorDue && state.recorder.sampleRate > 0 && physicalRate > 0));
   const attitude = env.kinematics.attitude;
   /** Body rates (what the gyros sense) and the same angular velocity in the inertial frame. */
   const bodyRate = env.kinematics.angularVelocity;
@@ -502,7 +526,7 @@ export function stepSensors(
     telemetry(recorder.equipmentId, 'sample-rate', Math.min(rate, 1 / dt));
   }
 
-  const packetValues = latticeAvailable ? { ...memory.packetValues } : undefined;
+  const packetValues = packetClock ? { ...memory.packetValues } : undefined;
   let ordinaryBytes = 64;
   if (packetValues)
     for (const m of measurements) {
@@ -518,6 +542,18 @@ export function stepSensors(
         : 8 + 8 * m.value.length + (m.sigma.some((s) => s !== 0) ? 8 * m.sigma.length : 0);
       packetValues[key] = payload;
     }
+  if (
+    packetDue &&
+    monitorDue &&
+    ordinaryBytes + RADIATION_MONITOR.bytesPerReading <= recorder.bytesPerSample
+  ) {
+    const monitor = recordRadiationMonitor(state, env.t);
+    state = monitor.state;
+    // Preserve the ordinary instruments' draws already made this step.
+    rng[RADIATION_MONITOR.stream] = monitor.state.rng[RADIATION_MONITOR.stream]!;
+    measurements.push(...monitor.measurements);
+    ordinaryBytes += RADIATION_MONITOR.bytesPerReading;
+  }
   const ordinaryState: ShipSystemsState = {
     ...state,
     equipment,
@@ -534,8 +570,18 @@ export function stepSensors(
           : (memory.nextRecorderAt ?? env.t),
         nextSampleAt,
         capacityWarning,
+        ...((latticeAvailable && wellsAvailable) || memory.nextOpticalProduct
+          ? {
+              nextOpticalProduct:
+                packetDue && latticeAvailable && wellsAvailable
+                  ? memory.nextOpticalProduct === 'wells'
+                    ? 'lattice'
+                    : 'wells'
+                  : (memory.nextOpticalProduct ?? 'lattice'),
+            }
+          : {}),
         ...(packetValues ? { packetValues } : {}),
-        ...(latticeAvailable
+        ...(packetClock
           ? {
               nextPhysicalPacketAt: packetDue
                 ? env.t + 1 / physicalRate
@@ -552,19 +598,26 @@ export function stepSensors(
     latticeAvailable && packetDue
       ? stepLatticeDiagnostic(ordinaryState, definition, env, spareBytes)
       : { state: ordinaryState, measurements: [], bytes: 0 };
-  const lattice = latticeAvailable
-    ? stepLatticeAcquisition(
-        tile.state,
-        definition,
-        env,
-        dt,
-        Math.max(0, spareBytes - tile.bytes),
-        rate,
-      )
-    : { state: tile.state, measurements: [] };
+  let acquired = tile.state;
+  let remaining = Math.max(0, spareBytes - tile.bytes);
+  const products: Measurement[] = [];
+  const order =
+    memory.nextOpticalProduct === 'wells'
+      ? (['wells', 'lattice'] as const)
+      : (['lattice', 'wells'] as const);
+  for (const channel of order) {
+    if (channel === 'lattice' ? !latticeAvailable : !wellsAvailable) continue;
+    const acquire = channel === 'lattice' ? stepLatticeAcquisition : stepWellAcquisition;
+    const result = acquire(acquired, definition, env, dt, remaining, rate);
+    if (!Number.isSafeInteger(result.bytes) || result.bytes < 0 || result.bytes > remaining)
+      throw new Error('Optical product exceeded its actual recorder packet budget');
+    remaining -= result.bytes;
+    acquired = result.state;
+    products.push(...result.measurements);
+  }
   return {
-    state: lattice.state,
-    measurements: [...measurements, ...tile.measurements, ...lattice.measurements],
+    state: acquired,
+    measurements: [...measurements, ...tile.measurements, ...products],
     events,
   };
 }
