@@ -23,6 +23,7 @@ Earlier catalogue: **Earth Arrival**. **Rewritten by the integrator on 2026-11-1
 - **Mid-crossing:** while the ship straddles the opening, each part feels its own side's law. The far side is Newtonian (A15 Q26). A loaded rim contact is still a loss (Q27), and that loss is real.
 - **The moment:** the instant the whole ship is through, the loss sequence starts. It must look and sound exactly like a real loss up to the black, because the twist is that it isn't one.
 - **The reveal:** the control room loads as after every recurrence, the same room in the same lighting. Through the window, beneath familiar stars, is Earth. Earth's size and look are fixed, never drawn from a run seed.
+- **The last moment (owner):** the player has control. They walk up to the console and see Earth in the distance, just as they saw it at the very beginning, before the ship was pulled into the black hole (A21). The ending mirrors the opening.
 
 ## 3. What's true underneath
 
@@ -33,8 +34,8 @@ Earlier catalogue: **Earth Arrival**. **Rewritten by the integrator on 2026-11-1
 
 ## 4. Open details for the owner
 
-- After the reveal, can the player walk the room and look out, or is it a closing shot?
-- Does anything follow (a debrief of the run, credits), or does the game rest on the window?
+- Answered: the player walks the room to the console and sees Earth in the distance, mirroring the opening (A17, A21).
+- Does anything follow (a debrief of the run, credits), or does the game rest on that view?
 - Sound: whether the familiar loss audio cuts to silence, or to something new, at the reveal (4E, audio).
 
 ## 5. Implementation and verification record
