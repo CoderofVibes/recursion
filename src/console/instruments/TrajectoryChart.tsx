@@ -63,6 +63,13 @@ export interface TrajectoryChartProps {
   readonly trail?: readonly P2[];
   /** An earlier attempt's measured path, kept by Black Box. */
   readonly previousTrail?: readonly P2[];
+  /**
+   * Indices into `trail` where a new stroke starts: a stretch with nothing measured is left
+   * undrawn (missing, not joined up).
+   */
+  readonly trailBreaks?: readonly number[];
+  /** The same for `previousTrail`. */
+  readonly previousBreaks?: readonly number[];
   readonly marks?: readonly ChartMark[];
   readonly cursor?: ChartCursor;
   /** Half-width of the view about the cursor, m. Absent: the whole picture is fitted. */
@@ -92,6 +99,8 @@ export function TrajectoryChart({
   earlier = [],
   trail = [],
   previousTrail = [],
+  trailBreaks = [],
+  previousBreaks = [],
   marks = [],
   cursor,
   follow,
@@ -108,6 +117,7 @@ export function TrajectoryChart({
     ...earlier.map((p): P2 => [p.x, p.y]),
     ...trail,
     ...previousTrail,
+    ...rocks,
   ];
   const box: Bounds =
     follow !== undefined && cursor
@@ -119,8 +129,12 @@ export function TrajectoryChart({
   const cy = (box.y0 + box.y1) / 2;
   const sx = (x: number): number => width / 2 + (x - cx) * scale;
   const sy = (y: number): number => height / 2 - (y - cy) * scale;
-  const line = (points: readonly P2[]): string =>
-    points.map(([x, y], i) => `${i ? 'L' : 'M'}${sx(x).toFixed(1)} ${sy(y).toFixed(1)}`).join('');
+  const line = (points: readonly P2[], breaks?: ReadonlySet<number>): string =>
+    points
+      .map(
+        ([x, y], i) => `${i && !breaks?.has(i) ? 'L' : 'M'}${sx(x).toFixed(1)} ${sy(y).toFixed(1)}`,
+      )
+      .join('');
   const closed = (points: readonly P2[]): string => (points.length ? `${line(points)}Z` : '');
   const path = (points: readonly PathPoint[]): string => line(points.map((p): P2 => [p.x, p.y]));
 
@@ -204,7 +218,11 @@ export function TrajectoryChart({
         ) : null}
 
         {previousTrail.length > 1 ? (
-          <path className="ci-chart__trail" data-previous="" d={line(previousTrail)} />
+          <path
+            className="ci-chart__trail"
+            data-previous=""
+            d={line(previousTrail, new Set(previousBreaks))}
+          />
         ) : null}
         {earlier.length > 1 ? <path className="ci-chart__earlier" d={path(earlier)} /> : null}
 
@@ -222,7 +240,9 @@ export function TrajectoryChart({
           </g>
         ))}
         {forecast.length > 1 ? <path className="ci-chart__forecast" d={path(forecast)} /> : null}
-        {trail.length > 1 ? <path className="ci-chart__trail" d={line(trail)} /> : null}
+        {trail.length > 1 ? (
+          <path className="ci-chart__trail" d={line(trail, new Set(trailBreaks))} />
+        ) : null}
 
         {bodies.map((b) => (
           <g key={b.id}>
@@ -256,7 +276,13 @@ export function TrajectoryChart({
             ) : (
               <circle cx={sx(m.x)} cy={sy(m.y)} r="3.5" />
             )}
-            <text x={sx(m.x) + 9} y={sy(m.y) + 3}>
+            {/* Beside its mark, on the side with room; where the flight left the forecast, and
+                where it has got to, are set above, clear of the forecast's own end. */}
+            <text
+              x={sx(m.x) + (sx(m.x) > width * 0.7 ? -9 : 9)}
+              y={sy(m.y) + (m.kind === 'left' || m.kind === 'now' ? -8 : 3)}
+              textAnchor={sx(m.x) > width * 0.7 ? 'end' : 'start'}
+            >
               {m.label}
             </text>
           </g>

@@ -253,6 +253,7 @@ export function ControlRoom({ game, modelError, erase }: ControlRoomProps) {
         desk={desk}
         visible={ui.mode === 'console' && ui.consoleUp && !dying}
         onBack={() => room?.back()}
+        onFlight={() => room?.go('flight')}
         footerExtra={soundSwitch('cs-foot__back')}
       />
 

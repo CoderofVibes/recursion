@@ -20,9 +20,15 @@ import { dist, fixed } from './format.ts';
 import { StepBar } from './instruments/StepBar.tsx';
 import { UncertaintyPanel } from './instruments/UncertaintyPanel.tsx';
 
+/** How much of the nearest body's radius the view reaches into it when it follows the ship. */
+export const FOLLOW_INTO_BODY = 0.5;
+/** Room left around that, as a factor. */
+export const FOLLOW_MARGIN = 1.15;
+
 /**
- * The range that frames a step when the view follows the ship: wide enough to hold the nearest
- * body whole, so the pass is seen against what it passes.
+ * The range that frames a step when the view follows the ship: out to the nearest body's
+ * surface and half a radius into it, so the body is large beside the ship, with only its near
+ * side in view (the owner: the planet should be big on the screen; part of it will do).
  */
 export function followRange(
   ship: Pick<ShipAt, 'ranges'>,
@@ -30,8 +36,11 @@ export function followRange(
 ): number {
   let nearest = Infinity;
   for (const r of ship.ranges)
-    nearest = Math.min(nearest, r.clearance + 2 * (radii.get(r.id) ?? 0));
-  return Number.isFinite(nearest) ? Math.max(nearest, 1) * 1.25 : 0;
+    nearest = Math.min(
+      nearest,
+      Math.max(r.clearance, 0) + FOLLOW_INTO_BODY * (radii.get(r.id) ?? 0),
+    );
+  return Number.isFinite(nearest) ? Math.max(nearest, 1) * FOLLOW_MARGIN : 0;
 }
 
 /** The range that holds a whole forecast from where the ship is now. */

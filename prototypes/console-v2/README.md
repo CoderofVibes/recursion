@@ -15,7 +15,7 @@ the real ship, model and Black Box:
 - the same 16 m/s plan forecast with the law (it reaches 125 km ±13 km at T+05:49);
 - the ship's definition and its telemetry in flight.
 
-The mockups read it at `/src/theme/lab/console-v2.html` (`npm run dev`).
+The layout mockups that read it (`src/theme/lab/console-v2.*`) were removed once the owner chose layout A and the console was rebuilt on the same instruments; they are in the history at `4c26e44`, and their screenshots are in `docs/handoffs/3f/layouts/`.
 
 ## Recording it again
 

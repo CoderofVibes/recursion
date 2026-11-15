@@ -34,6 +34,7 @@ export function LoopRail({ stages, current, onGo, label = 'The loop' }: LoopRail
           data-tone={s.tone}
           data-on={s.id === current ? '' : undefined}
           aria-current={s.id === current ? 'step' : undefined}
+          aria-label={`${s.label}: ${s.status}`}
           onClick={() => onGo(s.id)}
         >
           <span className="ci-rail__n">{i + 1}</span>

@@ -30,13 +30,43 @@ export interface StrengthPlotProps {
   readonly validated?: readonly { readonly rMin: number; readonly rMax: number }[];
   /** Distances the forecast flight visits: [nearest, farthest]. */
   readonly visits?: readonly [number, number];
+  /**
+   * The slope of strength against distance the model's report gives (d ln strength / d ln
+   * distance): drawn as the trend through the points, so a law that does not hold shows as a
+   * line leaving ×1.
+   */
+  readonly slope?: number;
+}
+
+/**
+ * The trend of measured strength against distance: a power of distance with the reported slope,
+ * through the points' weighted centre (in logs, weighted by 1/σ²). Undefined with no points.
+ */
+export function strengthTrend(
+  points: readonly Pick<StrengthDot, 'distance' | 'scale' | 'sigma'>[],
+  slope: number,
+): ((distance: number) => number) | undefined {
+  let w = 0;
+  let lnD = 0;
+  let lnS = 0;
+  for (const p of points) {
+    if (!(p.scale > 0) || !(p.distance > 0)) continue;
+    const weight = 1 / Math.max(1e-12, (p.sigma / p.scale) ** 2);
+    w += weight;
+    lnD += weight * Math.log(p.distance);
+    lnS += weight * Math.log(p.scale);
+  }
+  if (!(w > 0)) return undefined;
+  const d0 = lnD / w;
+  const s0 = lnS / w;
+  return (distance) => Math.exp(s0 + slope * (Math.log(distance) - d0));
 }
 
 const W = 320;
 const H = 150;
 const PAD = { l: 34, r: 8, t: 8, b: 26 };
 
-export function StrengthPlot({ label, points, validated = [], visits }: StrengthPlotProps) {
+export function StrengthPlot({ label, points, validated = [], visits, slope }: StrengthPlotProps) {
   const distances = [
     ...points.map((p) => p.distance),
     ...validated.flatMap((v) => [v.rMin, v.rMax]),
@@ -59,6 +89,19 @@ export function StrengthPlot({ label, points, validated = [], visits }: Strength
   const ly = (s: number): number =>
     PAD.t + (1 - (s - s0) / Math.max(1e-9, s1 - s0)) * (H - PAD.t - PAD.b);
   const ticks = [d0, Math.sqrt(d0 * d1), d1];
+  // The trend, across the distances that were measured (it says nothing beyond them).
+  const trend = slope !== undefined && points.length > 1 ? strengthTrend(points, slope) : undefined;
+  const reach = points.map((p) => p.distance);
+  const from = Math.min(...reach);
+  const to = Math.max(...reach);
+  const trendPath =
+    trend && to > from
+      ? Array.from({ length: 25 }, (_, i) => {
+          const d = Math.exp(Math.log(from) + (i / 24) * (Math.log(to) - Math.log(from)));
+          const s = Math.min(s1, Math.max(s0, trend(d)));
+          return `${i ? 'L' : 'M'}${lx(d).toFixed(1)} ${ly(s).toFixed(1)}`;
+        }).join('')
+      : undefined;
   const bandY = H - PAD.b + 5;
 
   return (
@@ -76,11 +119,18 @@ export function StrengthPlot({ label, points, validated = [], visits }: Strength
       <text className="cs-plot__tick" x={PAD.l - 4} y={ly(s0)} textAnchor="end">
         ×{s0.toFixed(2)}
       </text>
-      {ticks.map((d) => (
-        <text key={d} className="cs-plot__tick" x={lx(d)} y={H - 2} textAnchor="middle">
+      {ticks.map((d, i) => (
+        <text
+          key={d}
+          className="cs-plot__tick"
+          x={lx(d)}
+          y={H - 2}
+          textAnchor={i === 0 ? 'start' : i === ticks.length - 1 ? 'end' : 'middle'}
+        >
           {whole(d / 1000)} km
         </text>
       ))}
+      {trendPath ? <path className="cs-plot__trend" d={trendPath} /> : null}
       {validated.map((v, i) => (
         <line
           key={`v${i}`}

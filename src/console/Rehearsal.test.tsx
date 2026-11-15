@@ -35,7 +35,7 @@ function game(snapshot: ViewSnapshot = viewSnapshot): GameControls {
 }
 
 describe('framing a step', () => {
-  it('holds the nearest body whole when the view follows the ship', () => {
+  it('brings the nearest body up large when the view follows the ship', () => {
     const radii = new Map([
       ['alpha', 250_000],
       ['beta', 160_000],
@@ -44,8 +44,20 @@ describe('framing a step', () => {
       { id: 'alpha', name: 'Alpha', clearance: 125_000, sigma: 12_000 },
       { id: 'beta', name: 'Beta', clearance: 3_400_000, sigma: null },
     ];
-    // Alpha is nearest: its far side is 125 + 500 km from the ship, and a margin beyond.
-    expect(followRange({ ranges }, radii)).toBeCloseTo(625_000 * 1.25, 6);
+    // Alpha is nearest: the view reaches its surface, 125 km off, and half its radius into
+    // it, with a margin; so the body is large and only its near side shows.
+    const range = followRange({ ranges }, radii);
+    expect(range).toBeCloseTo((125_000 + 0.5 * 250_000) * 1.15, 6);
+    // Its surface is in view; its centre and far side are not.
+    expect(range).toBeGreaterThan(125_000);
+    expect(range).toBeLessThan(125_000 + 250_000);
+    // A ship inside a body (a bad forecast) still gets a view, never a negative one.
+    expect(
+      followRange(
+        { ranges: [{ id: 'alpha', name: 'Alpha', clearance: -5_000, sigma: null }] },
+        radii,
+      ),
+    ).toBeCloseTo(0.5 * 250_000 * 1.15, 6);
     // Nothing to frame against is no range at all.
     expect(followRange({ ranges: [] }, radii)).toBe(0);
   });

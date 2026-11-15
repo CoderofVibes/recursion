@@ -554,3 +554,334 @@ svg.cs-plot {
   border: var(--rx-line-rule) solid var(--rx-ink-dim);
   border-radius: 50%;
 }
+
+/* ---- Pages built around one instrument (A26) --------------------------------------------------- */
+/* The page fills the screen: its lead instrument holds its place, the columns beside it scroll. */
+.cp-grid {
+  display: grid;
+  gap: var(--rx-gap);
+  height: 100%;
+  min-height: 0;
+  align-items: start;
+}
+.cp-grid > * {
+  min-width: 0;
+}
+.cp-grid[data-cols='chart-two'] {
+  grid-template-columns: minmax(0, 1fr) var(--rx-hud-column) var(--rx-hud-column);
+}
+.cp-grid[data-cols='chart-side'] {
+  grid-template-columns: minmax(0, 1fr) calc(var(--rx-hud-column) + var(--rx-gap) * 4);
+}
+.cp-grid[data-cols='side-chart-side'] {
+  grid-template-columns: var(--rx-hud-column) minmax(0, 1fr) var(--rx-hud-column);
+}
+.cp-grid[data-cols='lead-side'] {
+  grid-template-columns: minmax(0, 1.7fr) minmax(var(--rx-hud-column), 1fr);
+}
+.cp-grid[data-cols='two'] {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+.cp-hero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rx-row-gap);
+  height: 100%;
+  min-height: 0;
+  align-self: stretch;
+}
+.cp-hero > .ci-chart {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+}
+.cp-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--rx-gap);
+  max-height: 100%;
+  min-height: 0;
+  align-self: stretch;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--rx-panel-edge) transparent;
+}
+.cp-side > * {
+  flex: none;
+}
+.cp-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--rx-row-gap) var(--rx-gap);
+}
+.cp-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(var(--rx-unit) * 2);
+}
+.cp-chips .rx-chip[data-on] {
+  color: var(--rx-ink);
+  border-color: var(--rx-ink-dim);
+  background: var(--rx-wash-selected);
+}
+/* What each mark on a chart means, beside the chart, in the marks' own strokes. */
+.cp-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--rx-unit) var(--rx-gap);
+  margin: 0;
+  font-size: var(--rx-size-small);
+  letter-spacing: var(--rx-tracking-body);
+  color: var(--rx-ink-dim);
+}
+.cp-legend span::before {
+  content: '';
+  display: inline-block;
+  width: calc(var(--rx-unit) * 7);
+  height: calc(var(--rx-unit) * 3);
+  margin-right: var(--rx-unit);
+  vertical-align: middle;
+}
+.cp-legend [data-key='forecast']::before {
+  height: 0;
+  border-top: var(--rx-unit) dotted var(--rx-forecast);
+}
+.cp-legend [data-key='trail']::before {
+  height: 0;
+  border-top: var(--rx-unit) solid var(--rx-measured);
+}
+.cp-legend [data-key='previous']::before {
+  height: 0;
+  border-top: var(--rx-line-rule) solid var(--rx-blackbox);
+}
+.cp-legend [data-key='envelope']::before {
+  background: var(--rx-forecast-band);
+  border: var(--rx-line-rule) solid var(--rx-forecast);
+}
+.cp-legend [data-key='beyond']::before {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--rx-forecast) 0 var(--rx-line-rule),
+    transparent var(--rx-line-rule) calc(var(--rx-unit) * 2)
+  );
+  border: var(--rx-line-rule) dashed var(--rx-forecast);
+  opacity: var(--rx-stale);
+}
+.cp-legend [data-key='measured']::before {
+  background: var(--rx-wash-selected);
+  border: var(--rx-line-rule) solid var(--rx-ink-faint);
+}
+.cp-legend [data-key='validated']::before {
+  background: var(--rx-wash-forecast);
+  border: var(--rx-line-rule) solid var(--rx-forecast);
+}
+/* A fold: detail on demand, under the instrument it explains. */
+.cp-fold {
+  border: var(--rx-line-rule) solid var(--rx-panel-edge);
+  border-radius: var(--rx-panel-radius);
+  background: var(--rx-panel);
+}
+.cp-fold > summary {
+  padding: var(--rx-row-gap) var(--rx-panel-pad-x);
+  font-size: var(--rx-size-label);
+  letter-spacing: var(--rx-tracking-label);
+  text-transform: uppercase;
+  color: var(--rx-ink-dim);
+  cursor: pointer;
+}
+.cp-fold > summary:hover {
+  color: var(--rx-ink);
+}
+.cp-fold > summary:focus-visible {
+  outline: var(--rx-line-rule) solid var(--rx-ink);
+  outline-offset: var(--rx-unit);
+}
+.cp-fold[open] > summary {
+  color: var(--rx-ink);
+  border-bottom: var(--rx-line-rule) solid var(--rx-panel-edge);
+}
+.cp-fold__body {
+  display: grid;
+  gap: var(--rx-row-gap);
+  padding: var(--rx-panel-pad-y) var(--rx-panel-pad-x);
+}
+/* A typed value beside a level the player pulls on. */
+.ci-drag__typed {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: var(--rx-unit);
+  color: var(--rx-ink-dim);
+}
+.ci-drag__typed input {
+  width: calc(var(--rx-unit) * 30);
+  padding: var(--rx-unit) calc(var(--rx-unit) * 2);
+  background: var(--rx-table);
+  border: var(--rx-line-rule) solid var(--rx-panel-edge);
+  border-radius: var(--rx-unit);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: var(--rx-ink);
+}
+.ci-drag__typed input:focus-visible {
+  outline: var(--rx-line-rule) solid var(--rx-ink);
+  outline-offset: var(--rx-unit);
+}
+/* Every unit, folded out: the list beside the unit chosen from it. */
+.cp-units {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: var(--rx-gap);
+}
+/* A page's lead instrument with nothing to draw yet: it says what will be there. */
+.cp-empty {
+  flex: 1;
+  display: grid;
+  place-content: center;
+  gap: var(--rx-row-gap);
+  border: var(--rx-line-rule) dashed var(--rx-panel-edge);
+  border-radius: var(--rx-panel-radius);
+  text-align: center;
+  font-size: var(--rx-size-value);
+  letter-spacing: var(--rx-tracking-label);
+  text-transform: uppercase;
+  color: var(--rx-ink-dim);
+}
+.cp-empty p {
+  margin: 0;
+}
+.cp-empty .cs-note {
+  text-transform: none;
+}
+/* One burn: its settings one under another, each a bar to pull and a figure to type. */
+.cp-burn {
+  display: grid;
+  gap: var(--rx-row-gap);
+}
+/* PLAN's commit strip: under the forecast it commits to, in one row. */
+.cp-commit {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--rx-row-gap) var(--rx-gap);
+}
+.cp-commit > .cs-line {
+  flex: 1;
+  min-width: 0;
+}
+/* What a lead chart is of, where it has no chips to say so. */
+.cp-tools__title {
+  font-size: var(--rx-size-label);
+  letter-spacing: var(--rx-tracking-label);
+  text-transform: uppercase;
+  color: var(--rx-ink-dim);
+}
+/* The trend of what was measured, beside the model's law. */
+.cs-plot__trend {
+  fill: none;
+  stroke: var(--rx-measured);
+  stroke-width: var(--rx-line-trace);
+}
+.cs-legend [data-swatch='law']::before {
+  border-top-style: dashed;
+  border-color: var(--rx-forecast);
+}
+.cs-legend [data-swatch='trend']::before {
+  border-color: var(--rx-measured);
+}
+/* A lead area that holds more than its height: it scrolls, the page does not. */
+.cp-hero[data-scroll] {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--rx-panel-edge) transparent;
+}
+/* MODEL's plots: one per body, as large as the lead area allows. */
+.cp-plots {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(calc(var(--rx-hud-column) * 0.9), 1fr));
+  gap: var(--rx-gap);
+}
+.cp-plot {
+  display: grid;
+  gap: var(--rx-row-gap);
+  margin: 0;
+  padding: var(--rx-panel-pad-y) var(--rx-panel-pad-x);
+  border: var(--rx-line-rule) solid var(--rx-panel-edge);
+  border-radius: var(--rx-panel-radius);
+  background: var(--rx-panel);
+}
+.cp-plot figcaption {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--rx-unit) var(--rx-gap);
+  font-size: var(--rx-size-small);
+  color: var(--rx-ink-dim);
+}
+.cp-plot__name {
+  font-size: var(--rx-size-label);
+  letter-spacing: var(--rx-tracking-label);
+  text-transform: uppercase;
+  color: var(--rx-ink);
+}
+/* As wide as its cell and in proportion, so the drawing fills it. */
+.cp-plot svg.cs-plot {
+  height: auto;
+  aspect-ratio: 32 / 15;
+  max-height: calc(var(--rx-hud-plot) * 4);
+}
+/* A test as its steps, in a row: what it is fitted on, what is held out, the result. */
+.cp-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--rx-unit);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: step;
+}
+.cp-steps li {
+  counter-increment: step;
+  display: grid;
+  align-content: start;
+  gap: var(--rx-unit);
+  padding: var(--rx-row-gap) var(--rx-row-pad-x);
+  border: var(--rx-line-rule) solid var(--rx-panel-edge);
+  border-radius: var(--rx-panel-radius);
+  color: var(--rx-ink-dim);
+}
+.cp-steps li[data-done] {
+  border-color: var(--rx-forecast);
+  color: var(--rx-ink);
+}
+.cp-steps li[data-status='caution'] {
+  border-color: var(--rx-caution);
+}
+.cp-steps__label {
+  font-size: var(--rx-size-small);
+  letter-spacing: var(--rx-tracking-label);
+  text-transform: uppercase;
+  color: var(--rx-ink-faint);
+}
+.cp-steps__label::before {
+  content: counter(step) ' ';
+}
+.cp-steps__value {
+  font-size: var(--rx-size-small);
+}
+/* A body's plot beside the same measurements before a rule was adopted, where there is room. */
+.cp-plot__pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(calc(var(--rx-hud-column) * 0.9), 1fr));
+  gap: var(--rx-gap);
+}
+.cp-plot__pair > div {
+  display: grid;
+  gap: var(--rx-row-gap);
+  min-width: 0;
+}

@@ -24,8 +24,12 @@ export interface BudgetLoad {
   readonly label: string;
   readonly value: number;
   /** A load the player sets: its segment is lit and it gets a handle below. */
-  readonly control?: Pick<DragBarProps, 'min' | 'max' | 'step' | 'marks' | 'effect'> & {
-    readonly onChange: (value: number) => void;
+  readonly control?: Pick<
+    DragBarProps,
+    'min' | 'max' | 'step' | 'marks' | 'effect' | 'onStop' | 'stop' | 'measured'
+  > & {
+    /** Absent: the load is set by its named settings only, and its bar shows the level. */
+    readonly onChange?: (value: number) => void;
     /** Named settings on the same scale (a mode's draw), offered as stops. */
     readonly stops?: readonly { readonly at: number; readonly label: string }[];
   };
@@ -175,7 +179,10 @@ export function BudgetBoard({
                   max={c.max}
                   step={c.step}
                   text={`${format(l.value)} ${unit}`}
-                  onChange={c.onChange}
+                  {...(c.onChange ? { onChange: c.onChange } : {})}
+                  {...(c.onStop ? { onStop: c.onStop } : {})}
+                  {...(c.stop !== undefined ? { stop: c.stop } : {})}
+                  {...(c.measured !== undefined ? { measured: c.measured } : {})}
                   tone={l.tone === 'measured' || l.tone === undefined ? 'forecast' : l.tone}
                   vertical={faders}
                   {...(c.stops ? { stops: c.stops } : {})}

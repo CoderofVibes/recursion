@@ -43,6 +43,19 @@ export interface DragBarProps {
   readonly vertical?: boolean;
   /** Named settings on the scale (a mode's draw): ticks on the bar, and buttons that jump to them. */
   readonly stops?: readonly DragStop[];
+  /**
+   * Choosing a named setting: called with the setting instead of `onChange` with its place on
+   * the scale, for settings that are not told apart by where they sit (two rates that draw the
+   * same power). The settings are offered even when the bar itself cannot be pulled.
+   */
+  readonly onStop?: (stop: DragStop) => void;
+  /** The named setting in force, by its label, where the value alone does not say which. */
+  readonly stop?: string;
+  /**
+   * Let the value be typed too, in place of its text: the unit shown after the field. The field
+   * takes any value in range, not only the bar's steps.
+   */
+  readonly typed?: { readonly unit: string; readonly step?: number };
 }
 
 /** A value held to the bar's steps and limits. */
@@ -90,6 +103,9 @@ export function DragBar({
   stacked,
   vertical,
   stops = [],
+  onStop,
+  stop,
+  typed,
 }: DragBarProps) {
   const track = useRef<HTMLDivElement>(null);
   const span = Math.max(1e-9, max - min);
@@ -124,7 +140,8 @@ export function DragBar({
     event.stopPropagation();
     onChange(wanted);
   };
-  const at = (stop: DragStop): boolean => Math.abs(value - stop.at) < step / 2;
+  const at = (s: DragStop): boolean =>
+    stop !== undefined ? s.label === stop : Math.abs(value - s.at) < step / 2;
   return (
     <div
       className="ci-drag"
@@ -181,15 +198,36 @@ export function DragBar({
               className="rx-chip"
               data-on={at(s) ? '' : undefined}
               aria-pressed={at(s)}
-              disabled={!onChange}
-              onClick={() => onChange?.(s.at)}
+              disabled={!onChange && !onStop}
+              onClick={() => (onStop ? onStop(s) : onChange?.(s.at))}
             >
               {s.label}
             </button>
           ))}
         </div>
       ) : null}
-      <span className="ci-drag__value">{text}</span>
+      {typed && onChange ? (
+        <label className="ci-drag__value ci-drag__typed">
+          <input
+            type="number"
+            aria-label={`${label}, ${typed.unit}`}
+            min={min}
+            max={max}
+            step={typed.step ?? step}
+            value={Number.isFinite(value) ? value : ''}
+            onChange={(e) => {
+              const v = Number(e.target.value);
+              if (e.target.value !== '' && Number.isFinite(v))
+                onChange(Math.min(max, Math.max(min, v)));
+            }}
+            // A field being typed in keeps its keys (S9 R10).
+            onKeyDown={(e) => e.stopPropagation()}
+          />
+          <span>{typed.unit}</span>
+        </label>
+      ) : (
+        <span className="ci-drag__value">{text}</span>
+      )}
       {effect ? <span className="ci-drag__effect">{effect}</span> : null}
     </div>
   );

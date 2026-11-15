@@ -404,6 +404,9 @@ describe('StepBar and LoopRail', () => {
       />,
     );
     expect(html.indexOf('Explore')).toBeLessThan(html.indexOf('Predict'));
+    // A stage's name comes first in what it is called, then where it stands.
+    expect(html).toContain('aria-label="Explore: Twin Deeps"');
+    expect(html).toContain('aria-label="Predict: ends early"');
     expect(html.match(/aria-current="step"/g)).toHaveLength(1);
     expect(html).toMatch(/data-state="attention"[^>]*aria-current="step"/);
   });
@@ -438,6 +441,65 @@ describe('TrajectoryChart', () => {
     expect(html).toContain('data-kind="extrapolating"');
     expect(html.match(/ci-chart__envelope-hatch/g)).toHaveLength(1);
     expect(html).toContain('>Alpha<');
+  });
+
+  it('leaves a stretch with nothing measured undrawn, in the flight and in the one before', () => {
+    const trail: [number, number][] = [
+      [0, 0],
+      [100, 0],
+      [200, 0],
+      [900, 0],
+      [1000, 0],
+    ];
+    const chart = (breaks: readonly number[]) =>
+      renderToStaticMarkup(
+        <TrajectoryChart
+          label="Gaps"
+          bodies={[{ id: 'alpha', name: 'Alpha', x: 500, y: 400, radius: 50 }]}
+          trail={trail}
+          trailBreaks={breaks}
+          previousTrail={trail}
+          previousBreaks={breaks}
+        />,
+      );
+    const strokes = (html: string): number[] =>
+      [...html.matchAll(/class="ci-chart__trail"[^>]* d="([^"]+)"/g)].map(
+        (m) => m[1]!.split('M').length - 1,
+      );
+    // One stroke each, joined up, with no break; two each where the record has a gap.
+    expect(strokes(chart([]))).toEqual([1, 1]);
+    expect(strokes(chart([3]))).toEqual([2, 2]);
+  });
+
+  it('sets a mark’s label on the side with room, and the flight’s own marks above', () => {
+    const html = renderToStaticMarkup(
+      <TrajectoryChart
+        label="Labels"
+        bodies={[{ id: 'alpha', name: 'Alpha', x: 500, y: 0, radius: 50 }]}
+        fit={[
+          [0, -300],
+          [1000, 300],
+        ]}
+        marks={[
+          { x: 100, y: 0, kind: 'burn', label: 'burn 1' },
+          { x: 950, y: 0, kind: 'ends', label: 'forecast ends' },
+          { x: 950, y: 0, kind: 'left', label: 'left the forecast' },
+        ]}
+      />,
+    );
+    const label = (text: string) =>
+      new RegExp(`<text x="([\\d.]+)" y="([\\d.]+)" text-anchor="(start|end)">${text}</text>`).exec(
+        html,
+      )!;
+    const burn = label('burn 1');
+    const ends = label('forecast ends');
+    const left = label('left the forecast');
+    // Near the left there is room to the right; near the right edge the label is set leftward.
+    expect(burn[3]).toBe('start');
+    expect(ends[3]).toBe('end');
+    expect(left[3]).toBe('end');
+    // Two marks at one place do not print over each other.
+    expect(Number(left[2])).toBeLessThan(Number(ends[2]));
   });
 
   it('draws no forecast, envelope or trail it was not given', () => {

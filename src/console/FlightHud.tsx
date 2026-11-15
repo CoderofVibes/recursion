@@ -286,7 +286,13 @@ export function FlightHud({
       {/* Time, then the panels, in one column: the lines under the warp steps push them down. */}
       <div className="fh-right">
         <div className="fh-top">
-          <TimeControls game={game} forecasts={snapshot.forecasts} reason={desk.warpDrop} compact />
+          <TimeControls
+            game={game}
+            forecasts={snapshot.forecasts}
+            reason={desk.warpDrop}
+            compact
+            onEnter={() => desk.enter()}
+          />
         </div>
         <aside className="fh-side">
           <Panel title="Flight" aside={headingUp ? 'heading up' : 'chart up'}>

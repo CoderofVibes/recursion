@@ -19,12 +19,26 @@ import { distance, length } from '../view3d/adapter.ts';
 import type { ApproachAlert } from '../view3d/flight/FlightHolo.ts';
 import { defaultDesign, designMark, setupCommands } from './mission.ts';
 import type { MissionDesign } from './mission.ts';
+import { settingOf } from './power.ts';
+import type { PendingSettings, UnitSetting } from './power.ts';
 import { doseRate } from './radiation.ts';
 
-export type PageId = 'exploration' | 'plan' | 'model' | 'blackbox' | 'systems' | 'credits';
+/**
+ * The console's pages, in the order of the loop (A26): explore, set the ship up, plan and
+ * predict, [fly: the FLIGHT view], compare what happened, learn. Credits stand apart.
+ */
+export type PageId = 'exploration' | 'systems' | 'plan' | 'blackbox' | 'model' | 'credits';
 
-/** A burn's direction: along or against the believed velocity, toward or away from a body, or the body axis. */
-export type BurnDirection = 'prograde' | 'retrograde' | 'toward' | 'away' | 'axis';
+/**
+ * A burn's direction: along or against the believed velocity, toward or away from a body, across
+ * the ship's motion (to its left or right in the reference plane, or up or down out of it), or
+ * from the body axis.
+ */
+export type BurnDirection =
+  'prograde' | 'retrograde' | 'toward' | 'away' | 'left' | 'right' | 'up' | 'down' | 'axis';
+
+/** What the PLAN chart holds in view: the plan's path, the ship as it goes, or the whole region. */
+export type ChartFraming = 'plan' | 'follow' | 'region';
 
 /** One burn being planned, as the player typed it. Times are seconds after commitment. */
 export interface BurnRow {
@@ -77,6 +91,13 @@ export class Desk {
   design: MissionDesign;
   /** Sim time the design was last committed in this attempt; undefined until then. */
   designedAt: number | undefined;
+  /** The moment of the forecast the PLAN chart shows; undefined is the forecast's end. */
+  chartT: number | undefined;
+  /**
+   * The model's report as it stood before the last rule was adopted in this session: what the
+   * evidence looked like against the old law, kept so MODEL can show it beside the new.
+   */
+  reportBefore: ModelReport | undefined;
   /**
    * The plan being edited: kept across page and view changes, set aside on recurrence (its times
    * meant something only from the conditions it was written in).
@@ -86,6 +107,14 @@ export class Desk {
   setAside: { readonly edit: PlanEdit; readonly attempt: number } | undefined;
   /** The draft forecast of the plan as edited, if previewed; cleared by any edit. */
   preview: ForecastDraft | undefined;
+  /**
+   * The preview the last edit made stale: PLAN draws it faintly, as the forecast of the plan as
+   * it was, until the forecast of the plan as it is arrives. Nothing else reads it.
+   */
+  stalePreview: ForecastDraft | undefined;
+  /** A draft forecast is being worked out. */
+  previewBusy = false;
+  chartFraming: ChartFraming = 'plan';
   /**
    * Stepping through the forecast in the MAP's region view: the moment of it being looked at,
    * and whether the view follows the ship there. Undefined: the region is shown as it is now.
@@ -122,10 +151,14 @@ export class Desk {
   /** The snapshot the frame loop took this frame (`snapshot()`). */
   private frameSnapshot: ViewSnapshot | undefined;
   private archived: { key: string; at: number; value: BlackBoxArchive } | undefined;
+  /** Bumped by every change to the design; recording it remembers the change it recorded. */
+  private designEdits = 0;
+  private recordedDesign = -1;
   /** Bumped by every edit of the plan; a preview or commit remembers the edit it was made from. */
   private edits = 0;
   private previewedEdit = -1;
   private committedEdit = -1;
+  private failedEdit = -1;
   private rowKey = 1;
   private readonly series = new Map<string, number[]>();
   private sinceSample = SAMPLE_EVERY;
@@ -190,6 +223,15 @@ export class Desk {
     this.page = page;
     this.notify();
   }
+  /** Show a moment of the forecast on the PLAN chart; undefined returns to its end. */
+  setChartT(t: number | undefined): void {
+    this.chartT = t;
+    this.notify();
+  }
+  /** How many times the plan has been edited: a preview made for one edit is stale for the next. */
+  planEdits(): number {
+    return this.edits;
+  }
   select(id: string | null): void {
     this.selected = id;
     this.notify();
@@ -203,6 +245,109 @@ export class Desk {
   // ---- Mission design ------------------------------------------------------------------------
   setDesign(patch: Partial<MissionDesign>): void {
     this.design = { ...this.design, ...patch };
+    this.designEdits++;
+    this.notify();
+  }
+  /** The design as shown has been recorded in this attempt, unchanged since. */
+  designRecorded(): boolean {
+    return this.designedAt !== undefined && this.recordedDesign === this.designEdits;
+  }
+
+  // ---- The ship's settings ------------------------------------------------------------------
+  // Before the encounter is entered nothing runs: a command sent then reaches the ship only on
+  // ENTER, and the ship reports nothing meanwhile. So while preparing, a setting is part of the
+  // design: it shows at once as set, and ENTER sends it. Inside the encounter a setting is a
+  // command, sent at once (A12), and the ship's own report is what is shown.
+  private preparing(): boolean {
+    return this.game.status().phase === 'prepare';
+  }
+  /** Settings made while preparing that the ship does not have yet, by unit. */
+  pendingSettings(): PendingSettings {
+    if (!this.preparing()) return {};
+    const camera = this.game.ship.equipment.find((e) => e.kind === 'optical-tracker');
+    return {
+      ...this.design.setup.units,
+      ...(camera
+        ? {
+            [camera.id]: {
+              ...this.design.setup.units?.[camera.id],
+              mode: this.design.setup.cameraMode,
+            },
+          }
+        : {}),
+    };
+  }
+  /** A unit's mode and allocation as set: the design while preparing, else the ship's report. */
+  unitSetting(id: string): UnitSetting | undefined {
+    const spec = this.game.ship.equipment.find((e) => e.id === id);
+    if (!spec) return undefined;
+    return settingOf(spec, this.snapshot().world.ship, this.pendingSettings());
+  }
+  /** Set a unit's mode, its allocation, or both. */
+  setUnit(id: string, patch: Partial<UnitSetting>): void {
+    const spec = this.game.ship.equipment.find((e) => e.id === id);
+    if (!spec) return;
+    if (!this.preparing()) {
+      if (patch.mode !== undefined)
+        this.game.command({ kind: 'mode', equipment: id, mode: patch.mode });
+      if (patch.allocation !== undefined)
+        this.game.command({ kind: 'power', equipment: id, allocation: patch.allocation });
+      this.notify();
+      return;
+    }
+    const { mode, allocation } = patch;
+    const units = { ...this.design.setup.units };
+    const was = units[id] ?? {};
+    // The camera's mode has its own place in the design; everything else is kept by unit.
+    if (spec.kind === 'optical-tracker' && mode !== undefined) {
+      if (allocation !== undefined) units[id] = { ...was, allocation };
+      this.setSetup({ cameraMode: mode, units });
+      return;
+    }
+    units[id] = {
+      ...was,
+      ...(mode !== undefined ? { mode } : {}),
+      ...(allocation !== undefined ? { allocation } : {}),
+    };
+    this.setSetup({ units });
+  }
+  /** The Black Box sample rate as set, Hz. */
+  recorderRate(): number {
+    if (this.preparing()) return this.design.setup.recorderRate;
+    return (
+      this.snapshot().world.ship.telemetry['black-box.sample-rate']?.value ??
+      this.design.setup.recorderRate
+    );
+  }
+  setRecorderRate(rate: number): void {
+    if (this.preparing()) this.setSetup({ recorderRate: rate });
+    else {
+      this.game.command({ kind: 'recorder', sampleRate: rate });
+      this.notify();
+    }
+  }
+  /** The configuration as set. */
+  configuration(): string {
+    return this.preparing()
+      ? this.design.setup.configuration
+      : this.snapshot().world.ship.configuration;
+  }
+  setConfiguration(configuration: string): void {
+    if (this.preparing()) this.setSetup({ configuration });
+    else {
+      this.game.command({ kind: 'configure', configuration });
+      this.notify();
+    }
+  }
+  /**
+   * Enter the encounter (A12): the design as shown is recorded and sent first, if it has not
+   * been, so what the screens showed as set is what flies. Then the clock starts at 1×.
+   */
+  enter(): void {
+    if (!this.preparing()) return;
+    if (!this.designRecorded()) this.commitDesign();
+    this.game.setWarp(1);
+    this.game.setPaused(false);
     this.notify();
   }
   setSetup(patch: Partial<MissionDesign['setup']>): void {
@@ -214,6 +359,7 @@ export class Desk {
     game.command(designMark(this.design));
     for (const c of setupCommands(this.design, game.ship)) game.command(c);
     this.designedAt = game.status().t;
+    this.recordedDesign = this.designEdits;
     try {
       window.localStorage.setItem(DESIGN_KEY, JSON.stringify(this.design));
     } catch {
@@ -238,7 +384,10 @@ export class Desk {
       this.note = 'plan draft set aside for the new attempt';
     }
     this.designedAt = undefined;
+    this.recordedDesign = -1;
+    this.chartT = undefined;
     this.preview = undefined;
+    this.stalePreview = undefined;
     // The forecast being stepped through belonged to the attempt that ended.
     this.rehearsal = undefined;
     this.warpDrop = null;
@@ -263,9 +412,11 @@ export class Desk {
   editPlan(change: (edit: PlanEdit) => PlanEdit): void {
     this.planEdit = change(this.planEdit);
     this.edits++;
+    this.chartT = undefined;
     if (this.preview) {
+      this.stalePreview = this.preview;
       this.preview = undefined;
-      this.say('draft changed · preview again');
+      this.say('draft changed · forecasting again');
     } else this.notify();
   }
   /** A key for a new row, unique in this session. */
@@ -290,22 +441,39 @@ export class Desk {
 
   previewPlan(plan: PlanDraft): void {
     const edit = this.edits;
+    this.previewBusy = true;
     this.say('forecasting');
     this.game.preview(plan).then(
       (draft) => {
+        this.previewBusy = false;
         // Edited while the forecast ran: the preview would describe inputs no longer shown.
-        if (edit !== this.edits) return this.say('draft changed while forecasting · preview again');
+        if (edit !== this.edits) return this.say('draft changed while forecasting');
         this.preview = draft;
+        this.stalePreview = undefined;
         this.previewedEdit = edit;
         this.say(`draft forecast: ${draft.samples.length} samples`);
       },
-      (reason: unknown) => this.say(`no forecast · ${message(reason)}`),
+      (reason: unknown) => {
+        this.previewBusy = false;
+        this.failedEdit = edit;
+        this.say(`no forecast · ${message(reason)}`);
+      },
     );
+  }
+  /** The draft as it stands could not be forecast: it is not asked again until it changes. */
+  previewFailed(): boolean {
+    return this.failedEdit === this.edits;
+  }
+  /** Choose what the PLAN chart holds in view. */
+  setChartFraming(framing: ChartFraming): void {
+    this.chartFraming = framing;
+    this.notify();
   }
   /** Commit a plan: the draft as edited, or (`fromDraft` false) a saved procedure. */
   commitPlan(plan: PlanDraft, fromDraft = true): void {
     const edit = this.edits;
     this.preview = undefined;
+    this.stalePreview = undefined;
     this.say('committing');
     this.game.commit(plan).then(
       (forecast) => {
@@ -403,7 +571,8 @@ export class Desk {
     };
     for (const [id, g] of Object.entries(ship.propellant)) push(`tank:${id}`, g.mean);
     for (const [channel, r] of Object.entries(ship.telemetry))
-      if (/\.(load|temperature|charge|bytes|output)$/.test(channel)) push(channel, r.value);
+      // Each unit's draw too, for its own trend (a unit's history, recent and present).
+      if (/\.(load|temperature|charge|bytes|output|power)$/.test(channel)) push(channel, r.value);
     for (const b of snapshot.world.bodies)
       push(`range:${b.id}`, distance(ship.position, b.position) - b.radius);
     push('speed', length(ship.velocity));

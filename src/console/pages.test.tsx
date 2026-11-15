@@ -36,6 +36,8 @@ function stubGame(
     model?: ModelState;
     snapshot?: ViewSnapshot;
     ended?: boolean;
+    /** Before the encounter is entered: nothing runs, and ship time is zero. */
+    preparing?: boolean;
     alerts?: readonly object[];
     radiation?: object;
   } = {},
@@ -52,7 +54,7 @@ function stubGame(
     },
     rules: { report: pending, test: pending, adopt: pending, revoke: pending },
     status: () => ({
-      phase: options.ended ? 'ended' : 'operate',
+      phase: options.preparing ? 'prepare' : options.ended ? 'ended' : 'operate',
       attemptId: current.id,
       attemptIndex: current.index,
       t: viewSnapshot.t,
@@ -185,10 +187,17 @@ describe('console pages on the fixtures', () => {
     const html = renderToStaticMarkup(<ConsoleScreen desk={desk} visible />);
     const finished = archive.attempts.filter((a) => a.outcome.kind !== 'in-progress');
     expect(html).toContain('finished attempts');
+    // The test as its steps: what it is fitted on, and the attempt held out to check it, which
+    // is never among those it is fitted on.
+    const step = (label: string): string | undefined =>
+      new RegExp(`${label}</span><span class="cp-steps__value">([^<]*)<`).exec(html)?.[1];
     if (finished.length >= 2) {
       const held = finished.at(-1)!;
-      expect(html).toContain(`check on attempt ${held.index}`);
-      expect(html).not.toContain(`attempt${finished.length > 2 ? 's' : ''} ${held.index} ·`);
+      const training = finished.filter((x) => x.id !== held.id);
+      expect(step('Check on')).toBe(`attempt ${held.index}`);
+      expect(step('Fit on')).toBe(
+        `attempt${training.length > 1 ? 's' : ''} ${training.map((x) => x.index).join(', ')}`,
+      );
     } else expect(html).toContain('test unavailable');
     // The data behind the plot can be read without it.
     expect(html).toContain('cs-table');
@@ -234,6 +243,159 @@ describe('console pages on the fixtures', () => {
     );
     expect(commands.length).toBeGreaterThan(1);
     expect(desk.designedAt).toBe(viewSnapshot.t);
+  });
+});
+
+/** Every element carrying `marker` in its opening tag. */
+const tags = (html: string, marker: string): string[] =>
+  (html.match(/<[a-z]+ [^>]*>/g) ?? []).filter((tag) => tag.includes(marker));
+
+describe('the loop on the console', () => {
+  const render = (
+    page: PageId,
+    options: Parameters<typeof stubGame>[0] = {},
+    prepare?: (desk: Desk) => void,
+  ) => {
+    const stub = stubGame(options);
+    const desk = new Desk(stub.game);
+    desk.page = page;
+    prepare?.(desk);
+    return { html: renderToStaticMarkup(<ConsoleScreen desk={desk} visible />), desk, ...stub };
+  };
+
+  it('names the six stages in order on the rail, each a button saying where it stands (A26)', () => {
+    const { html } = render('plan');
+    const stages = tags(html, 'class="ci-rail__stage"');
+    expect(stages).toHaveLength(6);
+    expect(stages.every((tag) => tag.startsWith('<button type="button"'))).toBe(true);
+    const names = stages.map((tag) => /aria-label="([^":]+): [^"]+"/.exec(tag)?.[1]);
+    expect(names).toEqual(['EXPLORATION', 'SYSTEMS', 'PLAN', 'FLIGHT', 'BLACK BOX', 'MODEL']);
+    // The page in hand is the one stage marked; nothing on the console is called MISSION.
+    expect(stages.filter((tag) => tag.includes('aria-current="step"'))).toHaveLength(1);
+    expect(stages[2]).toContain('aria-current="step"');
+    expect(html).not.toContain('MISSION');
+  });
+
+  it('offers a burn every direction, across the motion among them, on chips the keyboard steps', () => {
+    const { html } = render('plan', {}, (desk) =>
+      desk.editPlan((e) => ({
+        ...e,
+        burns: [
+          {
+            key: desk.newRowKey(),
+            at: 600,
+            direction: 'left',
+            target: briefing.knownBodies[0]!.id,
+            offset: 0,
+            sizing: 'deltaV',
+            amount: 12.5,
+            throttle: 1,
+          },
+        ],
+      })),
+    );
+    for (const label of [
+      'PROGRADE',
+      'RETROGRADE',
+      'TOWARD',
+      'AWAY',
+      '◂ LEFT',
+      'RIGHT ▸',
+      '▴ UP',
+      '▾ DOWN',
+      'AXIS',
+    ])
+      expect(html).toContain(`>${label}</button>`);
+    // The direction chosen is the one chip checked, and it is said in words what it means.
+    expect(html).toMatch(/aria-checked="true"[^>]*>◂ LEFT</);
+    expect(html).toContain('across the ship’s motion as it is now: to its left');
+    // Each of a burn's settings is a bar to pull and a figure to type: when it fires, how
+    // much, how hard. All of them take the keyboard.
+    const sliders = tags(html, 'role="slider"');
+    expect(sliders.map((tag) => /aria-label="([^"]+)"/.exec(tag)?.[1])).toEqual([
+      'Fires in',
+      'Speed change',
+      'Throttle',
+    ]);
+    expect(sliders.every((tag) => tag.includes('tabindex="0"'))).toBe(true);
+    expect(html).toContain('aria-valuetext="12.5 m/s"');
+    expect(tags(html, 'type="number"').map((tag) => /aria-label="([^"]+)"/.exec(tag)?.[1])).toEqual(
+      ['Fires in, s', 'Speed change, m/s', 'Throttle, %'],
+    );
+  });
+
+  it('keeps PREVIEW, COMMIT and CUTOFF under the chart, outside the column that scrolls', () => {
+    const { html } = render('plan');
+    const strip = html.indexOf('class="cp-commit"');
+    expect(strip).toBeGreaterThan(html.indexOf('class="cp-hero"'));
+    expect(strip).toBeLessThan(html.lastIndexOf('class="cp-side"'));
+    const after = html.slice(strip, html.lastIndexOf('class="cp-side"'));
+    for (const label of ['PREVIEW', 'COMMIT', 'CUTOFF'])
+      expect(after).toContain(`>${label}</button>`);
+    // Once, each: they are not also down in the burn list.
+    for (const label of ['PREVIEW', 'COMMIT', 'CUTOFF'])
+      expect(html.split(`>${label}</button>`)).toHaveLength(2);
+    // Procedures and Recall stay on the page, folded: a summary the keyboard opens.
+    expect(html).toMatch(
+      /<details class="cp-fold"><summary>procedures · \d+ saved · recall<\/summary>/,
+    );
+  });
+
+  it('before the encounter offers the way in on EXPLORATION, and never once inside', () => {
+    const before = render('exploration', { preparing: true }).html;
+    expect(before).toContain('RECORD DESIGN AND SET UP');
+    // On the page and in the footer.
+    expect(before.split(`ENTER ${briefing.name}`)).toHaveLength(3);
+    expect(before).toContain('the design is recorded when you enter');
+    expect(before).toContain('ci-chart');
+    const inside = render('exploration').html;
+    expect(inside).not.toContain(`ENTER ${briefing.name}`);
+    expect(inside).toContain('RECORD DESIGN AND SET UP');
+  });
+
+  it('before the encounter shows the power as set, on faders the keyboard can pull', () => {
+    const { html, commands } = render('systems', { preparing: true }, (desk) =>
+      desk.setUnit('comms', { mode: 'on' }),
+    );
+    expect(html).toContain('as set: nothing runs until you enter');
+    const faders = tags(html, 'role="slider"');
+    expect(faders.length).toBeGreaterThan(0);
+    expect(faders.every((tag) => tag.includes('tabindex="0"'))).toBe(true);
+    // A setting made here is on the desk, not with the ship.
+    expect(commands).toEqual([]);
+    // Inside, the page says nothing of waiting.
+    expect(render('systems').html).not.toContain('nothing runs until you enter');
+  });
+
+  it('leads BLACK BOX with the flight as measured, over the attempt before, and keeps RECALL in sight', () => {
+    const { html } = render('blackbox');
+    expect(html).toContain('the flight as measured against its forecast, seen from');
+    expect(html).toContain('class="ci-chart__trail"');
+    expect(html).toMatch(/class="ci-chart__trail" data-previous=""/);
+    expect(html).toContain('Predicted against flown');
+    // Recall is not folded away: it comes before the first fold on the page.
+    expect(html.indexOf('>RECALL</button>')).toBeGreaterThan(0);
+    expect(html.indexOf('>RECALL</button>')).toBeLessThan(html.indexOf('<details'));
+    // Compare and the recorder's store are still here.
+    expect(html).toContain('aria-label="Compare"');
+    expect(html).toMatch(/<summary>recorder · /);
+  });
+
+  it('names a body the model has measured nothing of, and draws no empty plot for it', () => {
+    const model: ModelState = {
+      ...models.distanceLaw,
+      calibration: [
+        ...models.distanceLaw.calibration,
+        { ...models.distanceLaw.calibration[0]!, body: 'beta', windows: [] },
+      ],
+    };
+    const { html } = render('model', { model });
+    expect(html.split('<figure')).toHaveLength(2);
+    expect(html).toContain('nothing measured yet of Beta');
+    expect(html).not.toContain('nothing measured, nothing drawn');
+    // The questions that cost fits are folded, and still there to ask.
+    expect(html).toContain('>CHECK BURNS</button>');
+    expect(html).toContain('>FIND UNEXPLAINED PULL</button>');
   });
 });
 
