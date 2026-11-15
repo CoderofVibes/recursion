@@ -17,7 +17,7 @@ At 12.8 s and 26.2 s **everything stops dead** and only the game's `black-cut` p
 
 | File | When in the trailer | What it does at the cuts |
 |---|---|---|
-| `title-out.mp3` | 2.0 s, as the title goes out | The game's own sound for its title going out. TR's reading of "black-cut at every snap": the title going out has its own cue in the game |
+| ~~`title-out.mp3`~~ | Not used (owner, 2026-11-15) | Skipped: right after the title's hit it would be one effect up against another. The title goes out in silence |
 | `main-engine.mp3` (loop) | 2.3–4.8 s, under the slingshot | Cuts at the wells |
 | `opening-rumble.mp3` | 2.3 s, under the slingshot | Cut at 4.8 s |
 | `well-hum.mp3` (loop) | 4.8–7.3 s, under the wells | Cuts at the lattice |
@@ -34,7 +34,7 @@ Times are seconds on the trailer's timeline. **Keep prompts simple** (owner, 202
 
 | File | Start · length | At the cuts | Mood | Paste into ElevenLabs Sound Effects |
 |---|---|---|---|---|
-| `title-hit.mp3` | 0.5 s · 1.5 s | Faded out by 2.0 s, where the game's `title-out` takes over | Stark, heavy, sudden | Deep cinematic boom hit with a metallic ring. |
+| `title-hit.mp3` | 0.5 s · 1.5 s | Faded out by 2.0 s; silence until the slingshot | Stark, heavy, sudden | Deep cinematic boom hit with a metallic ring. |
 | `flicker-crackle.mp3` | Each flicker: title 0.95, 1.35, 1.72 s; braid 11.6, 12.0, 12.4 s · 0.15 s | Each plays out | Electrical, failing | Short electrical crackle of a flickering screen. |
 | `hull-strain.mp3` | 2.6 s · 2.2 s | Cut at 4.8 s | Straining, under load | Metal spaceship hull groaning under heavy strain. |
 | `well-groan.mp3` | 4.8 s · 2.5 s | Cut at 7.3 s | Vast, uncanny | Deep, slow, otherworldly groan of a huge force pulling. |

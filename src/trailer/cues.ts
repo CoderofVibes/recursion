@@ -76,7 +76,8 @@ export const CUES: readonly SoundCue[] = [
     // The take peaks at -20 dBFS: lifted to be heard over the hit.
     gain: 1.8,
   })),
-  { from: 'game', file: 'title-out', at: end('title'), until: start('slingshot'), gain: 0.45 },
+  // No sound as the title goes out (owner, 2026-11-15): the game's `title-out` right after the
+  // hit would be one effect up against another. The hit fades into the black before the slingshot.
 
   // The slingshot.
   {
