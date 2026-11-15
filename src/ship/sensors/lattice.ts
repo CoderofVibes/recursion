@@ -28,7 +28,8 @@ import {
   type LatticeAngularFragment,
   type LatticeObservationFrame,
 } from './lattice-observations.ts';
-import { sensorFunctionAvailable } from './function-available.ts';
+import { functionAvailable } from '../condition/index.ts';
+import { functionalPower } from './functional-power.ts';
 
 export const LATTICE_SENSOR_STREAM = 'sensors.camera/lattice';
 export const LATTICE_DIAGNOSTIC_STREAM = 'sensors.camera/lattice-diagnostic';
@@ -114,7 +115,7 @@ export function healthy(
 ): EquipmentState | undefined {
   const e = state.equipment[id];
   const spec = definition.equipment.find((s) => s.id === id);
-  if (!e || !spec || !sensorFunctionAvailable(e, t) || e.powerDraw <= 0) return;
+  if (!e || !spec || !functionAvailable(e, t) || e.powerDraw <= 0) return;
   const temperature =
     (spec.thermalNode ? state.thermal[spec.thermalNode] : undefined) ?? e.temperature;
   if (
@@ -126,7 +127,7 @@ export function healthy(
   if (spec.kind === 'accelerometer' || spec.kind === 'gyro' || spec.kind === 'star-tracker') {
     const hardware = baseline.equipment.find((item) => item.id === id);
     const modes = hardware?.modes as Record<string, { power: number }> | undefined;
-    if (e.powerDraw + 1e-9 < (modes?.[e.mode]?.power ?? spec.ratedPower)) return;
+    if (functionalPower(e) + 1e-9 < (modes?.[e.mode]?.power ?? spec.ratedPower)) return;
   }
   return e;
 }
@@ -208,7 +209,7 @@ export function stepLatticeAcquisition(
     tracker &&
     shipScene?.starsVisible !== false &&
     length(env.kinematics.angularVelocity) <= baseline.sensing.starTracker.maxAngularRate
-      ? latticeProcessingRate(processor.powerDraw, camera.powerDraw, recorderRate)
+      ? latticeProcessingRate(functionalPower(processor), functionalPower(camera), recorderRate)
       : 0;
   let rng = state.rng;
 
@@ -265,7 +266,7 @@ export function stepLatticeAcquisition(
         throw new Error(`Missing initialized sensor RNG stream: ${LATTICE_SENSOR_STREAM}`);
       const noise = createRng(0);
       noise.setState(saved);
-      const f = Math.max(0.25, (processor.powerDraw - 350) / 650);
+      const f = Math.max(0.25, (functionalPower(processor) - 350) / 650);
       const reportedHealth = Math.min(
         ...[camera, processor, imu!, tracker!].map(
           (e) => e.values.reportedCondition ?? e.condition,

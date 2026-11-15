@@ -12,7 +12,8 @@ import { wrapAngle } from '../../lib/vec2.ts';
 import type { Vec3 } from '../../lib/vec3.ts';
 import { stepLatticeAcquisition } from './lattice.ts';
 import { latticeDiagnosticSchedule, stepLatticeDiagnostic } from './lattice-diagnostic.ts';
-import { sensorFunctionAvailable } from './function-available.ts';
+import { functionAvailable } from '../condition/index.ts';
+import { functionalPower } from './functional-power.ts';
 
 type Sensing = typeof baseline.sensing;
 type Recorder = typeof baseline.recorder;
@@ -147,7 +148,7 @@ export function apparentRate(
 }
 
 function available(e: EquipmentState | undefined, t: number): e is EquipmentState {
-  return sensorFunctionAvailable(e, t) && e.powerDraw > 0;
+  return !!e && functionAvailable(e, t) && e.powerDraw > 0;
 }
 
 function nextCadence(previous: number | undefined, t: number, rate: number): number {
@@ -211,7 +212,7 @@ export function stepSensors(
   const events: ShipEvent[] = [];
   const recording = equipment[recorder.equipmentId];
   const physicalRate = available(recording, env.t)
-    ? supportedRecorderRate(recording.powerDraw, definition)
+    ? supportedRecorderRate(functionalPower(recording), definition)
     : 0;
   const rate = Math.min(state.recorder.sampleRate, physicalRate);
   const latticeAvailable = Object.values(env.fieldSignals).some(
@@ -247,7 +248,7 @@ export function stepSensors(
       (e.condition <= 0 ||
         e.tripped ||
         e.mode === 'off' ||
-        e.powerDraw < sensing.camera.minTrackingPower)
+        functionalPower(e) < sensing.camera.minTrackingPower)
     ) {
       equipment[spec.id] = {
         ...e,
@@ -289,7 +290,7 @@ export function stepSensors(
         continue;
       let sampleRate = 0;
       if (spec.kind === 'optical-tracker')
-        sampleRate = Math.min(rate, e.powerDraw / sensing.camera.referenceTrackingPower);
+        sampleRate = Math.min(rate, functionalPower(e) / sensing.camera.referenceTrackingPower);
       if (spec.kind === 'accelerometer' || spec.kind === 'gyro')
         sampleRate = sensing.imu.sampleRate;
       if (spec.kind === 'star-tracker') sampleRate = sensing.starTracker.sampleRate;
@@ -359,7 +360,7 @@ export function stepSensors(
               continue;
             // The field of view is a cone about the boresight.
             const quality = opticalQuality(
-              e.powerDraw,
+              functionalPower(e),
               range,
               condition,
               exposure,
@@ -372,7 +373,7 @@ export function stepSensors(
               reportedCondition === condition
                 ? quality
                 : opticalQuality(
-                    e.powerDraw,
+                    functionalPower(e),
                     range,
                     reportedCondition,
                     exposure,
@@ -407,7 +408,7 @@ export function stepSensors(
           }
         }
       } else if (spec.kind === 'accelerometer' || spec.kind === 'gyro') {
-        if (e.powerDraw + 1e-9 >= modePower(spec, e, definition)) {
+        if (functionalPower(e) + 1e-9 >= modePower(spec, e, definition)) {
           // Persistent biases, drawn once: the x and y accelerometer axes and the z gyro from
           // the instrument's own stream (as the planar ship did), the rest from the 3D stream.
           const biasX = e.values.biasX ?? noise.normal(0, sensing.imu.accelerationBias);
@@ -448,7 +449,7 @@ export function stepSensors(
         spec.kind === 'star-tracker' &&
         scene.starsVisible !== false &&
         rateMagnitude <= sensing.starTracker.maxAngularRate &&
-        e.powerDraw + 1e-9 >= modePower(spec, e, definition)
+        functionalPower(e) + 1e-9 >= modePower(spec, e, definition)
       ) {
         const sigma = sensing.starTracker.angularSigma / condition;
         // The measured attitude is the true one turned by a small independent error about each
