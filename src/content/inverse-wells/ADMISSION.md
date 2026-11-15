@@ -22,6 +22,10 @@ resource and acquisition metrics, state/record hashes, and explicit missing cove
 The base revision is integrator `1f0dfef`; the manifest includes this uncommitted-at-run
 adapter and synchronous view registration. Outputs and Markdown are excluded from
 the source fingerprint. A report is refused if source changes during its flight.
+The adapter and reports were committed in `0eccbc4`. They remain historical evidence
+for that source manifest: the later R36 camera implementation and fresh-arrival
+stream initialization change the source/state fingerprint. Live camera acquisition
+was not wired into these runs; rerun after 3C's dispatcher and the light producer land.
 
 [DEMONSTRATED: `admission-reports/replay.json`] All 22 flights were run twice.
 The complete result objects match exactly, including metrics, executed controls,

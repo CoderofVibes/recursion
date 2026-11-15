@@ -36,3 +36,5 @@ export type * from './chart.ts';
 // Additive recorded-data contracts (A16); no truth-side geometry or existing schema changes.
 export type * from './lattice-acquisition.ts';
 export type * from './lattice-coverage.ts';
+// R36: additive acquired funnel-camera data; no truth geometry or schema changes.
+export type * from './wells-acquisition.ts';
