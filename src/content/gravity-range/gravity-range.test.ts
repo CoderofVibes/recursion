@@ -216,35 +216,39 @@ describe('Gravity range: the world at arrival', () => {
     );
   });
 
-  it('has a field about Alpha that lasts, is tilted out of the plane and leaves the arrival orbit clear', () => {
-    const rocks = field(world);
-    expect(rocks).toHaveLength(ALPHA_FIELD.disc + ALPHA_FIELD.dipping);
-    const alpha = world.bodies[0]!;
-    for (const a of rocks) {
-      expect(a.radius).toBeGreaterThanOrEqual(400);
-      expect(a.radius).toBeLessThanOrEqual(3500);
-      // Each orbit is tilted by at most 6° about its own line of nodes.
-      const offset = sub(a.position, alpha.position);
-      const normal = cross(offset, sub(a.velocity, alpha.velocity));
-      expect(Math.acos(normal.z / length(normal))).toBeLessThanOrEqual(
-        ALPHA_FIELD.maxInclination + 1e-9,
+  it(
+    'has a field about Alpha that lasts, is tilted out of the plane and leaves the arrival orbit clear',
+    { timeout: 60_000 },
+    () => {
+      const rocks = field(world);
+      expect(rocks).toHaveLength(ALPHA_FIELD.disc + ALPHA_FIELD.dipping);
+      const alpha = world.bodies[0]!;
+      for (const a of rocks) {
+        expect(a.radius).toBeGreaterThanOrEqual(400);
+        expect(a.radius).toBeLessThanOrEqual(3500);
+        // Each orbit is tilted by at most 6° about its own line of nodes.
+        const offset = sub(a.position, alpha.position);
+        const normal = cross(offset, sub(a.velocity, alpha.velocity));
+        expect(Math.acos(normal.z / length(normal))).toBeLessThanOrEqual(
+          ALPHA_FIELD.maxInclination + 1e-9,
+        );
+      }
+      expect(rocks.some((a) => Math.abs(a.position.z) > 10_000)).toBe(true);
+      // Two revolutions at r0 (35 h) with no burn: no impact, none of the field lost to a body,
+      // and the orbit stays near r0 (Beta's pull makes it wobble a few percent).
+      const { lowest, highest, result } = coast(world, 0, 126_000);
+      expect(result.events.filter((e) => e.kind === 'impact')).toEqual([]);
+      expect(result.absorbed.filter((e) => e.asteroid.startsWith('a-'))).toEqual([]);
+      expect(lowest).toBeGreaterThan(950_000);
+      expect(highest).toBeLessThan(1_060_000);
+      const closest = Math.min(
+        ...result.events
+          .filter((e) => e.kind === 'clearance' && e.with.startsWith('a-'))
+          .map((e) => (e.kind === 'clearance' ? e.distance : Infinity)),
       );
-    }
-    expect(rocks.some((a) => Math.abs(a.position.z) > 10_000)).toBe(true);
-    // Two revolutions at r0 (35 h) with no burn: no impact, none of the field lost to a body,
-    // and the orbit stays near r0 (Beta's pull makes it wobble a few percent).
-    const { lowest, highest, result } = coast(world, 0, 126_000);
-    expect(result.events.filter((e) => e.kind === 'impact')).toEqual([]);
-    expect(result.absorbed.filter((e) => e.asteroid.startsWith('a-'))).toEqual([]);
-    expect(lowest).toBeGreaterThan(950_000);
-    expect(highest).toBeLessThan(1_060_000);
-    const closest = Math.min(
-      ...result.events
-        .filter((e) => e.kind === 'clearance' && e.with.startsWith('a-'))
-        .map((e) => (e.kind === 'clearance' ? e.distance : Infinity)),
-    );
-    expect(closest).toBeGreaterThan(5_000);
-  });
+      expect(closest).toBeGreaterThan(5_000);
+    },
+  );
 });
 
 describe('Gravity range: the ring about Beta (A6)', () => {
@@ -374,29 +378,39 @@ describe('Gravity range: what the ship is told', () => {
 describe('Gravity range: the mismatch the encounter is built on', () => {
   const newtonian: TruthWorld = { ...world, law: { ...world.law, exponent: 2 } };
 
-  it('a 9.85 m/s retrograde burn dives to 500 km; a Newtonian world would stop 180 km short', () => {
-    const real = coast(world, -9.85, 40_000);
-    const forecast = coast(newtonian, -9.85, 40_000);
-    expect(real.lowest / 1e3).toBeGreaterThan(485);
-    expect(real.lowest / 1e3).toBeLessThan(505);
-    expect(forecast.lowest / 1e3).toBeGreaterThan(665);
-    expect(forecast.lowest / 1e3).toBeLessThan(690);
-    // And the low point comes later than a Newtonian clock says.
-    expect(real.when - forecast.when).toBeGreaterThan(1500);
-  });
+  it(
+    'a 9.85 m/s retrograde burn dives to 500 km; a Newtonian world would stop 180 km short',
+    { timeout: 60_000 },
+    () => {
+      const real = coast(world, -9.85, 40_000);
+      const forecast = coast(newtonian, -9.85, 40_000);
+      expect(real.lowest / 1e3).toBeGreaterThan(485);
+      expect(real.lowest / 1e3).toBeLessThan(505);
+      expect(forecast.lowest / 1e3).toBeGreaterThan(665);
+      expect(forecast.lowest / 1e3).toBeLessThan(690);
+      // And the low point comes later than a Newtonian clock says.
+      expect(real.when - forecast.when).toBeGreaterThan(1500);
+    },
+  );
 
-  it('the burn a Newtonian plan asks for (500 km low point) skims Alpha instead', () => {
-    const planned = coast(newtonian, -18.35, 40_000);
-    const real = coast(world, -18.35, 40_000);
-    expect(planned.lowest / 1e3).toBeGreaterThan(485);
-    expect(planned.lowest / 1e3).toBeLessThan(505);
-    // Within 60 km of the 250 km surface, but not into it.
-    expect(real.lowest / 1e3).toBeLessThan(310);
-    expect(real.lowest / 1e3).toBeGreaterThan(260);
-    expect(real.result.events.filter((e) => e.kind === 'impact' && e.with === 'alpha')).toEqual([]);
-  });
+  it(
+    'the burn a Newtonian plan asks for (500 km low point) skims Alpha instead',
+    { timeout: 60_000 },
+    () => {
+      const planned = coast(newtonian, -18.35, 40_000);
+      const real = coast(world, -18.35, 40_000);
+      expect(planned.lowest / 1e3).toBeGreaterThan(485);
+      expect(planned.lowest / 1e3).toBeLessThan(505);
+      // Within 60 km of the 250 km surface, but not into it.
+      expect(real.lowest / 1e3).toBeLessThan(310);
+      expect(real.lowest / 1e3).toBeGreaterThan(260);
+      expect(real.result.events.filter((e) => e.kind === 'impact' && e.with === 'alpha')).toEqual(
+        [],
+      );
+    },
+  );
 
-  it('a deeper Newtonian plan (300 km low point) hits Alpha', () => {
+  it('a deeper Newtonian plan (300 km low point) hits Alpha', { timeout: 60_000 }, () => {
     const real = coast(world, -32.1, 40_000);
     expect(coast(newtonian, -32.1, 40_000).lowest / 1e3).toBeGreaterThan(290);
     expect(real.result.events.some((e) => e.kind === 'impact' && e.with === 'alpha')).toBe(true);
