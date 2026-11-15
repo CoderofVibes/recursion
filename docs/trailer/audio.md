@@ -11,11 +11,11 @@ Mix: aim each export to peak around −3 dBFS. The page's master runs through a 
 
 ## The bed leads (owner, 2026-11-15)
 
-The montage's bed plays under every scene from the slingshot to the console, and the effects sit under it at half their level (`UNDER` in `cues.ts`); the title's sounds, the snaps' cut and the final hit keep theirs. The take has no steady tempo, but its four big accents fall about every 2.24 s of the file (2.07, 4.37, 6.59, 8.81 s). At 0.88 speed they fall every 2.5 s, a scene's length, so each scene starts the bed on one of them: every cut lands on an accent, and the next accent falls after the next cut. The montage's eight shots each start on one in turn. The lattice starts on a lighter hit (7.37 s) and runs a little slower, so its big accent lands on the strike at 9.0 s. `cues.test.ts` checks all of it. The wells' and the lattice's own sounds (hum, groan, creak; strike, failure, radiation) play a further 30% down (`QUIETER`).
+The montage's bed plays under every scene from the wells to the console (the slingshot keeps its own sounds at full level), and the effects sit under it at half their level (`UNDER` in `cues.ts`); the title's sounds, the snaps' cut and the final hit keep theirs. The take has no steady tempo, but its four big accents fall about every 2.24 s of the file (2.07, 4.37, 6.59, 8.81 s). At 0.88 speed they fall every 2.5 s, a scene's length, so each scene starts the bed on one of them: every cut lands on an accent, and the next accent falls after the next cut. The montage's eight shots each start on one in turn. The lattice starts on a lighter hit (7.37 s) and runs a little slower, so its big accent lands on the strike at 9.0 s. `cues.test.ts` checks all of it. The wells' and the lattice's own sounds (hum, groan, creak; strike, failure, radiation) play a further 30% down (`QUIETER`).
 
 ## Snaps to black
 
-At 12.8 s and 26.2 s **everything stops dead** and only the game's `black-cut` plays, then silence until the next shot. The alarm cuts at 12.8 s with it. The page enforces this, and a test checks it (`src/trailer/cues.test.ts`).
+At 12.8 s and 26.2 s **everything stops dead**: silence until the next shot (owner, 2026-11-15: no `black-cut`, whose take read as a drum). The alarm cuts at 12.8 s with it. The page enforces this, and a test checks it (`src/trailer/cues.test.ts`).
 
 ## The game's cues the trailer reuses (`public/audio/`, AU's prompts)
 
@@ -28,7 +28,7 @@ At 12.8 s and 26.2 s **everything stops dead** and only the game's `black-cut` p
 | `loss-failure.mp3` | 9.0 s, the lattice's strike | Plays out (1.5 s). R55's damage cue replaces it if AU adds one |
 | `lattice-radiation.mp3` (loop) | 9.0–12.8 s, from the strike | Cut dead at 12.8 s |
 | `warning.mp3` | The alarm: 9.0, 9.9, 10.8, 11.7, 12.6 s | The last is cut dead at 12.8 s |
-| `black-cut.mp3` | 12.8 s and 26.2 s, the snaps | Then silence |
+| ~~`black-cut.mp3`~~ | Not used in the video (owner, 2026-11-15) | The take is a low thud with a 1 s tail and read as a stray drum; both snaps are dead silence |
 | `room-hum.mp3` (loop) | 7.3–9.0 s, quietly, while the camera looks at FLIGHT and the empty window; and 23.9–26.2 s, the console with Earth | Cut by the strike at 9.0 s, and at 26.2 s |
 | ~~`home-reveal.mp3`~~ | Not used (owner, 2026-11-15) | Skipped: the console with Earth keeps the room's hum alone, so it is the same cabin sound as the rest of the video |
 

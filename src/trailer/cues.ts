@@ -53,9 +53,9 @@ export const LATTICE_STRIKE = 9.0;
 export const ALARM_PERIOD = 0.9;
 
 /**
- * The effects sit under the music (owner, 2026-11-15): every effect from the slingshot to the
- * console plays at this share of its level, and the montage's bed leads. The title's own sounds,
- * the snaps' cut and the final hit are not under the bed and keep their levels.
+ * The effects sit under the music (owner, 2026-11-15): every effect from the wells to the console
+ * plays at this share of its level, and the montage's bed leads. The title's and the slingshot's
+ * sounds are not under the bed and keep their levels.
  */
 export const UNDER = 0.5;
 /** The wells' and the lattice's own sounds, a further 30% down (owner, 2026-11-15). */
@@ -124,8 +124,7 @@ export const CUES: readonly SoundCue[] = [
   // No sound as the title goes out (owner, 2026-11-15): the game's `title-out` right after the
   // hit would be one effect up against another. The hit fades into the black before the slingshot.
 
-  // The bed under the action, from the slingshot's cut to the snap.
-  bed(start('slingshot'), start('wells'), A1),
+  // The bed under the action, from the wells' cut to the snap (owner: it starts with the wells).
   bed(start('wells'), start('lattice'), A2),
   bed(start('lattice'), start('braid'), LATTICE_HIT, LATTICE_RATE),
   bed(start('braid'), SNAP, A1),
@@ -137,7 +136,7 @@ export const CUES: readonly SoundCue[] = [
     at: start('slingshot'),
     until: end('slingshot'),
     loop: true,
-    gain: 0.5 * UNDER,
+    gain: 0.5,
   },
   {
     from: 'game',
@@ -148,14 +147,14 @@ export const CUES: readonly SoundCue[] = [
     // to fill the slingshot's 2.5 s and lift it (owner's note: slower, louder).
     offset: 0.35,
     rate: 0.68,
-    gain: 3.5 * UNDER,
+    gain: 3.5,
   },
   {
     from: 'trailer',
     file: 'hull-strain',
     at: start('slingshot') + 0.3,
     until: end('slingshot'),
-    gain: 0.5 * UNDER,
+    gain: 0.5,
   },
 
   // The wells.
@@ -240,8 +239,8 @@ export const CUES: readonly SoundCue[] = [
     gain: 0.6 * UNDER,
   },
 
-  // The snap: dead silence but the game's own cut.
-  { from: 'game', file: 'black-cut', at: SNAP, until: start('montage-flight'), gain: 0.6 },
+  // The snap: dead silence (owner, 2026-11-15: the game's black-cut take, a low thud with a
+  // 1 s tail, read as a stray drum at both snaps).
 
   // The montage, its bed cut on each shot.
   ...montageBed(),
@@ -258,7 +257,7 @@ export const CUES: readonly SoundCue[] = [
   },
   // No `home-reveal` here (owner, 2026-11-15): the console shot keeps the one cabin sound the
   // video already has, the room's hum above, so it sounds like the same cabin as the lattice shot.
-  { from: 'game', file: 'black-cut', at: CARD_SNAP, until: start('card'), gain: 0.6 },
+  // The snap before the card: dead silence, as at 12.8 s.
 
   // The final card.
   // No final hit under the card (owner, 2026-11-15: it read as a stray drum at the end); the

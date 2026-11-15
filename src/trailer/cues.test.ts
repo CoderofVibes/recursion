@@ -16,7 +16,7 @@ describe("the trailer's sound", () => {
     }
   });
 
-  it('goes dead on every snap to black: everything earlier is cut there, and only black-cut plays', () => {
+  it('goes dead on every snap to black: everything earlier is cut there, and nothing plays', () => {
     const next = [beat('montage-flight').start, beat('card').start];
     SNAPS.forEach((snap, i) => {
       for (const cue of CUES.filter((c) => c.at < snap)) {
@@ -24,7 +24,8 @@ describe("the trailer's sound", () => {
         expect(cue.until!).toBeLessThanOrEqual(snap);
       }
       const during = CUES.filter((c) => c.at >= snap && c.at < next[i]!);
-      expect(during.map((c) => c.file)).toEqual(['black-cut']);
+      // The owner's call (2026-11-15): no black-cut either; its take read as a drum.
+      expect(during.map((c) => c.file)).toEqual([]);
     });
   });
 
@@ -38,9 +39,10 @@ describe("the trailer's sound", () => {
 
   it('cuts the montage bed on its accents: every scene starts on one, none falls inside a scene', () => {
     const bed = CUES.filter((c) => c.file === 'montage-bed');
-    // Under every scene from the slingshot to the console: four action scenes, eight shots, one.
-    expect(bed).toHaveLength(13);
-    expect(bed[0]!.at).toBe(beat('slingshot').start);
+    // Under every scene from the wells to the console (owner): three action scenes, eight shots,
+    // one.
+    expect(bed).toHaveLength(12);
+    expect(bed[0]!.at).toBe(beat('wells').start);
     expect(Math.max(...bed.map((c) => c.until!))).toBe(SNAPS[1]);
     for (const cue of bed) {
       const rate = cue.rate ?? 1;
@@ -66,12 +68,12 @@ describe("the trailer's sound", () => {
         expect(bed[i]!.at).toBeCloseTo(bed[i - 1]!.until!, 9);
   });
 
-  it('puts the effects under the bed, and leaves the title, the snaps and the final hit alone', () => {
+  it('puts the effects under the bed, and leaves the title and the slingshot alone', () => {
     const at = (file: string) => CUES.filter((c) => c.file === file).map((c) => c.gain);
-    expect(at('main-engine')).toEqual([0.5 * UNDER]);
+    expect(at('main-engine')).toEqual([0.5]);
     expect(at('warning').every((g) => g === 0.6 * UNDER)).toBe(true);
     expect(at('title-hit')).toEqual([0.7]);
-    expect(at('black-cut')).toEqual([0.6, 0.6]);
+    expect(at('black-cut')).toEqual([]);
     // The owner's calls: no final hit under the card, and the wells' and the lattice's own
     // sounds a further 30% down.
     expect(at('final-hit')).toEqual([]);
@@ -87,7 +89,6 @@ describe("the trailer's sound", () => {
     expect(at('well-hum')).toEqual([beat('wells').start]);
     expect(at('lattice-radiation')).toEqual([LATTICE_STRIKE]);
     expect(at('loss-failure')).toEqual([LATTICE_STRIKE]);
-    expect(at('black-cut')).toEqual([...SNAPS]);
     expect(at('room-hum')).toEqual([beat('lattice').start, beat('console').start]);
     // The owner's two cuts (2026-11-15): the title goes out in silence, and the console with
     // Earth keeps the room's hum alone, the same cabin sound as the lattice shot.
