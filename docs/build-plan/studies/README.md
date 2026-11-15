@@ -15,6 +15,7 @@ Design and physics studies that run in parallel with the build. Each one answers
 | S9 | The first five minutes: a cold player in the Gravity range | [S9-first-five-minutes.md](S9-first-five-minutes.md) |
 | S10 | Submission groundwork: assets, licences, NASA data, AI use | [S10-submission-audit.md](S10-submission-audit.md) |
 | S11 | The owner's decision queue from S1–S6 | [S11-decision-queue.md](S11-decision-queue.md) |
+| S12 | The submission package, drafted: summary, description, NASA resources, AI disclosure, credits, demo | [S12-submission-drafts.md](S12-submission-drafts.md) |
 
 ## Rules for every study
 1. **Read first:**
