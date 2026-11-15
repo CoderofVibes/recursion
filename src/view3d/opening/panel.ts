@@ -21,7 +21,7 @@ export function createOpeningPanel() {
     context.fillStyle = colour.panel;
     context.fillRect(x - width / 2, y - height / 2, width, height);
     context.fillStyle = ink;
-    context.font = `${type.weight.strong} ${type.size.display * 2}px ${type.family}`;
+    context.font = `${type.weight.strong} ${type.size.display * 3}px ${type.family}`;
     context.textAlign = 'center';
     context.textBaseline = 'middle';
     context.fillText(label, x, y);

@@ -232,7 +232,7 @@ export function createHomeWindow() {
       void main() {
         vec3 n = normalize(worldNormal);
         vec3 v = normalize(cameraPosition - worldPosition);
-        float light = smoothstep(-0.025, 0.65, dot(n, sun));
+        float light = smoothstep(-0.025, 0.38, dot(n, sun));
         float rim = pow(1.0 - max(dot(n, v), 0.0), rimPower);
         vec3 surface = pow(texture2D(surfaceMap, mapUv).rgb, vec3(2.2));
         gl_FragColor = vec4(mix(night, surface + air * rim * rimStrength, light), 1.0);
@@ -244,7 +244,8 @@ export function createHomeWindow() {
   const mesh = new Mesh(geometry, material);
   mesh.position.copy(eye).addScaledVector(bearing, SKY_DEPTH);
   mesh.scale.setScalar(eye.distanceTo(mesh.position) * (EARTH_RADIUS_KM / APPROACH_DISTANCE_KM));
-  mesh.rotation.y = 2.6;
+  // Put the Atlantic on the visible face, with the Americas on the sunlit side.
+  mesh.rotation.y = -1;
   const scenery = new Group();
   scenery.add(mesh);
 
@@ -266,7 +267,10 @@ export function createHomeWindow() {
   const stars = new Points(starGeometry, starMaterial);
   stars.frustumCulled = false;
   scenery.add(stars);
+  let lastLensing = -1;
   function setLensing(amount: number) {
+    if (lastLensing === amount) return;
+    lastLensing = amount;
     for (const [i, [x, y]] of guides.entries()) {
       const distance = Math.hypot(x, y);
       const bend = 1 + (amount * 0.45 * Math.sin((Math.PI * distance) / 3)) / distance;

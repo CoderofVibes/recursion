@@ -1,7 +1,7 @@
 import { Euler, Vector3 } from 'three';
-import { buildChart } from '../../console/chart.ts';
 import type { GameControls } from '../../game/belief/controls.ts';
 import { motion } from '../../theme/index.ts';
+import { chartView } from '../../view3d/adapter.ts';
 import { createHomeWindow, HOME_SHOT } from '../../view3d/opening/home.ts';
 import { createOpeningPanel } from '../../view3d/opening/panel.ts';
 import { DOOR, ROOM } from '../../view3d/room/layout.ts';
@@ -58,7 +58,7 @@ export function playOpening({
   room.setWindowScenery(home.scenery);
   const arrival: RoomFrame = {
     snapshot: game.snapshot(),
-    chart: buildChart(game, game.blackBox.archive()),
+    chart: chartView(game.chart()),
     recording: true,
     clearance: 0,
   };
@@ -76,7 +76,7 @@ export function playOpening({
 
   const draw = () => {
     const sampled = sampleOpening(elapsed, reduceMotion());
-    if (sampled.beat === 'arrival' || sampled.beat === 'wake') {
+    if ((sampled.beat === 'arrival' && !arrivalInstalled) || sampled.beat === 'wake') {
       if (!arrivalInstalled) {
         arrivalInstalled = true;
         room.setWindowScenery(null);
@@ -122,10 +122,11 @@ export function playOpening({
       return;
     }
     const before = elapsed;
-    if (previous !== undefined)
-      elapsed += Math.min(motion.fast, Math.max(0, now - previous)) / 1000;
+    if (previous !== undefined) elapsed += Math.max(0, now - previous) / 1000;
     previous = now;
-    for (const cue of openingCues(before, elapsed)) audio?.cue(cue.id);
+    // On a stalled frame, resume at the current picture and drop overdue one-shots.
+    for (const cue of openingCues(Math.max(before, elapsed - motion.fast / 1000), elapsed))
+      audio?.cue(cue.id);
     if (draw()) raf = requestAnimationFrame(frame);
     else stopped = true;
   };
