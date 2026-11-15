@@ -69,7 +69,9 @@ export const stepShipSystems: ShipSystemsStep = (input, definition, commands, en
   // PowerDraw/output are the just-dispatched interval rates; physical inventory readings use t.
   // (A record is copied only where its start-of-step reading differs from the dispatched one.)
   const atStart: Record<string, EquipmentState> = {};
-  for (const [id, e] of Object.entries(power.state.equipment)) {
+  const dispatchedRecords = power.state.equipment;
+  for (const id of Object.keys(dispatchedRecords)) {
+    const e = dispatchedRecords[id]!;
     const before = input.equipment[id];
     const temperature = before?.temperature ?? e.temperature;
     const charge =

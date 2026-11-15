@@ -40,7 +40,11 @@ export function jetsOf(definition: ShipDefinition): readonly Jet[] {
   return jets;
 }
 
-const bankTables = new WeakMap<ShipDefinition, Map<string, readonly Jet[]>>();
+/** Each pod's jets by bank, built once per definition and pod (no key string per call). */
+const bankTables = new WeakMap<
+  ShipDefinition,
+  Map<string, { readonly a: readonly Jet[]; readonly b: readonly Jet[] }>
+>();
 
 /** The jets of a pod's active bank (`values.bank`: 0 is A, 1 is B), by index. */
 export function activeJets(
@@ -51,13 +55,16 @@ export function activeJets(
   const bank = (state.equipment[pod]?.values.bank ?? 0) === 1 ? 'b' : 'a';
   let table = bankTables.get(definition);
   if (!table) bankTables.set(definition, (table = new Map()));
-  const key = `${pod}/${bank}`;
-  let jets = table.get(key);
-  if (!jets) {
-    jets = jetsOf(definition).filter((jet) => jet.pod === pod && jet.bank === bank);
-    table.set(key, jets);
+  let banks = table.get(pod);
+  if (!banks) {
+    const jets = jetsOf(definition);
+    banks = {
+      a: jets.filter((jet) => jet.pod === pod && jet.bank === 'a'),
+      b: jets.filter((jet) => jet.pod === pod && jet.bank === 'b'),
+    };
+    table.set(pod, banks);
   }
-  return jets;
+  return banks[bank];
 }
 
 /** Minimum-impulse bookkeeping of one automatically fired jet (both in SI). */

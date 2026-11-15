@@ -57,11 +57,31 @@ export function hullAt(
   return hull;
 }
 
+/**
+ * Each appendage's extension in each named configuration, worked out once per definition
+ * (S15 rank 1: the geometry asks for it several times a tick, and it searches and reformats
+ * names). A value of the design alone, never of state.
+ */
+const deploymentTables = new WeakMap<ShipDefinition, Map<string, Map<string, number>>>();
+
 export function configurationDeployment(
   definition: ShipDefinition,
   configuration: string,
   id: string,
 ): number {
+  let table = deploymentTables.get(definition);
+  if (!table) deploymentTables.set(definition, (table = new Map()));
+  let byId = table.get(configuration);
+  if (!byId) table.set(configuration, (byId = new Map()));
+  let fraction = byId.get(id);
+  if (fraction === undefined) {
+    fraction = deploymentIn(definition, configuration, id);
+    byId.set(id, fraction);
+  }
+  return fraction;
+}
+
+function deploymentIn(definition: ShipDefinition, configuration: string, id: string): number {
   const data = dataFor(definition);
   const appendage = data.configuration.appendages.find((a) => a.id === id);
   const config = definition.configurations.find((c) => c.id === configuration);
