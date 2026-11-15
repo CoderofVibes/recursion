@@ -86,7 +86,7 @@ The regions' 3D positions are authored (A13). Since the distant sky is free to a
 | Leg | Ahead (the landmark the course faces) | Also in the window (from data) | References |
 |---|---|---|---|
 | C01 → C02 | The whole edge-on **Galaxy** | Twin Deeps growing from two points into two crescents | `02429124` #0, `ca1c5c59` #2 |
-| C02 → C03 | The **Ember Wheel** rising | Aft: Twin Deeps shrinking, the radiation crescent a faint violet curve | `f80f640f` #2, `836473b2` #1 |
+| C02 → C03 | The **Ember Wheel** rising | Aft: Twin Deeps shrinking, the radiation crescent a faint violet curve | `8911eeaa` #1 (aft view, chosen), `f80f640f` #2, `836473b2` #1 |
 | C03 → N01 | The **Bulge** | N01's unlit overhang growing as a starless patch that slowly eats into the Galaxy: an eclipse of a galaxy by a body you can't see | `8bbe8eef` #2 |
 | N01 → N02 | The **Blue Cloud** | Far Aperture's dark edges, a point of light winking between them | `5713ccd3` #2 |
 | N02 → N03 | The **Needle** beside a **Tip** | Two needles of light pointing the same way | `a4516a95` #3 |

@@ -25,7 +25,7 @@ For the threads that build the window's visuals: 2D (window and sky), 3B (funnel
 - **Halo.** A faint grey glow of unresolved stars surrounds the disc, fading over 20–30°.
 - **Beyond the galaxy.** Mostly black sky with sparse field stars, a few faint distant galaxies, and the other landmarks in window-views.md.
 - **The quiet base sky** (S02b `06ba5626…` #2 and #1): everywhere the landmarks aren't, a calm field of faint pinpoint stars in red, white and blue-white, density changing gently across the sky, an occasional brighter warm star, a rare tiny galaxy. It's the ground every view sits on, never empty black and never busy.
-- **The second galaxy, the Ember Wheel** (owner approved 2026-11-15; X03b `027eec67…` #0, L07b `f80f640f…` #2 and #0). On the opposite side of the sky from the Galaxy, a large spiral tilted about 60° from face-on, so it reads as a broad oval about 30–40° across. Its disc is soft near-white with fine warm dust spirals and a small bright core. Its outer rim is lined with bright points of star formation like embers, densest along the near edge. Dimmer overall than the Galaxy's bulge. Two great galaxies in one sky, one edge-on and one tilted, is something no human sky has, and it means the window has a landmark in either direction.
+- **The second galaxy, the Ember Wheel** (owner approved 2026-11-15; X03b `027eec67…` #0, L07b `f80f640f…` #2 and #0, T03 `c3c02d12…` #3). On the opposite side of the sky from the Galaxy, a large spiral tilted about 60° from face-on, so it reads as a broad oval about 30–40° across. Its disc is soft near-white with fine warm dust spirals and a small bright core. Its outer rim is lined with bright points of star formation like embers, densest along the near edge. Dimmer overall than the Galaxy's bulge. Two great galaxies in one sky, one edge-on and one tilted, is something no human sky has, and it means the window has a landmark in either direction.
 - **Colour.** Galaxy light is neutral white-grey toward warm, never teal or green. Field stars: deep red (about 35 %), blue-white (about 35 %), white (25 %), yellow (5 % at most).
 - **Stars.** Point sprites, never blurred discs. Brightness follows a steep power law: almost all faint, a handful bright. Density rises sharply inside the bands (about 8× at a band's centre) and is lowest at the poles of the primary band. Faint stars should be one or two pixels wide.
 - **Landmarks.** A few distant galaxies (S03 style) at fixed places: small, elliptical smudges, edge-on spirals, one interacting pair; and one cold blue-white star cloud (from S01 `6afb7728…` #3) beside the bulge.
@@ -118,6 +118,12 @@ Raised weirdness in round 5 produced three strange distant objects. Each sits in
 - **Needle** (`a4516a95…` #3): a spiral galaxy stretched into a long thin needle with a blazing star at its tip.
 - **Hollow** (`a4516a95…` #0): a thin tilted galaxy with a dark empty oval at its centre and one bright knot on its rim.
 - **Eye** (`2050f52c…` #0): a spiral wrapped round a black hollow, like the black hole that brought the ship here, seen far away. A recursion motif.
+
+### Transit views (2D) — round 7
+
+- **Looking back at Twin Deeps** (T03 `8911eeaa…` #1, chosen). Leaving C02, the two worlds shrink to small near-black discs, each a hair-thin warm crescent lit from the same side, tiny in a huge dark sky. Beside them the radiation crescent fades to a faint violet arc on one side (S21's azimuth), and the belt is a thin line of sparks round the smaller. Above, a galaxy lined with embers. Everything else is the quiet base sky. Their spacing comes from data; from most angles they sit about eight of Alpha's diameters apart.
+- **The Galaxy's core rising** (T01 `82158aac…` #2). The Bulge coming up from behind a knife-sharp dark sliver, everything else black: the look for P04's eclipse as the eye adapts, and the Galaxy at its most restrained.
+- **An eclipse of the Galaxy** (C03 → N01). An unlit airless body has a razor-sharp edge, and no stars show inside it. Never soften it into dust or haze (`4e65bd6f…` #2 has the mood but the wrong edge). Retrying as T01b.
 
 ### Earth (OP)
 

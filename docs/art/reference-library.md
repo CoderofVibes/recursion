@@ -4,19 +4,19 @@ Every usable MidJourney reference, grouped by the scene or element it guides, so
 
 **How to read it.** **Primary** sets the look. **Also** are alternates that agree with it, useful for variety and for a builder who needs a second angle. **Detail** means use only the named part. **Gap** means no usable reference yet; the prompt to fill it is named. References are written `jobID` #grid position; the round they came from is in selections.md.
 
-**Status after five rounds:** the sky, the bodies, Twin Deeps, the funnels, the Turning Rim and six places have three or more references each. Ten places, the Passage, the transit sky and a well's birth have none yet; they're marked **gap** with the prompt that fills them.
+**Status after seven rounds:** the sky, the bodies, Twin Deeps, the funnels, a well's birth, the Turning Rim and six places have three or more references each. The Ember Wheel has six. Looking back at Twin Deeps is the first transit view with its own reference. Ten places, the Passage, the Galaxy's eclipse and the Well Garden from afar have none yet; they're marked **gap** with the prompt that fills them.
 
 ## The sky
 
 ### The Galaxy (this universe's signature)
 - **Primary:** `57c10c4c` #2 (owner's pick).
-- **Also:** `02429124` #0 (over a dark limb), `57c10c4c` #0 (quieter colour, the right red level).
+- **Also:** `82158aac` #2 (the most restrained: a thin disc, the core rising from behind a sharp dark sliver), `02429124` #0 (over a dark limb), `57c10c4c` #0 (quieter colour, the right red level).
 - **Detail:** `f2d993f6` #2 (restraint: most of the sky black); `16145e4e` #3 (rocks overlapping the lane).
 - **As a small distant lens** behind other scenes: `969f9ba6` #1, `6042ea07` #3, `79f27860` #3.
 
 ### The Ember Wheel (second galaxy, owner approved)
 - **Primary:** `027eec67` #0.
-- **Also:** `f80f640f` #2 (the whole rim a ring of embers), `f80f640f` #0 (flatter, embers along the arms), `94002ddd` #2 (tightly wound). Sky only in all three: ignore their ground and haze.
+- **Also:** `f80f640f` #2 (the whole rim a ring of embers), `c3c02d12` #3 (the same, cleaner), `f80f640f` #0 (flatter, embers along the arms), `94002ddd` #2 (tightly wound), `8911eeaa` #1 (nearly edge-on, embers along its length). Sky only: ignore any ground and haze.
 
 ### Sky oddities (owner approved all three)
 - **Needle** `a4516a95` #3 · **Hollow** `a4516a95` #0 · **Eye** `2050f52c` #0.
@@ -25,6 +25,11 @@ Every usable MidJourney reference, grouped by the scene or element it guides, so
 - **Blue Cloud:** detail from `6afb7728` #3.
 - **Quiet base sky:** **primary** `06ba5626` #2; **also** `06ba5626` #1 (with a tiny galaxy).
 - **Transit views:** composed from the landmarks; see window-views.md, *Transit views*.
+  - **Looking back at Twin Deeps:** **primary** `8911eeaa` #1.
+  - **The Galaxy eclipsed (C03 → N01):** **gap**; mood only from `4e65bd6f` #2 (its edge is too soft). Prompt **T01b**.
+  - **The Well Garden from afar (P02 → P03):** **gap**. Prompt **T02b**.
+  - **The Bulge rising (P04):** `82158aac` #2.
+- **Candidate oddity (owner to decide):** a hooded galaxy, `4e65bd6f` #3.
 
 ### The far sun
 - **Primary:** `ca1c5c59` #3 (hard warm point, no flare).

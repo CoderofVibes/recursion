@@ -241,24 +241,38 @@ ultra-wide panoramic view seen from far out in open space, the massive dark limb
 Transit is composed from landmarks we already have (window-views.md, *Transit views*). These three prompts are references for its three most striking moments. Keep weirdness raised.
 
 ### T01 — A galaxy eclipsed by a body you can't see
-- **Leg:** C03 → N01. **Style refs:** `57c10c4c` #2 and `8bbe8eef` #2. **Status:** to try.
+- **Leg:** C03 → N01. **Style refs:** `57c10c4c` #2 and `8bbe8eef` #2. **Status:** tried (round 7). No eclipse; it gave a fine Galaxy (`82158aac` #2). Retry as T01b.
 
 ```
 ultra-wide panoramic view seen from far out in open space, an enormous edge-on galaxy with a blazing white core and a torn dark dust lane spanning the sky, and a vast unlit body drifting in front of it, invisible except as a sharp curved black shape where the galaxy's light and the stars simply stop, half the core already hidden, eerie and beautiful, astrophotography, high dynamic range --ar 21:9 --style raw --no text, letters, people, spaceship interior, frame, ground, horizon, atmosphere, planet surface, landscape, purple, violet, lens flare, rim light, glow, planet
 ```
 
 ### T02 — The Well Garden from afar
-- **Leg:** P02 → P03. **Style refs:** `bce5f206` #1 and `130bc062` #0. Weirdness low. **Status:** to try.
+- **Leg:** P02 → P03. **Style refs:** `bce5f206` #1 and `130bc062` #0. Weirdness low. **Status:** tried (round 7). Missed: every frame had a ground. Retry as T02b.
 
 ```
 ultra-wide panoramic view of black deep space, far ahead a wide faint field of thousands of tiny crossed violet threads pointing every direction like frost on glass, each thread ending in a tiny white spark, too far to see any funnel shape, above it a tilted spiral galaxy and a dark empty oval galaxy, quiet sparse stars elsewhere, a strange place ahead, cinematic, high dynamic range --ar 3:1 --style raw --no text, letters, people, spaceship interior, frame, ground, horizon, atmosphere, planet surface, landscape, aurora, nebula, fog, rain, spiral, pink, lightning
 ```
 
 ### T03 — Looking back at Twin Deeps
-- **Leg:** C02 → C03, aft. **Style refs:** `cb93a8bc` #0 and `836473b2` #1. **Status:** to try.
+- **Leg:** C02 → C03, aft. **Style refs:** `cb93a8bc` #0 and `836473b2` #1. **Status:** **chosen** (`8911eeaa` #1).
 
 ```
 ultra-wide panoramic view seen from far out in open space, far behind two small near-black worlds with hair-thin warm crescents, one ringed by a thin line of sparks, a faint violet curtain curving beside the ring, both small in a huge dark sky, above them a large tilted spiral galaxy with an ember-lined rim, sparse stars, the feeling of leaving a place behind, cinematic, high dynamic range --ar 21:9 --style raw --no text, letters, people, spaceship interior, frame, ground, horizon, atmosphere, planet surface, landscape, purple haze, lens flare, pink
+```
+
+### T01b — The eclipse, as a black disc
+- **Leg:** C03 → N01. **Style refs:** `82158aac` #2 and `57c10c4c` #2. **Status:** to try.
+
+```
+ultra-wide panoramic view of black deep space, a long thin edge-on galaxy with a blazing white core and a torn dark dust lane stretched across the sky, and a huge perfectly round black disc silhouetted in front of the galaxy, covering half of the bright core, the disc pure black with a razor-sharp edge and no stars inside it, nothing else lit, astrophotography, high dynamic range --ar 21:9 --style raw --no text, letters, people, spaceship interior, frame, ground, horizon, atmosphere, planet surface, landscape, purple, violet, lens flare, rim light, glow, halo, ring, crescent, black hole
+```
+
+### T02b — The Well Garden as a small floating cluster
+- **Leg:** P02 → P03. **Style refs:** `130bc062` #0 and `bce5f206` #1. Weirdness low. **Status:** to try.
+
+```
+ultra-wide panoramic view of empty black outer space, in the centre a small loose cluster of hundreds of tiny thin violet line segments floating in the void, pointing in every direction like scattered needles, each segment tipped with a tiny white dot, the cluster about a fifth of the image wide, black space all around it, sparse faint stars, a small tilted spiral galaxy in one corner, seen from very far away, astrophotography --ar 3:1 --style raw --no text, letters, people, spaceship interior, frame, ground, horizon, atmosphere, planet surface, landscape, ocean, water, mountains, trees, light rays, beams, pillars, aurora, nebula, fog, rain, pink, lightning
 ```
 
 ## 1. The deep sky (sky targets)

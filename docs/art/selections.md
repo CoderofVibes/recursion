@@ -126,4 +126,23 @@ For the disclosure: MidJourney was used to make reference images that guided the
 | W05c | `55b11529-baba-4f5a-9408-91b5ac10757a` | 3 | partial | Meridian line language | A pale wireframe tear-shape of fine meridians converging on a brilliant point, trailing a long thread. The cleanest meridians yet. The shape is reversed (a funnel's bright point is at its narrow end) and it's colourless. |
 | W05c | `55b11529-baba-4f5a-9408-91b5ac10757a` | 1 | dropped | | Star spikes and a lens flare; reads as a comet. |
 
+## Round 7 (2026-11-15): T01, T02, T03
+
+| Prompt | Job ID | # | Verdict | Use | Why |
+|---|---|---|---|---|---|
+| T03 | `8911eeaa-5e8e-4d06-8054-c2ade9eec1cc` | 1 | **chosen** | Looking back at Twin Deeps (C02 → C03, aft) | Two small near-black worlds with hair-thin warm crescents, both lit from the same side, tiny in a huge dark sky, a faint violet wisp beside them, and a long galaxy lined with embers above. No ground, no haze. It feels like leaving. In the game the spacing comes from data: from most angles the two worlds sit about eight of Alpha's diameters apart, so they only crowd together like this when seen nearly along the line between them. The violet is the radiation crescent: an arc on one side, not trailing tails. The belt's ring of sparks is missing; add it from `cb93a8bc` #0. |
+| T03 | `c3c02d12-a36e-4d52-bee3-7ee430a83ed9` | 3 | partial (sky only) | Ember Wheel | A clean tilted spiral whose whole rim is a ring of ember points: one of the best Ember Wheels yet. The lit ground along the bottom and the two worlds sitting on it must go. |
+| T03 | `b086353d-4073-4971-a538-45032f4e3439` | 3 | dropped | | A cloudy planet surface, a big flaring sun and two large nearby worlds. Everything the universe forbids. The ring of sparks around one world is a nice idea for the belt, but far too big. |
+| T01 | `82158aac-6d61-474e-becc-2d7b2df7ebeb` | 2 | **chosen** (not as an eclipse) | The Galaxy, its core rising | The edge-on Galaxy at its most restrained: a long thin disc with a torn lane, the core blazing up from behind a knife-sharp dark sliver, black sky everywhere else. Not the eclipse we asked for, but a beautiful Galaxy reference and a good picture of the Bulge coming up as the eye adapts (P04). |
+| T01 | `4e65bd6f-f5e1-4bde-9a52-021e53be4edc` | 2 | partial | The eclipse's mood | A tilted galaxy whose right side is swallowed by a dark mass. The closest to the eclipse, but the edge is soft like dust. An unlit airless body has a razor-sharp edge, and no stars show inside it. |
+| T01 | `4e65bd6f-f5e1-4bde-9a52-021e53be4edc` | 3 | partial, possible oddity | A hooded galaxy | The dust lane curls round the core like a hood or a lip, making the core look like a lit stage. Strange and lovely. A candidate fourth sky oddity, if the owner wants it. |
+| T01 | `4e65bd6f-f5e1-4bde-9a52-021e53be4edc` | 1 | dropped | | An orange atmosphere along the top; the galaxy pours down like a drain. |
+| T01 | `82158aac-6d61-474e-becc-2d7b2df7ebeb` | 3 | dropped | | A glowing atmosphere arc across the sky. |
+| T02 | `298cc1b7-c4e3-4243-925e-bfe106cb5356` | 1, 2, 3 | dropped | | Mountains, horizons and a night landscape with trees. #2 also has a black disc with a glowing halo, which reads as a black hole with lensing (not ruled). No threads anywhere. |
+| T02 | `bc4398bd-1bbb-4548-8da2-483b11870cd7` | 0, 3 | dropped | | #0 is a blue galaxy band arched like a planet's limb; #3 is an ocean under pillars of light. |
+
+**Lesson from T02:** "far ahead" and "a field" read as a landscape, so MidJourney put a ground under every frame. T02b describes a small floating cluster in open black space instead.
+
+**Lesson from T01:** MidJourney won't draw a body as an absence; it softened the edge into dust. T01b asks for a perfectly round black disc silhouetted against the core, and drops `planet` from the `--no` list so the disc is allowed.
+
 Images shipped as textures: **none** (A23).
