@@ -456,25 +456,25 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
   // Where the objective is. The plan's own framing does not stretch to hold it (a place a
   // thousand kilometres off would shrink the plan to a dot): the chart points to it instead.
   const regions = objectiveRegions(snapshot.objectives, bodies, model);
-  const fit: P2[] | undefined = reading
-    ? [
-        ...reading.path.map((p): P2 => [p.x, p.y]),
-        ...(near
-          ? ([
-              [near.x - near.radius * 1.3, near.y - near.radius * 1.3],
-              [near.x + near.radius * 1.3, near.y + near.radius * 1.3],
-            ] satisfies P2[])
-          : []),
-      ]
-    : undefined;
-  const whole: P2[] | undefined = reading
-    ? wholeFit(
-        reading.bodiesAt(t),
-        regions,
-        reading.path.map((p): P2 => [p.x, p.y]),
-        chartPath(snapshot.trail),
-      )
-    : undefined;
+  const pathPoints = useMemo(
+    (): P2[] => (reading ? reading.path.map((p): P2 => [p.x, p.y]) : []),
+    [reading],
+  );
+  const fit: P2[] | undefined =
+    reading && framing === 'plan'
+      ? [
+          ...pathPoints,
+          ...(near
+            ? ([
+                [near.x - near.radius * 1.3, near.y - near.radius * 1.3],
+                [near.x + near.radius * 1.3, near.y + near.radius * 1.3],
+              ] satisfies P2[])
+            : []),
+        ]
+      : undefined;
+  const flown = chartPath(snapshot.trail);
+  const whole: P2[] | undefined =
+    reading && framing === 'region' ? wholeFit(around, regions, pathPoints, flown) : undefined;
   // The forecast against the objective: how near it comes to a place to reach, and how a
   // departure stands where the forecast ends.
   const reaches = shown
@@ -823,12 +823,12 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
           <>
             <TrajectoryChart
               label={`${game.briefing.name}: the plan as the model forecasts it`}
-              bodies={reading.bodiesAt(t)}
+              bodies={around}
               bands={evidenceBands(model)}
               regions={regions}
               forecast={reading.path}
               {...(earlier ? { earlier } : {})}
-              trail={chartPath(snapshot.trail)}
+              trail={flown}
               marks={marks}
               cursor={{ x: here.x, y: here.y, heading: here.heading, ellipse: here.ellipse }}
               {...(framing === 'follow'
