@@ -113,7 +113,8 @@ export const CUES: readonly SoundCue[] = [
     at: start('wells'),
     until: end('wells'),
     loop: true,
-    gain: 0.55,
+    // The owner's take is quiet (peak -17 dBFS, mean -30): lifted to sit under the groan.
+    gain: 3,
   },
   { from: 'trailer', file: 'well-groan', at: start('wells'), until: end('wells'), gain: 0.55 },
   { from: 'trailer', file: 'ship-creak', at: start('wells') + 0.6, until: end('wells'), gain: 0.5 },
