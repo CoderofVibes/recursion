@@ -16,6 +16,7 @@ import {
   issueForecast,
   type AttemptId,
   type AttemptRecord,
+  type BelievedField,
   type ExtensionDecision,
   type ExtensionId,
   type Forecast,
@@ -57,6 +58,11 @@ export interface ModelClient {
   report(): Promise<ModelReport>;
   burns(attempts?: readonly AttemptId[]): Promise<BurnReport[]>;
   empirical(): Promise<EmpiricalReport | null>;
+  /**
+   * The lattice rebuilt from an attempt's records (A16): believed fields for
+   * `BelievedWorld.fields`, each `visual` in 3C's `lattice-observations-v1` display schema.
+   */
+  lattice(attemptId?: AttemptId, now?: number): Promise<BelievedField[]>;
   terminate(): void;
 }
 
@@ -154,6 +160,7 @@ export function createModelClient(opts: { worker?: boolean } = {}): ModelClient 
     report: () => c('report'),
     burns: (attempts) => c('burns', attempts),
     empirical: () => c('empirical'),
+    lattice: (attemptId, now) => c('lattice', attemptId, now),
     terminate,
   };
 }
