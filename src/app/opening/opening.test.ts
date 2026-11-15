@@ -2,13 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { claimOpening, openingLaunch, resetOpening } from './launch.ts';
 import {
   ALARM_DURATION,
+  DARK_AFTER_TITLE,
   ALARM_STARTS,
   OPENING_END,
   openingCues,
   sampleOpening,
   TITLE_FLICKERS,
   TITLE_OUT,
-  TITLE_WORD,
 } from './sequence.ts';
 
 describe('scripted opening', () => {
@@ -49,44 +49,45 @@ describe('scripted opening', () => {
     expect(sampleOpening(6.9, true).alarm).toBe(0);
   });
 
-  it('holds black, builds the title letter by letter in 1.5 s, flickers it, then leaves black', () => {
+  it('holds black, fades the whole title in over 1.5 s, flickers it, then holds black 2 s', () => {
     const ms = Array.from({ length: Math.ceil(OPENING_END * 1000) }, (_, i) => i / 1000);
     const cue = (id: string) => openingCues(0, OPENING_END).find((c) => c.id === id)!.at;
     const cut = cue('black-cut');
     const begins = cue('opening-title');
     const room = cue('room-wake');
-    // A held black of at least a second between the cut and the first letter.
+    const title = ms.map((t) => sampleOpening(t, false).title);
+    // A held black of at least a second between the cut and the title.
     expect(begins - cut).toBeGreaterThanOrEqual(1);
     expect(
-      ms
-        .filter((t) => t >= cut && t < begins)
-        .every((t) => sampleOpening(t, false).letters.every((l) => l === 0)),
+      ms.filter((t) => t >= cut && t < begins).every((t) => sampleOpening(t, false).title === 0),
     ).toBe(true);
-    // The letters come up in order, the last one fully up 1.5 s after the first starts.
-    const upAt = TITLE_WORD.split('').map((_, i) =>
-      ms.find((t) => sampleOpening(t, false).letters[i] === 1)!,
-    );
-    expect(upAt).toEqual([...upAt].sort((a, b) => a - b));
-    expect(upAt.at(-1)! - begins).toBeCloseTo(1.5, 3);
-    expect(upAt[0]! - begins).toBeLessThan(1.5);
-    // Steady at full from the end of the build until the flicker starts.
-    const steady = ms.filter((t) => t >= upAt.at(-1)! && t < TITLE_FLICKERS[0].at);
+    // The whole word fades in, rising steadily, fully shown 1.5 s after it starts.
+    const fading = ms
+      .filter((t) => t >= begins && t <= begins + 1.5)
+      .map((t) => sampleOpening(t, false).title);
+    expect(fading.every((v, i) => i === 0 || v >= fading[i - 1]!)).toBe(true);
+    expect(sampleOpening(begins + 0.75, false).title).toBeCloseTo(0.5, 2);
+    const full = ms.find((t) => sampleOpening(t, false).title === 1)!;
+    expect(full - begins).toBeCloseTo(1.5, 3);
+    // Steady at full from then until the flicker starts.
+    const steady = ms.filter((t) => t >= full && t < TITLE_FLICKERS[0].at);
     expect(steady.length).toBeGreaterThan(1000);
     expect(steady.every((t) => sampleOpening(t, false).title === 1)).toBe(true);
     // Every drop of 0.1 or more is a flash; count them in every rolling second.
-    const title = ms.map((t) => sampleOpening(t, false).title);
     const drops: number[] = [];
     for (let i = 1; i < title.length; i++) if (title[i - 1]! - title[i]! >= 0.1) drops.push(ms[i]!);
     expect(drops.length).toBe(TITLE_FLICKERS.length + 1);
     for (const at of drops)
       expect(drops.filter((d) => d >= at && d < at + 1).length).toBeLessThanOrEqual(3);
-    // Out for good: black from TITLE_OUT until the room appears.
+    // Out for good, then black for 2 s before the room starts to appear.
+    expect(room - TITLE_OUT).toBe(DARK_AFTER_TITLE);
+    expect(DARK_AFTER_TITLE).toBe(2);
     const after = ms.filter((t) => t >= TITLE_OUT && t < room);
-    expect(after.length).toBeGreaterThan(0);
     expect(after.every((t) => sampleOpening(t, false).title === 0)).toBe(true);
     expect(after.every((t) => sampleOpening(t, false).blackout === 1)).toBe(true);
-    // Reduced motion: the same build, no flicker, and the title goes out at the same moment.
-    const reduced = ms.filter((t) => t >= begins && t < TITLE_OUT);
+    expect(sampleOpening(room + 0.5, false).blackout).toBeLessThan(1);
+    // Reduced motion: the same fade, no flicker, and the title goes out at the same moment.
+    const reduced = ms.filter((t) => t >= full && t < TITLE_OUT);
     expect(reduced.every((t) => sampleOpening(t, true).title === 1)).toBe(true);
     expect(sampleOpening(TITLE_OUT, true).title).toBe(0);
   });

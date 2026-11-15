@@ -4,50 +4,41 @@ const TREMOR = 2.8;
 const STUMBLE = 4.1;
 const FAILURE = 5.65;
 const CUT = FAILURE + lossSequence.shakeEnd;
-/** A held black after the cut, then the title builds (owner, 2026-11-14). */
+/** A held black after the cut, then the whole title fades in over 1.5 s (owner, 2026-11-14). */
 const TITLE = 8.25;
-const TITLE_BUILT = TITLE + 1.5;
-const ARRIVAL_SKY = 12.85;
-const REVEAL = 13.5;
-const SETTLED = 15.05;
-export const OPENING_END = 15.5;
+const TITLE_SHOWN = TITLE + 1.5;
 
 /**
- * The title (owner, 2026-11-14): after a held black it builds letter by letter over 1.5 s, holds
- * steady, starts to flicker like a failing screen, then goes out for good and leaves black. Each
- * dip is [start, seconds, level during the dip]; after a dip the title returns at `after`. Dips
- * start at least 0.4 s apart and the title goes out at TITLE_OUT, so any one second holds at most
- * three flashes.
+ * The title (owner, 2026-11-14): after a held black every letter fades in together over 1.5 s,
+ * holds steady, starts to flicker like a failing screen, then goes out for good. Each dip is
+ * [start, seconds, level during the dip]; after a dip the title returns at `after`. Dips start at
+ * least 0.4 s apart and the title goes out at TITLE_OUT, so any one second holds at most three
+ * flashes. Black then holds for DARK_AFTER_TITLE before the room appears.
  */
-export const TITLE_WORD = 'RECURSION';
-/** Seconds each letter takes to come up; letters start in turn so the last is up at TITLE_BUILT. */
-const LETTER_IN = 0.3;
-const LETTER_STEP = (TITLE_BUILT - TITLE - LETTER_IN) / (TITLE_WORD.length - 1);
 export const TITLE_FLICKERS = [
   { at: 11.0, length: 0.07, level: 0, after: 1 },
   { at: 11.42, length: 0.05, level: 0.25, after: 0.85 },
   { at: 11.82, length: 0.09, level: 0, after: 0.6 },
 ] as const;
 export const TITLE_OUT = 12.2;
-
-/** How far each letter of the title has come up, 0 to 1. */
-export function titleLetters(t: number): number[] {
-  return [...TITLE_WORD].map((_, i) =>
-    ease(range(t, TITLE + i * LETTER_STEP, TITLE + i * LETTER_STEP + LETTER_IN)),
-  );
-}
-
-const NO_LETTERS: readonly number[] = [...TITLE_WORD].map(() => 0);
+/** Seconds of black after the title goes out, before the room starts to appear (owner). */
+export const DARK_AFTER_TITLE = 2;
+const REVEAL = TITLE_OUT + DARK_AFTER_TITLE;
+/** The new sky goes in under black a little before the reveal (S23's 0.65 s). */
+const ARRIVAL_SKY = REVEAL - 0.65;
+const SETTLED = REVEAL + 1.55;
+export const OPENING_END = 16;
 
 function titleAt(t: number, reducedMotion: boolean): number {
   if (t < TITLE || t >= TITLE_OUT) return 0;
-  if (reducedMotion) return 1;
+  const shown = ease(range(t, TITLE, TITLE_SHOWN));
+  if (reducedMotion) return shown;
   let level = 1;
   for (const dip of TITLE_FLICKERS) {
     if (t < dip.at) break;
     level = t < dip.at + dip.length ? dip.level : dip.after;
   }
-  return level;
+  return shown * level;
 }
 
 /** S23 pulse starts. The envelope stays local to two room strips. */
@@ -78,10 +69,8 @@ export type OpeningBeat =
 export interface OpeningFrame {
   readonly beat: OpeningBeat;
   readonly blackout: number;
-  /** The title's brightness, 0 to 1 (its flicker). */
+  /** The title's brightness, 0 to 1 (its fade in and flicker). */
   readonly title: number;
-  /** How far each letter of TITLE_WORD has come up, 0 to 1. */
-  readonly letters: readonly number[];
   readonly alarm: number;
   readonly light: number;
   readonly console: 'cruise' | 'caution' | 'warning' | 'off';
@@ -168,7 +157,6 @@ export function sampleOpening(t: number, reducedMotion: boolean): OpeningFrame {
     beat: 'home',
     blackout: 0,
     title: 0,
-    letters: NO_LETTERS,
     alarm: 0,
     light: 1,
     console: 'cruise',
@@ -202,7 +190,6 @@ export function sampleOpening(t: number, reducedMotion: boolean): OpeningFrame {
       beat: 'title',
       blackout: 1,
       title: titleAt(t, reducedMotion),
-      letters: titleLetters(t),
       ambience: 0,
     };
   }
