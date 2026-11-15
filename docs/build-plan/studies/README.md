@@ -19,6 +19,11 @@ Design and physics studies that run in parallel with the build. Each one answers
 | S13 | The release front door: licence, notices, a README for judges | [S13-release-front-door.md](S13-release-front-door.md) |
 | S14 | Phases 3–5 refreshed against A8–A14 and the studies | [S14-phases-refresh.md](S14-phases-refresh.md) |
 | S15 | Speed on a modest laptop: load, frames, and the cheapest fixes | [S15-modest-laptop.md](S15-modest-laptop.md) |
+| S16 | The Well Garden's layout: unavoidable, fair and seeded | [S16-well-garden.md](S16-well-garden.md) |
+| S17 | The lattice's first contact (A16): dose, failure order, the Black Box function, threading | [S17-lattice-first-contact.md](S17-lattice-first-contact.md) |
+| S18 | The tether's gate and run configurations (A15 Q11–Q18) | [S18-tether-gate.md](S18-tether-gate.md) |
+| S19 | Tidal Orchard: is the effect real? (A15 Q21) | [S19-tidal-check.md](S19-tidal-check.md) |
+| S20 | The 3D release, rechecked: S9's first five minutes, S12's claims and demo, S15's speed | [S20-3d-recheck.md](S20-3d-recheck.md) |
 
 ## Rules for every study
 1. **Read first:**
@@ -27,7 +32,7 @@ Design and physics studies that run in parallel with the build. Each one answers
    - `docs/build-plan/README.md` § Conventions;
    - `docs/handoffs/region-proposal/` (`README.md` and `regions.md`);
    - your prompt.
-2. **The world is 3D** (A11). The gravity law is P4: a = (GM/r₀²)(r₀/r)^2.5 with one shared r₀ = 1,000 km. Thread 2G is converting the game to 3D now; `src/contracts/README.md` shows the 3D types. Earlier planar documents give you vocabulary, not limits.
+2. **The world is 3D** (A11). The gravity law is P4: a = (GM/r₀²)(r₀/r)^2.5 with one shared r₀ = 1,000 km. The game is 3D end to end (2G, merged 2026-11-14); `src/contracts/README.md` shows the types and `docs/handoffs/2G.md` the ship, model and limits. Earlier planar documents give you vocabulary, not limits.
 3. **Ownership:** you write only `docs/studies/<your id>/`, `tools/studies/<your id>/` and `docs/handoffs/<your id>.md`. Everything else is a request in your handoff. Never commit changes under `src/`; 2D and 2G own it (S7 delivers its fix as a patch file).
 4. **Software:**
    - Python 3.14 with the standard library and numpy (both installed). Don't install anything else without the owner's OK.
@@ -36,6 +41,7 @@ Design and physics studies that run in parallel with the build. Each one answers
    - Label claims as in Convention 4: `[ESTABLISHED: source]`, `[ASSUMED]`, `[FICTIONAL]`, `[DEMONSTRATED: script or test]`.
    - Prefer NASA and peer-reviewed sources, cited by URL or by bibliography ID from `References/BIBLIOGRAPHY.md`.
    - Say plainly when an effect is too small to matter in play.
+   - Never commit local user paths or account names, for example in browser traces, profiles or logs. Scrub them first (S15's traces carried the Windows user folder).
 6. **Every study delivers:**
    - **A recommendation**, with the numbers behind it.
    - **What building it would take:**
