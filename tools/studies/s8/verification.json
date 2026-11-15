@@ -1,0 +1,16 @@
+{
+  "independent_verlet_vs_rk4": [
+    {
+      "dt": 5.0,
+      "position_m": 31.525410130615565,
+      "velocity_m_s": 0.00020574793072940332
+    },
+    {
+      "dt": 2.5,
+      "position_m": 7.881798491900383,
+      "velocity_m_s": 5.143989586197253e-05
+    }
+  ],
+  "analytic_binary_acceleration_error": 1.6263032587282567e-19,
+  "rotation_error_m": 2.687656409250385e-09
+}

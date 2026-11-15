@@ -1,0 +1,601 @@
+{
+  "schema": "s8-reference-v1",
+  "units": "m, s, kg, m/s, radians; inertial barycentric right-handed frame",
+  "inputs_file": "inputs.json",
+  "tolerance": {
+    "ship_position_m": 20,
+    "ship_velocity_m_s": 0.002,
+    "closest_clearance_m": 200,
+    "event_time_s": 120
+  },
+  "comparison_semantics": "Position/velocity tolerance applies at exact stored sample epochs, including the first sampled outward exit state; do not compare that state to an earlier interpolated gate crossing. Event time/clearance tolerances are separate. The wrong-law contact is refined to the20m-expanded surface; no penetrated sample is a flight state.",
+  "instructions": "Use the exact stored states and impulses; do not port the RNG or replace the law with conic formulas. Refine collision events; no post-contact ship trajectory is physical.",
+  "informed_exit": {
+    "file": "ring-witness.json",
+    "initial_ship": {
+      "t": 0,
+      "position": [
+        -1800000.0,
+        1.2246467991473533e-10,
+        0.0
+      ],
+      "velocity": [
+        -1.2246467991473532e-14,
+        -107.90569415042094,
+        0.0
+      ]
+    },
+    "commands": [
+      {
+        "t": 3960,
+        "delta_v": [
+          5.305689171714134,
+          -12.736159249696323,
+          0.0
+        ],
+        "frame": "inertial"
+      },
+      {
+        "t": 80040.0,
+        "delta_v": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "frame": "inertial"
+      }
+    ],
+    "expected": {
+      "beta_peri_m": 830440.1539808741,
+      "beta_peri_t": 108840.0,
+      "beta_peri_relative_speed": 71.57674355574228,
+      "alpha_min_m": 1000000.0,
+      "exit_t": 242760.0,
+      "exit_speed": 63.79858675655924,
+      "exit_position": [
+        -6956874.496434785,
+        5713437.059553029,
+        -101749.76432714397
+      ],
+      "exit_velocity": [
+        -63.6252362450571,
+        4.631184783612538,
+        -0.8006949449842827
+      ],
+      "qualifies": true
+    },
+    "minimum_rock_clearance_m": 6384.714469093141,
+    "description": "Full Alpha-field and Beta-belt lifted assist; explicit initial rock states and all closest approaches in linked file"
+  },
+  "wrong_law": {
+    "file": "seeds.json",
+    "case": {
+      "bearing_deg": 180.0,
+      "retrograde_delta_v": 32.063377951324256,
+      "initial": {
+        "position": [
+          -1800000.0,
+          1.2246467991473533e-10,
+          0.0
+        ],
+        "velocity": [
+          -1.2246467991473532e-14,
+          -107.90569415042094,
+          0.0
+        ]
+      },
+      "commands": [
+        {
+          "t": 600,
+          "delta_v_vector": [
+            -1.916238767597407,
+            32.006065591306644,
+            -0.0
+          ]
+        }
+      ],
+      "hit_t": 14967.08532207922,
+      "contact_bracket": [
+        14960.0,
+        14970.0
+      ],
+      "contact_time_tolerance": 0.01,
+      "warning_t": 9990.0,
+      "warning_alpha_range": 740377.738367429,
+      "warning_position_error": 10009.939988897479,
+      "lead_seconds": 4977.08532207922,
+      "abort_at_warning": {
+        "delta_v": 40.0,
+        "alpha_min_m": 386227.47475124756
+      },
+      "warning_threshold": "max(10000m, 5*0.002*true Alpha range)",
+      "samples": [
+        {
+          "t": 0.0,
+          "position": [
+            -1800000.0,
+            1.2246467991473533e-10,
+            0.0
+          ],
+          "velocity": [
+            -1.2246467991473532e-14,
+            -107.90569415042094,
+            0.0
+          ],
+          "forecast_position": [
+            -1800000.0,
+            1.2246467991473533e-10,
+            0.0
+          ],
+          "forecast_velocity": [
+            -1.2246467991473532e-14,
+            -107.90569415042094,
+            0.0
+          ],
+          "alpha_range": 1000000.0,
+          "separation": 0.0
+        },
+        {
+          "t": 600.0,
+          "position": [
+            -1798192.493999132,
+            -64707.37826737277,
+            0.0
+          ],
+          "velocity": [
+            4.10696866655657,
+            -75.7194597901752,
+            0.0
+          ],
+          "forecast_position": [
+            -1798182.536587752,
+            -64707.3223865566,
+            0.0
+          ],
+          "forecast_velocity": [
+            4.1401841879972325,
+            -75.71917922825213,
+            0.0
+          ],
+          "alpha_range": 1000006.0046823816,
+          "separation": 9.95756817985938
+        },
+        {
+          "t": 3000.0,
+          "position": [
+            -1759432.877488651,
+            -243112.11124202146,
+            0.0
+          ],
+          "velocity": [
+            28.254270651044518,
+            -72.26649668999642,
+            0.0
+          ],
+          "forecast_position": [
+            -1759217.2528715446,
+            -243111.15836735425,
+            0.0
+          ],
+          "forecast_velocity": [
+            28.36297941238508,
+            -72.2709133050658,
+            0.0
+          ],
+          "alpha_range": 984541.4287159772,
+          "separation": 215.6267225379596
+        },
+        {
+          "t": 6000.0,
+          "position": [
+            -1627750.104720711,
+            -445519.6255179761,
+            0.0
+          ],
+          "velocity": [
+            60.02013932450068,
+            -61.177694203271194,
+            0.0
+          ],
+          "forecast_position": [
+            -1627710.8780511608,
+            -445755.6171291354,
+            0.0
+          ],
+          "forecast_velocity": [
+            59.60589425351495,
+            -61.424734808650015,
+            0.0
+          ],
+          "alpha_range": 919779.1781878113,
+          "separation": 239.22953860582567
+        },
+        {
+          "t": 9000.0,
+          "position": [
+            -1394768.5845589533,
+            -597586.1410545515,
+            0.0
+          ],
+          "velocity": [
+            96.36938303330479,
+            -37.09953813787592,
+            0.0
+          ],
+          "forecast_position": [
+            -1399022.5015421899,
+            -600566.3027048243,
+            0.0
+          ],
+          "forecast_velocity": [
+            93.37832473443035,
+            -39.238712370718034,
+            0.0
+          ],
+          "alpha_range": 796714.1182253774,
+          "separation": 5193.955444747773
+        },
+        {
+          "t": 9990.0,
+          "position": [
+            -1292689.8702749615,
+            -627996.6230020917,
+            0.0
+          ],
+          "velocity": [
+            110.01173904491047,
+            -23.668084427597723,
+            0.0
+          ],
+          "forecast_position": [
+            -1300748.254707985,
+            -633934.7488773937,
+            0.0
+          ],
+          "forecast_velocity": [
+            105.20183477571942,
+            -27.697966908830168,
+            0.0
+          ],
+          "alpha_range": 740377.738367429,
+          "separation": 10009.939988897479
+        },
+        {
+          "t": 12000.0,
+          "position": [
+            -1041507.7668442526,
+            -634923.1217041444,
+            0.0
+          ],
+          "velocity": [
+            140.3424240757252,
+            22.549694550771253,
+            0.0
+          ],
+          "forecast_position": [
+            -1064952.671843732,
+            -657479.0422035522,
+            0.0
+          ],
+          "forecast_velocity": [
+            129.1770493926403,
+            7.573036095662068,
+            0.0
+          ],
+          "alpha_range": 594113.2607190313,
+          "separation": 32533.56912498566
+        },
+        {
+          "t": 14960.0,
+          "position": [
+            -610121.0549609767,
+            -291757.41774617136,
+            0.0
+          ],
+          "velocity": [
+            75.66540254586027,
+            294.9049361320002,
+            0.0
+          ],
+          "forecast_position": [
+            -652722.0763592097,
+            -491927.45008494146,
+            0.0
+          ],
+          "forecast_velocity": [
+            134.96307605253284,
+            122.38142959135878,
+            0.0
+          ],
+          "alpha_range": 251125.33870703483,
+          "separation": 204653.09396800474
+        },
+        {
+          "t": 14967.08532207922,
+          "position": [
+            -609590.7037397197,
+            -289662.41459857475,
+            0.0
+          ],
+          "velocity": [
+            74.03381020320847,
+            296.4601074789793,
+            0.0
+          ],
+          "forecast_position": [
+            -651766.3653776776,
+            -491058.8573732983,
+            0.0
+          ],
+          "forecast_velocity": [
+            134.8087072559932,
+            122.79954769298713,
+            0.0
+          ],
+          "alpha_range": 250020.0000000105,
+          "separation": 205765.19044024922
+        }
+      ]
+    },
+    "description": "Newton300km plan, true Alpha impact and pre-impact frozen-forecast residual/abort"
+  },
+  "rejected_seed": {
+    "file": "seeds.json",
+    "candidate": {
+      "bearing_offset_deg": 25,
+      "admitted": false,
+      "reason": "No candidate in declared finite control search"
+    },
+    "initial_ship": {
+      "t": 0,
+      "position": [
+        -1706307.7870366499,
+        -422618.2617406993,
+        0.0
+      ],
+      "velocity": [
+        42.261826174069924,
+        -98.53647285408594,
+        0.0
+      ]
+    },
+    "reason": "No robust witness in declared first-window search; this does not prove the geometry impossible.",
+    "strict_combined_rule": {
+      "rejected": 13,
+      "denominator": 13,
+      "reason": "No certified low-orbit-then-exit witness within committed16m/s budget"
+    }
+  },
+  "ring_crossing": {
+    "file": "ring-witness.json",
+    "closest_approaches": [
+      {
+        "rock": 140,
+        "host": "beta",
+        "t": 88214.47193187756,
+        "clearance_m": 6384.714469093141,
+        "center_distance_m": 11179.316188640278,
+        "relative_speed": 31.760036615432096,
+        "ship_position": [
+          2509727.1286869906,
+          1366897.5728633304,
+          8066.714399361665
+        ],
+        "ship_velocity": [
+          12.423500418187457,
+          64.0376551622871,
+          0.9569270880888369
+        ],
+        "rock_position": [
+          2519469.2540414184,
+          1366995.9739500755,
+          2584.1583120670584
+        ],
+        "rock_velocity": [
+          12.195595665638962,
+          32.293406011251584,
+          -0.01807602694965509
+        ]
+      },
+      {
+        "rock": 305,
+        "host": "beta",
+        "t": 105509.83694253671,
+        "clearance_m": 21667.55013356451,
+        "center_distance_m": 33679.843868722324,
+        "relative_speed": 18.995526733055968,
+        "ship_position": [
+          2451857.4896736713,
+          2693017.9919295395,
+          19567.40665050315
+        ],
+        "ship_velocity": [
+          -28.50578399202363,
+          86.54358717291197,
+          0.1327343456460623
+        ],
+        "rock_position": [
+          2482444.9022284765,
+          2695686.4064341476,
+          5724.659804039641
+        ],
+        "rock_velocity": [
+          -26.932474961099537,
+          67.61411304068534,
+          -0.03972909053441638
+        ]
+      },
+      {
+        "rock": 130,
+        "host": "beta",
+        "t": 103188.18634508348,
+        "clearance_m": 22970.823991515972,
+        "center_distance_m": 31980.85765372521,
+        "relative_speed": 16.191750186253284,
+        "ship_position": [
+          2507575.5868572914,
+          2493080.2457056185,
+          19024.04524049978
+        ],
+        "ship_velocity": [
+          -19.623904316903072,
+          85.44451369351441,
+          0.3315467289016137
+        ],
+        "rock_position": [
+          2480492.0067623635,
+          2482882.1744662807,
+          5413.230110359656
+        ],
+        "rock_velocity": [
+          -13.75687803388695,
+          70.35778189681135,
+          -0.04435270283516618
+        ]
+      },
+      {
+        "rock": 317,
+        "host": "beta",
+        "t": 106804.91814494577,
+        "clearance_m": 28275.463188375936,
+        "center_distance_m": 38304.553583563364,
+        "relative_speed": 16.713797707926208,
+        "ship_position": [
+          2411574.212300391,
+          2805099.952152296,
+          19662.671355792063
+        ],
+        "ship_velocity": [
+          -33.72521970381891,
+          86.45475058510712,
+          0.013637581079637326
+        ],
+        "rock_position": [
+          2438271.899669133,
+          2803715.8705017143,
+          -7770.094315600206
+        ],
+        "rock_velocity": [
+          -34.72100926673515,
+          69.77109959346801,
+          -0.10975835501967005
+        ]
+      },
+      {
+        "rock": 155,
+        "host": "beta",
+        "t": 102519.90106573817,
+        "clearance_m": 28546.084455821467,
+        "center_distance_m": 37567.29799920619,
+        "relative_speed": 20.284688395608498,
+        "ship_position": [
+          2519886.0176366842,
+          2436165.151730858,
+          18784.77751736041
+        ],
+        "ship_velocity": [
+          -17.233491555472632,
+          84.87058153385861,
+          0.38410130906672696
+        ],
+        "rock_position": [
+          2549935.750059901,
+          2442941.6709304387,
+          -2718.5768207878773
+        ],
+        "rock_velocity": [
+          -13.381365156036,
+          64.97485055942451,
+          -0.5044899932995157
+        ]
+      },
+      {
+        "rock": 266,
+        "host": "beta",
+        "t": 103727.74823784702,
+        "clearance_m": 30813.47357540529,
+        "center_distance_m": 40332.96776785992,
+        "relative_speed": 16.307633186056343,
+        "ship_position": [
+          2496452.6333382647,
+          2539290.2049337127,
+          19191.105214175353
+        ],
+        "ship_velocity": [
+          -21.614123728753682,
+          85.8303498173185,
+          0.2874610152472496
+        ],
+        "rock_position": [
+          2462993.505315674,
+          2527995.07950279,
+          -293.63708411665385
+        ],
+        "rock_velocity": [
+          -16.165931665306935,
+          70.46648227706456,
+          -0.16825553733021012
+        ]
+      },
+      {
+        "rock": 200,
+        "host": "beta",
+        "t": 112719.5811198062,
+        "clearance_m": 33638.67725606129,
+        "center_distance_m": 37595.22976030182,
+        "relative_speed": 17.486120177240462,
+        "ship_position": [
+          2142426.1472084457,
+          3300114.131866667,
+          18114.312694984794
+        ],
+        "ship_velocity": [
+          -56.584403734586445,
+          79.11548899766024,
+          -0.5253650250021948
+        ],
+        "rock_position": [
+          2107756.905175972,
+          3308345.7703965623,
+          6127.441346014368
+        ],
+        "rock_velocity": [
+          -60.72494401955808,
+          62.1294439446138,
+          -0.21779640290360214
+        ]
+      },
+      {
+        "rock": 324,
+        "host": "beta",
+        "t": 105265.78868041786,
+        "clearance_m": 34793.48304995413,
+        "center_distance_m": 43299.92404247522,
+        "relative_speed": 20.201579956964522,
+        "ship_position": [
+          2458696.080558003,
+          2671902.0326848365,
+          19532.336172767064
+        ],
+        "ship_velocity": [
+          -27.537915970362825,
+          86.50075260865758,
+          0.1546451083521172
+        ],
+        "rock_position": [
+          2498605.4711266616,
+          2677667.3964729905,
+          3756.2610299243424
+        ],
+        "rock_velocity": [
+          -24.773547833284184,
+          66.4916889646462,
+          -0.16074932761221805
+        ]
+      }
+    ],
+    "description": "Same physical informed run; center distance includes stored rock radius plus20m conservative ship sphere"
+  },
+  "analytic_checks_file": "verification.json",
+  "scattering_file": "scattering.json"
+}

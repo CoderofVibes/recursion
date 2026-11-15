@@ -1,0 +1,413 @@
+{
+  "source_commit": "2986c3551a6a5bf1fd79262e48e39024ad937769",
+  "source_sha256": {
+    "docs/handoffs/2G.md": "ea6a85278c36453f7c121d02549e4bc69d92cd6e0c40f23f5bfdfca16a9ec14a",
+    "src/content/gravity-range/world.ts": "74054c8180fea983830376d0dd5bf453ed3ec23f53a857a03d7773e50bfb4169",
+    "src/content/gravity-range/index.ts": "b32814c9610cc7419745ef8610fff85f466770db113003514d37e26e762fd139",
+    "src/content/gravity-range/briefing.ts": "cf08345ff5aaa123e4a43acbbfe3987d99d69e4908667a79b503d8403e7489ee",
+    "data/ship-baseline.json": "aae1d0023749446706bf2d44243a4e248e7dc307c7ecd8e1ed0a5e69e051e51c"
+  },
+  "constants": {
+    "exponent": 2.5,
+    "reference_radius_m": 1000000,
+    "alpha_gm": 10000000000.0,
+    "beta_gm": 2500000000.0,
+    "alpha_radius_m": 250000,
+    "beta_radius_m": 160000,
+    "binary_separation_m": 4000000,
+    "arrival_bearing_rad": 3.141592653589793,
+    "arrival_radius_m": 1000000,
+    "belt_count": 320,
+    "belt_inner_m": 700000,
+    "belt_outer_m": 860000,
+    "belt_thickness_fraction": 0.006,
+    "belt_eccentricity": 0.015,
+    "belt_min_radius_m": 3000,
+    "belt_max_radius_m": 12000,
+    "depart_radius_m": 9000000,
+    "depart_speed_m_s": 50,
+    "depart_dv_m_s": 16,
+    "camera_range_sigma_fraction": 0.002,
+    "hidden_engine_scale": 0.975
+  },
+  "ship": {
+    "name": "Recursion return vehicle",
+    "crew": 4,
+    "dryMass": 24000,
+    "initialWetMass": 30374,
+    "initialConfiguration": "radiators",
+    "configurations": [
+      "stowed",
+      "radiators",
+      "solar",
+      "allDeployed"
+    ],
+    "bodyFrame": "x forward, y left, z up (right-handed); origin fixed to structure on the hull axis; positive yaw counterclockwise seen from +z, positive pitch raises the nose; positions are not COM-relative",
+    "dryMassDefinition": "Sum equipment, including crew, retained cabin consumables and tank dry hardware. Excludes propellant and fuel-cell reactants/product. Waste stays aboard; no silent mass loss.",
+    "hull": {
+      "part": "habitat-structure",
+      "outline": [
+        [
+          -8,
+          -2.5
+        ],
+        [
+          8,
+          -2.5
+        ],
+        [
+          8,
+          2.5
+        ],
+        [
+          -8,
+          2.5
+        ]
+      ],
+      "zMin": -2.5,
+      "zMax": 2.5
+    },
+    "hullPolicy": "Occupied volume is a union of convex prisms: the pressure hull (this outline, extruded over the 5 m body diameter) plus one thin prism per radiator and solar wing, whose outline is the appendage polygon at its current extension (configuration.appendages). No space between the parts is included. The antenna mast, camera, engine bell beyond x = -8 and RCS nozzles are not in the envelope.",
+    "inertiaShapes": "Intrinsic inertia about the centre of each part, body axes. intrinsicInertia is the 1C yaw (z) term, unchanged. habitat-structure: uniform solid cylinder of radius 2.5 m about x, so pitch = yaw and roll = m R^2 / 2. Radiator and solar wings: thin flat plates in the body x-y plane, so yaw = roll + pitch, split in the ratio span^2 : chord^2 of the stowed and deployed polygons and interpolated with extension. Every other assembly and every propellant: isotropic (sphere or compact box), roll = pitch = yaw."
+  },
+  "propellant": [
+    {
+      "id": "main-propellant",
+      "initialMass": 6000,
+      "capacity": 6000,
+      "position": [
+        -2,
+        0,
+        0
+      ],
+      "intrinsicInertiaPerKg": 1,
+      "Isp": 320,
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S03",
+        "S12"
+      ],
+      "feedPolicy": "Main mixture locked; RCS defaults balanced draw from both tanks, isolation permits one-sided draw; xenon separate. Clamp impulse to available mass."
+    },
+    {
+      "id": "rcs-left",
+      "initialMass": 150,
+      "capacity": 150,
+      "position": [
+        -1,
+        1,
+        1.6
+      ],
+      "intrinsicInertiaPerKg": 1,
+      "Isp": 220,
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S03",
+        "S12"
+      ],
+      "feedPolicy": "Main mixture locked; RCS defaults balanced draw from both tanks, isolation permits one-sided draw; xenon separate. Clamp impulse to available mass."
+    },
+    {
+      "id": "rcs-right",
+      "initialMass": 150,
+      "capacity": 150,
+      "position": [
+        -1,
+        -1,
+        1.6
+      ],
+      "intrinsicInertiaPerKg": 1,
+      "Isp": 220,
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S03",
+        "S12"
+      ],
+      "feedPolicy": "Main mixture locked; RCS defaults balanced draw from both tanks, isolation permits one-sided draw; xenon separate. Clamp impulse to available mass."
+    },
+    {
+      "id": "xenon",
+      "initialMass": 20,
+      "capacity": 20,
+      "position": [
+        -3,
+        0,
+        -1.9
+      ],
+      "intrinsicInertiaPerKg": 1,
+      "Isp": 4190,
+      "label": "ASSUMED",
+      "mechanismSources": [
+        "S03",
+        "S12"
+      ],
+      "feedPolicy": "Main mixture locked; RCS defaults balanced draw from both tanks, isolation permits one-sided draw; xenon separate. Clamp impulse to available mass."
+    }
+  ],
+  "main": {
+    "equipmentId": "main-engine",
+    "resourceIds": [
+      "main-propellant"
+    ],
+    "thrust": 24000,
+    "Isp": 320,
+    "minimumImpulse": 2400,
+    "mountMisalignment": 0.003,
+    "mountMisalignmentPitch": 0,
+    "gimbalLimit": 0.035,
+    "gimbalRate": 0.02,
+    "chemicalHeatAtFullThrust": 4000,
+    "policy": "Pressure-fed storable bipropellant represented by one mixture-locked tank; on/off or pulse train, no arbitrary deep throttle. Two-axis gimbal (yaw about body z, pitch about body -y; gimbalLimit and gimbalRate apply to each axis) aims through current COM if in range; output force at mount. mountMisalignment is about body +z (tilts thrust toward +y), mountMisalignmentPitch about body -y (tilts thrust toward +z). Exhaust carries most chemical energy, not bus power.",
+    "direction": [
+      1,
+      0,
+      0
+    ]
+  },
+  "rcs_isp_s": 220,
+  "rcs_force_N": {
+    "x": [
+      -800,
+      800
+    ],
+    "y": [
+      -400,
+      400
+    ],
+    "z": [
+      -800,
+      800
+    ]
+  },
+  "appendages": [
+    {
+      "id": "radiator-left",
+      "stowedPosition": [
+        -2,
+        2,
+        0
+      ],
+      "deployedPosition": [
+        -2,
+        6,
+        0
+      ],
+      "stowedInertia": 500,
+      "stowedInertiaRoll": 19,
+      "stowedInertiaPitch": 481,
+      "deployedInertia": 2500,
+      "deployedInertiaRoll": 1798,
+      "deployedInertiaPitch": 702,
+      "zMin": -0.1,
+      "zMax": 0.1,
+      "stowedPolygon": [
+        [
+          -4,
+          1.5
+        ],
+        [
+          1,
+          1.5
+        ],
+        [
+          1,
+          2.5
+        ],
+        [
+          -4,
+          2.5
+        ]
+      ],
+      "deployedPolygon": [
+        [
+          -4,
+          2
+        ],
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          10
+        ],
+        [
+          -4,
+          10
+        ]
+      ]
+    },
+    {
+      "id": "radiator-right",
+      "stowedPosition": [
+        -2,
+        -2,
+        0
+      ],
+      "deployedPosition": [
+        -2,
+        -6,
+        0
+      ],
+      "stowedInertia": 500,
+      "stowedInertiaRoll": 19,
+      "stowedInertiaPitch": 481,
+      "deployedInertia": 2500,
+      "deployedInertiaRoll": 1798,
+      "deployedInertiaPitch": 702,
+      "zMin": -0.1,
+      "zMax": 0.1,
+      "stowedPolygon": [
+        [
+          -4,
+          -2.5
+        ],
+        [
+          1,
+          -2.5
+        ],
+        [
+          1,
+          -1.5
+        ],
+        [
+          -4,
+          -1.5
+        ]
+      ],
+      "deployedPolygon": [
+        [
+          -4,
+          -10
+        ],
+        [
+          1,
+          -10
+        ],
+        [
+          1,
+          -2
+        ],
+        [
+          -4,
+          -2
+        ]
+      ]
+    },
+    {
+      "id": "solar-left",
+      "stowedPosition": [
+        3,
+        2,
+        0
+      ],
+      "deployedPosition": [
+        3,
+        7,
+        0
+      ],
+      "stowedInertia": 700,
+      "stowedInertiaRoll": 19,
+      "stowedInertiaPitch": 681,
+      "deployedInertia": 3500,
+      "deployedInertiaRoll": 2574,
+      "deployedInertiaPitch": 926,
+      "zMin": -0.05,
+      "zMax": 0.05,
+      "stowedPolygon": [
+        [
+          0,
+          1.5
+        ],
+        [
+          6,
+          1.5
+        ],
+        [
+          6,
+          2.5
+        ],
+        [
+          0,
+          2.5
+        ]
+      ],
+      "deployedPolygon": [
+        [
+          0,
+          2
+        ],
+        [
+          6,
+          2
+        ],
+        [
+          6,
+          12
+        ],
+        [
+          0,
+          12
+        ]
+      ]
+    },
+    {
+      "id": "solar-right",
+      "stowedPosition": [
+        3,
+        -2,
+        0
+      ],
+      "deployedPosition": [
+        3,
+        -7,
+        0
+      ],
+      "stowedInertia": 700,
+      "stowedInertiaRoll": 19,
+      "stowedInertiaPitch": 681,
+      "deployedInertia": 3500,
+      "deployedInertiaRoll": 2574,
+      "deployedInertiaPitch": 926,
+      "zMin": -0.05,
+      "zMax": 0.05,
+      "stowedPolygon": [
+        [
+          0,
+          -2.5
+        ],
+        [
+          6,
+          -2.5
+        ],
+        [
+          6,
+          -1.5
+        ],
+        [
+          0,
+          -1.5
+        ]
+      ],
+      "deployedPolygon": [
+        [
+          0,
+          -12
+        ],
+        [
+          6,
+          -12
+        ],
+        [
+          6,
+          -2
+        ],
+        [
+          0,
+          -2
+        ]
+      ]
+    }
+  ],
+  "g0": 9.80665
+}
