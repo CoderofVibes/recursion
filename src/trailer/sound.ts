@@ -84,24 +84,31 @@ export async function loadSound(): Promise<Sound> {
     for (const cue of CUES) {
       const buffer = buffers.get(cue.file);
       if (!buffer) continue;
-      const until = Math.min(cue.until ?? cue.at + buffer.duration, TOTAL);
+      const rate = cue.rate ?? 1;
+      const skip = cue.offset ?? 0;
+      // Timeline seconds the file sounds for, at its speed, from its start point.
+      const length = (buffer.duration - skip) / rate;
+      const until = Math.min(cue.until ?? cue.at + length, TOTAL);
       if (until <= from) continue;
       const begin = Math.max(cue.at, from);
-      const offset = begin - cue.at;
+      // Where in the file to start: its start point, plus however far the timeline is into it.
+      const offset = skip + (begin - cue.at) * rate;
       const source = context.createBufferSource();
       source.buffer = buffer;
       source.loop = cue.loop ?? false;
+      source.playbackRate.value = rate;
       const gain = context.createGain();
       source.connect(gain).connect(master);
       const at = (s: number) => origin + s;
       gain.gain.setValueAtTime(cue.gain, at(begin));
+      // Start before stop: Web Audio refuses a stop on a source that hasn't been started.
+      source.start(at(begin), source.loop ? offset % buffer.duration : offset);
       const fade = cue.fadeOut ?? CUT;
       if (cue.until !== undefined || until === TOTAL) {
         gain.gain.setValueAtTime(cue.gain, at(Math.max(begin, until - fade)));
         gain.gain.linearRampToValueAtTime(0, at(until));
         source.stop(at(until) + 0.01);
       }
-      source.start(at(begin), source.loop ? offset % buffer.duration : offset);
       playing.push({ source, gain });
     }
   }

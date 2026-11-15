@@ -30,6 +30,10 @@ interface Common {
   readonly gain: number;
   /** Seconds of fade before `until` (a soft end instead of a cut). */
   readonly fadeOut?: number;
+  /** Playback speed: below 1 is slower and lower, to stretch a take (owner's notes on the files). */
+  readonly rate?: number;
+  /** Seconds into the file to start from, skipping a take's silent lead-in. */
+  readonly offset?: number;
 }
 export type SoundCue =
   | (Common & { readonly from: 'game'; readonly file: GameCue })
@@ -60,6 +64,8 @@ export const CUES: readonly SoundCue[] = [
     at: start('title'),
     until: end('title'),
     fadeOut: 0.3,
+    // The owner's take sounds for 1.34 s; slowed to fill the title's 1.5 s (owner's note).
+    rate: 0.89,
     gain: 0.7,
   },
   ...FLICKERS.map((at): SoundCue => ({
@@ -67,7 +73,8 @@ export const CUES: readonly SoundCue[] = [
     file: 'flicker-crackle',
     at,
     until: Math.min(Math.round((at + 0.3) * 1000) / 1000, SNAP),
-    gain: 0.4,
+    // The take peaks at -20 dBFS: lifted to be heard over the hit.
+    gain: 1.8,
   })),
   { from: 'game', file: 'title-out', at: end('title'), until: start('slingshot'), gain: 0.45 },
 
@@ -85,7 +92,11 @@ export const CUES: readonly SoundCue[] = [
     file: 'opening-rumble',
     at: start('slingshot'),
     until: end('slingshot'),
-    gain: 0.55,
+    // The take: 0.35 s of silence, 1.7 s of rumble peaking at -22 dBFS. Skip the silence, slow it
+    // to fill the slingshot's 2.5 s and lift it (owner's note: slower, louder).
+    offset: 0.35,
+    rate: 0.68,
+    gain: 3.5,
   },
   {
     from: 'trailer',
