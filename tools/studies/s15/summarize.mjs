@@ -1,10 +1,13 @@
 // Regenerate evidence tables and source-mapped profile summaries from a completed run.
 import { readFileSync, writeFileSync, existsSync, readdirSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { dirname, join } from 'node:path';
+import { join } from 'node:path';
 import { gunzipSync } from 'node:zlib';
 import { TraceMap, originalPositionFor } from '@jridgewell/trace-mapping';
-const here = dirname(fileURLToPath(import.meta.url));
+const root = fileURLToPath(new URL('../../../', import.meta.url));
+const output = process.argv[3] ?? 'tools/studies/s15';
+if (!['tools/studies/s15', 'docs/handoffs/pf'].includes(output)) throw new Error('Unsupported evidence directory');
+const here = join(root, output);
 const run = process.argv[2] ?? 'baseline';
 if (!/^[\w-]+$/.test(run)) throw new Error('Unsafe run name');
 const x = JSON.parse(readFileSync(join(here, `${run}.json`)));
@@ -18,7 +21,7 @@ const stat = (v) => {
 const fmt = (v, d = 1) => v === null || v === undefined ? '—' : v.toFixed(d);
 const grouped = new Map();
 for (const r of raw) {
-  const key = `${r.profile}/${r.view}/${r.requestedWarp}`;
+  const key = `${r.region ?? 'gravity-range'}/${r.profile}/${r.view}/${r.requestedWarp}`;
   if (!grouped.has(key)) grouped.set(key, []);
   grouped.get(key).push(r);
 }
@@ -37,26 +40,36 @@ for (const [key, runs] of grouped) {
     }
   }
   const a = runs[0];
-  frames.push({ key, profile: a.profile, view: a.view, warp: a.requestedWarp,
+  const perRunP95 = runs.map((r) => stat(r.rows.map((v) => v[0])).p95);
+  frames.push({ key, region: a.region ?? 'gravity-range', profile: a.profile, view: a.view, warp: a.requestedWarp,
     ...stat(rows.map((r) => r[0])), wall, ship, shipPerWall: ship / wall,
     saturationPercent: 100 * saturated.length / rows.length,
     saturated: { ...stat(saturated.map((r) => r[0])), shipPerWall: saturatedWall ? saturatedShip / saturatedWall : null },
     warningDrops: runs.reduce((n, r) => n + r.warpReselections.length, 0),
     modelErrors: [...new Set(runs.map((r) => r.modelError).filter(Boolean))],
-    perRunP95: runs.map((r) => stat(r.rows.map((v) => v[0])).p95),
+    perRunP95, p95Median: (() => { const sorted = [...perRunP95].sort((a, b) => a - b); return (sorted[Math.floor((sorted.length - 1) / 2)] + sorted[Math.floor(sorted.length / 2)]) / 2; })(),
+    p95Min: Math.min(...perRunP95), p95Max: Math.max(...perRunP95),
+    hostLoad: runs.map((r) => r.hostLoad ?? null),
   });
 }
 const loads = [];
+for (const region of x.settings.regions ?? ['gravity-range'])
 for (const profile of ['native', 'modest']) for (const cache of ['cold', 'warm']) {
-  const rows = x.loads.filter((r) => r.profile === profile && r.cache === cache);
+  const rows = x.loads.filter((r) => r.profile === profile && r.cache === cache && r.target !== 'opening' && (r.region ?? 'gravity-range') === region);
   if (!rows.length) continue;
-  loads.push({ profile, cache, ready: stat(rows.map((r) => r.ready)),
+  loads.push({ region, profile, cache, ready: stat(rows.map((r) => r.ready)),
     firstInteraction: stat(rows.map((r) => r.interaction.paint)),
     keyToAck: stat(rows.map((r) => r.interaction.ack - r.interaction.sent)),
     consoleReady: stat(rows.map((r) => r.consoleReady)),
     transfers: rows.map((r) => r.navigation.transferSize + r.resources.reduce((n, v) => n + v.transferSize, 0)),
     fcp: stat(rows.map((r) => r.paints.find((p) => p.name === 'first-contentful-paint')?.startTime).filter(Number.isFinite)),
   });
+}
+const openingLoads = [];
+for (const profile of ['native', 'modest']) for (const cache of ['cold', 'warm']) {
+  const rows = x.loads.filter((r) => r.target === 'opening' && r.profile === profile && r.cache === cache);
+  if (rows.length) openingLoads.push({ profile, cache, firstFrame: stat(rows.map((r) => r.firstFrame)),
+    handoffFramesOver100ms: rows.map((r) => r.handoff), hostLoad: rows.map((r) => r.hostLoad) });
 }
 const artifact = join(here, `${run}-profiles`);
 const artifactFiles = existsSync(artifact) ? readdirSync(artifact) : [];
@@ -120,7 +133,7 @@ if (existsSync(traceFile)) {
 }
 const totalBytes = x.bundle.reduce((n, f) => n + f.bytes, 0);
 const gzipBytes = x.bundle.reduce((n, f) => n + f.gzipBytes, 0);
-const summary = { run, source: x.source, totalBytes, gzipBytes, loads, frames, cpu, trace,
+const summary = { run, source: x.source, totalBytes, gzipBytes, loads, openingLoads, frames, cpu, trace,
   validity: { browserExceptions: x.errors.length, frames: x.frames.length,
     invalid: x.frames.filter((r) => r.hiddenFrames || r.pausedFrames || r.phases.some((p) => p !== 'operate')
       || r.attempts.length !== 1 || r.mode !== (['mission', 'plan', 'model', 'blackbox', 'systems'].includes(r.view) ? 'console' : r.view)
@@ -130,16 +143,16 @@ const summary = { run, source: x.source, totalBytes, gzipBytes, loads, frames, c
 writeFileSync(join(here, `${run}-summary.json`), JSON.stringify(summary, null, 2) + '\n');
 const md = [
   `# ${run} — generated measurement tables`, '',
-  `[DEMONSTRATED: tools/studies/s15/${run}.json and ${run}-frames.json.gz]`, '',
+  `[DEMONSTRATED: ${output}/${run}.json and ${run}-frames.json.gz]`, '',
   'Nearest-rank quantiles pooled across the recorded trials. Frame times are rAF intervals; all durations are milliseconds. CPU profiles are separate instrumented trials.', '',
   ...(loads.length ? [
-    '| Profile | Cache | Ready median / max | First interaction median / max | Console ready median / max |',
-    '| --- | --- | ---: | ---: | ---: |',
-    ...loads.map((r) => `| ${r.profile} | ${r.cache} | ${fmt(r.ready.median)} / ${fmt(r.ready.worst)} | ${fmt(r.firstInteraction.median)} / ${fmt(r.firstInteraction.worst)} | ${fmt(r.consoleReady.median)} / ${fmt(r.consoleReady.worst)} |`),
+    '| Region | Profile | Cache | Ready median / max | First interaction median / max | Console ready median / max |',
+    '| --- | --- | --- | ---: | ---: | ---: |',
+    ...loads.map((r) => `| ${r.region} | ${r.profile} | ${r.cache} | ${fmt(r.ready.median)} / ${fmt(r.ready.worst)} | ${fmt(r.firstInteraction.median)} / ${fmt(r.firstInteraction.worst)} | ${fmt(r.consoleReady.median)} / ${fmt(r.consoleReady.worst)} |`),
   ] : ['No load trials in this focused run.']), '',
-  '| Profile | View | Requested warp | Frames | Median | p95 | Worst | Ship s / wall s | Saturated % | Warning drops |',
-  '| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |',
-  ...frames.map((r) => `| ${r.profile} | ${r.view} | ${r.warp}× | ${r.n} | ${fmt(r.median)} | ${fmt(r.p95)} | ${fmt(r.worst)} | ${fmt(r.shipPerWall)} | ${fmt(r.saturationPercent)} | ${r.warningDrops} |`), '',
+  '| Region | Profile | View | Requested warp | Frames | Median | Pooled p95 | Per-run p95 median [min–max] | Worst | Ship s / wall s | Saturated % | Warning drops |',
+  '| --- | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |',
+  ...frames.map((r) => `| ${r.region} | ${r.profile} | ${r.view} | ${r.warp}× | ${r.n} | ${fmt(r.median)} | ${fmt(r.p95)} | ${fmt(r.p95Median)} [${fmt(r.p95Min)}–${fmt(r.p95Max)}] | ${fmt(r.worst)} | ${fmt(r.shipPerWall)} | ${fmt(r.saturationPercent)} | ${r.warningDrops} |`), '',
   '## Intervals reporting saturation', '',
   '| Profile | View | Warp | Saturated samples | Median | p95 | Worst | Ship s / wall s within these intervals |',
   '| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |',
@@ -150,6 +163,6 @@ for (const p of cpu) {
     '| Function | Original location | Self ms | Inclusive ms |', '| --- | --- | ---: | ---: |',
     ...p.self.slice(0, 20).map((r) => `| ${r.name.replaceAll('|', '\\|')} | ${r.source?.source ?? 'native/runtime'}:${r.source?.line ?? '—'} | ${fmt(r.selfMs)} | ${fmt(r.inclusiveMs)} |`), '');
 }
-const docs = new URL(`../../../docs/studies/s15/${run}-tables.md`, import.meta.url);
+const docs = output === 'docs/handoffs/pf' ? join(here, `${run}-tables.md`) : new URL(`../../../docs/studies/s15/${run}-tables.md`, import.meta.url);
 writeFileSync(docs, md.join('\n').trimEnd() + '\n');
 console.log(JSON.stringify({ run, totalBytes, gzipBytes, loadTrials: x.loads.length, validity: summary.validity }, null, 2));

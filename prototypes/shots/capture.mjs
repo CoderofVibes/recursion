@@ -110,6 +110,9 @@ const view = async (mode) => { await js(`${R}.view.go('${mode}')`); await sleep(
 
 try {
   await send('Page.enable');
+  await send('Page.addScriptToEvaluateOnNewDocument', {
+    source: "try { localStorage.setItem('recursion:opening-seen', '1'); } catch {}",
+  });
   await send('Runtime.enable');
   await send('Emulation.setDeviceMetricsOverride', { width: 1280, height: 720, deviceScaleFactor: 1, mobile: false });
 

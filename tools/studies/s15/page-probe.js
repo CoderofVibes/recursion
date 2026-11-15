@@ -39,6 +39,19 @@
     };
     requestAnimationFrame(tick);
   });
+  probe.watchHandoff = () => {
+    probe.handoff = { framesOver100ms: [], lastOpeningFrame: null, firstRoomFrame: null };
+    let last = performance.now();
+    const tick = (stamp) => {
+      const h = probe.handoff;
+      if (stamp - last > 100) h.framesOver100ms.push({ at: stamp, interval: stamp - last });
+      last = stamp;
+      if (document.querySelector('.rx-opening')) h.lastOpeningFrame = stamp;
+      if (probe.bind() && document.querySelector('.cr')) h.firstRoomFrame = stamp;
+      else requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  };
   probe.status = () => probe.desk.game.status();
   probe.sample = (duration, requestedWarp = 1) => new Promise((resolve) => {
     const rows = [], started = performance.now(), longStart = probe.longTasks.length;
@@ -100,6 +113,8 @@
     return { vendor: ext ? gl.getParameter(ext.UNMASKED_VENDOR_WEBGL) : null,
       renderer: ext ? gl.getParameter(ext.UNMASKED_RENDERER_WEBGL) : null,
       viewport: [innerWidth, innerHeight, devicePixelRatio], canvas: [r.domElement.width, r.domElement.height],
+      presentation: { antialias: gl.getContextAttributes()?.antialias,
+        target: [probe.room.composer.readBuffer.width, probe.room.composer.readBuffer.height] },
       memory: { ...r.info.memory }, programs: r.info.programs?.length,
       scene: { objects, uniqueGeometries: geometries.size, vertices, indexTriples: triangles, textures: tex },
       passes: probe.room.composer.passes.map((p) => ({ type: p.constructor.name, enabled: p.enabled,

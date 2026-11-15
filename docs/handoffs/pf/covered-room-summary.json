@@ -1,0 +1,2437 @@
+{
+  "run": "covered-room",
+  "source": {
+    "commit": "4b71f42685dbd932eec5582f7c10e2822c41d84c",
+    "srcTree": "12a374e9f427242ef23ffb935a5dc79d3c3f8ad4",
+    "dataTree": "7c28747036fc8aad8939a932d854458a46fe6fe8",
+    "branch": "p3/pf-speed",
+    "dirtyInputs": "",
+    "patch": {
+      "path": "docs/handoffs/pf/covered-room.patch",
+      "sha256": "4d3f333c00d1220a880442896a3b46d7a8ce33238db4ceaac5058e7aba1339a0"
+    }
+  },
+  "totalBytes": 1806230,
+  "gzipBytes": 549962,
+  "loads": [],
+  "openingLoads": [],
+  "frames": [
+    {
+      "key": "gravity-range/modest/map/1",
+      "region": "gravity-range",
+      "profile": "modest",
+      "view": "map",
+      "warp": 1,
+      "n": 337,
+      "median": 42.29999999999927,
+      "p95": 90.79999999999927,
+      "worst": 170,
+      "wall": 15.980400000005961,
+      "ship": 15,
+      "shipPerWall": 0.9386498460610752,
+      "saturationPercent": 0,
+      "saturated": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "worst": null,
+        "shipPerWall": null
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        103,
+        79
+      ],
+      "p95Median": 91,
+      "p95Min": 79,
+      "p95Max": 103,
+      "hostLoad": [
+        {
+          "at": "2026-11-15T17:23:52.324Z",
+          "windowMs": 1000,
+          "busyPercent": 27.947719897301877,
+          "perCoreBusyPercent": [
+            50.70052539404553,
+            0,
+            63.62754607177498,
+            0,
+            82.80000000000001,
+            0,
+            46.214355948869226,
+            0,
+            29.770229770229772,
+            0,
+            38.544739429695184,
+            0,
+            3.2024793388429784,
+            93.8953488372093,
+            0,
+            35.9,
+            49.26108374384236,
+            41.477832512315274,
+            26.573426573426573,
+            20.299999999999997,
+            45.24524524524524,
+            12.41241241241241,
+            17.18281718281718,
+            3.528114663726567,
+            42.2,
+            0,
+            0,
+            79.69999999999999
+          ],
+          "freeMemoryBytes": 9363918848,
+          "contentionFlag": true,
+          "note": "Uncontrolled shared host; >=20% aggregate CPU flags possible contention. Low CPU does not establish quiet GPU, memory, or scheduling."
+        },
+        {
+          "at": "2026-11-15T17:24:38.448Z",
+          "windowMs": 1000,
+          "busyPercent": 46.18831878709842,
+          "perCoreBusyPercent": [
+            47.633136094674555,
+            24.630541871921185,
+            67.6847290640394,
+            21.576354679802957,
+            66.10837438423644,
+            39,
+            40,
+            23.857868020304572,
+            43.8,
+            19.07386990077178,
+            70.27027027027026,
+            14.04494382022472,
+            76.52347652347653,
+            42.15784215784216,
+            67.16716716716718,
+            13.686534216335545,
+            47.68472906403941,
+            41.53543307086615,
+            43.8,
+            48.448448448448445,
+            37.5,
+            54.699999999999996,
+            64.06406406406407,
+            50.73891625615763,
+            68.18622696411252,
+            61,
+            37.5,
+            60.9
+          ],
+          "freeMemoryBytes": 8716636160,
+          "contentionFlag": true,
+          "note": "Uncontrolled shared host; >=20% aggregate CPU flags possible contention. Low CPU does not establish quiet GPU, memory, or scheduling."
+        }
+      ]
+    },
+    {
+      "key": "gravity-range/modest/ship/1",
+      "region": "gravity-range",
+      "profile": "modest",
+      "view": "ship",
+      "warp": 1,
+      "n": 261,
+      "median": 54.5,
+      "p95": 121.20000000000073,
+      "worst": 224.09999999999854,
+      "wall": 15.80679999999702,
+      "ship": 15,
+      "shipPerWall": 0.9489586760130341,
+      "saturationPercent": 0,
+      "saturated": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "worst": null,
+        "shipPerWall": null
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        91.19999999999709,
+        139.39999999999964
+      ],
+      "p95Median": 115.29999999999836,
+      "p95Min": 91.19999999999709,
+      "p95Max": 139.39999999999964,
+      "hostLoad": [
+        {
+          "at": "2026-11-15T17:24:16.686Z",
+          "windowMs": 1000,
+          "busyPercent": 34.0949866463337,
+          "perCoreBusyPercent": [
+            58.5544373284538,
+            4.700000000000005,
+            68.18622696411252,
+            0,
+            80.039331366765,
+            7.892107892107891,
+            48.54651162790697,
+            1.4222222222222247,
+            38.48425196850393,
+            0,
+            38.48425196850393,
+            3.248730964467006,
+            92.2,
+            3.1968031968031996,
+            54.563106796116514,
+            0,
+            49.21259842519685,
+            37.562437562437566,
+            25,
+            29.700000000000003,
+            51.548451548451546,
+            40.65934065934066,
+            31.368631368631373,
+            36.883629191321496,
+            53.1,
+            57.800000000000004,
+            24.248302618816687,
+            18.058252427184463
+          ],
+          "freeMemoryBytes": 8849408000,
+          "contentionFlag": true,
+          "note": "Uncontrolled shared host; >=20% aggregate CPU flags possible contention. Low CPU does not establish quiet GPU, memory, or scheduling."
+        },
+        {
+          "at": "2026-11-15T17:24:59.675Z",
+          "windowMs": 1000,
+          "busyPercent": 41.82223616890169,
+          "perCoreBusyPercent": [
+            9.251968503937002,
+            62.67942583732058,
+            60.58252427184466,
+            15.452755905511806,
+            26.181102362204722,
+            72.77131782945736,
+            55.36945812807882,
+            10.738916256157637,
+            69.73811833171678,
+            9.162561576354678,
+            63.62754607177498,
+            9.080325960419088,
+            75.75169738118332,
+            31.813773035887483,
+            65.67877629063096,
+            12.68917345750873,
+            25.728155339805824,
+            41.2041392285983,
+            46.99029126213592,
+            30.738916256157633,
+            53.003875968992254,
+            52.26377952755905,
+            43.212237093690256,
+            47.68472906403941,
+            41.5929203539823,
+            51.55038759689923,
+            50,
+            36.483739837398375
+          ],
+          "freeMemoryBytes": 9349361664,
+          "contentionFlag": true,
+          "note": "Uncontrolled shared host; >=20% aggregate CPU flags possible contention. Low CPU does not establish quiet GPU, memory, or scheduling."
+        }
+      ]
+    }
+  ],
+  "cpu": [
+    {
+      "file": "map-main.cpuprofile.gz",
+      "sampledMs": 9733.017,
+      "self": [
+        {
+          "name": "(program)",
+          "source": null,
+          "selfMs": 3336.477000000005,
+          "inclusiveMs": 3336.477000000005
+        },
+        {
+          "name": "updateMatrixWorld",
+          "source": {
+            "source": "node_modules/three/build/three.core.js",
+            "line": 13071,
+            "column": 1,
+            "name": null
+          },
+          "selfMs": 564.8180000000001,
+          "inclusiveMs": 724.2390000000006
+        },
+        {
+          "name": "(anonymous)",
+          "source": {
+            "source": "src/game/belief/standin-model.ts",
+            "line": 909,
+            "column": 15,
+            "name": null
+          },
+          "selfMs": 452.5740000000001,
+          "inclusiveMs": 452.5740000000001
+        },
+        {
+          "name": "setProgram",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 18220,
+            "column": 11,
+            "name": "setProgram"
+          },
+          "selfMs": 231.48,
+          "inclusiveMs": 689.4369999999996
+        },
+        {
+          "name": "multiplyMatrices",
+          "source": {
+            "source": "node_modules/three/build/three.core.js",
+            "line": 10564,
+            "column": 1,
+            "name": null
+          },
+          "selfMs": 173.17500000000004,
+          "inclusiveMs": 173.17500000000004
+        },
+        {
+          "name": "hideObject",
+          "source": {
+            "source": "node_modules/three/examples/jsm/renderers/CSS2DRenderer.js",
+            "line": 213,
+            "column": 11,
+            "name": "hideObject"
+          },
+          "selfMs": 160.10899999999998,
+          "inclusiveMs": 160.10899999999998
+        },
+        {
+          "name": "(garbage collector)",
+          "source": null,
+          "selfMs": 133.463,
+          "inclusiveMs": 133.463
+        },
+        {
+          "name": "update",
+          "source": {
+            "source": "src/view3d/fx/clouds.ts",
+            "line": 92,
+            "column": 4,
+            "name": null
+          },
+          "selfMs": 120.826,
+          "inclusiveMs": 185.32699999999988
+        },
+        {
+          "name": "renderObject",
+          "source": {
+            "source": "node_modules/three/examples/jsm/renderers/CSS2DRenderer.js",
+            "line": 225,
+            "column": 11,
+            "name": "renderObject"
+          },
+          "selfMs": 93.73999999999998,
+          "inclusiveMs": 257.21700000000004
+        },
+        {
+          "name": "projectObject",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17696,
+            "column": 11,
+            "name": "projectObject"
+          },
+          "selfMs": 85.367,
+          "inclusiveMs": 249.7820000000002
+        },
+        {
+          "name": "bindVertexArray",
+          "source": null,
+          "selfMs": 80.126,
+          "inclusiveMs": 80.126
+        },
+        {
+          "name": "E",
+          "source": {
+            "source": "src/app/loop.ts",
+            "line": 143,
+            "column": 17,
+            "name": null
+          },
+          "selfMs": 78.02300000000002,
+          "inclusiveMs": 5696.166999999995
+        },
+        {
+          "name": "believedAsteroids",
+          "source": {
+            "source": "src/game/belief/standin-model.ts",
+            "line": 908,
+            "column": 8,
+            "name": "believedAsteroids"
+          },
+          "selfMs": 75.501,
+          "inclusiveMs": 526.5540000000003
+        },
+        {
+          "name": "frame",
+          "source": {
+            "source": "src/view3d/room/RoomView.ts",
+            "line": 394,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 70.876,
+          "inclusiveMs": 4303.419000000005
+        },
+        {
+          "name": "uniform1fv",
+          "source": null,
+          "selfMs": 68.96299999999998,
+          "inclusiveMs": 68.96299999999998
+        },
+        {
+          "name": "(idle)",
+          "source": null,
+          "selfMs": 68.32700000000001,
+          "inclusiveMs": 68.32700000000001
+        },
+        {
+          "name": "renderBufferDirect",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17023,
+            "column": 28,
+            "name": null
+          },
+          "selfMs": 67.921,
+          "inclusiveMs": 1190.7679999999996
+        },
+        {
+          "name": "setMaterial",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 10205,
+            "column": 10,
+            "name": "setMaterial"
+          },
+          "selfMs": 61.04600000000001,
+          "inclusiveMs": 133.449
+        },
+        {
+          "name": "bindFramebuffer",
+          "source": null,
+          "selfMs": 59.565000000000005,
+          "inclusiveMs": 59.565000000000005
+        },
+        {
+          "name": "renderObject",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17991,
+            "column": 11,
+            "name": "renderObject"
+          },
+          "selfMs": 59.265,
+          "inclusiveMs": 1309.0980000000002
+        },
+        {
+          "name": "estimate",
+          "source": {
+            "source": "src/game/belief/standin-model.ts",
+            "line": 860,
+            "column": 8,
+            "name": "estimate"
+          },
+          "selfMs": 54.416999999999994,
+          "inclusiveMs": 67.20999999999998
+        },
+        {
+          "name": "render",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17464,
+            "column": 16,
+            "name": null
+          },
+          "selfMs": 49.231,
+          "inclusiveMs": 2257.889999999999
+        },
+        {
+          "name": "bindFramebuffer",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 9934,
+            "column": 10,
+            "name": "bindFramebuffer"
+          },
+          "selfMs": 48.938,
+          "inclusiveMs": 108.50299999999997
+        },
+        {
+          "name": "ba",
+          "source": {
+            "source": "node_modules/three/build/three.core.js",
+            "line": 17991,
+            "column": 1,
+            "name": null
+          },
+          "selfMs": 48.65799999999999,
+          "inclusiveMs": 55.54799999999998
+        },
+        {
+          "name": "refreshMarks",
+          "source": {
+            "source": "src/view3d/ship/ShipHolo.ts",
+            "line": 260,
+            "column": 11,
+            "name": "refreshMarks"
+          },
+          "selfMs": 47.377,
+          "inclusiveMs": 222.62199999999999
+        },
+        {
+          "name": "needsUpdate",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 1759,
+            "column": 10,
+            "name": "needsUpdate"
+          },
+          "selfMs": 46.133,
+          "inclusiveMs": 46.133
+        },
+        {
+          "name": "render",
+          "source": {
+            "source": "node_modules/three/examples/jsm/postprocessing/EffectComposer.js",
+            "line": 214,
+            "column": 1,
+            "name": null
+          },
+          "selfMs": 45.514,
+          "inclusiveMs": 2660.9210000000026
+        },
+        {
+          "name": "toScene",
+          "source": {
+            "source": "src/view3d/adapter.ts",
+            "line": 27,
+            "column": 16,
+            "name": "toScene"
+          },
+          "selfMs": 44.012,
+          "inclusiveMs": 48.874
+        },
+        {
+          "name": "sight",
+          "source": {
+            "source": "src/game/window.ts",
+            "line": 29,
+            "column": 8,
+            "name": "sight"
+          },
+          "selfMs": 43.363,
+          "inclusiveMs": 43.363
+        },
+        {
+          "name": "restyle",
+          "source": {
+            "source": "src/view3d/ship/ShipHolo.ts",
+            "line": 235,
+            "column": 11,
+            "name": "restyle"
+          },
+          "selfMs": 42.172000000000004,
+          "inclusiveMs": 101.47999999999998
+        },
+        {
+          "name": "bodyWeights",
+          "source": {
+            "source": "src/game/belief/departure.ts",
+            "line": 59,
+            "column": 16,
+            "name": "bodyWeights"
+          },
+          "selfMs": 41.73299999999999,
+          "inclusiveMs": 66.947
+        },
+        {
+          "name": "departureProgress",
+          "source": {
+            "source": "src/game/belief/departure.ts",
+            "line": 129,
+            "column": 16,
+            "name": "departureProgress"
+          },
+          "selfMs": 41.69200000000001,
+          "inclusiveMs": 41.69200000000001
+        },
+        {
+          "name": "getBindingState",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 1680,
+            "column": 10,
+            "name": "getBindingState"
+          },
+          "selfMs": 39.82100000000001,
+          "inclusiveMs": 39.82100000000001
+        },
+        {
+          "name": "update",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 242,
+            "column": 10,
+            "name": "update"
+          },
+          "selfMs": 38.544000000000004,
+          "inclusiveMs": 38.544000000000004
+        },
+        {
+          "name": "primaryInertial",
+          "source": {
+            "source": "src/game/belief/standin-model.ts",
+            "line": 812,
+            "column": 8,
+            "name": "primaryInertial"
+          },
+          "selfMs": 38.39,
+          "inclusiveMs": 38.39
+        },
+        {
+          "name": "useProgram",
+          "source": null,
+          "selfMs": 38.184999999999995,
+          "inclusiveMs": 38.184999999999995
+        },
+        {
+          "name": "believedWorld",
+          "source": {
+            "source": "src/game/belief/standin-model.ts",
+            "line": 1183,
+            "column": 4,
+            "name": null
+          },
+          "selfMs": 37.22299999999999,
+          "inclusiveMs": 846.8829999999994
+        },
+        {
+          "name": "O",
+          "source": {
+            "source": "src/app/loop.ts",
+            "line": 265,
+            "column": 16,
+            "name": null
+          },
+          "selfMs": 36.49199999999999,
+          "inclusiveMs": 5742.524999999995
+        },
+        {
+          "name": "drawArrays",
+          "source": null,
+          "selfMs": 36.006,
+          "inclusiveMs": 36.006
+        },
+        {
+          "name": "buildWindowView",
+          "source": {
+            "source": "src/game/window.ts",
+            "line": 23,
+            "column": 16,
+            "name": "buildWindowView"
+          },
+          "selfMs": 35.53699999999999,
+          "inclusiveMs": 120.59500000000001
+        },
+        {
+          "name": "upload",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 5941,
+            "column": 8,
+            "name": null
+          },
+          "selfMs": 35.252,
+          "inclusiveMs": 291.43500000000023
+        },
+        {
+          "name": "setRenderTarget",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 18783,
+            "column": 25,
+            "name": null
+          },
+          "selfMs": 34.184000000000005,
+          "inclusiveMs": 218.642
+        },
+        {
+          "name": "arraysEqual",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 4846,
+            "column": 9,
+            "name": "arraysEqual"
+          },
+          "selfMs": 32.109,
+          "inclusiveMs": 32.109
+        },
+        {
+          "name": "setConfig",
+          "source": {
+            "source": "src/view3d/ship/ShipHolo.ts",
+            "line": 357,
+            "column": 4,
+            "name": null
+          },
+          "selfMs": 31.490999999999996,
+          "inclusiveMs": 365.33999999999986
+        },
+        {
+          "name": "(anonymous)",
+          "source": {
+            "source": "src/game/belief/standin-model.ts",
+            "line": 892,
+            "column": 26,
+            "name": null
+          },
+          "selfMs": 31.393000000000008,
+          "inclusiveMs": 35.926999999999985
+        },
+        {
+          "name": "setValueV1fArray",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 5453,
+            "column": 9,
+            "name": "setValueV1fArray"
+          },
+          "selfMs": 30.469,
+          "inclusiveMs": 99.43199999999997
+        },
+        {
+          "name": "cloudWindow",
+          "source": {
+            "source": "src/content/gravity-range/clouds.ts",
+            "line": 223,
+            "column": 16,
+            "name": "cloudWindow"
+          },
+          "selfMs": 30.325000000000003,
+          "inclusiveMs": 67.368
+        },
+        {
+          "name": "setup",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 1623,
+            "column": 10,
+            "name": "setup"
+          },
+          "selfMs": 29.639000000000003,
+          "inclusiveMs": 193.636
+        },
+        {
+          "name": "update",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 4360,
+            "column": 10,
+            "name": "update"
+          },
+          "selfMs": 29.597,
+          "inclusiveMs": 66.919
+        },
+        {
+          "name": "setup",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 8307,
+            "column": 10,
+            "name": "setup"
+          },
+          "selfMs": 29.302000000000003,
+          "inclusiveMs": 34.072
+        }
+      ],
+      "inclusive": [
+        {
+          "name": "(root)",
+          "source": null,
+          "selfMs": 0,
+          "inclusiveMs": 9733.016999999943
+        },
+        {
+          "name": "O",
+          "source": {
+            "source": "src/app/loop.ts",
+            "line": 265,
+            "column": 16,
+            "name": null
+          },
+          "selfMs": 36.49199999999999,
+          "inclusiveMs": 5742.524999999995
+        },
+        {
+          "name": "E",
+          "source": {
+            "source": "src/app/loop.ts",
+            "line": 143,
+            "column": 17,
+            "name": null
+          },
+          "selfMs": 78.02300000000002,
+          "inclusiveMs": 5696.166999999995
+        },
+        {
+          "name": "frame",
+          "source": {
+            "source": "src/view3d/room/RoomView.ts",
+            "line": 394,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 70.876,
+          "inclusiveMs": 4303.419000000005
+        },
+        {
+          "name": "(program)",
+          "source": null,
+          "selfMs": 3336.477000000005,
+          "inclusiveMs": 3336.477000000005
+        },
+        {
+          "name": "render",
+          "source": {
+            "source": "src/view3d/perf/quality.ts",
+            "line": 11,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 7.178,
+          "inclusiveMs": 2669.344000000002
+        },
+        {
+          "name": "render",
+          "source": {
+            "source": "node_modules/three/examples/jsm/postprocessing/EffectComposer.js",
+            "line": 214,
+            "column": 1,
+            "name": null
+          },
+          "selfMs": 45.514,
+          "inclusiveMs": 2660.9210000000026
+        },
+        {
+          "name": "render",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17464,
+            "column": 16,
+            "name": null
+          },
+          "selfMs": 49.231,
+          "inclusiveMs": 2257.889999999999
+        },
+        {
+          "name": "renderScene",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17814,
+            "column": 11,
+            "name": "renderScene"
+          },
+          "selfMs": 5.643000000000001,
+          "inclusiveMs": 1359.7890000000004
+        },
+        {
+          "name": "renderObjects",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17964,
+            "column": 11,
+            "name": "renderObjects"
+          },
+          "selfMs": 28.234,
+          "inclusiveMs": 1345.731
+        },
+        {
+          "name": "renderObject",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17991,
+            "column": 11,
+            "name": "renderObject"
+          },
+          "selfMs": 59.265,
+          "inclusiveMs": 1309.0980000000002
+        },
+        {
+          "name": "render",
+          "source": {
+            "source": "node_modules/three/examples/jsm/postprocessing/RenderPass.js",
+            "line": 121,
+            "column": 1,
+            "name": null
+          },
+          "selfMs": 6.258000000000001,
+          "inclusiveMs": 1251.0110000000013
+        },
+        {
+          "name": "render",
+          "source": {
+            "source": "node_modules/three/examples/jsm/postprocessing/UnrealBloomPass.js",
+            "line": 282,
+            "column": 1,
+            "name": null
+          },
+          "selfMs": 17.978,
+          "inclusiveMs": 1222.8280000000002
+        },
+        {
+          "name": "renderBufferDirect",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17023,
+            "column": 28,
+            "name": null
+          },
+          "selfMs": 67.921,
+          "inclusiveMs": 1190.7679999999996
+        },
+        {
+          "name": "render",
+          "source": {
+            "source": "node_modules/three/examples/jsm/postprocessing/Pass.js",
+            "line": 166,
+            "column": 1,
+            "name": null
+          },
+          "selfMs": 12.131000000000002,
+          "inclusiveMs": 1096.238
+        },
+        {
+          "name": "status",
+          "source": {
+            "source": "src/game/session.ts",
+            "line": 602,
+            "column": 4,
+            "name": null
+          },
+          "selfMs": 13.178000000000003,
+          "inclusiveMs": 889.5809999999999
+        },
+        {
+          "name": "departures",
+          "source": {
+            "source": "src/game/session.ts",
+            "line": 517,
+            "column": 11,
+            "name": "departures"
+          },
+          "selfMs": 25.927999999999997,
+          "inclusiveMs": 869.5289999999998
+        },
+        {
+          "name": "believedWorld",
+          "source": {
+            "source": "src/game/belief/model-bridge.ts",
+            "line": 250,
+            "column": 4,
+            "name": null
+          },
+          "selfMs": 9.282,
+          "inclusiveMs": 858.5289999999994
+        },
+        {
+          "name": "believedWorld",
+          "source": {
+            "source": "src/game/belief/standin-model.ts",
+            "line": 1183,
+            "column": 4,
+            "name": null
+          },
+          "selfMs": 37.22299999999999,
+          "inclusiveMs": 846.8829999999994
+        },
+        {
+          "name": "updateMatrixWorld",
+          "source": {
+            "source": "node_modules/three/build/three.core.js",
+            "line": 13071,
+            "column": 1,
+            "name": null
+          },
+          "selfMs": 564.8180000000001,
+          "inclusiveMs": 724.2390000000006
+        },
+        {
+          "name": "setProgram",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 18220,
+            "column": 11,
+            "name": "setProgram"
+          },
+          "selfMs": 231.48,
+          "inclusiveMs": 689.4369999999996
+        },
+        {
+          "name": "Ey.render",
+          "source": {
+            "source": "node_modules/three/examples/jsm/renderers/CSS2DRenderer.js",
+            "line": 181,
+            "column": 16,
+            "name": null
+          },
+          "selfMs": 1.335,
+          "inclusiveMs": 635.965000000001
+        },
+        {
+          "name": "believedAsteroids",
+          "source": {
+            "source": "src/game/belief/standin-model.ts",
+            "line": 908,
+            "column": 8,
+            "name": "believedAsteroids"
+          },
+          "selfMs": 75.501,
+          "inclusiveMs": 526.5540000000003
+        },
+        {
+          "name": "(anonymous)",
+          "source": {
+            "source": "src/game/belief/standin-model.ts",
+            "line": 909,
+            "column": 15,
+            "name": null
+          },
+          "selfMs": 452.5740000000001,
+          "inclusiveMs": 452.5740000000001
+        },
+        {
+          "name": "setConfig",
+          "source": {
+            "source": "src/view3d/ship/ShipHolo.ts",
+            "line": 357,
+            "column": 4,
+            "name": null
+          },
+          "selfMs": 31.490999999999996,
+          "inclusiveMs": 365.33999999999986
+        },
+        {
+          "name": "snapshot",
+          "source": {
+            "source": "src/game/session.ts",
+            "line": 625,
+            "column": 4,
+            "name": null
+          },
+          "selfMs": 21.343,
+          "inclusiveMs": 363.2410000000003
+        },
+        {
+          "name": "(anonymous)",
+          "source": {
+            "source": "node_modules/react-dom/cjs/react-dom-client.production.js",
+            "line": 13579,
+            "column": 20,
+            "name": null
+          },
+          "selfMs": 0,
+          "inclusiveMs": 306.7300000000001
+        },
+        {
+          "name": "processRootScheduleInMicrotask",
+          "source": {
+            "source": "node_modules/react-dom/cjs/react-dom-client.production.js",
+            "line": 13456,
+            "column": 9,
+            "name": "processRootScheduleInMicrotask"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 306.7300000000001
+        },
+        {
+          "name": "flushSyncWorkAcrossRoots_impl",
+          "source": {
+            "source": "node_modules/react-dom/cjs/react-dom-client.production.js",
+            "line": 13408,
+            "column": 9,
+            "name": "flushSyncWorkAcrossRoots_impl"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 306.58500000000004
+        },
+        {
+          "name": "performSyncWorkOnRoot",
+          "source": {
+            "source": "node_modules/react-dom/cjs/react-dom-client.production.js",
+            "line": 13574,
+            "column": 9,
+            "name": "performSyncWorkOnRoot"
+          },
+          "selfMs": 0.104,
+          "inclusiveMs": 306.58500000000004
+        }
+      ],
+      "groups": [
+        {
+          "group": "(program)",
+          "ms": 3336.477000000005
+        },
+        {
+          "group": "Three.js + addons",
+          "ms": 3129.0979999999977
+        },
+        {
+          "group": "src/game",
+          "ms": 1250.3230000000003
+        },
+        {
+          "group": "src/view3d",
+          "ms": 669.9669999999995
+        },
+        {
+          "group": "React + DOM + scheduler",
+          "ms": 168.222
+        },
+        {
+          "group": "(garbage collector)",
+          "ms": 133.463
+        },
+        {
+          "group": "src/app",
+          "ms": 118.74600000000001
+        },
+        {
+          "group": "bindVertexArray",
+          "ms": 80.126
+        },
+        {
+          "group": "src/sim",
+          "ms": 79.909
+        },
+        {
+          "group": "src/content",
+          "ms": 71.948
+        },
+        {
+          "group": "src/ship",
+          "ms": 70.436
+        },
+        {
+          "group": "uniform1fv",
+          "ms": 68.96299999999998
+        },
+        {
+          "group": "(idle)",
+          "ms": 68.32700000000001
+        },
+        {
+          "group": "bindFramebuffer",
+          "ms": 59.565000000000005
+        },
+        {
+          "group": "src/console",
+          "ms": 43.461000000000006
+        },
+        {
+          "group": "useProgram",
+          "ms": 38.184999999999995
+        },
+        {
+          "group": "drawArrays",
+          "ms": 36.006
+        },
+        {
+          "group": "requestAnimationFrame",
+          "ms": 28.464999999999993
+        },
+        {
+          "group": "uniform2f",
+          "ms": 28.318
+        },
+        {
+          "group": "bindTexture",
+          "ms": 26.278
+        },
+        {
+          "group": "clear",
+          "ms": 25.436999999999998
+        },
+        {
+          "group": "uniform1f",
+          "ms": 24.345999999999993
+        },
+        {
+          "group": "uniformMatrix4fv",
+          "ms": 19.774
+        },
+        {
+          "group": "drawElementsInstanced",
+          "ms": 15.609000000000002
+        },
+        {
+          "group": "drawElements",
+          "ms": 14.142
+        },
+        {
+          "group": "tick",
+          "ms": 13.291999999999998
+        },
+        {
+          "group": "disable",
+          "ms": 10.911
+        },
+        {
+          "group": "uniform3f",
+          "ms": 10.736
+        },
+        {
+          "group": "toggle",
+          "ms": 9.100999999999999
+        },
+        {
+          "group": "now",
+          "ms": 8.699000000000002
+        },
+        {
+          "group": "scissor",
+          "ms": 7.293
+        },
+        {
+          "group": "viewport",
+          "ms": 7.073
+        },
+        {
+          "group": "src/theme",
+          "ms": 6.178
+        },
+        {
+          "group": "postMessage",
+          "ms": 5.925
+        },
+        {
+          "group": "(anonymous)",
+          "ms": 5.663
+        },
+        {
+          "group": "frontFace",
+          "ms": 4.7909999999999995
+        },
+        {
+          "group": "enable",
+          "ms": 4.69
+        },
+        {
+          "group": "src/lib",
+          "ms": 4.575
+        },
+        {
+          "group": "depthMask",
+          "ms": 4.445
+        },
+        {
+          "group": "clearColor",
+          "ms": 4.1850000000000005
+        },
+        {
+          "group": "uniform3fv",
+          "ms": 3.832
+        },
+        {
+          "group": "src/contracts",
+          "ms": 3.184
+        },
+        {
+          "group": "queueMicrotask",
+          "ms": 2.733
+        },
+        {
+          "group": "framebufferTexture2D",
+          "ms": 1.64
+        },
+        {
+          "group": "probe.sample",
+          "ms": 1.622
+        },
+        {
+          "group": "createFramebuffer",
+          "ms": 1.58
+        },
+        {
+          "group": "deleteFramebuffer",
+          "ms": 1.523
+        },
+        {
+          "group": "PerformanceObserver.observe.type",
+          "ms": 1.279
+        },
+        {
+          "group": "getRootNode",
+          "ms": 1.222
+        },
+        {
+          "group": "src/blackbox",
+          "ms": 1.008
+        },
+        {
+          "group": "getEntries",
+          "ms": 0.246
+        }
+      ]
+    },
+    {
+      "file": "map-worker-0.cpuprofile.gz",
+      "sampledMs": 9912.179,
+      "self": [
+        {
+          "name": "(idle)",
+          "source": null,
+          "selfMs": 9912.178999999973,
+          "inclusiveMs": 9912.178999999973
+        },
+        {
+          "name": "(root)",
+          "source": null,
+          "selfMs": 0,
+          "inclusiveMs": 9912.178999999973
+        }
+      ],
+      "inclusive": [
+        {
+          "name": "(root)",
+          "source": null,
+          "selfMs": 0,
+          "inclusiveMs": 9912.178999999973
+        },
+        {
+          "name": "(idle)",
+          "source": null,
+          "selfMs": 9912.178999999973,
+          "inclusiveMs": 9912.178999999973
+        }
+      ],
+      "groups": [
+        {
+          "group": "(idle)",
+          "ms": 9912.178999999973
+        }
+      ]
+    },
+    {
+      "file": "ship-main.cpuprofile.gz",
+      "sampledMs": 10013.483,
+      "self": [
+        {
+          "name": "(program)",
+          "source": null,
+          "selfMs": 3177.5160000000074,
+          "inclusiveMs": 3177.5160000000074
+        },
+        {
+          "name": "updateMatrixWorld",
+          "source": {
+            "source": "node_modules/three/build/three.core.js",
+            "line": 13071,
+            "column": 1,
+            "name": null
+          },
+          "selfMs": 424.72900000000016,
+          "inclusiveMs": 525.2440000000001
+        },
+        {
+          "name": "(anonymous)",
+          "source": {
+            "source": "src/game/belief/standin-model.ts",
+            "line": 909,
+            "column": 15,
+            "name": null
+          },
+          "selfMs": 401.89599999999973,
+          "inclusiveMs": 401.89599999999973
+        },
+        {
+          "name": "setProgram",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 18220,
+            "column": 11,
+            "name": "setProgram"
+          },
+          "selfMs": 315.2930000000002,
+          "inclusiveMs": 896.8299999999996
+        },
+        {
+          "name": "renderObject",
+          "source": {
+            "source": "node_modules/three/examples/jsm/renderers/CSS2DRenderer.js",
+            "line": 225,
+            "column": 11,
+            "name": "renderObject"
+          },
+          "selfMs": 199.42800000000005,
+          "inclusiveMs": 361.4669999999999
+        },
+        {
+          "name": "multiplyMatrices",
+          "source": {
+            "source": "node_modules/three/build/three.core.js",
+            "line": 10564,
+            "column": 1,
+            "name": null
+          },
+          "selfMs": 145.848,
+          "inclusiveMs": 145.848
+        },
+        {
+          "name": "hideObject",
+          "source": {
+            "source": "node_modules/three/examples/jsm/renderers/CSS2DRenderer.js",
+            "line": 213,
+            "column": 11,
+            "name": "hideObject"
+          },
+          "selfMs": 140.769,
+          "inclusiveMs": 140.769
+        },
+        {
+          "name": "bindVertexArray",
+          "source": null,
+          "selfMs": 131.03300000000002,
+          "inclusiveMs": 131.03300000000002
+        },
+        {
+          "name": "update",
+          "source": {
+            "source": "src/view3d/fx/clouds.ts",
+            "line": 92,
+            "column": 4,
+            "name": null
+          },
+          "selfMs": 129.982,
+          "inclusiveMs": 202.825
+        },
+        {
+          "name": "bufferData",
+          "source": null,
+          "selfMs": 77.19099999999999,
+          "inclusiveMs": 77.19099999999999
+        },
+        {
+          "name": "(garbage collector)",
+          "source": null,
+          "selfMs": 75.81900000000005,
+          "inclusiveMs": 75.81900000000005
+        },
+        {
+          "name": "projectObject",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17696,
+            "column": 11,
+            "name": "projectObject"
+          },
+          "selfMs": 74.45199999999998,
+          "inclusiveMs": 375.7830000000001
+        },
+        {
+          "name": "renderBufferDirect",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17023,
+            "column": 28,
+            "name": null
+          },
+          "selfMs": 71.62000000000002,
+          "inclusiveMs": 1665.6489999999983
+        },
+        {
+          "name": "drawArrays",
+          "source": null,
+          "selfMs": 69.79299999999999,
+          "inclusiveMs": 69.79299999999999
+        },
+        {
+          "name": "getBindingState",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 1680,
+            "column": 10,
+            "name": "getBindingState"
+          },
+          "selfMs": 65.927,
+          "inclusiveMs": 76.47000000000001
+        },
+        {
+          "name": "estimate",
+          "source": {
+            "source": "src/game/belief/standin-model.ts",
+            "line": 860,
+            "column": 8,
+            "name": "estimate"
+          },
+          "selfMs": 65.659,
+          "inclusiveMs": 73.371
+        },
+        {
+          "name": "frame",
+          "source": {
+            "source": "src/view3d/room/RoomView.ts",
+            "line": 394,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 65.51700000000001,
+          "inclusiveMs": 4939.797999999993
+        },
+        {
+          "name": "update",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 242,
+            "column": 10,
+            "name": "update"
+          },
+          "selfMs": 63.46500000000001,
+          "inclusiveMs": 184.935
+        },
+        {
+          "name": "uniform1fv",
+          "source": null,
+          "selfMs": 63.232000000000006,
+          "inclusiveMs": 63.232000000000006
+        },
+        {
+          "name": "believedWorld",
+          "source": {
+            "source": "src/game/belief/standin-model.ts",
+            "line": 1183,
+            "column": 4,
+            "name": null
+          },
+          "selfMs": 60.950999999999986,
+          "inclusiveMs": 783.0380000000008
+        },
+        {
+          "name": "(idle)",
+          "source": null,
+          "selfMs": 58.999000000000024,
+          "inclusiveMs": 58.999000000000024
+        },
+        {
+          "name": "E",
+          "source": {
+            "source": "src/app/loop.ts",
+            "line": 143,
+            "column": 17,
+            "name": null
+          },
+          "selfMs": 55.461000000000006,
+          "inclusiveMs": 6197.7389999999905
+        },
+        {
+          "name": "setMaterial",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 10205,
+            "column": 10,
+            "name": "setMaterial"
+          },
+          "selfMs": 53.13000000000001,
+          "inclusiveMs": 166.9989999999999
+        },
+        {
+          "name": "render",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17464,
+            "column": 16,
+            "name": null
+          },
+          "selfMs": 51.876,
+          "inclusiveMs": 2744.114999999997
+        },
+        {
+          "name": "believedAsteroids",
+          "source": {
+            "source": "src/game/belief/standin-model.ts",
+            "line": 908,
+            "column": 8,
+            "name": "believedAsteroids"
+          },
+          "selfMs": 50.825,
+          "inclusiveMs": 451.0649999999998
+        },
+        {
+          "name": "toScene",
+          "source": {
+            "source": "src/view3d/adapter.ts",
+            "line": 27,
+            "column": 16,
+            "name": "toScene"
+          },
+          "selfMs": 49.65,
+          "inclusiveMs": 54.425999999999995
+        },
+        {
+          "name": "renderObject",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17991,
+            "column": 11,
+            "name": "renderObject"
+          },
+          "selfMs": 49.42100000000001,
+          "inclusiveMs": 1813.2689999999984
+        },
+        {
+          "name": "ba",
+          "source": {
+            "source": "node_modules/three/build/three.core.js",
+            "line": 17991,
+            "column": 1,
+            "name": null
+          },
+          "selfMs": 48.090999999999994,
+          "inclusiveMs": 61.81899999999999
+        },
+        {
+          "name": "update",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 4360,
+            "column": 10,
+            "name": "update"
+          },
+          "selfMs": 46.87099999999999,
+          "inclusiveMs": 221.1379999999999
+        },
+        {
+          "name": "bindFramebuffer",
+          "source": null,
+          "selfMs": 45.868,
+          "inclusiveMs": 45.868
+        },
+        {
+          "name": "setup",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 1623,
+            "column": 10,
+            "name": "setup"
+          },
+          "selfMs": 45.853999999999985,
+          "inclusiveMs": 347.5759999999999
+        },
+        {
+          "name": "useProgram",
+          "source": null,
+          "selfMs": 44.86299999999999,
+          "inclusiveMs": 44.86299999999999
+        },
+        {
+          "name": "renderObjects",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17964,
+            "column": 11,
+            "name": "renderObjects"
+          },
+          "selfMs": 44.51599999999999,
+          "inclusiveMs": 1860.0589999999984
+        },
+        {
+          "name": "needsUpdate",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 1759,
+            "column": 10,
+            "name": "needsUpdate"
+          },
+          "selfMs": 43.60099999999999,
+          "inclusiveMs": 43.60099999999999
+        },
+        {
+          "name": "departureProgress",
+          "source": {
+            "source": "src/game/belief/departure.ts",
+            "line": 129,
+            "column": 16,
+            "name": "departureProgress"
+          },
+          "selfMs": 42.449,
+          "inclusiveMs": 42.449
+        },
+        {
+          "name": "sight",
+          "source": {
+            "source": "src/game/window.ts",
+            "line": 29,
+            "column": 8,
+            "name": "sight"
+          },
+          "selfMs": 42.192,
+          "inclusiveMs": 42.192
+        },
+        {
+          "name": "bindFramebuffer",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 9934,
+            "column": 10,
+            "name": "bindFramebuffer"
+          },
+          "selfMs": 41.480000000000004,
+          "inclusiveMs": 87.34799999999998
+        },
+        {
+          "name": "refreshMarks",
+          "source": {
+            "source": "src/view3d/ship/ShipHolo.ts",
+            "line": 260,
+            "column": 11,
+            "name": "refreshMarks"
+          },
+          "selfMs": 39.609,
+          "inclusiveMs": 247.84899999999996
+        },
+        {
+          "name": "setValueV1f",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 4900,
+            "column": 9,
+            "name": "setValueV1f"
+          },
+          "selfMs": 39.591,
+          "inclusiveMs": 74.729
+        },
+        {
+          "name": "setTest",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 9561,
+            "column": 12,
+            "name": null
+          },
+          "selfMs": 37.842999999999996,
+          "inclusiveMs": 41.90899999999999
+        },
+        {
+          "name": "render",
+          "source": {
+            "source": "node_modules/three/examples/jsm/postprocessing/EffectComposer.js",
+            "line": 214,
+            "column": 1,
+            "name": null
+          },
+          "selfMs": 37.239000000000004,
+          "inclusiveMs": 3087.9589999999953
+        },
+        {
+          "name": "cloudWindow",
+          "source": {
+            "source": "src/content/gravity-range/clouds.ts",
+            "line": 223,
+            "column": 16,
+            "name": "cloudWindow"
+          },
+          "selfMs": 36.458999999999996,
+          "inclusiveMs": 72.30600000000001
+        },
+        {
+          "name": "setRenderTarget",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 18783,
+            "column": 25,
+            "name": null
+          },
+          "selfMs": 36.37200000000001,
+          "inclusiveMs": 185.24000000000004
+        },
+        {
+          "name": "refreshUniformsLine",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 15049,
+            "column": 10,
+            "name": "refreshUniformsLine"
+          },
+          "selfMs": 36.073,
+          "inclusiveMs": 36.073
+        },
+        {
+          "name": "bindTexture",
+          "source": null,
+          "selfMs": 35.526,
+          "inclusiveMs": 35.526
+        },
+        {
+          "name": "uniform1f",
+          "source": null,
+          "selfMs": 35.138,
+          "inclusiveMs": 35.138
+        },
+        {
+          "name": "upload",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 5941,
+            "column": 8,
+            "name": null
+          },
+          "selfMs": 34.812999999999995,
+          "inclusiveMs": 350.61199999999997
+        },
+        {
+          "name": "updateWorldMatrix",
+          "source": {
+            "source": "node_modules/three/build/three.core.js",
+            "line": 13120,
+            "column": 1,
+            "name": null
+          },
+          "selfMs": 34.62199999999999,
+          "inclusiveMs": 79.562
+        },
+        {
+          "name": "restyle",
+          "source": {
+            "source": "src/view3d/ship/ShipHolo.ts",
+            "line": 235,
+            "column": 11,
+            "name": "restyle"
+          },
+          "selfMs": 34.51200000000001,
+          "inclusiveMs": 93.043
+        },
+        {
+          "name": "copy",
+          "source": {
+            "source": "node_modules/three/build/three.core.js",
+            "line": 8331,
+            "column": 1,
+            "name": null
+          },
+          "selfMs": 33.43600000000001,
+          "inclusiveMs": 33.43600000000001
+        }
+      ],
+      "inclusive": [
+        {
+          "name": "(root)",
+          "source": null,
+          "selfMs": 0,
+          "inclusiveMs": 10013.482999999993
+        },
+        {
+          "name": "O",
+          "source": {
+            "source": "src/app/loop.ts",
+            "line": 265,
+            "column": 16,
+            "name": null
+          },
+          "selfMs": 19.230999999999998,
+          "inclusiveMs": 6233.389999999992
+        },
+        {
+          "name": "E",
+          "source": {
+            "source": "src/app/loop.ts",
+            "line": 143,
+            "column": 17,
+            "name": null
+          },
+          "selfMs": 55.461000000000006,
+          "inclusiveMs": 6197.7389999999905
+        },
+        {
+          "name": "frame",
+          "source": {
+            "source": "src/view3d/room/RoomView.ts",
+            "line": 394,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 65.51700000000001,
+          "inclusiveMs": 4939.797999999993
+        },
+        {
+          "name": "(program)",
+          "source": null,
+          "selfMs": 3177.5160000000074,
+          "inclusiveMs": 3177.5160000000074
+        },
+        {
+          "name": "render",
+          "source": {
+            "source": "src/view3d/perf/quality.ts",
+            "line": 11,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 18.744999999999997,
+          "inclusiveMs": 3108.312999999995
+        },
+        {
+          "name": "render",
+          "source": {
+            "source": "node_modules/three/examples/jsm/postprocessing/EffectComposer.js",
+            "line": 214,
+            "column": 1,
+            "name": null
+          },
+          "selfMs": 37.239000000000004,
+          "inclusiveMs": 3087.9589999999953
+        },
+        {
+          "name": "render",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17464,
+            "column": 16,
+            "name": null
+          },
+          "selfMs": 51.876,
+          "inclusiveMs": 2744.114999999997
+        },
+        {
+          "name": "render",
+          "source": {
+            "source": "node_modules/three/examples/jsm/postprocessing/RenderPass.js",
+            "line": 121,
+            "column": 1,
+            "name": null
+          },
+          "selfMs": 5.959,
+          "inclusiveMs": 1926.102
+        },
+        {
+          "name": "renderScene",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17814,
+            "column": 11,
+            "name": "renderScene"
+          },
+          "selfMs": 12.668,
+          "inclusiveMs": 1883.3289999999977
+        },
+        {
+          "name": "renderObjects",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17964,
+            "column": 11,
+            "name": "renderObjects"
+          },
+          "selfMs": 44.51599999999999,
+          "inclusiveMs": 1860.0589999999984
+        },
+        {
+          "name": "renderObject",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17991,
+            "column": 11,
+            "name": "renderObject"
+          },
+          "selfMs": 49.42100000000001,
+          "inclusiveMs": 1813.2689999999984
+        },
+        {
+          "name": "renderBufferDirect",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17023,
+            "column": 28,
+            "name": null
+          },
+          "selfMs": 71.62000000000002,
+          "inclusiveMs": 1665.6489999999983
+        },
+        {
+          "name": "render",
+          "source": {
+            "source": "node_modules/three/examples/jsm/postprocessing/UnrealBloomPass.js",
+            "line": 282,
+            "column": 1,
+            "name": null
+          },
+          "selfMs": 9.212,
+          "inclusiveMs": 1019.4690000000002
+        },
+        {
+          "name": "render",
+          "source": {
+            "source": "node_modules/three/examples/jsm/postprocessing/Pass.js",
+            "line": 166,
+            "column": 1,
+            "name": null
+          },
+          "selfMs": 30.831999999999997,
+          "inclusiveMs": 905.041
+        },
+        {
+          "name": "setProgram",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 18220,
+            "column": 11,
+            "name": "setProgram"
+          },
+          "selfMs": 315.2930000000002,
+          "inclusiveMs": 896.8299999999996
+        },
+        {
+          "name": "status",
+          "source": {
+            "source": "src/game/session.ts",
+            "line": 602,
+            "column": 4,
+            "name": null
+          },
+          "selfMs": 7.245000000000001,
+          "inclusiveMs": 826.4030000000013
+        },
+        {
+          "name": "departures",
+          "source": {
+            "source": "src/game/session.ts",
+            "line": 517,
+            "column": 11,
+            "name": "departures"
+          },
+          "selfMs": 8.934,
+          "inclusiveMs": 821.1360000000013
+        },
+        {
+          "name": "believedWorld",
+          "source": {
+            "source": "src/game/belief/model-bridge.ts",
+            "line": 250,
+            "column": 4,
+            "name": null
+          },
+          "selfMs": 20.768000000000004,
+          "inclusiveMs": 807.1380000000012
+        },
+        {
+          "name": "believedWorld",
+          "source": {
+            "source": "src/game/belief/standin-model.ts",
+            "line": 1183,
+            "column": 4,
+            "name": null
+          },
+          "selfMs": 60.950999999999986,
+          "inclusiveMs": 783.0380000000008
+        },
+        {
+          "name": "Ey.render",
+          "source": {
+            "source": "node_modules/three/examples/jsm/renderers/CSS2DRenderer.js",
+            "line": 181,
+            "column": 16,
+            "name": null
+          },
+          "selfMs": 2.908,
+          "inclusiveMs": 685.1790000000005
+        },
+        {
+          "name": "updateMatrixWorld",
+          "source": {
+            "source": "node_modules/three/build/three.core.js",
+            "line": 13071,
+            "column": 1,
+            "name": null
+          },
+          "selfMs": 424.72900000000016,
+          "inclusiveMs": 525.2440000000001
+        },
+        {
+          "name": "believedAsteroids",
+          "source": {
+            "source": "src/game/belief/standin-model.ts",
+            "line": 908,
+            "column": 8,
+            "name": "believedAsteroids"
+          },
+          "selfMs": 50.825,
+          "inclusiveMs": 451.0649999999998
+        },
+        {
+          "name": "(anonymous)",
+          "source": {
+            "source": "src/game/belief/standin-model.ts",
+            "line": 909,
+            "column": 15,
+            "name": null
+          },
+          "selfMs": 401.89599999999973,
+          "inclusiveMs": 401.89599999999973
+        },
+        {
+          "name": "setConfig",
+          "source": {
+            "source": "src/view3d/ship/ShipHolo.ts",
+            "line": 357,
+            "column": 4,
+            "name": null
+          },
+          "selfMs": 22.028,
+          "inclusiveMs": 375.7860000000001
+        },
+        {
+          "name": "projectObject",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17696,
+            "column": 11,
+            "name": "projectObject"
+          },
+          "selfMs": 74.45199999999998,
+          "inclusiveMs": 375.7830000000001
+        },
+        {
+          "name": "(anonymous)",
+          "source": {
+            "source": "node_modules/react-dom/cjs/react-dom-client.production.js",
+            "line": 13579,
+            "column": 20,
+            "name": null
+          },
+          "selfMs": 0.259,
+          "inclusiveMs": 362.12699999999995
+        },
+        {
+          "name": "processRootScheduleInMicrotask",
+          "source": {
+            "source": "node_modules/react-dom/cjs/react-dom-client.production.js",
+            "line": 13456,
+            "column": 9,
+            "name": "processRootScheduleInMicrotask"
+          },
+          "selfMs": 0.656,
+          "inclusiveMs": 361.868
+        },
+        {
+          "name": "renderObject",
+          "source": {
+            "source": "node_modules/three/examples/jsm/renderers/CSS2DRenderer.js",
+            "line": 225,
+            "column": 11,
+            "name": "renderObject"
+          },
+          "selfMs": 199.42800000000005,
+          "inclusiveMs": 361.4669999999999
+        },
+        {
+          "name": "flushSyncWorkAcrossRoots_impl",
+          "source": {
+            "source": "node_modules/react-dom/cjs/react-dom-client.production.js",
+            "line": 13408,
+            "column": 9,
+            "name": "flushSyncWorkAcrossRoots_impl"
+          },
+          "selfMs": 0.223,
+          "inclusiveMs": 360.20599999999996
+        }
+      ],
+      "groups": [
+        {
+          "group": "Three.js + addons",
+          "ms": 3557.3689999999933
+        },
+        {
+          "group": "(program)",
+          "ms": 3177.5160000000074
+        },
+        {
+          "group": "src/game",
+          "ms": 1129.1740000000011
+        },
+        {
+          "group": "src/view3d",
+          "ms": 609.8940000000001
+        },
+        {
+          "group": "React + DOM + scheduler",
+          "ms": 194.737
+        },
+        {
+          "group": "bindVertexArray",
+          "ms": 131.03300000000002
+        },
+        {
+          "group": "src/app",
+          "ms": 84.6
+        },
+        {
+          "group": "bufferData",
+          "ms": 77.19099999999999
+        },
+        {
+          "group": "(garbage collector)",
+          "ms": 75.81900000000005
+        },
+        {
+          "group": "src/content",
+          "ms": 74.47500000000001
+        },
+        {
+          "group": "drawArrays",
+          "ms": 69.79299999999999
+        },
+        {
+          "group": "src/sim",
+          "ms": 64.589
+        },
+        {
+          "group": "src/console",
+          "ms": 63.410000000000004
+        },
+        {
+          "group": "uniform1fv",
+          "ms": 63.232000000000006
+        },
+        {
+          "group": "(idle)",
+          "ms": 58.999000000000024
+        },
+        {
+          "group": "src/ship",
+          "ms": 56.786
+        },
+        {
+          "group": "bindFramebuffer",
+          "ms": 45.868
+        },
+        {
+          "group": "useProgram",
+          "ms": 44.86299999999999
+        },
+        {
+          "group": "bindTexture",
+          "ms": 35.526
+        },
+        {
+          "group": "uniform1f",
+          "ms": 35.138
+        },
+        {
+          "group": "drawElements",
+          "ms": 32.914
+        },
+        {
+          "group": "requestAnimationFrame",
+          "ms": 29.580999999999996
+        },
+        {
+          "group": "uniformMatrix4fv",
+          "ms": 20.744000000000003
+        },
+        {
+          "group": "uniform2f",
+          "ms": 19.724
+        },
+        {
+          "group": "clear",
+          "ms": 18.995
+        },
+        {
+          "group": "now",
+          "ms": 18.832
+        },
+        {
+          "group": "createBuffer",
+          "ms": 18.226000000000003
+        },
+        {
+          "group": "deleteBuffer",
+          "ms": 16.828
+        },
+        {
+          "group": "deleteVertexArray",
+          "ms": 16.767
+        },
+        {
+          "group": "uniform3f",
+          "ms": 16.402
+        },
+        {
+          "group": "bindBuffer",
+          "ms": 14.547
+        },
+        {
+          "group": "src/theme",
+          "ms": 11.3
+        },
+        {
+          "group": "tick",
+          "ms": 11.041
+        },
+        {
+          "group": "viewport",
+          "ms": 11.026
+        },
+        {
+          "group": "src/lib",
+          "ms": 10.958000000000002
+        },
+        {
+          "group": "drawElementsInstanced",
+          "ms": 10.666
+        },
+        {
+          "group": "createVertexArray",
+          "ms": 8.865
+        },
+        {
+          "group": "enable",
+          "ms": 7.987
+        },
+        {
+          "group": "(anonymous)",
+          "ms": 7.803
+        },
+        {
+          "group": "postMessage",
+          "ms": 7.5
+        },
+        {
+          "group": "toggle",
+          "ms": 6.2459999999999996
+        },
+        {
+          "group": "scissor",
+          "ms": 5.882000000000001
+        },
+        {
+          "group": "vertexAttribPointer",
+          "ms": 5.234
+        },
+        {
+          "group": "blendFuncSeparate",
+          "ms": 4.551
+        },
+        {
+          "group": "enableVertexAttribArray",
+          "ms": 4.309
+        },
+        {
+          "group": "depthMask",
+          "ms": 4.25
+        },
+        {
+          "group": "queueMicrotask",
+          "ms": 3.0490000000000004
+        },
+        {
+          "group": "uniform3fv",
+          "ms": 3.041
+        },
+        {
+          "group": "disable",
+          "ms": 2.787
+        },
+        {
+          "group": "frontFace",
+          "ms": 1.575
+        },
+        {
+          "group": "probe.sample",
+          "ms": 1.542
+        },
+        {
+          "group": "drawBuffers",
+          "ms": 1.527
+        },
+        {
+          "group": "framebufferTexture2D",
+          "ms": 1.453
+        },
+        {
+          "group": "texParameteri",
+          "ms": 1.275
+        },
+        {
+          "group": "clearColor",
+          "ms": 1.25
+        },
+        {
+          "group": "uniformMatrix3fv",
+          "ms": 1.222
+        },
+        {
+          "group": "blendFunc",
+          "ms": 1.158
+        },
+        {
+          "group": "src/contracts",
+          "ms": 1.151
+        },
+        {
+          "group": "PerformanceObserver.observe.type",
+          "ms": 0.677
+        },
+        {
+          "group": "probe.status",
+          "ms": 0.506
+        },
+        {
+          "group": "getEntries",
+          "ms": 0.08
+        }
+      ]
+    },
+    {
+      "file": "ship-worker-0.cpuprofile.gz",
+      "sampledMs": 10163.685,
+      "self": [
+        {
+          "name": "(idle)",
+          "source": null,
+          "selfMs": 10163.685000000007,
+          "inclusiveMs": 10163.685000000007
+        },
+        {
+          "name": "(root)",
+          "source": null,
+          "selfMs": 0,
+          "inclusiveMs": 10163.685000000007
+        }
+      ],
+      "inclusive": [
+        {
+          "name": "(root)",
+          "source": null,
+          "selfMs": 0,
+          "inclusiveMs": 10163.685000000007
+        },
+        {
+          "name": "(idle)",
+          "source": null,
+          "selfMs": 10163.685000000007,
+          "inclusiveMs": 10163.685000000007
+        }
+      ],
+      "groups": [
+        {
+          "group": "(idle)",
+          "ms": 10163.685000000007
+        }
+      ]
+    }
+  ],
+  "trace": [],
+  "validity": {
+    "browserExceptions": 0,
+    "frames": 4,
+    "invalid": [],
+    "modelErrors": 0,
+    "maxObserverMsPerFrame": 1.481553399302427
+  }
+}
