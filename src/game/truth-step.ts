@@ -30,7 +30,10 @@ import type {
   ShipStepResult,
   ShipSystemsState,
 } from '../contracts/truth/index.ts';
-import type { EncounterSetup } from './encounter.ts';
+import { adaptSetup } from './adapters.ts';
+import type { DynamicsEvent, EncounterSetup } from './encounter.ts';
+import { hullReach } from '../contracts/ship.ts';
+import type { JsonValue } from '../contracts/units.ts';
 import { buildEnvironment, type EnvironmentOptions } from './environment.ts';
 import {
   evaluateObjectives,
@@ -45,6 +48,8 @@ export interface GameTruthState {
   readonly objectives: ObjectiveProgress;
   /** How long critical electrical service has been out (A18 (5)). Absent: never. */
   readonly power?: PowerProgress;
+  /** The encounter's own changing truth (`EncounterSetup.dynamics`: 3B's well lifecycle). */
+  readonly dynamics?: JsonValue;
   /**
    * Raw field exposure per equipment item, lattice-unit seconds (∫ intensity dt, before any
    * susceptibility; A16, R14). Items never exposed are left out. What the exposure does to the
@@ -73,6 +78,12 @@ export interface TickResult {
   readonly events: readonly ShipEvent[];
   /** Truth-only events (true clearances, impacts). For tests and tuning; never forwarded. */
   readonly simEvents: readonly SimEvent[];
+  /**
+   * What the encounter's dynamics did this tick (a well's precursor, its birth or veto). Truth;
+   * those marked `seen` are what the eye sees through the window, which is all the session
+   * passes on (A12: a newly seen precursor drops warp to 1×).
+   */
+  readonly dynamics?: readonly DynamicsEvent[];
 }
 
 export interface TruthStepper {
@@ -246,13 +257,40 @@ export function clearCooledOvertemperature(
   return equipment ? { ...systems, equipment } : systems;
 }
 
-export function createTruthStepper(setup: EncounterSetup): TruthStepper {
+export function createTruthStepper(given: EncounterSetup): TruthStepper {
+  // The field encounters' hooks (3B's wells, 3C's lattice), whatever setup came in.
+  const setup = adaptSetup(given);
   const { definition, objectiveRules, play } = setup;
-  const simulation = createSimulation(definition.world, {
-    dt: definition.dt,
-    ...(setup.fields ? { registry: setup.fields } : {}),
-  });
-  const intensityFields = simulation.fields.filter((f) => typeof f.intensity === 'function');
+  const options = { dt: definition.dt, ...(setup.fields ? { registry: setup.fields } : {}) };
+  const simulation = createSimulation(definition.world, options);
+  const intensityOf = (sim: Simulation) =>
+    sim.fields.filter((f) => typeof f.intensity === 'function');
+  const intensityFields = intensityOf(simulation);
+  // The field instances follow the world's specs: when the encounter's dynamics change them (a
+  // well switching on), the simulation is rebuilt for the new ones, and the hazards with it.
+  let current = {
+    specs: definition.world.fields,
+    simulation,
+    intensityFields,
+    hazards: setup.hazards?.(definition.world.fields),
+  };
+  const forFields = (world: SimState['world']) => {
+    if (world.fields !== current.specs) {
+      const registry = setup.dynamics?.registry?.(world.fields) ?? setup.fields;
+      // The simulation counts time as its first epoch plus ticks, so keep the arrival's epoch.
+      const sim = createSimulation(
+        { ...world, t: simulation.t0 },
+        { ...options, ...(registry ? { registry } : {}) },
+      );
+      current = {
+        specs: world.fields,
+        simulation: sim,
+        intensityFields: intensityOf(sim),
+        hazards: setup.hazards?.(world.fields),
+      };
+    }
+    return current;
+  };
   // What the briefing told the ship about: it knows where these bodies are, and how big they
   // and the surveyed asteroids are.
   const briefedBodies = new Set(definition.briefing.knownBodies.map((b) => b.id));
@@ -264,7 +302,6 @@ export function createTruthStepper(setup: EncounterSetup): TruthStepper {
       ...definition.briefing.knownAsteroids.map((a) => a.id),
     ],
     sunExclusionAngle: play.sunExclusionAngle,
-    intensityFields,
     ship: definition.ship,
   };
   const hook = setup.environment;
@@ -283,6 +320,7 @@ export function createTruthStepper(setup: EncounterSetup): TruthStepper {
             },
           },
     objectives: initialObjectiveProgress,
+    ...(setup.dynamics ? { dynamics: setup.dynamics.initial } : {}),
   };
 
   return {
@@ -292,11 +330,44 @@ export function createTruthStepper(setup: EncounterSetup): TruthStepper {
 
     step(state, commands = []): TickResult {
       if (state.lost) throw new Error('the ship is lost; start a new attempt');
-      const before = state.sim;
+      let before = state.sim;
       const t = before.world.t;
 
+      // 0. The encounter's own dynamics, due at the start of this tick, with the ship's actual
+      //    committed state then; the fields they imply take effect for the tick.
+      let dynamics = state.dynamics;
+      const happened: DynamicsEvent[] = [];
+      if (setup.dynamics && dynamics !== undefined) {
+        for (let due = setup.dynamics.next(dynamics); due !== null && due <= t;) {
+          if (due < t)
+            throw new Error(`encounter dynamics due at ${due} s, between ticks (tick at ${t} s)`);
+          const k = before.world.ship.kinematics;
+          const mp = before.world.ship.systems.massProperties;
+          const advanced = setup.dynamics.advance(dynamics, due, {
+            t: due,
+            position: k.position,
+            velocity: k.velocity,
+            hullRadius: hullReach(mp.hull, mp.centerOfMass),
+          });
+          dynamics = advanced.state;
+          happened.push(...advanced.events);
+          const next = setup.dynamics.next(dynamics);
+          if (next !== null && next <= due) throw new Error('encounter dynamics did not advance');
+          due = next;
+        }
+        if (happened.length > 0) {
+          const specs = setup.dynamics.fields(dynamics, before.world.fields);
+          if (specs !== before.world.fields)
+            before = { ...before, world: { ...before.world, fields: specs } };
+        }
+      }
+      const fieldsNow = forFields(before.world);
+
       // 1. Environment at the start of the tick.
-      const built = buildEnvironment(before, environment);
+      const built = buildEnvironment(before, {
+        ...environment,
+        intensityFields: fieldsNow.intensityFields,
+      });
       const env = hook ? hook(before, built) : built;
       // The exposure account: this tick's intensity, held over the tick.
       let exposure = state.exposure;
@@ -332,7 +403,7 @@ export function createTruthStepper(setup: EncounterSetup): TruthStepper {
 
       // 3. Simulation, with the mass properties at the middle of the step (2B reports the end
       //    of the step; the mean keeps burns second order).
-      const stepped = simulation.step(before, {
+      const stepped = fieldsNow.simulation.step(before, {
         actuators: {
           ...ship.actuators,
           massProperties: midStepMassProperties(
@@ -368,6 +439,22 @@ export function createTruthStepper(setup: EncounterSetup): TruthStepper {
         if (contact.relativeSpeed >= play.lossSpeed && !lost) {
           lost = 'collision';
           lostAt = contact.t;
+        }
+      }
+      // Structural hazards (3B's throats): the earliest contact of any part of the hull over
+      // the tick, swept from its start; it ends the attempt there, unless a collision came first.
+      if (fieldsNow.hazards) {
+        const k = before.world.ship.kinematics;
+        const [hit] = fieldsNow.hazards.sweep(
+          { position: k.position, attitude: k.attitude },
+          before.world.ship.systems.massProperties,
+          sim.world.ship.kinematics.position,
+          t,
+          t + definition.dt,
+        );
+        if (hit && (!lost || hit.t < lostAt)) {
+          lost = hit.cause;
+          lostAt = hit.t;
         }
       }
       // Critical electrical service (A18 (5)), on the systems as the tick left them. A collision
@@ -428,6 +515,7 @@ export function createTruthStepper(setup: EncounterSetup): TruthStepper {
           sim,
           objectives,
           ...(power ? { power } : {}),
+          ...(dynamics !== undefined ? { dynamics } : {}),
           ...(exposure ? { exposure } : {}),
           ...(lost ? { lost } : {}),
         },
@@ -435,6 +523,7 @@ export function createTruthStepper(setup: EncounterSetup): TruthStepper {
         measurements: ship.measurements,
         events,
         simEvents: stepped.events,
+        ...(happened.length > 0 ? { dynamics: happened } : {}),
       };
     },
   };

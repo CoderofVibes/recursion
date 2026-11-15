@@ -51,6 +51,17 @@ export type AttitudeMode = 'free' | 'hands-on' | 'steady' | 'hold' | 'pointing' 
 export type Phase = 'prepare' | 'operate' | 'ended';
 
 /**
+ * Something the eye has seen through the window that the screens should call out: an Inverse
+ * Well's precursor (A19), until what it announces is due.
+ */
+export interface Sighting {
+  readonly kind: string;
+  readonly field: string;
+  readonly seenAt: Seconds;
+  readonly until?: Seconds;
+}
+
+/**
  * How much of each frame `advance` may spend stepping the simulation (A20). The step itself
  * never changes (P2): a bigger slice runs more of the same fixed ticks per frame, so the same
  * flight gives the same results however it is sliced.
@@ -106,6 +117,8 @@ export interface SessionStatus {
    * against the cap, closest approaches, and the ship's verdict once judged (`departure.ts`).
    */
   readonly departure: readonly DepartureProgress[];
+  /** What the eye has seen that the screens should call out (a well's precursor). */
+  readonly sightings: readonly Sighting[];
   readonly outcome: AttemptOutcome;
   /** The plan whose items are still scheduled, if any, and how many remain. */
   readonly planId?: PlanId;

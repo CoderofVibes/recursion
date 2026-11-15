@@ -49,6 +49,7 @@ import type {
   AttitudeMode,
   FrameBudget,
   GameControls,
+  Sighting,
   Phase,
   PlanDraft,
   SessionStatus,
@@ -192,6 +193,8 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
   /** Exposure the ship has reported per item this attempt (its `exposure` events), U s. */
   let exposureReported: Record<string, number> = {};
   let exposureMost = 0;
+  /** What the eye has seen through the window, until it is due (a well's precursor). */
+  let sightings: Sighting[] = [];
   /** The believed departure account (S20): gauged Δv, closest approaches, the ship's verdicts. */
   let departureTrack: DepartureTrack = initialDepartureTrack;
   const checkEvery = Math.max(1, Math.round(setup.play.power.checkEvery / stepper.dt));
@@ -296,6 +299,7 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
     lastFault = -Infinity;
     exposureReported = {};
     exposureMost = 0;
+    sightings = [];
     departureTrack = initialDepartureTrack;
     commanded = initialCommandedState;
     drawn = undefined;
@@ -408,6 +412,23 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
       fault ??= e.t;
       if (e.t > lastFault) lastFault = e.t;
       if (!shortReported.includes(group)) shortReported.push(group);
+    }
+    // What the eye saw this tick (A19): a well's precursor. A new one drops warp to 1× and ends
+    // the frame's run of ticks; time keeps running (A12).
+    if (sightings.length > 0)
+      sightings = sightings.filter((s) => s.until === undefined || s.until > time());
+    for (const e of result.dynamics ?? []) {
+      if (!e.seen) continue;
+      sightings.push({
+        kind: e.kind,
+        field: e.id,
+        seenAt: e.t,
+        ...(e.until !== undefined ? { until: e.until } : {}),
+      });
+      if (warp > 1) {
+        warp = 1;
+        debt = Math.min(debt, dt);
+      }
     }
     for (const e of result.events)
       if (e.kind === 'objective')
@@ -585,6 +606,7 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
         attitude: attitudeMode,
         alerts,
         departure: departures(),
+        sightings,
         outcome,
         ...(planId ? { planId } : {}),
         pending: queue.filter((item) => item.source === 'plan').length,
