@@ -1,0 +1,2952 @@
+{
+  "schema": 1,
+  "run": "2g-r2",
+  "started": "2026-11-15T06:10:15.554Z",
+  "source": {
+    "commit": "bdb9f5b7e44397ddf782c36b071573069c4a04f1",
+    "srcTree": "16b6044a946e82aac079fc0dabaa370f32bcbe04",
+    "dataTree": "c5a09fa693bf2132c89251682a05c9f567a49a8f",
+    "branch": "",
+    "dirtyInputs": ""
+  },
+  "host": {
+    "node": "v24.22.1",
+    "os": "win32 10.0.26200",
+    "cpu": "Intel(R) Core(TM) i7-14700HX",
+    "logicalCpus": 28,
+    "totalMemoryBytes": 34049155072,
+    "freeMemoryBytesAtStart": 14157135872,
+    "gpu": {
+      "devices": [
+        {
+          "vendorId": 32902,
+          "deviceId": 42888,
+          "subSysId": 2356613180,
+          "revision": 4,
+          "vendorString": "",
+          "deviceString": "Intel(R) UHD Graphics",
+          "driverVendor": "Intel",
+          "driverVersion": "32.0.101.6556"
+        },
+        {
+          "vendorId": 4318,
+          "deviceId": 10465,
+          "subSysId": 2356613180,
+          "revision": 161,
+          "vendorString": "",
+          "deviceString": "NVIDIA GeForce RTX 4050 Laptop GPU",
+          "driverVendor": "",
+          "driverVersion": "32.0.16.1742"
+        },
+        {
+          "vendorId": 5140,
+          "deviceId": 140,
+          "subSysId": 0,
+          "revision": 0,
+          "vendorString": "",
+          "deviceString": "Microsoft Basic Render Driver",
+          "driverVendor": "",
+          "driverVersion": "10.0.26100.9818"
+        }
+      ],
+      "auxAttributes": {
+        "amdSwitchable": false,
+        "bgra8OverlaySupport": "SCALING",
+        "canSupportThreadedTextureMailbox": false,
+        "directComposition": true,
+        "directMLFeatureLevel": "Not supported",
+        "directRenderingVersion": "",
+        "displayType": "ANGLE_D3D11",
+        "dx12FeatureLevel": "Not supported",
+        "glExtensions": "GL_AMD_performance_monitor GL_ANGLE_base_vertex_base_instance_shader_builtin GL_ANGLE_blob_cache GL_ANGLE_client_arrays GL_ANGLE_clip_cull_distance GL_ANGLE_copy_texture_3d GL_ANGLE_depth_texture GL_ANGLE_framebuffer_blit GL_ANGLE_framebuffer_multisample GL_ANGLE_get_serialized_context_string GL_ANGLE_get_tex_level_parameter GL_ANGLE_instanced_arrays GL_ANGLE_memory_size GL_ANGLE_multiview_multisample GL_ANGLE_pack_reverse_row_order GL_ANGLE_polygon_mode GL_ANGLE_program_binary_readiness_query GL_ANGLE_program_cache_control GL_ANGLE_provoking_vertex GL_ANGLE_renderability_validation GL_ANGLE_request_extension GL_ANGLE_robust_client_memory GL_ANGLE_shader_pixel_local_storage GL_ANGLE_shader_pixel_local_storage_coherent GL_ANGLE_stencil_texturing GL_ANGLE_texture_compression_dxt3 GL_ANGLE_texture_compression_dxt5 GL_ANGLE_texture_multisample GL_ANGLE_texture_usage GL_ANGLE_translated_shader_source GL_APPLE_clip_distance GL_ARM_rgba8 GL_CHROMIUM_bind_generates_resource GL_CHROMIUM_bind_uniform_location GL_CHROMIUM_copy_compressed_texture GL_CHROMIUM_copy_texture GL_CHROMIUM_lose_context GL_EXT_EGL_image_external_wrap_modes GL_EXT_base_instance GL_EXT_blend_func_extended GL_EXT_blend_minmax GL_EXT_clip_control GL_EXT_clip_cull_distance GL_EXT_color_buffer_float GL_EXT_color_buffer_half_float GL_EXT_conservative_depth GL_EXT_debug_label GL_EXT_debug_marker GL_EXT_depth_clamp GL_EXT_discard_framebuffer GL_EXT_disjoint_timer_query GL_EXT_draw_buffers GL_EXT_draw_buffers_indexed GL_EXT_draw_elements_base_vertex GL_EXT_float_blend GL_EXT_frag_depth GL_EXT_instanced_arrays GL_EXT_map_buffer_range GL_EXT_occlusion_query_boolean GL_EXT_polygon_offset_clamp GL_EXT_read_format_bgra GL_EXT_render_snorm GL_EXT_robustness GL_EXT_sRGB GL_EXT_shader_texture_lod GL_EXT_texture_border_clamp GL_EXT_texture_compression_bptc GL_EXT_texture_compression_dxt1 GL_EXT_texture_compression_rgtc GL_EXT_texture_compression_s3tc_srgb GL_EXT_texture_filter_anisotropic GL_EXT_texture_format_BGRA8888 GL_EXT_texture_mirror_clamp_to_edge GL_EXT_texture_norm16 GL_EXT_texture_rg GL_EXT_texture_storage GL_EXT_texture_type_2_10_10_10_REV GL_EXT_unpack_subimage GL_KHR_debug GL_KHR_parallel_shader_compile GL_KHR_robustness GL_NV_EGL_stream_consumer_external GL_NV_fence GL_NV_framebuffer_blit GL_NV_pack_subimage GL_NV_pixel_buffer_object GL_NV_shader_noperspective_interpolation GL_OES_EGL_image GL_OES_EGL_image_external GL_OES_EGL_image_external_essl3 GL_OES_depth24 GL_OES_depth32 GL_OES_draw_buffers_indexed GL_OES_draw_elements_base_vertex GL_OES_element_index_uint GL_OES_fbo_render_mipmap GL_OES_get_program_binary GL_OES_mapbuffer GL_OES_packed_depth_stencil GL_OES_required_internalformat GL_OES_rgb8_rgba8 GL_OES_sample_variables GL_OES_shader_multisample_interpolation GL_OES_standard_derivatives GL_OES_surfaceless_context GL_OES_texture_border_clamp GL_OES_texture_float GL_OES_texture_float_linear GL_OES_texture_half_float GL_OES_texture_half_float_linear GL_OES_texture_npot GL_OES_texture_stencil8 GL_OES_texture_storage_multisample_2d_array GL_OES_vertex_array_object GL_OVR_multiview GL_OVR_multiview2 ",
+        "glImplementationParts": "(gl=egl-angle,angle=d3d11)",
+        "glRenderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11-32.0.101.6556)",
+        "glResetNotificationStrategy": 33362,
+        "glVendor": "Google Inc. (Intel)",
+        "glVersion": "OpenGL ES 3.0 (ANGLE 2.1.29097 git hash: 751417514a52)",
+        "glWsExtensions": "EGL_EXT_create_context_robustness EGL_ANGLE_d3d_share_handle_client_buffer EGL_ANGLE_d3d_texture_client_buffer EGL_ANGLE_surface_d3d_texture_2d_share_handle EGL_ANGLE_query_surface_pointer EGL_ANGLE_window_fixed_size EGL_ANGLE_keyed_mutex EGL_ANGLE_surface_orientation EGL_ANGLE_direct_composition EGL_NV_post_sub_buffer EGL_KHR_create_context EGL_KHR_image EGL_KHR_image_base EGL_KHR_gl_texture_2D_image EGL_KHR_gl_texture_cubemap_image EGL_KHR_gl_renderbuffer_image EGL_KHR_get_all_proc_addresses EGL_KHR_stream EGL_KHR_stream_consumer_gltexture EGL_NV_stream_consumer_gltexture_yuv EGL_ANGLE_stream_producer_d3d_texture EGL_ANGLE_create_context_webgl_compatibility EGL_CHROMIUM_create_context_bind_generates_resource EGL_CHROMIUM_sync_control EGL_EXT_pixel_format_float EGL_KHR_surfaceless_context EGL_ANGLE_display_texture_share_group EGL_ANGLE_display_semaphore_share_group EGL_ANGLE_create_context_client_arrays EGL_ANGLE_program_cache_control EGL_ANGLE_robust_resource_initialization EGL_ANGLE_create_context_extensions_enabled EGL_ANDROID_blob_cache EGL_ANDROID_recordable EGL_ANGLE_image_d3d11_texture EGL_ANGLE_create_context_backwards_compatible EGL_KHR_no_config_context EGL_KHR_create_context_no_error EGL_KHR_reusable_sync EGL_ANGLE_memory_usage_report ",
+        "glWsVendor": "Google Inc. (Intel)",
+        "glWsVersion": "1.5 (ANGLE 2.1.29097 git hash: 751417514a52)",
+        "inProcessGpu": false,
+        "initializationTime": 0.427732,
+        "isAsan": false,
+        "isClangCoverage": false,
+        "jpegDecodeAcceleratorSupported": false,
+        "maxMsaaSamples": "8",
+        "nv12OverlaySupport": "SCALING",
+        "optimus": false,
+        "p010OverlaySupport": "SOFTWARE",
+        "passthroughCmdDecoder": true,
+        "pixelShaderVersion": "5.0",
+        "processCrashCount": 0,
+        "rgb10a2OverlaySupport": "SOFTWARE",
+        "sandboxed": true,
+        "skiaBackendType": "GaneshGL",
+        "subpixelFontRendering": true,
+        "supportsD3dSharedImages": false,
+        "supportsDirectML": false,
+        "supportsDx12": false,
+        "supportsOverlays": true,
+        "supportsVulkan": false,
+        "targetCpuBits": 64,
+        "vertexShaderVersion": "5.0",
+        "visibilityCallbackCallCount": 0,
+        "vulkanVersion": "Not supported",
+        "yuy2OverlaySupport": "SCALING"
+      },
+      "featureStatus": {
+        "2d_canvas": "enabled",
+        "direct_rendering_display_compositor": "disabled_off_ok",
+        "gpu_compositing": "enabled",
+        "multiple_raster_threads": "enabled_on",
+        "opengl": "enabled_on",
+        "rasterization": "enabled",
+        "skia_graphite": "disabled_off",
+        "trees_in_viz": "disabled_off",
+        "video_decode": "enabled",
+        "video_encode": "enabled",
+        "webgl": "enabled",
+        "webgpu": "enabled",
+        "webnn": "disabled_off"
+      },
+      "driverBugWorkarounds": [
+        "d3d12_encode_packed_format_dpb_sizing",
+        "disable_d3d12_av1_multi_ref_encoding",
+        "disable_d3d12_h264_encoder_non_reference_frames",
+        "disable_d3d12_hevc_encoding",
+        "disable_direct_composition_sw_video_overlays",
+        "disable_vp_auto_hdr",
+        "enable_webgl_timer_query_extensions",
+        "exit_on_context_lost",
+        "force_dcomp_triple_buffer_video_swap_chain",
+        "limit_d3d12_av1_profile_to_main",
+        "max_msaa_sample_count_4",
+        "msaa_is_slow",
+        "no_downscaled_overlay_promotion",
+        "supports_two_yuv_hardware_overlays",
+        "use_first_valid_ref_for_av1_invalid_ref",
+        "disabled_extension_GL_KHR_blend_equation_advanced",
+        "disabled_extension_GL_KHR_blend_equation_advanced_coherent"
+      ],
+      "videoDecoding": [],
+      "videoEncoding": []
+    }
+  },
+  "settings": {
+    "seconds": 8,
+    "repeats": 1,
+    "loadRepeats": 5,
+    "views": [
+      "room",
+      "mission",
+      "plan",
+      "model",
+      "blackbox",
+      "systems",
+      "flight",
+      "map",
+      "ship"
+    ],
+    "warps": [
+      2000
+    ],
+    "profiles": {
+      "native": {
+        "cpu": 1,
+        "latency": 0,
+        "downloadThroughput": -1,
+        "uploadThroughput": -1,
+        "connectionType": "none"
+      },
+      "modest": {
+        "cpu": 4,
+        "latency": 40,
+        "downloadThroughput": 1250000,
+        "uploadThroughput": 125000,
+        "connectionType": "wifi"
+      }
+    },
+    "viewport": [
+      1366,
+      768,
+      1
+    ],
+    "warmupMs": 1200,
+    "presentation": "installed headless Chrome, GPU enabled; no GPU throttle",
+    "timeToInteraction": "navigation start to a trusted key 3 producing console data-mode; separate console-ready paint includes camera travel",
+    "frameDefinition": "consecutive requestAnimationFrame timestamps in foreground; not GPU execution duration",
+    "fixture": "fresh origin storage, shipped arrival seed, no archived attempts, coasting, no synthetic bodies or commands",
+    "topWarpPolicy": "bounded stress: reselect 2000 through the existing game control after automatic drops; log each drop; do not suppress alerts or model errors"
+  },
+  "loads": [],
+  "frames": [
+    {
+      "profile": "modest",
+      "view": "room",
+      "requestedWarp": 2000,
+      "repeat": 1,
+      "n": 78,
+      "median": 102.80000000000109,
+      "p95": 163.60000000000036,
+      "worst": 181.89999999999964,
+      "mean": 102.00897435897434,
+      "wallSeconds": 7.93970000000298,
+      "shipSeconds": 624,
+      "achievedShipSecondsPerWallSecond": 78.59239014065592,
+      "saturationFraction": 1,
+      "saturatedFrames": {
+        "n": 78,
+        "median": 102.80000000000109,
+        "p95": 163.60000000000036,
+        "worst": 181.89999999999964,
+        "mean": 102.00897435897434
+      },
+      "unsaturatedFrames": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "worst": null
+      },
+      "over33ms": 1,
+      "over50ms": 1,
+      "warpsObserved": [
+        2000
+      ],
+      "phases": [
+        "operate"
+      ],
+      "hiddenFrames": 0,
+      "pausedFrames": 0,
+      "attempts": [
+        1
+      ],
+      "startShipTime": 145,
+      "endShipTime": 769,
+      "longTasks": {
+        "n": 76,
+        "median": 98,
+        "p95": 158,
+        "worst": 182,
+        "mean": 100.89473684210526
+      },
+      "observerMs": 12.399999983608723,
+      "warpReselections": [],
+      "mode": "room",
+      "page": "mission",
+      "modelError": null,
+      "inventory": {
+        "vendor": "Google Inc. (Intel)",
+        "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "viewport": [
+          1366,
+          768,
+          1
+        ],
+        "canvas": [
+          1366,
+          768
+        ],
+        "memory": {
+          "geometries": 225,
+          "textures": 37
+        },
+        "programs": 27,
+        "scene": {
+          "objects": 631,
+          "uniqueGeometries": 465,
+          "vertices": 49247,
+          "indexTriples": 28334.999999999993,
+          "textures": [
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 1536,
+              "height": 840
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 256
+            }
+          ]
+        },
+        "passes": [
+          {
+            "type": "Bg",
+            "enabled": true
+          },
+          {
+            "type": "e",
+            "enabled": true,
+            "bloomMipSizes": [
+              [
+                683,
+                384
+              ],
+              [
+                342,
+                192
+              ],
+              [
+                171,
+                96
+              ],
+              [
+                86,
+                48
+              ],
+              [
+                43,
+                24
+              ]
+            ]
+          },
+          {
+            "type": "zg",
+            "enabled": true
+          }
+        ],
+        "appDeveloperHandle": "undefined"
+      },
+      "draws": {
+        "frame": 2280,
+        "calls": 239,
+        "triangles": 43554,
+        "points": 3200,
+        "lines": 3978
+      }
+    },
+    {
+      "profile": "modest",
+      "view": "mission",
+      "requestedWarp": 2000,
+      "repeat": 1,
+      "n": 89,
+      "median": 84.80000000000109,
+      "p95": 145.40000000000146,
+      "worst": 181.79999999999927,
+      "mean": 89.87640449438203,
+      "wallSeconds": 7.971,
+      "shipSeconds": 712,
+      "achievedShipSecondsPerWallSecond": 89.32379877054322,
+      "saturationFraction": 1,
+      "saturatedFrames": {
+        "n": 89,
+        "median": 84.80000000000109,
+        "p95": 145.40000000000146,
+        "worst": 181.79999999999927,
+        "mean": 89.87640449438203
+      },
+      "unsaturatedFrames": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "worst": null
+      },
+      "over33ms": 1,
+      "over50ms": 1,
+      "warpsObserved": [
+        2000
+      ],
+      "phases": [
+        "operate"
+      ],
+      "hiddenFrames": 0,
+      "pausedFrames": 0,
+      "attempts": [
+        1
+      ],
+      "startShipTime": 161,
+      "endShipTime": 873,
+      "longTasks": {
+        "n": 89,
+        "median": 81,
+        "p95": 141,
+        "worst": 177,
+        "mean": 87.52808988764045
+      },
+      "observerMs": 15.199999995529652,
+      "warpReselections": [],
+      "mode": "console",
+      "page": "mission",
+      "modelError": null,
+      "inventory": {
+        "vendor": "Google Inc. (Intel)",
+        "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "viewport": [
+          1366,
+          768,
+          1
+        ],
+        "canvas": [
+          1366,
+          768
+        ],
+        "memory": {
+          "geometries": 224,
+          "textures": 37
+        },
+        "programs": 27,
+        "scene": {
+          "objects": 631,
+          "uniqueGeometries": 465,
+          "vertices": 49177,
+          "indexTriples": 28311.66666666666,
+          "textures": [
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 1536,
+              "height": 840
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 256
+            }
+          ]
+        },
+        "passes": [
+          {
+            "type": "Bg",
+            "enabled": true
+          },
+          {
+            "type": "e",
+            "enabled": true,
+            "bloomMipSizes": [
+              [
+                683,
+                384
+              ],
+              [
+                342,
+                192
+              ],
+              [
+                171,
+                96
+              ],
+              [
+                86,
+                48
+              ],
+              [
+                43,
+                24
+              ]
+            ]
+          },
+          {
+            "type": "zg",
+            "enabled": true
+          }
+        ],
+        "appDeveloperHandle": "undefined"
+      },
+      "draws": {
+        "frame": 2505,
+        "calls": 95,
+        "triangles": 38118,
+        "points": 3200,
+        "lines": 0
+      }
+    },
+    {
+      "profile": "modest",
+      "view": "plan",
+      "requestedWarp": 2000,
+      "repeat": 1,
+      "n": 96,
+      "median": 78.80000000000109,
+      "p95": 109.30000000000109,
+      "worst": 121.19999999999891,
+      "mean": 83.07083333333333,
+      "wallSeconds": 7.95179999999702,
+      "shipSeconds": 768,
+      "achievedShipSecondsPerWallSecond": 96.58190598358709,
+      "saturationFraction": 1,
+      "saturatedFrames": {
+        "n": 96,
+        "median": 78.80000000000109,
+        "p95": 109.30000000000109,
+        "worst": 121.19999999999891,
+        "mean": 83.07083333333333
+      },
+      "unsaturatedFrames": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "worst": null
+      },
+      "over33ms": 1,
+      "over50ms": 1,
+      "warpsObserved": [
+        2000
+      ],
+      "phases": [
+        "operate"
+      ],
+      "hiddenFrames": 0,
+      "pausedFrames": 0,
+      "attempts": [
+        1
+      ],
+      "startShipTime": 129,
+      "endShipTime": 897,
+      "longTasks": {
+        "n": 96,
+        "median": 78,
+        "p95": 107,
+        "worst": 120,
+        "mean": 80.70833333333333
+      },
+      "observerMs": 12.700000025331974,
+      "warpReselections": [],
+      "mode": "console",
+      "page": "plan",
+      "modelError": null,
+      "inventory": {
+        "vendor": "Google Inc. (Intel)",
+        "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "viewport": [
+          1366,
+          768,
+          1
+        ],
+        "canvas": [
+          1366,
+          768
+        ],
+        "memory": {
+          "geometries": 224,
+          "textures": 37
+        },
+        "programs": 27,
+        "scene": {
+          "objects": 631,
+          "uniqueGeometries": 465,
+          "vertices": 49177,
+          "indexTriples": 28311.66666666666,
+          "textures": [
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 1536,
+              "height": 840
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 256
+            }
+          ]
+        },
+        "passes": [
+          {
+            "type": "Bg",
+            "enabled": true
+          },
+          {
+            "type": "e",
+            "enabled": true,
+            "bloomMipSizes": [
+              [
+                683,
+                384
+              ],
+              [
+                342,
+                192
+              ],
+              [
+                171,
+                96
+              ],
+              [
+                86,
+                48
+              ],
+              [
+                43,
+                24
+              ]
+            ]
+          },
+          {
+            "type": "zg",
+            "enabled": true
+          }
+        ],
+        "appDeveloperHandle": "undefined"
+      },
+      "draws": {
+        "frame": 2370,
+        "calls": 95,
+        "triangles": 38118,
+        "points": 3200,
+        "lines": 0
+      }
+    },
+    {
+      "profile": "modest",
+      "view": "model",
+      "requestedWarp": 2000,
+      "repeat": 1,
+      "n": 88,
+      "median": 78.89999999999964,
+      "p95": 169.60000000000036,
+      "worst": 290.8000000000011,
+      "mean": 90.27954545454548,
+      "wallSeconds": 7.93520000000298,
+      "shipSeconds": 704,
+      "achievedShipSecondsPerWallSecond": 88.71862082867925,
+      "saturationFraction": 1,
+      "saturatedFrames": {
+        "n": 88,
+        "median": 78.89999999999964,
+        "p95": 169.60000000000036,
+        "worst": 290.8000000000011,
+        "mean": 90.27954545454548
+      },
+      "unsaturatedFrames": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "worst": null
+      },
+      "over33ms": 1,
+      "over50ms": 1,
+      "warpsObserved": [
+        2000
+      ],
+      "phases": [
+        "operate"
+      ],
+      "hiddenFrames": 0,
+      "pausedFrames": 0,
+      "attempts": [
+        1
+      ],
+      "startShipTime": 129,
+      "endShipTime": 833,
+      "longTasks": {
+        "n": 89,
+        "median": 78,
+        "p95": 167,
+        "worst": 288,
+        "mean": 87.86516853932584
+      },
+      "observerMs": 10.400000020861626,
+      "warpReselections": [],
+      "mode": "console",
+      "page": "model",
+      "modelError": null,
+      "inventory": {
+        "vendor": "Google Inc. (Intel)",
+        "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "viewport": [
+          1366,
+          768,
+          1
+        ],
+        "canvas": [
+          1366,
+          768
+        ],
+        "memory": {
+          "geometries": 224,
+          "textures": 37
+        },
+        "programs": 27,
+        "scene": {
+          "objects": 631,
+          "uniqueGeometries": 465,
+          "vertices": 49177,
+          "indexTriples": 28311.66666666666,
+          "textures": [
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 1536,
+              "height": 840
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 256
+            }
+          ]
+        },
+        "passes": [
+          {
+            "type": "Bg",
+            "enabled": true
+          },
+          {
+            "type": "e",
+            "enabled": true,
+            "bloomMipSizes": [
+              [
+                683,
+                384
+              ],
+              [
+                342,
+                192
+              ],
+              [
+                171,
+                96
+              ],
+              [
+                86,
+                48
+              ],
+              [
+                43,
+                24
+              ]
+            ]
+          },
+          {
+            "type": "zg",
+            "enabled": true
+          }
+        ],
+        "appDeveloperHandle": "undefined"
+      },
+      "draws": {
+        "frame": 2235,
+        "calls": 95,
+        "triangles": 38118,
+        "points": 3200,
+        "lines": 0
+      }
+    },
+    {
+      "profile": "modest",
+      "view": "blackbox",
+      "requestedWarp": 2000,
+      "repeat": 1,
+      "n": 89,
+      "median": 78.79999999999927,
+      "p95": 157.5,
+      "worst": 206,
+      "mean": 89.74269662921347,
+      "wallSeconds": 7.98840000000596,
+      "shipSeconds": 712,
+      "achievedShipSecondsPerWallSecond": 89.12923739415513,
+      "saturationFraction": 1,
+      "saturatedFrames": {
+        "n": 89,
+        "median": 78.79999999999927,
+        "p95": 157.5,
+        "worst": 206,
+        "mean": 89.74269662921347
+      },
+      "unsaturatedFrames": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "worst": null
+      },
+      "over33ms": 1,
+      "over50ms": 0.9550561797752809,
+      "warpsObserved": [
+        2000
+      ],
+      "phases": [
+        "operate"
+      ],
+      "hiddenFrames": 0,
+      "pausedFrames": 0,
+      "attempts": [
+        1
+      ],
+      "startShipTime": 137,
+      "endShipTime": 849,
+      "longTasks": {
+        "n": 85,
+        "median": 78,
+        "p95": 153,
+        "worst": 206,
+        "mean": 88.8
+      },
+      "observerMs": 11.59999993443489,
+      "warpReselections": [],
+      "mode": "console",
+      "page": "blackbox",
+      "modelError": null,
+      "inventory": {
+        "vendor": "Google Inc. (Intel)",
+        "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "viewport": [
+          1366,
+          768,
+          1
+        ],
+        "canvas": [
+          1366,
+          768
+        ],
+        "memory": {
+          "geometries": 224,
+          "textures": 37
+        },
+        "programs": 27,
+        "scene": {
+          "objects": 631,
+          "uniqueGeometries": 465,
+          "vertices": 49177,
+          "indexTriples": 28311.66666666666,
+          "textures": [
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 1536,
+              "height": 840
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 256
+            }
+          ]
+        },
+        "passes": [
+          {
+            "type": "Bg",
+            "enabled": true
+          },
+          {
+            "type": "e",
+            "enabled": true,
+            "bloomMipSizes": [
+              [
+                683,
+                384
+              ],
+              [
+                342,
+                192
+              ],
+              [
+                171,
+                96
+              ],
+              [
+                86,
+                48
+              ],
+              [
+                43,
+                24
+              ]
+            ]
+          },
+          {
+            "type": "zg",
+            "enabled": true
+          }
+        ],
+        "appDeveloperHandle": "undefined"
+      },
+      "draws": {
+        "frame": 2265,
+        "calls": 95,
+        "triangles": 38118,
+        "points": 3200,
+        "lines": 0
+      }
+    },
+    {
+      "profile": "modest",
+      "view": "systems",
+      "requestedWarp": 2000,
+      "repeat": 1,
+      "n": 56,
+      "median": 90.80000000000109,
+      "p95": 333.2999999999993,
+      "worst": 369.7999999999993,
+      "mean": 142.3017857142857,
+      "wallSeconds": 7.91729999999702,
+      "shipSeconds": 448,
+      "achievedShipSecondsPerWallSecond": 56.584946888480744,
+      "saturationFraction": 1,
+      "saturatedFrames": {
+        "n": 56,
+        "median": 90.80000000000109,
+        "p95": 333.2999999999993,
+        "worst": 369.7999999999993,
+        "mean": 142.3017857142857
+      },
+      "unsaturatedFrames": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "worst": null
+      },
+      "over33ms": 1,
+      "over50ms": 1,
+      "warpsObserved": [
+        2000
+      ],
+      "phases": [
+        "operate"
+      ],
+      "hiddenFrames": 0,
+      "pausedFrames": 0,
+      "attempts": [
+        1
+      ],
+      "startShipTime": 57,
+      "endShipTime": 505,
+      "longTasks": {
+        "n": 56,
+        "median": 87,
+        "p95": 314,
+        "worst": 364,
+        "mean": 133.76785714285714
+      },
+      "observerMs": 7.199999995529652,
+      "warpReselections": [],
+      "mode": "console",
+      "page": "systems",
+      "modelError": null,
+      "inventory": {
+        "vendor": "Google Inc. (Intel)",
+        "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "viewport": [
+          1366,
+          768,
+          1
+        ],
+        "canvas": [
+          1366,
+          768
+        ],
+        "memory": {
+          "geometries": 224,
+          "textures": 37
+        },
+        "programs": 27,
+        "scene": {
+          "objects": 631,
+          "uniqueGeometries": 465,
+          "vertices": 49177,
+          "indexTriples": 28311.66666666666,
+          "textures": [
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 1536,
+              "height": 840
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 256
+            }
+          ]
+        },
+        "passes": [
+          {
+            "type": "Bg",
+            "enabled": true
+          },
+          {
+            "type": "e",
+            "enabled": true,
+            "bloomMipSizes": [
+              [
+                683,
+                384
+              ],
+              [
+                342,
+                192
+              ],
+              [
+                171,
+                96
+              ],
+              [
+                86,
+                48
+              ],
+              [
+                43,
+                24
+              ]
+            ]
+          },
+          {
+            "type": "zg",
+            "enabled": true
+          }
+        ],
+        "appDeveloperHandle": "undefined"
+      },
+      "draws": {
+        "frame": 1680,
+        "calls": 95,
+        "triangles": 38118,
+        "points": 3200,
+        "lines": 0
+      }
+    },
+    {
+      "profile": "modest",
+      "view": "flight",
+      "requestedWarp": 2000,
+      "repeat": 1,
+      "n": 71,
+      "median": 109,
+      "p95": 176.20000000000073,
+      "worst": 193.89999999999964,
+      "mean": 112.0661971830986,
+      "wallSeconds": 7.87360000000149,
+      "shipSeconds": 568,
+      "achievedShipSecondsPerWallSecond": 72.13980898190059,
+      "saturationFraction": 1,
+      "saturatedFrames": {
+        "n": 71,
+        "median": 109,
+        "p95": 176.20000000000073,
+        "worst": 193.89999999999964,
+        "mean": 112.0661971830986
+      },
+      "unsaturatedFrames": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "worst": null
+      },
+      "over33ms": 1,
+      "over50ms": 1,
+      "warpsObserved": [
+        2000
+      ],
+      "phases": [
+        "operate"
+      ],
+      "hiddenFrames": 0,
+      "pausedFrames": 0,
+      "attempts": [
+        1
+      ],
+      "startShipTime": 121,
+      "endShipTime": 689,
+      "longTasks": {
+        "n": 70,
+        "median": 106,
+        "p95": 174,
+        "worst": 191,
+        "mean": 112
+      },
+      "observerMs": 8.000000014901161,
+      "warpReselections": [],
+      "mode": "flight",
+      "page": "mission",
+      "modelError": null,
+      "inventory": {
+        "vendor": "Google Inc. (Intel)",
+        "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "viewport": [
+          1366,
+          768,
+          1
+        ],
+        "canvas": [
+          1366,
+          768
+        ],
+        "memory": {
+          "geometries": 225,
+          "textures": 37
+        },
+        "programs": 27,
+        "scene": {
+          "objects": 631,
+          "uniqueGeometries": 465,
+          "vertices": 49247,
+          "indexTriples": 28334.999999999993,
+          "textures": [
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 1536,
+              "height": 840
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 256
+            }
+          ]
+        },
+        "passes": [
+          {
+            "type": "Bg",
+            "enabled": true
+          },
+          {
+            "type": "e",
+            "enabled": true,
+            "bloomMipSizes": [
+              [
+                683,
+                384
+              ],
+              [
+                342,
+                192
+              ],
+              [
+                171,
+                96
+              ],
+              [
+                86,
+                48
+              ],
+              [
+                43,
+                24
+              ]
+            ]
+          },
+          {
+            "type": "zg",
+            "enabled": true
+          }
+        ],
+        "appDeveloperHandle": "undefined"
+      },
+      "draws": {
+        "frame": 1995,
+        "calls": 171,
+        "triangles": 40268,
+        "points": 3200,
+        "lines": 3978
+      }
+    },
+    {
+      "profile": "modest",
+      "view": "map",
+      "requestedWarp": 2000,
+      "repeat": 1,
+      "n": 158,
+      "median": 48.5,
+      "p95": 72.80000000000109,
+      "worst": 90.80000000000109,
+      "mean": 50.39810126582278,
+      "wallSeconds": 7.95389999999851,
+      "shipSeconds": 1264,
+      "achievedShipSecondsPerWallSecond": 158.9157520210509,
+      "saturationFraction": 1,
+      "saturatedFrames": {
+        "n": 158,
+        "median": 48.5,
+        "p95": 72.80000000000109,
+        "worst": 90.80000000000109,
+        "mean": 50.39810126582278
+      },
+      "unsaturatedFrames": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "worst": null
+      },
+      "over33ms": 0.9810126582278481,
+      "over50ms": 0.3924050632911392,
+      "warpsObserved": [
+        2000
+      ],
+      "phases": [
+        "operate"
+      ],
+      "hiddenFrames": 0,
+      "pausedFrames": 0,
+      "attempts": [
+        1
+      ],
+      "startShipTime": 209,
+      "endShipTime": 1473,
+      "longTasks": {
+        "n": 62,
+        "median": 58,
+        "p95": 77,
+        "worst": 85,
+        "mean": 60.403225806451616
+      },
+      "observerMs": 9.700000032782555,
+      "warpReselections": [],
+      "mode": "map",
+      "page": "mission",
+      "modelError": null,
+      "inventory": {
+        "vendor": "Google Inc. (Intel)",
+        "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "viewport": [
+          1366,
+          768,
+          1
+        ],
+        "canvas": [
+          1366,
+          768
+        ],
+        "memory": {
+          "geometries": 239,
+          "textures": 37
+        },
+        "programs": 28,
+        "scene": {
+          "objects": 631,
+          "uniqueGeometries": 465,
+          "vertices": 49247,
+          "indexTriples": 28334.999999999993,
+          "textures": [
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 1536,
+              "height": 840
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 256
+            }
+          ]
+        },
+        "passes": [
+          {
+            "type": "Bg",
+            "enabled": true
+          },
+          {
+            "type": "e",
+            "enabled": true,
+            "bloomMipSizes": [
+              [
+                683,
+                384
+              ],
+              [
+                342,
+                192
+              ],
+              [
+                171,
+                96
+              ],
+              [
+                86,
+                48
+              ],
+              [
+                43,
+                24
+              ]
+            ]
+          },
+          {
+            "type": "zg",
+            "enabled": true
+          }
+        ],
+        "appDeveloperHandle": "undefined"
+      },
+      "draws": {
+        "frame": 4080,
+        "calls": 140,
+        "triangles": 42468,
+        "points": 5544,
+        "lines": 379
+      }
+    },
+    {
+      "profile": "modest",
+      "view": "ship",
+      "requestedWarp": 2000,
+      "repeat": 1,
+      "n": 117,
+      "median": 60.600000000000364,
+      "p95": 139.10000000000036,
+      "worst": 206.3000000000011,
+      "mean": 68.05811965811965,
+      "wallSeconds": 7.976299999997019,
+      "shipSeconds": 944,
+      "achievedShipSecondsPerWallSecond": 118.35061369310993,
+      "saturationFraction": 1,
+      "saturatedFrames": {
+        "n": 117,
+        "median": 60.600000000000364,
+        "p95": 139.10000000000036,
+        "worst": 206.3000000000011,
+        "mean": 68.05811965811965
+      },
+      "unsaturatedFrames": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "worst": null
+      },
+      "over33ms": 1,
+      "over50ms": 0.7008547008547008,
+      "warpsObserved": [
+        2000
+      ],
+      "phases": [
+        "operate"
+      ],
+      "hiddenFrames": 0,
+      "pausedFrames": 0,
+      "attempts": [
+        1
+      ],
+      "startShipTime": 201,
+      "endShipTime": 1145,
+      "longTasks": {
+        "n": 85,
+        "median": 66,
+        "p95": 133,
+        "worst": 205,
+        "mean": 74.49411764705883
+      },
+      "observerMs": 8.399999991059303,
+      "warpReselections": [],
+      "mode": "ship",
+      "page": "mission",
+      "modelError": null,
+      "inventory": {
+        "vendor": "Google Inc. (Intel)",
+        "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+        "viewport": [
+          1366,
+          768,
+          1
+        ],
+        "canvas": [
+          1366,
+          768
+        ],
+        "memory": {
+          "geometries": 279,
+          "textures": 37
+        },
+        "programs": 27,
+        "scene": {
+          "objects": 631,
+          "uniqueGeometries": 465,
+          "vertices": 49249,
+          "indexTriples": 28335.66666666666,
+          "textures": [
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 144
+            },
+            {
+              "name": "",
+              "width": 256,
+              "height": 256
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 512
+            },
+            {
+              "name": "",
+              "width": 1536,
+              "height": 840
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 180
+            },
+            {
+              "name": "",
+              "width": 512,
+              "height": 256
+            }
+          ]
+        },
+        "passes": [
+          {
+            "type": "Bg",
+            "enabled": true
+          },
+          {
+            "type": "e",
+            "enabled": true,
+            "bloomMipSizes": [
+              [
+                683,
+                384
+              ],
+              [
+                342,
+                192
+              ],
+              [
+                171,
+                96
+              ],
+              [
+                86,
+                48
+              ],
+              [
+                43,
+                24
+              ]
+            ]
+          },
+          {
+            "type": "zg",
+            "enabled": true
+          }
+        ],
+        "appDeveloperHandle": "undefined"
+      },
+      "draws": {
+        "frame": 3525,
+        "calls": 160,
+        "triangles": 39668,
+        "points": 3200,
+        "lines": 9770
+      }
+    }
+  ],
+  "profiles": [],
+  "errors": [],
+  "bundle": [
+    {
+      "file": "assets/index-B4g5eV30.js",
+      "bytes": 1356485,
+      "gzipBytes": 395151,
+      "sha256": "26989c120eab7f12c2711ad201fa44009c426bbfabb3bb9ba0689c5437f1accf"
+    },
+    {
+      "file": "assets/index-CkPRR0hR.css",
+      "bytes": 30254,
+      "gzipBytes": 5050,
+      "sha256": "33c596e26839b9e498b22aa0a3b4ba22d537a5bf6d01391f490a7f5b860d2b53"
+    },
+    {
+      "file": "assets/worker-D25i66sO.js",
+      "bytes": 108184,
+      "gzipBytes": 38990,
+      "sha256": "0cb3f671e57be0282980b881c2b44c5e53267c6fe71d6e81d399b0cc8c5de9c0"
+    },
+    {
+      "file": "favicon.svg",
+      "bytes": 420,
+      "gzipBytes": 277,
+      "sha256": "25068945c916e7d281af774354407e8705dd8a9f6748db28e089fd2314e8e3b4"
+    },
+    {
+      "file": "index.html",
+      "bytes": 510,
+      "gzipBytes": 309,
+      "sha256": "aa0494f4ff012f96e587d6f801eedf11d63630854b3780c4ba3bda4d83fcbc83"
+    },
+    {
+      "file": "LICENSE",
+      "bytes": 11357,
+      "gzipBytes": 3928,
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    },
+    {
+      "file": "NOTICE",
+      "bytes": 362,
+      "gzipBytes": 262,
+      "sha256": "35279566fbe56e61d55c6d08fedc08879314ac6afda357e9ad68b170839b4970"
+    },
+    {
+      "file": "THIRD-PARTY-NOTICES.txt",
+      "bytes": 7698,
+      "gzipBytes": 1292,
+      "sha256": "ddb9535594cee8eb3ab0a0e49bed657ca195181edd74fc2f2b7353cbf4814b12"
+    }
+  ],
+  "chunkContents": [
+    {
+      "file": "assets/index-B4g5eV30.js",
+      "mappedGeneratedCharacters": {
+        "unmapped": 61227,
+        "React + DOM + scheduler": 219082,
+        "src/theme": 31512,
+        "src/console": 66259,
+        "Three.js + addons": 629647,
+        "src/view3d": 90216,
+        "src/lib": 8321,
+        "src/contracts": 810,
+        "src/blackbox": 11192,
+        "src/game": 44207,
+        "src/app": 5319,
+        "src/ship": 53852,
+        "src/content": 5695,
+        "src/sim": 23774,
+        "src/model": 104932,
+        "src/main.tsx": 164
+      },
+      "modules": [
+        "\u0000rolldown/runtime.js",
+        "\u0000vite/modulepreload-polyfill.js",
+        "C:/Dev/Recursion NASA Hackathon/.worktrees/2g/node_modules/react/cjs/react.production.js",
+        "C:/Dev/Recursion NASA Hackathon/.worktrees/2g/node_modules/react/index.js",
+        "C:/Dev/Recursion NASA Hackathon/.worktrees/2g/node_modules/scheduler/cjs/scheduler.production.js",
+        "C:/Dev/Recursion NASA Hackathon/.worktrees/2g/node_modules/scheduler/index.js",
+        "C:/Dev/Recursion NASA Hackathon/.worktrees/2g/node_modules/react-dom/cjs/react-dom.production.js",
+        "C:/Dev/Recursion NASA Hackathon/.worktrees/2g/node_modules/react-dom/index.js",
+        "C:/Dev/Recursion NASA Hackathon/.worktrees/2g/node_modules/react-dom/cjs/react-dom-client.production.js",
+        "C:/Dev/Recursion NASA Hackathon/.worktrees/2g/node_modules/react-dom/client.js",
+        "src/theme/colour.ts",
+        "src/theme/type.ts",
+        "src/theme/space.ts",
+        "src/theme/line.ts",
+        "src/theme/motion.ts",
+        "src/theme/render.ts",
+        "src/theme/instrument.ts",
+        "src/theme/room.ts",
+        "src/theme/hud.ts",
+        "src/theme/css.ts",
+        "src/theme/three/styles.ts",
+        "src/theme/three/holo.ts",
+        "src/theme/three/ship-holo.ts",
+        "src/theme/three/map-holo.ts",
+        "src/theme/dressing.ts",
+        "src/theme/index.ts",
+        "src/theme/components/components.css",
+        "src/theme/components/scale.ts",
+        "C:/Dev/Recursion NASA Hackathon/.worktrees/2g/node_modules/react/cjs/react-jsx-runtime.production.js",
+        "C:/Dev/Recursion NASA Hackathon/.worktrees/2g/node_modules/react/jsx-runtime.js",
+        "src/theme/components/LevelBar.tsx",
+        "src/theme/components/Trend.tsx",
+        "src/theme/components/Readout.tsx",
+        "src/theme/components/Schematic.tsx",
+        "src/theme/components/ComponentRow.tsx",
+        "src/theme/components/ModeChips.tsx",
+        "src/theme/components/Alert.tsx",
+        "src/theme/components/BlackBoxMark.tsx",
+        "src/theme/components/Gauge.tsx",
+        "src/theme/components/Panel.tsx",
+        "src/theme/components/index.ts",
+        "src/console/format.ts",
+        "src/console/controls.tsx",
+        "C:/Dev/Recursion NASA Hackathon/.worktrees/2g/node_modules/three/build/three.core.js",
+        "C:/Dev/Recursion NASA Hackathon/.worktrees/2g/node_modules/three/build/three.module.js",
+        "src/view3d/adapter.ts",
+        "src/lib/quat.ts",
+        "src/lib/sym3.ts",
+        "src/contracts/estimates.ts",
+        "src/contracts/ship.ts",
+        "src/contracts/commands.ts",
+        "src/lib/freeze.ts",
+        "src/contracts/forecast.ts",
+        "src/contracts/index.ts",
+        "src/blackbox/recorder.ts",
+        "src/blackbox/archive.ts",
+        "src/blackbox/store.ts",
+        "src/blackbox/compare.ts",
+        "src/lib/vec3.ts",
+        "src/blackbox/procedures.ts",
+        "src/blackbox/index.ts",
+        "src/console/mission.ts",
+        "src/console/desk.ts",
+        "src/console/data.ts",
+        "src/console/pages/BlackBoxPage.tsx",
+        "src/console/pages/MissionPage.tsx",
+        "src/console/StrengthPlot.tsx",
+        "src/console/pages/ModelPage.tsx",
+        "src/game/belief/maneuver.ts",
+        "src/console/pages/PlanPage.tsx",
+        "src/console/pages/SystemsPage.tsx",
+        "src/console/ConsoleScreen.tsx",
+        "src/console/alerts.ts",
+        "src/console/FlightHud.tsx",
+        "src/console/chart.ts",
+        "src/console/MapPlate.tsx",
+        "src/console/ShipPanels.tsx",
+        "src/view3d/room/layout.ts",
+        "src/app/hands.ts",
+        "C:/Dev/Recursion NASA Hackathon/.worktrees/2g/node_modules/three/examples/jsm/shaders/CopyShader.js",
+        "C:/Dev/Recursion NASA Hackathon/.worktrees/2g/node_modules/three/examples/jsm/postprocessing/Pass.js",
+        "C:/Dev/Recursion NASA Hackathon/.worktrees/2g/node_modules/three/examples/jsm/postprocessing/ShaderPass.js",
+        "C:/Dev/Recursion NASA Hackathon/.worktrees/2g/node_modules/three/examples/jsm/postprocessing/MaskPass.js",
+        "C:/Dev/Recursion NASA Hackathon/.worktrees/2g/node_modules/three/examples/jsm/postprocessing/EffectComposer.js",
+        "C:/Dev/Recursion NASA Hackathon/.worktrees/2g/node_modules/three/examples/jsm/shaders/OutputShader.js",
+        "C:/Dev/Recursion NASA Hackathon/.worktrees/2g/node_modules/three/examples/jsm/postprocessing/OutputPass.js",
+        "C:/Dev/Recursion NASA Hackathon/.worktrees/2g/node_modules/three/examples/jsm/postprocessing/RenderPass.js",
+        "C:/Dev/Recursion NASA Hackathon/.worktrees/2g/node_modules/three/examples/jsm/shaders/LuminosityHighPassShader.js",
+        "C:/Dev/Recursion NASA Hackathon/.worktrees/2g/node_modules/three/examples/jsm/postprocessing/UnrealBloomPass.js",
+        "C:/Dev/Recursion NASA Hackathon/.worktrees/2g/node_modules/three/examples/jsm/renderers/CSS2DRenderer.js",
+        "C:/Dev/Recursion NASA Hackathon/.worktrees/2g/node_modules/three/examples/jsm/lines/LineMaterial.js",
+        "src/theme/three/lines.ts",
+        "src/theme/three/envelope.ts",
+        "src/theme/three/plane.ts",
+        "src/theme/three/holo-plane.ts",
+        "src/theme/three/bodies.ts",
+        "src/theme/three/index.ts",
+        "src/view3d/fieldViews.ts",
+        "C:/Dev/Recursion NASA Hackathon/.worktrees/2g/node_modules/three/examples/jsm/lines/LineSegmentsGeometry.js",
+        "C:/Dev/Recursion NASA Hackathon/.worktrees/2g/node_modules/three/examples/jsm/lines/LineSegments2.js",
+        "C:/Dev/Recursion NASA Hackathon/.worktrees/2g/node_modules/three/examples/jsm/lines/LineGeometry.js",
+        "C:/Dev/Recursion NASA Hackathon/.worktrees/2g/node_modules/three/examples/jsm/lines/Line2.js",
+        "src/view3d/gfx.ts",
+        "src/view3d/ship/wire.ts",
+        "src/view3d/ship/parts.ts",
+        "src/view3d/ship/model.ts",
+        "src/view3d/flight/coverageHistory.ts",
+        "src/view3d/flight/FlightHolo.ts",
+        "src/view3d/map/layout.ts",
+        "src/view3d/map/MapHolo.ts",
+        "src/view3d/ship/ShipHolo.ts",
+        "src/view3d/room/outside.ts",
+        "src/view3d/room/dress.ts",
+        "src/view3d/room/textures.ts",
+        "src/view3d/room/shell.ts",
+        "src/view3d/room/RoomView.ts",
+        "src/app/loop.ts",
+        "src/console/console.css",
+        "src/app/control-room.css",
+        "src/app/ControlRoom.tsx",
+        "src/game/encounter.ts",
+        "data/ship-baseline.json",
+        "src/ship/propulsion/control.ts",
+        "src/ship/propulsion/jets.ts",
+        "src/lib/vec2.ts",
+        "src/ship/config/configuration.ts",
+        "src/ship/massprops/massprops.ts",
+        "src/ship/propulsion/allocator.ts",
+        "src/ship/propulsion/propulsion.ts",
+        "src/ship/commands.ts",
+        "src/ship/config/index.ts",
+        "src/ship/massprops/index.ts",
+        "src/lib/rng.ts",
+        "src/ship/sensors/index.ts",
+        "src/ship/power/baseline.ts",
+        "src/ship/power/sun.ts",
+        "src/ship/power/index.ts",
+        "src/ship/definition.ts",
+        "src/ship/state.ts",
+        "src/ship/propulsion/nominal.ts",
+        "src/ship/propulsion/index.ts",
+        "src/ship/thermal/index.ts",
+        "src/ship/index.ts",
+        "src/content/gravity-range/briefing.ts",
+        "src/game/arrival.ts",
+        "src/sim/geometry.ts",
+        "src/sim/gravity.ts",
+        "src/sim/simulation.ts",
+        "src/sim/analytic.ts",
+        "src/sim/invariants.ts",
+        "src/sim/snapshot.ts",
+        "src/sim/index.ts",
+        "src/content/gravity-range/world.ts",
+        "src/content/gravity-range/index.ts",
+        "src/game/belief/blackbox.ts",
+        "src/model/rpc.ts",
+        "src/lib/hash.ts",
+        "src/model/dynamics.ts",
+        "src/model/adapt.ts",
+        "src/model/aging.ts",
+        "src/model/linalg.ts",
+        "src/model/probes.ts",
+        "src/model/settings.ts",
+        "src/model/solve.ts",
+        "src/model/tierL.ts",
+        "src/model/engine.ts",
+        "src/model/extensions.ts",
+        "src/model/forecast.ts",
+        "src/model/diagnostics.ts",
+        "src/model/report.ts",
+        "src/model/service.ts",
+        "src/model/client.ts",
+        "src/model/index.ts",
+        "src/game/belief/resolve.ts",
+        "src/game/belief/standin-model.ts",
+        "src/game/belief/model-bridge.ts",
+        "src/game/belief/chart.ts",
+        "src/game/belief/view.ts",
+        "src/game/belief/coverage.ts",
+        "src/game/belief/telemetry.ts",
+        "src/game/environment.ts",
+        "src/game/objectives.ts",
+        "src/game/truth-step.ts",
+        "src/game/window.ts",
+        "src/game/session.ts",
+        "src/app/game.ts",
+        "src/app/App.tsx",
+        "src/app/app.css",
+        "src/main.tsx",
+        "index.html"
+      ]
+    }
+  ],
+  "browser": {
+    "protocolVersion": "1.3",
+    "product": "Chrome/157.0.8103.51",
+    "revision": "@653674df293788cf4932c40d914e9e15b41a2d31",
+    "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/157.0.0.0 Safari/537.36",
+    "jsVersion": "15.7.112.23"
+  },
+  "chrome": {
+    "path": "C:/Program Files/Google/Chrome/Application/chrome.exe",
+    "args": [
+      "--headless=new",
+      "--remote-debugging-address=127.0.0.1",
+      "--remote-debugging-port=0",
+      "--user-data-dir=<unique temporary profile>",
+      "--window-size=1366,768",
+      "--no-first-run",
+      "--no-default-browser-check",
+      "--enable-gpu",
+      "--disable-background-networking",
+      "--disable-component-update",
+      "--disable-background-timer-throttling",
+      "--disable-renderer-backgrounding",
+      "about:blank"
+    ]
+  },
+  "completed": "2026-11-15T06:13:31.794Z"
+}

@@ -1,0 +1,59 @@
+{
+  "nominal": {
+    "ticks": 10000,
+    "chain": "27b326eb7e0272942f9536c48f5980286b028c7fa318780277cabeb0c73107ba",
+    "totals": {
+      "t": 10000,
+      "mass": 29824.995219848508,
+      "measurements": 1214322,
+      "events": 5,
+      "rejected": 1,
+      "tank.main-propellant": 5485.4894382893235,
+      "tank.rcs-left": 132.75289077959022,
+      "tank.rcs-right": 132.75289077959022,
+      "tank.xenon": 20,
+      "tank.fuel-cell-hydrogen": 5.480336350533973,
+      "tank.fuel-cell-oxygen": 43.84269080427178,
+      "tank.product-water": 4.676972845197613
+    },
+    "lastTick": "cd36524a175f ea046e41eb43 4f53cda18c2b 5ae1625b488b"
+  },
+  "worn": {
+    "ticks": 10000,
+    "chain": "6d20edaac7925d0f59825b5a43238b59bcc3162c3d04f90e15c42d22e9ff1951",
+    "totals": {
+      "t": 10000,
+      "mass": 29572.682016794726,
+      "measurements": 1209872,
+      "events": 27,
+      "rejected": 1,
+      "tank.main-propellant": 5498.682016794714,
+      "tank.rcs-left": 0,
+      "tank.rcs-right": 0,
+      "tank.xenon": 20,
+      "tank.fuel-cell-hydrogen": 5.5379317533593895,
+      "tank.fuel-cell-oxygen": 44.303454026875116,
+      "tank.product-water": 4.158614219778006
+    },
+    "lastTick": "fe2f3c9b2dac 4c933293dea2 4f53cda18c2b 5ae1625b488b"
+  },
+  "eclipse": {
+    "ticks": 10000,
+    "chain": "fe1c2b90fcafa7df7646fd6e731dfa02529457fdb424f743d84a1b0da249999d",
+    "totals": {
+      "t": 10000,
+      "mass": 29824.99058477481,
+      "measurements": 1210232,
+      "events": 5,
+      "rejected": 1,
+      "tank.main-propellant": 5485.4894382893235,
+      "tank.rcs-left": 132.75057324274258,
+      "tank.rcs-right": 132.75057324274258,
+      "tank.xenon": 20,
+      "tank.fuel-cell-hydrogen": 5.632073408519065,
+      "tank.fuel-cell-oxygen": 45.05658726815252,
+      "tank.product-water": 3.3113393233301394
+    },
+    "lastTick": "c888e3f4a5a7 9e9d489091f5 4f53cda18c2b 5ae1625b488b"
+  }
+}
