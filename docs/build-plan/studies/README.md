@@ -16,6 +16,9 @@ Design and physics studies that run in parallel with the build. Each one answers
 | S10 | Submission groundwork: assets, licences, NASA data, AI use | [S10-submission-audit.md](S10-submission-audit.md) |
 | S11 | The owner's decision queue from S1–S6 | [S11-decision-queue.md](S11-decision-queue.md) |
 | S12 | The submission package, drafted: summary, description, NASA resources, AI disclosure, credits, demo | [S12-submission-drafts.md](S12-submission-drafts.md) |
+| S13 | The release front door: licence, notices, a README for judges | [S13-release-front-door.md](S13-release-front-door.md) |
+| S14 | Phases 3–5 refreshed against A8–A14 and the studies | [S14-phases-refresh.md](S14-phases-refresh.md) |
+| S15 | Speed on a modest laptop: load, frames, and the cheapest fixes | [S15-modest-laptop.md](S15-modest-laptop.md) |
 
 ## Rules for every study
 1. **Read first:**
