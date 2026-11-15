@@ -18,8 +18,8 @@ import type {
   Objective,
 } from '../contracts/index.ts';
 import { believedCentre, validatedSpans } from './data.ts';
-import { CHART_UP, onPlane } from './instruments/chartMath.ts';
-import type { ChartPlane, P2, P3 } from './instruments/chartMath.ts';
+import { CHART_UP, onPlane, sigmaAlong } from './instruments/chartMath.ts';
+import type { ChartPlane, P2, P3, Sym3 } from './instruments/chartMath.ts';
 import type { ChartBand, ChartBody, ChartRegion } from './instruments/TrajectoryChart.tsx';
 
 type V = { readonly x: number; readonly y: number; readonly z?: number };
@@ -112,22 +112,32 @@ export function wholeFit(
 /**
  * How near a forecast comes to a region to reach: the moment it first enters it, or failing
  * that the moment it is nearest, with the distance from the region's edge then (negative
- * inside). Undefined for a forecast with no samples.
+ * inside) and that distance's one sigma: the forecast's own uncertainty in the ship's position
+ * there, along the line to the region's centre (null where the forecast gives none).
+ * Undefined for a forecast with no samples.
  */
 export function forecastReach(
-  forecast: { readonly samples: readonly { readonly t: number; readonly position: V }[] },
+  forecast: {
+    readonly samples: readonly {
+      readonly t: number;
+      readonly position: V;
+      readonly positionCov?: readonly number[];
+    }[];
+  },
   region: { readonly center: V; readonly radius: number },
-): { t: number; edge: number; reached: boolean } | undefined {
-  let best: { t: number; edge: number } | undefined;
+): { t: number; edge: number; sigma: number | null; reached: boolean } | undefined {
+  let best: { t: number; edge: number; sigma: number | null } | undefined;
   for (const s of forecast.samples) {
-    const edge =
-      Math.hypot(
-        s.position.x - region.center.x,
-        s.position.y - region.center.y,
-        (s.position.z ?? 0) - (region.center.z ?? 0),
-      ) - region.radius;
-    if (edge <= 0) return { t: s.t, edge, reached: true };
-    if (!best || edge < best.edge) best = { t: s.t, edge };
+    const to: P3 = [
+      region.center.x - s.position.x,
+      region.center.y - s.position.y,
+      (region.center.z ?? 0) - (s.position.z ?? 0),
+    ];
+    const edge = Math.hypot(to[0], to[1], to[2]) - region.radius;
+    const sigma =
+      s.positionCov?.length === 6 ? sigmaAlong(s.positionCov as unknown as Sym3, to) : null;
+    if (edge <= 0) return { t: s.t, edge, sigma, reached: true };
+    if (!best || edge < best.edge) best = { t: s.t, edge, sigma };
   }
   return best ? { ...best, reached: false } : undefined;
 }

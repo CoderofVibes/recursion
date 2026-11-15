@@ -234,6 +234,63 @@ describe('console pages on the fixtures', () => {
     });
   });
 
+  it('gives the model’s own reason for a held-out test, where the test carries one (2C)', () => {
+    const base = {
+      state: { id: 'distance-law', status: 'candidate' },
+      training: ['attempt-0001'],
+      heldOut: 'attempt-0002',
+    } as unknown as ExtensionRecord;
+    const why =
+      'Most of the misfit is in the held-out attempt’s burn (T+0:10 to T+0:11): the model can’t explain that burn, so this attempt can’t judge the rule.';
+    const failed = {
+      ...base,
+      adoptable: false,
+      heldOutTest: {
+        pass: false,
+        TperNu: 4.2,
+        threshold: 1.12,
+        diagnosis: { cause: 'burn', why },
+      },
+    } as unknown as ExtensionRecord;
+    // The reason replaces the old words; the result itself stays short.
+    expect(testVerdict(failed, false)).toEqual({
+      text: 'fails its held-out test',
+      status: 'caution',
+      why,
+    });
+    // A pass says why it passed, too; a test saved before the model gave reasons has none.
+    const agrees = 'The held-out attempt agrees with the rule within its measurement noise.';
+    const passed = {
+      ...base,
+      adoptable: true,
+      heldOutTest: {
+        pass: true,
+        TperNu: 1.0,
+        threshold: 1.12,
+        diagnosis: { cause: 'consistent', why: agrees },
+      },
+    } as unknown as ExtensionRecord;
+    expect(testVerdict(passed, false)).toEqual({
+      text: 'passes · not adopted',
+      status: 'nominal',
+      why: agrees,
+    });
+    expect(testVerdict(passed, true)?.why).toBe(agrees);
+    expect(
+      testVerdict({ ...failed, heldOutTest: { pass: false } } as unknown as ExtensionRecord, false),
+    ).toEqual({ text: 'fails: the held-out attempt departs from it', status: 'caution' });
+
+    // On the page: the result in the test's third step, the reason under the steps in full.
+    const { game } = stubGame({ model: models.prior });
+    const desk = new Desk(game);
+    desk.page = 'model';
+    desk.tests.set('distance-law', failed);
+    const html = renderToStaticMarkup(<ConsoleScreen desk={desk} visible />);
+    expect(html).toContain('<span class="cp-steps__value">fails its held-out test</span>');
+    expect(html).toContain(`<p class="cs-why" data-status="caution">${why}</p>`);
+    expect(html).not.toContain('departs from it');
+  });
+
   it('records the design and sets the ship up through commands only', () => {
     const { game, commands } = stubGame();
     const desk = new Desk(game);
@@ -469,7 +526,7 @@ describe('the loop on the console', () => {
     const far = render('plan', { snapshot: objective({ x: 4e8, y: 3e8, z: 0 }, 1000) }).html;
     expect(far).toContain('against the objective');
     expect(far).toMatch(
-      /forward transit<\/span><span class="cs-line__value">comes within [\d,.]+ km · T\+\d\d:\d\d:\d\d</,
+      /forward transit<\/span><span class="cs-line__value">comes within [\d,.]+ km ±[\d,.]+ k?m · T\+\d\d:\d\d:\d\d</,
     );
     expect(far).toMatch(/class="ci-chart__pointer".*>FORWARD TRANSIT · [\d,.]+ km<\/text>/);
     // Where the forecast ends inside it, it is said to be reached, as a plain fact.
@@ -477,7 +534,7 @@ describe('the loop on the console', () => {
       snapshot: objective({ x: end.position.x, y: end.position.y, z: end.position.z ?? 0 }, 5000),
     }).html;
     expect(there).toMatch(
-      /forward transit<\/span><span class="cs-line__value">reached T\+\d\d:\d\d:\d\d</,
+      /forward transit<\/span><span class="cs-line__value">reached T\+\d\d:\d\d:\d\d · position ±[\d,.]+ k?m</,
     );
     expect(there).not.toContain('comes within');
   });
@@ -498,7 +555,7 @@ describe('the loop on the console', () => {
     expect(html).toContain('against the objective');
     expect(html).toMatch(/aria-label="Speed out at its end"[^>]*aria-valuetext="[\d.]+ of 50 m\/s/);
     expect(html).toMatch(
-      /aria-label="Distance out at its end"[^>]*aria-valuetext="[\d,.]+ km of 9,000 km"/,
+      /aria-label="Distance out at its end"[^>]*aria-valuetext="[\d,.]+ km ±[\d,.]+ k?m of 9,000 km"/,
     );
     // With no objective of either kind, the panel claims nothing about one.
     expect(render('plan').html).not.toContain('against the objective');

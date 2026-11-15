@@ -446,24 +446,27 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
     : [];
   const framing = desk.chartFraming;
   // The plan's framing: its path and the body it passes, with room for that body whole.
-  const near = here
-    ? reading!
-        .bodiesAt(t)
-        .reduce((a, b) =>
+  const around = reading && here ? reading.bodiesAt(t) : [];
+  const near =
+    here && around.length
+      ? around.reduce((a, b) =>
           Math.hypot(b.x - here.x, b.y - here.y) < Math.hypot(a.x - here.x, a.y - here.y) ? b : a,
         )
-    : undefined;
+      : undefined;
   // Where the objective is. The plan's own framing does not stretch to hold it (a place a
   // thousand kilometres off would shrink the plan to a dot): the chart points to it instead.
   const regions = objectiveRegions(snapshot.objectives, bodies, model);
-  const fit: P2[] | undefined =
-    reading && near
-      ? [
-          ...reading.path.map((p): P2 => [p.x, p.y]),
-          [near.x - near.radius * 1.3, near.y - near.radius * 1.3],
-          [near.x + near.radius * 1.3, near.y + near.radius * 1.3],
-        ]
-      : undefined;
+  const fit: P2[] | undefined = reading
+    ? [
+        ...reading.path.map((p): P2 => [p.x, p.y]),
+        ...(near
+          ? ([
+              [near.x - near.radius * 1.3, near.y - near.radius * 1.3],
+              [near.x + near.radius * 1.3, near.y + near.radius * 1.3],
+            ] satisfies P2[])
+          : []),
+      ]
+    : undefined;
   const whole: P2[] | undefined = reading
     ? wholeFit(
         reading.bodiesAt(t),
@@ -975,8 +978,8 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
                   status={r.reached ? 'nominal' : 'caution'}
                 >
                   {r.reached
-                    ? `reached T+${clock(r.t)}`
-                    : `comes within ${dist(r.edge)} · T+${clock(r.t)}`}
+                    ? `reached T+${clock(r.t)}${r.sigma !== null ? ` · position ±${dist(r.sigma)}` : ''}`
+                    : `comes within ${dist(r.edge)}${r.sigma !== null ? ` ±${dist(r.sigma)}` : ''} · T+${clock(r.t)}`}
                 </Line>
               ))}
               {leaving ? (
@@ -1001,7 +1004,11 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
                     label="Distance out at its end"
                     value={leaving.distance}
                     max={leaving.beyond * 1.1}
-                    text={`${dist(leaving.distance)} of ${dist(leaving.beyond)}`}
+                    text={
+                      dist(leaving.distance) +
+                      (leaving.distanceSigma !== null ? ` ±${dist(leaving.distanceSigma)}` : '') +
+                      ` of ${dist(leaving.beyond)}`
+                    }
                     tone="forecast"
                     marks={[{ at: leaving.beyond, kind: 'target', label: 'the gate' }]}
                   />

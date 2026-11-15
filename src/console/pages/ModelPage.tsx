@@ -64,17 +64,25 @@ const isRecord = (t: ExtensionRecord | { error: string } | undefined): t is Exte
 /**
  * A test's result in plain words before its statistics (S9 R7): insufficient evidence, fails,
  * passes but not adopted, or adopted. Never a readiness state the numbers do not support.
+ *
+ * `why` is the model's own reason for how the held-out attempt came out, in plain words (2C's
+ * `heldOutTest.diagnosis`, read from the test's numbers): where the misfit lies, and what to
+ * hold out instead. A test saved before the model gave one has none, and keeps the old words.
  */
 export function testVerdict(
   result: ExtensionRecord | { error: string } | undefined,
   adopted: boolean,
-): { text: string; status: Status } | null {
-  if (adopted) return { text: 'adopted', status: 'nominal' };
+): { text: string; status: Status; why?: string } | null {
+  const why = result && !('error' in result) ? result.heldOutTest?.diagnosis?.why : undefined;
+  const reason = why ? { why } : {};
+  if (adopted) return { text: 'adopted', status: 'nominal', ...reason };
   if (!result) return null;
   if ('error' in result) return { text: `no test: ${result.error}`, status: 'caution' };
-  if (result.adoptable) return { text: 'passes · not adopted', status: 'nominal' };
+  if (result.adoptable) return { text: 'passes · not adopted', status: 'nominal', ...reason };
   if (result.heldOutTest && !result.heldOutTest.pass)
-    return { text: 'fails: the held-out attempt departs from it', status: 'caution' };
+    return why
+      ? { text: 'fails its held-out test', status: 'caution', why }
+      : { text: 'fails: the held-out attempt departs from it', status: 'caution' };
   if (result.identifiable && !result.identifiable.identifiable)
     return {
       text: `insufficient evidence: ${result.identifiable.reasons.join('; ') || 'not identifiable'}`,
@@ -407,6 +415,12 @@ export function ModelPage({ desk }: { readonly desk: Desk }) {
                     </span>
                   </li>
                 </ol>
+                {/* Why the held-out attempt came out as it did, in the model's own words. */}
+                {verdict?.why && busy !== rule.id ? (
+                  <p className="cs-why" data-status={verdict.status}>
+                    {verdict.why}
+                  </p>
+                ) : null}
                 <SelectField
                   label="Hold out"
                   value={held}

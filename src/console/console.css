@@ -889,3 +889,14 @@ svg.cs-plot {
   height: 0;
   border-top: var(--rx-line-rule) dashed var(--rx-ink);
 }
+/* A result's reason, in plain words: read as a sentence, marked on its edge by how it went. */
+.cs-why {
+  margin: 0;
+  padding-left: var(--rx-row-pad-x);
+  border-left: var(--rx-line-rule) solid var(--rx-forecast);
+  font-size: var(--rx-size-small);
+  color: var(--rx-ink);
+}
+.cs-why[data-status='caution'] {
+  border-left-color: var(--rx-caution);
+}

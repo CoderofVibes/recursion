@@ -213,8 +213,13 @@ export interface DepartureForecast {
   /** Speed from the bodies' centre of mass there, m/s, and its part away from that centre. */
   readonly speed: number;
   readonly outward: number;
-  /** From that centre, m. */
+  /**
+   * From that centre, m, and its one sigma: the forecast's own uncertainty in the ship's
+   * position there, along the line from the centre (null where the forecast gives none). The
+   * forecast carries no uncertainty for velocity, so the speed has none to show.
+   */
   readonly distance: number;
+  readonly distanceSigma: number | null;
   readonly minSpeed: number;
   readonly beyond: number;
 }
@@ -266,11 +271,22 @@ export function departForecast(
     z: (last.velocity.z ?? 0) - frame.drift.z,
   };
   const r = Math.hypot(out.x, out.y, out.z);
+  const c = last.positionCov as readonly number[] | undefined;
+  // Variance along the line from the centre: uᵀ Σ u, with Σ as [xx, xy, xz, yy, yz, zz].
+  const along =
+    c?.length === 6 && r > 0
+      ? (c[0]! * out.x * out.x +
+          c[3]! * out.y * out.y +
+          c[5]! * out.z * out.z +
+          2 * (c[1]! * out.x * out.y + c[2]! * out.x * out.z + c[4]! * out.y * out.z)) /
+        (r * r)
+      : null;
   return {
     t: last.t,
     speed: Math.hypot(rel.x, rel.y, rel.z),
     outward: r > 0 ? (rel.x * out.x + rel.y * out.y + rel.z * out.z) / r : 0,
     distance: r,
+    distanceSigma: along === null ? null : Math.sqrt(Math.max(0, along)),
     minSpeed: objective.depart.minSpeed,
     beyond: objective.depart.beyond,
   };

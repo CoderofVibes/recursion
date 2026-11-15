@@ -56,6 +56,7 @@ import type { Hotspot, ViewMode } from './layout.ts';
 import { buildOutside } from './outside.ts';
 import type { Outside } from './outside.ts';
 import { buildRoom } from './shell.ts';
+import { coveredByVeil } from './veil.ts';
 
 export type LossStage = 'start' | 'black' | 'pip' | 'reset' | 'fade' | 'end';
 
@@ -103,6 +104,10 @@ export class RoomView {
   private readonly quality: ReturnType<typeof createQualityHook>;
   private readonly labels: CSS2DRenderer;
   private readonly shell;
+  /** The room's own scene parts (shell, console, dressing): not drawn while the veil covers them. */
+  private readonly roomParts: readonly Object3D[];
+  /** Those of them hidden for the frame being drawn; emptied when it is (kept, not remade: S15). */
+  private readonly coveredParts: Object3D[] = [];
   private readonly outside;
   private readonly veil: Mesh<SphereGeometry, MeshBasicMaterial>;
   private readonly holoRoot = new Group();
@@ -197,6 +202,9 @@ export class RoomView {
     this.labels = new CSS2DRenderer({ element: labels });
 
     this.shell = buildRoom(this.scene);
+    // The room's own parts, as built: what the veil covers in MAP and SHIP. Its lights are not
+    // among them (they light the holograms too), nor is anything added after this.
+    this.roomParts = this.scene.children.filter((child) => !('isLight' in child));
     this.outside = buildOutside(this.scene);
 
     // Holograms: a veil that hides the room behind MAP and SHIP, the projector's cone of light,
@@ -550,8 +558,24 @@ export class RoomView {
     }
 
     this.outside.followEye(this.camera, this.renderer);
-    this.composer.render();
-    this.labels.render(this.scene, camera);
+    // A8: settled, MAP and SHIP cover the room with an opaque veil, so the room's own parts
+    // are not sent to be drawn behind it (PF's measured proposal, R63). The sky outside still
+    // is: its stars show through the veil, behind the hologram, as they always have. The lights
+    // stay. Moving between views, and through a loss, everything is drawn.
+    const hidden = this.coveredParts;
+    if (coveredByVeil(mode, cur.veil, this.trans !== null || this.death !== null))
+      for (const part of this.roomParts)
+        if (part.visible) {
+          part.visible = false;
+          hidden.push(part);
+        }
+    try {
+      this.composer.render();
+      this.labels.render(this.scene, camera);
+    } finally {
+      for (const part of hidden) part.visible = true;
+      hidden.length = 0;
+    }
   }
 
   dispose(): void {

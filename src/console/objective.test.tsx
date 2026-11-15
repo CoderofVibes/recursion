@@ -79,12 +79,16 @@ describe('where the objectives are, for the chart', () => {
   });
 });
 
-/** A forecast flying along +x at 100 m/s from the origin, a sample every 10 s for 100 s. */
+/**
+ * A forecast flying along +x at 100 m/s from the origin, a sample every 10 s for 100 s. Its
+ * position is known to 30 m along x, 40 m along y and 120 m along z (one sigma), uncorrelated.
+ */
 const flying = {
   samples: Array.from({ length: 11 }, (_, i) => ({
     t: i * 10,
     position: { x: i * 1000, y: 0, z: 0 },
     velocity: { x: 100, y: 0, z: 0 },
+    positionCov: [30 ** 2, 0, 0, 40 ** 2, 0, 120 ** 2],
   })),
   objects: [],
 } as unknown as Forecast;
@@ -93,7 +97,8 @@ describe('how near a forecast comes to a place to reach', () => {
   it('gives the first moment it is inside', () => {
     const through = { center: { x: 6000, y: 0, z: 0 }, radius: 1500 };
     // Inside from x = 4500: the first sample there is x = 5000, at t = 50.
-    expect(forecastReach(flying, through)).toEqual({ t: 50, edge: -500, reached: true });
+    // The region's centre lies along x from there: the position's sigma along that line is x's.
+    expect(forecastReach(flying, through)).toEqual({ t: 50, edge: -500, sigma: 30, reached: true });
   });
 
   it('gives the nearest it comes when it never enters, measured to the region’s edge', () => {
@@ -103,6 +108,12 @@ describe('how near a forecast comes to a place to reach', () => {
     expect(reachOf.t).toBe(40);
     // 5 km from its centre in space (3 and 4 km off the path), less its radius.
     expect(reachOf.edge).toBeCloseTo(4000, 9);
+    // Its uncertainty is the position's along that line: 0.6 of y's sigma and 0.8 of z's,
+    // added in quadrature.
+    expect(reachOf.sigma).toBeCloseTo(Math.hypot(0.6 * 40, 0.8 * 120), 9);
+    // A forecast that gives no covariance has no uncertainty to show, never a zero.
+    const bare = { samples: flying.samples.map(({ t, position }) => ({ t, position })) };
+    expect(forecastReach(bare, beside)!.sigma).toBeNull();
   });
 
   it('says nothing of a forecast with no samples', () => {
@@ -124,6 +135,9 @@ describe('a departure, where a forecast ends', () => {
     expect(at.distance).toBeCloseTo(9999, 9);
     expect(at.speed).toBeCloseTo(Math.hypot(100, 0.5), 9);
     expect(at.outward).toBeCloseTo(100, 9);
+    // The distance out is uncertain by the position's sigma along the line from the centre,
+    // which here is x's.
+    expect(at.distanceSigma).toBeCloseTo(30, 6);
     expect(at.minSpeed).toBe(50);
     expect(at.beyond).toBe(9_000_000);
   });
