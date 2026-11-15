@@ -24,14 +24,18 @@ Everything on screen that is not three-dimensional. It reaches the game only thr
 
 ## Encounter panels
 
-An encounter's own instruments go beside FLIGHT. The interface is `encounterPanels.ts`; each panel lives in `encounters/<encounter-id>/` and belongs to the section that builds that encounter. Its `index.ts` registers the panel for its encounter id, through a dynamic import (the console loads every `encounters/*/index.ts` eagerly, so a static import back would be a cycle):
+An encounter's own instruments go beside FLIGHT. The interface is `encounterPanels.ts`; each panel lives in `encounters/<encounter-id>/` and belongs to the section that builds that encounter. Its `index.ts` registers the panel for its encounter id. The console loads every `encounters/*/index.ts` eagerly; the registry is hoisted, so registering by a plain static import back is safe while that load is still under way. `index.ts` is not JSX, so build the element with `createElement`:
 
-```tsx
+```ts
 // src/console/encounters/chain-link/index.ts
-void import('../../encounterPanels.ts').then(({ registerEncounterPanel }) =>
-  registerEncounterPanel('chain-link', ({ snapshot, game, command }) => (
-    <ChainLinkPanel state={stateFrom(snapshot)} onMode={(m) => command(latticeModeCommands(m))} />
-  )),
+import { createElement } from 'react';
+import { registerEncounterPanel } from '../../encounterPanels.ts';
+
+registerEncounterPanel('chain-link', ({ snapshot, command }) =>
+  createElement(ChainLinkPanel, {
+    state: stateFrom(snapshot),
+    onMode: (m: ReconstructionMode) => command(latticeModeCommands(m)),
+  }),
 );
 ```
 
