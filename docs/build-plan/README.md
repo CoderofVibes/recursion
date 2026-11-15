@@ -45,6 +45,8 @@ Why the split: GPT/Codex takes bounded derivations, specifications and well-spec
 
 The prompt files must be on the branch the thread starts from, so commit (and push, for cloud threads) before launching.
 
+**Live state:** [coordination.md](coordination.md) lists every running thread, who holds each shared file, and every open request between threads. The integrator keeps it current.
+
 The owner launches every worker thread personally. The main Tony & Claude session is the integrator and does not spawn threads.
 
 **One folder per thread.** The project root (`C:\Dev\Recursion NASA Hackathon`) belongs to the main session on `main`. Every other local thread, Claude or Codex, works in its own git worktree under `.worktrees/` (ignored by Git), on the branch named in its prompt. Two threads must never share a folder.
