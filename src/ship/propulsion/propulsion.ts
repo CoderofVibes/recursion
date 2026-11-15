@@ -1,107 +1,178 @@
 import baseline from '../../../data/ship-baseline.json';
-import type { ShipDefinition } from '../../contracts/ship.ts';
+import type { HandsOnInput } from '../../contracts/commands.ts';
+import type { EquipmentSpec, ShipDefinition } from '../../contracts/ship.ts';
 import type { ShipEvent } from '../../contracts/measurements.ts';
 import type {
   EnvironmentEffects,
   ShipSystemsState,
   ThrustOutput,
 } from '../../contracts/truth/ship.ts';
-import { yawOf } from '../../lib/quat.ts';
-import { cross, rotate, scale, sub, wrapAngle, type Vec2 } from '../../lib/vec2.ts';
+import type { JsonValue } from '../../contracts/units.ts';
+import { normalize } from '../../lib/quat.ts';
 import type { Vec3 } from '../../lib/vec3.ts';
 import { getGeometry } from '../config/configuration.ts';
-import { computeMassProperties, yawInertia } from '../massprops/massprops.ts';
+import { computeMassProperties, massDetail } from '../massprops/massprops.ts';
+import { allocateJets, type AllocatorJet } from './allocator.ts';
+import { attitudeTorque, controlSettings, handsOnForce, ratesNulled } from './control.ts';
+import {
+  activeJets,
+  CONTROL_KEY,
+  controlOf,
+  PULSES_KEY,
+  pulsesOf,
+  type Jet,
+  type JetPulse,
+} from './jets.ts';
 
 const clamp = (n: number, lo = 0, hi = 1) => Math.max(lo, Math.min(hi, n));
+/** −0 becomes +0, so a stored value is unchanged by a JSON round trip (replays stay exact). */
+const unsigned = (value: number) => value + 0;
 const dataFor = (definition: ShipDefinition) =>
   (definition.systems ?? baseline) as unknown as typeof baseline;
-interface Control {
-  jet: number;
-  throttle: number;
+
+/** `ext.handsOnHold`: released controls first null the rates ('pending'), then hold ('held'). */
+export const HANDS_ON_HOLD_KEY = 'handsOnHold';
+
+/**
+ * A thrust direction turned by a mount or gimbal error: `yaw` about body +z (toward +y for a
+ * +x thruster), `pitch` about body −y (toward +z). With pitch 0 this is the planar rotation.
+ */
+export function tiltDirection(direction: Vec3, yaw: number, pitch: number): Vec3 {
+  const cp = Math.cos(pitch);
+  const sp = Math.sin(pitch);
+  const x = direction.x * cp - direction.z * sp;
+  const z = direction.x * sp + direction.z * cp;
+  const cy = Math.cos(yaw);
+  const sy = Math.sin(yaw);
+  return { x: x * cy - direction.y * sy, y: x * sy + direction.y * cy, z };
 }
 
-function attitudeControl(
+/** Can the attitude and hands-on controller count on this pod's jets this step? */
+function podAvailable(
+  state: ShipSystemsState,
+  spec: EquipmentSpec,
+  data: typeof baseline,
+): boolean {
+  const current = state.equipment[spec.id];
+  if (!current || current.tripped || current.condition <= 0) return false;
+  if (current.values.controlInhibited === 1 || ['off', 'heater'].includes(current.mode))
+    return false;
+  // A manual burn has the pod (manual burns override control per pod).
+  if (state.burns.some((b) => b.thruster === spec.id && b.until > state.t)) return false;
+  const temperature =
+    current.temperature ?? (spec.thermalNode ? state.thermal[spec.thermalNode] : undefined) ?? 293;
+  return (
+    temperature >= Math.max(spec.params.tempMin ?? 0, data.propulsion.rcs.warmupTemperature) &&
+    temperature < (spec.params.tempMax ?? Infinity) &&
+    (current.values.readyTime ?? 0) >= data.propulsion.rcs.warmupTime
+  );
+}
+
+/**
+ * What the attitude controller and the hands-on translation controls ask of each jet this
+ * step, as a duty per jet index per pod. Real jets only: there is no free torque.
+ */
+function jetControl(
   state: ShipSystemsState,
   definition: ShipDefinition,
   env: EnvironmentEffects,
-): Record<string, Control> {
-  const target = state.attitudeTarget;
-  if (target.reference !== 'inertial' && target.reference !== 'rate') return {};
+): Record<string, Record<string, number>> {
   const data = dataFor(definition);
-  const inertia = yawInertia(computeMassProperties(state, definition).inertia);
-  // LIFT(2G): one-axis control. Only yaw (about body z) is held or turned; the x and y parts of
-  // a rate target and the pitch and roll of an inertial target are ignored.
-  const angularRate = env.kinematics.angularVelocity.z;
-  // [ASSUMED] 5 s damping and 25 s attitude stiffness; actuator limits still apply.
-  const acceleration =
-    target.reference === 'rate'
-      ? 0.4 * (target.rate.z - angularRate)
-      : 0.04 * wrapAngle(yawOf(target.attitude) - yawOf(env.kinematics.attitude)) -
-        0.4 * angularRate;
-  const demand = inertia * acceleration;
-  if (Math.abs(demand) < 1e-9) return {};
-  const jetIndex = demand > 0 ? 1 : 0;
+  const settings = controlSettings(definition);
+  const mass = massDetail(state, definition);
+  const torque = attitudeTorque(state.attitudeTarget, env.kinematics, mass.tensor, settings);
+  const force = handsOnForce(state.ext?.handsOn as unknown as HandsOnInput | undefined, definition);
+  if (!torque && force.x === 0 && force.y === 0 && force.z === 0) return {};
   const geometry = getGeometry(state, definition);
-  const jets = data.propulsion.rcs.jets.filter(
-    (jet) => jet.bank === 'a' && jet.id.endsWith(`-${jetIndex}`),
+  const pods: string[] = [];
+  const jets: (AllocatorJet & { readonly jet: Jet })[] = [];
+  for (const spec of definition.equipment) {
+    if (spec.kind !== 'rcs-thruster' || !podAvailable(state, spec, data)) continue;
+    const point = geometry.positions[spec.id] ?? spec.position;
+    for (const jet of activeJets(definition, state, spec.id))
+      jets.push({ pod: pods.length, point, direction: jet.direction, jet });
+    pods.push(spec.id);
+  }
+  const duty = allocateJets(
+    jets,
+    mass.properties.centerOfMass,
+    force,
+    torque ?? { x: 0, y: 0, z: 0 },
+    {
+      thrust: data.propulsion.rcs.thrustPerJet,
+      maxPerPod: data.propulsion.rcs.maxSimultaneousJetsPerPod,
+      torquePriority: settings.torquePriority,
+    },
   );
-  // LIFT(2G): torque capacity about body z only, from the planar parts of lever arm and force.
-  const capacity = Math.abs(
-    jets.reduce(
-      (total, jet) =>
-        total +
-        cross(
-          sub(geometry.positions[jet.equipmentId]!, state.massProperties.centerOfMass),
-          scale({ x: jet.direction[0]!, y: jet.direction[1]! }, data.propulsion.rcs.thrustPerJet),
-        ),
-      0,
-    ),
-  );
-  if (capacity === 0) return {};
-  return Object.fromEntries(
-    jets.map((jet) => [
-      jet.equipmentId,
-      { jet: jetIndex, throttle: clamp(Math.abs(demand) / capacity) },
-    ]),
-  );
+  const control: Record<string, Record<string, number>> = {};
+  jets.forEach((entry, j) => {
+    if (duty[j]! > 0) (control[entry.jet.pod] ??= {})[String(entry.jet.index)] = duty[j]!;
+  });
+  return control;
 }
 
-/** Reserve valve power before dispatch. Attitude control uses the installed RCS jets, never free torque. */
+/**
+ * Reserve valve power before dispatch, and decide what the controller asks of the jets.
+ * Released hands-on controls become an attitude hold here, once the rates are nulled.
+ */
 export function preparePropulsion(
-  state: ShipSystemsState,
+  input: ShipSystemsState,
   definition: ShipDefinition,
   env: EnvironmentEffects,
 ): ShipSystemsState {
+  let state = input;
+  if (
+    state.ext?.[HANDS_ON_HOLD_KEY] === 'pending' &&
+    state.attitudeTarget.reference === 'rate' &&
+    ratesNulled(env.kinematics.angularVelocity, controlSettings(definition))
+  ) {
+    // The ship is steady: from now on hold the attitude it has (A8: released controls give a
+    // steady ship, which is what the coasting forecast assumes).
+    const q = normalize(env.kinematics.attitude);
+    state = {
+      ...state,
+      attitudeTarget: {
+        reference: 'inertial',
+        attitude: { w: unsigned(q.w), x: unsigned(q.x), y: unsigned(q.y), z: unsigned(q.z) },
+      },
+      ext: { ...state.ext, [HANDS_ON_HOLD_KEY]: 'held' },
+    };
+  }
   const equipment = { ...state.equipment };
-  const control = attitudeControl(state, definition, env);
+  const control = jetControl(state, definition, env);
+  const pulses = pulsesOf(state);
   for (const spec of definition.equipment) {
     if (spec.kind !== 'main-engine' && spec.kind !== 'rcs-thruster') continue;
     const current = equipment[spec.id];
     if (!current) continue;
+    const isRcs = spec.kind === 'rcs-thruster';
     const burn = state.burns.find(
       (b) => b.thruster === spec.id && b.until > state.t && b.throttle > 0,
     );
-    const automatic =
-      control[spec.id] &&
-      current.values.controlInhibited !== 1 &&
-      !['off', 'heater'].includes(current.mode);
-    const firing = burn || automatic || (current.values.pulseRemaining ?? 0) > 0;
-    const mode = firing
-      ? spec.kind === 'rcs-thruster'
-        ? 'fire-one'
-        : 'firing'
-      : ['firing', 'fire-one', 'fire-two'].includes(current.mode)
-        ? 'ready'
-        : current.mode;
+    let valves = burn || (current.values.pulseRemaining ?? 0) > 0 ? 1 : 0;
+    if (isRcs && !burn) {
+      // Jets the controller asks for, and jets still finishing a committed minimum pulse.
+      const asked = new Set(Object.keys(control[spec.id] ?? {}));
+      for (const jet of activeJets(definition, state, spec.id))
+        if ((pulses[jet.id]?.pulse ?? 0) > 0) asked.add(String(jet.index));
+      valves += asked.size;
+    }
+    const mode =
+      valves > 0
+        ? isRcs
+          ? valves > 1
+            ? 'fire-two'
+            : 'fire-one'
+          : 'firing'
+        : ['firing', 'fire-one', 'fire-two'].includes(current.mode)
+          ? 'ready'
+          : current.mode;
     equipment[spec.id] = { ...current, mode };
   }
   return {
     ...state,
     equipment,
-    ext: {
-      ...state.ext,
-      'propulsion.control': control as unknown as Record<string, { jet: number; throttle: number }>,
-    },
+    ext: { ...state.ext, [CONTROL_KEY]: control as unknown as JsonValue },
   };
 }
 
@@ -123,6 +194,41 @@ function consume(tanks: Record<string, number>, ids: readonly string[], requeste
   return requested - remaining;
 }
 
+/**
+ * Chemical thrust is delivered in whole minimum-impulse pulses. Demand (N·s) accumulates in
+ * `pending` until a pulse can start; a committed pulse runs on across ticks in `pulse` (s).
+ * Returns the new bookkeeping and how long the valve is open this step.
+ */
+function advancePulse(
+  pendingBefore: number,
+  pulseBefore: number,
+  ready: boolean,
+  demand: number,
+  dt: number,
+  minimumImpulse: number,
+  nominalThrust: number,
+): { pending: number; pulse: number; firingTime: number } {
+  if (!ready) return { pending: 0, pulse: 0, firingTime: 0 };
+  let pending = pendingBefore + demand;
+  let pulse = pulseBefore;
+  let firingTime = 0;
+  let availableTime = dt;
+  // Continue committed minimum pulses across small simulation ticks.
+  const continuation = Math.min(availableTime, pulse);
+  firingTime += continuation;
+  pulse -= continuation;
+  availableTime -= continuation;
+  const pulseDuration = minimumImpulse / nominalThrust;
+  const wholePulses = Math.floor((pending + 1e-9) / minimumImpulse);
+  const neededPulses = Math.ceil(Math.max(0, availableTime - 1e-12) / pulseDuration);
+  const startedPulses = Math.min(wholePulses, neededPulses);
+  const duration = startedPulses * pulseDuration;
+  pending = Math.max(0, pending - startedPulses * minimumImpulse);
+  firingTime += Math.min(availableTime, duration);
+  pulse += Math.max(0, duration - availableTime);
+  return { pending, pulse, firingTime };
+}
+
 export function stepPropulsion(
   state: ShipSystemsState,
   definition: ShipDefinition,
@@ -130,13 +236,16 @@ export function stepPropulsion(
   dt: number,
 ): { state: ShipSystemsState; thrusts: ThrustOutput[]; torque: Vec3; events: ShipEvent[] } {
   const data = dataFor(definition);
+  const g0 = data.constants.g0.value;
   const equipment = { ...state.equipment };
   const tanks = { ...state.tanks };
   const events: ShipEvent[] = [];
   const thrusts: ThrustOutput[] = [];
   const geometry = getGeometry(state, definition);
   const mass = computeMassProperties(state, definition);
-  const control = (state.ext?.['propulsion.control'] ?? {}) as unknown as Record<string, Control>;
+  const control = controlOf(state);
+  const oldPulses = pulsesOf(state);
+  const pulses: Record<string, JetPulse> = {};
   const controllerPowered = definition.equipment.some(
     (spec) =>
       spec.id.startsWith('flight-cpu') &&
@@ -156,14 +265,6 @@ export function stepPropulsion(
     const modePower = (mode: string) =>
       spec.params[`mode.${mode}.power`] ?? baselineModes?.[mode]?.power ?? Infinity;
     const burn = state.burns.find((b) => b.thruster === spec.id && b.until > state.t);
-    const automatic =
-      !burn &&
-      controllerPowered &&
-      control[spec.id] &&
-      current.values.controlInhibited !== 1 &&
-      !['off', 'heater'].includes(current.mode)
-        ? control[spec.id]
-        : undefined;
     const nominalThrust = isRcs ? data.propulsion.rcs.thrustPerJet : data.propulsion.main.thrust;
     const minimumImpulse = isRcs
       ? data.propulsion.rcs.minimumImpulsePerJet
@@ -188,102 +289,193 @@ export function stepPropulsion(
           ? Math.min(data.propulsion.rcs.warmupTime, (values.readyTime ?? 0) + dt)
           : 0;
     }
-    const firingPower = modePower(isRcs ? 'fire-one' : 'firing');
-    const ready =
+    // How many valves the supplied power and readiness allow open at once (the main engine: 1).
+    const warm =
       operational &&
-      current.powerDraw >= firingPower - 1e-9 &&
       (!isRcs ||
         (temperature >= data.propulsion.rcs.warmupTemperature &&
           (current.values.readyTime ?? 0) >= data.propulsion.rcs.warmupTime));
-    const activeTime = burn ? Math.min(dt, Math.max(0, burn.until - state.t)) : automatic ? dt : 0;
-    const throttle = clamp(burn?.throttle ?? automatic?.throttle ?? 0);
-    let pending = values.pendingImpulse ?? 0;
-    let pulse = values.pulseRemaining ?? 0;
-    let firingTime = 0;
-    if (ready) {
-      pending += nominalThrust * throttle * activeTime;
-      let availableTime = dt;
-      // Continue committed minimum pulses across small simulation ticks.
-      const continuation = Math.min(availableTime, pulse);
-      firingTime += continuation;
-      pulse -= continuation;
-      availableTime -= continuation;
-      const pulseDuration = minimumImpulse / nominalThrust;
-      const wholePulses = Math.floor((pending + 1e-9) / minimumImpulse);
-      const neededPulses = Math.ceil(Math.max(0, availableTime - 1e-12) / pulseDuration);
-      const startedPulses = Math.min(wholePulses, neededPulses);
-      const duration = startedPulses * pulseDuration;
-      pending = Math.max(0, pending - startedPulses * minimumImpulse);
-      firingTime += Math.min(availableTime, duration);
-      pulse += Math.max(0, duration - availableTime);
-    } else {
-      pending = 0;
-      pulse = 0;
-    }
-    if (!burn && !automatic) {
-      values.unservedImpulse = (values.unservedImpulse ?? 0) + pending;
-      pending = 0;
-    }
+    const valves = !warm
+      ? 0
+      : !isRcs
+        ? current.powerDraw >= modePower('firing') - 1e-9
+          ? 1
+          : 0
+        : current.powerDraw >= modePower('fire-two') - 1e-9
+          ? data.propulsion.rcs.maxSimultaneousJetsPerPod
+          : current.powerDraw >= modePower('fire-one') - 1e-9
+            ? 1
+            : 0;
     const thrustScale = Math.max(0, values.thrustScale ?? 1) * clamp(current.condition);
-    const requestedImpulse = nominalThrust * thrustScale * firingTime;
-    const selectedJet = Math.round(automatic?.jet ?? values.selectedJet ?? 0);
-    const bank = (values.bank ?? 0) === 1 ? 'b' : 'a';
-    const jet = isRcs
-      ? data.propulsion.rcs.jets.find(
-          (j) => j.equipmentId === spec.id && j.bank === bank && j.id.endsWith(`-${selectedJet}`),
-        )
-      : undefined;
-    const resources = isRcs ? (jet?.resourceIds ?? []) : data.propulsion.main.resourceIds;
-    const feeds = resources.filter((id) => values[`feed.${id}`] !== 0);
-    const usedMass = consume(tanks, feeds, requestedImpulse / (isp * data.constants.g0.value));
-    const impulse = usedMass * isp * data.constants.g0.value;
-    if (impulse + 1e-8 < requestedImpulse) {
-      values.unservedImpulse = (values.unservedImpulse ?? 0) + requestedImpulse - impulse;
-      pending = 0;
-      pulse = 0;
-    }
-    // LIFT(2G): thrust directions, mount misalignment and gimbal stay in the body x–y plane
-    // (rotations about z); forces leave with z = 0.
-    let direction: Vec2 = isRcs
-      ? { x: jet?.direction[0] ?? 0, y: jet?.direction[1] ?? 0 }
-      : { x: data.propulsion.main.direction[0]!, y: data.propulsion.main.direction[1]! };
     const point = geometry.positions[spec.id] ?? spec.mount?.position ?? spec.position;
     const misalignment =
       values.misalignment ??
       spec.params.mountMisalignment ??
       (isRcs ? data.propulsion.rcs.mountMisalignment : data.propulsion.main.mountMisalignment);
-    if (!isRcs) {
-      const ideal =
-        Math.atan2(mass.centerOfMass.y - point.y, mass.centerOfMass.x - point.x) - misalignment;
-      const targetGimbal = clamp(
-        ideal,
-        -data.propulsion.main.gimbalLimit,
-        data.propulsion.main.gimbalLimit,
-      );
-      const previous = values.gimbal ?? 0;
-      const gimbal = ready
-        ? previous +
-          clamp(
-            targetGimbal - previous,
-            -data.propulsion.main.gimbalRate * dt,
-            data.propulsion.main.gimbalRate * dt,
-          )
-        : previous;
-      values.gimbal = gimbal;
-      direction = rotate(direction, misalignment + gimbal);
-    } else direction = rotate(direction, misalignment);
-    if (impulse > 0) {
-      const force = scale(direction, impulse / dt);
-      thrusts.push({ source: spec.id, point, force: { x: force.x, y: force.y, z: 0 } });
+    const misalignmentPitch =
+      values.misalignmentPitch ??
+      spec.params.mountMisalignmentPitch ??
+      (isRcs ? 0 : data.propulsion.main.mountMisalignmentPitch);
+    let unserved = values.unservedImpulse ?? 0;
+    let totalImpulse = 0;
+    let totalMass = 0;
+    let fx = 0;
+    let fy = 0;
+    let fz = 0;
+    /** Open one valve for `firingTime`: draw propellant, add the force. True if the feed ran short. */
+    const fire = (
+      firingTime: number,
+      resources: readonly string[],
+      direction: Vec3,
+      yaw: number,
+      pitch: number,
+    ): boolean => {
+      const requestedImpulse = nominalThrust * thrustScale * firingTime;
+      const feeds = resources.filter((id) => values[`feed.${id}`] !== 0);
+      const usedMass = consume(tanks, feeds, requestedImpulse / (isp * g0));
+      const impulse = usedMass * isp * g0;
+      const short = impulse + 1e-8 < requestedImpulse;
+      if (short) unserved += requestedImpulse - impulse;
+      if (impulse > 0) {
+        const tilted = tiltDirection(direction, yaw, pitch);
+        const magnitude = impulse / dt;
+        fx += tilted.x * magnitude;
+        fy += tilted.y * magnitude;
+        fz += tilted.z * magnitude;
+      }
+      totalImpulse += impulse;
+      totalMass += usedMass;
+      return short;
+    };
+
+    // The commanded channel: a timed or hands-on burn of the main engine, or of a pod's
+    // selected jet. Its bookkeeping stays in the equipment values, as before.
+    const podJets = isRcs ? activeJets(definition, state, spec.id) : [];
+    // What the controller asks of this pod. A commanded burn has the pod to itself.
+    const asked: Readonly<Record<string, number>> =
+      isRcs &&
+      !burn &&
+      controllerPowered &&
+      current.values.controlInhibited !== 1 &&
+      !['off', 'heater'].includes(current.mode)
+        ? (control[spec.id] ?? {})
+        : {};
+    const controlled = Object.keys(asked).length > 0;
+    const selected = isRcs
+      ? podJets.find((jet) => jet.index === Math.round(values.selectedJet ?? 0))
+      : undefined;
+    const activeTime = burn ? Math.min(dt, Math.max(0, burn.until - state.t)) : 0;
+    const throttle = clamp(burn?.throttle ?? 0);
+    const commanded = advancePulse(
+      values.pendingImpulse ?? 0,
+      values.pulseRemaining ?? 0,
+      valves >= 1,
+      nominalThrust * throttle * activeTime,
+      dt,
+      minimumImpulse,
+      nominalThrust,
+    );
+    // Demand left over when nothing asks for thrust any more is reported, never fired late.
+    let reported = false;
+    if (!burn) {
+      unserved += commanded.pending;
+      commanded.pending = 0;
+      reported = !controlled;
     }
-    values.pendingImpulse = pending;
-    values.pulseRemaining = pulse;
-    values.impulse = impulse;
-    values.massFlow = usedMass / dt;
+    let direction: Vec3;
+    let yaw = misalignment;
+    let pitch = misalignmentPitch;
+    if (!isRcs) {
+      // Two-axis gimbal: aim the thrust line through the centre of mass, each axis within the
+      // gimbal limit and rate. Yaw turns the thrust toward +y, pitch toward +z.
+      const main = data.propulsion.main;
+      const dx = mass.centerOfMass.x - point.x;
+      const dy = mass.centerOfMass.y - point.y;
+      const dz = mass.centerOfMass.z - point.z;
+      const steer = (ideal: number, previous: number): number =>
+        valves >= 1
+          ? previous +
+            clamp(
+              clamp(ideal, -main.gimbalLimit, main.gimbalLimit) - previous,
+              -main.gimbalRate * dt,
+              main.gimbalRate * dt,
+            )
+          : previous;
+      values.gimbal = steer(Math.atan2(dy, dx) - misalignment, values.gimbal ?? 0);
+      values.gimbalPitch = unsigned(
+        steer(Math.atan2(dz, Math.hypot(dx, dy)) - misalignmentPitch, values.gimbalPitch ?? 0),
+      );
+      yaw += values.gimbal;
+      pitch += values.gimbalPitch;
+      direction = {
+        x: main.direction[0]!,
+        y: main.direction[1]!,
+        z: main.direction[2]!,
+      };
+    } else direction = selected?.direction ?? { x: 0, y: 0, z: 0 };
+    const resources = isRcs ? (selected?.resourceIds ?? []) : data.propulsion.main.resourceIds;
+    if (fire(commanded.firingTime, resources, direction, yaw, pitch)) {
+      commanded.pending = 0;
+      commanded.pulse = 0;
+      reported = true;
+    }
+    values.pendingImpulse = commanded.pending;
+    values.pulseRemaining = commanded.pulse;
+
+    if (isRcs) {
+      // The controller's channel: any number of the pod's jets, each with its own minimum-bit
+      // bookkeeping.
+      // With power for one valve only, the jet asked for most keeps it.
+      let favoured = -1;
+      if (valves === 1)
+        for (const jet of podJets)
+          if ((asked[jet.index] ?? 0) > (favoured < 0 ? 0 : (asked[favoured] ?? 0)))
+            favoured = jet.index;
+      for (const jet of podJets) {
+        const duty = asked[jet.index] ?? 0;
+        const before = oldPulses[jet.id];
+        if (duty === 0 && !before) continue;
+        const ready =
+          !burn && (valves > 1 || (valves === 1 && (favoured < 0 || favoured === jet.index)));
+        const next = advancePulse(
+          before?.pending ?? 0,
+          before?.pulse ?? 0,
+          ready,
+          nominalThrust * clamp(duty) * dt,
+          dt,
+          minimumImpulse,
+          nominalThrust,
+        );
+        if (duty === 0) {
+          if (next.pending > 0) reported = true;
+          unserved += next.pending;
+          next.pending = 0;
+        }
+        if (
+          fire(next.firingTime, jet.resourceIds, jet.direction, misalignment, misalignmentPitch)
+        ) {
+          next.pending = 0;
+          next.pulse = 0;
+          reported = true;
+        }
+        if (next.pending > 0 || next.pulse > 0)
+          pulses[jet.id] = { pending: next.pending, pulse: next.pulse };
+      }
+    }
+
+    if (totalImpulse > 0)
+      thrusts.push({
+        source: spec.id,
+        point,
+        force: { x: unsigned(fx), y: unsigned(fy), z: unsigned(fz) },
+      });
+    if (reported) values.unservedImpulse = unserved;
+    values.impulse = totalImpulse;
+    values.massFlow = totalMass / dt;
     const chemicalHeat = isRcs
       ? data.propulsion.rcs.chemicalHeatPerFiringJet
       : data.propulsion.main.chemicalHeatAtFullThrust;
-    values.heat = current.powerDraw + chemicalHeat * (impulse / (nominalThrust * dt));
+    values.heat = current.powerDraw + chemicalHeat * (totalImpulse / (nominalThrust * dt));
     equipment[spec.id] = { ...current, values };
   }
   for (const tank of definition.tanks) {
@@ -299,6 +491,7 @@ export function stepPropulsion(
     equipment,
     tanks,
     burns: state.burns.filter((burn) => burn.until > state.t + dt),
+    ext: { ...state.ext, [PULSES_KEY]: pulses as unknown as JsonValue },
   };
   return {
     state: { ...next, massProperties: computeMassProperties(next, definition) },

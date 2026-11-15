@@ -32,3 +32,4 @@ export { issueForecast } from './forecast.ts';
 export type * from './attempt.ts';
 export type * from './encounter.ts';
 export type * from './view.ts';
+export type * from './chart.ts';

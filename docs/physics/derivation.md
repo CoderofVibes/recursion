@@ -4,9 +4,18 @@
 
 [ASSUMED] Labels apply to the paragraph and the equation, table or list it introduces. **[FICTIONAL]** identifies an invented law and its conditional mathematical consequences, not an observed property of real gravity. **[ASSUMED]** identifies a modeling choice, numerical proposal or illustrative operating point. **[ESTABLISHED: ID]** refers to the existing [bibliography](../../References/BIBLIOGRAPHY.md). Numerical checks are identified explicitly as research-tool demonstrations, never as game demonstrations.
 
+[ASSUMED] **What is new (thread 2G, 2026-11-14; DECISIONS A11, flight is three-dimensional).** The planar text of 1B is kept as written; it stays correct in the plane it describes. New material is in two clearly marked places:
+
+- **§11, Three dimensions (A11)**: the contract in 3D; why an orbit about one body keeps its plane (so every single-body result of §2 holds at any inclination, with no nodal precession); why the binary keeps its plane; the vertical frequency and the nodal precession of an orbit inclined to the binary's plane, for a general exponent, with numbers for the Gravity range and for a belt about the secondary; the Jacobi constant with z; rigid-body attitude for the ship; and the three-dimensional reference vectors in `tests/vectors/physics-3d.json`.
+- Paragraphs headed **A11 note** in §1, §2, §3, §7, §9 and §10, where a planar statement generalises or is superseded.
+
+[ASSUMED] The exponent is called p throughout this document; DECISIONS and the contracts call it n. Here n stays the binary's angular rate, as in §3.
+
 ## 1. Implementation contract, units and normalization
 
 [ASSUMED] Work in an inertial, right-handed plane, with counterclockwise positive angles. Positions and collision radii are in metres, time in seconds, inertial mass in kilograms, velocity in m/s, acceleration in m/s², force in N, energy in J, and specific energy in J/kg = m²/s². Angles are radians unless marked degrees. Use double precision. The out-of-plane initial state and all forces are zero under P1; there is no artificial projection of a spatial trajectory each frame.
+
+[ASSUMED] **A11 note.** P1 is superseded by A11. Positions, velocities and forces are three-component vectors in a right-handed inertial frame and r is the three-dimensional distance; units, the law, the shared r₀ and everything else in this section are unchanged. Planar motion is the special case in which every source and the ship have z = 0 and no z velocity, which the three-dimensional equations preserve exactly. In three dimensions the angular momentum of the table below is the vector **h** = **r** × **v**; the planar h is its component along the orbit normal. See §11.1 and §11.2.
 
 [ASSUMED] Symbols used below:
 
@@ -74,6 +83,8 @@ V_{\rm eff}(r)=\frac{h^2}{2r^2}-\frac{K}{(p-1)r^{p-1}}
 $$
 
 [FICTIONAL] The swept area rate remains $dA/dt=h/2\ [\mathrm{m^2\,s^{-1}}]$. Kepler's equal-area statement survives for a central force; conic shapes and the ordinary period–semimajor-axis law do not. In a moving binary, the ship generally conserves neither its inertial energy nor its angular momentum about one body.
+
+[FICTIONAL] **A11 note.** In three dimensions the conserved quantity is the whole vector **h** = **r** × **v**, so the orbit stays in one plane and everything in this section holds in that plane at any inclination, with h read as |**h**|. A single body turns the periapsis within the plane (for p ≠ 2) but never turns the plane. Derivation in §11.2.
 
 ### Circular solution and its stability
 
@@ -186,6 +197,8 @@ $$
 
 [FICTIONAL] C is the Jacobi constant for a coasting test particle and an exactly circular binary. Convert inertial velocity using $\mathbf v_{\rm rot}=Q(-nt)[\mathbf v_{\rm inertial}-n\hat{\mathbf z}\times\mathbf x_{\rm inertial}]\ [\mathrm{m\,s^{-1}}]$, with Q a planar rotation. Allowed positions satisfy $2W\ge C\ [\mathrm{m^2\,s^{-2}}]$. The open/closed passages through this zero-velocity geometry matter more than a single-body escape-speed label. A noncircular binary has no constant n and no such conserved C.
 
+[FICTIONAL] **A11 note.** With z, the distances rᵢ are three-dimensional, W keeps its form, a third equation $\ddot z=W_z$ joins the two above and C subtracts ż² as well. The equilibria stay in the binary's plane and their in-plane analysis below is unchanged; each gains a vertical mode. What C does and does not constrain off the plane is in §11.5; the vertical frequency and the turning of an inclined orbit's node are in §11.4.
+
 [FICTIONAL] Solve ∇W = 0 for equilibria. In dimensionless coordinates $X=x/d,\ Y=y/d\ [1]$, put $X_1=-q, X_2=1-q\ [1]$. The three collinear roots lie one per interval separated by the sources and solve:
 
 $$
@@ -238,6 +251,8 @@ $$
 ### Asteroids and local motion
 
 [FICTIONAL] Asteroids may follow local rosettes near a source, circumbinary paths far away, or sensitive scattering paths near the bodies and rotating-frame passages. Their specific energy can change through encounters with a moving source; this is ordinary gravitational exchange under the assumed conservative pair law, not numerical energy creation. Do not certify a permanent “stable belt” from a snapshot. Test every authored population over the relevant encounter duration and check clearance.
+
+[FICTIONAL] **A11 note.** A belt tilted to the binary's plane does not keep its tilt as a ring: the other body turns each orbit's node at a rate that grows with orbit radius (§11.4), so a tilted ring spreads into a band about the binary's plane. §11.4 also records how far out a belt about the secondary stayed bound in the reference runs.
 
 [FICTIONAL] The distant source's leading tidal acceleration across a displacement **ρ** is $\delta\mathbf a_2\simeq [K_2/R^{p+1}][(p+1)\hat{\mathbf R}\hat{\mathbf R}^{T}-I]\boldsymbol\rho\ [\mathrm{m\,s^{-2}}]$. Radial stretch is p times that coefficient and transverse compression is minus one times it. For q ≪ 1 a Hill-like length around the secondary is $\rho_H\simeq d[q/(p+1)]^{1/(p+1)}\ [\mathrm m]$, from balancing secondary attraction against the rotating primary tide. The usual Newtonian cube-root rule becomes a 1/3.5 power here. q = 0.2 is not a small mass ratio: use actual equilibria and trajectories, not this asymptotic radius, to establish a passage.
 
@@ -397,6 +412,8 @@ $$
 
 [ASSUMED] Acceptance should cover positions, velocities, invariants **and event times**, with tolerances tied to the horizon and obstacle/ship dimensions. Halving Δt should reduce smooth-trajectory Verlet error by about four until roundoff dominates. Use isolated energy and h checks for a single source; total massive-body energy/momentum for a mutual binary; and Jacobi C for a massless ship in a circular binary. Do not demand constant inertial ship energy in the binary. Near-zero energy requires an absolute scale for normalization rather than division by ε ≈ 0.
 
+[ASSUMED] **A11 note.** The translation scheme above is written in vectors and is unchanged in three dimensions; its single-source check becomes the vector **h**, and the Jacobi constant includes z (§11.5). Attitude is no longer one angle and one rate. What a three-axis attitude integrator has to preserve, and the invariants it should report its drift against, are in §11.6; this section does not choose that scheme.
+
 [DEMONSTRATED: tools/physics/benchmark.mjs] The separate JavaScript research probe on Node v24.22.1 on this host propagated 100,000 binary-plus-ship steps in approximately 5 ms after warmup (one new force evaluation, three pair/source contributions per step, no allocation in the loop). It excludes UI, sensing, ship systems, collisions, workers and output sampling. This is evidence that the arithmetic budget is plausible, not a browser timing guarantee. The command prints current median/max timing and a state checksum; rerun on the target browser/hardware in 2A.
 
 [DEMONSTRATED: tools/physics/benchmark.mjs] For its 10,000 s binary fixture, 1 s Verlet differed from 0.03125 s Verlet by about 6.8×10⁻⁵ m and 2.2×10⁻⁹ m/s. An isolated eccentric coast over twenty r₀ circular periods had peak relative energy error about 6.9×10⁻⁸ at 1 s, about four times larger at 2 s, without an increasing envelope in that run. Conversely, a 400 km circular orbit accumulated about **5.1 m** position/phase error over ten revolutions at 1 s despite tiny energy error. Do not extrapolate the easy binary fixture's tolerance to every horizon or close pass.
@@ -455,6 +472,8 @@ $$
 
 [FICTIONAL] For an ideal straight crossing through one isolated strand with impact offset zero, constant normal speed $v_\perp\ [\mathrm{m/s}]$, and constant layer envelope 1, the profile above integrates to $D_{\rm crossing}=(256/315)\dot D_0w/|v_\perp|\ [\mathrm{DU}]$. A slower crossing increases dose. This is a testable field integral, not a universal dose per hit; offset, layer envelope and extended components alter it.
 
+[ASSUMED] **A11 note.** The exposure field above was already defined in three dimensions and needs no change. The blind-traversal estimate in the next three paragraphs assumed P1: a path confined to one plane, with one free aim coordinate across each layer. Under A11 a path through a layer has two transverse coordinates, so the clear fraction per layer is an area fraction of the layer's openings, not a width fraction of a planar slice. For a square mesh of pitch s whose two strand families are independent, with the same margin b, it is $(1-2b/s)^2\ [1]$: 0.36 per layer for s = 1,000 m and b = 200 m, and 4.7×10⁻⁶ for twelve independent layers. The warning below against using the area fraction applied to planar flight and is reversed by A11. These figures are conditional on that mesh; the lattice's owner should redo the estimate for the authored geometry.
+
 [ASSUMED] A transparent blind-traversal estimate can be made only after specifying geometry and a lethal-dose criterion. Under P1 a transverse layer has **one free aim coordinate**. Suppose N layers intersect the flight plane in periodic forbidden intervals of spacing s [m], with independent, uniformly distributed transverse offsets. Let the ship's swept footprint and severe-contact margin give each interval a combined half-width b [m], with b < s/2. At one layer the probability of avoiding that region is $q_{\rm safe}=1-2b/s\ [1]$, hence $P_{\rm no\ severe}=q_{\rm safe}^{N}\ [1]$. Independence is an ensemble assumption about unknown authored layer offsets, not runtime randomness. Include the lateral sweep across a finite layer's thickness in b; a point at the layer center alone is insufficient.
 
 [ASSUMED] For s = 1,000 m and effective severe margin b = 200 m, qsafe = 0.6 [1]. Six layers give 4.666%, ten give 0.605%, and twelve give **0.218%** avoidance of all severe regions. If any severe intersection at the chosen speed disables a critical component, these are optimistic survival estimates: cumulative lesser doses can only reduce survival under that assumption. If severe contact is sometimes survivable, they estimate severe-contact avoidance only, not survival; integrate dose and condition to get survival. Changing layer phases, ship attitude, speed or clearance changes the estimate.
@@ -473,11 +492,19 @@ python tools/physics/generate_vectors.py --report
 node tools/physics/benchmark.mjs
 ```
 
+[ASSUMED] **A11 note.** The planar file is unchanged and remains the planar regression. Three-dimensional flight has its own file, [physics-3d.json](../../tests/vectors/physics-3d.json), produced and checked by the same generator with `--3d` (cases, tolerances and audit results in §11.7):
+
+```text
+python tools/physics/generate_vectors.py --3d --check
+python tools/physics/generate_vectors.py --3d --report
+python tools/physics/generate_vectors.py --3d --consumer-probe
+```
+
 [ASSUMED] Closed-form limits, high-accuracy reference states, tighter-solver agreement, analytic Newtonian/circular controls and conservation checks serve different purposes. A tighter rerun of one adaptive method is useful convergence evidence, not an independent proof of correctness. The separate Verlet probe checks another integration method; Phase 2A and the Newtonian GMAT package provide further independent checks. Per-case tolerances are absolute SI comparison tolerances, not a license to label every forecast correct at that error for every horizon.
 
 [ASSUMED] Limits and open questions for the integrator:
 
-- Adopt one universal r₀, fixed μ/K semantics, point-center gravity and collision envelopes in P4/contracts. Preserve P1; this derivation supplies no reason to reject planar motion.
+- Adopt one universal r₀, fixed μ/K semantics, point-center gravity and collision envelopes in P4/contracts. Preserve P1; this derivation supplies no reason to reject planar motion. (**A11 note:** the owner has since chosen three-dimensional flight; P1 is superseded and §11 covers what changes.)
 - Reconcile the proposed masses/radii, 30 t / 20 kN / 320 s ship assumptions, electrical/thermal examples, fuel reserve and encounter duration with 1C/1F. Only playtests can establish the actual route and pacing.
 - Choose binary initial phase/eccentricity and asteroid population. Constant rotating equilibria/Jacobi tests apply only to the circular baseline; an eccentric binary requires time-dependent propagation.
 - Confirm sensor uncertainty and available range/geometry variation in 1G. An exact single-radius circular observation does not identify p; model identifiability is not automatic.
@@ -486,3 +513,356 @@ node tools/physics/benchmark.mjs
 - Choose actual lattice geometry, component dose curves and failure thresholds. The blind-traversal probability is conditional and must be recomputed for the authored planar passage.
 
 [ASSUMED] Changes to the force law, softening, r₀ convention or vector semantics require regenerating/reviewing the reference package. No files under `src/`, shared contracts, the creative brief or the decisions log are modified by 1B.
+
+## 11. Three dimensions (A11)
+
+[ASSUMED] Thread 2G added this section on 2026-11-14, after the owner decided that flight is three-dimensional (DECISIONS A11, replacing P1). It extends §1–§3, §7 and §10 and replaces nothing in them. The law is unchanged; r is now the three-dimensional distance. Rigid-body mechanics and the Newtonian (p = 2) limits quoted below are standard results, but the project bibliography has no entry for them, so they are derived here and checked numerically instead of cited. Paragraphs marked [DEMONSTRATED] name the generator command that reproduces their numbers; those are checks of the reference mathematics, not of the game.
+
+### 11.1 Contract in three dimensions
+
+[ASSUMED] Positions, velocities and accelerations are three-component vectors [m, m s⁻¹, m s⁻²] in one right-handed inertial frame per encounter. The ship's body frame is right-handed with +x forward, +y left and +z up. Attitude is a unit quaternion q = (w, x, y, z), scalar first, Hamilton product, taking body-frame vectors to the inertial frame: $\mathbf v_{\rm inertial}=q\otimes\mathbf v_{\rm body}\otimes q^{*}$. q and −q are the same attitude. Angular velocity **ω** [rad s⁻¹] is expressed in the body frame. These are the conventions of `src/contracts/README.md`; this document uses them and does not define them.
+
+[FICTIONAL] The force and potential of §1–§2 were already written for vectors:
+
+$$
+\mathbf a_p(\mathbf r)=-\frac{K\mathbf r}{|\mathbf r|^{p+1}}\quad[\mathrm{m\,s^{-2}}],\qquad
+\Phi=-\frac{K}{(p-1)|\mathbf r|^{p-1}}\quad[\mathrm{m^2\,s^{-2}}],\qquad
+|\mathbf r|=\sqrt{x^2+y^2+z^2}\quad[\mathrm m].
+$$
+
+[FICTIONAL] Φ depends on distance only, so −∇Φ is the same radial force in three dimensions, and the vector denominator for p = 2.5 is still |**r**|^3.5. If every source and the ship have z = 0 and no z velocity, the z component of every force is exactly zero and the motion stays in that plane. The planar results and `tests/vectors/physics.json` are therefore the z = 0 case of the same model, not a different model. Point centres, the shared r₀ and the absence of softening (§1) are unchanged.
+
+### 11.2 One body: the orbit keeps its plane
+
+[FICTIONAL] For one fixed source at the origin, define the specific angular momentum vector **h** = **r** × **v** [m² s⁻¹]. Then
+
+$$
+\frac{d\mathbf h}{dt}=\mathbf v\times\mathbf v+\mathbf r\times\mathbf a_p
+=-\frac{K}{|\mathbf r|^{p+1}}\,\mathbf r\times\mathbf r=\mathbf 0\quad[\mathrm{m^2\,s^{-2}}].
+$$
+
+[FICTIONAL] Only the direction of the force was used, so this holds for every exponent. Three things follow.
+
+- **The orbit is planar.** **r**·**h** = 0 and **v**·**h** = 0 at all times: the ship stays in the fixed plane through the source whose unit normal is $\hat{\mathbf h}=\mathbf h/|\mathbf h|$.
+- **Every single-body result of §2 holds in that plane, at any inclination.** In polar coordinates (r, θ) in the orbit plane, |**h**| = r²θ̇ and the radial equation is the one in §2 with h read as |**h**|. The circular speed and period, κ = √(3−p) Ω, the 149.116882° periapsis advance per radial cycle (near-circular limit, p = 2.5), the escape ratio √(2/(p−1)) = 1.154700538, the turning-radius formulas and the quadratures are unchanged.
+- **One body causes no nodal precession, under either law.** $\hat{\mathbf h}$ is constant, so the inclination $i=\arccos\hat h_z$ and the longitude of the ascending node $\Omega_N=\operatorname{atan2}(\hat h_x,-\hat h_y)$ [rad] are constant. The 2.5 law turns the periapsis inside the orbit plane. It does not turn the plane.
+
+[FICTIONAL] The same statement in frequencies: a small displacement ζ [m] normal to a circular orbit of radius r obeys $\ddot\zeta=-(K/r^{p+1})\zeta=-\Omega^2\zeta$. The out-of-plane frequency equals the orbital frequency exactly for any p, while the radial frequency is √(3−p) Ω. A radial frequency that differs from Ω is apsidal precession (present for p ≠ 2). A vertical frequency that differs from Ω would be nodal precession (absent for one point source).
+
+[ASSUMED] Limits: one source, treated as a point centre, no thrust. A real oblate body turns the node of an inclined orbit; nothing here does, because bodies are point centres (§1). A second body breaks the result (§11.4).
+
+[DEMONSTRATED: `python tools/physics/generate_vectors.py --3d --check`] The planar eccentric start of `single-p2` and `single-p2p5`, rotated to inclination 50° with node 35°, was integrated in three dimensions. Over 20,000 s it matched the rotated planar reference to 2.6×10⁻⁶ m and 4.4×10⁻¹⁰ m/s (the worst figure over this case and the rotated binary cases of §11.3), matched the rotated analytic Kepler ellipse for p = 2 to 5.5×10⁻⁷ m and 4.1×10⁻¹¹ m/s, and stayed in its initial plane to better than the check's limit of 10⁻⁶ m.
+
+### 11.3 The binary keeps its plane
+
+[FICTIONAL] The two bodies of §3 attract each other with a reciprocal central force, so total momentum is conserved and the barycentre moves uniformly. The separation **R** = **x₂** − **x₁** obeys the one-centre equation $\ddot{\mathbf R}=-K_T\mathbf R/R^{p+1}$, so §11.2 applies to it: **R** × **Ṙ** is constant and the relative orbit lies in a fixed plane. The total angular momentum about the barycentre,
+
+$$
+\mathbf L=M_1\mathbf x_1\times\mathbf v_1+M_2\mathbf x_2\times\mathbf v_2
+=m_{\rm red}\,\mathbf R\times\dot{\mathbf R}\quad[\mathrm{kg\,m^2\,s^{-1}}],
+$$
+
+[FICTIONAL] is a constant vector. The ship and the asteroids are massless (§3), so nothing in the model can tilt the binary's plane. For the circular baseline the bodies move with a constant angular velocity **vector** $\mathbf n=n\hat{\mathbf L}$ [rad s⁻¹], n = √(K_T/d^{p+1}), and $\mathbf v_i=\mathbf n\times\mathbf x_i$ in barycentric coordinates.
+
+[ASSUMED] An encounter's inertial frame need not put the binary in its x–y plane. Formulas in §3, §11.4 and §11.5 that are written with ẑ along **n** generalise by replacing z with the component along $\hat{\mathbf n}$ and $x v_y-y v_x$ with $\hat{\mathbf n}\cdot(\mathbf r\times\mathbf v)$. Code that assumes the binary lies in the x–y plane is wrong for a tilted binary; the `binary-inclined` vectors (§11.7) exist to catch it.
+
+[DEMONSTRATED: `python tools/physics/generate_vectors.py --3d --check`] In every binary case, including the one whose plane is inclined 40° to the x–y plane and the 2×10⁶ s run, both bodies stayed on their exact circles to 7.1×10⁻⁷ m and 1.0×10⁻¹¹ m/s. The tilted run matched the rotated planar binary reference, ship included, within the figure quoted in §11.2.
+
+### 11.4 Off the binary's plane: vertical frequency and nodal precession
+
+[FICTIONAL] **Vertical motion near the plane.** Put the circular binary in the plane z = 0. A test particle at height z feels, from source i, $a_z=-K_i z/(\varrho_i^2+z^2)^{(p+1)/2}$, where ϱᵢ [m] is its in-plane distance to that source. To first order in z,
+
+$$
+\ddot z=-A\,z,\qquad A=\sum_i\frac{K_i}{\varrho_i^{\,p+1}}\quad[\mathrm{s^{-2}}],
+$$
+
+[FICTIONAL] and the in-plane force changes only at order z². Near the plane the vertical motion is therefore an oscillator of instantaneous angular frequency √A that rides on the planar trajectory and does not feed back on it at first order. By the mirror symmetry z → −z, a particle that starts in the plane with no vertical velocity stays in it. At an equilibrium point A is constant: this is the vertical mode quoted in §3. At L4 and L5 both distances equal d, so A = K_T/d^{p+1} = n² and the vertical frequency equals the binary's rate n for any exponent.
+
+[FICTIONAL] **An orbit about the primary, perturbed by the secondary.** Let a particle move on a near-circular orbit of radius a about the primary (strength K₁) with unperturbed rate Ω = √(K₁/a^{p+1}), while the secondary (strength K₂) circles at separation D ≫ a with rate n ≪ Ω. In a non-rotating frame centred on the primary, the secondary's effect is its pull on the particle minus its pull on the primary. For a particle at **ρ** [m] from the primary that is the tidal acceleration of §3:
+
+$$
+\delta\mathbf a=\frac{K_2}{D^{p+1}}\left[(p+1)\hat{\mathbf R}\hat{\mathbf R}^{T}-I\right]\boldsymbol\rho
++O\!\left(\frac{K_2\rho^2}{D^{p+2}}\right)\quad[\mathrm{m\,s^{-2}}].
+$$
+
+[FICTIONAL] Average over one revolution of the binary, using $\langle\hat{\mathbf R}\hat{\mathbf R}^{T}\rangle=\tfrac12(\hat{\mathbf x}\hat{\mathbf x}^{T}+\hat{\mathbf y}\hat{\mathbf y}^{T})$. Then ⟨δ**a**⟩ = −T**ρ** with the orbit-averaged tidal tensor
+
+$$
+T=\langle\nabla\nabla\Phi_2\rangle=\frac{K_2}{D^{p+1}}\left[\left(1-\frac{p+1}{2}\right)(\hat{\mathbf x}\hat{\mathbf x}^{T}+\hat{\mathbf y}\hat{\mathbf y}^{T})+\hat{\mathbf z}\hat{\mathbf z}^{T}\right]
+=\frac{K_2}{D^{p+1}}\left[\frac{1-p}{2}\,I+\frac{p+1}{2}\,\hat{\mathbf z}\hat{\mathbf z}^{T}\right]\quad[\mathrm{s^{-2}}].
+$$
+
+[FICTIONAL] The averaged field squeezes along z and, for p > 1, stretches equally along x and y. Its trace is (2−p)K₂/D^{p+1}: zero for Newton's law, as Laplace's equation requires, and not zero for the invented law.
+
+[FICTIONAL] *Near the plane.* The vertical frequency is $\nu_z^2=\Omega^2+K_2/D^{p+1}$. A circular orbit in the plane needs $a\,\Omega_\varphi^2=K_1/a^{p}+T_{xx}\,a$ with $T_{xx}=-\tfrac{p-1}{2}K_2/D^{p+1}$, so its azimuthal frequency is $\Omega_\varphi^2=\Omega^2-\tfrac{p-1}{2}K_2/D^{p+1}$. Therefore
+
+$$
+\nu_z^2-\Omega_\varphi^2=\frac{(p+1)K_2}{2D^{p+1}}\quad[\mathrm{s^{-2}}].
+$$
+
+[FICTIONAL] The particle finishes its vertical oscillation slightly before it finishes a revolution, and the node moves backwards at $\Omega_\varphi-\nu_z\simeq-(p+1)K_2/(4\Omega D^{p+1})$.
+
+[FICTIONAL] *Any inclination.* Let $\hat{\mathbf h}$ be the orbit's unit normal, inclined i to ẑ, so that $\mathbf h=a^2\Omega\,\hat{\mathbf h}$. For a circular orbit $\langle\boldsymbol\rho\boldsymbol\rho^{T}\rangle=\tfrac12a^2(I-\hat{\mathbf h}\hat{\mathbf h}^{T})$. The isotropic part of T exerts no torque. The rest gives the orbit-averaged torque per unit mass
+
+$$
+\langle\boldsymbol\rho\times\delta\mathbf a\rangle
+=-\frac{(p+1)K_2}{2D^{p+1}}\left(\langle\boldsymbol\rho\boldsymbol\rho^{T}\rangle\hat{\mathbf z}\right)\times\hat{\mathbf z}
+=\frac{(p+1)K_2\,a^2\cos i}{4D^{p+1}}\;\hat{\mathbf h}\times\hat{\mathbf z}\quad[\mathrm{m^2\,s^{-2}}].
+$$
+
+[FICTIONAL] Setting it equal to d**h**/dt gives the result:
+
+$$
+\frac{d\hat{\mathbf h}}{dt}=\dot\Omega_N\,\hat{\mathbf z}\times\hat{\mathbf h},\qquad
+\boxed{\;\dot\Omega_N=-\frac{(p+1)K_2\cos i}{4\,\Omega\,D^{p+1}}\;}\quad[\mathrm{rad\,s^{-1}}].
+$$
+
+[FICTIONAL] The torque is perpendicular to both ẑ and $\hat{\mathbf h}$, so |**h**| and the inclination are constant at this order: the orbit normal circles the binary's normal at the rate $\dot\Omega_N$. The node regresses for a prograde orbit (i < 90°), advances for a retrograde one and does not move for a polar one. Using Ω² = K₁/a^{p+1}, the same result per orbit is
+
+$$
+\frac{\dot\Omega_N}{\Omega}=-\frac{p+1}{4}\,\frac{K_2}{K_1}\left(\frac aD\right)^{p+1}\cos i\quad[1],\qquad
+\Delta\Omega_N\big|_{\rm one\ orbit}=-\frac{\pi}{2}(p+1)\frac{K_2}{K_1}\left(\frac aD\right)^{p+1}\cos i\quad[\mathrm{rad}].
+$$
+
+[FICTIONAL] For p = 2 this is −¾ (GM₂/D³) cos i / Ω, the classical leading term for a satellite's node under a distant perturber. It is the form the integrator proposed from the averaged tidal tensor; this independent derivation and the numerical check below found no different coefficient.
+
+[FICTIONAL] **Newton against the 2.5 law.** For the same GM values and geometry,
+
+$$
+\frac{\dot\Omega_N(p)}{\dot\Omega_N(2)}=\frac{p+1}{3}\left(\frac{r_0}{D}\right)^{p-2}\left(\frac{a}{r_0}\right)^{(p-2)/2}
+=\frac76\left(\frac{r_0}{D}\right)^{1/2}\left(\frac{a}{r_0}\right)^{1/4}\ \text{at } p=2.5\quad[1].
+$$
+
+[FICTIONAL] The coefficient is 7/6 of Newton's, but a perturber at D > r₀ pulls less than its Newtonian calibration says. At a = r₀ and D = 4r₀ the node regresses at 0.583 of the Newtonian rate. A Newtonian model whose secondary mass has been refitted to reproduce the secondary's pull at distance D still gets the node rate wrong, by the factor 3/(p+1) = 6/7, because the ratio of a source's tide to its pull is (p+1)/D, not 3/D. To first order in a/D this is one more sign of the exponent, beside those in §4, and it does not need the primary's field sampled at several ranges.
+
+[FICTIONAL] **Next term.** Expanding the secondary's potential one even order further (odd orders average to zero over a circular orbit) multiplies the rate by
+
+$$
+1+\frac{(p+3)\left[(p+5)(1+3\cos^2 i)-16\right]}{32}\left(\frac aD\right)^{2}+O\!\left(\frac{a^4}{D^4}\right)\quad[1].
+$$
+
+[FICTIONAL] Sketch of the derivation: $(1-2sc+s^2)^{-\lambda}=\sum_l C_l^{(\lambda)}(c)\,s^l$ with λ = (p−1)/2, s = a/D and c the cosine of the angle between **ρ** and **R**; the average over both orbital phases uses ⟨c²⟩ = (1+cos²i)/4 and ⟨c⁴⟩ = (9+6cos²i+9cos⁴i)/64; the node rate is $-(a^2\Omega\sin i)^{-1}\,\partial\bar\Phi/\partial i$ for the averaged perturbing potential Φ̄. For p = 2 the bracketed coefficient is the Legendre result (15/32)(7cos²i − 3). At i = 0 it is (p+1)(p+3)/8 for any p, which also follows from averaging A above over the orbit.
+
+[ASSUMED] **Validity.** The boxed formula is first order. It assumes:
+
+- **a/D ≪ 1.** At a/D = 1/4 the next term is +11.7 % (p = 2) and +15.0 % (p = 2.5) at i = 0, +6.6 % and +9.0 % at i = 30°, zero near i = 49° and 52°, and negative above that.
+- **n/Ω ≪ 1.** The average over the binary's revolution needs the binary to turn slowly compared with the orbit and fast compared with the precession. Corrections of relative order n/Ω are not derived here; the runs below contain them.
+- **A near-circular orbit that stays near-circular and bound.** The perturbation also forces eccentricity, and a weakly bound orbit can be lost altogether.
+- **A circular binary, a massless particle, no thrust.**
+- Not examined: slow exchange between eccentricity and inclination at high inclination over many node periods (for Newton's law the Lidov–Kozai mechanism; the 2.5 law's own apsidal precession changes that problem).
+
+[ASSUMED] **Numbers at the Gravity range scale** (P16: GM 1×10¹⁰ and 2.5×10⁹ m³/s², r₀ = 1,000 km, separation 4,000 km), first-order formula. For a ship orbiting the primary at a = r₀:
+
+| Quantity | p = 2 | p = 2.5 |
+|---|---:|---:|
+| Orbit rate Ω (rad/s); period (s) | 1.0000×10⁻⁴; 62,832 | 1.0000×10⁻⁴; 62,832 |
+| Binary rate over orbit rate, n/Ω | 0.1398 | 0.0988 |
+| ν_z² − Ω_φ² (s⁻²) | 5.859×10⁻¹¹ | 3.418×10⁻¹¹ |
+| Node rate (rad/s) | −2.930×10⁻⁷ cos i | −1.709×10⁻⁷ cos i |
+| Node shift per orbit | −1.0547° cos i | −0.6152° cos i |
+| Time for the node to go round once | 2.14×10⁷ s / cos i (341 orbits) | 3.68×10⁷ s / cos i (585 orbits) |
+
+[ASSUMED] For an asteroid orbiting the secondary (Beta), with the primary as the perturber (K₁ and K₂ exchange roles in the formula; the perturber is four times the heavier body and the hierarchy is weak):
+
+| Orbit radius | Law | Orbit rate (rad/s); period (s) | a/D | n/Ω | Node rate (rad/s) | Node period (s) |
+|---:|---|---:|---:|---:|---:|---:|
+| 300 km | p = 2 | 3.043×10⁻⁴; 20,649 | 0.075 | 0.046 | −3.85×10⁻⁷ cos i | 1.63×10⁷ / cos i |
+| 600 km | p = 2 | 1.076×10⁻⁴; 58,403 | 0.150 | 0.130 | −1.09×10⁻⁶ cos i | 5.77×10⁶ / cos i |
+| 900 km | p = 2 | 5.856×10⁻⁵; 107,294 | 0.225 | 0.239 | −2.00×10⁻⁶ cos i | not bound, see below |
+| 300 km | p = 2.5 | 4.112×10⁻⁴; 15,282 | 0.075 | 0.024 | −1.66×10⁻⁷ cos i | 3.78×10⁷ / cos i |
+| 600 km | p = 2.5 | 1.222×10⁻⁴; 51,401 | 0.150 | 0.081 | −5.59×10⁻⁷ cos i | 1.12×10⁷ / cos i |
+| 900 km | p = 2.5 | 6.012×10⁻⁵; 104,504 | 0.225 | 0.164 | −1.14×10⁻⁶ cos i | not bound, see below |
+
+[DEMONSTRATED: `python tools/physics/generate_vectors.py --3d --report`] **Numerical check.** The full problem (two moving bodies and a massless particle) was integrated with the reference integrator and the secular node rate measured as the least-squares slope of the osculating node longitude over a whole number of binary periods. "First" is the boxed formula; "second" includes the (a/D)² term.
+
+| Check | Law | Measured / first | Measured / second |
+|---|---|---:|---:|
+| Orbit about the primary, a = r₀, i = 30°, D = 4,000 km | p = 2 | 1.059 | 0.994 |
+| same, D = 8,000 km | p = 2 | 1.015 | 0.998 |
+| same, D = 16,000 km | p = 2 | 1.0043 | 1.0002 |
+| Orbit about the primary, a = r₀, i = 30°, D = 4,000 km | p = 2.5 | 1.047 | 0.961 |
+| same, D = 8,000 km | p = 2.5 | 1.022 | 1.000 |
+| same, D = 16,000 km | p = 2.5 | 1.0061 | 1.0005 |
+| D = 4,000 km, i = 1° | p = 2; p = 2.5 | 1.126; 1.152 | 1.008; 1.002 |
+| D = 4,000 km, i = 45° | p = 2; p = 2.5 | 1.005; 0.992 | 0.991; 0.964 |
+| D = 4,000 km, i = 60° | p = 2; p = 2.5 | 0.963; 0.947 | 1.000; 0.978 |
+| D = 4,000 km, i = 75° | p = 2; p = 2.5 | 0.950; 0.891 | 1.026; 0.963 |
+
+[DEMONSTRATED: `python tools/physics/generate_vectors.py --3d --report`] As the separation grows the measured rate converges on the boxed formula for both exponents, which confirms the coefficient (p+1)/4 and the cos i factor; the (a/D)² term accounts for most of what is left. At the Gravity range scale itself (a/D = 1/4) the first-order formula is within about 7 % at i = 30° (the figure moves by a few per cent with the length of the run) and within about 15 % from 1° to 75°. The inclination stayed within 1° of its start in the runs up to 30°. The `nodal-precession` vectors (§11.7) ask a tested implementation to reproduce the reference trajectory closely and the first-order formula to 10 %.
+
+[DEMONSTRATED: `python tools/physics/generate_vectors.py --3d --report`] **A belt about the secondary.** For initially circular orbits about Beta followed for six binary periods:
+
+| Law | Inclination | Measured / first, by radius | Outcome |
+|---|---:|---|---|
+| p = 2 | 5° | 300 km: 0.998; 450 km: 0.999; 600 km: 1.033 | not bound at 700 km and beyond |
+| p = 2 | 30° | 300 km: 0.996; 450 km: 0.990; 600 km: 0.981; 700 km: 1.011; 750 km: 1.19 | not bound at 800 km and beyond |
+| p = 2.5 | 5° | 300 km: 1.008; 450 km: 1.018; 600 km: 1.031; 700 km: 1.034; 800 km: 1.018; 850 km: 0.971 | not bound at 900 km |
+| p = 2.5 | 30° | 300 km: 1.004; 450 km: 1.010; 600 km: 1.020; 700 km: 1.002; 800 km: 0.990; 850 km: 0.967 | not bound at 900 km |
+
+[ASSUMED] **Where the formula stops being trustworthy for the belt.** Out to 600 km it is good to about 3 % under either law. The (a/D)² term does not improve it there: in these runs what is left after it, which includes the neglected corrections of order n/Ω, is negative and of similar size, so the two partly cancel and neither form should be trusted beyond a few per cent. Beyond 600 km the orbit is no longer near-circular (forced radial excursion $e_r$ of 0.06–0.17 under the 2.5 law at 700–850 km, 0.19–0.34 under Newton's law at 700–750 km), and beyond about 850 km (2.5 law) or 600–750 km (Newton's law, depending on inclination) a prograde orbit did not stay bound to Beta for six binary periods, so no node rate exists. "Not bound" here means the particle went beyond twice its starting distance; these runs use one starting phase each and are not a stability map. The outer part of a 300–900 km belt needs its own test by whoever authors it (2F), under the law actually in force: the 2.5 law holds a wider belt than Newton's because, inside r₀, Beta's pull is stronger than its Newtonian calibration while the primary's tide at 4r₀ is weaker.
+
+[FICTIONAL] **Consequences.** The node rate grows with orbit radius as a^{(p+1)/2}, so a belt that starts as a thin ring tilted to the binary's plane spreads into a band symmetric about that plane within a few node periods of its outer edge (the 600 km orbit's node goes round in 1.1×10⁷ s / cos i under the 2.5 law, 18 binary periods). A belt meant to stay a ring should lie in the binary's plane. For the ship, an orbit at r₀ about the primary inclined 30° has its node carried back 0.53° per orbit under the 2.5 law; a Newtonian forecast with the same GM values says 0.91°. After ten orbits the two node longitudes differ by 3.8°, which at this inclination puts the orbit planes 1.9° apart: up to 33 km out of plane at r₀.
+
+[DEMONSTRATED: `python tools/physics/generate_vectors.py --3d --report`] **An accident of the P16 numbers.** Under the 2.5 law an orbit's periapsis advances at (1 − √(3−p)) Ω = 0.2929 Ω (§2). At a = r₀ about the primary this is 2.964 times the binary's rate: within about 1 % of three times. Inclined orbits started circular at that radius picked up a large radial excursion within six binary periods ($e_r$ = 0.072 at 30°, 0.17 at 45°, 0.24 at 60°), while at 800, 900, 950, 1,050, 1,100 and 1,200 km and i = 60° it was 0.008, 0.023, 0.059, 0.051, 0.036 and 0.028, and Newton's law showed no peak (0.016 at r₀). [ASSUMED] The sharp peak at the radius where the ratio is three, growing with inclination, points to a 3:1 commensurability between apsidal precession and the binary's revolution. That mechanism is an inference from these runs, not a derivation. Its practical meaning: under the 2.5 law, an inclined orbit near r₀ about Alpha does not stay circular, and the node formula is correspondingly less accurate there (0.89–0.99 of first order above 30°).
+
+### 11.5 The Jacobi constant with z
+
+[FICTIONAL] In the frame rotating with the circular binary, with ẑ along **n** and rᵢ the three-dimensional distances,
+
+$$
+W(x,y,z)=\tfrac12 n^2(x^2+y^2)+\sum_i\frac{K_i}{(p-1)r_i^{p-1}}\quad[\mathrm{m^2\,s^{-2}}],
+$$
+$$
+\ddot x-2n\dot y=W_x,\qquad \ddot y+2n\dot x=W_y,\qquad \ddot z=W_z=-z\sum_i\frac{K_i}{r_i^{p+1}}\quad[\mathrm{m\,s^{-2}}],
+$$
+$$
+C=2W-(\dot x^2+\dot y^2+\dot z^2)\quad[\mathrm{m^2\,s^{-2}}].
+$$
+
+[FICTIONAL] C is constant for a coasting particle: multiply the three equations by ẋ, ẏ, ż and add; the Coriolis terms cancel. In inertial barycentric coordinates, for a binary in any orientation,
+
+$$
+C=-2\Phi-|\mathbf v|^2+2\,\mathbf n\cdot(\mathbf r\times\mathbf v)=-2\,(\epsilon-\mathbf n\cdot\mathbf h)\quad[\mathrm{m^2\,s^{-2}}],
+$$
+
+[FICTIONAL] where ε is the ship's inertial specific energy and **h** its specific angular momentum about the barycentre. Only the component of **h** along the binary's axis enters; the other two components are free. Thrust changes C at the rate $\dot C=-2\,\mathbf v_{\rm rot}\cdot\mathbf a_{\rm thrust}$ [m² s⁻³]. As in §3, C exists only for a circular binary.
+
+[FICTIONAL] **What C constrains.** Motion is possible only where 2W(x, y, z) ≥ C; the boundary is the zero-velocity surface.
+
+- W is largest in the plane and falls monotonically with |z| at fixed (x, y), towards ½n²(x²+y²). So the planar curve of §3 is the widest section of each allowed region near a body, and the equilibria, all in the plane, are still where the surfaces change shape: the critical values of C are those of the planar problem.
+- For C above the L1 value the surface around each body is a closed oval, closed above and below as well as sideways. A particle inside it cannot leave in any direction. Its height over the primary's centre solves $n^2x_1^2+2K_1/[(p-1)z^{p-1}]+2K_2/[(p-1)(d^2+z^2)^{(p-1)/2}]=C$, with d the separation and x₁ the primary's distance from the barycentre.
+- When C falls below a collinear value the neck there opens as a hole with extent in z as well as in y. A path through it need not lie in the plane.
+- Far from the plane the potential terms vanish and the condition becomes x² + y² ≥ C/n²: for any C > 0 the region inside a cylinder of radius √C/n about the binary's axis is forbidden at large |z|. These two funnels above and below the plane remain after the planar curves have vanished (C below the L4, L5 value, the whole plane accessible) and disappear only at C = 0.
+
+[FICTIONAL] **What C does not constrain.** It bounds a region; it does not say the region is filled. It fixes the speed in the rotating frame at each point, not its direction. Outside the cylinder there is no bound on |z| at all, and for C ≤ 0 there is no bound anywhere. It is the only integral: there is no separate conserved "vertical energy", since vertical and in-plane motion exchange energy at second order in z (§11.4 is the first-order statement), and neither the ship's inertial energy nor its angular momentum is separately constant. A particle in the plane with no vertical velocity stays in the plane whatever C is.
+
+[DEMONSTRATED: `python tools/physics/generate_vectors.py --3d --report`] At the Gravity range scale under the 2.5 law, 2W at L1, L2, L3 and L4/L5 is 5,468.3, 4,723.0, 4,001.6 and 3,395.8 m²/s² (Newton's law: 11,889.5, 11,101.2, 9,991.6 and 8,875.0). The cylinder radius at the L4 value is 5,897 km. The ship of the `binary-crossing-p2p5` vectors has C = 8,518.1, above the L1 value: it is confined to the primary's oval, whose height over the primary is 1,397 km, and in 20,000 s it reaches |z| = 365 km. The bound holds and is loose. In the reference runs C stayed constant to 8.8×10⁻⁸ m²/s² over 20,000 s (`--3d --check`).
+
+### 11.6 Rigid-body attitude in three dimensions
+
+[ASSUMED] Treat the ship as a rigid body with a constant inertia tensor J [kg m²] about its centre of mass, written in body axes. Its principal moments are I₁, I₂, I₃, about principal axes that a fixed rotation relates to the body axes (the contract's `Inertia { moments, axes }`). R(q) is the rotation matrix of the attitude, body to inertial. Propellant use and configuration changes alter J; the terms that a changing J adds are the ship model's business and are not derived here.
+
+[ASSUMED] **Kinematics.** A vector fixed in the body has inertial components $q\otimes\mathbf v_{\rm body}\otimes q^{*}$ and turns with the inertial angular velocity $q\otimes\boldsymbol\omega\otimes q^{*}$. Differentiating and using q ⊗ q* = 1 gives
+
+$$
+\dot q=\tfrac12\,q\otimes(0,\boldsymbol\omega)\quad[\mathrm{s^{-1}}],\qquad\text{equivalently}\quad \dot R=R\,[\boldsymbol\omega]_\times,
+$$
+
+[ASSUMED] with **ω** in the body frame. The exact flow keeps |q| = 1, because $d|q|^2/dt=|q|^2\,\mathrm{Re}(0,\boldsymbol\omega)=0$. For a pure yaw rate **ω** = (0, 0, ψ̇) from the identity the solution is q = (cos ½ψ, 0, 0, sin ½ψ), the planar attitude.
+
+[ASSUMED] **Dynamics.** The angular momentum about the centre of mass is J**ω** in body axes and **L** = R(q) J**ω** in inertial axes [kg m² s⁻¹]. Newton's second law for rotation, d**L**/dt = R **τ** with **τ** the torque in body axes [N m], gives with the kinematics above
+
+$$
+J\dot{\boldsymbol\omega}+\boldsymbol\omega\times J\boldsymbol\omega=\boldsymbol\tau\quad[\mathrm{N\,m}],
+$$
+
+[ASSUMED] which in the principal frame is Euler's equations:
+
+$$
+I_1\dot\omega_1=(I_2-I_3)\,\omega_2\omega_3+\tau_1,\qquad
+I_2\dot\omega_2=(I_3-I_1)\,\omega_3\omega_1+\tau_2,\qquad
+I_3\dot\omega_3=(I_1-I_2)\,\omega_1\omega_2+\tau_3 .
+$$
+
+[ASSUMED] **Conserved quantities without torque.** The rotational energy changes as $\dot T=\boldsymbol\omega\cdot\boldsymbol\tau$ and the inertial angular momentum as $\dot{\mathbf L}=R\boldsymbol\tau$, so with **τ** = 0:
+
+$$
+T=\tfrac12\,\boldsymbol\omega\cdot J\boldsymbol\omega=\tfrac12\sum_k I_k\omega_k^2\quad[\mathrm J],\qquad
+\mathbf L=R(q)\,J\boldsymbol\omega\quad[\mathrm{kg\,m^2\,s^{-1}}]
+$$
+
+[ASSUMED] are constant: one scalar and one inertial vector. In the body frame only the length of J**ω** is constant; the vector itself moves. **L** is the stricter check because it involves the attitude as well as the rates.
+
+[ASSUMED] **Closed form: a body symmetric about its long axis.** Let I₁ = I_a about body x and I₂ = I₃ = I_t. Euler's equations give ω_x constant and
+
+$$
+\omega_y+i\,\omega_z=\left(\omega_{y0}+i\,\omega_{z0}\right)e^{-i\lambda t},\qquad
+\lambda=\frac{I_t-I_a}{I_t}\,\omega_x\quad[\mathrm{rad\,s^{-1}}].
+$$
+
+[ASSUMED] The attitude is a steady precession about the fixed angular momentum composed with a steady spin about the body axis:
+
+$$
+q(t)=q\!\left(\hat{\mathbf L},\,\Omega_p t\right)\otimes q(0)\otimes q\!\left(\hat{\mathbf x},\,\lambda t\right),\qquad
+\Omega_p=\frac{|\mathbf L|}{I_t}\quad[\mathrm{rad\,s^{-1}}],
+$$
+
+[ASSUMED] where q(axis, angle) = (cos ½angle, sin ½angle · axis), $\hat{\mathbf L}$ is the inertial direction of the angular momentum and $\hat{\mathbf x}$ is the body axis in body coordinates. Proof: the body-frame rate of this product is $\Omega_p R^{T}\hat{\mathbf L}+\lambda\hat{\mathbf x}$, and $\Omega_pR^{T}\hat{\mathbf L}=J\boldsymbol\omega/I_t=(I_a\omega_x/I_t,\ \omega_y,\ \omega_z)$; adding λ to the first component gives **ω**. The body axis keeps a constant angle θ to **L**, cos θ = I_aω_x/|**L**|. Limits: with no transverse rate the product collapses to a spin at ω_x about the body axis (Ω_p + λ = ω_x); with I_a = I_t, λ = 0 and the body turns at constant **ω**.
+
+[ASSUMED] **A triaxial body.** Order the moments I₁ < I₂ < I₃ and count time from an instant when ω₂ = 0. If L² > 2T I₂ the rates are Jacobi elliptic functions,
+
+$$
+\omega_1=\omega_{1m}\,\mathrm{cn}(u,k),\quad \omega_2=\pm\,\omega_{2m}\,\mathrm{sn}(u,k),\quad \omega_3=\omega_{3m}\,\mathrm{dn}(u,k),\qquad
+u=t\sqrt{\frac{(I_3-I_2)(L^2-2TI_1)}{I_1I_2I_3}},
+$$
+$$
+k^2=\frac{(I_2-I_1)(2TI_3-L^2)}{(I_3-I_2)(L^2-2TI_1)},\qquad
+\omega_{2m}=\sqrt{\frac{2TI_3-L^2}{I_2(I_3-I_2)}},
+$$
+
+[ASSUMED] with ω₁m and ω₃m the values at that instant and the sign of ω₂ fixed by Euler's equation there. If L² < 2T I₂, exchange the indices 1 and 3. The rate about the axis that carries dn never changes sign; the body circulates about that axis. L² = 2T I₂ is the separatrix. The attitude has no elementary closed form and is integrated numerically.
+
+[ASSUMED] **Stability of rotation about a principal axis.** Spin at ω₀ about axis i and disturb the other two rates slightly. Linearising Euler's equations gives, for either of them,
+
+$$
+\ddot\omega_j=-\,\omega_0^2\,\frac{(I_i-I_j)(I_i-I_k)}{I_jI_k}\;\omega_j\quad[\mathrm{rad\,s^{-3}}].
+$$
+
+[ASSUMED] About the axis of greatest or least moment the coefficient is positive and the disturbance oscillates: neutrally stable. About the intermediate axis it is negative and the disturbance grows exponentially: unstable. This is a property of a rigid body; internal dissipation (sloshing propellant, flexing arrays), which this model does not have, also destabilises spin about the axis of least moment.
+
+[ASSUMED] **Numbers for a ship of this size.** With roll, pitch and yaw moments of 7×10⁴, 5.5×10⁵ and 4.5×10⁵ kg m² (the triaxial reference body; 1C and the ship model own the real values) and ω₀ = 0.04 rad/s: roll (least) is stable, the disturbance oscillating at 0.858 ω₀ = 0.0343 rad/s; pitch (greatest) is stable at 1.234 ω₀ = 0.0494 rad/s; **yaw is the intermediate axis and is unstable**, growing at 0.993 ω₀ = 0.0397 s⁻¹, an e-folding time of 25 s. The planar game turned the ship only in yaw. In three dimensions a ship whose yaw moment lies between its roll and pitch moments cannot hold a steady free yaw rotation without control; with pitch equal to yaw the rotation is neutral. For the symmetric reference body (6×10⁴, 5×10⁵, 5×10⁵ kg m²) with **ω** = (0.04, 0.012, −0.009) rad/s: |**L**| = 7,874.6 kg m²/s, T = 104.25 J, Ω_p = 0.015749 rad/s (one precession turn in 399 s), λ = 0.0352 rad/s and θ = 72.3°.
+
+[FICTIONAL] **A torque the vectors leave out.** Gravity pulls harder on the near side of an extended ship. Integrating the tidal acceleration of §3 over the ship gives the gravity-gradient torque about the centre of mass,
+
+$$
+\boldsymbol\tau_{gg}=(p+1)\frac{K}{r^{p+1}}\;\hat{\mathbf r}\times J\hat{\mathbf r}\quad[\mathrm{N\,m}],
+$$
+
+[FICTIONAL] with $\hat{\mathbf r}$ the direction from the source to the ship in body axes; for p = 2 it is the classical 3(GM/r³) form. Its largest value is (p+1)(K/r^{p+1})(I_max − I_min)/2: for the triaxial reference body about the primary, 0.21 N m at 400 km and 0.008 N m at r₀ under the 2.5 law (0.11 and 0.007 N m under Newton's law). [ASSUMED] The reference vectors contain no gravity-gradient torque and the contracts do not ask for one. It is small beside the tens of newton-metres used here as a control torque, but over 1,000 s at 400 km it can add up to 200 N m s, about 4×10⁻⁴ rad/s of pitch or yaw rate. Whether the game includes it is the integrator's decision.
+
+[ASSUMED] **What this asks of an integrator.** The game's attitude scheme is another thread's choice; these are the properties it should be measured against, with the game's own step and rates up to about 0.05 rad/s.
+
+- *Norm.* The exact kinematics keep |q| = 1. A step that adds q̇Δt leaves the unit sphere at the order of its truncation error, and a non-unit q scales every rotated vector. Either compose each step as a multiplication by a unit quaternion (the exponential of a rotation vector), which keeps the norm to rounding, or renormalise and say so. Report the largest | |q| − 1 |.
+- *Energy and momentum.* With all torques off, report the drift of T, of |**L**| and of the direction of **L** = R(q)J**ω** over the vector cases' 600 s and over a longer run, and whether the error grows steadily or stays bounded. A scheme can hold T and the body-frame |J**ω**| well and still let the inertial **L** wander, because **L** also carries the attitude error.
+- *Order.* Halving the step should divide the attitude and rate errors by 2 to the scheme's order until rounding dominates.
+- *Exact cases.* A constant torque about a principal axis from rest (`spin-constant-torque`) and a pure yaw rotation should be reproduced to rounding by any scheme that is exact for constant angular acceleration, as 2A's planar scheme was.
+- *Step against rate.* At 0.05 rad/s and a 1 s step the ship turns 0.05 rad per step. [DEMONSTRATED: `python tools/physics/generate_vectors.py --3d --consumer-probe`] A plain second-order probe (explicit midpoint for the rates, exponential update for the attitude; not the game's scheme) at 1 s was 4.5×10⁻³ rad off after 600 s on `spin-axisymmetric` and 4.8×10⁻⁴ rad on `spin-triaxial`, with T off by about 1×10⁻⁴ of its value and **L** by 3–6×10⁻⁴ of its length; errors fell about 64-fold per eightfold step reduction, and the probe met every tolerance of the vector file at 1/64 s. A burn of Δv made with an attitude error δθ is off by about Δv·δθ across the thrust direction.
+- *Scope.* Control torques change T and **L** by design. Test the invariants with actuators off, and test controlled motion against the kinematics and the torque law separately.
+
+### 11.7 Three-dimensional reference vectors and verification
+
+[ASSUMED] [physics-3d.json](../../tests/vectors/physics-3d.json) holds twelve cases in the planar file's schema (version, units, conventions, cases with `law`, `initial` and `expect` entries of `quantity`, `at_t`, `value`, `tolerance`, `unit`) with three-component vectors. [tools/physics/README.md](../../tools/physics/README.md) defines every quantity and convention. The values come from a reference written without sight of the TypeScript simulation. The planar file is untouched and still checks byte for byte.
+
+| Case | What it is | Checkpoints (s) | Tolerances a tested implementation is asked to meet |
+|---|---|---|---|
+| `inclined-single-p2`, `-p2p5` | The planar eccentric start rotated to inclination 50°, node 35°, in-plane turn 25°; fixed source | 0; 1,000; 5,000; 10,000; 20,000 | position 0.1 m; velocity 10⁻⁵ m/s; energy 2×10⁻³ m²/s²; **h** vector 10⁻³ m²/s; orbit normal 10⁻¹⁰ |
+| `binary-crossing-p2`, `-p2p5` | Binary in the x–y plane; the ship starts 160 km above it and crosses it twice (at 1,721 and 18,154 s for p = 2; 1,709 and 9,563 s for p = 2.5), passing 584 km and 387 km from the primary | same | ship 1 m and 2×10⁻⁴ m/s; bodies 0.1 m and 10⁻⁵ m/s; binary energy 2×10⁻³ m²/s²; binary angular momentum vector 10⁻³ m²/s; barycentre 10⁻⁵ m; barycentric velocity 10⁻¹⁰ m/s; Jacobi constant 2×10⁻² m²/s² |
+| `binary-inclined-p2`, `-p2p5` | The planar binary case, bodies and ship, rotated as one: binary plane inclined 40°, node 110°, in-plane turn −35° | same | as the planar file: 0.1 m and 10⁻⁵ m/s for ship and bodies; invariants as above with the Jacobi constant at 2×10⁻³ m²/s² |
+| `nodal-precession-p2`, `-p2p5` | Binary in the x–y plane; ship started on the unperturbed circle of radius r₀ about the primary, inclined 30°, node 40° | 0; 20,000; 200,000; 10⁶; 2×10⁶ | ship 5 m and 5×10⁻⁴ m/s; bodies and invariants as above (Jacobi 2×10⁻³); orbit normal about the primary 10⁻⁷; node longitude and inclination 10⁻⁷ rad; mean node rate equal to the first-order formula within 10 % |
+| `spin-axisymmetric` | Torque-free, moments (6×10⁴, 5×10⁵, 5×10⁵) kg m², **ω** = (0.04, 0.012, −0.009) rad/s; closed form | 0; 10; 50; 100; 300; 600 | attitude 10⁻⁵ per quaternion component; body rates 10⁻⁷ rad/s; rotational energy 10⁻⁴ J; inertial angular momentum 10⁻² kg m²/s |
+| `spin-triaxial` | Torque-free, moments (7×10⁴, 5.5×10⁵, 4.5×10⁵) kg m², tumbling near the unstable yaw axis (k² = 0.919); numerical | same | same |
+| `spin-triaxial-tilted-axes` | The same motion for a body whose principal frame is turned 0.35 rad from its body frame, so J is not diagonal in body axes | same | same |
+| `spin-constant-torque` | From rest, 40 N m about the pitch principal axis; closed form | same | same; energy and momentum follow the closed form, they are not invariants here |
+
+[DEMONSTRATED: `python tools/physics/generate_vectors.py --3d --check`] **Audit of the reference** (the worst difference found; every limit is far inside the consumer tolerance):
+
+| Check | Worst difference | Limit |
+|---|---:|---:|
+| 20,000 s orbit cases, emitted run against a tighter run (tolerances ÷100, half the maximum step) | 6.5×10⁻⁶ m; 1.4×10⁻⁹ m/s | 10⁻⁴ m; 10⁻⁸ m/s |
+| 20,000 s orbit cases against a separately coded pair-loop force with fixed-step RK4 (5 s) | 9.6×10⁻⁶ m; 2.0×10⁻⁹ m/s | same |
+| 2×10⁶ s case, emitted run against half its maximum step | 6.9×10⁻⁵ m; 8.0×10⁻⁹ m/s | 10⁻³ m; 10⁻⁷ m/s |
+| 2×10⁶ s case against the separately coded RK4 (10 s) | 8.4×10⁻⁵ m; 9.6×10⁻⁹ m/s | same |
+| Rotation invariance: rotated planar single and binary references, and a rotated copy of the crossing case | 2.6×10⁻⁶ m; 4.4×10⁻¹⁰ m/s | 10⁻⁴ m; 10⁻⁸ m/s |
+| Rotated Kepler ellipse, p = 2 | 5.5×10⁻⁷ m; 4.1×10⁻¹¹ m/s | same |
+| Binary bodies against exact inclined circles | 7.1×10⁻⁷ m; 1.0×10⁻¹¹ m/s | same (10⁻³ m; 10⁻⁷ m/s at 2×10⁶ s) |
+| Closed forms (axisymmetric precession, constant torque) against the numerical rigid-body reference | 3.2×10⁻¹³ in attitude; 2.6×10⁻¹⁵ rad/s | 10⁻¹⁰; 10⁻¹² rad/s |
+| Rigid-body reference against a tighter run | 3.0×10⁻¹³; 3.4×10⁻¹⁵ rad/s | same |
+| Rigid-body reference against a different formulation (rotation matrix and inertial angular momentum, no quaternion, no Euler equations; RK4 at 0.05 s; includes the non-diagonal tensor) | 1.5×10⁻¹² ; 3.0×10⁻¹⁴ rad/s | same |
+| Triaxial body rates against Jacobi elliptic functions | 3.5×10⁻¹⁵ rad/s | 10⁻¹² rad/s |
+| Disturbance about each principal axis against the linear rate after 100 s | agrees to six figures (−0.957588, 0.223417, 26.606279) | 10⁻⁴ relative |
+
+[DEMONSTRATED: `python tools/physics/generate_vectors.py --3d --consumer-probe`] A separate probe reads the JSON file alone, as a consumer would, and flies every orbit case with fixed-step velocity Verlet at 1 s. It met every orbit tolerance: worst ship error 9 mm in `inclined-single`, 0.32 m in `binary-crossing-p2p5` (the close pass), 0.13 mm in `binary-inclined`, and 1.2 m after 2×10⁶ s in `nodal-precession-p2p5`, with the node longitude within 3×10⁻⁹ rad. This shows the file is sufficient and the tolerances are attainable at the game's step by a second-order symplectic scheme; it is not a test of the game.
+
+[ASSUMED] **Limits.** The orbit vectors contain no thrust, contact, softening or field. The rigid-body vectors contain no gravity, no gravity-gradient torque, no changing mass properties and no actuators. The rigid-body tolerances are an accuracy bar (about 4 arcseconds of attitude after 600 s), not a statement about a 1 s step. The `nodal-precession` formula entry tests a first-order formula at a/D = 1/4; its 10 % tolerance is the formula's error, not the reference's (the reference end-to-end rates are 1.050 and 1.016 of the formula, and the least-squares rates 1.060 and 1.072). The node-rate, belt and commensurability studies are single-phase runs of six to eight binary periods.
+
+[ASSUMED] **Open points for the integrator.** (1) Whether the game applies the gravity-gradient torque. (2) Whether the ship's yaw moment lies between its roll and pitch moments; if it does, free yaw rotation is unstable in three dimensions and the attitude controller has to hold it. (3) The outer edge of the Gravity range's belt about Beta needs a bound-orbit test under the law in force; 900 km did not stay bound under either law here. (4) The bibliography has no source for rigid-body dynamics or for secular perturbation theory; a public reference for each would let these paragraphs carry [ESTABLISHED] labels. (5) The lattice traversal estimate of §9 was planar and needs redoing by the lattice's owner. No files under `src/`, the creative brief or the decisions log were changed by this section's author.

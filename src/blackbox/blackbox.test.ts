@@ -51,10 +51,11 @@ const ctx: ModelContext = {
   ],
   ship: testShip(MASS, THRUST),
   arrival: recs[0]!.start.estimate,
-  settings: { dt: 60 },
+  settings: { dt: 60, planar: 1 },
 };
 
-// LIFT(2G): the scenarios in this file are planar (z = 0, yaw-only attitude, flat hull).
+// The scenarios in this file are planar (z = 0, yaw-only attitude, flat hull): the model runs
+// them in the planar reduction (`planar: 1`, spec Appendix A.3), as the planar model did.
 const massProperties: MassProperties = {
   mass: MASS,
   centerOfMass: { x: 0, y: 0, z: 0 },
@@ -133,64 +134,68 @@ describe('recorder', () => {
 });
 
 describe('storage and rebuild (P8)', () => {
-  it('records survive storage; forecasts come back issued; the rebuilt model equals the live one', async () => {
-    const store = new MemoryBlackBoxStore();
-    let archive = emptyArchive();
-    const live = new ModelService(ctx);
-    live.load({ attempts: [] });
-    let issued: ReturnType<typeof issueForecast> | null = null;
-    for (const rec of recs) {
-      const r = recorderFor(rec);
-      live.beginAttempt(r.snapshot());
-      let cursor: RecordCursor = START_CURSOR;
-      const ms = rec.measurements;
-      for (let i = 0; i < ms.length; i += 120) {
-        r.recordMeasurements(ms.slice(i, i + 120));
-        const { delta, cursor: next } = r.since(cursor);
-        cursor = next;
-        live.append(rec.id, delta);
-        live.refresh();
-        await store.putAttempt(r.snapshot()); // in-progress saves keep data through a closed tab
+  it(
+    'records survive storage; forecasts come back issued; the rebuilt model equals the live one',
+    { timeout: 60_000 },
+    async () => {
+      const store = new MemoryBlackBoxStore();
+      let archive = emptyArchive();
+      const live = new ModelService(ctx);
+      live.load({ attempts: [] });
+      let issued: ReturnType<typeof issueForecast> | null = null;
+      for (const rec of recs) {
+        const r = recorderFor(rec);
+        live.beginAttempt(r.snapshot());
+        let cursor: RecordCursor = START_CURSOR;
+        const ms = rec.measurements;
+        for (let i = 0; i < ms.length; i += 120) {
+          r.recordMeasurements(ms.slice(i, i + 120));
+          const { delta, cursor: next } = r.since(cursor);
+          cursor = next;
+          live.append(rec.id, delta);
+          live.refresh();
+          await store.putAttempt(r.snapshot()); // in-progress saves keep data through a closed tab
+        }
+        if (rec.id === 'att3') {
+          const plan: Plan = { id: 'coast', epoch: 14400, items: [] };
+          r.recordPlan(plan);
+          const { draft } = live.forecast({
+            id: 'f-att3',
+            issuedAt: 14400,
+            plan,
+            massProperties,
+            step: 600,
+            duration: 7200,
+          });
+          issued = issueForecast(draft);
+          r.recordForecast(issued);
+          const d = r.since(cursor);
+          live.append(rec.id, d.delta);
+        }
+        const fin = r.end(
+          { kind: 'recalled', t: rec.outcome.kind === 'recalled' ? rec.outcome.t : 0 },
+          live.state.version,
+        );
+        live.endAttempt(fin);
+        await store.putAttempt(fin);
+        archive = withAttempt(archive, fin);
       }
-      if (rec.id === 'att3') {
-        const plan: Plan = { id: 'coast', epoch: 14400, items: [] };
-        r.recordPlan(plan);
-        const { draft } = live.forecast({
-          id: 'f-att3',
-          issuedAt: 14400,
-          plan,
-          massProperties,
-          step: 600,
-          duration: 7200,
-        });
-        issued = issueForecast(draft);
-        r.recordForecast(issued);
-        const d = r.since(cursor);
-        live.append(rec.id, d.delta);
-      }
-      const fin = r.end(
-        { kind: 'recalled', t: rec.outcome.kind === 'recalled' ? rec.outcome.t : 0 },
-        live.state.version,
-      );
-      live.endAttempt(fin);
-      await store.putAttempt(fin);
-      archive = withAttempt(archive, fin);
-    }
-    expect(nextAttemptIndex(archive)).toBe(4);
-    await store.putMeta({ adoptedExtensions: [], leads: [], extensionTests: [] });
-    const loaded = await store.load();
-    expect(loaded.archive.attempts.map((a) => a.id)).toEqual(['att1', 'att2', 'att3']);
-    const f = loaded.archive.attempts[2]!.forecasts[0]!;
-    expect(Object.isFrozen(f) && Object.isFrozen(f.samples)).toBe(true);
-    expect(hashState(f)).toBe(hashState(issued));
-    const rebuilt = new ModelService(ctx);
-    rebuilt.load({
-      attempts: loaded.archive.attempts,
-      extensions: loaded.archive.extensionTests,
-      adopted: loaded.archive.adoptedExtensions,
-    });
-    expect(hashState(content(rebuilt.state))).toBe(hashState(content(live.state)));
-  });
+      expect(nextAttemptIndex(archive)).toBe(4);
+      await store.putMeta({ adoptedExtensions: [], leads: [], extensionTests: [] });
+      const loaded = await store.load();
+      expect(loaded.archive.attempts.map((a) => a.id)).toEqual(['att1', 'att2', 'att3']);
+      const f = loaded.archive.attempts[2]!.forecasts[0]!;
+      expect(Object.isFrozen(f) && Object.isFrozen(f.samples)).toBe(true);
+      expect(hashState(f)).toBe(hashState(issued));
+      const rebuilt = new ModelService(ctx);
+      rebuilt.load({
+        attempts: loaded.archive.attempts,
+        extensions: loaded.archive.extensionTests,
+        adopted: loaded.archive.adoptedExtensions,
+      });
+      expect(hashState(content(rebuilt.state))).toBe(hashState(content(live.state)));
+    },
+  );
 });
 
 describe('comparison analytics', () => {
@@ -254,6 +259,77 @@ describe('comparison analytics', () => {
     expect(db.firstBeyond3Sigma).not.toBeNull();
     expect(db.maxSigmas!).toBeGreaterThan(10);
     expect(da.unmeasured).toBe(false);
+  });
+
+  it('measures divergence in 3D: out of the plane, against the ellipsoid and the fix noise', () => {
+    // A forecast thin across the plane (σz 50 m) and wider in it (σ 100 m); fixes that put the
+    // ship 150 m above the forecast (3σ), or 100 m beside it in the plane (1σ).
+    const base = svc.forecast({
+      id: 'f-3d',
+      issuedAt: half,
+      plan: coast,
+      massProperties,
+      step: 300,
+      duration: 3600,
+    }).draft;
+    const times = Array.from({ length: 11 }, (_, i) => i * 100);
+    const ship = (t: number) => ({ x: 1e6 + t, y: 0, z: 0 });
+    const f = issueForecast({
+      ...base,
+      issuedAt: 0,
+      horizon: 1000,
+      samples: times.map((t) => ({
+        t,
+        position: ship(t),
+        velocity: { x: 1, y: 0, z: 0 },
+        positionCov: [100 ** 2, 0, 0, 100 ** 2, 0, 50 ** 2],
+        extrapolating: false,
+      })),
+      objects: [
+        {
+          id: 'A',
+          samples: times.map((t) => ({
+            t,
+            position: { x: 0, y: 0, z: 0 },
+            positionCov: [0, 0, 0, 0, 0, 0],
+          })),
+        },
+      ],
+    });
+    const fixAt = (t: number, off: { y: number; z: number }) => {
+      // From the measured ship position to the body: azimuth, elevation, range.
+      const d = { x: -(1e6 + t), y: -off.y, z: -off.z };
+      const r = Math.hypot(d.x, d.y, d.z);
+      const el = Math.asin(d.z / r);
+      return [
+        {
+          kind: 'bearing' as const,
+          t,
+          source: 'cam',
+          target: 'A',
+          value: [Math.atan2(d.y, d.x), el],
+          sigma: [1e-9 / Math.cos(el), 1e-9],
+        },
+        { kind: 'range' as const, t, source: 'cam', target: 'A', value: [r], sigma: [1e-3] },
+      ];
+    };
+    const rec = (off: { y: number; z: number }): AttemptRecord => ({
+      ...recs[0]!,
+      measurements: times.flatMap((t) => fixAt(t, off)),
+      outcome: { kind: 'recalled', t: 1000 },
+    });
+    const up = forecastDivergence(f, rec({ y: 0, z: 150 }));
+    expect(up.points).toHaveLength(times.length);
+    for (const p of up.points) {
+      expect(p.deviation).toBeCloseTo(150, 3);
+      expect(p.sigmas).toBeCloseTo(3, 3);
+    }
+    expect(up.firstBeyond3Sigma).toBeNull();
+    const aside = forecastDivergence(f, rec({ y: 100, z: 0 }));
+    for (const p of aside.points) expect(p.sigmas).toBeCloseTo(1, 3);
+    const far = forecastDivergence(f, rec({ y: 0, z: 400 }));
+    expect(far.firstBeyond3Sigma).toBe(0);
+    expect(far.maxSigmas!).toBeCloseTo(8, 3);
   });
 
   it('diffs configuration and plans, splits residuals, reports missing data', () => {

@@ -18,7 +18,11 @@ describe('Gravity range with the real model', () => {
     'learns the distance law from two dives and forecasts a third it has never flown',
     { timeout: 300_000 },
     async () => {
-      const setup = createGravityRange();
+      // The dives at Alpha are judged over one low point each, so this test keeps the 16 h
+      // look-ahead it was written with. The encounter's own is 48 h, for the slingshot, and a
+      // forecast that long reports its closest approach over several later low points.
+      const range = createGravityRange();
+      const setup = { ...range, play: { ...range.play, forecastSpan: 16 * 3600 } };
       // In-thread client: the same service the browser runs in a Web Worker.
       const model = createModelBridge(createModelClient({ worker: false }), {
         referenceRadius: LAW.referenceRadius,
@@ -36,11 +40,11 @@ describe('Gravity range with the real model', () => {
         const world = session.truth().sim.world;
         const alpha = world.bodies[0]!;
         const p = world.ship.kinematics.position;
-        return Math.hypot(p.x - alpha.position.x, p.y - alpha.position.y);
+        return Math.hypot(p.x - alpha.position.x, p.y - alpha.position.y, p.z - alpha.position.z);
       };
       const dive = (deltaV: number) => ({
         items: burnSteps({
-          at: 400,
+          at: 600,
           duration: burnDuration(
             session.ship,
             session.snapshot().world.ship.massProperties.mass,
@@ -66,22 +70,60 @@ describe('Gravity range with the real model', () => {
           sigma: alpha.sigma / 1e3,
         };
       };
-      /** Commit a dive 300 s after arrival and fly it; returns the forecast and the true low point. */
+      /**
+       * Commit a dive 300 s after arrival and fly it; returns the forecast, the true low point
+       * and the true distance from Alpha every 100 s.
+       */
       const fly = async (deltaV: number) => {
         session.stepTicks(300);
         const forecast = await session.commit(dive(deltaV));
         let low = Infinity;
         let when = 0;
+        const flown: [number, number][] = [];
         for (let i = 0; i < 300; i++) {
           session.stepTicks(100);
           const r = trueRange();
+          flown.push([session.status().t, r]);
           if (r < low) {
             low = r;
             when = session.status().t;
           }
         }
         await model.settled();
-        return { forecast, low: low / 1e3, when };
+        return { forecast, low: low / 1e3, when, flown };
+      };
+      /**
+       * Like for like: the forecast's distance from Alpha at time `t` against the true distance
+       * at the same moment, km, with the forecast's own one-sigma position uncertainty there.
+       */
+      const against = (
+        f: Forecast,
+        flown: readonly (readonly [number, number])[],
+        t: number,
+      ): { miss: number; sigma: number } => {
+        const nearest = <T>(items: readonly T[], time: (item: T) => number, to: number): T =>
+          items.reduce((best, item) =>
+            Math.abs(time(item) - to) < Math.abs(time(best) - to) ? item : best,
+          );
+        const sample = nearest(f.samples, (q) => q.t, t);
+        const alpha = nearest(
+          f.objects.find((o) => o.id === 'alpha')!.samples,
+          (q) => q.t,
+          sample.t,
+        );
+        const truth = nearest(flown, (q) => q[0], sample.t);
+        const range = Math.hypot(
+          sample.position.x - alpha.position.x,
+          sample.position.y - alpha.position.y,
+          sample.position.z - alpha.position.z,
+        );
+        return {
+          miss: Math.abs(range - truth[1]) / 1e3,
+          sigma:
+            Math.sqrt(
+              Math.max(sample.positionCov[0], sample.positionCov[3], sample.positionCov[5]),
+            ) / 1e3,
+        };
       };
 
       // Attempt 1. The model is Newtonian and has flown nowhere: its forecast of a dive leaves
@@ -98,13 +140,22 @@ describe('Gravity range with the real model', () => {
       session.recall();
 
       // Attempt 2: a shallower dive, inside distances attempt 1 sampled. The calibration table
-      // carries it (A4): nothing is extrapolated and the forecast low point is right.
+      // carries it (A4): nothing is extrapolated, and the ship stays inside the forecast's
+      // envelope all the way to where the forecast ends. Judged like for like: the forecast's
+      // distance from Alpha against the true distance at the same moment. (2G: this used to
+      // compare the forecast's last sample with the true distance 6,000 s later, which agreed
+      // by the accident of where the forecast ended; see the 2G handoff.)
       const second = await fly(5);
       expect(second.forecast.modelVersion).toBe(1);
       expect(second.forecast.samples.some((s) => s.extrapolating)).toBe(false);
-      const shallow = lowest(second.forecast);
-      expect(Math.abs(shallow.km - second.low)).toBeLessThan(2 * shallow.sigma);
-      expect(Math.abs(shallow.km - second.low)).toBeLessThan(30);
+      const halfway = against(second.forecast, second.flown, 15_000);
+      expect(halfway.miss).toBeLessThan(30);
+      expect(halfway.miss).toBeLessThan(2 * halfway.sigma);
+      const end = against(second.forecast, second.flown, second.forecast.samples.at(-1)!.t);
+      expect(end.miss).toBeLessThan(2 * end.sigma);
+      // And it follows the dive most of the way down before it ends: below 760 km of the
+      // 1,000 km it started from (the true low point, 695 km, comes after the 8 h flown here).
+      expect(lowest(second.forecast).km).toBeLessThan(760);
       session.recall();
       await model.settled();
 

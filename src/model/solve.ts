@@ -1,22 +1,28 @@
 /**
- * Tier G solver (1G spec §4): batch weighted least squares with priors, solved by
+ * Tier G solver (1G spec revision 3, §4): batch weighted least squares with priors, solved by
  * Levenberg–Marquardt on scaled parameters; covariance, effective parameter count and
- * whitened residuals at the solution. Jacobians are central finite differences
- * (step 1e-3 × scale, §4.3). Deterministic.
+ * whitened residuals at the solution. Jacobians are central finite differences of the whitened
+ * residuals (step 1e-3 × scale, §4.3). Deterministic.
+ *
+ * A fix gives up to three rows (east, north, range) and an accelerometer sample up to three;
+ * m, p_eff and ν count the rows that are used.
  */
 
 import {
+  MIN_ARC_FIXES,
   compileArc,
-  flatten,
+  planMeasurements,
   poweredAt,
-  predict,
-  timeIndex,
+  rangeFixTimes,
+  residuals,
+  simulate,
   usable,
-  wrap,
   type Arc,
   type CompiledArc,
   type EstMeasurement,
+  type MeasPlan,
   type Structure,
+  type Trajectory,
 } from './dynamics.ts';
 import { inverse, solve, zeros, type Matrix } from './linalg.ts';
 
@@ -43,10 +49,28 @@ export type ResidualKind = 'bearing' | 'range' | 'accel' | 'relpos';
 export interface ResidualTag {
   readonly arc: string;
   readonly t: number;
+  /** 'bearing': component 0 is the east (azimuth) row, 1 the north (elevation) row. */
   readonly kind: ResidualKind;
   readonly target: string | undefined;
   readonly component: number;
   readonly powered: boolean;
+}
+
+/** The direction a residual is shown in (§9.1). */
+export type ResidualDirection = 'along' | 'normal' | 'range' | 'accel' | 'relpos';
+
+/**
+ * A whitened residual by direction (§9.1): a fix's bearing 2-vector resolved along the apparent
+ * motion of the line of sight (`along`: in the orbit plane, along the track) and across it
+ * (`normal`: out of the orbit plane); `range` is along the line of sight.
+ */
+export interface DirectedResidual {
+  readonly arc: string;
+  readonly t: number;
+  readonly direction: ResidualDirection;
+  readonly target: string | undefined;
+  readonly powered: boolean;
+  readonly value: number;
 }
 
 export interface FitResult {
@@ -62,9 +86,11 @@ export interface FitResult {
   readonly pEff: number;
   readonly iterations: number;
   readonly converged: boolean;
-  /** Whitened residuals (z − h)/σ. */
+  /** Whitened residuals (z − h)/σ, one per used row. */
   readonly resid: Float64Array;
   readonly residTags: readonly ResidualTag[];
+  /** The same residuals by direction (§9.1). */
+  readonly directed: readonly DirectedResidual[];
 }
 
 export const fitNu = (f: FitResult) => f.m - f.pEff;
@@ -98,10 +124,7 @@ interface Block {
   readonly arc: Arc;
   readonly ca: CompiledArc;
   readonly meas: readonly EstMeasurement[];
-  readonly ti: { times: number[]; at: Int32Array };
-  readonly z: Float64Array;
-  readonly s: Float64Array;
-  readonly isAngle: Uint8Array;
+  readonly plan: MeasPlan;
   /** Parameter indices this block depends on (globals and its own arc). */
   readonly rel: readonly number[];
   readonly tags: readonly ResidualTag[];
@@ -119,8 +142,10 @@ export interface SolverOptions {
   readonly tolerance?: number;
 }
 
+const NOT_FINITE = 'fit: a measurement or a prediction is not a finite number';
+
 function tagKind(m: EstMeasurement, c: number): ResidualKind {
-  if (m.kind === 'opnav') return c === 0 ? 'bearing' : 'range';
+  if (m.kind === 'opnav') return c < 2 ? 'bearing' : 'range';
   if (m.kind === 'range') return 'range';
   if (m.kind === 'accel') return 'accel';
   return 'relpos';
@@ -154,12 +179,13 @@ export class Problem {
       const tmax = opts.tmax?.get(arc.id);
       const meas = arc.meas.filter((q) => usable(st, q) && (tmax === undefined || q.t <= tmax));
       if (meas.length === 0) continue;
-      const fl = flatten(meas);
+      const plan = planMeasurements(meas);
+      if (plan.m === 0) continue;
       const rel: number[] = [];
       params.forEach((p, i) => {
         if (p.group === 'global' || p.group === arc.id) rel.push(i);
       });
-      const tags = fl.meta.map(([mi, c]) => {
+      const tags = plan.meta.map(([mi, c]) => {
         const q = meas[mi]!;
         return {
           arc: arc.id,
@@ -170,70 +196,154 @@ export class Problem {
           powered: poweredAt(arc.commands, q.t),
         };
       });
-      this.blocks.push({
-        arc,
-        ca: compileArc(st, arc, this.idx),
-        meas,
-        ti: timeIndex(meas),
-        z: fl.z,
-        s: fl.s,
-        isAngle: fl.isAngle,
-        rel,
-        tags,
-      });
-      m += fl.z.length;
+      this.blocks.push({ arc, ca: compileArc(st, arc, this.idx), meas, plan, rel, tags });
+      m += plan.m;
     }
     this.m = m;
   }
 
-  private whiten(b: Block, pred: Float64Array, out: Float64Array, off: number) {
-    for (let i = 0; i < b.z.length; i++) {
-      let r = b.z[i]! - pred[i]!;
-      if (b.isAngle[i]) r = wrap(r);
-      out[off + i] = r / b.s[i]!;
-    }
+  private trajectory(b: Block, x: ArrayLike<number>): Trajectory | null {
+    return b.plan.needsTrajectory ? simulate(b.ca, x, b.plan.ti.times, this.dt) : null;
   }
 
   residual(x: Float64Array): Float64Array {
     const out = new Float64Array(this.m);
     let off = 0;
     for (const b of this.blocks) {
-      const pred = predict(b.ca, x, b.meas, b.ti, this.dt);
-      this.whiten(b, pred, out, off);
-      off += b.z.length;
+      out.set(residuals(b.ca, x, b.plan, this.dt), off);
+      off += b.plan.m;
     }
     return out;
   }
 
-  /** Whitened residual and Jacobian dh/dx / σ (m × p, row-major). */
+  /**
+   * Whitened residual r and Jacobian J = −dr/dx (m × p, row-major), by central differences of
+   * the whitened residuals, so that H = JᵀJ and g = Jᵀr.
+   *
+   * Three savings, none of which changes what is computed: a parameter the arc does not depend
+   * on gives a zero column; one that enters only the measurement equations (camera
+   * misalignment, accelerometer scale) reuses the trajectory; and parameters that only ever
+   * appear added together (an arrival value and its per-arc deviation, §3.7) share one column.
+   */
   residualAndJacobian(x: Float64Array): { r: Float64Array; J: Matrix } {
     const p = x.length;
     const r = new Float64Array(this.m);
     const J = zeros(this.m, p);
     let off = 0;
     const xp = new Float64Array(x);
-    const plus = new Float64Array(this.m);
-    const minus = new Float64Array(this.m);
     for (const b of this.blocks) {
-      const nz = b.z.length;
-      const pred = predict(b.ca, x, b.meas, b.ti, this.dt);
-      this.whiten(b, pred, r, off);
+      const nz = b.plan.m;
+      const base = this.trajectory(b, x);
+      r.set(residuals(b.ca, x, b.plan, this.dt, undefined, base), off);
+      const plus = new Float64Array(nz);
+      const minus = new Float64Array(nz);
+      const done = new Set<number>();
       for (const k of b.rel) {
+        const moves = b.ca.moves.has(k);
+        if (!moves && !b.ca.measures.has(k)) continue;
+        const twin = b.ca.sameAs.get(k);
+        if (twin !== undefined && done.has(twin)) {
+          for (let i = 0; i < nz; i++) J.data[(off + i) * p + k] = J.data[(off + i) * p + twin]!;
+          done.add(k);
+          continue;
+        }
         const step = this.h * this.scale[k]!;
         xp[k] = x[k]! + step;
-        predict(b.ca, xp, b.meas, b.ti, this.dt, plus);
+        residuals(b.ca, xp, b.plan, this.dt, plus, moves ? null : base);
         xp[k] = x[k]! - step;
-        predict(b.ca, xp, b.meas, b.ti, this.dt, minus);
+        residuals(b.ca, xp, b.plan, this.dt, minus, moves ? null : base);
         xp[k] = x[k]!;
-        for (let i = 0; i < nz; i++) {
-          let d = plus[i]! - minus[i]!;
-          if (b.isAngle[i]) d = wrap(d);
-          J.data[(off + i) * p + k] = d / (2 * step) / b.s[i]!;
-        }
+        for (let i = 0; i < nz; i++)
+          J.data[(off + i) * p + k] = (minus[i]! - plus[i]!) / (2 * step);
+        done.add(k);
       }
       off += nz;
     }
     return { r, J };
+  }
+
+  /**
+   * §9.1: the residuals by direction, at x. A fix's two bearing rows are a 2-vector in the
+   * tangent plane at the measured direction; it is resolved along the apparent motion of the
+   * line of sight and across it, each whitened by the sigma in its own direction. A fix with one
+   * bearing row (the planar reduction) gives that row as `along`.
+   */
+  directed(x: ArrayLike<number>, resid: Float64Array): DirectedResidual[] {
+    const out: DirectedResidual[] = [];
+    let off = 0;
+    for (const b of this.blocks) {
+      const plan = b.plan;
+      const traj = this.trajectory(b, x);
+      const ship = 3 * b.ca.nb;
+      for (let i = 0; i < b.meas.length; i++) {
+        const q = b.meas[i]!;
+        const kE = plan.row[3 * i]!;
+        const kN = plan.row[3 * i + 1]!;
+        const kR = plan.row[3 * i + 2]!;
+        const first = kE >= 0 ? kE : kN >= 0 ? kN : kR;
+        if (first < 0) continue;
+        const tag = b.tags[first]!;
+        const push = (direction: ResidualDirection, value: number) =>
+          out.push({
+            arc: tag.arc,
+            t: tag.t,
+            direction,
+            target: tag.target,
+            powered: tag.powered,
+            value,
+          });
+        const at = (k: number) => resid[off + k]!;
+        if (q.kind === 'accel' || q.kind === 'relpos') {
+          for (const k of [kE, kN, kR]) if (k >= 0) push(q.kind, at(k));
+          continue;
+        }
+        if (q.kind === 'range') {
+          push('range', at(kE));
+          continue;
+        }
+        if (kR >= 0) push('range', at(kR));
+        if (kE >= 0 && kN >= 0) {
+          const ti = plan.ti.at[i]!;
+          const P = traj!.pos[ti]!;
+          const V = traj!.vel[ti]!;
+          const j = 3 * b.ca.bodyIndex.get(q.target)!;
+          const d = [P[j]! - P[ship]!, P[j + 1]! - P[ship + 1]!, P[j + 2]! - P[ship + 2]!];
+          const w = [V[j]! - V[ship]!, V[j + 1]! - V[ship + 1]!, V[j + 2]! - V[ship + 2]!];
+          const rho = Math.hypot(d[0]!, d[1]!, d[2]!);
+          const ph = [d[0]! / rho, d[1]! / rho, d[2]! / rho];
+          const wp = w[0]! * ph[0]! + w[1]! * ph[1]! + w[2]! * ph[2]!;
+          const a = [w[0]! - wp * ph[0]!, w[1]! - wp * ph[1]!, w[2]! - wp * ph[2]!];
+          const na = Math.hypot(a[0]!, a[1]!, a[2]!);
+          if (!(na > 0)) {
+            push('along', at(kE));
+            push('normal', at(kN));
+            continue;
+          }
+          for (let c = 0; c < 3; c++) a[c]! /= na;
+          const nn = [
+            ph[1]! * a[2]! - ph[2]! * a[1]!,
+            ph[2]! * a[0]! - ph[0]! * a[2]!,
+            ph[0]! * a[1]! - ph[1]! * a[0]!,
+          ];
+          const B = plan.basis;
+          const sE = 1 / plan.w[3 * i]!;
+          const sN = 1 / plan.w[3 * i + 1]!;
+          const tE = at(kE) * sE;
+          const tN = at(kN) * sN;
+          for (const [direction, u] of [
+            ['along', a],
+            ['normal', nn],
+          ] as const) {
+            const uE = u[0]! * B[9 * i + 3]! + u[1]! * B[9 * i + 4]! + u[2]! * B[9 * i + 5]!;
+            const uN = u[0]! * B[9 * i + 6]! + u[1]! * B[9 * i + 7]! + u[2]! * B[9 * i + 8]!;
+            push(direction, (tE * uE + tN * uN) / Math.hypot(sE * uE, sN * uN));
+          }
+        } else if (kE >= 0) push('along', at(kE));
+        else if (kN >= 0) push('normal', at(kN));
+      }
+      off += plan.m;
+    }
+    return out;
   }
 
   /** Prior information, gradient (toward the prior) and cost at x. */
@@ -273,6 +383,23 @@ export class Problem {
     return { H, g, cost };
   }
 
+  /**
+   * A solve or inverse of the normal matrix. When it cannot be done, the error says what the
+   * data and the priors leave undetermined, so a caller can name it as the reason a fit was
+   * left out: such a fit is never returned as if it had been solved.
+   */
+  private normal<T>(H: Matrix, op: (m: Matrix) => T): T {
+    try {
+      return op(H);
+    } catch {
+      if (H.data.some((v) => !Number.isFinite(v))) throw new Error(NOT_FINITE);
+      const free = this.names.filter((_, i) => H.data[i * H.cols + i] === 0);
+      throw new Error(
+        `fit: the data do not determine ${free.length > 0 ? free.join(', ') : 'every parameter'}`,
+      );
+    }
+  }
+
   /** Levenberg–Marquardt from x0 (§4.4), then covariance and outputs (§4.6). */
   solve(x0: ArrayLike<number>, maxit = 60, tol = 1e-3): FitResult {
     let x = Float64Array.from(x0);
@@ -281,6 +408,9 @@ export class Problem {
     let { r, J } = this.residualAndJacobian(x);
     let pt = this.priorTerms(x);
     let cost = dot(r, r) + pt.cost;
+    // A cost that is not finite cannot be reduced: no step would be accepted, and the start
+    // would come back marked converged.
+    if (!Number.isFinite(cost)) throw new Error(NOT_FINITE);
     let lam = 1e-3;
     let converged = false;
     let it: number;
@@ -297,7 +427,7 @@ export class Problem {
       for (let tries = 0; tries < 12; tries++) {
         const A = { rows: p, cols: p, data: new Float64Array(H.data) };
         for (let i = 0; i < p; i++) A.data[i * p + i]! += lam * D[i]!;
-        delta = solve(A, g);
+        delta = this.normal(A, (m) => solve(m, g));
         xn = Float64Array.from(x, (v, i) => v + S[i]! * delta[i]!);
         const rn = this.residual(xn);
         cn = dot(rn, rn) + this.priorTerms(xn).cost;
@@ -311,7 +441,7 @@ export class Problem {
         converged = true; // no descent available: at a minimum to working precision
         break;
       }
-      const Hi = inverse(H);
+      const Hi = this.normal(H, inverse);
       let stepSig = 0;
       for (let i = 0; i < p; i++)
         stepSig = Math.max(
@@ -331,7 +461,7 @@ export class Problem {
     }
     if (it > maxit) it = maxit;
     const { H, Hd } = normal(J, r, S, pt.H, pt.g, this.m, p);
-    const Hi = inverse(H);
+    const Hi = this.normal(H, inverse);
     const P = zeros(p, p);
     for (let i = 0; i < p; i++)
       for (let j = 0; j < p; j++) P.data[i * p + j] = S[i]! * Hi.data[i * p + j]! * S[j]!;
@@ -350,6 +480,7 @@ export class Problem {
       converged,
       resid: r,
       residTags: this.blocks.flatMap((b) => b.tags),
+      directed: this.directed(x, r),
     };
   }
 }
@@ -402,6 +533,11 @@ function normal(
 /**
  * Arc growing (§4.5): fit the first 25%, 50%, then all of each arc's usable data, each stage
  * starting from the previous solution.
+ *
+ * A stage never cuts an arc below the fixes that determine its state: the arc keeps at least its
+ * first MIN_ARC_FIXES range fixes on the gauge body, or all of its data if it has fewer. A
+ * quarter of a short arc can hold a single fix, which gives a position and no velocity; the
+ * stage's normal matrix is then singular, and no later stage could run.
  */
 export function stagedFit(
   st: Structure,
@@ -413,6 +549,7 @@ export function stagedFit(
 ): FitResult {
   let x: ArrayLike<number> = x0 ?? params.map((p) => p.init);
   let res: FitResult | null = null;
+  const gauge = st.bodies.find((b) => b.state === 'gauge')?.id;
   for (const f of fracs) {
     let tmax: Map<string, number> | undefined;
     if (f < 1) {
@@ -422,7 +559,9 @@ export function stagedFit(
         if (ts.length === 0) continue;
         const lo = Math.min(...ts);
         const hi = Math.max(...ts);
-        tmax.set(a.id, lo + f * (hi - lo));
+        const fixes = gauge === undefined ? [] : rangeFixTimes(a.meas, gauge);
+        const determined = fixes.length >= MIN_ARC_FIXES ? fixes[MIN_ARC_FIXES - 1]! : hi;
+        tmax.set(a.id, Math.max(lo + f * (hi - lo), determined));
       }
     }
     const prob = new Problem(st, arcs, params, { ...opts, ...(tmax ? { tmax } : {}) });
@@ -442,26 +581,55 @@ export interface ResidualClass {
   readonly mean: number;
 }
 
-/** §9.1: whitened residual RMS split into coasting and powered, by kind. */
+/**
+ * §9.1: whitened residual RMS split into coasting and powered, by direction. Keys
+ * `coast.along`, `coast.normal`, `coast.range`, `powered.along`, `powered.normal`,
+ * `powered.range`, `powered.accel` (and `.relpos` for relative-position records).
+ */
 export function residualSummary(f: FitResult): Record<string, ResidualClass> {
   const out: Record<string, ResidualClass> = {};
   for (const seg of ['coast', 'powered'] as const) {
-    for (const kind of ['bearing', 'range', 'accel', 'relpos'] as const) {
+    for (const direction of ['along', 'normal', 'range', 'accel', 'relpos'] as const) {
       let n = 0;
       let ss = 0;
       let s = 0;
-      f.residTags.forEach((tag, i) => {
-        if (tag.kind === kind && tag.powered === (seg === 'powered')) {
-          const v = f.resid[i]!;
-          n++;
-          ss += v * v;
-          s += v;
-        }
-      });
-      if (n > 0) out[`${seg}.${kind}`] = { n, rms: Math.sqrt(ss / n), mean: s / n };
+      for (const d of f.directed) {
+        if (d.direction !== direction || d.powered !== (seg === 'powered')) continue;
+        n++;
+        ss += d.value * d.value;
+        s += d.value;
+      }
+      if (n > 0) out[`${seg}.${direction}`] = { n, rms: Math.sqrt(ss / n), mean: s / n };
     }
   }
   return out;
+}
+
+/**
+ * §9.3: multiple correlation of one parameter with a set of others,
+ * R = √(cᵀ S⁻¹ c / P_aa), c = cov(a, others), S = cov(others). Used for the engine scale against
+ * the two misalignment angles, which roll mixes: no single pair correlation finds a confound
+ * that sits on both. Others the fit does not hold are left out; 0 when none is left.
+ */
+export function multipleCorrelation(f: FitResult, a: string, others: readonly string[]): number {
+  if (!f.names.includes(a)) return 0;
+  const ia = fitIndex(f, a);
+  const io = others.filter((n) => f.names.includes(n)).map((n) => fitIndex(f, n));
+  if (io.length === 0) return 0;
+  const n = f.P.cols;
+  const S = zeros(io.length, io.length);
+  io.forEach((i, r) => io.forEach((j, c) => (S.data[r * io.length + c] = f.P.data[i * n + j]!)));
+  const c = Float64Array.from(io, (i) => f.P.data[ia * n + i]!);
+  let v: Float64Array;
+  try {
+    v = solve(S, c);
+  } catch {
+    return 0;
+  }
+  let q = 0;
+  for (let i = 0; i < c.length; i++) q += c[i]! * v[i]!;
+  const paa = f.P.data[ia * n + ia]!;
+  return paa > 0 ? Math.sqrt(Math.max(q / paa, 0)) : 0;
 }
 
 export interface Confounding {

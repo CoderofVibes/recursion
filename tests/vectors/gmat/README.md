@@ -13,12 +13,28 @@ accuracy are in [the verification guide](../../../docs/verification/gmat.md).
 | `c2-eccentric.csv` | 7201 | 72000 | e≈0.603 orbit, 3 periods |
 | `c3-hyperbolic.csv` | 4001 | 40000 | e=1.5 flyby, periapsis at 20000 s |
 | `c4-finite_burn.csv` | 613 | 6120 | 1000 N / Isp 320 s prograde burn 0–120 s, then 6000 s coast |
+| `c5-inclined_eccentric.csv` | 3601 | 36000 | inclined e=0.35 orbit (i 55°, RAAN 40°, AOP 30°), 3 periods |
+| `c6-inclined_burn.csv` | 721 | 7200 | 2000 N / Isp 300 s burn 0–200 s along the fixed inertial direction (3,−2,6)/7 from a 45° inclined circular orbit (turns the plane 2.78° and raises the orbit), then 7000 s coast |
+| `c7-inclined_hyperbolic.csv` | 4001 | 40000 | retrograde e=1.5 flyby (i 120°, RAAN 250°, AOP 70°), periapsis at 20000 s |
+
+C1–C4 are phase 1D's planar cases and are unchanged. C5–C7 were added by thread 2G
+when flight became three-dimensional (DECISIONS A11): the same Earth, GM, propagator,
+sampling, runner and checks, on orbits out of the equatorial plane.
 
 Format: one `# ` JSON provenance line (GMAT version, frame, epoch, GM, initial
 state, burn parameters, propagator settings, script and raw-report SHA-256 hashes,
-validation results), then the header `t_s,x_m,y_m,vx_mps,vy_mps,mass_kg`, then
-samples every 10 s in SI units (m, m/s, kg), frame EarthMJ2000Eq XY plane,
-mu = 398600441500000 m³/s². Consumers must skip the comment line.
+validation results), then a column header, then samples every 10 s in SI units
+(m, m/s, kg), frame EarthMJ2000Eq, mu = 398600441500000 m³/s². Consumers must skip
+the comment line. There are two column layouts:
+
+| Cases | Column header | Notes |
+|---|---|---|
+| C1–C4 | `t_s,x_m,y_m,vx_mps,vy_mps,mass_kg` | EarthMJ2000Eq XY plane; z and vz are exactly 0 and are not stored |
+| C5–C7 | `t_s,x_m,y_m,z_m,vx_mps,vy_mps,vz_mps,mass_kg` | all three EarthMJ2000Eq components |
+
+The JSON line of C5–C7 also carries `orbit` (the stated elements, angles in
+degrees) and, for C6, `burn.direction_unit_EarthMJ2000Eq` (the constant thrust
+unit vector) beside the `burn` fields C4 already has.
 
 - `t_s` is exact propagation time (sample index × 10 s). GMAT's own reported
   elapsed time drifts by up to 1e-3 s from epoch round-off; that drift is recorded
@@ -27,3 +43,40 @@ mu = 398600441500000 m³/s². Consumers must skip the comment line.
   quote these vectors as more precise.
 - Missing or altered vectors must fail the comparison explicitly; never substitute
   analytic trajectories. Run `python tools/gmat/reference.py verify` to check them.
+
+## Provenance of C5–C7
+
+All three: GMAT R2026a, `GmatConsole` build date Mar 26 2026 15:02:55 (executable
+SHA-256 `36c880ad…db15f5f`, the same build 1D used), run 2026-11-14 15:03 PST by
+`python tools/gmat/reference.py run`, converted by `convert --case inclined`. Raw
+reports, logs and manifests are outside the repository in
+`%LOCALAPPDATA%\Programs\GMAT\recursion-2g-runs\` (`baseline-1`, `baseline-2`,
+`tight-1`, `elements-audit-1`).
+
+| File | GMAT script (`tools/gmat/`) | Script SHA-256 | Raw report SHA-256 (both runs) |
+|---|---|---|---|
+| `c5-inclined_eccentric.csv` | `c5-inclined_eccentric.script` | `5ec937b790d951a509e69f8fd6cc1539140c7d35dc8d52e59636244eb68fe34e` | `f6c81415f53abe439a98b1001f12b3d60f8b45889b87e8ddda08d3e9bae4e696` |
+| `c6-inclined_burn.csv` | `c6-inclined_burn.script` | `65c8f2dd5840b024625b42584c4200b587a011846d189f15d15bf9aeb4364bd9` | `d4f4821f018729441b0411e85fa7af9d656fc266ab1ecb26cc8000a38326a37e` |
+| `c7-inclined_hyperbolic.csv` | `c7-inclined_hyperbolic.script` | `efe6cb44f5ecae7d62714a56e7f21dbc95e01708fb6f8f20b6dd2738b67936dd` | `614747a2a75ccdeb32cda897d8136c8e35305234ad85c408d163b15a7f960c0b` |
+
+The same run re-executed C1–C4 and reproduced 1D's raw reports and these four CSVs
+byte for byte, so the seven vectors come from one unchanged installation.
+
+## Acceptance bounds
+
+P17's bounds (DECISIONS) apply to all seven, at every sample of the full run, with
+GM = 3.986004415×10¹⁴ m³/s² exactly:
+
+```text
+position error  <= 0.05 m      (norm over x, y for C1–C4; over x, y, z for C5–C7)
+velocity error  <= 5e-5 m/s    (same norms)
+mass error      <= 1e-6 kg
+```
+
+For C5–C7 these are a requirement still to be met: the independent Python check
+agrees with GMAT to 5.3 mm, 5.4e-6 m/s and 4.3e-7 kg, and a plain RK4 of the stated
+model lands within 10.2 mm, 1.04e-5 m/s and 4.3e-7 kg of every sample, so the
+bounds are reachable, but **the game's 3D simulation has not been compared with
+C5–C7 yet**. C6 has the least headroom (about 5× in position and velocity, 2.3× in
+mass) because GMAT's stop timing wanders within its 1e-6 s tolerance while the
+engine is on; the guide explains why the bounds were kept rather than widened.

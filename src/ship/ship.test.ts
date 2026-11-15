@@ -5,6 +5,7 @@ import type { EnvironmentEffects, ShipSystemsState } from '../contracts/truth/sh
 import { fromYaw } from '../lib/quat.ts';
 import { applyCommands } from './commands.ts';
 import { createShipSystemsState, loadShipDefinition, stepShipSystems } from './index.ts';
+import { yawInertia } from './massprops/massprops.ts';
 
 const definition = loadShipDefinition();
 const env = (state: ShipSystemsState): EnvironmentEffects => ({
@@ -37,7 +38,8 @@ describe('1C loader and physical arrival', () => {
     expect(definition.tanks).toHaveLength(7);
     expect(state.massProperties.mass).toBe(30374);
     expect(state.massProperties.centerOfMass.x).toBeCloseTo(-0.3328504642, 8);
-    expect(state.massProperties.inertia.moments.z).toBeCloseTo(325048.751, 2);
+    // 1C's yaw inertia is the zz term of the tensor; heights do not enter it.
+    expect(yawInertia(state.massProperties.inertia)).toBeCloseTo(325048.751, 2);
     expect(definition.equipment.find((e) => e.id === 'main-engine')?.mount?.position).toEqual({
       x: -7,
       y: 0.08,
@@ -161,10 +163,11 @@ describe('ship step integration', () => {
   });
 
   it('cutoff defeats automatic thrust until the player explicitly re-enables control', () => {
+    // A turn to the right: the forward-left and aft-right pods fire the lateral couple.
     const initial = createShipSystemsState(definition);
     const state: ShipSystemsState = {
       ...initial,
-      attitudeTarget: { reference: 'inertial', attitude: fromYaw(1) },
+      attitudeTarget: { reference: 'inertial', attitude: fromYaw(-1) },
     };
     const all = stepShipSystems(
       state,
@@ -187,7 +190,7 @@ describe('ship step integration', () => {
     const resumed = stepShipSystems(
       one.state,
       definition,
-      [{ kind: 'attitude', target: { reference: 'inertial', attitude: fromYaw(1) } }],
+      [{ kind: 'attitude', target: { reference: 'inertial', attitude: fromYaw(-1) } }],
       env(one.state),
       0.1,
     );

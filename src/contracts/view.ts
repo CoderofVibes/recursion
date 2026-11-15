@@ -56,12 +56,63 @@ export interface SensorCoverage {
   readonly cones: readonly SensorCone[];
 }
 
+/**
+ * A look a sensor took in an earlier attempt of this encounter, rebuilt from Black Box records
+ * (R6): where the ship believed it was, which way the sensor looked and how far it could see.
+ * It says what was sensed then, not what is there now: things have moved since (A10).
+ */
+export interface CoverageLook {
+  readonly attemptId: AttemptId;
+  readonly sensor: EquipmentId;
+  /** Ship time in that attempt over which this look held (the sensor neither turned much nor the ship moved far). */
+  readonly from: Seconds;
+  readonly to: Seconds;
+  /** Where the ship believed it was, in this encounter's briefing frame. */
+  readonly origin: Vec3;
+  /** Inertial unit vector along the sensor's axis. */
+  readonly axis: Vec3;
+  readonly halfAngle: Radians;
+  readonly range: Meters;
+}
+
 /** One attempt in a two-attempt Black Box comparison overlay. */
 export interface AttemptOverlay {
   readonly attemptId: AttemptId;
   readonly label: string;
   readonly trail: readonly TrailPoint[];
   readonly forecast?: Forecast;
+}
+
+/**
+ * One thing the unaided eye can see through the window: light only, no sensor (A3, A8, P11).
+ * A direction and an apparent size, never a range.
+ */
+export interface WindowObject {
+  readonly id: ObjectId;
+  readonly kind: 'body' | 'asteroid';
+  /** Inertial unit vector from the ship toward the object's centre. */
+  readonly direction: Vec3;
+  /** Half the angle the object spans as seen from the ship. */
+  readonly angularRadius: Radians;
+  /** In sunlight (not inside another body's shadow). An unlit object is seen as a dark disc against the stars, if at all. */
+  readonly lit: boolean;
+}
+
+/**
+ * What is outside the window right now, as the eye sees it. Built by the game layer each
+ * frame; it holds no field and nothing that needs an instrument. Objects too small or too faint
+ * to see are absent, whether or not the ship has catalogued them, and an object the ship has
+ * never catalogued can be here.
+ */
+export interface WindowView {
+  /**
+   * The sun: inertial unit vector toward it, and whether it is in view (not behind a body).
+   * Absent where the encounter has no sun.
+   */
+  readonly sun?: { readonly direction: Vec3; readonly visible: boolean };
+  /** Sunlight reaches the ship (it is not in a body's shadow). */
+  readonly sunlit: boolean;
+  readonly objects: readonly WindowObject[];
 }
 
 export type Selection =
@@ -83,4 +134,11 @@ export interface ViewSnapshot {
   readonly objectives: readonly Objective[];
   readonly compare?: readonly [AttemptOverlay, AttemptOverlay];
   readonly selection?: Selection;
+  /** The view through the window. Absent from fixtures and stand-ins that have no world. */
+  readonly window?: WindowView;
+  /**
+   * Coverage sensed in earlier attempts of this encounter, oldest first, from Black Box (R6).
+   * This attempt's own history is the view's to keep. Absent: none recorded.
+   */
+  readonly coverageEarlier?: readonly CoverageLook[];
 }

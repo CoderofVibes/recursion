@@ -6,7 +6,7 @@ import type {
   EnvironmentEffects,
   ShipSystemsState,
 } from '../../contracts/truth/ship.ts';
-import { yawOf } from '../../lib/quat.ts';
+import { fromRotationVector, multiply, rotate, toRotationVector } from '../../lib/quat.ts';
 import { createRng, type RngState } from '../../lib/rng.ts';
 import { wrapAngle } from '../../lib/vec2.ts';
 import type { Vec3 } from '../../lib/vec3.ts';
@@ -75,11 +75,69 @@ export function supportedRecorderRate(power: number, definition?: ShipDefinition
   );
 }
 
+/**
+ * The stream an instrument's out-of-plane components draw from: elevation, the z accelerometer
+ * axis and its bias, the x and y gyro axes and their biases, the x and y parts of an attitude
+ * fix. The planar components keep the instrument's own stream (`sensors.<id>`) in their old
+ * order, so a planar flight records the same azimuths, ranges, x–y accelerations and yaw rates
+ * as before the ship was three-dimensional.
+ */
+export const outOfPlaneStream = (id: string): string => `sensors.${id}/3d`;
+
 /** Names are stable across saves; no stream is seeded during a step. */
 export function sensorStreamNames(definition: ShipDefinition): string[] {
-  return definition.equipment
-    .filter((e) => ['optical-tracker', 'accelerometer', 'gyro', 'star-tracker'].includes(e.kind))
-    .map((e) => `sensors.${e.id}`);
+  const instruments = definition.equipment.filter((e) =>
+    ['optical-tracker', 'accelerometer', 'gyro', 'star-tracker'].includes(e.kind),
+  );
+  return [
+    ...instruments.map((e) => `sensors.${e.id}`),
+    ...instruments.map((e) => outOfPlaneStream(e.id)),
+  ];
+}
+
+/** Cosine below which an elevation counts as at the pole when widening the azimuth sigma. */
+const POLE_COSINE = 1e-6;
+
+/** Length of v. In-plane vectors use the planar form, which keeps planar ranges bit for bit. */
+const lengthOf = (v: Vec3): number =>
+  v.z === 0 ? Math.hypot(v.x, v.y) : Math.hypot(v.x, v.y, v.z);
+
+/**
+ * Angle between two directions, in [0, π]. A pair in the inertial x–y plane uses the
+ * difference of their azimuths, as the planar ship did, which keeps planar records bit for bit.
+ */
+export function separation(a: Vec3, b: Vec3): number {
+  if (a.z === 0 && b.z === 0)
+    return Math.abs(wrapAngle(Math.atan2(a.y, a.x) - Math.atan2(b.y, b.x)));
+  const cx = a.y * b.z - a.z * b.y;
+  const cy = a.z * b.x - a.x * b.z;
+  const cz = a.x * b.y - a.y * b.x;
+  return Math.atan2(Math.sqrt(cx * cx + cy * cy + cz * cz), a.x * b.x + a.y * b.y + a.z * b.z);
+}
+
+/**
+ * Rate (rad/s) at which a target's image crosses the camera: the line of sight's angular
+ * velocity minus the ship's, less any part about the line of sight itself (which turns the
+ * image without moving a point target).
+ */
+export function apparentRate(
+  relativePosition: Vec3,
+  relativeVelocity: Vec3,
+  range: number,
+  shipRate: Vec3,
+): number {
+  if (!(range > 0)) return 0;
+  const r = relativePosition;
+  const v = relativeVelocity;
+  const r2 = range * range;
+  const wx = (r.y * v.z - r.z * v.y) / r2 - shipRate.x;
+  const wy = (r.z * v.x - r.x * v.z) / r2 - shipRate.y;
+  const wz = (r.x * v.y - r.y * v.x) / r2 - shipRate.z;
+  const along = (wx * r.x + wy * r.y + wz * r.z) / r2;
+  const px = wx - along * r.x;
+  const py = wy - along * r.y;
+  const pz = wz - along * r.z;
+  return Math.sqrt(px * px + py * py + pz * pz);
 }
 
 function available(e: EquipmentState | undefined): e is EquipmentState {
@@ -179,11 +237,13 @@ export function stepSensors(
     }
   }
   const due = rate > 0 && capacityAvailable && env.t + 1e-10 >= (memory.nextRecorderAt ?? env.t);
-  // LIFT(2G): sensing geometry is planar. Attitude is the yaw of the body axis, the rate is the
-  // body z rate, and bearings and boresights are azimuths in the inertial x–y plane. The new
-  // out-of-plane components are emitted as exact zeros with no extra random draws.
-  const yaw = yawOf(env.kinematics.attitude);
-  const yawRate = env.kinematics.angularVelocity.z;
+  const attitude = env.kinematics.attitude;
+  /** Body rates (what the gyros sense) and the same angular velocity in the inertial frame. */
+  const bodyRate = env.kinematics.angularVelocity;
+  const inertialRate = rotate(attitude, bodyRate);
+  const rateMagnitude = Math.sqrt(
+    bodyRate.x * bodyRate.x + bodyRate.y * bodyRate.y + bodyRate.z * bodyRate.z,
+  );
 
   if (due) {
     for (const spec of definition.equipment) {
@@ -210,6 +270,12 @@ export function stepSensors(
       if (!saved) throw new Error(`Missing initialized sensor RNG stream: ${streamName}`);
       const noise = createRng(0);
       noise.setState(saved);
+      // The out-of-plane components draw from their own stream (see `outOfPlaneStream`).
+      const streamName3d = outOfPlaneStream(spec.id);
+      const saved3d = rng[streamName3d];
+      if (!saved3d) throw new Error(`Missing initialized sensor RNG stream: ${streamName3d}`);
+      const noise3d = createRng(0);
+      noise3d.setState(saved3d);
       const condition = clamp(e.condition, Number.EPSILON, 1);
       const emit = (
         kind: Measurement['kind'],
@@ -237,44 +303,49 @@ export function stepSensors(
           const locked = aim?.target
             ? env.targets.find((target) => target.id === aim.target)
             : undefined;
+          // Where the camera looks, inertial: at its locked target, along the commanded
+          // direction, or along its mount's boresight carried by the ship's attitude.
           const boresight = locked
-            ? Math.atan2(locked.relativePosition.y, locked.relativePosition.x)
-            : aim?.direction
-              ? Math.atan2(aim.direction.y, aim.direction.x)
-              : yaw + Math.atan2(spec.mount?.direction.y ?? 0, spec.mount?.direction.x ?? 1);
+            ? locked.relativePosition
+            : (aim?.direction ?? rotate(attitude, spec.mount?.direction ?? { x: 1, y: 0, z: 0 }));
           for (const target of env.targets) {
             if (
               (aim?.target && target.id !== aim.target) ||
               scene.visibility?.[target.id] === false
             )
               continue;
-            const bearing = Math.atan2(target.relativePosition.y, target.relativePosition.x);
-            const range = Math.hypot(target.relativePosition.x, target.relativePosition.y);
+            const line = target.relativePosition;
+            const bearing = Math.atan2(line.y, line.x);
+            const elevation = Math.atan2(line.z, Math.hypot(line.x, line.y));
+            const range = lengthOf(line);
             // C14: target drift can smear even when the ship is not rotating. A target
             // lock selects boresight; this stub does not assume a perfect slew servo.
-            const apparentRate =
-              range > 0
-                ? (target.relativePosition.x * target.relativeVelocity.y -
-                    target.relativePosition.y * target.relativeVelocity.x) /
-                    (range * range) -
-                  yawRate
-                : 0;
-            if (Math.abs(apparentRate) * exposure > c.maxSmearAngle) continue;
+            if (
+              apparentRate(line, target.relativeVelocity, range, inertialRate) * exposure >
+              c.maxSmearAngle
+            )
+              continue;
+            // The field of view is a cone about the boresight.
             const quality = opticalQuality(
               e.powerDraw,
               range,
               condition,
               exposure,
-              wrapAngle(bearing - boresight),
+              separation(line, boresight),
               halfAngle,
               definition,
             );
             if (!quality) continue;
-            // LIFT(2G): [azimuth, elevation] with elevation exactly 0.
+            // An isotropic pointing error on the sphere: the same angle in elevation and across
+            // it, which is 1 / cos(elevation) wider in azimuth (guarded at the poles).
+            const sigmaAzimuth = quality.angularSigma / Math.max(Math.cos(elevation), POLE_COSINE);
             emit(
               'bearing',
-              [wrapAngle(noise.normal(bearing, quality.angularSigma)), 0],
-              [quality.angularSigma, quality.angularSigma],
+              [
+                wrapAngle(noise.normal(bearing, sigmaAzimuth)),
+                clamp(noise3d.normal(elevation, quality.angularSigma), -Math.PI / 2, Math.PI / 2),
+              ],
+              [sigmaAzimuth, quality.angularSigma],
               target.id,
             );
             if (scene.knownSizeTargets?.includes(target.id)) {
@@ -285,39 +356,58 @@ export function stepSensors(
         }
       } else if (spec.kind === 'accelerometer' || spec.kind === 'gyro') {
         if (e.powerDraw + 1e-9 >= modePower(spec, e, definition)) {
+          // Persistent biases, drawn once: the x and y accelerometer axes and the z gyro from
+          // the instrument's own stream (as the planar ship did), the rest from the 3D stream.
           const biasX = e.values.biasX ?? noise.normal(0, sensing.imu.accelerationBias);
           const biasY = e.values.biasY ?? noise.normal(0, sensing.imu.accelerationBias);
           const gyroBias = e.values.gyroBias ?? noise.normal(0, sensing.imu.gyroBias);
-          equipment[spec.id] = { ...e, values: { ...e.values, biasX, biasY, gyroBias } };
+          const biasZ = e.values.biasZ ?? noise3d.normal(0, sensing.imu.accelerationBias);
+          const gyroBiasX = e.values.gyroBiasX ?? noise3d.normal(0, sensing.imu.gyroBias);
+          const gyroBiasY = e.values.gyroBiasY ?? noise3d.normal(0, sensing.imu.gyroBias);
+          equipment[spec.id] = {
+            ...e,
+            values: { ...e.values, biasX, biasY, gyroBias, biasZ, gyroBiasX, gyroBiasY },
+          };
           if (spec.kind === 'accelerometer') {
             const sigma = sensing.imu.accelerationSigma / condition;
             // EnvironmentEffects already supplies COM specific force; no gravity or position read.
-            // LIFT(2G): [ax, ay, az] with az exactly 0 (no z bias, no z noise draw).
             emit(
               'accel',
               [
                 noise.normal(env.specificForce.x + biasX, sigma),
                 noise.normal(env.specificForce.y + biasY, sigma),
-                0,
+                noise3d.normal(env.specificForce.z + biasZ, sigma),
               ],
               [sigma, sigma, sigma],
             );
           }
           const sigma = sensing.imu.gyroSigma / condition;
-          // LIFT(2G): [ωx, ωy, ωz] with only the body z rate sensed.
-          emit('rate', [0, 0, noise.normal(yawRate + gyroBias, sigma)], [sigma, sigma, sigma]);
+          emit(
+            'rate',
+            [
+              noise3d.normal(bodyRate.x + gyroBiasX, sigma),
+              noise3d.normal(bodyRate.y + gyroBiasY, sigma),
+              noise.normal(bodyRate.z + gyroBias, sigma),
+            ],
+            [sigma, sigma, sigma],
+          );
         }
       } else if (
         spec.kind === 'star-tracker' &&
         scene.starsVisible !== false &&
-        Math.abs(yawRate) <= sensing.starTracker.maxAngularRate &&
+        rateMagnitude <= sensing.starTracker.maxAngularRate &&
         e.powerDraw + 1e-9 >= modePower(spec, e, definition)
       ) {
         const sigma = sensing.starTracker.angularSigma / condition;
-        // LIFT(2G): rotation vector [0, 0, ψ]: a yaw about inertial +z.
-        emit('attitude', [0, 0, wrapAngle(noise.normal(yaw, sigma))], [sigma, sigma, sigma]);
+        // The measured attitude is the true one turned by a small independent error about each
+        // body axis; the fix is its rotation vector (a yaw ψ about inertial +z is [0, 0, ψ]).
+        const errorZ = noise.normal(0, sigma);
+        const error = { x: noise3d.normal(0, sigma), y: noise3d.normal(0, sigma), z: errorZ };
+        const fix = toRotationVector(multiply(attitude, fromRotationVector(error)));
+        emit('attitude', [fix.x + 0, fix.y + 0, fix.z + 0], [sigma, sigma, sigma]);
       }
       rng[streamName] = noise.getState();
+      rng[streamName3d] = noise3d.getState();
     }
 
     const telemetry = (owner: string, quantity: string, value: number, source = owner) => {

@@ -7,6 +7,7 @@
  * Records contain only what the ship sensed or commanded: no truth.
  */
 
+import type { Vec3 } from '../lib/vec3.ts';
 import type { ShipEstimate } from './belief.ts';
 import type { ExecutedCommand, Plan, Procedure } from './commands.ts';
 import type { Forecast } from './forecast.ts';
@@ -21,7 +22,7 @@ import type {
 import type { EncounterBriefing } from './encounter.ts';
 import type { ExtensionState } from './model.ts';
 import type { LossCause, Measurement, ShipEvent } from './measurements.ts';
-import type { MetersPerSecond, Seconds } from './units.ts';
+import type { MetersPerSecond, Radians, Seconds } from './units.ts';
 
 export type AttemptOutcome =
   | { readonly kind: 'in-progress' }
@@ -90,6 +91,16 @@ export interface Lead {
   readonly name: string;
   readonly firstSeen: { readonly attemptId: AttemptId; readonly t: Seconds };
   readonly status: LeadStatus;
+  /**
+   * Where it was seen: a bearing taken from an encounter, with how sure the direction is. Its
+   * range is not known (that is what makes it a lead). Chart frame (chart.ts).
+   */
+  readonly bearing?: {
+    readonly from: EncounterId;
+    readonly direction: Vec3;
+    /** Half-angle of the cone the lead lies in. */
+    readonly spread: Radians;
+  };
 }
 
 /**

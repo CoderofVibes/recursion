@@ -9,13 +9,28 @@
 import type { Command } from '../../contracts/commands.ts';
 import type { ShipDefinition } from '../../contracts/ship.ts';
 import type { JsonValue } from '../../contracts/units.ts';
-import { DEFAULT_PLAY, type EncounterSetup, type ObjectiveRule } from '../../game/encounter.ts';
+import {
+  DEFAULT_PLAY,
+  type EncounterSetup,
+  type ObjectiveRule,
+  type PlayValues,
+} from '../../game/encounter.ts';
 import { loadShipDefinition } from '../../ship/index.ts';
-import { BAND, RESERVE, briefing } from './briefing.ts';
+import { DEPART, briefing } from './briefing.ts';
 import { arrivalWorld } from './world.ts';
 
-export { BAND, ENCOUNTER_ID, OBJECTIVES, PRIORS, RESERVE } from './briefing.ts';
-export { ALPHA, ARRIVAL_ANGLE, BETA, HIDDEN, LAW, SEPARATION, SUN } from './world.ts';
+export { DEPART, ENCOUNTER_ID, OBJECTIVES, PRIORS } from './briefing.ts';
+export {
+  ALPHA,
+  ALPHA_FIELD,
+  ARRIVAL_ANGLE,
+  BELT,
+  BETA,
+  HIDDEN,
+  LAW,
+  SEPARATION,
+  SUN,
+} from './world.ts';
 
 /** Root seed for the field, the arrival survey and every sensor noise stream. */
 export const SEED = 'gravity-range-1';
@@ -24,7 +39,7 @@ export const SEED = 'gravity-range-1';
  * Bump whenever a change here would make earlier Black Box records describe a different world
  * or ship (law, bodies, field, sensors). The app keeps one save slot per value.
  */
-export const SAVE_FORMAT = 3;
+export const SAVE_FORMAT = 5;
 
 /**
  * [ASSUMED] 1 s suits the P16 scale (2A: orbits of hours; worst error 11 mm over 20,000 s).
@@ -75,15 +90,20 @@ export function rangeShip(): ShipDefinition {
 
 export const OBJECTIVE_RULES: readonly ObjectiveRule[] = [
   {
-    kind: 'orbit-band',
-    objective: 'low-orbit',
-    body: 'alpha',
-    inner: BAND.inner,
-    outer: BAND.outer,
-    revolutions: BAND.revolutions,
+    kind: 'depart',
+    objective: 'depart',
+    beyond: DEPART.beyond,
+    minSpeed: DEPART.minSpeed,
+    maxDeltaV: DEPART.maxDeltaV,
   },
-  { kind: 'reserve', objective: 'reserve', tank: RESERVE.tank, minimum: RESERVE.minimum },
 ];
+
+/**
+ * [ASSUMED] Play values for this encounter. The slingshot's pass comes about 29 h after the
+ * burn that sets it up, so a committed forecast may look 48 h ahead (the default is 16 h); the
+ * model still ends it earlier wherever it has nothing useful to say (P10).
+ */
+export const PLAY: PlayValues = { ...DEFAULT_PLAY, forecastSpan: 48 * 3600 };
 
 export function createGravityRange(seed: string = SEED): EncounterSetup {
   const ship = rangeShip();
@@ -93,6 +113,6 @@ export function createGravityRange(seed: string = SEED): EncounterSetup {
     arrivalCommands: ARRIVAL_COMMANDS,
     arrivalMass: world.ship.systems.massProperties.mass,
     objectiveRules: OBJECTIVE_RULES,
-    play: DEFAULT_PLAY,
+    play: PLAY,
   };
 }

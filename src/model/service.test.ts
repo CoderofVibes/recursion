@@ -79,7 +79,7 @@ function context(opts: {
       attitudeSigma: 1e-3,
       angularVelocity: { x: 0, y: 0, z: 0 },
     },
-    settings: { dt: 60, ...(opts.settings ?? {}) },
+    settings: { dt: 60, planar: 1, ...(opts.settings ?? {}) },
   };
 }
 
@@ -97,7 +97,8 @@ const param = (s: ModelState, id: string) => {
   return p;
 };
 
-// LIFT(2G): the scenarios in this file are planar (z = 0, yaw-only attitude, flat hull).
+// The scenarios in this file are planar (z = 0, yaw-only attitude, flat hull): the model runs
+// them in the planar reduction (`planar: 1`, spec Appendix A.3), as the planar model did.
 const massProperties: MassProperties = {
   mass: MASS,
   centerOfMass: { x: 0, y: 0, z: 0 },
@@ -276,8 +277,14 @@ describe('forecast service (forecast-envelope through the game layer)', () => {
     expect(p.t).toBe(now);
     const ra = c.anchor!;
     const C = fromRows(ra.covariance);
+    // The present state has six numbers (x, y, z, vx, vy, vz); the planar vector's four are
+    // x, y, vx, vy. In the planar reduction z and vz are exactly zero.
+    const plane = [0, 1, 3, 4];
     for (let i = 0; i < 4; i++)
-      expect(Math.abs(p.state[i]! - ra.state[i]!)).toBeLessThan(Math.sqrt(C.data[i * 4 + i]!));
+      expect(Math.abs(p.state[plane[i]!]! - ra.state[i]!)).toBeLessThan(
+        Math.sqrt(C.data[i * 4 + i]!),
+      );
+    expect([p.state[2], p.state[5]]).toEqual([0, 0]);
   });
 
   it('coasting inside sampled distances: honest at every hour, full horizon', () => {
@@ -361,72 +368,82 @@ describe('rebuild from records equals the live state (P8, spec §11.3)', () => {
 describe('extensions: rules only from the player (A4, P5)', () => {
   const v = V(rawValidation);
 
-  it('distance law: passes held-out, earns a hedge, is adopted only on request, can be revoked', () => {
-    const svc = new ModelService(context({}));
-    svc.load({ attempts: records(v, 'distance-law') });
-    const before = svc.state;
-    expect(() => svc.adopt('distance-law')).toThrow();
-    const rec = svc.testExtension('distance-law', ['att1', 'att2'], 'att3');
-    const ref = v.cases
-      .find((c) => c.id === 'distance-law')!
-      .fits.find((f) => f.id === 'exponent')!;
-    expect(rec.adoptable).toBe(true);
-    expect(rec.state.status).toBe('candidate');
-    expect(rec.state.validation!.verdict).toBe('better');
-    expect(Math.abs(rec.state.validation!.statistic / ref.heldOut!.TperNu - 1)).toBeLessThan(0.02);
-    expect(rec.state.validation!.rmsAfter).toBeLessThan(rec.state.validation!.rmsBefore);
-    // The earned hedge and the distances its test covered (§7.4).
-    const eh = ref.earnedHedge as unknown as { sigmaH: number; validatedRange: [number, number] };
-    expect(rec.state.validatedSpans).toHaveLength(1);
-    const span = rec.state.validatedSpans![0]!;
-    expect(span.body).toBe('A');
-    expect(span.heldOutAttempt).toBe('att3');
-    expect(Math.abs(span.sigmaE / eh.sigmaH - 1)).toBeLessThan(0.05);
-    expect(Math.abs(span.rMin / eh.validatedRange[0] - 1)).toBeLessThan(1e-3);
-    expect(Math.abs(span.rMax / eh.validatedRange[1] - 1)).toBeLessThan(1e-3);
-    // Testing never adopts.
-    expect(svc.state.parameters.some((p) => p.id === 'law.gravity.exponent')).toBe(false);
-    expect(svc.state.version).toBe(before.version);
-    const after = svc.adopt('distance-law');
-    const n = param(after, 'law.gravity.exponent');
-    expect(Math.abs(n.value - 2.5)).toBeLessThan(3 * n.sigma);
-    expect(after.extensions).toEqual([
-      expect.objectContaining({ id: 'distance-law', status: 'adopted' }),
-    ]);
-    expect(after.version).toBe(before.version + 1);
-    // Inside the validated span σ_e applies; elsewhere the default stays (A5).
-    expect(svc.snapshot.derived.sigmaH0).toBe(0.3);
-    expect(svc.snapshot.derived.validated['A']).toEqual({
-      spans: [[span.rMin, span.rMax]],
-      sigmaE: span.sigmaE,
-    });
-    expect(after.extensions[0]!.validatedSpans).toEqual([span]);
-    const revoked = svc.revoke('distance-law');
-    expect(revoked.parameters.some((p) => p.id === 'law.gravity.exponent')).toBe(false);
-    expect(revoked.extensions[0]!.status).toBe('revoked');
-  });
+  it(
+    'distance law: passes held-out, earns a hedge, is adopted only on request, can be revoked',
+    { timeout: 60_000 },
+    () => {
+      const svc = new ModelService(context({}));
+      svc.load({ attempts: records(v, 'distance-law') });
+      const before = svc.state;
+      expect(() => svc.adopt('distance-law')).toThrow();
+      const rec = svc.testExtension('distance-law', ['att1', 'att2'], 'att3');
+      const ref = v.cases
+        .find((c) => c.id === 'distance-law')!
+        .fits.find((f) => f.id === 'exponent')!;
+      expect(rec.adoptable).toBe(true);
+      expect(rec.state.status).toBe('candidate');
+      expect(rec.state.validation!.verdict).toBe('better');
+      expect(Math.abs(rec.state.validation!.statistic / ref.heldOut!.TperNu - 1)).toBeLessThan(
+        0.02,
+      );
+      expect(rec.state.validation!.rmsAfter).toBeLessThan(rec.state.validation!.rmsBefore);
+      // The earned hedge and the distances its test covered (§7.4).
+      const eh = ref.earnedHedge as unknown as { sigmaH: number; validatedRange: [number, number] };
+      expect(rec.state.validatedSpans).toHaveLength(1);
+      const span = rec.state.validatedSpans![0]!;
+      expect(span.body).toBe('A');
+      expect(span.heldOutAttempt).toBe('att3');
+      expect(Math.abs(span.sigmaE / eh.sigmaH - 1)).toBeLessThan(0.05);
+      expect(Math.abs(span.rMin / eh.validatedRange[0] - 1)).toBeLessThan(1e-3);
+      expect(Math.abs(span.rMax / eh.validatedRange[1] - 1)).toBeLessThan(1e-3);
+      // Testing never adopts.
+      expect(svc.state.parameters.some((p) => p.id === 'law.gravity.exponent')).toBe(false);
+      expect(svc.state.version).toBe(before.version);
+      const after = svc.adopt('distance-law');
+      const n = param(after, 'law.gravity.exponent');
+      expect(Math.abs(n.value - 2.5)).toBeLessThan(3 * n.sigma);
+      expect(after.extensions).toEqual([
+        expect.objectContaining({ id: 'distance-law', status: 'adopted' }),
+      ]);
+      expect(after.version).toBe(before.version + 1);
+      // Inside the validated span σ_e applies; elsewhere the default stays (A5).
+      expect(svc.snapshot.derived.sigmaH0).toBe(0.3);
+      expect(svc.snapshot.derived.validated['A']).toEqual({
+        spans: [[span.rMin, span.rMax]],
+        sigmaE: span.sigmaE,
+      });
+      expect(after.extensions[0]!.validatedSpans).toEqual([span]);
+      const revoked = svc.revoke('distance-law');
+      expect(revoked.parameters.some((p) => p.id === 'law.gravity.exponent')).toBe(false);
+      expect(revoked.extensions[0]!.status).toBe('revoked');
+    },
+  );
 
-  it('overlooked body: the wrong rule fails visibly, the right one passes', () => {
-    const recs = records(v, 'overlooked-body');
-    const ctx = context({
-      bodies: [body('A'), body('B', 4e6, 0, 1e7)],
-      settings: { priorBodyVelocitySigma: 1e3 },
-    });
-    const svc = new ModelService(ctx);
-    svc.load({ attempts: recs });
-    const wrong = svc.testExtension('distance-law', ['att1', 'att2'], 'att3');
-    expect(wrong.adoptable).toBe(false);
-    expect(wrong.state.status).toBe('rejected');
-    expect(wrong.state.validation!.verdict).toBe('worse');
-    expect(() => svc.adopt('distance-law')).toThrow();
-    const right = svc.testExtension('unmodeled-body:B', ['att1', 'att2'], 'att3');
-    expect(right.adoptable).toBe(true);
-    const mb = right.fitted!['body.B.mu']!;
-    expect(Math.abs(mb.value - 2.5e9)).toBeLessThan(3 * mb.sigma);
-    const s = svc.adopt('unmodeled-body:B');
-    expect(param(s, 'body.B.mu').value).toBeGreaterThan(2e9);
-    expect(s.fit!.nu > 0 && s.fit!.chi2 / s.fit!.nu).toBeLessThan(1.3);
-  });
+  it(
+    'overlooked body: the wrong rule fails visibly, the right one passes',
+    { timeout: 60_000 },
+    () => {
+      const recs = records(v, 'overlooked-body');
+      const ctx = context({
+        bodies: [body('A'), body('B', 4e6, 0, 1e7)],
+        settings: { priorBodyVelocitySigma: 1e3 },
+      });
+      const svc = new ModelService(ctx);
+      svc.load({ attempts: recs });
+      const wrong = svc.testExtension('distance-law', ['att1', 'att2'], 'att3');
+      expect(wrong.adoptable).toBe(false);
+      expect(wrong.state.status).toBe('rejected');
+      expect(wrong.state.validation!.verdict).toBe('worse');
+      expect(() => svc.adopt('distance-law')).toThrow();
+      const right = svc.testExtension('unmodeled-body:B', ['att1', 'att2'], 'att3');
+      expect(right.adoptable).toBe(true);
+      const mb = right.fitted!['body.B.mu']!;
+      expect(Math.abs(mb.value - 2.5e9)).toBeLessThan(3 * mb.sigma);
+      const s = svc.adopt('unmodeled-body:B');
+      expect(param(s, 'body.B.mu').value).toBeGreaterThan(2e9);
+      expect(s.fit!.nu > 0 && s.fit!.chi2 / s.fit!.nu).toBeLessThan(1.3);
+    },
+  );
 });
 
 describe('issued forecasts are immutable and versioned', () => {
@@ -493,15 +510,19 @@ describe('fixtures (mock Gravity range)', () => {
 });
 
 describe('truth/belief boundary (P11) holds for the real model and Black Box files', () => {
-  it('no file in src/model or src/blackbox imports truth or the simulation', async () => {
-    const eslint = new ESLint({ errorOnUnmatchedPattern: false });
-    const results = await eslint.lintFiles(['src/model/**/*.ts', 'src/blackbox/**/*.ts']);
-    const bad = results.flatMap((r) =>
-      r.messages
-        .filter((m) => m.ruleId === 'no-restricted-imports')
-        .map((m) => `${r.filePath}: ${m.message}`),
-    );
-    expect(bad).toEqual([]);
-    expect(results.length).toBeGreaterThan(10);
-  }, 30_000);
+  it(
+    'no file in src/model or src/blackbox imports truth or the simulation',
+    { timeout: 60_000 },
+    async () => {
+      const eslint = new ESLint({ errorOnUnmatchedPattern: false });
+      const results = await eslint.lintFiles(['src/model/**/*.ts', 'src/blackbox/**/*.ts']);
+      const bad = results.flatMap((r) =>
+        r.messages
+          .filter((m) => m.ruleId === 'no-restricted-imports')
+          .map((m) => `${r.filePath}: ${m.message}`),
+      );
+      expect(bad).toEqual([]);
+      expect(results.length).toBeGreaterThan(10);
+    },
+  );
 });

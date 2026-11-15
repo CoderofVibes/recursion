@@ -4,13 +4,23 @@
  */
 
 import { describe, expect, it } from 'vitest';
-import type { Measurement } from '../../contracts/index.ts';
-import { quat } from '../../lib/index.ts';
+import type {
+  AttemptRecord,
+  BelievedWorld,
+  BlackBoxArchive,
+  Measurement,
+  ModelState,
+} from '../../contracts/index.ts';
+import { HANDS_ON_NEUTRAL } from '../../contracts/index.ts';
+import { createGravityRange, LAW } from '../../content/gravity-range/index.ts';
+import { quat, v3 } from '../../lib/index.ts';
 import { loadShipDefinition } from '../../ship/index.ts';
+import { buildChart } from './chart.ts';
 import { burnDuration, burnSteps } from './maneuver.ts';
 import { resolveAttitude, resolveCommand, type NavigationView } from './resolve.ts';
+import { createStandInModel } from './standin-model.ts';
 import { createTelemetryFilter } from './telemetry.ts';
-import { applyCommanded, initialCommandedState } from './view.ts';
+import { applyCommanded, buildViewSnapshot, initialCommandedState, sensorCones } from './view.ts';
 
 describe('belief side of the game layer stays on its side (P11)', () => {
   const sources = Object.entries(
@@ -169,13 +179,18 @@ describe('plan helpers', () => {
   const ship = loadShipDefinition();
 
   it('turns, burns and releases', () => {
-    const steps = burnSteps({ at: 400, duration: 12, attitude: { reference: 'retrograde' } });
+    const steps = burnSteps({ at: 600, duration: 12, attitude: { reference: 'retrograde' } });
+    // The turn starts TURN_LEAD (480 s) before the burn: a half turn takes about 420 s.
     expect(steps.map((s) => [s.at, s.command.kind])).toEqual([
-      [100, 'attitude'],
-      [400, 'burn'],
-      [417, 'attitude'],
+      [120, 'attitude'],
+      [600, 'burn'],
+      [617, 'attitude'],
     ]);
-    expect(steps[2]!.command).toEqual({ kind: 'attitude', target: { reference: 'free' } });
+    // Released to a zero-rate hold, not free: a ship left free after a burn keeps turning.
+    expect(steps[2]!.command).toEqual({
+      kind: 'attitude',
+      target: { reference: 'rate', rate: { x: 0, y: 0, z: 0 } },
+    });
   });
 
   it('clips the turn to the plan epoch and can keep holding', () => {
@@ -215,5 +230,227 @@ describe('commanded state follows executed commands', () => {
     expect(state.pointing.camera).toEqual({ target: 'alpha' });
     expect(state.burns).toEqual([{ thruster: 'main-engine', throttle: 0.5, until: 110 }]);
     expect(applyCommanded(state, 105, { kind: 'cutoff', thruster: 'all' }).burns).toEqual([]);
+  });
+
+  it('keeps the hands-on controls while held, and a cut-off thruster quiet until they change', () => {
+    const input = { ...HANDS_ON_NEUTRAL, throttle: 1, translate: { x: 0, y: 0, z: 1 } };
+    let state = applyCommanded(initialCommandedState, 10, { kind: 'fly', input });
+    expect(state.handsOn).toEqual({ input, cut: [] });
+    state = applyCommanded(state, 12, { kind: 'cutoff', thruster: 'main-engine' });
+    expect(state.handsOn).toEqual({ input, cut: ['main-engine'] });
+    expect(applyCommanded(state, 13, { kind: 'fly', input: { ...input } }).handsOn!.cut).toEqual(
+      [],
+    );
+    expect(applyCommanded(state, 13, { kind: 'cutoff', thruster: 'all' }).handsOn).toBeUndefined();
+    expect(
+      applyCommanded(state, 13, { kind: 'fly', input: HANDS_ON_NEUTRAL }).handsOn,
+    ).toBeUndefined();
+  });
+});
+
+describe('the view snapshot in three dimensions', () => {
+  const setup = createGravityRange();
+  const navigator = createStandInModel({ referenceRadius: LAW.referenceRadius });
+  navigator.beginAttempt(
+    {
+      attemptId: 'attempt-0001',
+      index: 1,
+      briefing: setup.definition.briefing,
+      ship: setup.definition.ship,
+      startedAt: 'now',
+    },
+    undefined as never,
+  );
+  const believed = navigator.believedWorld(0);
+  /** The believed world with the ship pitched nose-up by `pitch`, and the camera drawing power. */
+  const world = (pitch = 0): BelievedWorld => ({
+    ...believed,
+    ship: {
+      ...believed.ship,
+      attitude: quat.fromAxisAngle({ x: 0, y: -1, z: 0 }, pitch),
+      equipment: {
+        ...believed.ship.equipment,
+        camera: { ...believed.ship.equipment.camera!, powerDraw: 120 },
+      },
+    },
+  });
+  const view = (inputs: Partial<Parameters<typeof buildViewSnapshot>[0]>) =>
+    buildViewSnapshot({
+      t: 0,
+      paused: true,
+      warp: 1,
+      world: world(),
+      definition: setup.definition.ship,
+      commanded: initialCommandedState,
+      trail: [],
+      forecasts: [],
+      objectives: [],
+      ...inputs,
+    });
+
+  it('points the camera cone along its 3D axis: at its target, along its direction, or its boresight', () => {
+    const rock = believed.asteroids.find((a) => a.position.z > 5_000)!;
+    const toRock = v3.normalize(v3.sub(rock.position, believed.ship.position));
+    const aimed = applyCommanded(initialCommandedState, 0, {
+      kind: 'point',
+      sensor: 'camera',
+      target: rock.id,
+    });
+    const atRock = sensorCones(setup.definition.ship, aimed, world()).at(0)!;
+    expect(v3.angleBetween(atRock.axis, toRock)).toBeLessThan(1e-12);
+    expect(atRock.axis.z).toBeGreaterThan(0);
+    expect(atRock.halfAngle).toBeCloseTo(Math.PI / 6, 12);
+
+    const along = applyCommanded(initialCommandedState, 0, {
+      kind: 'point',
+      sensor: 'camera',
+      target: null,
+      direction: { x: 0, y: 3, z: 4 },
+    });
+    expect(sensorCones(setup.definition.ship, along, world())[0]!.axis).toEqual({
+      x: 0,
+      y: 0.6,
+      z: 0.8,
+    });
+
+    // Not pointed: the boresight (body +x) carried by the believed attitude, pitched 30° up.
+    const boresight = sensorCones(setup.definition.ship, initialCommandedState, world(Math.PI / 6));
+    expect(boresight[0]!.axis.x).toBeCloseTo(Math.cos(Math.PI / 6), 12);
+    expect(boresight[0]!.axis.z).toBeCloseTo(0.5, 12);
+    // An unpowered camera has no cone.
+    const off = { ...world(), ship: { ...world().ship, equipment: believed.ship.equipment } };
+    expect(sensorCones(setup.definition.ship, aimed, off)).toEqual([]);
+  });
+
+  it('draws the hands-on thrust it is given, less a thruster cut off since', () => {
+    const input = { ...HANDS_ON_NEUTRAL, throttle: 1 };
+    const engine = {
+      source: 'main-engine',
+      point: { x: -7, y: 0.08, z: 0 },
+      direction: { x: 1, y: 0, z: 0 },
+      magnitude: 24_000,
+    };
+    const jet = { ...engine, source: 'rcs-aft-left', point: { x: -5, y: 2, z: 0 }, magnitude: 200 };
+    let commanded = applyCommanded(initialCommandedState, 0, { kind: 'fly', input });
+    expect(view({ commanded, handsOn: [engine, jet] }).ship.thrust).toEqual([engine, jet]);
+    commanded = applyCommanded(commanded, 1, { kind: 'cutoff', thruster: 'main-engine' });
+    expect(view({ commanded, handsOn: [engine, jet] }).ship.thrust).toEqual([jet]);
+    // Hull and centre of mass come from the believed mass properties.
+    const ship = view({}).ship;
+    expect(ship.hull).toBe(believed.ship.massProperties.hull);
+    expect(ship.centerOfMass.z).toBeLessThan(0);
+    expect(ship.hull).toHaveLength(5);
+  });
+
+  it('passes the window and earlier coverage through, and leaves out an empty history', () => {
+    const window = { sunlit: true, objects: [] };
+    expect(view({ window }).window).toBe(window);
+    expect(view({ coverageEarlier: [] })).not.toHaveProperty('coverageEarlier');
+    expect(view({})).not.toHaveProperty('window');
+  });
+});
+
+describe('the chart (GameControls.chart)', () => {
+  const setup = createGravityRange();
+  const briefing = setup.definition.briefing;
+  const state = (over: Partial<ModelState> = {}): ModelState => ({
+    version: 1,
+    parameters: [],
+    covariance: { ids: [], values: [] },
+    extensions: [],
+    support: { distance: {}, powered: [] },
+    residuals: { coast: { rms: 0, n: 0 }, powered: { rms: 0, n: 0 } },
+    basedOn: { attempts: [], measurementCount: 0 },
+    calibration: [],
+    ...over,
+  });
+  const attempt = (index: number, outcome: AttemptRecord['outcome'], encounterId = briefing.id) =>
+    ({ id: `attempt-000${index}`, index, encounterId, outcome }) as unknown as AttemptRecord;
+  const archive = (over: Partial<BlackBoxArchive> = {}): BlackBoxArchive => ({
+    attempts: [],
+    procedures: [],
+    adoptedExtensions: [],
+    leads: [],
+    ...over,
+  });
+
+  it('is one region at the origin as far out as the depart objective, with its attempts', () => {
+    const chart = buildChart(
+      briefing,
+      state(),
+      archive({
+        attempts: [
+          attempt(1, { kind: 'lost', t: 50, cause: 'collision' }),
+          attempt(2, { kind: 'in-progress' }),
+          attempt(3, { kind: 'recalled', t: 9 }, 'elsewhere'),
+        ],
+      }),
+    );
+    expect(chart).toEqual({
+      regions: [
+        {
+          id: 'gravity-range',
+          name: 'GRAVITY RANGE',
+          position: { x: 0, y: 0, z: 0 },
+          radius: 9_000_000,
+          surveyed: 0,
+          current: true,
+          attempts: [
+            { index: 1, outcome: 'lost' },
+            { index: 2, outcome: 'in-progress' },
+          ],
+        },
+      ],
+      corridors: [],
+      leads: [],
+    });
+  });
+
+  it('counts survey coverage: each body whose pull has been measured, and an adopted rule', () => {
+    const measured = state({ support: { distance: { alpha: [[5e5, 1e6]] }, powered: [] } });
+    expect(buildChart(briefing, measured, archive()).regions[0]!.surveyed).toBeCloseTo(1 / 3, 12);
+    const ruled = state({
+      support: { distance: { alpha: [[5e5, 1e6]], beta: [[1e6, 2e6]] }, powered: [] },
+      extensions: [{ id: 'distance-law', status: 'adopted' }],
+    });
+    expect(buildChart(briefing, ruled, archive()).regions[0]!.surveyed).toBe(1);
+  });
+
+  it('without a depart objective reaches the farthest briefed body', () => {
+    const plain = { ...briefing, objectives: [] };
+    const beta = briefing.knownBodies[1]!;
+    expect(buildChart(plain, state(), archive()).regions[0]!.radius).toBeCloseTo(
+      v3.length(beta.position) + beta.radius,
+      6,
+    );
+  });
+
+  it('draws a lead only when it has a bearing, as a unit direction', () => {
+    const seen = { attemptId: 'attempt-0001', t: 10 };
+    const chart = buildChart(
+      briefing,
+      state(),
+      archive({
+        leads: [
+          { id: 'glint', name: 'Glint', firstSeen: seen, status: 'noticed' },
+          {
+            id: 'flash',
+            name: 'Flash',
+            firstSeen: seen,
+            status: 'investigating',
+            bearing: { from: briefing.id, direction: { x: 0, y: 0, z: 2 }, spread: 0.1 },
+          },
+        ],
+      }),
+    );
+    expect(chart.leads).toEqual([
+      {
+        id: 'flash',
+        name: 'Flash',
+        from: 'gravity-range',
+        direction: { x: 0, y: 0, z: 1 },
+        spread: 0.1,
+      },
+    ]);
   });
 });

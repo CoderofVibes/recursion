@@ -1,6 +1,6 @@
 # Ship engineering baseline — 1C proposal
 
-**Status: [ASSUMED] proposed hardware, ratings and operating policies for owner approval.** This is an internally checked design model for the game, not a flight-qualified spacecraft, approved expedition balance, or demonstrated playable route. It implements the engineering intent of the [creative brief](../CREATIVE_BRIEF.md) and proposed decisions P1, P7 and P12 without changing either document. Implementation priorities are in [gameplay-couplings.md](gameplay-couplings.md); numerical configuration is in [ship-baseline.json](../../data/ship-baseline.json).
+**Status: [ASSUMED] proposed hardware, ratings and operating policies for owner approval.** This is an internally checked design model for the game, not a flight-qualified spacecraft, approved expedition balance, or demonstrated playable route. It implements the engineering intent of the [creative brief](../CREATIVE_BRIEF.md) and proposed decisions P1, P7 and P12 without changing either document. Implementation priorities are in [gameplay-couplings.md](gameplay-couplings.md); numerical configuration is in [ship-baseline.json](../../data/ship-baseline.json). Flight is three-dimensional (DECISIONS A11): thread 2G gave the planar 1C proposal heights, a hull in prisms, a full inertia tensor, RCS jets on three axes, a two-axis gimbal and attitude-control values; what it added and why is in [Three dimensions](#three-dimensions-2g).
 
 ## Reading the labels and numbers
 
@@ -15,11 +15,11 @@ The JSON is the numerical authority. A numeric leaf or array inherits the neares
 
 **[ASSUMED]** Propose a compact return vehicle for **4 crew**, with **24,000 kg dry operational mass**, **6,320 kg propulsion inventory**, and **54 kg fuel-cell reactants**: **30,374 kg at arrival**. Dry operational mass includes people, fixed stores, pressure structure, shielding, plumbing and dry tank hardware. It is not the stripped manufacturer's dry mass. The large `habitat-structure` residual is an explicit unallocated structural/habitation allowance, not a claim that each bolt has been designed. No inventory is counted twice.
 
-**[ASSUMED]** The body origin is fixed to the structure; **x points forward, y left**. Yaw is counterclockwise. The main engine and optional ion unit are aft; cabin, camera and command station are forward. Heavy main propellant is aft of the origin, paired RCS supplies and electronics straddle the centerline. Radiators extend sideways aft, solar wings sideways forward. Equipment positions, their intrinsic yaw inertia and all envelope vertices are in the appendix. The origin, center of mass, thrust axis and velocity vector are separate quantities.
+**[ASSUMED]** The body origin is fixed to the structure, on the hull axis; **x points forward, y left, z up**. Yaw is counterclockwise seen from above (about +z); positive pitch raises the nose (about −y). The main engine and optional ion unit are aft; cabin, camera and command station are forward. Heavy main propellant is aft of the origin, paired RCS supplies and electronics straddle the centerline; life-support gear, batteries and stores sit under the cabin deck, avionics above it. Radiators extend sideways aft, solar wings sideways forward, both in the hull's mid-plane. Equipment positions, their intrinsic inertia about three axes and all prism vertices are in the appendix. The origin, center of mass, thrust axis and velocity vector are separate quantities.
 
-**[ASSUMED]** Arrival has radiators deployed, solar wings stowed, healthy hardware, normal recording and tracking, and unknown illumination conservatively allocated as zero power. Fuel cells ramp from zero while batteries bridge. Passive thermal louvers and regulated coolant flow hold the initial thermal targets. This supports safe preparation when the game is paused; advancing mission time still consumes real supplies. Stowing for a narrow passage is a temporary thermal commitment, not a new equilibrium or a free cooling reset.
+**[ASSUMED]** Arrival has radiators deployed, solar wings stowed, healthy hardware, normal recording and tracking, and unknown illumination conservatively allocated as zero power. Fuel cells ramp from zero while batteries bridge. Passive thermal louvers and regulated coolant flow hold the initial thermal targets. This supports preparation on arrival without relying on a pause (DECISIONS A12: there is none inside an encounter); mission time always runs and consumes real supplies. Stowing for a narrow passage is a temporary thermal commitment, not a new equilibrium or a free cooling reset.
 
-**[ASSUMED]** The four named polygons are conservative envelopes: stowed, radiators deployed, solar deployed and all deployed. They include empty space between appendages to keep clearance conservative. Emitting surface area is a separate quantity, never inferred from polygon area. Asymmetric configurations and intermediate extension use the hull plus each appendage's current polygon, then a convex hull; sweep that geometry continuously during movement. A jam retains the actual extension. Out-of-plane radiator pointing uses the conservative in-plane envelope. Point-mass tank centroids and smoothly extended appendages omit fluid slosh and detailed hinge dynamics. [ESTABLISHED: S21, S24] Structures/mechanisms and mass distribution require separate geometric and inertial descriptions.
+**[ASSUMED]** The occupied volume is a union of convex prisms: the pressure hull (the 16 m by 5 m stowed outline over the 5 m body diameter) and one thin prism per radiator and solar wing, whose outline is the wing's polygon at its current extension. The four configurations (stowed, radiators deployed, solar deployed and all deployed) keep their names and meaning; each is the hull plus the wings at those extensions. Unlike 1C's single convex outline, the union includes no empty space between the wings and the nose and tail: the objects the ship must clear are spheres hundreds of metres across or more, against which a few metres of concavity cannot hide a collision, while a 5 m tall slab around a 0.2 m wing would report contacts that did not happen. Emitting surface area is a separate quantity, never inferred from prism area. Asymmetric configurations and intermediate extension use each wing's current polygon; sweep that geometry continuously during movement. A jam retains the actual extension. The antenna, camera, engine bell beyond the outline and RCS nozzles are outside the envelope. Point-mass tank centroids and smoothly extended appendages omit fluid slosh and detailed hinge dynamics. [ESTABLISHED: S21, S24] Structures/mechanisms and mass distribution require separate geometric and inertial descriptions.
 
 ## Electrical architecture and energy accounting
 
@@ -64,7 +64,7 @@ The JSON is the numerical authority. A numeric leaf or array inherits the neares
 
 **[ESTABLISHED: S12, S13]** Use `massFlow = thrust/(Isp*g0)` and `deltaV = Isp*g0*ln(initialMass/finalMass)` for ordinary propulsion checks, with standard gravity in the Isp definition, not the unfamiliar universe's local acceleration. The validator reports the resulting mass flow and ideal main-only velocity change. Burn duration/impulse is truncated at actual remaining propellant; any partial final impulse is logged. Minimum-impulse commands accumulate or are rejected explicitly, not silently rounded into free thrust.
 
-**[ASSUMED]** Each of four RCS pods contains duplicated A/B directions, yielding **8 jets per bank**, **16 installed**. Each jet provides **200 N** at **220 s Isp** with a **10 N s minimum impulse**. The initial active bank is A; B is isolated until heated and selected. Tank draw is balanced by default; isolating one tank moves the center of mass. The current layout has asymmetric yaw authority: axial jets provide clockwise torque, transverse jets counterclockwise. Zero-net-force combinations provide **−1,600 / +4,000 N m**; a pure-translation allocation generally needs mixed pulses to cancel moment. This is an explicit proposal for controllable planar authority, not a six-axis spacecraft layout.
+**[ASSUMED]** Each of four RCS pods contains duplicated A/B directions: five nozzles per pod and bank (fore, aft, up, down and outboard, as 1E drew them), **20 jets per bank**, **40 installed**. Each jet provides **200 N** at **220 s Isp** with a **10 N s minimum impulse**; a pod opens at most two valves at once. The initial active bank is A; B is isolated until heated and selected. Tank draw is balanced by default; isolating one tank moves the center of mass. The force on the ship is opposite the nozzle, so a pod's lateral jet pushes toward the centreline. One bank gives zero-net-force torque of **±1,600 N m in roll, ±4,000 N m in pitch and ±3,600 N m in yaw**, and force of **±800 N along x, ±400 N along y and ±800 N along z**; a translation with no torque about the current center of mass needs slightly unequal pulses, which the allocator provides. This replaces 1C's planar layout (8 jets per bank, yaw −1,600 / +4,000 N m): the first two jets of each pod keep their 1C mode names, but the lateral jets of the forward-left and aft-right pods now push the other way.
 
 **[ESTABLISHED: S15, DD09]** Voyager demonstrates that branch swaps can require scarce heater power and that spare branches may have different control authority. **[ASSUMED]** Heating and switching restore only available functions. Neither action unclogs a nozzle, refills a tank nor clears component damage. The exact warmup time is compressed for play but still temperature-gated.
 
@@ -72,11 +72,11 @@ The JSON is the numerical authority. A numeric leaf or array inherits the neares
 
 **[ESTABLISHED: S08]** The NEXT reference operating point couples **0.236 N**, **4,190 s Isp**, and **7,220 W bus input**. **[ASSUMED]** Retain that point as an optional installed long-coast unit, disabled by default. On this ship it provides negligible short-encounter velocity change; do not magnify thrust without a new explicit fictional decision. The assumed onboard heat allocation is a conservative upper bound, not a measured S08 thermal load. Do not combine a lower throttle point's power with the maximum thrust or Isp.
 
-**[ESTABLISHED: S14, S24]** Compute `COM = sum(m*r)/sum(m)` and `Iz = sum(intrinsicIz + m*|r-COM|²)`; thrust torque is `(mount-COM) cross force`. **[ASSUMED]** Consumables use fixed centroids and intrinsic inertia proportional to remaining mass. Retained fuel-cell water moves mass forward without changing total mass. Main depletion shifts the center forward; an isolated RCS supply or one-sided deployment also moves it sideways. Recompute mass properties before applying each actuator output. The gimbal aims through the *current* COM subject to limits; residual moment belongs in attitude dynamics. During internal extension preserve angular momentum when inertia changes, and account for actuator energy. Exhaust angular momentum during burns remains the simulation owner's responsibility.
+**[ESTABLISHED: S14, S24]** Compute `COM = sum(m*r)/sum(m)` and the inertia tensor about it, `I = sum(I_intrinsic + m*(|d|² 1 - d dᵀ))` with `d = r - COM`; its zz term is 1C's `Iz = sum(intrinsicIz + m*(dx² + dy²))`, unchanged by heights. Thrust torque is `(mount-COM) cross force`. **[ASSUMED]** Consumables use fixed centroids and intrinsic inertia proportional to remaining mass. Retained fuel-cell water moves mass forward without changing total mass. Main depletion shifts the center forward; an isolated RCS supply or one-sided deployment also moves it sideways. The center sits about 0.10 m below the hull axis (0.15 m with empty tanks), because the heavy equipment is under the deck. Recompute mass properties before applying each actuator output. The two-axis gimbal aims through the *current* COM subject to its limit and rate on each axis; residual moment belongs in attitude dynamics. During internal extension preserve angular momentum when inertia changes, and account for actuator energy. Exhaust angular momentum during burns remains the simulation owner's responsibility.
 
 ## Sensing, computation and evidence
 
-**[ESTABLISHED: S04, DD10]** Inertial and optical instruments measure different things. **[ASSUMED, P7]** Accelerometers report specific force from propulsion or other modeled nongravitational forces; free fall alone reads bias/noise, not gravity. Correct the IMU's lever-arm rotational acceleration to COM and include correction uncertainty. Star trackers provide attitude, not position. An Earth star catalogue may fail in this universe; the proposal bootstraps a local relative sky map with an arbitrary inertial yaw origin when stars are visible. No valid star field means no perfect attitude fallback.
+**[ESTABLISHED: S04, DD10]** Inertial and optical instruments measure different things. **[ASSUMED, P7]** Accelerometers report specific force from propulsion or other modeled nongravitational forces; free fall alone reads bias/noise, not gravity. Correct the IMU's lever-arm rotational acceleration to COM and include correction uncertainty. Star trackers provide attitude, not position. An Earth star catalogue may fail in this universe; the proposal bootstraps a local relative sky map with an arbitrary inertial frame when stars are visible. No valid star field means no perfect attitude fallback.
 
 **[ESTABLISHED: DD05, DD07]** Optical navigation needs usable target geometry, illumination, exposure, pointing and calibration. **[ASSUMED]** Camera power buys bounded processing/cadence and noise improvements, not visibility or exact distance. Angular noise produces transverse error proportional to range. Range estimates require a declared target-size/shape prior or a sequence with parallax; otherwise observations are bearings only. A longer exposure can lower photon noise but fail the smear gate. Condition bounds, low-light validity, warmup, settling and maximum useful power prevent infinite-quality or divide-by-zero observations.
 
@@ -99,6 +99,36 @@ The JSON is the numerical authority. A numeric leaf or array inherits the neares
 **[FICTIONAL]** For illustration, an intact ordinary component receiving intensity **1** for **8 s** accumulates **8 exposure units**: it crosses an upset bucket but stays below degradation onset. Repeated glances can eventually degrade that same component; another component elsewhere has its own history. An energized ordinary component at intensity **25** for **0.1 s** crosses the burnout dwell and fails irreversibly. These are illustrative field inputs, not encounter tuning or a ship-wide two-hit rule. Local protection, position, power state and susceptibility change the outcome.
 
 **[FICTIONAL]** Lattice reconstruction is a processing mode on the existing science processor using existing camera/inertial/attitude hardware. More allocation improves only the declared reconstruction measurements and update cadence, while adding ordinary heat and draw. It creates no physical detector and no shielding. Its reconstructed evidence can reach the model through measurements; the ordinary forecaster never reads the field's truth. Leaving the field, cooling or resetting a breaker does not restore cumulative damage.
+
+## Three dimensions (2G)
+
+**[ASSUMED]** Everything in this section was added by thread 2G for three-dimensional flight (DECISIONS A11). 1C's values are unchanged: every x and y position, every mass, rating and the yaw (z) intrinsic inertia. The validator checks the rules stated here.
+
+**Heights.** z is the anchor height of each assembly in 1E's owner-approved drawing (`prototypes/room/ship-parts.js`, same body frame), so the ship view and the physics agree: crew −0.2; stores, air trains, batteries, cabin pumps −1.62; power distribution −1.6; reactant tanks −1.68; product-water tank −1.7; interface exchanger −1.72; xenon tank −1.9; ion drive −1.5; camera −2.2; console 0.1; fuel cells 0.95; external pumps, flight computers, science processor 1.0; inertial units 1.25; RCS tanks and Black Box 1.6; star trackers 2.5; antenna 3.6; main tank, main engine, RCS pods, radiators and solar wings 0. Chosen by 2G where the drawing has no centroid: the structure at 0 (a body of revolution has its centre on its axis; the drawing's hull anchor is a label point on the skin), and each propellant or reactant at its tank's height. Consequence: the center of mass is 0.105 m below the hull axis at arrival and 0.147 m with every tank empty.
+
+**Hull.** Pressure hull prism from z = −2.5 to 2.5 (the 5 m body diameter); radiator prisms 0.2 m thick and solar prisms 0.1 m thick about z = 0 (a panel with its tubes and manifold; a panel with its yoke). Why the union of parts is acceptable for clearance is in [Concept, layout and configuration](#concept-layout-and-configuration).
+
+**Intrinsic inertia about three axes** (`ship.inertiaShapes`). The 1C number stays as the yaw term. `habitat-structure`: a uniform solid cylinder of radius 2.5 m about x, so pitch = yaw = 180,000 kg m² and roll = m R²/2 = 54,500 kg m² (the 1C yaw value corresponds to such a cylinder 10.3 m long). Radiator and solar wings: thin flat plates in the x–y plane, so yaw = roll + pitch, split in the ratio span² : chord² of the stowed and deployed polygons (radiator 19 + 481 stowed, 1,798 + 702 deployed; solar 19 + 681 stowed, 2,574 + 926 deployed) and interpolated with extension like the yaw term. Everything else, and every propellant: isotropic (a sphere or compact box). The resulting tensor, its principal moments and their tilt for every configuration, full and empty, are in the appendix; the principal axes are 2.5–2.7° from the body axes because the life-support gear is low and forward (xz product about 10,600 kg m² at arrival).
+
+**RCS jets.** Five nozzles per pod and bank as drawn by 1E; forces and authority are in [Propulsion](#propulsion-and-changing-mass-properties) and the appendix. Jet 0 of each pod is 1C's axial jet and jet 1 its lateral jet, so the `jet-0` and `jet-1` modes keep their names; jet 2 is the opposite axial jet, jet 3 pushes up (down nozzle) and jet 4 down. The lateral jets of the forward-left and aft-right pods are reversed from 1C: an outboard nozzle can only push inboard, and with all four lateral jets inboard the ship can translate along y without turning and has the same yaw authority both ways. All of a pod's jets act at the pod's position (the nozzles' 0.3 m offsets are neglected).
+
+**Main engine.** The gimbal has two axes with the 1C limit (0.035 rad) and rate (0.02 rad/s) on each: two linear actuators, each with its own stroke. `mountMisalignmentPitch` = 0: the 1C mount offset is about z; none is assumed about y.
+
+**Attitude control** (`propulsion.attitudeControl`), flight-software play values answering 2F's request 3. [ESTABLISHED: S04] Attitude is held and changed with thrusters, and star trackers lose their solution above a slew rate; the numbers are assumed.
+
+| Value | | Reasoning |
+|---|---|---|
+| `rateGain` | 0.4 s⁻¹ | 2B's rate gain. |
+| `attitudeGain` | 0.1 s⁻¹ | 2B's attitude gain (0.04 s⁻²) divided by the rate gain: the same law written as a rate loop. |
+| `slewRate` | 0.008 rad/s | 80% of the star trackers' 0.01 rad/s, leaving room for the ripple of minimum pulses, so a turn keeps the attitude fix. A 180° turn then takes about 420 s. |
+| `attitudeDeadband` | 0.002 rad | With the rate deadband this holds attitude within about 0.7°: about 1% of a burn's velocity change goes sideways. |
+| `rateDeadband` | 0.0004 rad/s | Wider than one pair of minimum bits can cross in any configuration with any loading (largest: roll, stowed, empty: 0.00053 rad/s per bit against a band 0.0008 wide), so the jets never answer each other. |
+| `handsOnTurnRate` | 0.008 rad/s | A full yaw or pitch deflection asks for the slew rate. |
+| `torquePriority` | 10 | When jets are short the turn is served before the push. |
+
+Measured with these values (tests in `src/ship/propulsion/control.test.ts`, the rigid body integrated in the test): a ship at rest is held for nothing; after a manoeuvre a hold costs 0.3–1.2 kg/h of RCS propellant (2B's controller: about 12 kg/h); a 90° turn settles in about 215 s and a 180° turn in about 420 s for 0.4–0.5 kg either way (2B: 15–29 kg for 180°), peaking at 0.0077–0.0084 rad/s (2B: 0.18).
+
+**Sensing and light.** Camera boresight body +x with a cone of half-angle π/6 (2B's value made explicit; 1E drew ±26°). Bearings are azimuth and elevation with an isotropic pointing error; star-tracker fixes carry an error about each body axis; the inertial units sense three axes with a bias on each. `generation.solar.arrayNormal` = body +x: the wings are feathered about their span to face forward, which is what the planar formula cos(sun azimuth − yaw) meant, so in-plane cases are unchanged; the radiators absorb sunlight at the same incidence.
 
 ## Realistic anchors and deliberate play choices
 
@@ -130,52 +160,52 @@ All numbers in this appendix are **[ASSUMED]** unless a row explicitly says othe
 
 ### Equipment inventory and modes
 
-Each physical assembly is counted once. `off` has zero commanded electrical draw and data; it does not stop metabolism, erase stored heat, remove mass or cure damage. Crew cannot be commanded off. Positions are the stowed structural coordinates; configuration overrides move appendages. Heat is deposited onboard, not total energy released. Generator/storage mode values are rated endpoints; dispatch formulas determine actual values.
+Each physical assembly is counted once. `off` has zero commanded electrical draw and data; it does not stop metabolism, erase stored heat, remove mass or cure damage. Crew cannot be commanded off. Positions are the stowed structural coordinates (x forward, y left, z up); configuration overrides move appendages. Intrinsic inertia is about the centre of the assembly, about body x (roll), y (pitch) and z (yaw). Heat is deposited onboard, not total energy released. Generator/storage mode values are rated endpoints; dispatch formulas determine actual values.
 
-| ID / subsystem | Mass kg; (x,y) m; intrinsic I kg m² | Modes: power / onboard heat / output data rate / generated power (W / W / byte s⁻¹ / W) | Allowed assembly K | Node / bus / initial mode |
+| ID / subsystem | Mass kg; (x,y,z) m; intrinsic I roll/pitch/yaw kg m² | Modes: power / onboard heat / output data rate / generated power (W / W / byte s⁻¹ / W) | Allowed assembly K | Node / bus / initial mode |
 |---|---|---|---|---|
-| `habitat-structure` / structure | 17438; [0, 0]; 180000 | off: 0/0/0/0 | 250–340 | cabin / none / off |
-| `crew` / crew | 320; [3, 0]; 320 | off: 0/0/0/0; occupied: 0/400/0/0 | 283–308 | cabin / none / occupied |
-| `cabin-stores` / life-support | 800; [3, 0]; 800 | off: 0/0/0/0 | 273–313 | cabin / none / off |
-| `main-tank` / tank | 800; [-2, 0]; 800 | off: 0/0/0/0 | 263–323 | service / none / off |
-| `rcs-tanks` / tank | 100; [-1, 0]; 100 | off: 0/0/0/0 | 263–323 | service / none / off |
-| `xenon-tank` / tank | 40; [-3, 0]; 40 | off: 0/0/0/0 | 263–323 | service / none / off |
-| `reactant-tanks` / tank | 80; [1, 0]; 80 | off: 0/0/0/0 | 263–323 | service / none / off |
-| `product-water-tank` / tank | 20; [2, 0]; 20 | off: 0/0/0/0 | 263–323 | service / none / off |
-| `solar-left` / generation | 300; [3, 2]; 700 | off: 0/0/0/0; stowed: 0/0/0/0; deployed: 0/0/0/12000; deploying: 100/100/0/0 | 173–373 | external-loop / main-a / stowed |
-| `radiator-left` / thermal | 250; [-2, 2]; 500 | off: 0/0/0/0; hold: 0/0/0/0; moving: 80/80/0/0 | 200–350 | external-loop / main-a / hold |
-| `solar-right` / generation | 300; [3, -2]; 700 | off: 0/0/0/0; stowed: 0/0/0/0; deployed: 0/0/0/12000; deploying: 100/100/0/0 | 173–373 | external-loop / main-b / stowed |
-| `radiator-right` / thermal | 250; [-2, -2]; 500 | off: 0/0/0/0; hold: 0/0/0/0; moving: 80/80/0/0 | 200–350 | external-loop / main-b / hold |
-| `fuel-cell-a` / generation | 180; [-1, 1]; 180 | off: 0/0/0/0; following: 0/6000/0/6000 | 278–333 | service / main-a / following |
-| `battery-a` / storage | 200; [1, 1]; 200 | off: 0/0/0/0; idle: 0/0/0/0; discharge: 0/210.526316/0/4000; charge: 2000/100/0/0 | 263–318 | service / main-a / idle |
-| `pdu-a` / distribution | 70; [0, 1]; 70 | off: 0/0/0/0; active: 30/30/0/0 | 263–333 | service / main-a / active |
-| `eclss-a` / life-support | 450; [4, 1]; 450 | off: 0/0/0/0; active: 1800/1800/0/0; standby: 80/80/0/0 | 278–313 | cabin / essential / active |
-| `internal-pump-a` / thermal | 30; [2, 1]; 30 | off: 0/0/0/0; active: 120/120/0/0; standby: 5/5/0/0 | 278–323 | cabin / essential / active |
-| `external-pump-a` / thermal | 40; [-2, 1]; 40 | off: 0/0/0/0; active: 180/180/0/0; standby: 5/5/0/0 | 200–333 | service / essential / active |
-| `flight-cpu-a` / avionics | 25; [2, 0.5]; 25 | off: 0/0/0/0; active: 120/120/4000/0; standby: 20/20/100/0 | 263–323 | cabin / essential / active |
-| `imu-a` / sensing | 8; [0, 0.1]; 2 | off: 0/0/0/0; active: 15/15/2400/0 | 273–313 | cabin / essential / active |
-| `star-tracker-a` / sensing | 8; [6, 1]; 3 | off: 0/0/0/0; active: 20/20/128/0 | 263–313 | service / essential / active |
-| `fuel-cell-b` / generation | 180; [-1, -1]; 180 | off: 0/0/0/0; following: 0/6000/0/6000 | 278–333 | service / main-b / following |
-| `battery-b` / storage | 200; [1, -1]; 200 | off: 0/0/0/0; idle: 0/0/0/0; discharge: 0/210.526316/0/4000; charge: 2000/100/0/0 | 263–318 | service / main-b / idle |
-| `pdu-b` / distribution | 70; [0, -1]; 70 | off: 0/0/0/0; active: 30/30/0/0 | 263–333 | service / main-b / active |
-| `eclss-b` / life-support | 450; [4, -1]; 450 | off: 0/0/0/0; active: 1800/1800/0/0; standby: 80/80/0/0 | 278–313 | cabin / essential / standby |
-| `internal-pump-b` / thermal | 30; [2, -1]; 30 | off: 0/0/0/0; active: 120/120/0/0; standby: 5/5/0/0 | 278–323 | cabin / essential / standby |
-| `external-pump-b` / thermal | 40; [-2, -1]; 40 | off: 0/0/0/0; active: 180/180/0/0; standby: 5/5/0/0 | 200–333 | service / essential / standby |
-| `flight-cpu-b` / avionics | 25; [2, -0.5]; 25 | off: 0/0/0/0; active: 120/120/4000/0; standby: 20/20/100/0 | 263–323 | cabin / essential / standby |
-| `imu-b` / sensing | 8; [0, -0.1]; 2 | off: 0/0/0/0; active: 15/15/2400/0 | 273–313 | cabin / essential / active |
-| `star-tracker-b` / sensing | 8; [6, -1]; 3 | off: 0/0/0/0; active: 20/20/128/0 | 263–313 | service / essential / active |
-| `interface-hx` / thermal | 150; [0, 0]; 150 | off: 0/0/0/0; regulated: 20/20/0/0; antifreeze: 220/220/0/0 | 278–323 | hx-water / essential / regulated |
-| `main-engine` / propulsion | 600; [-7, 0.08]; 300 | off: 0/0/0/0; ready: 30/30/0/0; firing: 180/4180/0/0; heater: 100/100/0/0 | 278–343 | service / essential / ready |
-| `rcs-forward-left` / propulsion | 60; [5, 2]; 20 | off: 0/0/0/0; ready: 15/15/0/0; heater: 80/80/0/0; fire-one: 40/140/0/0; fire-two: 65/265/0/0 | 278–343 | service / essential / ready |
-| `rcs-forward-right` / propulsion | 60; [5, -2]; 20 | off: 0/0/0/0; ready: 15/15/0/0; heater: 80/80/0/0; fire-one: 40/140/0/0; fire-two: 65/265/0/0 | 278–343 | service / essential / ready |
-| `rcs-aft-left` / propulsion | 60; [-5, 2]; 20 | off: 0/0/0/0; ready: 15/15/0/0; heater: 80/80/0/0; fire-one: 40/140/0/0; fire-two: 65/265/0/0 | 278–343 | service / essential / ready |
-| `rcs-aft-right` / propulsion | 60; [-5, -2]; 20 | off: 0/0/0/0; ready: 15/15/0/0; heater: 80/80/0/0; fire-one: 40/140/0/0; fire-two: 65/265/0/0 | 278–343 | service / essential / ready |
-| `ion-drive` / propulsion | 100; [-7, 0]; 50 | off: 0/0/0/0; idle: 0/0/0/0; firing: 7220/2300/0/0 | 273–333 | service / payload / idle |
-| `camera` / sensing | 30; [7, 0]; 10 | off: 0/0/0/0; survey: 60/60/100000/0; track: 120/120/500000/0; detail: 200/200/1000000/0 | 273–313 | service / payload / track |
-| `science-processor` / processing | 30; [1, 0.5]; 15 | off: 0/0/0/0; idle: 40/40/1000/0; science: 350/350/100000/0; lattice: 1000/1000/200000/0 | 263–323 | service / payload / idle |
-| `black-box` / data | 20; [2, 0]; 10 | off: 0/0/0/0; minimum: 15/15/4096/0; normal: 35/35/40960/0; high: 100/100/204800/0 | 263–323 | cabin / essential / normal |
-| `comms` / communications | 60; [6, 0]; 30 | off: 0/0/0/0; listen: 20/20/0/0; transmit: 250/170/125000/0 | 263–333 | service / payload / listen |
-| `console` / avionics | 50; [4, 0]; 25 | off: 0/0/0/0; active: 100/100/1000/0; dim: 40/40/1000/0 | 273–313 | cabin / essential / active |
+| `habitat-structure` / structure | 17438; [0, 0, 0]; 54500/180000/180000 | off: 0/0/0/0 | 250–340 | cabin / none / off |
+| `crew` / crew | 320; [3, 0, -0.2]; 320/320/320 | off: 0/0/0/0; occupied: 0/400/0/0 | 283–308 | cabin / none / occupied |
+| `cabin-stores` / life-support | 800; [3, 0, -1.62]; 800/800/800 | off: 0/0/0/0 | 273–313 | cabin / none / off |
+| `main-tank` / tank | 800; [-2, 0, 0]; 800/800/800 | off: 0/0/0/0 | 263–323 | service / none / off |
+| `rcs-tanks` / tank | 100; [-1, 0, 1.6]; 100/100/100 | off: 0/0/0/0 | 263–323 | service / none / off |
+| `xenon-tank` / tank | 40; [-3, 0, -1.9]; 40/40/40 | off: 0/0/0/0 | 263–323 | service / none / off |
+| `reactant-tanks` / tank | 80; [1, 0, -1.68]; 80/80/80 | off: 0/0/0/0 | 263–323 | service / none / off |
+| `product-water-tank` / tank | 20; [2, 0, -1.7]; 20/20/20 | off: 0/0/0/0 | 263–323 | service / none / off |
+| `solar-left` / generation | 300; [3, 2, 0]; 19/681/700 | off: 0/0/0/0; stowed: 0/0/0/0; deployed: 0/0/0/12000; deploying: 100/100/0/0 | 173–373 | external-loop / main-a / stowed |
+| `radiator-left` / thermal | 250; [-2, 2, 0]; 19/481/500 | off: 0/0/0/0; hold: 0/0/0/0; moving: 80/80/0/0 | 200–350 | external-loop / main-a / hold |
+| `solar-right` / generation | 300; [3, -2, 0]; 19/681/700 | off: 0/0/0/0; stowed: 0/0/0/0; deployed: 0/0/0/12000; deploying: 100/100/0/0 | 173–373 | external-loop / main-b / stowed |
+| `radiator-right` / thermal | 250; [-2, -2, 0]; 19/481/500 | off: 0/0/0/0; hold: 0/0/0/0; moving: 80/80/0/0 | 200–350 | external-loop / main-b / hold |
+| `fuel-cell-a` / generation | 180; [-1, 1, 0.95]; 180/180/180 | off: 0/0/0/0; following: 0/6000/0/6000 | 278–333 | service / main-a / following |
+| `battery-a` / storage | 200; [1, 1, -1.62]; 200/200/200 | off: 0/0/0/0; idle: 0/0/0/0; discharge: 0/210.526316/0/4000; charge: 2000/100/0/0 | 263–318 | service / main-a / idle |
+| `pdu-a` / distribution | 70; [0, 1, -1.6]; 70/70/70 | off: 0/0/0/0; active: 30/30/0/0 | 263–333 | service / main-a / active |
+| `eclss-a` / life-support | 450; [4, 1, -1.62]; 450/450/450 | off: 0/0/0/0; active: 1800/1800/0/0; standby: 80/80/0/0 | 278–313 | cabin / essential / active |
+| `internal-pump-a` / thermal | 30; [2, 1, -1.62]; 30/30/30 | off: 0/0/0/0; active: 120/120/0/0; standby: 5/5/0/0 | 278–323 | cabin / essential / active |
+| `external-pump-a` / thermal | 40; [-2, 1, 1]; 40/40/40 | off: 0/0/0/0; active: 180/180/0/0; standby: 5/5/0/0 | 200–333 | service / essential / active |
+| `flight-cpu-a` / avionics | 25; [2, 0.5, 1]; 25/25/25 | off: 0/0/0/0; active: 120/120/4000/0; standby: 20/20/100/0 | 263–323 | cabin / essential / active |
+| `imu-a` / sensing | 8; [0, 0.1, 1.25]; 2/2/2 | off: 0/0/0/0; active: 15/15/2400/0 | 273–313 | cabin / essential / active |
+| `star-tracker-a` / sensing | 8; [6, 1, 2.5]; 3/3/3 | off: 0/0/0/0; active: 20/20/128/0 | 263–313 | service / essential / active |
+| `fuel-cell-b` / generation | 180; [-1, -1, 0.95]; 180/180/180 | off: 0/0/0/0; following: 0/6000/0/6000 | 278–333 | service / main-b / following |
+| `battery-b` / storage | 200; [1, -1, -1.62]; 200/200/200 | off: 0/0/0/0; idle: 0/0/0/0; discharge: 0/210.526316/0/4000; charge: 2000/100/0/0 | 263–318 | service / main-b / idle |
+| `pdu-b` / distribution | 70; [0, -1, -1.6]; 70/70/70 | off: 0/0/0/0; active: 30/30/0/0 | 263–333 | service / main-b / active |
+| `eclss-b` / life-support | 450; [4, -1, -1.62]; 450/450/450 | off: 0/0/0/0; active: 1800/1800/0/0; standby: 80/80/0/0 | 278–313 | cabin / essential / standby |
+| `internal-pump-b` / thermal | 30; [2, -1, -1.62]; 30/30/30 | off: 0/0/0/0; active: 120/120/0/0; standby: 5/5/0/0 | 278–323 | cabin / essential / standby |
+| `external-pump-b` / thermal | 40; [-2, -1, 1]; 40/40/40 | off: 0/0/0/0; active: 180/180/0/0; standby: 5/5/0/0 | 200–333 | service / essential / standby |
+| `flight-cpu-b` / avionics | 25; [2, -0.5, 1]; 25/25/25 | off: 0/0/0/0; active: 120/120/4000/0; standby: 20/20/100/0 | 263–323 | cabin / essential / standby |
+| `imu-b` / sensing | 8; [0, -0.1, 1.25]; 2/2/2 | off: 0/0/0/0; active: 15/15/2400/0 | 273–313 | cabin / essential / active |
+| `star-tracker-b` / sensing | 8; [6, -1, 2.5]; 3/3/3 | off: 0/0/0/0; active: 20/20/128/0 | 263–313 | service / essential / active |
+| `interface-hx` / thermal | 150; [0, 0, -1.72]; 150/150/150 | off: 0/0/0/0; regulated: 20/20/0/0; antifreeze: 220/220/0/0 | 278–323 | hx-water / essential / regulated |
+| `main-engine` / propulsion | 600; [-7, 0.08, 0]; 300/300/300 | off: 0/0/0/0; ready: 30/30/0/0; firing: 180/4180/0/0; heater: 100/100/0/0 | 278–343 | service / essential / ready |
+| `rcs-forward-left` / propulsion | 60; [5, 2, 0]; 20/20/20 | off: 0/0/0/0; ready: 15/15/0/0; heater: 80/80/0/0; fire-one: 40/140/0/0; fire-two: 65/265/0/0 | 278–343 | service / essential / ready |
+| `rcs-forward-right` / propulsion | 60; [5, -2, 0]; 20/20/20 | off: 0/0/0/0; ready: 15/15/0/0; heater: 80/80/0/0; fire-one: 40/140/0/0; fire-two: 65/265/0/0 | 278–343 | service / essential / ready |
+| `rcs-aft-left` / propulsion | 60; [-5, 2, 0]; 20/20/20 | off: 0/0/0/0; ready: 15/15/0/0; heater: 80/80/0/0; fire-one: 40/140/0/0; fire-two: 65/265/0/0 | 278–343 | service / essential / ready |
+| `rcs-aft-right` / propulsion | 60; [-5, -2, 0]; 20/20/20 | off: 0/0/0/0; ready: 15/15/0/0; heater: 80/80/0/0; fire-one: 40/140/0/0; fire-two: 65/265/0/0 | 278–343 | service / essential / ready |
+| `ion-drive` / propulsion | 100; [-7, 0, -1.5]; 50/50/50 | off: 0/0/0/0; idle: 0/0/0/0; firing: 7220/2300/0/0 | 273–333 | service / payload / idle |
+| `camera` / sensing | 30; [7, 0, -2.2]; 10/10/10 | off: 0/0/0/0; survey: 60/60/100000/0; track: 120/120/500000/0; detail: 200/200/1000000/0 | 273–313 | service / payload / track |
+| `science-processor` / processing | 30; [1, 0.5, 1]; 15/15/15 | off: 0/0/0/0; idle: 40/40/1000/0; science: 350/350/100000/0; lattice: 1000/1000/200000/0 | 263–323 | service / payload / idle |
+| `black-box` / data | 20; [2, 0, 1.6]; 10/10/10 | off: 0/0/0/0; minimum: 15/15/4096/0; normal: 35/35/40960/0; high: 100/100/204800/0 | 263–323 | cabin / essential / normal |
+| `comms` / communications | 60; [6, 0, 3.6]; 30/30/30 | off: 0/0/0/0; listen: 20/20/0/0; transmit: 250/170/125000/0 | 263–333 | service / payload / listen |
+| `console` / avionics | 50; [4, 0, 0.1]; 25/25/25 | off: 0/0/0/0; active: 100/100/1000/0; dim: 40/40/1000/0 | 273–313 | cabin / essential / active |
 
 ### Fault containment and dependencies
 
@@ -234,7 +264,7 @@ Parameter paths are exact JSON keys; array entries use their `id` when available
 
 | Parameter | Value | Label / source |
 |---|---|---|
-| `version` | 1 | [ASSUMED] |
+| `version` | 2 | [ASSUMED] |
 
 #### `constants`
 
@@ -250,36 +280,12 @@ Parameter paths are exact JSON keys; array entries use their `id` when available
 | `ship.crew` | 4 | [ASSUMED] |
 | `ship.dryMass` | 24000 | [ASSUMED] |
 | `ship.initialWetMass` | 30374 | [ASSUMED] |
-| `ship.footprints.stowed[0]` | [-8, -2.5] | [ASSUMED] |
-| `ship.footprints.stowed[1]` | [8, -2.5] | [ASSUMED] |
-| `ship.footprints.stowed[2]` | [8, 2.5] | [ASSUMED] |
-| `ship.footprints.stowed[3]` | [-8, 2.5] | [ASSUMED] |
-| `ship.footprints.radiators[0]` | [-8, -2.5] | [ASSUMED] |
-| `ship.footprints.radiators[1]` | [-4, -10] | [ASSUMED] |
-| `ship.footprints.radiators[2]` | [1, -10] | [ASSUMED] |
-| `ship.footprints.radiators[3]` | [8, -2.5] | [ASSUMED] |
-| `ship.footprints.radiators[4]` | [8, 2.5] | [ASSUMED] |
-| `ship.footprints.radiators[5]` | [1, 10] | [ASSUMED] |
-| `ship.footprints.radiators[6]` | [-4, 10] | [ASSUMED] |
-| `ship.footprints.radiators[7]` | [-8, 2.5] | [ASSUMED] |
-| `ship.footprints.solar[0]` | [-8, -2.5] | [ASSUMED] |
-| `ship.footprints.solar[1]` | [0, -12] | [ASSUMED] |
-| `ship.footprints.solar[2]` | [6, -12] | [ASSUMED] |
-| `ship.footprints.solar[3]` | [8, -2.5] | [ASSUMED] |
-| `ship.footprints.solar[4]` | [8, 2.5] | [ASSUMED] |
-| `ship.footprints.solar[5]` | [6, 12] | [ASSUMED] |
-| `ship.footprints.solar[6]` | [0, 12] | [ASSUMED] |
-| `ship.footprints.solar[7]` | [-8, 2.5] | [ASSUMED] |
-| `ship.footprints.allDeployed[0]` | [-8, -2.5] | [ASSUMED] |
-| `ship.footprints.allDeployed[1]` | [-4, -10] | [ASSUMED] |
-| `ship.footprints.allDeployed[2]` | [0, -12] | [ASSUMED] |
-| `ship.footprints.allDeployed[3]` | [6, -12] | [ASSUMED] |
-| `ship.footprints.allDeployed[4]` | [8, -2.5] | [ASSUMED] |
-| `ship.footprints.allDeployed[5]` | [8, 2.5] | [ASSUMED] |
-| `ship.footprints.allDeployed[6]` | [6, 12] | [ASSUMED] |
-| `ship.footprints.allDeployed[7]` | [0, 12] | [ASSUMED] |
-| `ship.footprints.allDeployed[8]` | [-4, 10] | [ASSUMED] |
-| `ship.footprints.allDeployed[9]` | [-8, 2.5] | [ASSUMED] |
+| `ship.hull.outline[0]` | [-8, -2.5] | [ASSUMED] |
+| `ship.hull.outline[1]` | [8, -2.5] | [ASSUMED] |
+| `ship.hull.outline[2]` | [8, 2.5] | [ASSUMED] |
+| `ship.hull.outline[3]` | [-8, 2.5] | [ASSUMED] |
+| `ship.hull.zMin` | -2.5 | [ASSUMED] |
+| `ship.hull.zMax` | 2.5 | [ASSUMED] |
 
 #### `propellant`
 
@@ -287,22 +293,22 @@ Parameter paths are exact JSON keys; array entries use their `id` when available
 |---|---|---|
 | `propellant[main-propellant].initialMass` | 6000 | [ASSUMED] |
 | `propellant[main-propellant].capacity` | 6000 | [ASSUMED] |
-| `propellant[main-propellant].position` | [-2, 0] | [ASSUMED] |
+| `propellant[main-propellant].position` | [-2, 0, 0] | [ASSUMED] |
 | `propellant[main-propellant].intrinsicInertiaPerKg` | 1 | [ASSUMED] |
 | `propellant[main-propellant].Isp` | 320 | [ASSUMED] |
 | `propellant[rcs-left].initialMass` | 150 | [ASSUMED] |
 | `propellant[rcs-left].capacity` | 150 | [ASSUMED] |
-| `propellant[rcs-left].position` | [-1, 1] | [ASSUMED] |
+| `propellant[rcs-left].position` | [-1, 1, 1.6] | [ASSUMED] |
 | `propellant[rcs-left].intrinsicInertiaPerKg` | 1 | [ASSUMED] |
 | `propellant[rcs-left].Isp` | 220 | [ASSUMED] |
 | `propellant[rcs-right].initialMass` | 150 | [ASSUMED] |
 | `propellant[rcs-right].capacity` | 150 | [ASSUMED] |
-| `propellant[rcs-right].position` | [-1, -1] | [ASSUMED] |
+| `propellant[rcs-right].position` | [-1, -1, 1.6] | [ASSUMED] |
 | `propellant[rcs-right].intrinsicInertiaPerKg` | 1 | [ASSUMED] |
 | `propellant[rcs-right].Isp` | 220 | [ASSUMED] |
 | `propellant[xenon].initialMass` | 20 | [ASSUMED] |
 | `propellant[xenon].capacity` | 20 | [ASSUMED] |
-| `propellant[xenon].position` | [-3, 0] | [ASSUMED] |
+| `propellant[xenon].position` | [-3, 0, -1.9] | [ASSUMED] |
 | `propellant[xenon].intrinsicInertiaPerKg` | 1 | [ASSUMED] |
 | `propellant[xenon].Isp` | 4190 | [ASSUMED] |
 
@@ -312,15 +318,15 @@ Parameter paths are exact JSON keys; array entries use their `id` when available
 |---|---|---|
 | `reactants[fuel-cell-hydrogen].initialMass` | 6 | [ASSUMED] |
 | `reactants[fuel-cell-hydrogen].capacity` | 6 | [ASSUMED] |
-| `reactants[fuel-cell-hydrogen].position` | [1, 0] | [ASSUMED] |
+| `reactants[fuel-cell-hydrogen].position` | [1, 0, -1.68] | [ASSUMED] |
 | `reactants[fuel-cell-hydrogen].intrinsicInertiaPerKg` | 1 | [ASSUMED] |
 | `reactants[fuel-cell-oxygen].initialMass` | 48 | [ASSUMED] |
 | `reactants[fuel-cell-oxygen].capacity` | 48 | [ASSUMED] |
-| `reactants[fuel-cell-oxygen].position` | [1, 0] | [ASSUMED] |
+| `reactants[fuel-cell-oxygen].position` | [1, 0, -1.68] | [ASSUMED] |
 | `reactants[fuel-cell-oxygen].intrinsicInertiaPerKg` | 1 | [ASSUMED] |
 | `reactants[product-water].initialMass` | 0 | [ASSUMED] |
 | `reactants[product-water].capacity` | 54 | [ASSUMED] |
-| `reactants[product-water].position` | [2, 0] | [ASSUMED] |
+| `reactants[product-water].position` | [2, 0, -1.7] | [ASSUMED] |
 | `reactants[product-water].intrinsicInertiaPerKg` | 1 | [ASSUMED] |
 
 #### `buses`
@@ -357,6 +363,7 @@ Parameter paths are exact JSON keys; array entries use their `id` when available
 | `generation.solar.efficiency` | 0.22 | [ASSUMED] |
 | `generation.solar.areaPerWing` | 40 | [ASSUMED] |
 | `generation.solar.maxPowerPerWing` | 12000 | [ASSUMED] |
+| `generation.solar.arrayNormal` | [1, 0, 0] | [ASSUMED] |
 | `generation.solar.initialIrradiance` | 0 | [ASSUMED] |
 | `generation.fuelCell.maxPowerPerStack` | 6000 | [ASSUMED] |
 | `generation.fuelCell.oxygenPerHydrogen` | 8 | [ASSUMED] |
@@ -439,10 +446,16 @@ Parameter paths are exact JSON keys; array entries use their `id` when available
 | Parameter | Value | Label / source |
 |---|---|---|
 | `configuration.solarDeploymentTime` | 30 | [ASSUMED] |
-| `configuration.appendages[radiator-left].stowedPosition` | [-2, 2] | [ASSUMED] |
-| `configuration.appendages[radiator-left].deployedPosition` | [-2, 6] | [ASSUMED] |
+| `configuration.appendages[radiator-left].stowedPosition` | [-2, 2, 0] | [ASSUMED] |
+| `configuration.appendages[radiator-left].deployedPosition` | [-2, 6, 0] | [ASSUMED] |
 | `configuration.appendages[radiator-left].stowedInertia` | 500 | [ASSUMED] |
+| `configuration.appendages[radiator-left].stowedInertiaRoll` | 19 | [ASSUMED] |
+| `configuration.appendages[radiator-left].stowedInertiaPitch` | 481 | [ASSUMED] |
 | `configuration.appendages[radiator-left].deployedInertia` | 2500 | [ASSUMED] |
+| `configuration.appendages[radiator-left].deployedInertiaRoll` | 1798 | [ASSUMED] |
+| `configuration.appendages[radiator-left].deployedInertiaPitch` | 702 | [ASSUMED] |
+| `configuration.appendages[radiator-left].zMin` | -0.1 | [ASSUMED] |
+| `configuration.appendages[radiator-left].zMax` | 0.1 | [ASSUMED] |
 | `configuration.appendages[radiator-left].stowedPolygon[0]` | [-4, 1.5] | [ASSUMED] |
 | `configuration.appendages[radiator-left].stowedPolygon[1]` | [1, 1.5] | [ASSUMED] |
 | `configuration.appendages[radiator-left].stowedPolygon[2]` | [1, 2.5] | [ASSUMED] |
@@ -451,10 +464,16 @@ Parameter paths are exact JSON keys; array entries use their `id` when available
 | `configuration.appendages[radiator-left].deployedPolygon[1]` | [1, 2] | [ASSUMED] |
 | `configuration.appendages[radiator-left].deployedPolygon[2]` | [1, 10] | [ASSUMED] |
 | `configuration.appendages[radiator-left].deployedPolygon[3]` | [-4, 10] | [ASSUMED] |
-| `configuration.appendages[radiator-right].stowedPosition` | [-2, -2] | [ASSUMED] |
-| `configuration.appendages[radiator-right].deployedPosition` | [-2, -6] | [ASSUMED] |
+| `configuration.appendages[radiator-right].stowedPosition` | [-2, -2, 0] | [ASSUMED] |
+| `configuration.appendages[radiator-right].deployedPosition` | [-2, -6, 0] | [ASSUMED] |
 | `configuration.appendages[radiator-right].stowedInertia` | 500 | [ASSUMED] |
+| `configuration.appendages[radiator-right].stowedInertiaRoll` | 19 | [ASSUMED] |
+| `configuration.appendages[radiator-right].stowedInertiaPitch` | 481 | [ASSUMED] |
 | `configuration.appendages[radiator-right].deployedInertia` | 2500 | [ASSUMED] |
+| `configuration.appendages[radiator-right].deployedInertiaRoll` | 1798 | [ASSUMED] |
+| `configuration.appendages[radiator-right].deployedInertiaPitch` | 702 | [ASSUMED] |
+| `configuration.appendages[radiator-right].zMin` | -0.1 | [ASSUMED] |
+| `configuration.appendages[radiator-right].zMax` | 0.1 | [ASSUMED] |
 | `configuration.appendages[radiator-right].stowedPolygon[0]` | [-4, -2.5] | [ASSUMED] |
 | `configuration.appendages[radiator-right].stowedPolygon[1]` | [1, -2.5] | [ASSUMED] |
 | `configuration.appendages[radiator-right].stowedPolygon[2]` | [1, -1.5] | [ASSUMED] |
@@ -463,10 +482,16 @@ Parameter paths are exact JSON keys; array entries use their `id` when available
 | `configuration.appendages[radiator-right].deployedPolygon[1]` | [1, -10] | [ASSUMED] |
 | `configuration.appendages[radiator-right].deployedPolygon[2]` | [1, -2] | [ASSUMED] |
 | `configuration.appendages[radiator-right].deployedPolygon[3]` | [-4, -2] | [ASSUMED] |
-| `configuration.appendages[solar-left].stowedPosition` | [3, 2] | [ASSUMED] |
-| `configuration.appendages[solar-left].deployedPosition` | [3, 7] | [ASSUMED] |
+| `configuration.appendages[solar-left].stowedPosition` | [3, 2, 0] | [ASSUMED] |
+| `configuration.appendages[solar-left].deployedPosition` | [3, 7, 0] | [ASSUMED] |
 | `configuration.appendages[solar-left].stowedInertia` | 700 | [ASSUMED] |
+| `configuration.appendages[solar-left].stowedInertiaRoll` | 19 | [ASSUMED] |
+| `configuration.appendages[solar-left].stowedInertiaPitch` | 681 | [ASSUMED] |
 | `configuration.appendages[solar-left].deployedInertia` | 3500 | [ASSUMED] |
+| `configuration.appendages[solar-left].deployedInertiaRoll` | 2574 | [ASSUMED] |
+| `configuration.appendages[solar-left].deployedInertiaPitch` | 926 | [ASSUMED] |
+| `configuration.appendages[solar-left].zMin` | -0.05 | [ASSUMED] |
+| `configuration.appendages[solar-left].zMax` | 0.05 | [ASSUMED] |
 | `configuration.appendages[solar-left].stowedPolygon[0]` | [0, 1.5] | [ASSUMED] |
 | `configuration.appendages[solar-left].stowedPolygon[1]` | [6, 1.5] | [ASSUMED] |
 | `configuration.appendages[solar-left].stowedPolygon[2]` | [6, 2.5] | [ASSUMED] |
@@ -475,10 +500,16 @@ Parameter paths are exact JSON keys; array entries use their `id` when available
 | `configuration.appendages[solar-left].deployedPolygon[1]` | [6, 2] | [ASSUMED] |
 | `configuration.appendages[solar-left].deployedPolygon[2]` | [6, 12] | [ASSUMED] |
 | `configuration.appendages[solar-left].deployedPolygon[3]` | [0, 12] | [ASSUMED] |
-| `configuration.appendages[solar-right].stowedPosition` | [3, -2] | [ASSUMED] |
-| `configuration.appendages[solar-right].deployedPosition` | [3, -7] | [ASSUMED] |
+| `configuration.appendages[solar-right].stowedPosition` | [3, -2, 0] | [ASSUMED] |
+| `configuration.appendages[solar-right].deployedPosition` | [3, -7, 0] | [ASSUMED] |
 | `configuration.appendages[solar-right].stowedInertia` | 700 | [ASSUMED] |
+| `configuration.appendages[solar-right].stowedInertiaRoll` | 19 | [ASSUMED] |
+| `configuration.appendages[solar-right].stowedInertiaPitch` | 681 | [ASSUMED] |
 | `configuration.appendages[solar-right].deployedInertia` | 3500 | [ASSUMED] |
+| `configuration.appendages[solar-right].deployedInertiaRoll` | 2574 | [ASSUMED] |
+| `configuration.appendages[solar-right].deployedInertiaPitch` | 926 | [ASSUMED] |
+| `configuration.appendages[solar-right].zMin` | -0.05 | [ASSUMED] |
+| `configuration.appendages[solar-right].zMax` | 0.05 | [ASSUMED] |
 | `configuration.appendages[solar-right].stowedPolygon[0]` | [0, -2.5] | [ASSUMED] |
 | `configuration.appendages[solar-right].stowedPolygon[1]` | [6, -2.5] | [ASSUMED] |
 | `configuration.appendages[solar-right].stowedPolygon[2]` | [6, -1.5] | [ASSUMED] |
@@ -496,10 +527,11 @@ Parameter paths are exact JSON keys; array entries use their `id` when available
 | `propulsion.main.Isp` | 320 | [ASSUMED] |
 | `propulsion.main.minimumImpulse` | 2400 | [ASSUMED] |
 | `propulsion.main.mountMisalignment` | 0.003 | [ASSUMED] |
+| `propulsion.main.mountMisalignmentPitch` | 0 | [ASSUMED] |
 | `propulsion.main.gimbalLimit` | 0.035 | [ASSUMED] |
 | `propulsion.main.gimbalRate` | 0.02 | [ASSUMED] |
 | `propulsion.main.chemicalHeatAtFullThrust` | 4000 | [ASSUMED] |
-| `propulsion.main.direction` | [1, 0] | [ASSUMED] |
+| `propulsion.main.direction` | [1, 0, 0] | [ASSUMED] |
 | `propulsion.rcs.thrustPerJet` | 200 | [ASSUMED] |
 | `propulsion.rcs.Isp` | 220 | [ASSUMED] |
 | `propulsion.rcs.minimumImpulsePerJet` | 10 | [ASSUMED] |
@@ -508,29 +540,65 @@ Parameter paths are exact JSON keys; array entries use their `id` when available
 | `propulsion.rcs.warmupTemperature` | 285 | [ASSUMED] |
 | `propulsion.rcs.maxSimultaneousJetsPerPod` | 2 | [ASSUMED] |
 | `propulsion.rcs.chemicalHeatPerFiringJet` | 100 | [ASSUMED] |
-| `propulsion.rcs.jets[rcs-forward-left-a-0].direction` | [1, 0] | [ASSUMED] |
-| `propulsion.rcs.jets[rcs-forward-left-a-1].direction` | [0, 1] | [ASSUMED] |
-| `propulsion.rcs.jets[rcs-forward-left-b-0].direction` | [1, 0] | [ASSUMED] |
-| `propulsion.rcs.jets[rcs-forward-left-b-1].direction` | [0, 1] | [ASSUMED] |
-| `propulsion.rcs.jets[rcs-forward-right-a-0].direction` | [-1, 0] | [ASSUMED] |
-| `propulsion.rcs.jets[rcs-forward-right-a-1].direction` | [0, 1] | [ASSUMED] |
-| `propulsion.rcs.jets[rcs-forward-right-b-0].direction` | [-1, 0] | [ASSUMED] |
-| `propulsion.rcs.jets[rcs-forward-right-b-1].direction` | [0, 1] | [ASSUMED] |
-| `propulsion.rcs.jets[rcs-aft-left-a-0].direction` | [1, 0] | [ASSUMED] |
-| `propulsion.rcs.jets[rcs-aft-left-a-1].direction` | [0, -1] | [ASSUMED] |
-| `propulsion.rcs.jets[rcs-aft-left-b-0].direction` | [1, 0] | [ASSUMED] |
-| `propulsion.rcs.jets[rcs-aft-left-b-1].direction` | [0, -1] | [ASSUMED] |
-| `propulsion.rcs.jets[rcs-aft-right-a-0].direction` | [-1, 0] | [ASSUMED] |
-| `propulsion.rcs.jets[rcs-aft-right-a-1].direction` | [0, -1] | [ASSUMED] |
-| `propulsion.rcs.jets[rcs-aft-right-b-0].direction` | [-1, 0] | [ASSUMED] |
-| `propulsion.rcs.jets[rcs-aft-right-b-1].direction` | [0, -1] | [ASSUMED] |
-| `propulsion.rcs.zeroNetForceYawTorquePerBank` | [-1600, 4000] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-forward-left-a-0].direction` | [1, 0, 0] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-forward-left-a-1].direction` | [0, -1, 0] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-forward-left-a-2].direction` | [-1, 0, 0] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-forward-left-a-3].direction` | [0, 0, 1] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-forward-left-a-4].direction` | [0, 0, -1] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-forward-left-b-0].direction` | [1, 0, 0] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-forward-left-b-1].direction` | [0, -1, 0] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-forward-left-b-2].direction` | [-1, 0, 0] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-forward-left-b-3].direction` | [0, 0, 1] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-forward-left-b-4].direction` | [0, 0, -1] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-forward-right-a-0].direction` | [-1, 0, 0] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-forward-right-a-1].direction` | [0, 1, 0] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-forward-right-a-2].direction` | [1, 0, 0] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-forward-right-a-3].direction` | [0, 0, 1] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-forward-right-a-4].direction` | [0, 0, -1] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-forward-right-b-0].direction` | [-1, 0, 0] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-forward-right-b-1].direction` | [0, 1, 0] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-forward-right-b-2].direction` | [1, 0, 0] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-forward-right-b-3].direction` | [0, 0, 1] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-forward-right-b-4].direction` | [0, 0, -1] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-aft-left-a-0].direction` | [1, 0, 0] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-aft-left-a-1].direction` | [0, -1, 0] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-aft-left-a-2].direction` | [-1, 0, 0] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-aft-left-a-3].direction` | [0, 0, 1] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-aft-left-a-4].direction` | [0, 0, -1] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-aft-left-b-0].direction` | [1, 0, 0] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-aft-left-b-1].direction` | [0, -1, 0] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-aft-left-b-2].direction` | [-1, 0, 0] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-aft-left-b-3].direction` | [0, 0, 1] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-aft-left-b-4].direction` | [0, 0, -1] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-aft-right-a-0].direction` | [-1, 0, 0] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-aft-right-a-1].direction` | [0, 1, 0] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-aft-right-a-2].direction` | [1, 0, 0] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-aft-right-a-3].direction` | [0, 0, 1] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-aft-right-a-4].direction` | [0, 0, -1] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-aft-right-b-0].direction` | [-1, 0, 0] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-aft-right-b-1].direction` | [0, 1, 0] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-aft-right-b-2].direction` | [1, 0, 0] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-aft-right-b-3].direction` | [0, 0, 1] | [ASSUMED] |
+| `propulsion.rcs.jets[rcs-aft-right-b-4].direction` | [0, 0, -1] | [ASSUMED] |
+| `propulsion.rcs.zeroNetForceTorquePerBank.roll` | [-1600, 1600] | [ASSUMED] |
+| `propulsion.rcs.zeroNetForceTorquePerBank.pitch` | [-4000, 4000] | [ASSUMED] |
+| `propulsion.rcs.zeroNetForceTorquePerBank.yaw` | [-3600, 3600] | [ASSUMED] |
+| `propulsion.rcs.translationForcePerBank.x` | [-800, 800] | [ASSUMED] |
+| `propulsion.rcs.translationForcePerBank.y` | [-400, 400] | [ASSUMED] |
+| `propulsion.rcs.translationForcePerBank.z` | [-800, 800] | [ASSUMED] |
+| `propulsion.attitudeControl.rateGain` | 0.4 | [ASSUMED] |
+| `propulsion.attitudeControl.attitudeGain` | 0.1 | [ASSUMED] |
+| `propulsion.attitudeControl.slewRate` | 0.008 | [ASSUMED] |
+| `propulsion.attitudeControl.attitudeDeadband` | 0.002 | [ASSUMED] |
+| `propulsion.attitudeControl.rateDeadband` | 0.0004 | [ASSUMED] |
+| `propulsion.attitudeControl.handsOnTurnRate` | 0.008 | [ASSUMED] |
+| `propulsion.attitudeControl.torquePriority` | 10 | [ASSUMED] |
 | `propulsion.ion.thrust` | 0.236 | [ASSUMED] |
 | `propulsion.ion.Isp` | 4190 | [ASSUMED] |
 | `propulsion.ion.busPower` | 7220 | [ASSUMED] |
 | `propulsion.ion.onboardHeatUpperBound` | 2300 | [ASSUMED] |
 | `propulsion.ion.minimumOnTime` | 60 | [ASSUMED] |
-| `propulsion.ion.direction` | [1, 0] | [ASSUMED] |
+| `propulsion.ion.direction` | [1, 0, 0] | [ASSUMED] |
 
 #### `sensing`
 
@@ -539,6 +607,8 @@ Parameter paths are exact JSON keys; array entries use their `id` when available
 | `sensing.camera.warmupTime` | 20 | [ASSUMED] |
 | `sensing.camera.calibrationTime` | 10 | [ASSUMED] |
 | `sensing.camera.settleTime` | 5 | [ASSUMED] |
+| `sensing.camera.boresight` | [1, 0, 0] | [ASSUMED] |
+| `sensing.camera.fovHalfAngle` | 0.523598776 | [ASSUMED] |
 | `sensing.camera.referenceRange` | 10000 | [ASSUMED] |
 | `sensing.camera.referenceExposure` | 0.05 | [ASSUMED] |
 | `sensing.camera.minExposure` | 0.005 | [ASSUMED] |
@@ -680,17 +750,48 @@ Parameter paths are exact JSON keys; array entries use their `id` when available
 
 ### Calculated mass and power checks
 
-**[ASSUMED]** These are derived from proposed ratings, rounded for display. The validator recomputes them. They establish bookkeeping consistency only.
+**[ASSUMED]** These are derived from proposed ratings, rounded for display. The validator recomputes them. They establish bookkeeping consistency only. The yaw inertia is the zz term of the tensor about the centre of mass; heights do not enter it, so it is the planar 1C value.
 
-| Mass case | M kg | COM x,y m | Yaw inertia kg m² |
+| Mass case | M kg | COM x,y,z m | Yaw inertia kg m² |
 |---|---|---|---|
-| wet-stowed | 30374.000 | -0.332850, 0.002074 | 305048.751 |
-| wet-radiators | 30374.000 | -0.332850, 0.002074 | 325048.751 |
-| wet-all-deployed | 30374.000 | -0.332850, 0.002074 | 357648.751 |
-| main-empty | 24374.000 | 0.077542, 0.002585 | 278267.283 |
-| left-RCS-empty | 30224.000 | -0.329539, -0.002879 | 304681.537 |
-| left-radiator-only | 30374.000 | -0.332850, 0.034997 | 315011.680 |
-| reactants-converted | 30374.000 | -0.331073, 0.002074 | 305246.603 |
+| wet-stowed | 30374.000 | -0.332850, 0.002074, -0.104672 | 305048.751 |
+| wet-radiators | 30374.000 | -0.332850, 0.002074, -0.104672 | 325048.751 |
+| wet-all-deployed | 30374.000 | -0.332850, 0.002074, -0.104672 | 357648.751 |
+| main-empty | 24374.000 | 0.077542, 0.002585, -0.130439 | 278267.283 |
+| left-RCS-empty | 30224.000 | -0.329539, -0.002879, -0.113133 | 304681.537 |
+| left-radiator-only | 30374.000 | -0.332850, 0.034997, -0.104672 | 315011.680 |
+| reactants-converted | 30374.000 | -0.331073, 0.002074, -0.104708 | 305246.603 |
+
+Inertia about the centre of mass in three dimensions (parallel-axis theorem over every part). Tensor terms are in body axes; the principal moments are about the principal axes nearest body x, y and z, and the tilt is the angle between the two frames. `full` is the arrival loading; `empty` has every propellant and reactant tank at zero.
+
+| Configuration, tanks | M kg | COM x,y,z m | Ixx, Iyy, Izz kg m² | Ixy, Ixz, Iyz kg m² | Principal moments kg m² | Tilt ° |
+|---|---|---|---|---|---|---|
+| stowed, full | 30374 | -0.3329, 0.0021, -0.1047 | 83057, 306970, 305049 | 300, 10568, -22 | 82554, 306970, 305551 | 2.74 |
+| stowed, empty | 24000 | 0.0915, 0.0026, -0.1471 | 75204, 278047, 277005 | 327, 8730, -24 | 74826, 278047, 277382 | 2.62 |
+| radiators, full | 30374 | -0.3329, 0.0021, -0.1047 | 102615, 307412, 325049 | 300, 10568, -22 | 102113, 307412, 325550 | 2.72 |
+| radiators, empty | 24000 | 0.0915, 0.0026, -0.1471 | 94762, 278489, 297005 | 327, 8730, -24 | 94385, 278489, 297381 | 2.47 |
+| solar, full | 30374 | -0.3329, 0.0021, -0.1047 | 115167, 307460, 337649 | 300, 10568, -22 | 114665, 307460, 338150 | 2.71 |
+| solar, empty | 24000 | 0.0915, 0.0026, -0.1471 | 107314, 278537, 309605 | 327, 8730, -24 | 106937, 278537, 309981 | 2.47 |
+| allDeployed, full | 30374 | -0.3329, 0.0021, -0.1047 | 134725, 307902, 357649 | 300, 10568, -22 | 134224, 307902, 358149 | 2.71 |
+| allDeployed, empty | 24000 | 0.0915, 0.0026, -0.1471 | 126872, 278979, 329605 | 327, 8730, -24 | 126496, 278979, 329980 | 2.46 |
+
+RCS authority of one bank at arrival (configuration `radiators`, full tanks). Torques are the zero-net-force sets (couples) with every helping jet firing, at most two per pod; angular acceleration is torque over the diagonal term of the tensor. Forces are every jet along that axis; a clean translation also needs the torque about the centre of mass balanced, which the allocator does by throttling pods.
+
+| Axis | Torque − / + N m | Angular acceleration rad s⁻² | Axis | Force − / + N | Acceleration m s⁻² |
+|---|---|---|---|---|---|
+| roll (x) | -1600 / 1600 | 0.01559 | x | -800 / 800 | 0.02634 |
+| pitch (y) | -4000 / 4000 | 0.01301 | y | -400 / 400 | 0.01317 |
+| yaw (z) | -3600 / 3600 | 0.01108 | z | -800 / 800 | 0.02634 |
+
+Hull prisms (the occupied volume is their union). Outline corners are (x, y) m, counter-clockwise seen from +z; the wing prisms are shown stowed and deployed and move linearly between.
+
+| Part | z min, max m | Outline stowed | Outline deployed |
+|---|---|---|---|
+| `habitat-structure` (pressure hull) | -2.5, 2.5 | [[-8, -2.5], [8, -2.5], [8, 2.5], [-8, 2.5]] | same |
+| `radiator-left` | -0.1, 0.1 | [[-4, 1.5], [1, 1.5], [1, 2.5], [-4, 2.5]] | [[-4, 2], [1, 2], [1, 10], [-4, 10]] |
+| `radiator-right` | -0.1, 0.1 | [[-4, -2.5], [1, -2.5], [1, -1.5], [-4, -1.5]] | [[-4, -10], [1, -10], [1, -2], [-4, -2]] |
+| `solar-left` | -0.05, 0.05 | [[0, 1.5], [6, 1.5], [6, 2.5], [0, 2.5]] | [[0, 2], [6, 2], [6, 12], [0, 12]] |
+| `solar-right` | -0.05, 0.05 | [[0, -2.5], [6, -2.5], [6, -1.5], [0, -1.5]] | [[0, -12], [6, -12], [6, -2], [0, -2]] |
 
 | Operating case | Configuration | Main-bus demand W | Heat deposited W | Battery output needed W | Essential load W |
 |---|---|---|---|---|---|

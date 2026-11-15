@@ -46,15 +46,16 @@ function truthAt(
   times: readonly number[],
   commands: readonly ThrustSegment[] = [],
 ) {
+  const [x, y, vx, vy] = state as [number, number, number, number];
   const st: Structure = {
     r0: R0,
     n: N,
     bodies: [{ id: 'A', mu: MU, state: 'gauge' }],
-    ship: state as unknown as readonly [number, number, number, number],
+    ship: [x, y, 0, vx, vy, 0],
     dynamicBodies: false,
-    engine: { kE: KE, dE: DE },
+    engine: { kE: KE, dE: DE, dP: 0 },
     kA: 1,
-    camBias: 0,
+    camBias: [0, 0, 0],
   };
   const tr = simulate(
     compileArc(st, { id: 'truth', epoch: 0, commands }, new Map()),
@@ -62,7 +63,7 @@ function truthAt(
     times,
     15,
   );
-  return tr.pos.map((p, k) => [p[2]!, p[3]!, tr.vel[k]![2]!, tr.vel[k]![3]!] as const);
+  return tr.pos.map((p, k) => [p[3]!, p[4]!, tr.vel[k]![3]!, tr.vel[k]![4]!] as const);
 }
 
 // Ship from pericentre at 1.0 r0 toward apocentre at 1.3 r0; asteroid on a 0.55–0.7 r0 orbit.
@@ -169,10 +170,11 @@ const ctx: ModelContext = {
   ],
   ship: testShip(MASS, THRUST),
   arrival: record(false).start.estimate,
-  settings: { dt: 60 },
+  settings: { dt: 60, planar: 1 },
 };
 
-// LIFT(2G): the scenarios in this file are planar (z = 0, yaw-only attitude, flat hull).
+// The scenarios in this file are planar (z = 0, yaw-only attitude, flat hull): the model runs
+// them in the planar reduction (`planar: 1`, spec Appendix A.3), as the planar model did.
 const massProperties: MassProperties = {
   mass: MASS,
   centerOfMass: { x: 0, y: 0, z: 0 },
@@ -216,7 +218,7 @@ const dive: Plan = {
 const HOURS = 10;
 const truthDiveTimes = Array.from({ length: (HOURS * 3600) / 600 + 1 }, (_, i) => NOW + i * 600);
 const truthDive = truthAt(SHIP0, truthDiveTimes, [
-  { t0: NOW, t1: NOW + burnTime, u: 0.15, theta, thruster: 'main' },
+  { t0: NOW, t1: NOW + burnTime, u: 0.15, q: quat.fromYaw(theta), thruster: 'main' },
 ]);
 const truthAst = truthAt(AST0, truthDiveTimes);
 

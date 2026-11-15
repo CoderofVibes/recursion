@@ -4,12 +4,19 @@
 
 import { describe, expect, it } from 'vitest';
 import type { Command } from '../contracts/commands.ts';
+import { HANDS_ON_NEUTRAL, type MassProperties } from '../contracts/index.ts';
 import type { Asteroid } from '../contracts/truth/index.ts';
 import { createGravityRange, HIDDEN } from '../content/gravity-range/index.ts';
 import { hashState } from '../lib/hash.ts';
-import { quat } from '../lib/index.ts';
+import { quat, sym3 } from '../lib/index.ts';
 import type { EncounterSetup } from './encounter.ts';
-import { createTruthStepper, type DueCommand, type GameTruthState } from './truth-step.ts';
+import { buildEnvironment } from './environment.ts';
+import {
+  createTruthStepper,
+  midStepMassProperties,
+  type DueCommand,
+  type GameTruthState,
+} from './truth-step.ts';
 
 const setup = createGravityRange();
 const arrival: DueCommand[] = setup.arrivalCommands.map((command) => ({
@@ -168,11 +175,200 @@ describe('truth step', () => {
     expect(() => createTruthStepper(setup).step(state)).toThrow(/lost/);
   });
 
+  it('loses the ship to a rock coming down on it from above the plane', () => {
+    // 400 m straight above the arriving ship, falling onto it at 25 m/s.
+    const world = setup.definition.world;
+    const k = world.ship.kinematics;
+    const rock: Asteroid = {
+      id: 'overhead',
+      radius: 40,
+      position: { x: k.position.x, y: k.position.y, z: k.position.z + 400 },
+      velocity: { x: k.velocity.x, y: k.velocity.y, z: k.velocity.z - 25 },
+    };
+    const above: EncounterSetup = {
+      ...setup,
+      definition: {
+        ...setup.definition,
+        world: { ...world, asteroids: [...world.asteroids, rock] },
+      },
+    };
+    const stepper = createTruthStepper(above);
+    let state = stepper.initial;
+    const events = [];
+    const impacts = [];
+    for (let i = 0; i < 60 && !state.lost; i++) {
+      const result = stepper.step(state, i === 0 ? arrival : []);
+      state = result.state;
+      events.push(...result.events);
+      impacts.push(...result.simEvents.filter((e) => e.kind === 'impact'));
+    }
+    expect(state.lost).toBe('collision');
+    const lost = events.find((e) => e.kind === 'ship-lost');
+    // 400 m less the rock's radius and the hull's 2.5 m half-height, at 25 m/s.
+    expect(lost!.t).toBeGreaterThan(14);
+    expect(lost!.t).toBeLessThan(15);
+    // It struck the top of the hull (body z = 2.5 m), not its side.
+    const impact = impacts[0]!;
+    if (impact.kind !== 'impact') throw new Error('no impact');
+    expect(impact.with).toBe('overhead');
+    expect(impact.point.z).toBeCloseTo(2.5, 6);
+    expect(impact.relativeSpeed).toBeGreaterThan(24);
+  });
+
+  it('names a briefed body it hits even unseen, and an unbriefed rock only if seen', () => {
+    // On Alpha's night side, 2 km above the surface and falling onto it at 30 m/s; an
+    // unbriefed rock waits 300 m below the ship, in the dark too.
+    const world = setup.definition.world;
+    const alpha = world.bodies[0]!;
+    const down = {
+      x: -world.sun!.direction.x,
+      y: -world.sun!.direction.y,
+      z: -world.sun!.direction.z,
+    };
+    const at = (height: number) => ({
+      x: alpha.position.x + (alpha.radius + height) * down.x,
+      y: alpha.position.y + (alpha.radius + height) * down.y,
+      z: alpha.position.z + (alpha.radius + height) * down.z,
+    });
+    const falling = {
+      x: alpha.velocity.x - 30 * down.x,
+      y: alpha.velocity.y - 30 * down.y,
+      z: alpha.velocity.z - 30 * down.z,
+    };
+    const placed = (asteroids: readonly Asteroid[]): EncounterSetup => ({
+      ...setup,
+      definition: {
+        ...setup.definition,
+        world: {
+          ...world,
+          asteroids,
+          ship: {
+            ...world.ship,
+            kinematics: { ...world.ship.kinematics, position: at(2_000), velocity: falling },
+          },
+        },
+      },
+    });
+    const stepper = createTruthStepper(placed([]));
+    const scene = buildEnvironment(stepper.initial.sim, {
+      knownSizeTargets: [],
+      sunExclusionAngle: setup.play.sunExclusionAngle,
+    }).fieldSignals['ship-environment'] as { visibility: Record<string, boolean> };
+    // From the night side Alpha cannot be seen.
+    expect(scene.visibility.alpha).toBe(false);
+
+    const ground = run(placed([]), 120);
+    expect(ground.state.lost).toBe('collision');
+    expect(ground.events.find((e) => e.kind === 'contact')).toMatchObject({ with: 'alpha' });
+
+    const rock: Asteroid = {
+      id: 'dark-rock',
+      radius: 20,
+      position: at(1_700),
+      velocity: alpha.velocity,
+    };
+    const dark = run(placed([rock]), 120);
+    const contact = dark.events.find((e) => e.kind === 'contact');
+    expect(contact).toBeDefined();
+    expect(contact).not.toHaveProperty('with');
+    expect(dark.state.lost).toBe('collision');
+  });
+
+  it('counts Δv from the main engine and RCS translation, not from turning', () => {
+    const stepper = createTruthStepper(setup);
+    let state = stepper.initial;
+    const go = (ticks: number, commands: Readonly<Record<number, DueCommand[]>> = {}) => {
+      for (let i = 0; i < ticks; i++) state = stepper.step(state, commands[i] ?? []).state;
+    };
+    go(101, { 0: arrival });
+    expect(state.objectives.deltaV).toBeUndefined();
+    // A quarter turn on attitude control, then a hands-on yaw: couples, nothing pushed.
+    const yaw = quat.yawOf(setup.definition.world.ship.kinematics.attitude);
+    go(420, {
+      0: [
+        manual({
+          kind: 'attitude',
+          target: { reference: 'inertial', attitude: quat.fromYaw(yaw + Math.PI / 2) },
+        }),
+      ],
+    });
+    const turned = state.objectives.deltaV ?? 0;
+    // The allocator trims the 2 mm sideways offset of the centre of mass with tiny forces.
+    expect(turned).toBeLessThan(1e-3);
+    go(100, {
+      0: [manual({ kind: 'fly', input: { ...HANDS_ON_NEUTRAL, yaw: 1 } })],
+      40: [manual({ kind: 'fly', input: HANDS_ON_NEUTRAL })],
+    });
+    expect((state.objectives.deltaV ?? 0) - turned).toBeLessThan(1e-9);
+
+    // 10 s of main engine: the rocket equation on the propellant actually used.
+    const before = state.objectives.deltaV ?? 0;
+    const m0 = state.sim.world.ship.systems.massProperties.mass;
+    go(20, { 0: [manual({ kind: 'burn', thruster: 'main-engine', throttle: 1, duration: 10 })] });
+    const m1 = state.sim.world.ship.systems.massProperties.mass;
+    const burned = (state.objectives.deltaV ?? 0) - before;
+    expect(burned).toBeCloseTo(320 * 9.80665 * Math.log(m0 / m1), 5);
+    expect(burned).toBeGreaterThan(7.5);
+
+    // A minute of sideways translation by hand: 400 N on the ship.
+    const sideways = state.objectives.deltaV ?? 0;
+    go(61, {
+      0: [manual({ kind: 'fly', input: { ...HANDS_ON_NEUTRAL, translate: { x: 0, y: 1, z: 0 } } })],
+      60: [manual({ kind: 'fly', input: HANDS_ON_NEUTRAL })],
+    });
+    const mass = state.sim.world.ship.systems.massProperties.mass;
+    expect((state.objectives.deltaV ?? 0) - sideways).toBeCloseTo((400 / mass) * 60, 3);
+  });
+
   it('survives a slow bump below the loss speed', () => {
     const { state, events } = run(withObstacle(80, 1), 120);
     expect(state.lost).toBeUndefined();
     const contact = events.find((e) => e.kind === 'contact');
     expect(contact).toBeDefined();
     expect(events.some((e) => e.kind === 'ship-lost')).toBe(false);
+  });
+});
+
+describe('mass properties at the middle of a step', () => {
+  const props = (
+    moments: MassProperties['inertia']['moments'],
+    axes: quat.Quat,
+  ): MassProperties => ({
+    mass: 30_000,
+    centerOfMass: { x: -0.3, y: 0, z: -0.1 },
+    inertia: { moments, axes },
+    hull: [],
+  });
+
+  it('is the mean of the two inertia tensors, also when the principal axes turn', () => {
+    // The principal axes turn by 0.1 rad about body y between the two ends of the step.
+    const before = props(
+      { x: 1e5, y: 3e5, z: 3.2e5 },
+      quat.fromAxisAngle({ x: 0, y: 1, z: 0 }, 0.02),
+    );
+    const after = props(
+      { x: 0.9e5, y: 2.9e5, z: 3.3e5 },
+      quat.fromAxisAngle({ x: 0, y: 1, z: 0 }, 0.12),
+    );
+    const mid = midStepMassProperties({ ...before, mass: 30_100 }, after);
+    const tensor = (p: MassProperties) => sym3.fromPrincipal(p.inertia.moments, p.inertia.axes);
+    const mean = sym3.scaleSym3(sym3.addSym3(tensor(before), tensor(after)), 0.5);
+    const got = tensor(mid);
+    for (let i = 0; i < 6; i++) expect(got[i]).toBeCloseTo(mean[i]!, 4);
+    // Averaging the moments on the newer axes would miss the product of inertia by about 400.
+    const naive = sym3.fromPrincipal({ x: 0.95e5, y: 2.95e5, z: 3.25e5 }, after.inertia.axes);
+    expect(Math.abs(naive[2] - mean[2])).toBeGreaterThan(1e3);
+    expect(mid.mass).toBe(30_050);
+    expect(mid.hull).toBe(after.hull);
+  });
+
+  it('keeps the ship’s own numbers when nothing changed', () => {
+    const same = props(
+      { x: 1e5, y: 3e5, z: 3.2e5 },
+      quat.fromAxisAngle({ x: 0, y: 1, z: 0 }, 0.03),
+    );
+    expect(midStepMassProperties(same, same)).toBe(same);
+    const lighter = { ...same, mass: 29_990 };
+    expect(midStepMassProperties(same, lighter).inertia).toBe(lighter.inertia);
   });
 });

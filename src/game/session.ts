@@ -18,8 +18,12 @@ import type {
   AttemptId,
   AttemptOutcome,
   AttemptOverlay,
+  AttemptRecord,
+  BelievedWorld,
+  Chart,
   Command,
   CommandSource,
+  CoverageLook,
   ExecutedCommand,
   Forecast,
   ForecastDraft,
@@ -29,14 +33,20 @@ import type {
   PlanItemId,
   Selection,
   ShipEvent,
+  ThrustTick,
   TrailPoint,
   ViewSnapshot,
 } from '../contracts/index.ts';
 import { HANDS_ON_NEUTRAL, isHandsOnNeutral, issueForecast } from '../contracts/index.ts';
+import { handsOnBodyRate, handsOnFirings } from '../ship/index.ts';
+import { buildChart } from './belief/chart.ts';
+import { earlierCoverage, type CoverageReplayOptions } from './belief/coverage.ts';
 import type { GameControls, Phase, PlanDraft, SessionStatus } from './belief/controls.ts';
 import type {
   AttemptStartInfo,
   BlackBoxPort,
+  HandsOnThrust,
+  HandsOnTurn,
   ModelPort,
   RecordBatch,
   RuleControls,
@@ -56,6 +66,7 @@ import {
   type GameTruthState,
   type TickResult,
 } from './truth-step.ts';
+import { buildWindowView } from './window.ts';
 
 export interface SessionOptions {
   readonly model: ModelPort;
@@ -88,6 +99,12 @@ interface Scheduled {
 }
 
 const UNRESOLVED = 'Attitude reference cannot be resolved from the navigation solution.';
+/**
+ * [ASSUMED] Firings weaker than this are not drawn or followed, N. The allocator trims the
+ * 2 mm sideways offset of the centre of mass with jets at well under a newton.
+ */
+const FAINTEST_FIRING = 1;
+const NO_THRUST: readonly ThrustTick[] = [];
 const pad = (n: number): string => String(n).padStart(4, '0');
 
 const sameControls = (a: HandsOnInput, b: HandsOnInput): boolean =>
@@ -128,6 +145,12 @@ export function createGameSession(setup: EncounterSetup, options: SessionOptions
   /** The hands-on input last sent to the ship this attempt; the controls start released. */
   let flown: HandsOnInput = HANDS_ON_NEUTRAL;
   let commanded: CommandedState = initialCommandedState;
+  /** Finished attempts when this one began, and what their sensors covered (built on demand). */
+  let earlierRecords: readonly AttemptRecord[] = [];
+  let earlierLooks: readonly CoverageLook[] | undefined;
+  const looksByAttempt = new Map<AttemptId, readonly CoverageLook[]>();
+  /** The thrust drawn for the controls as held, and what it was worked out from. */
+  let drawn: { input: HandsOnInput; mass: number; thrust: readonly ThrustTick[] } | undefined;
   let trail: TrailPoint[] = [];
   let forecasts: Forecast[] = [];
   const trails = new Map<AttemptId, TrailPoint[]>();
@@ -136,6 +159,51 @@ export function createGameSession(setup: EncounterSetup, options: SessionOptions
 
   const time = (): number => tick * dt;
   const running = (): boolean => outcome.kind === 'in-progress';
+
+  /**
+   * Which thrusters a hands-on input fires, as designed: the ship's own control law and jet
+   * allocator, run on the nominal design with the mass properties given (the believed ones).
+   * It reads nothing of the ship's true state, so the believed side may use the answer: the
+   * view draws it and the navigator follows it.
+   */
+  /** The turn the controls ask for, from the same flight-software law the ship flies. */
+  const handsOnTurn: HandsOnTurn = (input) => handsOnBodyRate(definition.ship, input);
+
+  const handsOnThrust: HandsOnThrust = (input, massProperties) =>
+    handsOnFirings(definition.ship, input, massProperties)
+      .filter((firing) => firing.force >= FAINTEST_FIRING)
+      .map((firing) => ({
+        source: firing.source,
+        point: firing.point,
+        direction: firing.direction,
+        magnitude: firing.force,
+      }));
+
+  /** What a replay of an earlier attempt needs to follow it as the navigator did. */
+  const replay: CoverageReplayOptions = {
+    ship: definition.ship,
+    briefing: definition.briefing,
+    referenceRadius:
+      definition.briefing.referenceRadius ?? setup.definition.world.law.referenceRadius,
+    arrivalMass: setup.arrivalMass,
+    handsOnThrust,
+    handsOnTurn,
+  };
+
+  /** The thrust the controls ask for right now, from the last executed `fly` input. */
+  function heldThrust(world: BelievedWorld): readonly ThrustTick[] {
+    const held = commanded.handsOn;
+    if (!held) return NO_THRUST;
+    const massProperties = world.ship.massProperties;
+    // Worked out again when the controls change or a kilogram of propellant has gone.
+    if (!drawn || drawn.input !== held.input || Math.abs(drawn.mass - massProperties.mass) > 1)
+      drawn = {
+        input: held.input,
+        mass: massProperties.mass,
+        thrust: handsOnThrust(held.input, massProperties),
+      };
+    return drawn.thrust;
+  }
 
   function begin(): void {
     attemptIndex += 1;
@@ -151,6 +219,7 @@ export function createGameSession(setup: EncounterSetup, options: SessionOptions
     planId = undefined;
     flown = HANDS_ON_NEUTRAL;
     commanded = initialCommandedState;
+    drawn = undefined;
     trail = [];
     forecasts = [];
     telemetry.reset();
@@ -161,7 +230,12 @@ export function createGameSession(setup: EncounterSetup, options: SessionOptions
       ship: definition.ship,
       arrivalMass: setup.arrivalMass,
       startedAt: now(),
+      handsOnThrust,
+      handsOnTurn,
     };
+    // Every attempt Black Box holds is finished now; this attempt's own is not among them.
+    earlierRecords = blackBox.archive().attempts;
+    earlierLooks = undefined;
     model.beginAttempt(start, blackBox.beginAttempt(start, model.state().version));
     trails.set(attemptId, trail);
     trail.push({ t: 0, position: model.believedWorld(0).ship.position });
@@ -326,19 +400,33 @@ export function createGameSession(setup: EncounterSetup, options: SessionOptions
     snapshot(): ViewSnapshot {
       const first = compare ? overlay(compare[0]) : undefined;
       const second = compare ? overlay(compare[1]) : undefined;
+      const world = model.believedWorld(time());
       return buildViewSnapshot({
         t: time(),
         paused,
         warp,
-        world: model.believedWorld(time()),
+        world,
         definition: definition.ship,
         commanded,
+        handsOn: heldThrust(world),
         trail,
         forecasts,
         objectives: definition.briefing.objectives,
         ...(first && second ? { compare: [first, second] as const } : {}),
         ...(selection ? { selection } : {}),
+        // The one place truth reaches the view without an instrument: what the eye can see.
+        window: buildWindowView(truth.sim.world, play.windowMinAngularRadius),
+        coverageEarlier: (earlierLooks ??= earlierCoverage(
+          earlierRecords,
+          attemptId,
+          replay,
+          looksByAttempt,
+        )),
       });
+    },
+
+    chart(): Chart {
+      return buildChart(definition.briefing, model.state(), blackBox.archive());
     },
 
     setPaused(value) {

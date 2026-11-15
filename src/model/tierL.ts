@@ -1,35 +1,40 @@
 /**
- * Tier L (1G spec §5) and the forecast core (§8): windows of equal swept angle, short-arc local
- * fits, the noise scale, the per-body gravity calibration profile, the present state, the
- * linearised forecast with its uncertainty split by source, and the earned hedge (§7.4).
+ * Tier L (1G spec revision 3, §5) and the forecast core (§8), in three dimensions: windows of
+ * equal swept angle (the sweep is a vector), short-arc local fits with a six-number state, the
+ * noise scale, the per-body gravity calibration profile, the present state with the camera
+ * misalignment, the linearised forecast with a 3×3 position covariance per sample split by
+ * source, and the earned hedge (§7.4).
+ *
+ * Distances the model tracks (covered range, profile nodes, validated spans) are radial scalars
+ * (A11): nothing in the profile or the hedge has a direction.
  */
 
 import {
-  poweredAt,
-  simulate,
+  bodyRefs,
   compileArc,
-  wrap,
-  SHIP_REFS,
+  hasRange,
+  lineOfSight,
+  poweredAt,
+  shipRefs,
+  simulate,
+  STATE_KEYS,
   type Arc,
   type ArcSolution,
   type BodyDef,
   type CompiledArc,
-  type EstMeasurement,
+  type EngineDef,
+  type Fix,
   type ProfileDef,
+  type State6,
   type Structure,
   type ThrustSegment,
 } from './dynamics.ts';
-import {
-  fromRows,
-  inverse,
-  lstsq,
-  sandwich,
-  solve,
-  symEig2,
-  zeros,
-  type Matrix,
-} from './linalg.ts';
+import { fromRows, inverse, lstsq, sandwich, solve, symEig, zeros, type Matrix } from './linalg.ts';
 import { Problem, fitChi2Nu, fitGet, type Param } from './solve.ts';
+
+export type { Fix } from './dynamics.ts';
+
+export type Vec3T = readonly [number, number, number];
 
 // ---------------------------------------------------------------------------------------------
 // Settings
@@ -37,7 +42,7 @@ import { Problem, fitChi2Nu, fitGet, type Param } from './solve.ts';
 
 /** Window rule (§5.1) and profile constants (§5.4). [ASSUMED] */
 export interface WindowRule {
-  /** Close a window after the bearing sweeps this much, rad. */
+  /** Close a window after the line of sight sweeps this much, rad. */
   readonly sweep: number;
   /** … or ln(range) spans this much. */
   readonly lnRange: number;
@@ -61,8 +66,14 @@ export const DEFAULT_WINDOW_RULE: WindowRule = {
 export interface FrozenBody {
   readonly id: string;
   readonly mu: number;
-  /** Believed state (x, y, vx, vy) relative to the reference body at time t (that body at rest). */
-  readonly stateAt: (t: number) => readonly [number, number, number, number];
+  /** Believed state (six numbers) relative to the reference body at time t (that body at rest). */
+  readonly stateAt: (t: number) => State6;
+}
+
+export interface EngineValues {
+  readonly kE: number;
+  readonly dE: number;
+  readonly dP: number;
 }
 
 export interface ReferenceLaw {
@@ -71,12 +82,21 @@ export interface ReferenceLaw {
   readonly body: string;
   readonly mu: number;
   readonly n: number;
-  readonly cam: number;
+  /** Camera misalignment, body frame (x, y, z); z is the planar bias. */
+  readonly cam: Vec3T;
   readonly kE: number;
   readonly dE: number;
-  /** Per-thruster engine values, if they differ from kE/dE. */
-  readonly engines?: Readonly<Record<string, { kE: number; dE: number }>>;
+  readonly dP?: number;
+  /** RCS translation scale. Default 1. */
+  readonly kR?: number;
+  /** Per-thruster engine values, if they differ from kE/dE/dP. */
+  readonly engines?: Readonly<Record<string, EngineValues>>;
   readonly others?: readonly FrozenBody[];
+  /**
+   * Planar reduction (§1, A.3): states are fitted in the x–y plane, z and vz held at the fixed
+   * number 0. The measurements must then carry no out-of-plane rows.
+   */
+  readonly planar?: boolean;
 }
 
 /**
@@ -109,15 +129,16 @@ export function refStructure(
       ? { stateByArc: Object.fromEntries(opts.arcs.map((a) => [a.id, o.stateAt(a.epoch)])) }
       : {}),
   }));
-  const engines: Record<string, { kE: number; dE: number }> = { ...(ref.engines ?? {}) };
+  const engines: Record<string, EngineDef> = { ...(ref.engines ?? {}) };
   return {
     r0: ref.r0,
     n: ref.n,
     bodies: [main, ...others],
-    ship: SHIP_REFS,
+    ship: shipRefs(ref.planar),
     dynamicBodies: others.length > 0,
-    engine: { kE: ref.kE, dE: ref.dE },
+    engine: { kE: ref.kE, dE: ref.dE, dP: ref.dP ?? 0 },
     engines,
+    kR: ref.kR ?? 1,
     kA: 1,
     camBias: ref.cam,
     ...(opts.profiles ? { profiles: opts.profiles } : {}),
@@ -127,8 +148,6 @@ export function refStructure(
 // ---------------------------------------------------------------------------------------------
 // Windows (§5.1)
 // ---------------------------------------------------------------------------------------------
-
-export type Fix = Extract<EstMeasurement, { kind: 'opnav' }>;
 
 export interface Window {
   readonly id: string;
@@ -141,52 +160,118 @@ export interface Window {
   readonly rGeo: number;
   readonly rMin: number;
   readonly rMax: number;
+  /** Size of the swept angle, rad. */
   readonly sweep: number;
+  /** Unit sweep vector: the axis the line of sight turned about (the orbit normal); zero if none. */
+  readonly planeNormal: Vec3T;
+  /** Mean direction of the ship as seen from the body over the window's fixes (unit). */
+  readonly direction: Vec3T;
 }
 
 /** Range-and-bearing fixes on a body, sorted by time (stable). */
 export function rangeFixes(arc: Arc, body: string): Fix[] {
   return arc.meas
-    .filter((m): m is Fix => m.kind === 'opnav' && m.target === body && m.z.length === 2)
+    .filter((m): m is Fix => hasRange(m) && m.target === body)
     .map((m, i) => [m, i] as const)
     .sort((a, b) => a[0].t - b[0].t || a[1] - b[1])
     .map((p) => p[0]);
 }
 
+/**
+ * Rotation vector of the line of sight between two fixes: the angle between the two unit
+ * vectors, along a × b. Planar data give wrap(Δ bearing) about z.
+ */
+function sweepStep(a: readonly number[], b: readonly number[]): [number, number, number] {
+  const cx = a[1]! * b[2]! - a[2]! * b[1]!;
+  const cy = a[2]! * b[0]! - a[0]! * b[2]!;
+  const cz = a[0]! * b[1]! - a[1]! * b[0]!;
+  const s = Math.sqrt(cx * cx + cy * cy + cz * cz);
+  if (s === 0) return [0, 0, 0];
+  const k = Math.atan2(s, a[0]! * b[0]! + a[1]! * b[1]! + a[2]! * b[2]!) / s;
+  return [k * cx, k * cy, k * cz];
+}
+
+function windowOf(
+  id: string,
+  arcId: string,
+  index: number,
+  fixes: readonly Fix[],
+  sweep: readonly number[],
+  powered: boolean,
+): Window {
+  const rr = fixes.map((q) => q.z[2]!);
+  const meanLn = rr.reduce((s, r) => s + Math.log(r), 0) / rr.length;
+  const mag = Math.hypot(sweep[0]!, sweep[1]!, sweep[2]!);
+  const d = [0, 0, 0];
+  for (const q of fixes) {
+    const l = lineOfSight(q);
+    d[0]! -= l[0];
+    d[1]! -= l[1];
+    d[2]! -= l[2];
+  }
+  const dn = Math.hypot(d[0]!, d[1]!, d[2]!);
+  return {
+    id,
+    arc: arcId,
+    index,
+    t0: fixes[0]!.t,
+    t1: fixes[fixes.length - 1]!.t,
+    fixes,
+    powered,
+    rGeo: Math.exp(meanLn),
+    rMin: Math.min(...rr),
+    rMax: Math.max(...rr),
+    sweep: mag,
+    planeNormal: mag > 0 ? [sweep[0]! / mag, sweep[1]! / mag, sweep[2]! / mag] : [0, 0, 0],
+    direction: dn > 0 ? [d[0]! / dn, d[1]! / dn, d[2]! / dn] : [d[0]!, d[1]!, d[2]!],
+  };
+}
+
+/**
+ * §5.1: the sweep is a vector, the sum of the line of sight's rotation vectors between
+ * consecutive fixes. A window closes once it holds minFixes and either |sweep| or the spread of
+ * ln(range) reaches its limit; it always closes when thrust (engine or RCS) turns on or off.
+ */
 export function makeWindows(
   arc: Arc,
   body: string,
   rule: WindowRule = DEFAULT_WINDOW_RULE,
 ): Window[] {
   const fx = rangeFixes(arc, body);
-  const groups: { fixes: Fix[]; sweep: number; forced: boolean }[] = [];
+  const groups: { fixes: Fix[]; sweep: [number, number, number]; forced: boolean }[] = [];
   let cur: Fix[] = [];
-  let sweep = 0;
+  let sweep: [number, number, number] = [0, 0, 0];
+  let last: [number, number, number] = [0, 0, 0];
   let lmin = Infinity;
   let lmax = -Infinity;
   const pw = (t: number) => poweredAt(arc.commands, t);
+  const reset = () => {
+    cur = [];
+    sweep = [0, 0, 0];
+    lmin = Infinity;
+    lmax = -Infinity;
+  };
   for (const m of fx) {
     if (cur.length > 0 && pw(m.t) !== pw(cur[0]!.t)) {
       groups.push({ fixes: cur, sweep, forced: true });
-      cur = [];
-      sweep = 0;
-      lmin = Infinity;
-      lmax = -Infinity;
+      reset();
     }
-    if (cur.length > 0) sweep += wrap(m.z[0]! - cur[cur.length - 1]!.z[0]!);
+    const los = lineOfSight(m);
+    if (cur.length > 0) {
+      const st = sweepStep(last, los);
+      sweep = [sweep[0] + st[0], sweep[1] + st[1], sweep[2] + st[2]];
+    }
+    last = los;
     cur.push(m);
-    const lr = Math.log(m.z[1]!);
+    const lr = Math.log(m.z[2]!);
     lmin = Math.min(lmin, lr);
     lmax = Math.max(lmax, lr);
     if (
       cur.length >= rule.minFixes &&
-      (Math.abs(sweep) >= rule.sweep || lmax - lmin >= rule.lnRange)
+      (Math.hypot(sweep[0], sweep[1], sweep[2]) >= rule.sweep || lmax - lmin >= rule.lnRange)
     ) {
       groups.push({ fixes: cur, sweep, forced: false });
-      cur = [];
-      sweep = 0;
-      lmin = Infinity;
-      lmax = -Infinity;
+      reset();
     }
   }
   if (cur.length > 0) {
@@ -197,63 +282,47 @@ export function makeWindows(
       !prev.forced &&
       pw(prev.fixes[0]!.t) === pw(cur[0]!.t)
     ) {
+      // The sweeps add; the step between the two groups was never counted in either.
       groups.pop();
-      groups.push({ fixes: [...prev.fixes, ...cur], sweep: prev.sweep + sweep, forced: false });
+      groups.push({
+        fixes: [...prev.fixes, ...cur],
+        sweep: [prev.sweep[0] + sweep[0], prev.sweep[1] + sweep[1], prev.sweep[2] + sweep[2]],
+        forced: false,
+      });
     } else if (cur.length >= rule.keepFixes) {
       groups.push({ fixes: cur, sweep, forced: false });
     }
   }
-  return groups.map((g, k) => {
-    const rr = g.fixes.map((q) => q.z[1]!);
-    const meanLn = rr.reduce((s, r) => s + Math.log(r), 0) / rr.length;
-    return {
-      id: `${arc.id}.w${k}`,
-      arc: arc.id,
-      index: k,
-      t0: g.fixes[0]!.t,
-      t1: g.fixes[g.fixes.length - 1]!.t,
-      fixes: g.fixes,
-      powered: pw(g.fixes[0]!.t),
-      rGeo: Math.exp(meanLn),
-      rMin: Math.min(...rr),
-      rMax: Math.max(...rr),
-      sweep: Math.abs(g.sweep),
-    };
-  });
+  return groups.map((g, k) =>
+    windowOf(`${arc.id}.w${k}`, arc.id, k, g.fixes, g.sweep, pw(g.fixes[0]!.t)),
+  );
 }
 
 /** All range fixes of an arc on `body` as one window (a short track not yet cut into windows). */
 export function wholeArcWindow(arc: Arc, body: string, powered = false): Window | null {
   const fixes = rangeFixes(arc, body);
   if (fixes.length === 0) return null;
-  const rr = fixes.map((q) => q.z[1]!);
-  let sweep = 0;
-  for (let i = 1; i < fixes.length; i++) sweep += wrap(fixes[i]!.z[0]! - fixes[i - 1]!.z[0]!);
-  return {
-    id: `${arc.id}.all`,
-    arc: arc.id,
-    index: 0,
-    t0: fixes[0]!.t,
-    t1: fixes[fixes.length - 1]!.t,
-    fixes,
-    powered,
-    rGeo: Math.exp(rr.reduce((q, r) => q + Math.log(r), 0) / rr.length),
-    rMin: Math.min(...rr),
-    rMax: Math.max(...rr),
-    sweep: Math.abs(sweep),
-  };
+  let sweep: [number, number, number] = [0, 0, 0];
+  for (let i = 1; i < fixes.length; i++) {
+    const st = sweepStep(lineOfSight(fixes[i - 1]!), lineOfSight(fixes[i]!));
+    sweep = [sweep[0] + st[0], sweep[1] + st[1], sweep[2] + st[2]];
+  }
+  return windowOf(`${arc.id}.all`, arc.id, 0, fixes, sweep, powered);
 }
 
 // ---------------------------------------------------------------------------------------------
 // Initial guesses (§4.5)
 // ---------------------------------------------------------------------------------------------
 
+/** Measured ship position relative to the fix's target: −ρ m. */
+function measuredPosition(m: Fix): [number, number, number] {
+  const l = lineOfSight(m);
+  const r = m.z[2]!;
+  return [-r * l[0], -r * l[1], -r * l[2]];
+}
+
 /** Least-squares quadratic through the first fixes (ship relative to the body), at tEpoch. */
-export function quadGuess(
-  fixes: readonly Fix[],
-  tEpoch: number,
-  nfix = 10,
-): [number, number, number, number] {
+export function quadGuess(fixes: readonly Fix[], tEpoch: number, nfix = 10): State6 {
   const fx = fixes.slice(0, nfix);
   if (fx.length < 3) throw new Error('quadGuess: need at least three range fixes');
   const design = fromRows(
@@ -262,21 +331,13 @@ export function quadGuess(
       return [1, tau, 0.5 * tau * tau];
     }),
   );
-  const rhs = fromRows(fx.map((m) => [-m.z[1]! * Math.cos(m.z[0]!), -m.z[1]! * Math.sin(m.z[0]!)]));
-  const c = lstsq(design, rhs);
-  return [c.data[0]!, c.data[1]!, c.data[2]!, c.data[3]!];
+  const c = lstsq(design, fromRows(fx.map(measuredPosition)));
+  return [c.data[0]!, c.data[1]!, c.data[2]!, c.data[3]!, c.data[4]!, c.data[5]!];
 }
 
 /** Ship state guess at tEpoch from the first ≤ 10 range fixes on `body` (in record order). */
-export function guessShip(
-  arc: Arc,
-  body: string,
-  tEpoch = arc.epoch,
-  nfix = 10,
-): [number, number, number, number] {
-  const fx = arc.meas.filter(
-    (m): m is Fix => m.kind === 'opnav' && m.target === body && m.z.length === 2,
-  );
+export function guessShip(arc: Arc, body: string, tEpoch = arc.epoch, nfix = 10): State6 {
+  const fx = arc.meas.filter((m): m is Fix => hasRange(m) && m.target === body);
   return quadGuess(fx, tEpoch, nfix);
 }
 
@@ -287,52 +348,58 @@ export function guessBody(
   target: string,
   tEpoch = arc.epoch,
   nfix = 8,
-): [number, number, number, number] {
-  const fxA = arc.meas
-    .filter((m): m is Fix => m.kind === 'opnav' && m.target === primary && m.z.length === 2)
-    .slice(0, 10);
+): State6 {
+  const fxA = arc.meas.filter((m): m is Fix => hasRange(m) && m.target === primary).slice(0, 10);
   const coef = lstsq(
     fromRows(fxA.map((m) => [1, m.t - tEpoch, 0.5 * (m.t - tEpoch) ** 2])),
-    fromRows(fxA.map((m) => [-m.z[1]! * Math.cos(m.z[0]!), -m.z[1]! * Math.sin(m.z[0]!)])),
+    fromRows(fxA.map(measuredPosition)),
   );
-  const fx = arc.meas
-    .filter((m): m is Fix => m.kind === 'opnav' && m.target === target && m.z.length === 2)
-    .slice(0, nfix);
+  const fx = arc.meas.filter((m): m is Fix => hasRange(m) && m.target === target).slice(0, nfix);
   const rows = fx.map((m) => {
     const tau = m.t - tEpoch;
-    const sx = coef.data[0]! + coef.data[2]! * tau + coef.data[4]! * 0.5 * tau * tau;
-    const sy = coef.data[1]! + coef.data[3]! * tau + coef.data[5]! * 0.5 * tau * tau;
-    return [sx + m.z[1]! * Math.cos(m.z[0]!), sy + m.z[1]! * Math.sin(m.z[0]!)];
+    const off = measuredPosition(m);
+    return [0, 1, 2].map(
+      (c) =>
+        coef.data[c]! + coef.data[3 + c]! * tau + coef.data[6 + c]! * 0.5 * tau * tau - off[c]!,
+    );
   });
   const c2 = lstsq(fromRows(fx.map((m) => [1, m.t - tEpoch])), fromRows(rows));
-  return [c2.data[0]!, c2.data[1]!, c2.data[2]!, c2.data[3]!];
+  return [c2.data[0]!, c2.data[1]!, c2.data[2]!, c2.data[3]!, c2.data[4]!, c2.data[5]!];
 }
 
-export function shipParams(id: string, guess: readonly number[]): Param[] {
-  const sc = [1e3, 1e3, 1, 1];
-  return ['x', 'y', 'vx', 'vy'].map((k, i) => ({
-    name: `${id}.ship.${k}`,
+const SHIP_SCALE = [1e3, 1e3, 1e3, 1, 1, 1];
+const BODY_SCALE = [1e3, 1e3, 1e3, 0.1, 0.1, 0.1];
+/** Indices of the state components that are parameters: all six, or x, y, vx, vy when planar. */
+const stateKeep = (planar: boolean) => (planar ? [0, 1, 3, 4] : [0, 1, 2, 3, 4, 5]);
+
+/** Ship state parameters from a six-number guess; `planar` leaves z and vz out (held at 0). */
+export function shipParams(id: string, guess: readonly number[], planar = false): Param[] {
+  return stateKeep(planar).map((i) => ({
+    name: `${id}.ship.${STATE_KEYS[i]!}`,
     init: guess[i]!,
-    scale: sc[i]!,
+    scale: SHIP_SCALE[i]!,
     group: id,
   }));
 }
 
+/** State parameters of a moving body; `planar` leaves z and vz out (held at 0). */
 export function bodyStateParams(
   id: string,
   body: string,
   guess: readonly number[],
   prior?: { mean: readonly number[]; sigma: readonly number[] },
+  planar = false,
 ): Param[] {
-  const sc = [1e3, 1e3, 0.1, 0.1];
-  return ['x', 'y', 'vx', 'vy'].map((k, i) => ({
-    name: `${id}.${body}.${k}`,
+  return stateKeep(planar).map((i) => ({
+    name: `${id}.${body}.${STATE_KEYS[i]!}`,
     init: guess[i]!,
-    scale: sc[i]!,
+    scale: BODY_SCALE[i]!,
     group: id,
     ...(prior ? { priorMean: prior.mean[i]!, priorSigma: prior.sigma[i]! } : {}),
   }));
 }
+
+export { bodyRefs, shipRefs };
 
 // ---------------------------------------------------------------------------------------------
 // Local fits (§5.2) and noise scale (§5.3)
@@ -354,20 +421,10 @@ export interface WindowFit {
   readonly sigma: number;
   readonly chi2PerDof: number;
   readonly converged: boolean;
-  /** Mean direction of the ship as seen from the body over the window, rad (§9.2). */
-  readonly azimuth: number;
-}
-
-/** Mean direction of the ship as seen from `body` over [t0, t1]: bearing to the body + π. */
-export function azimuth(arc: Arc, body: string, t0: number, t1: number): number {
-  let s = 0;
-  let c = 0;
-  for (const m of arc.meas) {
-    if (m.kind !== 'opnav' || m.target !== body || m.t < t0 || m.t > t1) continue;
-    s += Math.sin(m.z[0]! + Math.PI);
-    c += Math.cos(m.z[0]! + Math.PI);
-  }
-  return Math.atan2(s, c);
+  /** Mean direction of the ship as seen from the body over the window: a unit vector (§9.2). */
+  readonly direction: Vec3T;
+  /** The axis the line of sight turned about: the orbit normal of the window (§5.1). */
+  readonly planeNormal: Vec3T;
 }
 
 export interface LocalFitResult {
@@ -386,6 +443,7 @@ export function localFit(
   return localFitDetailed(ref, arc, w, dt, gPrior).row;
 }
 
+/** §5.2: window state (six numbers; four in the planar reduction) and a local gravity scale. */
 export function localFitDetailed(
   ref: ReferenceLaw,
   arc: Arc,
@@ -396,7 +454,7 @@ export function localFitDetailed(
   const sub: Arc = { id: w.id, epoch: w.t0, commands: arc.commands, meas: w.fixes };
   const st = refStructure(ref, w.t0, { gs: '{att}.g' });
   const params: Param[] = [
-    ...shipParams(w.id, quadGuess(w.fixes, w.t0)),
+    ...shipParams(w.id, quadGuess(w.fixes, w.t0), ref.planar),
     {
       name: `${w.id}.g`,
       init: gPrior[0],
@@ -433,7 +491,8 @@ export function localFitDetailed(
     sigma: sg,
     chi2PerDof: fitChi2Nu(res),
     converged: res.converged,
-    azimuth: azimuth(arc, ref.body, w.t0, w.t1),
+    direction: w.direction,
+    planeNormal: w.planeNormal,
   };
   return { row, solution };
 }
@@ -467,7 +526,7 @@ export function noiseScale(rows: readonly WindowFit[]): number {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Calibration profile (§5.4)
+// Calibration profile (§5.4): indexed by distance alone
 // ---------------------------------------------------------------------------------------------
 
 export interface ProfileSettings {
@@ -580,6 +639,19 @@ export function buildProfile(
   };
 }
 
+/** The profile's scale at distance r: linear between nodes, held at its edge values (§5.4). */
+export function profileAt(prof: ProfileFit, r: number): number {
+  const nn = prof.uNodes.length;
+  const u = Math.log(Math.min(Math.max(r, prof.rMin), prof.rMax) / prof.r0);
+  const x = Math.min(
+    Math.max((u - prof.uNodes[0]!) / (prof.uNodes[1]! - prof.uNodes[0]!), 0),
+    nn - 1,
+  );
+  const i0 = Math.min(Math.floor(x), nn - 2);
+  const w = x - i0;
+  return (1 - w) * prof.g[i0]! + w * prof.g[i0 + 1]!;
+}
+
 /** Union of distance spans as sorted disjoint [lo, hi] (spec §7.4). */
 export function mergeSpans(spans: readonly (readonly [number, number])[]): [number, number][] {
   const out: [number, number][] = [];
@@ -655,14 +727,21 @@ export interface AnchorInfo {
   readonly g1Sigma: number;
   readonly chi2PerDof: number;
   readonly converged: boolean;
+  /** The camera misalignment the fit carried: its prior (the current value and σ) and result. */
+  readonly camera?: {
+    readonly prior: Vec3T;
+    readonly priorSigma: Vec3T;
+    readonly value: Vec3T;
+    readonly sigma: Vec3T;
+  };
 }
 
 export interface Anchor {
   /** Time of the last fix used. */
   readonly tNow: number;
-  /** Ship state (x, y, vx, vy) relative to the reference body (gauge of tFirst). */
+  /** Ship state (x, y, z, vx, vy, vz) relative to the reference body (gauge of tFirst). */
   readonly state: Float64Array;
-  /** 4×4 covariance (before s²). */
+  /** 6×6 covariance (before s²). It contains the camera misalignment's share. */
   readonly covariance: Matrix;
   readonly info: AnchorInfo;
 }
@@ -670,6 +749,11 @@ export interface Anchor {
 /**
  * Fit the most recent window(s) on the calibrated law with a free local scale and slope in
  * ln r, propagated to the last fix (§8.1). `prof` null gives the bare reference law.
+ *
+ * `camSigma` (three numbers) carries the camera misalignment as three more parameters held by a
+ * prior at the reference law's values: the unknown orientation of the picture is then part of
+ * the state covariance (11 parameters in all). Without it the misalignment is held fixed, as in
+ * the planar reduction.
  */
 export function anchorState(
   ref: ReferenceLaw,
@@ -682,6 +766,7 @@ export function anchorState(
     gPrior?: readonly [number, number];
     slopeSigma?: number;
     extraProfiles?: readonly ProfileFit[];
+    camSigma?: Vec3T | null;
   } = {},
 ): Anchor {
   const h = opts.h ?? 1e-3;
@@ -691,15 +776,25 @@ export function anchorState(
   const aid = `${arc.id}.anchor`;
   const tFirst = fixes[0]!.t;
   const tLast = fixes[fixes.length - 1]!.t;
-  const u0 = fixes.reduce((s, m) => s + Math.log(m.z[1]!), 0) / fixes.length;
+  const u0 = fixes.reduce((s, m) => s + Math.log(m.z[2]!), 0) / fixes.length;
   const sub: Arc = { id: aid, epoch: tFirst, commands: arc.commands, meas: fixes };
   const profiles = [
     ...(prof ? [profileDef(prof)] : []),
     ...(opts.extraProfiles ?? []).map((p) => profileDef(p)),
   ];
-  const st = refStructure(ref, tFirst, { gs: '{att}.g', gs1: '{att}.g1', gsU0: u0, profiles });
+  const base = refStructure(ref, tFirst, {
+    gs: '{att}.g',
+    gs1: '{att}.g1',
+    gsU0: u0,
+    profiles,
+  });
+  const camSigma = opts.camSigma ?? null;
+  const camKeys = ['x', 'y', 'z'] as const;
+  const st: Structure = camSigma
+    ? { ...base, camBias: ['{att}.cam.x', '{att}.cam.y', '{att}.cam.z'] }
+    : base;
   const params: Param[] = [
-    ...shipParams(aid, quadGuess(fixes, tFirst)),
+    ...shipParams(aid, quadGuess(fixes, tFirst), ref.planar),
     {
       name: `${aid}.g`,
       init: gPrior[0],
@@ -709,6 +804,16 @@ export function anchorState(
       group: aid,
     },
     { name: `${aid}.g1`, init: 0, scale: 1e-2, priorMean: 0, priorSigma: slopeSigma, group: aid },
+    ...(camSigma
+      ? camKeys.map((k, i) => ({
+          name: `${aid}.cam.${k}`,
+          init: ref.cam[i]!,
+          scale: 1e-5,
+          priorMean: ref.cam[i]!,
+          priorSigma: camSigma[i]!,
+          group: aid,
+        }))
+      : []),
   ];
   const prob = new Problem(st, [sub], params, { dt });
   const res = prob.solve(params.map((p) => p.init));
@@ -717,20 +822,22 @@ export function anchorState(
   // Ship relative to the reference body (equal to the gauge state when it is the only body).
   const rel = (xv: ArrayLike<number>) => shipAndBodies(ca, xv, [tLast], dt).state[0]!;
   const xNow = rel(res.x);
-  const Jm = zeros(4, q);
+  const Jm = zeros(6, q);
   const xp = new Float64Array(res.x);
   for (let i = 0; i < q; i++) {
+    if (!ca.moves.has(i)) continue; // the camera turns the picture, not the path
     const step = h * prob.scale[i]!;
     xp[i] = res.x[i]! + step;
     const sp = rel(xp);
     xp[i] = res.x[i]! - step;
     const sm = rel(xp);
     xp[i] = res.x[i]!;
-    for (let r = 0; r < 4; r++) Jm.data[r * q + i] = (sp[r]! - sm[r]!) / (2 * step);
+    for (let r = 0; r < 6; r++) Jm.data[r * q + i] = (sp[r]! - sm[r]!) / (2 * step);
   }
   const PNow = sandwich(Jm, res.P);
   const [g, gS] = fitGet(res, `${aid}.g`);
   const [g1, g1S] = fitGet(res, `${aid}.g1`);
+  const cam = camSigma ? camKeys.map((k) => fitGet(res, `${aid}.cam.${k}`)) : null;
   return {
     tNow: tLast,
     state: xNow,
@@ -747,6 +854,16 @@ export function anchorState(
       g1Sigma: g1S,
       chi2PerDof: fitChi2Nu(res),
       converged: res.converged,
+      ...(cam && camSigma
+        ? {
+            camera: {
+              prior: ref.cam,
+              priorSigma: camSigma,
+              value: [cam[0]![0], cam[1]![0], cam[2]![0]] as const,
+              sigma: [cam[0]![1], cam[1]![1], cam[2]![1]] as const,
+            },
+          }
+        : {}),
     },
   };
 }
@@ -755,6 +872,7 @@ export function anchorState(
 // Forecast core (§8.2–§8.4)
 // ---------------------------------------------------------------------------------------------
 
+/** Position covariance (3×3 each) of one forecast sample, split by source (§8.3). */
 export interface CovSplit {
   readonly state: Matrix;
   readonly profile: Matrix;
@@ -762,6 +880,7 @@ export interface CovSplit {
   readonly hedge: Matrix;
   readonly hedgeEarned: Matrix;
   readonly hedgeDefault: Matrix;
+  /** Engine scale and both misalignment angles of every thruster, and the RCS scale. */
   readonly engine: Matrix;
   readonly mass: Matrix;
   readonly total: Matrix;
@@ -769,11 +888,24 @@ export interface CovSplit {
 
 export interface ForecastCoreResult {
   readonly times: readonly number[];
-  /** Ship state relative to the reference body: x, y, vx, vy. */
+  /** Ship state relative to the reference body: x, y, z, vx, vy, vz. */
   readonly mean: readonly Float64Array[];
-  /** Other modelled bodies relative to the reference body, per time: [x, y, vx, vy] per body. */
+  /** Other modelled bodies relative to the reference body, per time: six numbers per body. */
   readonly bodies: readonly Float64Array[];
   readonly cov: readonly CovSplit[];
+  /**
+   * Sensitivity of the relative position to each uncertain source, for covariances of
+   * differences between two forecasts made with the same sources (§8.7).
+   */
+  readonly sensitivity: ForecastSensitivity;
+}
+
+/** Columns d(position)/d(source) of a forecast, per requested time (3 numbers per time). */
+export interface ForecastSensitivity {
+  /** Source name → column over the requested times (length 3·T). */
+  readonly columns: ReadonlyMap<string, Float64Array>;
+  /** Shared sources (profile nodes, hedge exponents, masses) and their covariance blocks. */
+  readonly shared: readonly { readonly names: readonly string[]; readonly cov: Matrix }[];
 }
 
 export interface ForecastCoreInput {
@@ -782,7 +914,9 @@ export interface ForecastCoreInput {
   readonly profiles: readonly ProfileFit[];
   readonly commands: readonly ThrustSegment[];
   readonly tNow: number;
+  /** Six numbers. */
   readonly xNow: ArrayLike<number>;
+  /** 6×6. */
   readonly PNow: Matrix;
   readonly times: readonly number[];
   readonly dt: number;
@@ -797,39 +931,50 @@ export interface ForecastCoreInput {
       { readonly spans: readonly (readonly [number, number])[]; readonly sigmaE: number }
     >
   >;
-  /** Engine σ for planned burns: kE, dE of the default engine (ref.kE, ref.dE). */
-  readonly engineSigma: readonly [number, number];
-  /** Per-thruster σ (kE, dE); values come from ref.engines. */
-  readonly engineSigmas?: Readonly<Record<string, readonly [number, number]>>;
+  /** Engine σ for planned burns: kE, dE, dP of the default engine (ref.kE, ref.dE, ref.dP). */
+  readonly engineSigma: readonly [number, number, number?];
+  /** Per-thruster σ (kE, dE, dP); values come from ref.engines. */
+  readonly engineSigmas?: Readonly<Record<string, readonly [number, number, number?]>>;
+  /** σ of the RCS translation scale (value ref.kR). */
+  readonly rcsSigma?: number;
   /** σ of μ for frozen bodies without a profile (§8.2). */
   readonly muSigma?: Readonly<Record<string, number>>;
   readonly h?: number;
 }
 
 /**
- * Linearised forecast (§8.3) from the present state under the calibrated law, with the
+ * Linearised forecast (§8.3) from the present state under the calibrated law, with the 3×3
  * position covariance split by source: state, profile nodes, hedge, engine, body masses.
  */
 export function forecastCore(inp: ForecastCoreInput): ForecastCoreResult {
   const { ref, profiles } = inp;
   const h = inp.h ?? 1e-3;
   const aid = 'fc';
-  const names: string[] = ['fc.ship.x', 'fc.ship.y', 'fc.ship.vx', 'fc.ship.vy', 'f.kE', 'f.dE'];
-  const x: number[] = [...Array.from(inp.xNow), ref.kE, ref.dE];
-  const scale: number[] = [1e3, 1e3, 1, 1, 1e-3, 1e-3];
+  const names: string[] = [...STATE_KEYS.map((k) => `fc.ship.${k}`), 'f.kE', 'f.dE', 'f.dP'];
+  const x: number[] = [...Array.from(inp.xNow), ref.kE, ref.dE, ref.dP ?? 0];
+  const scale: number[] = [1e3, 1e3, 1e3, 1, 1, 1, 1e-3, 1e-3, 1e-3];
   const engineCols: [number, number][] = [
-    [4, inp.engineSigma[0]],
-    [5, inp.engineSigma[1]],
+    [6, inp.engineSigma[0]],
+    [7, inp.engineSigma[1]],
+    [8, inp.engineSigma[2] ?? 0],
   ];
-  const engines: Record<string, { kE: string; dE: string }> = {};
+  const engines: Record<string, EngineDef> = {};
   for (const [thr, e] of Object.entries(ref.engines ?? {})) {
-    const sig = inp.engineSigmas?.[thr] ?? [0, 0];
-    engines[thr] = { kE: `f.kE.${thr}`, dE: `f.dE.${thr}` };
-    engineCols.push([names.length, sig[0]], [names.length + 1, sig[1]]);
-    names.push(`f.kE.${thr}`, `f.dE.${thr}`);
-    x.push(e.kE, e.dE);
-    scale.push(1e-3, 1e-3);
+    const sig = inp.engineSigmas?.[thr] ?? [0, 0, 0];
+    engines[thr] = { kE: `f.kE.${thr}`, dE: `f.dE.${thr}`, dP: `f.dP.${thr}` };
+    engineCols.push(
+      [names.length, sig[0]],
+      [names.length + 1, sig[1]],
+      [names.length + 2, sig[2] ?? 0],
+    );
+    names.push(`f.kE.${thr}`, `f.dE.${thr}`, `f.dP.${thr}`);
+    x.push(e.kE, e.dE, e.dP);
+    scale.push(1e-3, 1e-3, 1e-3);
   }
+  engineCols.push([names.length, inp.rcsSigma ?? 0]);
+  names.push('f.kR');
+  x.push(ref.kR ?? 1);
+  scale.push(1e-3);
   const etaIdx: number[] = [];
   const etaEIdx: [number, number][] = [];
   const nodeIdx: number[][] = [];
@@ -878,39 +1023,50 @@ export function forecastCore(inp: ForecastCoreInput): ForecastCoreResult {
       { id: ref.body, mu: ref.mu, state: 'gauge' },
       ...others.map((o) => ({ id: o.id, mu: o.muRef, state: o.stateAt(inp.tNow) })),
     ],
-    ship: ['fc.ship.x', 'fc.ship.y', 'fc.ship.vx', 'fc.ship.vy'],
+    ship: STATE_KEYS.map((k) => `fc.ship.${k}`) as unknown as Structure['ship'],
     dynamicBodies: others.length > 0,
-    engine: { kE: 'f.kE', dE: 'f.dE' },
+    engine: { kE: 'f.kE', dE: 'f.dE', dP: 'f.dP' },
     engines,
+    kR: 'f.kR',
     kA: 1,
-    camBias: ref.cam,
+    camBias: [0, 0, 0],
     profiles: pdefs,
   };
   const idx = new Map(names.map((n, i) => [n, i]));
   const ca = compileArc(st, { id: aid, epoch: inp.tNow, commands: inp.commands }, idx);
   const order = inp.times.map((t, i) => [t, i] as const).sort((a, b) => a[0] - b[0]);
   const sortedTimes = order.map((o) => o[0]);
-  const run = (xv: ArrayLike<number>) => {
-    // simulate via shipStates-like path but keep body positions too
-    return shipAndBodies(ca, xv, sortedTimes, inp.dt);
-  };
+  const run = (xv: ArrayLike<number>) => shipAndBodies(ca, xv, sortedTimes, inp.dt);
   const base = run(x);
   const q = x.length;
   const T = sortedTimes.length;
-  const S: Float64Array[] = []; // per param: d(rel pos)/dq, length 2T
+  // A source that cannot move the path, or carries no uncertainty, needs no propagation.
+  const weight = new Float64Array(q);
+  for (let i = 0; i < 6; i++) weight[i] = 1;
+  for (const [i, s] of engineCols) weight[i] = s;
+  for (const i of etaIdx) weight[i] = inp.sigmaH;
+  for (const [i, s] of etaEIdx) weight[i] = s;
+  for (const [i, s] of muIdx) weight[i] = s;
+  nodeIdx.forEach((list, j) => {
+    const C = profiles[j]!.covariance;
+    list.forEach((i, b) => (weight[i] = C.data[b * C.cols + b]!));
+  });
+  const S: (Float64Array | null)[] = []; // per param: d(rel pos)/dq, length 3T (null: zero)
   const xp = Float64Array.from(x);
   for (let i = 0; i < q; i++) {
+    if (!(weight[i]! > 0) || !ca.moves.has(i)) {
+      S.push(null);
+      continue;
+    }
     const step = h * scale[i]!;
     xp[i] = x[i]! + step;
-    const plus = run(xp).rel;
+    const plus = run(xp).state;
     xp[i] = x[i]! - step;
-    const minus = run(xp).rel;
+    const minus = run(xp).state;
     xp[i] = x[i]!;
-    const col = new Float64Array(2 * T);
-    for (let k = 0; k < T; k++) {
-      col[2 * k] = (plus[k]![0]! - minus[k]![0]!) / (2 * step);
-      col[2 * k + 1] = (plus[k]![1]! - minus[k]![1]!) / (2 * step);
-    }
+    const col = new Float64Array(3 * T);
+    for (let k = 0; k < T; k++)
+      for (let c = 0; c < 3; c++) col[3 * k + c] = (plus[k]![c]! - minus[k]![c]!) / (2 * step);
     S.push(col);
   }
   const outer = (
@@ -918,31 +1074,31 @@ export function forecastCore(inp: ForecastCoreInput): ForecastCoreResult {
     C: (a: number, b: number) => number,
     k: number,
   ): Matrix => {
-    const m = zeros(2, 2);
-    for (let a = 0; a < cols.length; a++)
+    const m = zeros(3, 3);
+    for (let a = 0; a < cols.length; a++) {
+      const sa = S[cols[a]!];
+      if (!sa) continue;
       for (let b = 0; b < cols.length; b++) {
+        const sb = S[cols[b]!];
+        if (!sb) continue;
         const c = C(a, b);
         if (c === 0) continue;
-        const sa = S[cols[a]!]!;
-        const sb = S[cols[b]!]!;
-        m.data[0]! += sa[2 * k]! * c * sb[2 * k]!;
-        m.data[1]! += sa[2 * k]! * c * sb[2 * k + 1]!;
-        m.data[2]! += sa[2 * k + 1]! * c * sb[2 * k]!;
-        m.data[3]! += sa[2 * k + 1]! * c * sb[2 * k + 1]!;
+        for (let r = 0; r < 3; r++)
+          for (let s = 0; s < 3; s++) m.data[3 * r + s]! += sa[3 * k + r]! * c * sb[3 * k + s]!;
       }
+    }
     return m;
   };
   const add = (...ms: Matrix[]) => {
-    const m = zeros(2, 2);
-    for (const q2 of ms) for (let i = 0; i < 4; i++) m.data[i]! += q2.data[i]!;
+    const m = zeros(3, 3);
+    for (const q2 of ms) for (let i = 0; i < 9; i++) m.data[i]! += q2.data[i]!;
     return m;
   };
+  const stateCols = [0, 1, 2, 3, 4, 5];
   const sh2 = inp.sigmaH * inp.sigmaH;
   const covs: CovSplit[] = new Array(T);
-  const means: Float64Array[] = new Array(T);
-  const bodies: Float64Array[] = new Array(T);
   for (let k = 0; k < T; k++) {
-    const state = outer([0, 1, 2, 3], (a, b) => inp.s2 * inp.PNow.data[a * 4 + b]!, k);
+    const state = outer(stateCols, (a, b) => inp.s2 * inp.PNow.data[a * 6 + b]!, k);
     const engine = outer(
       engineCols.map((c) => c[0]),
       (a, b) => (a === b ? engineCols[a]![1] ** 2 : 0),
@@ -967,19 +1123,67 @@ export function forecastCore(inp: ForecastCoreInput): ForecastCoreResult {
       mass,
       total: add(state, profile, hedge, engine, mass),
     };
-    means[k] = base.state[k]!;
-    bodies[k] = base.bodies[k]!;
   }
   // restore requested order
   const outMean: Float64Array[] = new Array(T);
   const outCov: CovSplit[] = new Array(T);
   const outBodies: Float64Array[] = new Array(T);
   order.forEach(([, i], k) => {
-    outMean[i] = means[k]!;
+    outMean[i] = base.state[k]!;
     outCov[i] = covs[k]!;
-    outBodies[i] = bodies[k]!;
+    outBodies[i] = base.bodies[k]!;
   });
-  return { times: inp.times, mean: outMean, bodies: outBodies, cov: outCov };
+  const unsort = (col: Float64Array) => {
+    const o = new Float64Array(3 * T);
+    order.forEach(([, i], k) => {
+      for (let c = 0; c < 3; c++) o[3 * i + c] = col[3 * k + c]!;
+    });
+    return o;
+  };
+  const columns = new Map<string, Float64Array>();
+  const zero = new Float64Array(3 * T);
+  // Sources shared with any other forecast under the same law are named by what they are, not
+  // by their place in this forecast's list.
+  const sharedName = (i: number): string => {
+    for (let j = 0; j < profiles.length; j++) {
+      const body = profiles[j]!.body;
+      if (etaIdx[j] === i) return `eta:${body}`;
+      if (names[i] === `f.etaE${j}`) return `etaE:${body}`;
+      const b = nodeIdx[j]!.indexOf(i);
+      if (b >= 0) return `node:${body}:${b}`;
+    }
+    return names[i]!;
+  };
+  const shared: { names: string[]; cov: Matrix }[] = [];
+  profiles.forEach((p, j) => {
+    const nm = nodeIdx[j]!.map(sharedName);
+    nodeIdx[j]!.forEach((i, b) => columns.set(nm[b]!, S[i] ? unsort(S[i]) : zero));
+    shared.push({ names: nm, cov: p.covariance });
+    const e = etaIdx[j]!;
+    columns.set(sharedName(e), S[e] ? unsort(S[e]) : zero);
+    shared.push({ names: [sharedName(e)], cov: { rows: 1, cols: 1, data: Float64Array.of(sh2) } });
+  });
+  for (const [i, se] of etaEIdx) {
+    columns.set(sharedName(i), S[i] ? unsort(S[i]) : zero);
+    shared.push({
+      names: [sharedName(i)],
+      cov: { rows: 1, cols: 1, data: Float64Array.of(se * se) },
+    });
+  }
+  for (const [i, sig] of muIdx) {
+    columns.set(names[i]!, S[i] ? unsort(S[i]) : zero);
+    shared.push({
+      names: [names[i]!],
+      cov: { rows: 1, cols: 1, data: Float64Array.of(sig * sig) },
+    });
+  }
+  return {
+    times: inp.times,
+    mean: outMean,
+    bodies: outBodies,
+    cov: outCov,
+    sensitivity: { columns, shared },
+  };
 }
 
 /**
@@ -991,46 +1195,71 @@ function shipAndBodies(
   x: ArrayLike<number>,
   times: readonly number[],
   dt: number,
-): { state: Float64Array[]; rel: Float64Array[]; bodies: Float64Array[] } {
+): { state: Float64Array[]; bodies: Float64Array[] } {
   const traj = simulate(ca, x, times, dt);
   const nb = ca.nb;
-  const s = nb;
+  const s = 3 * nb;
   const state: Float64Array[] = [];
-  const rel: Float64Array[] = [];
   const bodies: Float64Array[] = [];
   traj.pos.forEach((p, k) => {
     const v = traj.vel[k]!;
     state.push(
       Float64Array.of(
-        p[2 * s]! - p[0]!,
-        p[2 * s + 1]! - p[1]!,
-        v[2 * s]! - v[0]!,
-        v[2 * s + 1]! - v[1]!,
+        p[s]! - p[0]!,
+        p[s + 1]! - p[1]!,
+        p[s + 2]! - p[2]!,
+        v[s]! - v[0]!,
+        v[s + 1]! - v[1]!,
+        v[s + 2]! - v[2]!,
       ),
     );
-    rel.push(Float64Array.of(p[2 * s]! - p[0]!, p[2 * s + 1]! - p[1]!));
-    const o = new Float64Array(4 * (nb - 1));
-    for (let j = 1; j < nb; j++) {
-      o[4 * (j - 1)] = p[2 * j]! - p[0]!;
-      o[4 * (j - 1) + 1] = p[2 * j + 1]! - p[1]!;
-      o[4 * (j - 1) + 2] = v[2 * j]! - v[0]!;
-      o[4 * (j - 1) + 3] = v[2 * j + 1]! - v[1]!;
-    }
+    const o = new Float64Array(6 * (nb - 1));
+    for (let j = 1; j < nb; j++)
+      for (let c = 0; c < 3; c++) {
+        o[6 * (j - 1) + c] = p[3 * j + c]! - p[c]!;
+        o[6 * (j - 1) + 3 + c] = v[3 * j + c]! - v[c]!;
+      }
     bodies.push(o);
   });
-  return { state, rel, bodies };
+  return { state, bodies };
 }
 
-/** √(largest eigenvalue) of a 2×2 covariance. */
+/**
+ * √(largest eigenvalue) of a symmetric covariance: the longest semi-axis of the 1σ ellipsoid
+ * (§8.4). For a planar covariance embedded in 3D this is the planar ellipse's.
+ */
 export function majorSigma(c: Matrix): number {
-  const [, l] = symEig2(c.data[0]!, 0.5 * (c.data[1]! + c.data[2]!), c.data[3]!);
-  return Math.sqrt(Math.max(l, 0));
+  const { values } = symEig(c);
+  return Math.sqrt(Math.max(values[values.length - 1]!, 0));
 }
 
-/** Mahalanobis distance of a 2-vector deviation under a 2×2 covariance. */
-export function mahalanobis(dev: readonly [number, number], c: Matrix): number {
-  const v = solve(c, dev);
-  return Math.sqrt(dev[0] * v[0]! + dev[1] * v[1]!);
+/** Unit vector along the longest axis of a covariance, signed so its largest component is positive. */
+export function majorAxis(c: Matrix): number[] {
+  const { vectors } = symEig(c);
+  const n = c.rows;
+  const a = Array.from({ length: n }, (_, r) => vectors.data[r * n + (n - 1)]!);
+  let big = 0;
+  for (let i = 1; i < n; i++) if (Math.abs(a[i]!) > Math.abs(a[big]!)) big = i;
+  return a[big]! < 0 ? a.map((v) => -v) : a;
+}
+
+/**
+ * Mahalanobis distance of a deviation under a covariance of the same size. Directions in which
+ * the covariance is exactly zero (a planar covariance lifted to 3D) are left out.
+ */
+export function mahalanobis(dev: readonly number[], c: Matrix): number {
+  const n = dev.length;
+  if (c.rows !== n || c.cols !== n) throw new Error('mahalanobis: size mismatch');
+  const { values, vectors } = symEig(c);
+  const top = Math.max(values[n - 1]!, 1e-300);
+  let s = 0;
+  for (let k = 0; k < n; k++) {
+    if (!(values[k]! > 1e-12 * top)) continue;
+    let y = 0;
+    for (let r = 0; r < n; r++) y += vectors.data[r * n + k]! * dev[r]!;
+    s += (y * y) / values[k]!;
+  }
+  return Math.sqrt(s);
 }
 
 // ---------------------------------------------------------------------------------------------

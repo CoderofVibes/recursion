@@ -4,7 +4,8 @@
  *
  * - Configuration and plan diff, and the commands that actually executed.
  * - Where the outcome diverged from each issued forecast: the measured position relative to a
- *   tracked body against the forecast's, in metres and in σ of the forecast envelope.
+ *   tracked body (azimuth, elevation and range) against the forecast's, in metres and in σ of
+ *   the forecast's 3D envelope (an ellipsoid) combined with the fix's own noise.
  * - Residual series split into coasting and powered (spec §9.1), measured strength against
  *   distance (§9.2) and the confounding indicator with what is missing (§9.3), from the model.
  * Missing data is reported as missing, never filled in.
@@ -172,9 +173,12 @@ export interface ForecastDivergence {
 interface Fix {
   readonly t: number;
   readonly body: string;
-  readonly bearing: number;
+  readonly azimuth: number;
+  readonly elevation: number;
   readonly range: number;
-  readonly sb: number;
+  /** Azimuth sigma as reported (it carries 1 / cos(elevation)), elevation sigma, range sigma. */
+  readonly sAz: number;
+  readonly sEl: number;
   readonly sr: number;
 }
 
@@ -186,14 +190,15 @@ function fixes(ms: readonly Measurement[]): Fix[] {
   for (const m of ms) {
     if (m.kind !== 'bearing' || !m.target) continue;
     const r = ranges.get(`${m.t}|${m.source}|${m.target}`);
-    // LIFT(2G): a bearing enters as its azimuth ([0]); elevation ([1]) is ignored.
     if (r)
       out.push({
         t: m.t,
         body: m.target,
-        bearing: m.value[0]!,
+        azimuth: m.value[0]!,
+        elevation: m.value[1] ?? 0,
         range: r.value[0]!,
-        sb: m.sigma[0]!,
+        sAz: m.sigma[0]!,
+        sEl: m.sigma[1] ?? m.sigma[0]!,
         sr: r.sigma[0]!,
       });
   }
@@ -222,6 +227,24 @@ function interp<T extends { t: number }>(
   return va.map((v, i) => v + w * (vb[i]! - v));
 }
 
+/** vᵀ M⁻¹ v for a symmetric 3×3 M (Infinity when M is singular). */
+function quadInverse(M: readonly (readonly number[])[], v: readonly number[]): number {
+  const [a, b, c] = M[0]! as [number, number, number];
+  const [, e, f] = M[1]! as [number, number, number];
+  const i = M[2]![2]!;
+  // Cofactors of the symmetric matrix [[a, b, c], [b, e, f], [c, f, i]].
+  const A = e * i - f * f;
+  const B = c * f - b * i;
+  const Cc = b * f - c * e;
+  const E = a * i - c * c;
+  const F = b * c - a * f;
+  const I = a * e - b * b;
+  const det = a * A + b * B + c * Cc;
+  if (!(det > 0)) return Infinity;
+  const [x, y, z] = v as [number, number, number];
+  return (A * x * x + E * y * y + I * z * z + 2 * (B * x * y + Cc * x * z + F * y * z)) / det;
+}
+
 export function forecastDivergence(
   f: Forecast,
   rec: AttemptRecord,
@@ -237,33 +260,48 @@ export function forecastDivergence(
   for (const q of fx) {
     const track = f.objects.find((o) => o.id === q.body);
     if (!track) continue;
-    // LIFT(2G): divergence is measured in the x–y plane: positions' x and y and the
-    // envelope's x–y block [xx, xy, yy] = Cov3 [0], [1], [3].
+    // The forecast's ship relative to the body, with its 3×3 envelope [xx, xy, xz, yy, yz, zz].
     const s = interp(samples, q.t, (p) => [
       p.position.x,
       p.position.y,
-      p.positionCov[0],
-      p.positionCov[1],
-      p.positionCov[3],
+      p.position.z,
+      ...p.positionCov,
     ]);
-    const b = interp(track.samples, q.t, (p) => [p.position.x, p.position.y]);
+    const b = interp(track.samples, q.t, (p) => [p.position.x, p.position.y, p.position.z]);
     if (!s || !b) continue;
-    const px = s[0]! - b[0]!;
-    const py = s[1]! - b[1]!;
-    const ux = Math.cos(q.bearing);
-    const uy = Math.sin(q.bearing);
-    const mx = -q.range * ux;
-    const my = -q.range * uy;
-    const dx = mx - px;
-    const dy = my - py;
-    // Fix covariance: σr along the line of sight, ρ·σb across it.
-    const sc = q.range * q.sb;
-    const cxx = s[2]! + q.sr ** 2 * ux * ux + sc ** 2 * uy * uy;
-    const cxy = s[3]! + (q.sr ** 2 - sc ** 2) * ux * uy;
-    const cyy = s[4]! + q.sr ** 2 * uy * uy + sc ** 2 * ux * ux;
-    const det = cxx * cyy - cxy * cxy;
-    const m2 = det > 0 ? (cyy * dx * dx - 2 * cxy * dx * dy + cxx * dy * dy) / det : Infinity;
-    points.push({ t: q.t, body: q.body, deviation: Math.hypot(dx, dy), sigmas: Math.sqrt(m2) });
+    const pf = [s[0]! - b[0]!, s[1]! - b[1]!, s[2]! - b[2]!];
+    // The measured ship relative to the body: −ρ along the measured line of sight.
+    const ca = Math.cos(q.azimuth);
+    const sa = Math.sin(q.azimuth);
+    const ce = Math.cos(q.elevation);
+    const se = Math.sin(q.elevation);
+    const u = [ce * ca, ce * sa, se];
+    const east = [-sa, ca, 0];
+    const north = [-se * ca, -se * sa, ce];
+    const dev = [0, 1, 2].map((c) => -q.range * u[c]! - pf[c]!);
+    // Fix covariance: σr along the line of sight, ρ·σ across it in each tangent direction (the
+    // east arc is σ_az·cos(el)).
+    const sE = q.range * q.sAz * ce;
+    const sN = q.range * q.sEl;
+    const C = s.slice(3);
+    const SYM = [
+      [0, 1, 2],
+      [1, 3, 4],
+      [2, 4, 5],
+    ];
+    const cov = (i: number, j: number) =>
+      C[SYM[i]![j]!]! +
+      q.sr ** 2 * u[i]! * u[j]! +
+      sE ** 2 * east[i]! * east[j]! +
+      sN ** 2 * north[i]! * north[j]!;
+    const M = [0, 1, 2].map((i) => [0, 1, 2].map((j) => cov(i, j)));
+    const m2 = quadInverse(M, dev);
+    points.push({
+      t: q.t,
+      body: q.body,
+      deviation: Math.hypot(dev[0]!, dev[1]!, dev[2]!),
+      sigmas: Math.sqrt(m2),
+    });
   }
   const times = [...new Set(fx.map((q) => q.t))].sort((a, b) => a - b);
   const gaps: [number, number][] = [];

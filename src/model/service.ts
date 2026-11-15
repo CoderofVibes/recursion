@@ -139,11 +139,12 @@ export class ModelService {
     );
   }
 
+  /** A new version. If the build throws, the version and the snapshot stay as they were. */
   private bump(): ModelState {
-    const parent = this.version;
+    const snap = this.build(this.version + 1, this.version);
     this.version += 1;
-    this.snap = this.build(this.version, parent);
-    return this.snap.state;
+    this.snap = snap;
+    return snap.state;
   }
 
   /** Rebuild from Black Box records (P8). */
@@ -231,22 +232,33 @@ export class ModelService {
       heldOut,
       this.version,
       this.snap.derived.probes,
+      this.snap.derived.unusable,
     );
     this.tests = [...this.tests, rec];
     this.snap = this.build(this.version, this.snap.state.parent, this.snap);
     return rec;
   }
 
+  /** A decision takes effect with its new version, or not at all. */
+  private decided(ext: ExtensionId, action: ExtensionDecision['action'], at: string): ModelState {
+    const before = this.decisionLog;
+    this.decisionLog = decide(this.tests, before, ext, action, this.version + 1, at);
+    try {
+      return this.bump();
+    } catch (e) {
+      this.decisionLog = before;
+      throw e;
+    }
+  }
+
   /** The player adopts a rule that passed its held-out test. New version. */
   adopt(ext: ExtensionId, at: string = new Date().toISOString()): ModelState {
-    this.decisionLog = decide(this.tests, this.decisionLog, ext, 'adopted', this.version + 1, at);
-    return this.bump();
+    return this.decided(ext, 'adopted', at);
   }
 
   /** The player revokes an adopted rule. New version. */
   revoke(ext: ExtensionId, at: string = new Date().toISOString()): ModelState {
-    this.decisionLog = decide(this.tests, this.decisionLog, ext, 'revoked', this.version + 1, at);
-    return this.bump();
+    return this.decided(ext, 'revoked', at);
   }
 
   report(): ModelReport {

@@ -106,7 +106,9 @@ describe('attitude', () => {
 describe('coverage and hull', () => {
   it('turns a planar sector into a cone in the plane', () => {
     const [cone] = coverageCones({
-      sectors: [{ sensor: 'camera', center: Math.PI / 2, halfWidth: 0.5, range: 6e6, quality: 0.6 }],
+      sectors: [
+        { sensor: 'camera', center: Math.PI / 2, halfWidth: 0.5, range: 6e6, quality: 0.6 },
+      ],
     });
     expect(cone).toBeDefined();
     close(cone!.axis, [0, 0, -1]);
@@ -116,13 +118,15 @@ describe('coverage and hull', () => {
 
   it('takes a three-dimensional cone as it is', () => {
     const [cone] = coverageCones({
-      cones: [{ sensor: 'camera', axis: { x: 0, y: 0, z: 2 }, halfAngle: 0.4, range: 1e6, quality: 1 }],
+      cones: [
+        { sensor: 'camera', axis: { x: 0, y: 0, z: 2 }, halfAngle: 0.4, range: 1e6, quality: 1 },
+      ],
     });
     close(cone!.axis, [0, 1, 0]);
     expect(cone!.halfAngle).toBe(0.4);
   });
 
-  it('draws the footprint, or the widest prism of a hull', () => {
+  it('draws the footprint, one prism as it is, or the envelope of several', () => {
     const footprint = [
       { x: -8, y: -2.5 },
       { x: 8, y: -2.5 },
@@ -136,7 +140,19 @@ describe('coverage and hull', () => {
       { x: 1, y: 10 },
       { x: -4, y: 10 },
     ];
-    expect(hullOutline({ hull: [{ outline: footprint }, { outline: wings }] })).toBe(wings);
+    // One prism: its own outline. Several (the 3D ship's pressure hull and wings): the convex
+    // envelope of them all, counter-clockwise, which is the footprint the planar game drew.
+    expect(hullOutline({ hull: [{ outline: wings }] })).toBe(wings);
+    expect(hullOutline({ hull: [{ outline: footprint }, { outline: wings }] })).toEqual([
+      { x: -8, y: -2.5 },
+      { x: -4, y: -10 },
+      { x: 1, y: -10 },
+      { x: 8, y: -2.5 },
+      { x: 8, y: 2.5 },
+      { x: 1, y: 10 },
+      { x: -4, y: 10 },
+      { x: -8, y: 2.5 },
+    ]);
     expect(hullOutline({})).toEqual([]);
   });
 });

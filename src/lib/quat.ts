@@ -125,8 +125,13 @@ export const fromRotationVector = (v: Vec3): Quat => {
 
 /** Angle of the rotation taking attitude a to attitude b, in [0, π]. */
 export const angleBetween = (a: Quat, b: Quat): number => {
-  const d = Math.abs(a.w * b.w + a.x * b.x + a.y * b.y + a.z * b.z);
-  return 2 * Math.acos(d > 1 ? 1 : d);
+  // The relative rotation a* ⊗ b, and its angle from atan2 of its vector and scalar parts: an
+  // arccosine of the dot product cannot resolve angles below about 3e-8 rad.
+  const w = a.w * b.w + a.x * b.x + a.y * b.y + a.z * b.z;
+  const x = a.w * b.x - a.x * b.w - a.y * b.z + a.z * b.y;
+  const y = a.w * b.y + a.x * b.z - a.y * b.w - a.z * b.x;
+  const z = a.w * b.z - a.x * b.y + a.y * b.x - a.z * b.w;
+  return 2 * Math.atan2(Math.sqrt(x * x + y * y + z * z), Math.abs(w));
 };
 
 /**

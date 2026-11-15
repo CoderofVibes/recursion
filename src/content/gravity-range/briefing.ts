@@ -15,16 +15,22 @@ import type {
   ParameterPrior,
   ShipEstimate,
 } from '../../contracts/index.ts';
-import { cov3FromPlanar, isoCov2 } from '../../contracts/index.ts';
+import { isoCov3 } from '../../contracts/index.ts';
 import type { TruthWorld } from '../../contracts/truth/index.ts';
-import { fromYaw, yawOf } from '../../lib/quat.ts';
+import { fromRotationVector, multiply } from '../../lib/quat.ts';
 import { createRng } from '../../lib/rng.ts';
+import type { Vec3 } from '../../lib/vec3.ts';
 
 export const ENCOUNTER_ID = 'gravity-range';
 
-/** [ASSUMED] Low-orbit band about Alpha, m from its centre, and the propellant to keep. */
-export const BAND = { inner: 450_000, outer: 550_000, revolutions: 1 } as const;
-export const RESERVE = { tank: 'main-propellant', minimum: 5_600 } as const;
+/**
+ * [ASSUMED; owner direction A6] The objective: leave the binary on a slingshot past Beta.
+ * Judged when the ship is `beyond` this distance from the pair's centre of mass: it must be
+ * moving at `minSpeed` or more relative to it, having spent no more than `maxDeltaV`. Without
+ * Beta's help 16 m/s leaves at under 40 m/s; a pass 680–1,650 km from Beta leaves at 50–66 m/s
+ * (2G handoff, slingshot study).
+ */
+export const DEPART = { beyond: 9_000_000, minSpeed: 50, maxDeltaV: 16 } as const;
 
 /** [ASSUMED] One-sigma survey error on arrival. */
 const SIGMA = {
@@ -56,8 +62,18 @@ export const PRIORS: readonly ParameterPrior[] = [
     value: 0,
     sigma: 0.01,
   },
+  {
+    // Wide enough to take in the gimbal's trim toward the low centre of mass (about 16 mrad),
+    // which the model's nominal thrust line (body +x) does not know about.
+    id: 'thruster.main-engine.misalignment-pitch',
+    label: 'Main thrust pitch',
+    unit: 'rad',
+    value: 0,
+    sigma: 0.02,
+  },
   { id: 'sensor.imu-a.bias-x', label: 'IMU A bias x', unit: 'm/s²', value: 0, sigma: 5e-5 },
   { id: 'sensor.imu-a.bias-y', label: 'IMU A bias y', unit: 'm/s²', value: 0, sigma: 5e-5 },
+  { id: 'sensor.imu-a.bias-z', label: 'IMU A bias z', unit: 'm/s²', value: 0, sigma: 5e-5 },
   {
     id: 'law.gravity.exponent',
     label: 'Distance-law exponent',
@@ -70,48 +86,53 @@ export const PRIORS: readonly ParameterPrior[] = [
 
 export const OBJECTIVES: readonly Objective[] = [
   {
-    id: 'low-orbit',
-    kind: 'custom',
-    label: 'ORBIT 450–550 KM',
-    target: 'alpha',
-    // Mid-band circle about Alpha (the contract has no annulus yet; see the 2F handoff).
-    region: { center: { x: 0, y: 0, z: 0 }, radius: (BAND.inner + BAND.outer) / 2 },
+    id: 'depart',
+    kind: 'depart',
+    label: `DEPART ${DEPART.minSpeed} M/S`,
+    depart: { beyond: DEPART.beyond, minSpeed: DEPART.minSpeed },
+    maxDeltaV: DEPART.maxDeltaV,
   },
-  { id: 'reserve', kind: 'custom', label: `RESERVE ${RESERVE.minimum} KG` },
 ];
 
 export function briefing(world: TruthWorld, seed: string): EncounterBriefing {
   const rng = createRng(seed).stream('content.briefing');
   const alpha = world.bodies.find((b) => b.id === 'alpha')!;
   const noisy = (value: number, sigma: number): number => rng.normal(value, sigma);
-  // LIFT(2G): the survey is planar: no z error is drawn (z = 0), covariances have no z terms,
-  // and the attitude estimate is a yaw.
-  const relative = (
-    p: { x: number; y: number },
-    v: { x: number; y: number },
-    sigmaP: number,
-    sigmaV: number,
-  ) => ({
+  // The out-of-plane survey errors come from their own stream, so the in-plane survey draws
+  // the same numbers as the planar game did.
+  const vertical = createRng(seed).stream('content.briefing.z');
+  const relative = (p: Vec3, v: Vec3, sigmaP: number, sigmaV: number) => ({
     position: {
       x: noisy(p.x - alpha.position.x, sigmaP),
       y: noisy(p.y - alpha.position.y, sigmaP),
-      z: 0,
+      z: vertical.normal(p.z - alpha.position.z, sigmaP),
     },
     velocity: {
       x: noisy(v.x - alpha.velocity.x, sigmaV),
       y: noisy(v.y - alpha.velocity.y, sigmaV),
-      z: 0,
+      z: vertical.normal(v.z - alpha.velocity.z, sigmaV),
     },
   });
-  const planarCov = (sigma: number) => cov3FromPlanar(isoCov2(sigma));
 
   const k = world.ship.kinematics;
+  const surveyedState = relative(k.position, k.velocity, SIGMA.shipPosition, SIGMA.shipVelocity);
+  const yawError = noisy(0, SIGMA.attitude);
+  const surveyedAttitude = multiply(
+    k.attitude,
+    fromRotationVector({
+      x: vertical.normal(0, SIGMA.attitude),
+      y: vertical.normal(0, SIGMA.attitude),
+      z: yawError,
+    }),
+  );
   const arrivalEstimate: ShipEstimate = {
     t: 0,
-    ...relative(k.position, k.velocity, SIGMA.shipPosition, SIGMA.shipVelocity),
-    positionCov: planarCov(SIGMA.shipPosition),
-    velocityCov: planarCov(SIGMA.shipVelocity),
-    attitude: fromYaw(noisy(yawOf(k.attitude), SIGMA.attitude)),
+    ...surveyedState,
+    positionCov: isoCov3(SIGMA.shipPosition),
+    velocityCov: isoCov3(SIGMA.shipVelocity),
+    // The true attitude with a small error about each body axis: yaw from the same stream as
+    // before, roll and pitch from the out-of-plane stream.
+    attitude: surveyedAttitude,
     attitudeSigma: SIGMA.attitude,
     angularVelocity: { x: 0, y: 0, z: 0 },
   };
@@ -123,7 +144,7 @@ export function briefing(world: TruthWorld, seed: string): EncounterBriefing {
           name: b.name,
           position: { x: 0, y: 0, z: 0 },
           velocity: { x: 0, y: 0, z: 0 },
-          positionCov: planarCov(0),
+          positionCov: isoCov3(0),
           radius: b.radius,
           tracked: false,
           lastFix: 0,
@@ -132,7 +153,7 @@ export function briefing(world: TruthWorld, seed: string): EncounterBriefing {
           id: b.id,
           name: b.name,
           ...relative(b.position, b.velocity, SIGMA.betaPosition, SIGMA.betaVelocity),
-          positionCov: planarCov(SIGMA.betaPosition),
+          positionCov: isoCov3(SIGMA.betaPosition),
           radius: b.radius,
           tracked: false,
           lastFix: 0,
@@ -144,7 +165,7 @@ export function briefing(world: TruthWorld, seed: string): EncounterBriefing {
     .map((a) => ({
       id: a.id,
       ...relative(a.position, a.velocity, SIGMA.asteroidPosition, SIGMA.asteroidVelocity),
-      positionCov: planarCov(SIGMA.asteroidPosition),
+      positionCov: isoCov3(SIGMA.asteroidPosition),
       radius: a.radius,
       tracked: false,
       lastSeen: 0,
@@ -159,5 +180,6 @@ export function briefing(world: TruthWorld, seed: string): EncounterBriefing {
     priors: PRIORS,
     knownBodies,
     knownAsteroids,
+    referenceRadius: world.law.referenceRadius,
   };
 }
