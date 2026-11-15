@@ -173,23 +173,25 @@ function alarmAt(t: number): number {
 }
 
 /**
- * The lens's path (owner, 2026-11-15). It starts in the left pane, small, and drifts toward Earth
- * (az +4.7°, el +2.0°): stars it passes brighten, slide and split (calm). It grows as the ship
- * falls toward it; Earth doubles, then smears into arcs (alarm, stumble), then sits behind it as a
- * ring (failure). Then the dark at the ring's centre swells until it fills the window, and the
- * cut to black comes out of it. Each key is [t, az, el, einstein, shadow].
+ * The lens's path (owner, 2026-11-15). It starts in the left pane, small, and drifts right, but
+ * stays well clear of Earth (az +4.7°, el +2.0°): the owner cut Earth doubling into a ring. Stars
+ * it passes brighten, slide and split (calm). It grows as the ship falls toward it, a dark point
+ * ringed by bent starlight (alarm, stumble, failure). Then the dark swells from that point until
+ * it fills the window, and the cut to black comes out of it. Each key is [t, az, el, einstein,
+ * shadow]. Earth stays at least 10° away, where the lens moves its light by under 0.2°.
  */
 export const LENS_KEYS = [
   [0, -17, 3.4, 0.25, 0],
-  [TREMOR, -5, 2.7, 0.7, 0.02],
-  [8.6, 2.6, 2.15, 1.6, 0.25],
-  [9.6, 4.7, 2.0, 2.2, 0.6],
-  [10.15, 4.7, 2.0, 2.4, 0.9],
+  [TREMOR, -9, 2.9, 0.7, 0.02],
+  [FAILURE, -6.2, 2.7, 1.1, 0.35],
+  [10.15, -5.6, 2.6, 1.25, 0.8],
   // Full by the black-cut cue, so the dark has the window for a moment before the cut.
-  [CUT - 0.2, 4.7, 2.0, 2.6, 85],
+  [CUT - 0.2, -5.6, 2.6, 1.3, 85],
 ] as const;
+/** Earth's bearing in the window, degrees (S23). */
+export const EARTH_BEARING = { az: 4.7, el: 2.0 } as const;
 /** In reduced motion the dark never swells over the window: the room simply goes black. */
-export const REDUCED_SHADOW = LENS_KEYS[4][4];
+export const REDUCED_SHADOW = LENS_KEYS[3][4];
 
 function lensAt(t: number, reducedMotion: boolean): Lens {
   let i = 1;

@@ -3,7 +3,7 @@ import { claimOpening, openingLaunch, resetOpening } from './launch.ts';
 import {
   ALARM_DURATION,
   DARK_AFTER_TITLE,
-  LENS_KEYS,
+  EARTH_BEARING,
   ALARM_STARTS,
   OPENING_END,
   REDUCED_SHADOW,
@@ -53,40 +53,32 @@ describe('scripted opening', () => {
     expect(sampleOpening(10.6, true).alarm).toBe(0);
   });
 
-  it('shows the anomaly by what it does: stars first, then the console, Earth, a ring, the dark', () => {
+  it('shows the anomaly by what it does: stars, the console, then the dark, never Earth', () => {
     const ms = Array.from({ length: Math.ceil(OPENING_END * 1000) }, (_, i) => i / 1000);
     const cue = (id: string) => openingCues(0, OPENING_END).find((c) => c.id === id)!.at;
     const lens = (t: number) => sampleOpening(t, false).lens;
-    const earth = { az: 4.7, el: 2.0 };
-    const offEarth = (t: number) => Math.hypot(lens(t).az - earth.az, lens(t).el - earth.el);
+    const offEarth = (t: number) =>
+      Math.hypot(lens(t).az - EARTH_BEARING.az, lens(t).el - EARTH_BEARING.el);
     // Through the calm it bends light but its dark is under a pixel (0.086° at 720 px, 62° fov).
     const calm = ms.filter((t) => t < cue('opening-rumble'));
     expect(calm.every((t) => lens(t).einstein > 0 && lens(t).shadow < 0.05)).toBe(true);
     expect(lens(0).az).toBeLessThan(-10);
-    // It drifts toward Earth without jumping.
+    // It drifts without jumping.
     for (let i = 1; i < ms.length; i++) {
       const a = sampleOpening(ms[i - 1]!, false).lens;
       const b = sampleOpening(ms[i]!, false).lens;
       expect(Math.abs(b.az - a.az)).toBeLessThan(0.02);
     }
-    // Earth doubles while the lens is still beside it: both images clear of the shadow.
-    const doubled = 8.6;
-    const beta = offEarth(doubled);
-    const inner = Math.abs(beta - Math.hypot(beta, 2 * lens(doubled).einstein)) / 2;
-    expect(beta).toBeGreaterThan(0.5);
-    expect(inner).toBeGreaterThan(lens(doubled).shadow);
-    // Then it sits squarely in front of Earth, and Earth's light reaches the eye as a ring
-    // outside the shadow.
-    // (Until the dark starts to swell: from then it swallows the ring.)
-    const swell = LENS_KEYS[LENS_KEYS.length - 2]![0];
-    const ring = ms.filter((t) => offEarth(t) < 1e-9 && t < swell);
-    expect(ring.length).toBeGreaterThan(500);
-    expect(ring.every((t) => lens(t).einstein > lens(t).shadow + 1)).toBe(true);
-    expect(ring[0]!).toBeLessThan(cue('loss-failure') + 0.5);
-    // The dark at its centre fills the window (150° wide) before the cut to black.
+    // Earth is never doubled or ringed (owner): the lens stays 10° off and moves Earth's light
+    // by under 0.2° (a point lens shifts light at angle a by einstein² / a).
+    const shown = ms.filter((t) => t < cue('black-cut'));
+    expect(shown.every((t) => offEarth(t) > 10)).toBe(true);
+    expect(shown.every((t) => lens(t).einstein ** 2 / offEarth(t) < 0.2)).toBe(true);
+    // Its own dark shows by the failure, then fills the window (150° wide) before the cut.
+    expect(lens(cue('loss-failure')).shadow).toBeGreaterThan(0.25);
     expect(sampleOpening(cue('black-cut'), false).lens.shadow).toBeGreaterThan(75);
     // The console's measured track leaves the forecast during the calm and keeps going.
-    const drift = ms.filter((t) => t < cue('black-cut')).map((t) => sampleOpening(t, false).drift);
+    const drift = shown.map((t) => sampleOpening(t, false).drift);
     expect(drift.every((v, i) => i === 0 || v >= drift[i - 1]!)).toBe(true);
     expect(sampleOpening(cue('opening-rumble'), false).drift).toBeGreaterThan(0.3);
     expect(sampleOpening(cue('loss-failure'), false).drift).toBe(1);
