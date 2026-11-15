@@ -103,11 +103,11 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 | R32 | 3B → 2C | Acquire contour bearings and phase through the real camera; fit funnel geometry, pull and reversal separately from motion and IMU evidence; no catalogue coordinates as belief | **Open**: relay | After R9 |
 | R33 | Integrator | Fixes on merging 3B: its acquisition test imports `ModelService` from `src/model/service.ts` (2C's index exports the type only); the field-view registry moved onto a hoisted function (Vite's eager glob put plugin registration ahead of the const) | **Done** (this commit) | Tell 2D (its `fieldViews.ts`) and 3B |
 
-| R34 | 2C → 3A | `condition-changed` must carry the reported condition: emit `values.reportedCondition ?? condition` in `src/ship/condition/index.ts` and `src/ship/thermal/protection.ts`, or true damage reaches the record once the two differ | **Open**: relay | |
-| R35 | 2C → integrator | `exposure` events put each component's true absorbed dose into the Black Box. The ship has no instrument that measures it, so it's truth in the archive (P11) | **Integrator ruling:** true per-component dose stays out of recorded events (3A). **Owner: yes, a real radiation monitor (A24)**, see R37 | |
-| R36 | 2C → integrator | Who builds the funnel camera channel R32 needs | **Integrator ruling:** 3B, as 3C did for the lattice (scoped exception for `src/ship/sensors/wells*` plus additive contract types); then 2C infers geometry, pull and reversal | R32 after it; behind playability work |
+| R34 | 2C → 3A | `condition-changed` carries the reported condition | **Done** `246248c` | |
+| R35 | 2C → integrator | True per-component dose in the Black Box | **Done** `246248c`: 3A removed true-dose `exposure` events; the radiation monitor (A24) supplies the honest reading | |
+| R36 | 2C → integrator | The funnel camera channel R32 needs | **3B builds the channel and contract** in `src/ship/sensors/wells*`; **3C wires it into the dispatcher and recorder-packet budget** in `src/ship/sensors/index.ts` (3C's file, where it's already working), using 3B's published API | R32 after it |
 
-| R37 | Owner → 3C, 2C, 2D, 3A | The radiation monitor (A24): 3C builds the sensor and its recorded channel (`src/ship/sensors/`, additive contract type), folded into an existing avionics unit if possible; 2C records it and shows it in the Black Box's loss review; 2D shows the dose rate and its caution; 3A only if a new unit needs power or heat | **Open**: relay | A baseline change, if needed, goes through the integrator |
+| R37 | Owner → 3C, 2F, 2C, 2D | The radiation monitor (A24). 3C: the sensor, a point-sampling helper and a decoded radiation caution in `src/ship/sensors/`. **2F:** the environment supplies the monitor's point signal from all active fields, including the Gravity range's clouds; `session.ts` consumes the recorded caution at once, drops warp to 1× and stops that frame's remaining ticks. 2C records it and shows it in the loss review; 2D shows the dose rate and caution | **Open**: 3C building; relay to 2F | 3C publishes the exact APIs in its handoff |
 
 Add new rows at the bottom with the next ID. Never renumber.
 
@@ -123,7 +123,9 @@ Decided: A15 (S11's queue), A16 (the lattice), A17 (the ending) and A18 (the Gra
 
 | Commit | What |
 |---|---|
-| (this commit) | 2C merged; ledger R34–R36 |
+| (this commit) | 3A's fixes merged; ledger R34–R37 |
+| `246248c` | 3A: reported condition, no true-dose events |
+| `5542b25` | 2C merged; ledger R34–R36 |
 | `e4df230` | 2C: lattice reconstruction (R9), condition events (R27) |
 | `43e18d9` | 3C follow-up: shared availability, leakage fix, integration tests |
 | `1f0dfef` | Integrator fixes on merging 3B (R33); ledger R30–R33 |
