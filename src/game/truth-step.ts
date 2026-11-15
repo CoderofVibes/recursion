@@ -18,15 +18,18 @@ import type { PlanId, PlanItemId } from '../contracts/ids.ts';
 import type { LossCause, Measurement, ShipEvent } from '../contracts/measurements.ts';
 import type { MassProperties } from '../contracts/ship.ts';
 import type { SimEvent } from '../contracts/truth/index.ts';
+import { rotate } from '../lib/quat.ts';
 import { addSym3, fromPrincipal, principalAxes, scaleSym3 } from '../lib/sym3.ts';
 import { createSimulation, type SimState, type Simulation } from '../sim/index.ts';
 import { stepShipSystems } from '../ship/index.ts';
 import { radiationProfiles, type Exposure } from '../ship/condition/index.ts';
 import { integrateConditionedInterval } from '../ship/condition/integrate.ts';
 import { energizedEquipment } from '../ship/power/service.ts';
+import { withRadiationMonitorInput } from '../ship/sensors/radiation-environment.ts';
 import type { ShipDefinition } from '../contracts/ship.ts';
 import type {
   EnvironmentEffects,
+  EnvironmentField,
   ShipStepResult,
   ShipSystemsState,
 } from '../contracts/truth/index.ts';
@@ -50,6 +53,8 @@ export interface GameTruthState {
   readonly power?: PowerProgress;
   /** The encounter's own changing truth (`EncounterSetup.dynamics`: 3B's well lifecycle). */
   readonly dynamics?: JsonValue;
+  /** The encounter's own account (`EncounterSetup.ledger`: the work 3B's wells do). */
+  readonly ledger?: JsonValue;
   /**
    * Raw field exposure per equipment item, lattice-unit seconds (∫ intensity dt, before any
    * susceptibility; A16, R14). Items never exposed are left out. What the exposure does to the
@@ -144,6 +149,9 @@ export function midStepMassProperties(
  *
  * Without field intensity and with no reboot pending, nothing can happen inside the tick, and
  * this is the plain ship step: the same result to the bit.
+ *
+ * `refresh` gives a piece that starts inside the tick what must be read at its own instant (the
+ * radiation monitor's point input, which the monitor accepts only for the time it is stamped).
  */
 export function conditionedShipStep(
   systems: ShipSystemsState,
@@ -151,6 +159,7 @@ export function conditionedShipStep(
   commands: readonly Command[],
   env: EnvironmentEffects,
   dt: number,
+  refresh?: (env: EnvironmentEffects, systems: ShipSystemsState) => EnvironmentEffects,
 ): ShipStepResult {
   const intensity = env.intensity;
   const exposed = Object.keys(intensity).length > 0;
@@ -187,21 +196,19 @@ export function conditionedShipStep(
     (state, d) => {
       const offset = state.t - t0;
       const k = env.kinematics;
-      const at =
-        offset === 0
-          ? env
-          : {
-              ...env,
-              t: state.t,
-              kinematics: {
-                ...k,
-                position: {
-                  x: k.position.x + k.velocity.x * offset,
-                  y: k.position.y + k.velocity.y * offset,
-                  z: k.position.z + k.velocity.z * offset,
-                },
-              },
-            };
+      const carried: EnvironmentEffects = {
+        ...env,
+        t: state.t,
+        kinematics: {
+          ...k,
+          position: {
+            x: k.position.x + k.velocity.x * offset,
+            y: k.position.y + k.velocity.y * offset,
+            z: k.position.z + k.velocity.z * offset,
+          },
+        },
+      };
+      const at = offset === 0 ? env : refresh ? refresh(carried, state) : carried;
       const result = stepShipSystems(state, definition, pieces.length === 0 ? commands : [], at, d);
       pieces.push({ result, dt: d });
       return { state: result.state, events: result.events };
@@ -256,6 +263,8 @@ export function clearCooledOvertemperature(
   }
   return equipment ? { ...systems, equipment } : systems;
 }
+
+const NONE: readonly EnvironmentField[] = [];
 
 export function createTruthStepper(given: EncounterSetup): TruthStepper {
   // The field encounters' hooks (3B's wells, 3C's lattice), whatever setup came in.
@@ -321,6 +330,7 @@ export function createTruthStepper(given: EncounterSetup): TruthStepper {
           },
     objectives: initialObjectiveProgress,
     ...(setup.dynamics ? { dynamics: setup.dynamics.initial } : {}),
+    ...(setup.ledger ? { ledger: setup.ledger.initial } : {}),
   };
 
   return {
@@ -363,12 +373,20 @@ export function createTruthStepper(given: EncounterSetup): TruthStepper {
       }
       const fieldsNow = forFields(before.world);
 
-      // 1. Environment at the start of the tick.
-      const built = buildEnvironment(before, {
-        ...environment,
-        intensityFields: fieldsNow.intensityFields,
-      });
-      const env = hook ? hook(before, built) : built;
+      // 1. Environment at the start of the tick: every source of intensity there is now, the
+      //    simulation's fields and the encounter's own (the clouds), at each equipment item and
+      //    at the radiation monitor (A24, R37), which reads the whole list at its own point.
+      const extra = setup.intensityFields?.(before) ?? NONE;
+      const point =
+        extra.length > 0 ? [...fieldsNow.intensityFields, ...extra] : fieldsNow.intensityFields;
+      const built = buildEnvironment(before, { ...environment, intensityFields: point });
+      const systemsBefore = before.world.ship.systems;
+      const env = withRadiationMonitorInput(
+        hook ? hook(before, built) : built,
+        systemsBefore,
+        definition.ship,
+        point,
+      );
       // The exposure account: this tick's intensity, held over the tick.
       let exposure = state.exposure;
       for (const id in env.intensity) {
@@ -379,11 +397,13 @@ export function createTruthStepper(given: EncounterSetup): TruthStepper {
 
       // 2. Ship systems over [t, t + dt].
       const ship = conditionedShipStep(
-        before.world.ship.systems,
+        systemsBefore,
         definition.ship,
         commands.map((c) => c.command),
         env,
         definition.dt,
+        // A piece that starts inside the tick reads the monitor's point where the ship is then.
+        (at, systems) => withRadiationMonitorInput(at, systems, definition.ship, point),
       );
       const rejected = new Map<Command, string>();
       for (const e of ship.events)
@@ -419,6 +439,33 @@ export function createTruthStepper(given: EncounterSetup): TruthStepper {
       const sim: SimState = sun
         ? { ...stepped.state, world: { ...stepped.state.world, sun } }
         : stepped.state;
+
+      // The encounter's own account over the tick, from the ship's actual state at each end and
+      // the thrust it commanded (3B's request 4: the work the wells do).
+      let ledger = state.ledger;
+      if (setup.ledger && ledger !== undefined) {
+        // The net thrust, body frame, carried by the ship's attitude at each end.
+        const body = { x: 0, y: 0, z: 0 };
+        for (const thrust of ship.actuators.thrusts) {
+          body.x += thrust.force.x;
+          body.y += thrust.force.y;
+          body.z += thrust.force.z;
+        }
+        const stage = (s: SimState) => ({
+          t: s.world.t,
+          position: s.world.ship.kinematics.position,
+          velocity: s.world.ship.kinematics.velocity,
+          mass: s.world.ship.systems.massProperties.mass,
+          force: rotate(s.world.ship.kinematics.attitude, body),
+        });
+        ledger = setup.ledger.account(
+          ledger,
+          before.world.fields,
+          stage(before),
+          stage(sim),
+          definition.dt,
+        );
+      }
 
       // 4. What the ship noticed.
       const events: ShipEvent[] = [...ship.events];
@@ -516,6 +563,7 @@ export function createTruthStepper(given: EncounterSetup): TruthStepper {
           objectives,
           ...(power ? { power } : {}),
           ...(dynamics !== undefined ? { dynamics } : {}),
+          ...(ledger !== undefined ? { ledger } : {}),
           ...(exposure ? { exposure } : {}),
           ...(lost ? { lost } : {}),
         },

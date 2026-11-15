@@ -89,7 +89,14 @@ import {
   type DepartureProgress,
   type DepartureTrack,
 } from './belief/departure.ts';
-import { criticalFault, powerAlerts, RADIATION_CAUTION, type PowerAlert } from './belief/power.ts';
+import { criticalFault, powerAlerts, type PowerAlert } from './belief/power.ts';
+import type { ForecastEnded, RadiationReading, SessionAlert } from './belief/controls.ts';
+import {
+  decodeRadiationReading,
+  radiationCaution,
+  type RadiationCautionState,
+} from '../ship/sensors/radiation-observations.ts';
+import { RADIATION_MONITOR } from '../ship/sensors/radiation-spec.ts';
 
 export interface SessionOptions {
   readonly model: ModelPort;
@@ -184,16 +191,25 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
   let committing = 0;
   /** What the attitude controller was last told, from executed commands. */
   let attitudeMode: AttitudeMode = 'free';
-  /** What the gauges and the ship's fault reports warn about now (belief only). */
-  let alerts: readonly PowerAlert[] = [];
+  /** What the gauges, the radiation monitor and the ship's fault reports warn about now (belief only). */
+  let alerts: readonly SessionAlert[] = [];
+  /** The power gauges' part of them, as last read. */
+  let gauged: readonly PowerAlert[] = [];
   /** When the ship first reported a critical function short of power, and which, while it is. */
   let shortSince: number | undefined;
   let shortReported: string[] = [];
   /** The latest such report: the gauges end the warning only with a sample newer than it. */
   let lastFault = -Infinity;
-  /** Exposure the ship has reported per item this attempt (its `exposure` events), U s. */
-  let exposureReported: Record<string, number> = {};
-  let exposureMost = 0;
+  /**
+   * The radiation monitor as recorded this attempt (A24, R37): 3C's caution policy over the
+   * readings in record order, and the latest reading. Belief: the record, never the dose.
+   */
+  let radiation: RadiationCautionState = {};
+  let radiationReading: RadiationReading | undefined;
+  /** The forecast in force has ended and the ship flies past it (A6, A12), while it does. */
+  let ended: ForecastEnded | undefined;
+  /** The last forecast whose end was called out: each is called out once. */
+  let endedFor: string | undefined;
   /** What the eye has seen through the window, until it is due (a well's precursor). */
   let sightings: Sighting[] = [];
   /** The believed departure account (S20): gauged Δv, closest approaches, the ship's verdicts. */
@@ -295,11 +311,14 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
     flown = HANDS_ON_NEUTRAL;
     attitudeMode = 'free';
     alerts = [];
+    gauged = [];
     shortSince = undefined;
     shortReported = [];
     lastFault = -Infinity;
-    exposureReported = {};
-    exposureMost = 0;
+    radiation = {};
+    radiationReading = undefined;
+    ended = undefined;
+    endedFor = undefined;
     sightings = [];
     departureTrack = initialDepartureTrack;
     commanded = initialCommandedState;
@@ -399,15 +418,7 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
     // a critical function short of power. A new alert, or one that worsened, drops warp to 1×
     // and ends the frame's run of ticks, so the player meets it in real time (A12).
     let fault: number | undefined;
-    let cautioned = false;
     for (const e of result.events) {
-      if (e.kind === 'exposure') {
-        const total = (exposureReported[e.equipment] ?? 0) + e.amount;
-        exposureReported[e.equipment] = total;
-        if (exposureMost < RADIATION_CAUTION && total >= RADIATION_CAUTION) cautioned = true;
-        if (total > exposureMost) exposureMost = total;
-        continue;
-      }
       const group = criticalFault(e, definition.ship);
       if (group === undefined) continue;
       fault ??= e.t;
@@ -434,8 +445,40 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
     for (const e of result.events)
       if (e.kind === 'objective')
         departureTrack = recordVerdict(departureTrack, e.objective, e.status);
+    // The radiation monitor's readings as recorded, in record order (A24, R37; 3C's policy): a
+    // new caution drops warp to 1× and ends the frame's run of ticks at once (A12). Only a fresh
+    // low reading clears it; missing or stale readings keep it.
+    const cautionBefore = radiation.caution;
+    for (const m of measurements) {
+      const reading = decodeRadiationReading(m);
+      if (!reading) continue;
+      radiationReading = { ...reading, threshold: RADIATION_MONITOR.hazardThreshold };
+      radiation = radiationCaution(m, time(), radiation);
+    }
+    if (radiation.caution !== cautionBefore) {
+      alerts = composed(gauged);
+      if (!cautionBefore) {
+        warp = 1;
+        debt = Math.min(debt, dt);
+      }
+    }
+    // The end of the forecast in force (A6, A12): flying on past it, the ship has no prediction
+    // of where it goes. Called out once per forecast, at 1×; it stands until one reaches past now.
+    const inForce = forecastInForce();
+    const horizon = inForce?.samples.at(-1)?.t;
+    const past = inForce !== undefined && horizon !== undefined && time() > horizon;
+    if (past && endedFor !== inForce.id) {
+      endedFor = inForce.id;
+      ended = { id: 'forecast-ended', level: 'caution', forecast: inForce.id, endedAt: horizon };
+      alerts = composed(gauged);
+      warp = 1;
+      debt = Math.min(debt, dt);
+    } else if (!past && ended) {
+      ended = undefined;
+      alerts = composed(gauged);
+    }
     // While a critical warning stands the gauges are read every tick, so it ends with them.
-    if (fault !== undefined || cautioned || shortSince !== undefined || tick % checkEvery === 0) {
+    if (fault !== undefined || shortSince !== undefined || tick % checkEvery === 0) {
       const believed = model.believedWorld(time());
       updateAlerts(believed.ship, fault);
       if (tick % checkEvery === 0)
@@ -466,7 +509,7 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
         -1,
       );
       if (sampled <= lastFault) {
-        const previous = alerts.find((a) => a.id === 'critical-service');
+        const previous = gauged.find((a) => a.id === 'critical-service');
         const budget = now[0] ?? { stored: 0, demand: 0, drain: 0 };
         critical = previous ?? {
           id: 'critical-service',
@@ -485,24 +528,30 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
       shortSince ??= time();
       critical = { ...critical, since: shortSince, deadline: shortSince + play.power.lossGrace };
     }
-    const next = critical ? [critical, ...now.filter((a) => a.id !== 'critical-service')] : now;
-    if (exposureMost >= RADIATION_CAUTION) {
-      const budget = now[0] ?? { stored: 0, demand: 0, drain: 0 };
-      next.push({
-        id: 'radiation',
-        level: 'caution',
-        exposure: exposureMost,
-        stored: budget.stored,
-        demand: budget.demand,
-        drain: budget.drain,
-      });
-    }
+    gauged = critical ? [critical, ...now.filter((a) => a.id !== 'critical-service')] : now;
+    const next = composed(gauged);
     const before = new Set(alerts.map((a) => `${a.id}:${a.level}`));
     if (next.some((a) => !before.has(`${a.id}:${a.level}`)) && warp > 1) {
       warp = 1;
       debt = Math.min(debt, dt);
     }
     alerts = next;
+  }
+
+  /**
+   * The gauges' alerts with the radiation monitor's caution and the forecast's end after them,
+   * while they stand.
+   */
+  function composed(list: readonly PowerAlert[]): readonly SessionAlert[] {
+    if (!radiation.caution && !ended) return list;
+    return [...list, ...(radiation.caution ? [radiation.caution] : []), ...(ended ? [ended] : [])];
+  }
+
+  /** The forecast the ship flies by: the one issued latest (by its epoch), if any. */
+  function forecastInForce(): Forecast | undefined {
+    let latest: Forecast | undefined;
+    for (const f of forecasts) if (!latest || f.issuedAt >= latest.issuedAt) latest = f;
+    return latest;
   }
 
   /** What the eye sees through the window: bodies and rocks, and the encounter's visible fields. */
@@ -614,6 +663,7 @@ export function createGameSession(source: EncounterSource, options: SessionOptio
         committing: committing > 0,
         attitude: attitudeMode,
         alerts,
+        ...(radiationReading ? { radiation: radiationReading } : {}),
         departure: departures(),
         sightings,
         outcome,
