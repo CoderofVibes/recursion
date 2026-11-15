@@ -296,7 +296,7 @@ export function runReferenceChecks(): ReferenceReport {
       rejected: vectors.rejected_seed,
       candidateOffsetsDegrees: [-15, -10, -5, 0, 5, 10, 15],
       interpretation:
-        'S8 candidate catalogue is body-only until full-session admission; +25° lacks a witness in its finite first-window search. Strict low-orbit-plus-16 m/s-exit rejects 13/13 for lack of a certificate, not demonstrated impossibility. S8 uses an independent RNG; names are not game seed IDs.',
+        'S8 candidate catalogue is body-only until full-session admission; +25° lacks a witness in its finite first-window search. The historical strict low-orbit-plus-16 m/s-exit rule rejected 13/13 for lack of a certificate, not demonstrated impossibility. A18(3) supersedes that cumulative-cap policy by excluding science burns from departure accounting; the historical rejection is not current admission policy. S8 uses an independent RNG; names are not game seed IDs.',
     },
     blocked: [
       'Full-session S8 seed/arrival admission requires the content owner certificate and finite-burn/control neighborhood tests.',

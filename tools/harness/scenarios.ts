@@ -56,6 +56,22 @@ export function casesFor(suite: 'smoke' | 'routes', seed = SEED): FlightCase[] {
         knowledge:
           'Wrong-law 41 s retrograde dive from 2D handoff; author-selected collision negative control, no truth steering.',
       },
+      {
+        ...shared,
+        id: 'c02-cutoff-abort-window',
+        duration: 30300,
+        controls: [
+          ...burnSteps({ at: 600, duration: 41, attitude: { reference: 'retrograde' } }),
+          { at: 610, command: { kind: 'cutoff', thruster: 'all' } },
+          {
+            at: 610,
+            command: { kind: 'mark', label: 'Abort after ten seconds; keep acquiring Alpha' },
+          },
+        ],
+        expected: 'survive-window',
+        knowledge:
+          'Authored cutoff of the negative-control burn after ten seconds, with production acquisition retained. A measured abort window, not a human cue or complete safe-transit certificate.',
+      },
     ];
   const controls = slingshotControls(createGravityRange(seed));
   return [

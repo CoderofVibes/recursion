@@ -180,7 +180,7 @@ export async function runLearning(seed = SEED) {
         const saved = pairBox.archive().procedures.find((p) => p.id === procedure!.id)!;
         const match = matchProcedure(saved, {
           encounterId: game.briefing.id,
-          configuration: saved.condition.configuration,
+          configuration: game.snapshot().world.ship.configuration,
           estimate: game.snapshot().world.ship,
         });
         const forecast = await game.commit({ name: saved.name, items: saved.items });
