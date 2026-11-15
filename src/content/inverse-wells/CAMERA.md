@@ -1,5 +1,13 @@
 # R36 funnel camera handoff
 
+**R45, 2026-11-15:** ownership has passed to 3C. `4692625` is 3B's final sensor
+commit. The API below records that handoff; 3C now fixes compatibility with the
+merged availability/functional-power helpers and owns subsequent sensor changes
+and dispatcher wiring. It must not treat leakage heat as useful camera power.
+3B consumed 3C's published fix/dispatch commit `8a1713b` unchanged for the next
+admission runs. The maintained sensor behavior and remaining integrations are
+documented in `docs/handoffs/3C.md`; the description below is the original API handoff.
+
 The channel is implemented and tested in `src/ship/sensors/wells*`. The owner
 assigned the live dispatcher and shared packet budget to **3C**; this branch does
 not edit `src/ship/sensors/index.ts`. Additive recorded-data types are in
