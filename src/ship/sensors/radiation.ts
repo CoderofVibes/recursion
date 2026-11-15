@@ -17,6 +17,10 @@ interface MonitorMemory {
   readonly response: number;
   readonly readyAt: number;
   readonly nextSampleAt: number;
+  /** The latest reading sensed on board (R52), recorded or not: the flight computer's. */
+  readonly sensed?: Measurement;
+  /** That reading was above the caution threshold (or saturated): the next one below crosses it. */
+  readonly above?: boolean;
 }
 
 /** Only initialization/migration may derive a stream. Never reseed during acquisition. */
@@ -98,6 +102,9 @@ export function advanceRadiationMonitor(
     response,
     readyAt: continuous ? old.readyAt : env.t + spec.responseTime,
     nextSampleAt: continuous ? old.nextSampleAt : env.t + spec.responseTime,
+    // The last reading stays the flight computer's latest; a gap restarts the crossing watch.
+    ...(old?.sensed ? { sensed: old.sensed } : {}),
+    ...(continuous && old.above ? { above: true } : {}),
   };
   return { ...state, ext: { ...state.ext, radiationMonitor: next as unknown as JsonValue } };
 }
@@ -107,7 +114,67 @@ export function radiationMonitorDue(state: ShipSystemsState, t: number): boolean
   return !!memory && memory.at === t && t >= memory.readyAt && t + 1e-10 >= memory.nextSampleAt;
 }
 
-/** One current sample only, inside an actual charged recorder packet. No backlog replay. */
+/**
+ * R52 (owner): which readings sensed on board go into the Black Box. Those at the player's chosen
+ * recorder rate (`recorderDue`: the ordinary packet is due now, so the reading rides in it), every
+ * reading above the caution threshold or saturated, and the first reading back below it, so the
+ * spike before a failure stays in the record in full. The rest stay on board.
+ */
+export function radiationRecorded(
+  reading: Measurement,
+  wasAbove: boolean,
+  recorderDue: boolean,
+): { readonly record: boolean; readonly above: boolean } {
+  const rate = reading.value[0]!;
+  const above = rate > spec.hazardThreshold || reading.value[1] === 1;
+  return { record: recorderDue || above || wasAbove, above };
+}
+
+/**
+ * One reading sensed on board now (R52): the flight computer has it, and the session's caution
+ * reads it, whether or not it is recorded. `record` says whether it goes into the record
+ * (`radiationRecorded`); a packet must still take it. No backlog replay.
+ */
+export function senseRadiationMonitor(
+  state: ShipSystemsState,
+  t: number,
+  recorderDue: boolean,
+  /** The recorder's physical packet interval, s: the monitor senses no faster, as before R52. */
+  packetInterval = 0,
+): { state: ShipSystemsState; reading?: Measurement; record: boolean } {
+  const memory = memoryOf(state);
+  const sensed = recordRadiationMonitor(state, t);
+  const reading = sensed.measurements[0];
+  if (!memory || !reading) return { state, record: false };
+  const policy = radiationRecorded(reading, memory.above === true, recorderDue);
+  const after = memoryOf(sensed.state)!;
+  return {
+    state: {
+      ...sensed.state,
+      ext: {
+        ...sensed.state.ext,
+        radiationMonitor: {
+          ...after,
+          nextSampleAt: Math.max(after.nextSampleAt, t + packetInterval),
+          sensed: reading,
+          above: policy.above,
+        } as unknown as JsonValue,
+      },
+    },
+    reading,
+    record: policy.record,
+  };
+}
+
+/** The latest reading the monitor sensed on board (R52), recorded or not. */
+export function latestRadiationReading(state: ShipSystemsState): Measurement | undefined {
+  return memoryOf(state)?.sensed;
+}
+
+/**
+ * One current sample only, drawn now (the monitor's sensing step; `senseRadiationMonitor` adds
+ * R52's recording decision). No backlog replay.
+ */
 export function recordRadiationMonitor(
   state: ShipSystemsState,
   t: number,
