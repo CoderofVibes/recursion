@@ -4,7 +4,7 @@ The live state of the build between threads: who is running, who holds which sha
 
 **Integrator, after a compaction:** read this file first, then `git log --oneline -15`, then the handoffs of any thread marked running.
 
-**Last updated:** 2026-11-14, S16 merged; S22 (the big well field) written.
+**Last updated:** 2026-11-14, A19 (wells are real funnels); S22 rewritten.
 
 ## Threads
 
@@ -21,7 +21,7 @@ The live state of the build between threads: who is running, who holds which sha
 | 3D expedition | Opus 5.5 | not created yet · `p3/3d-expedition` | **Gated** | After 2F's and 2C's first checkpoints merge | — |
 | 3F console v2 | Claude | — | **Gated** | After 2D hands off | — |
 | S16 Well Garden layout | GPT/Codex | `.worktrees/s16` · `st/s16-well-garden` | **Done**: three-well prototype, 25-entry catalogue, garden budget (A15 Q05) | — | `e6eb51d` |
-| S22 big well field | GPT/Codex | `.worktrees/s22` · `st/s22-big-well-field` | Ready to launch | Feeds 3B (R12); its orientation comparison goes to the owner | — |
+| S22 well field (real funnels) | GPT/Codex | `.worktrees/s22` · `st/s22-big-well-field` | Ready to launch (rewritten for A19) | Feeds 3B (R12) | — |
 | S17 lattice first contact | GPT/Codex | `.worktrees/s17` · `st/s17-lattice-first-contact` | Running | Feeds 3C; its landing starts 3C | — |
 | S18 tether gate | GPT/Codex | `.worktrees/s18` · `st/s18-tether-gate` | Running | Future tether work | — |
 | S19 tidal check | GPT/Codex | `.worktrees/s19` · `st/s19-tidal-check` | **Done**: Tidal Orchard deferred (A15 Q21) | — | merged, see log |
@@ -65,7 +65,7 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 | R10 | 3C ↔ 3A | Component faults from radiation: electrics and instruments (A16) | **Open:** 3C running; 3A gated | |
 | R11 | 2G → integrator | Release check from A18 (7) on 2G's speed pass: rerun S15's script, modest profile | **Open:** with 2G's merge | |
 
-| R12 | S22 → 3B | The big well field: many wells through 3D, random orientations, wells that appear with a precursor | **Open:** S22 ready to launch | 3B builds for many wells and time-varying wells now; the field contract already passes `t` |
+| R12 | S22 → 3B | Wells as real funnels (A19): pull, reversal inside, crush at the throat; a big field through 3D at random orientations; wells that appear with a precursor; a reuse map | **Open:** S22 ready to launch | 3B keeps its reversal maths, registry and loading; generalises to an oriented funnel; adds the pull and the crush; doesn't tune a layout until S22 lands |
 
 Add new rows at the bottom with the next ID. Never renumber.
 
@@ -81,7 +81,8 @@ Decided: A15 (S11's queue), A16 (the lattice), A17 (the ending) and A18 (the Gra
 
 | Commit | What |
 |---|---|
-| (this commit) | S16 merged (`e6eb51d`); owner's S16 answers in A15 Q05; S22 written |
+| (this commit) | A19: wells are real funnels; brief §7 clarified; S22 rewritten |
+| `303d268` | S16 merged (`e6eb51d`); owner's S16 answers in A15 Q05; S22 written |
 | `108f4fc` | S19 merged; Tidal Orchard deferred (A15 Q21) |
 | `ae562fe` | 3C reassigned to GPT/Codex and launched |
 | `682957b` | This ledger |
