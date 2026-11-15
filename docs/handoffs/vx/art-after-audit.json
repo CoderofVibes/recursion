@@ -1,0 +1,456 @@
+{
+  "label": "after",
+  "source": "working-tree",
+  "scope": "Shipping sky; optical effects are synthetic fixtures, not encounter publication.",
+  "cases": [
+    {
+      "name": "galaxy",
+      "verticalFov": 68,
+      "horizontalFov": 100.3753192062715,
+      "draws": 2,
+      "points": 15674
+    },
+    {
+      "name": "ember-wheel",
+      "verticalFov": 68,
+      "horizontalFov": 100.3753192062715,
+      "draws": 2,
+      "points": 15674
+    },
+    {
+      "name": "needle",
+      "verticalFov": 10,
+      "horizontalFov": 17.689871233241185,
+      "draws": 2,
+      "points": 15674
+    },
+    {
+      "name": "hollow",
+      "verticalFov": 10,
+      "horizontalFov": 17.689871233241185,
+      "draws": 2,
+      "points": 15674
+    },
+    {
+      "name": "eye",
+      "verticalFov": 10,
+      "horizontalFov": 17.689871233241185,
+      "draws": 2,
+      "points": 15674
+    },
+    {
+      "name": "room-sky",
+      "stats": {
+        "offered": 0,
+        "culled": 0,
+        "thinned": 0,
+        "drawn": 0,
+        "segments": 0
+      }
+    },
+    {
+      "name": "room-funnels",
+      "stats": {
+        "offered": 3,
+        "culled": 0,
+        "thinned": 3,
+        "drawn": 3,
+        "segments": 1116
+      }
+    },
+    {
+      "name": "room-precursors",
+      "stats": {
+        "offered": 3,
+        "culled": 0,
+        "thinned": 3,
+        "drawn": 3,
+        "segments": 1116
+      }
+    },
+    {
+      "name": "room-birth",
+      "stats": {
+        "offered": 3,
+        "culled": 0,
+        "thinned": 3,
+        "drawn": 3,
+        "segments": 1116
+      }
+    },
+    {
+      "name": "room-clouds",
+      "stats": {
+        "offered": 0,
+        "culled": 0,
+        "thinned": 0,
+        "drawn": 0,
+        "segments": 0
+      }
+    }
+  ],
+  "errors": [],
+  "atlas": {
+    "cones": [
+      {
+        "cone": 0,
+        "exempt": false,
+        "peak": 28,
+        "mean": 0.0017582033299011132,
+        "quietFraction": 0.9999320031861364,
+        "measuredLineFraction": 0.01445501362966537,
+        "hueSeparation": {
+          "forecast": 26.72956308079358,
+          "thrust": 81.27004952940642,
+          "velocity": 52.1873626953412,
+          "blackbox": 90.24082951897053,
+          "caution": 64.20027075864743,
+          "warning": 107.36725078765767
+        }
+      },
+      {
+        "cone": 1,
+        "exempt": false,
+        "peak": 31,
+        "mean": 0.0018407708895926019,
+        "quietFraction": 0.9999368601014124,
+        "measuredLineFraction": 0.01635539004128278,
+        "hueSeparation": {
+          "forecast": 27.009711489641486,
+          "thrust": 80.98213818095307,
+          "velocity": 52.39733430444615,
+          "blackbox": 90.09569298963292,
+          "caution": 64.22780118014569,
+          "warning": 107.11529695228049
+        }
+      },
+      {
+        "cone": 2,
+        "exempt": false,
+        "peak": 63,
+        "mean": 0.042337730460629844,
+        "quietFraction": 0.9986983467060401,
+        "measuredLineFraction": 0.06034718982073559,
+        "hueSeparation": {
+          "forecast": 26.88783917500211,
+          "thrust": 80.9928974307646,
+          "velocity": 52.46354779451689,
+          "blackbox": 90.26264506374936,
+          "caution": 64.37496169605738,
+          "warning": 107.25722097855825
+        }
+      },
+      {
+        "cone": 3,
+        "exempt": false,
+        "peak": 103,
+        "mean": 1.8082635556505353,
+        "quietFraction": 0.9591776271054727,
+        "measuredLineFraction": 0.1636309662284438,
+        "hueSeparation": {
+          "forecast": 26.86320589203633,
+          "thrust": 81.01683069429359,
+          "velocity": 52.44698883125652,
+          "blackbox": 90.2765508626659,
+          "caution": 64.37437924121065,
+          "warning": 107.27967432063048
+        }
+      },
+      {
+        "cone": 4,
+        "exempt": false,
+        "peak": 30,
+        "mean": 0.002758727876750918,
+        "quietFraction": 0.9999028616944806,
+        "measuredLineFraction": 0.0161643213003467,
+        "hueSeparation": {
+          "forecast": 26.90326280714146,
+          "thrust": 81.14139937958828,
+          "velocity": 52.24898933436961,
+          "blackbox": 90.1058829073569,
+          "caution": 64.14812875141052,
+          "warning": 107.19724463708488
+        }
+      },
+      {
+        "cone": 5,
+        "exempt": false,
+        "peak": 35,
+        "mean": 0.0036184018805975947,
+        "quietFraction": 0.9998737202028248,
+        "measuredLineFraction": 0.020933939579687852,
+        "hueSeparation": {
+          "forecast": 26.522018100781377,
+          "thrust": 81.52615527513706,
+          "velocity": 51.974083771977,
+          "blackbox": 90.31171040707217,
+          "caution": 64.12273893526918,
+          "warning": 107.5433530320506
+        }
+      },
+      {
+        "cone": 6,
+        "exempt": false,
+        "peak": 88,
+        "mean": 1.7834690031667089,
+        "quietFraction": 0.9457531132826918,
+        "measuredLineFraction": 0.1171180804908722,
+        "hueSeparation": {
+          "forecast": 26.86615913851975,
+          "thrust": 81.00943369365577,
+          "velocity": 52.45523281018956,
+          "blackbox": 90.2790324369176,
+          "caution": 64.38078553339363,
+          "warning": 107.2782941163227
+        }
+      },
+      {
+        "cone": 7,
+        "exempt": true,
+        "peak": 0,
+        "mean": 0,
+        "quietFraction": 1,
+        "measuredLineFraction": 0,
+        "hueSeparation": {
+          "forecast": null,
+          "thrust": null,
+          "velocity": null,
+          "blackbox": null,
+          "caution": null,
+          "warning": null
+        }
+      },
+      {
+        "cone": 8,
+        "exempt": false,
+        "peak": 51,
+        "mean": 0.16420744856526723,
+        "quietFraction": 0.9958813358459775,
+        "measuredLineFraction": 0.04008055131136146,
+        "hueSeparation": {
+          "forecast": 27.06201061225214,
+          "thrust": 80.93969633770578,
+          "velocity": 52.421171378853245,
+          "blackbox": 90.05853484721075,
+          "caution": 64.21748538231736,
+          "warning": 107.06518075652033
+        }
+      },
+      {
+        "cone": 9,
+        "exempt": false,
+        "peak": 105,
+        "mean": 1.9121869718104638,
+        "quietFraction": 0.9572202902492569,
+        "measuredLineFraction": 0.17302620917755676,
+        "hueSeparation": {
+          "forecast": 26.69160368456778,
+          "thrust": 80.90450490643734,
+          "velocity": 52.72097714706152,
+          "blackbox": 90.63346031811908,
+          "caution": 64.76526324601012,
+          "warning": 107.52038901484009
+        }
+      },
+      {
+        "cone": 10,
+        "exempt": false,
+        "peak": 31,
+        "mean": 0.0016027820410700756,
+        "quietFraction": 0.9999417170166883,
+        "measuredLineFraction": 0.01706101435786326,
+        "hueSeparation": {
+          "forecast": 26.794720752959048,
+          "thrust": 81.52896658620439,
+          "velocity": 51.7924960361165,
+          "blackbox": 89.92210764759946,
+          "caution": 63.76268047375857,
+          "warning": 107.22554888988881
+        }
+      },
+      {
+        "cone": 11,
+        "exempt": false,
+        "peak": 56,
+        "mean": 0.17278476094263012,
+        "quietFraction": 0.9954296427253123,
+        "measuredLineFraction": 0.04798862514103659,
+        "hueSeparation": {
+          "forecast": 27.00904207706241,
+          "thrust": 80.97484904690644,
+          "velocity": 52.4077900097097,
+          "blackbox": 90.10326571826046,
+          "caution": 64.23881729282434,
+          "warning": 107.11814163433426
+        }
+      }
+    ],
+    "landmarks": [
+      {
+        "id": "galaxy",
+        "peak": 121,
+        "mean": 5.738668816661162,
+        "quietFraction": 0.8812824199094671,
+        "measuredLineFraction": 0.23147142222822262,
+        "hueSeparation": {
+          "forecast": 26.817484842377137,
+          "thrust": 80.97290432896327,
+          "velocity": 52.538729582099066,
+          "blackbox": 90.3837478468517,
+          "caution": 64.49738082967998,
+          "warning": 107.34728746161761
+        }
+      },
+      {
+        "id": "ember-wheel",
+        "peak": 87,
+        "mean": 1.4362869854098266,
+        "quietFraction": 0.9566763157383482,
+        "measuredLineFraction": 0.1165122624371492,
+        "hueSeparation": {
+          "forecast": 26.874573342148565,
+          "thrust": 81.01272134246719,
+          "velocity": 52.445044642558514,
+          "blackbox": 90.26378077375985,
+          "caution": 64.36494286636389,
+          "warning": 107.26730571728613
+        }
+      },
+      {
+        "id": "needle",
+        "peak": 51,
+        "mean": 0.18466477570765255,
+        "quietFraction": 0.9951770831309619,
+        "measuredLineFraction": 0.04008055131136146,
+        "hueSeparation": {
+          "forecast": 27.000854501870627,
+          "thrust": 80.9622279505459,
+          "velocity": 52.43055477885094,
+          "blackbox": 90.12657664353442,
+          "caution": 64.26724106176897,
+          "warning": 107.13143583096878
+        }
+      },
+      {
+        "id": "hollow",
+        "peak": 62,
+        "mean": 0.04130320750684825,
+        "quietFraction": 0.998708060536592,
+        "measuredLineFraction": 0.05846152732281149,
+        "hueSeparation": {
+          "forecast": 26.866292865756982,
+          "thrust": 80.99591253596572,
+          "velocity": 52.473845056452525,
+          "blackbox": 90.29124651921218,
+          "caution": 64.39954795478188,
+          "warning": 107.28206701353785
+        }
+      },
+      {
+        "id": "eye",
+        "peak": 96,
+        "mean": 2.0273395760884347,
+        "quietFraction": 0.9514162764944728,
+        "measuredLineFraction": 0.14303480274410052,
+        "hueSeparation": {
+          "forecast": 26.879575544300515,
+          "thrust": 80.99423682742868,
+          "velocity": 52.46723972459256,
+          "blackbox": 90.27344325673847,
+          "caution": 64.38413075584477,
+          "warning": 107.26669451405657
+        }
+      },
+      {
+        "id": "blue-cloud",
+        "peak": 121,
+        "mean": 5.5642181337788745,
+        "quietFraction": 0.8915402249723156,
+        "measuredLineFraction": 0.23147142222822262,
+        "hueSeparation": {
+          "forecast": 26.83317946189905,
+          "thrust": 80.97648326584041,
+          "velocity": 52.52311563031574,
+          "blackbox": 90.35747736474491,
+          "caution": 64.47123792583201,
+          "warning": 107.32740212054038
+        }
+      },
+      {
+        "id": "pair",
+        "peak": 36,
+        "mean": 0.003521263575078196,
+        "quietFraction": 0.9998785771181008,
+        "measuredLineFraction": 0.021974939023430933,
+        "hueSeparation": {
+          "forecast": 26.84364059758529,
+          "thrust": 81.05986394505682,
+          "velocity": 52.40065806059431,
+          "blackbox": 90.26565534603115,
+          "caution": 64.34036076861639,
+          "warning": 107.29060704173583
+        }
+      },
+      {
+        "id": "far-lens",
+        "peak": 28,
+        "mean": 0.0017484894993491733,
+        "quietFraction": 0.9999417170166883,
+        "measuredLineFraction": 0.013815172097619744,
+        "hueSeparation": {
+          "forecast": 26.908045174095534,
+          "thrust": 81.15458581493134,
+          "velocity": 52.22779727618602,
+          "blackbox": 90.08723476192874,
+          "caution": 64.12364676175874,
+          "warning": 107.18804202347738
+        }
+      },
+      {
+        "id": "far-north",
+        "peak": 30,
+        "mean": 0.0015833543799661958,
+        "quietFraction": 0.9999562877625162,
+        "measuredLineFraction": 0.0161643213003467,
+        "hueSeparation": {
+          "forecast": 26.316715248496994,
+          "thrust": 81.60273215997299,
+          "velocity": 52.006709568045984,
+          "blackbox": 90.53872221394148,
+          "caution": 64.28971699876189,
+          "warning": 107.76431769523484
+        }
+      },
+      {
+        "id": "far-cloud",
+        "peak": 30,
+        "mean": 0.002739300215647038,
+        "quietFraction": 0.9999028616944806,
+        "measuredLineFraction": 0.0161643213003467,
+        "hueSeparation": {
+          "forecast": 26.74676462840363,
+          "thrust": 81.20651143565927,
+          "velocity": 52.26326336903041,
+          "blackbox": 90.27303779507446,
+          "caution": 64.2653379644665,
+          "warning": 107.36433235171481
+        }
+      },
+      {
+        "id": "far-south",
+        "peak": 30,
+        "mean": 0.0017679171604530531,
+        "quietFraction": 0.9999417170166883,
+        "measuredLineFraction": 0.0161643213003467,
+        "hueSeparation": {
+          "forecast": 26.934626276516454,
+          "thrust": 80.97371858887976,
+          "velocity": 52.45873811744714,
+          "blackbox": 90.2121772563028,
+          "caution": 64.33933823745191,
+          "warning": 107.20697146484234
+        }
+      }
+    ]
+  }
+}

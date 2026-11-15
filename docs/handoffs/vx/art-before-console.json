@@ -1,0 +1,90 @@
+{
+  "label": "art-before",
+  "cases": [
+    {
+      "name": "deep-sky",
+      "mode": "room",
+      "funnels": {
+        "offered": 0,
+        "culled": 0,
+        "thinned": 0,
+        "drawn": 0,
+        "segments": 0
+      },
+      "modelError": null,
+      "skyQuaternion": [
+        -0.000005451345384904771,
+        0.9999999998415687,
+        -0.000014127830076926529,
+        0.000009356804822530096
+      ],
+      "fields": [
+        {
+          "kind": "cloud-bank",
+          "patches": 1118
+        }
+      ],
+      "sun": {
+        "direction": {
+          "x": -0.9191580824489982,
+          "y": -0.33454618259663516,
+          "z": 0.20791169081775931
+        },
+        "visible": true
+      }
+    },
+    {
+      "name": "funnels",
+      "mode": "room",
+      "funnels": {
+        "offered": 0,
+        "culled": 0,
+        "thinned": 0,
+        "drawn": 0,
+        "segments": 0
+      },
+      "modelError": null,
+      "skyQuaternion": [
+        -0.2209403281964574,
+        0.18311497883293854,
+        0.9186586951141456,
+        0.27151515205348925
+      ],
+      "sun": {
+        "direction": {
+          "x": 0,
+          "y": 0,
+          "z": 1
+        },
+        "visible": true
+      }
+    },
+    {
+      "name": "cathedral",
+      "mode": "room",
+      "funnels": {
+        "offered": 0,
+        "culled": 0,
+        "thinned": 0,
+        "drawn": 0,
+        "segments": 0
+      },
+      "modelError": null,
+      "skyQuaternion": [
+        0.058542236892012,
+        0.543308757182234,
+        0.03804213044991356,
+        0.8366248843894184
+      ],
+      "sun": {
+        "direction": {
+          "x": -0.6474393443130362,
+          "y": -0.2882585680855138,
+          "z": 0.7054993220129946
+        },
+        "visible": true
+      }
+    }
+  ],
+  "errors": []
+}

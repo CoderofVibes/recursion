@@ -5,7 +5,8 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { launchChrome, sleep } from '../../../tools/studies/s15/cdp.mjs';
 
 const label = process.argv[2] ?? 'after';
-if (!['before', 'after'].includes(label)) throw new Error('Use before or after');
+if (!['before', 'after', 'art-before', 'art-after'].includes(label))
+  throw new Error('Invalid capture label');
 const server = await preview({ preview: { host: '127.0.0.1', port: 4186, strictPort: true } });
 const browser = await launchChrome();
 const cdp = browser.cdp;
@@ -36,8 +37,17 @@ try {
     new URL('../../../tools/studies/s15/page-probe.js', import.meta.url),
     'utf8',
   );
-  await cdp.send('Page.addScriptToEvaluateOnNewDocument', { source: probe }, sessionId);
+  await cdp.send(
+    'Page.addScriptToEvaluateOnNewDocument',
+    {
+      source:
+        (label.startsWith('art-') ? "localStorage.setItem('recursion:opening-seen','1');\n" : '') +
+        probe,
+    },
+    sessionId,
+  );
   for (const [name, query] of [
+    ...(label === 'art-after' ? [['opening-replay', '?opening=replay']] : []),
     ['deep-sky', ''],
     ['funnels', '?encounter=inverse-wells'],
     ['cathedral', '?encounter=chain-link'],
@@ -72,4 +82,5 @@ try {
   await server.close();
 }
 console.log(JSON.stringify(report));
-if (report.errors.length) process.exitCode = 1;
+if (report.errors.length || report.cases.some((c) => c.modelError || c.mode !== 'room'))
+  process.exitCode = 1;

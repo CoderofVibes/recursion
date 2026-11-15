@@ -1,4 +1,4 @@
-# Handoff: VX — Window and sky visuals
+# Handoff: VX — Window and sky visuals**Latest follow-through:** [Art brief pass, screenshots and verification](vx-art.md). The report below preserves the first overnight pass.
 
 Thread: GPT/Codex · Branch: `p3/vx-visuals` · Worktree: `.worktrees/vx` · Date: 2026-11-15 (Pacific).
 
@@ -20,9 +20,9 @@ The ART files are not yet on this branch's main base. This pass read ART's curre
 - `node docs/handoffs/vx/capture-optics.mjs before` and `after`: compile the actual room and optical renderers with controlled light-only fixtures on 4187. The before variant loads the three replaced renderers from `0ee3d1c`; the after variant uses this branch. It covers active/end-on/precursor funnels, clouds, Earth, lens and title; title fits 360 px. [Fixture console evidence](vx/after-optics-console.json).
 - Six integration tests in `src/view3d/fx/light.test.ts` exercise the promoted optical contract, stale/malformed observations, precursor joining, invalid/absent cloud patches, complete scenery replacement/disposal, and eye-centred placement under a rotated parent. The existing funnel/window and opening tests also pass.
 
-## Performance � release gate still fails
+## Performance — release gate still fails
 
-[DEMONSTRATED: S15 production runs, `performance.json`] Final measured source: `936fc56` (`src` tree `02218477705bdb2850169387cefe094e155b10f3`). Installed headless Chrome, Intel UHD / ANGLE D3D11, 1366 � 768, DPR 1, 4� CPU throttle, 10/1 Mbit/s and 40 ms latency. One eight-second sample per view at 1� after the cache optimization, two cold/warm load pairs, followed by CPU/timeline profiles of FLIGHT and MODEL. No build, test or other VX browser ran during this final timed matrix. Other threads and host contention were not controlled.
+[DEMONSTRATED: S15 production runs, `performance.json`] Final measured source: `936fc56` (`src` tree `02218477705bdb2850169387cefe094e155b10f3`). Installed headless Chrome, Intel UHD / ANGLE D3D11, 1366 × 768, DPR 1, 4× CPU throttle, 10/1 Mbit/s and 40 ms latency. One eight-second sample per view at 1× after the cache optimization, two cold/warm load pairs, followed by CPU/timeline profiles of FLIGHT and MODEL. No build, test or other VX browser ran during this final timed matrix. Other threads and host contention were not controlled.
 
 | View | Frame p95 (ms) | Worst frame (ms) |
 |---|---:|---:|
@@ -36,7 +36,7 @@ The ART files are not yet on this branch's main base. This pass read ART's curre
 | Map | 72.8 | 109.1 |
 | Ship | 97.0 | 115.2 |
 
-Cold room readiness was **3,406 / 2,405 ms**; first interaction paint was **3,570 / 2,532 ms**. This does **not** pass A18's 2.5 s / 33 ms release gate. A real modest-laptop check remains unperformed. All samples stayed in the intended view, reached 1� without saturation, and reported no model error.
+Cold room readiness was **3,406 / 2,405 ms**; first interaction paint was **3,570 / 2,532 ms**. This does **not** pass A18's 2.5 s / 33 ms release gate. A real modest-laptop check remains unperformed. All samples stayed in the intended view, reached 1× without saturation, and reported no model error.
 
 **Hitch investigation.** The initial room profile put 169 ms of its eight-second capture in cloud transforms; that prompted the bounded upload cadence. The final FLIGHT profile put 86 ms there and still spent substantial time in Three's program setup/draw submission and belief-side snapshot helpers (`standin-model.ts`). These are self-time samples from different views, not an apples-to-apples speedup claim. Room, Flight, Map and Ship all recorded browser long tasks, not only late presentation timestamps. The 164 ms MODEL long task was investigated with a separate MODEL profile; it did not reproduce (maximum frame 78.9 ms), while the belief-side snapshot helpers dominated named application samples. The remaining broad room/hologram/snapshot cost and the intermittent MODEL hitch need the integrator's quiet-machine follow-up; VX does not claim their causes are completely isolated.
 
