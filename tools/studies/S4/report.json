@@ -1,0 +1,480 @@
+{
+  "all_simple_earth_paths_include": [
+    "C02",
+    "C05",
+    "H01"
+  ],
+  "detours_with_forward_rejoin": 8,
+  "directed_connections_with_reverse_cross_transfer": 33,
+  "drawn_connections": 32,
+  "limitations": [
+    "Graph dominance does not prove physical hazard gating or an assist",
+    "Timing is the sum of design estimates, not measured player performance",
+    "Template checks establish field/section presence, not semantic completeness",
+    "No simulation, seed generation, render, browser or playtest was run"
+  ],
+  "local_links_checked": 38,
+  "pacing_assumptions_by_region": {
+    "A01": {
+      "expert": [
+        2.0,
+        3.0
+      ],
+      "first": [
+        4.0,
+        7.0
+      ]
+    },
+    "A02": {
+      "expert": [
+        1.0,
+        2.0
+      ],
+      "first": [
+        3.0,
+        5.0
+      ]
+    },
+    "A03": {
+      "expert": [
+        3.0,
+        5.0
+      ],
+      "first": [
+        6.0,
+        10.0
+      ]
+    },
+    "C01": {
+      "expert": [
+        0.5,
+        1.0
+      ],
+      "first": [
+        2.0,
+        3.0
+      ]
+    },
+    "C02": {
+      "expert": [
+        3.0,
+        5.0
+      ],
+      "first": [
+        8.0,
+        12.0
+      ]
+    },
+    "C03": {
+      "expert": [
+        0.5,
+        1.0
+      ],
+      "first": [
+        2.0,
+        3.0
+      ]
+    },
+    "C04": {
+      "expert": [
+        1.0,
+        1.5
+      ],
+      "first": [
+        2.0,
+        4.0
+      ]
+    },
+    "C05": {
+      "expert": [
+        3.0,
+        4.0
+      ],
+      "first": [
+        5.0,
+        8.0
+      ]
+    },
+    "C06": {
+      "expert": [
+        1.0,
+        2.0
+      ],
+      "first": [
+        3.0,
+        5.0
+      ]
+    },
+    "H01": {
+      "expert": [
+        2.0,
+        3.0
+      ],
+      "first": [
+        4.0,
+        6.0
+      ]
+    },
+    "H02": {
+      "expert": [
+        1.0,
+        2.0
+      ],
+      "first": [
+        2.0,
+        3.0
+      ]
+    },
+    "N01": {
+      "expert": [
+        0.5,
+        1.0
+      ],
+      "first": [
+        3.0,
+        5.0
+      ]
+    },
+    "N02": {
+      "expert": [
+        1.0,
+        2.0
+      ],
+      "first": [
+        3.0,
+        5.0
+      ]
+    },
+    "N03": {
+      "expert": [
+        2.0,
+        3.0
+      ],
+      "first": [
+        6.0,
+        9.0
+      ]
+    },
+    "N04": {
+      "expert": [
+        0.5,
+        1.5
+      ],
+      "first": [
+        4.0,
+        7.0
+      ]
+    },
+    "P01": {
+      "expert": [
+        0.5,
+        1.0
+      ],
+      "first": [
+        3.0,
+        5.0
+      ]
+    },
+    "P02": {
+      "expert": [
+        1.5,
+        2.5
+      ],
+      "first": [
+        4.0,
+        6.0
+      ]
+    },
+    "P03": {
+      "expert": [
+        2.0,
+        3.0
+      ],
+      "first": [
+        6.0,
+        9.0
+      ]
+    },
+    "P04": {
+      "expert": [
+        1.0,
+        2.0
+      ],
+      "first": [
+        3.0,
+        5.0
+      ]
+    },
+    "R01": {
+      "expert": [
+        0.5,
+        1.0
+      ],
+      "first": [
+        3.0,
+        5.0
+      ]
+    },
+    "R02": {
+      "expert": [
+        0.5,
+        1.0
+      ],
+      "first": [
+        3.0,
+        5.0
+      ]
+    },
+    "R03": {
+      "expert": [
+        0.5,
+        1.0
+      ],
+      "first": [
+        3.0,
+        5.0
+      ]
+    },
+    "R04": {
+      "expert": [
+        0.5,
+        1.0
+      ],
+      "first": [
+        2.0,
+        4.0
+      ]
+    }
+  },
+  "region_pages": [
+    {
+      "id": "A01",
+      "path": "docs/design/regions/a01-countercurrent.md",
+      "words": 1074
+    },
+    {
+      "id": "A02",
+      "path": "docs/design/regions/a02-tidal-orchard.md",
+      "words": 1133
+    },
+    {
+      "id": "A03",
+      "path": "docs/design/regions/a03-borrowed-spin.md",
+      "words": 1124
+    },
+    {
+      "id": "C01",
+      "path": "docs/design/regions/c01-unfamiliar-sky.md",
+      "words": 982
+    },
+    {
+      "id": "C02",
+      "path": "docs/design/regions/c02-twin-deeps.md",
+      "words": 1082
+    },
+    {
+      "id": "C03",
+      "path": "docs/design/regions/c03-lantern-field.md",
+      "words": 976
+    },
+    {
+      "id": "C04",
+      "path": "docs/design/regions/c04-stillwater.md",
+      "words": 956
+    },
+    {
+      "id": "C05",
+      "path": "docs/design/regions/c05-braided-crossing.md",
+      "words": 1141
+    },
+    {
+      "id": "C06",
+      "path": "docs/design/regions/c06-turning-rim.md",
+      "words": 973
+    },
+    {
+      "id": "H01",
+      "path": "docs/design/regions/h01-passage.md",
+      "words": 1015
+    },
+    {
+      "id": "H02",
+      "path": "docs/design/regions/h02-familiar-sky.md",
+      "words": 1028
+    },
+    {
+      "id": "N01",
+      "path": "docs/design/regions/n01-shadow-observatory.md",
+      "words": 1056
+    },
+    {
+      "id": "N02",
+      "path": "docs/design/regions/n02-far-aperture.md",
+      "words": 1059
+    },
+    {
+      "id": "N03",
+      "path": "docs/design/regions/n03-unseen-cathedral.md",
+      "words": 1039
+    },
+    {
+      "id": "N04",
+      "path": "docs/design/regions/n04-petal-gallery.md",
+      "words": 1080
+    },
+    {
+      "id": "P01",
+      "path": "docs/design/regions/p01-listening-shelf.md",
+      "words": 1095
+    },
+    {
+      "id": "P02",
+      "path": "docs/design/regions/p02-sunward.md",
+      "words": 1067
+    },
+    {
+      "id": "P03",
+      "path": "docs/design/regions/p03-well-garden.md",
+      "words": 1088
+    },
+    {
+      "id": "P04",
+      "path": "docs/design/regions/p04-back-of-the-world.md",
+      "words": 1050
+    },
+    {
+      "id": "R01",
+      "path": "docs/design/regions/r01-red-wall.md",
+      "words": 1038
+    },
+    {
+      "id": "R02",
+      "path": "docs/design/regions/r02-hinge.md",
+      "words": 1061
+    },
+    {
+      "id": "R03",
+      "path": "docs/design/regions/r03-missing-room.md",
+      "words": 989
+    },
+    {
+      "id": "R04",
+      "path": "docs/design/regions/r04-crooked-ship.md",
+      "words": 1016
+    }
+  ],
+  "routes": {
+    "expert_power": {
+      "active_minutes_to_contact_assumed": [
+        14.0,
+        23.0
+      ],
+      "active_minutes_to_earth_assumed": [
+        17.0,
+        28.0
+      ],
+      "entries_through_contact": 10,
+      "profile": "expert",
+      "route": [
+        "C01",
+        "C02",
+        "C03",
+        "P01",
+        "P02",
+        "P03",
+        "P04",
+        "C04",
+        "C05",
+        "C06",
+        "H01",
+        "H02"
+      ]
+    },
+    "expert_sensing": {
+      "active_minutes_to_contact_assumed": [
+        12.5,
+        20.5
+      ],
+      "active_minutes_to_earth_assumed": [
+        15.5,
+        25.5
+      ],
+      "entries_through_contact": 9,
+      "profile": "expert",
+      "route": [
+        "C01",
+        "C02",
+        "C03",
+        "N01",
+        "N02",
+        "N03",
+        "C04",
+        "C05",
+        "C06",
+        "H01",
+        "H02"
+      ]
+    },
+    "first_power": {
+      "active_minutes_to_contact_assumed": [
+        46.0,
+        73.0
+      ],
+      "active_minutes_to_earth_assumed": [
+        52.0,
+        82.0
+      ],
+      "entries_through_contact": 12,
+      "profile": "first",
+      "route": [
+        "C01",
+        "C02",
+        "C03",
+        "P01",
+        "P02",
+        "R01",
+        "P03",
+        "N03",
+        "C04",
+        "R04",
+        "C05",
+        "C06",
+        "H01",
+        "H02"
+      ]
+    },
+    "first_sensing": {
+      "active_minutes_to_contact_assumed": [
+        52.0,
+        84.0
+      ],
+      "active_minutes_to_earth_assumed": [
+        58.0,
+        93.0
+      ],
+      "entries_through_contact": 14,
+      "profile": "first",
+      "route": [
+        "C01",
+        "C02",
+        "C03",
+        "N01",
+        "N02",
+        "N04",
+        "N03",
+        "P03",
+        "R02",
+        "P04",
+        "C04",
+        "R04",
+        "C05",
+        "C06",
+        "H01",
+        "H02"
+      ]
+    }
+  },
+  "scope": "Document consistency and arithmetic only; not gameplay, timing or physics validation",
+  "simple_paths_to_earth_no_required_revisit": 120,
+  "unique_regions": 23
+}
