@@ -23,6 +23,7 @@ import type {
   ViewSnapshot,
 } from '../../contracts/index.ts';
 import type { PlanStep } from './maneuver.ts';
+import type { PowerAlert } from './power.ts';
 import type { BlackBoxPort, ModelPort, RuleControls } from './ports.ts';
 
 /** A plan before it is committed: times are seconds after the moment of commitment. */
@@ -67,6 +68,11 @@ export interface SessionStatus {
    */
   readonly committing: boolean;
   readonly attitude: AttitudeMode;
+  /**
+   * What the ship's own gauges warn about now (A18 (5)): stored energy running low, or life
+   * support unpowered. A new one drops warp to 1× (A12); the screen shows them.
+   */
+  readonly alerts: readonly PowerAlert[];
   readonly outcome: AttemptOutcome;
   /** The plan whose items are still scheduled, if any, and how many remain. */
   readonly planId?: PlanId;

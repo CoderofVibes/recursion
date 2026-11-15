@@ -77,6 +77,22 @@ describe('Gravity range: the slingshot flown by hand', () => {
       expect(mainBefore - world().ship.systems.tanks['main-propellant']!).toBeGreaterThan(120);
       expect(mainBefore - world().ship.systems.tanks['main-propellant']!).toBeLessThan(150);
 
+      // The fuel cells last about 40 hours and the flight about 64, and running out of power
+      // is a loss (A18 (5)). So deploy the arrays and point the nose, which they face, at the
+      // sun the window shows.
+      const facingSun = () => {
+        const sun = session.snapshot().window?.sun;
+        if (!sun) throw new Error('no sun in the window');
+        session.command({
+          kind: 'attitude',
+          target: { reference: 'direction', direction: sun.direction },
+        });
+      };
+      session.command({ kind: 'configure', configuration: 'solar' });
+      facingSun();
+      session.stepTicks(1800);
+      expect(session.status().alerts).toEqual([]);
+
       // Releasing the controls stops the rotation only (A18 (6)): over the next 20 hours the
       // attitude drifts within the controller's rate deadband. So level the ship first, nose
       // along the believed velocity and its top up, ten minutes before lifting.
@@ -100,6 +116,7 @@ describe('Gravity range: the slingshot flown by hand', () => {
       session.fly(HANDS_ON_NEUTRAL);
       await model.settled();
       session.stepTicks(1);
+      facingSun();
       const lift = world().ship.kinematics.velocity.z - vzBefore;
       expect(lift).toBeGreaterThan(0.9);
       expect(lift).toBeLessThan(1.1);
