@@ -2,9 +2,42 @@
 
 The live state of the build between threads: who is running, who holds which shared file, and every open request or agreement between threads. **The integrator updates it on every relay, merge, launch and gate change, in the same commit as the change.** Threads read it; they don't edit it. They send changes to the integrator through the owner.
 
-**Integrator, after a compaction or in a new main thread:** read this file first (the "Morning" section, if it's still there), then `git log --oneline -15`, then the handoffs of any thread marked running.
+**Integrator, after a compaction or in a new main thread:** read this file first (the "Final assembly" section below), then `git log --oneline -15`, then the handoffs of any thread marked running.
 
-**Last updated:** 2026-11-15 morning, new main thread. **All the overnight branches are merged** (NIGHT, VX, 3C, 3B, ART, S23; AU had nothing), and **2F's morning work** (R37, the forecast's end, the Garden across saves). The owner played the build and decided **A26**: four morning threads, with prompts at the end of `phase-3-extras.md` (3F new; VX's next pass; 2C and 2F resuming). The owner launches them.
+**Last updated:** 2026-11-15 afternoon. Merged today: NIGHT, VX (three passes), 3C, 3B, ART, S23, 2F (twice), 2C, AU (twice), PF (twice). The owner is wrapping up the remaining threads; then one final thread puts the video, the demo and the submission together, starting from the checklist below.
+
+## Final assembly (owner, 2026-11-15)
+
+The owner wraps up every thread, then everything is committed and merged, the integrator gauges where the game stands, and **one last thread finalises the video, the demo and the submission**. This list is what that thread starts from. Keep it current with every merge.
+
+**1. Merges still to come, in this order.** Each `--no-ff`, with `npm run check`, `npm run build`, the production smoke test (fresh browser: the opening, then each region by `?encounter=`), Twin Deeps' learning loop (`docs/handoffs/night/judge-run/learning-loop.sh`), a scan of any evidence for local paths (inside `.gz` too), and this ledger in the same commit. If `clouds.test.ts` or `admission-observer.test.ts` time out under load, rerun them alone; never raise their limits.
+
+| # | Thread | What lands | Watch for |
+|---|---|---|---|
+| a | AU | R62: the opening's black-cut at `CUT` (10.85 s), not 10.65 | One line in 3F's `src/app/opening/sequence.ts` |
+| b | 3F | The console rebuilt (A26): EXPLORATION, the level disc, STEER, the Garden's objectives on the charts, the test's plain-words reason on MODEL, R63's variant | Then apply 3F's `docs/handoffs/3f/s15-runner.patch` (S15 clicks the new rail). Keep `AudioMount`, `.cr`, `.cr-black[data-stage]` |
+| c | 2C | R61 (the Cathedral draws nothing in the production build), R58 (the loss review reads the monitor), R32 (the Garden's pull and its honest envelope) | Verify R61 in the production build: three minutes at Thread draws strands |
+| d | VX | R54 (each region its own sky), if it ran | The arrival shots differ per region |
+| e | TR (with TV) | The trailer page, TV's five shots, the owner's sounds: 7 game files into `public/audio/` | After 3F. TV's scripted-frame method in `RoomView.ts` is never called by the game; PF's renderer code kept |
+
+**2. The owner's items.**
+- R65: the game's `opening-alarm` take is 3 s; the game wants about 0.45 s. Regenerate or trim it before TR's merge brings it into the game.
+- 12 sound files still to generate: the game's title-out, main-engine, well-hum, lattice-radiation, warning, home-reveal; the video's well-groan, ship-creak, lattice-strike, braid-rush, montage-bed, final-hit (prompts in `docs/audio/cues.md` and TR's `docs/trailer/audio.md`).
+- Review TV's shots and record the video with TR's next thread (`?quality=full`, Game Bar, one take).
+- The real modest-laptop check: PF's procedure and `?perf` (A18 (7)).
+- Decide how to present S15's release gate, which still fails (R49): 13 of 27 view/region cells pass; every cold load and 3D view misses.
+- Approve pushing `main` (it redeploys the public site), then check the site from a private window with no sign-in.
+
+**3. The submission** (`docs/submission/`; the owner's notes and the deadline are in `requirements.md`).
+- The summary (what we developed, how it answers the challenge, why it matters) and the project details (what it does and how, benefits, intended impact, tools, creativity, factors considered), from S12's drafts (`docs/studies/s12/`), updated for today's game.
+- The 30-second video (`video.md`), with its labels: edited gameplay, some shots staged, AI assistance, ElevenLabs audio.
+- AI disclosure: Claude and OpenAI Codex (code, tests, studies), ElevenLabs (audio, AI-generated, acknowledged in text and metadata); visible watermarks on any AI-generated image or video.
+- NASA data for global eligibility: GMAT reference trajectories (`nasa-resources.md`).
+- The judge's README: the opening (`?opening=replay`), the region picker, the Twin Deeps recipe (two short dives, RECALL, TEST, ADOPT), the Garden's route (STEER toward CROSS-TRANSFER, about 12.5 m/s at 600 s), the Cathedral (Thread; strands after a few minutes, once R61 lands), `?quality=full` and `?perf`.
+- Credits (ElevenLabs, A22), licence and notices (S13), the certificate's paper size (Letter).
+- Honest limits: Twin Deeps' exit wasn't reached in one blind try; the route between regions isn't built (previews, A25); S15's gate fails; the video's staged shots; anything still open from step 1.
+
+**4. Then** the owner submits through the portal. The integrator doesn't submit or post anything.
 
 ## Threads
 
