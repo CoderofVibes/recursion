@@ -17,7 +17,7 @@ const MISS_SIGMAS = 3;
 export function flightAlerts(desk: Desk): AlertItem[] {
   const { game } = desk;
   const status = game.status();
-  const snapshot = game.snapshot();
+  const snapshot = desk.snapshot();
   const items: AlertItem[] = [];
   const failure = desk.modelError();
   if (failure) items.push({ id: 'model', level: 'caution', text: 'Model fault', detail: failure });

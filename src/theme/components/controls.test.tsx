@@ -35,14 +35,18 @@ describe('ModeChips', () => {
     // Only the mode the equipment cannot enter is disabled.
     expect(html.match(/disabled=""/g)).toHaveLength(1);
     expect(html).toContain('>Track<');
+    // One Tab stop for the group: the mode in force (S9 R11).
+    expect(html.match(/tabindex="0"/g)).toHaveLength(1);
+    expect(html).toMatch(/data-value="track" tabindex="0"/);
   });
 
-  it('shows the modes without offering them when there is no handler', () => {
+  it('shows the modes as text, with no stop, when there is no handler', () => {
     const html = renderToStaticMarkup(
       <ModeChips label="Mode" options={['off', 'on']} value="on" />,
     );
-    expect(html.match(/disabled=""/g)).toHaveLength(1);
-    expect(html).toMatch(/aria-checked="true" data-on="true">on</);
+    expect(html).not.toContain('<button');
+    expect(html).toContain('aria-readonly="true"');
+    expect(html).toMatch(/aria-checked="true" data-on="true" data-readonly="">on</);
   });
 });
 

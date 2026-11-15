@@ -8,7 +8,7 @@ export type { ColourRole } from './colour.ts';
 export { type } from './type.ts';
 export { space, surface } from './space.ts';
 export { line, dash, hatch } from './line.ts';
-export { motion } from './motion.ts';
+export { coastCadence, motion } from './motion.ts';
 export { render } from './render.ts';
 export { instrument, trendGrid, gaugeArc } from './instrument.ts';
 export { cssVariables, applyTheme } from './css.ts';

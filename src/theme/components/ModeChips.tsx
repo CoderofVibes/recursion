@@ -1,4 +1,4 @@
-import type { ReactElement } from 'react';
+import type { KeyboardEvent, ReactElement } from 'react';
 import type { Status, Tone } from './scale.ts';
 
 export interface ModeOption {
@@ -21,9 +21,20 @@ export interface ModeChipsProps {
   readonly tone?: Tone;
 }
 
+const NEXT: Readonly<Record<string, 1 | -1 | 'first' | 'last'>> = {
+  ArrowRight: 1,
+  ArrowDown: 1,
+  ArrowLeft: -1,
+  ArrowUp: -1,
+  Home: 'first',
+  End: 'last',
+};
+
 /**
  * One choice from a short list: an equipment mode, a configuration, a scan power level.
- * The mode in force is lit; the others are quiet. Behaves as a radio group.
+ * The mode in force is lit; the others are quiet. Behaves as a radio group: one Tab stop (the
+ * mode in force), arrows and Home/End to choose another. Without `onChange` the modes are shown
+ * as text, with no stop at all.
  */
 export function ModeChips({
   label,
@@ -33,17 +44,54 @@ export function ModeChips({
   status = 'nominal',
   tone = 'measured',
 }: ModeChipsProps): ReactElement {
+  const opts: ModeOption[] = options.map((o) => (typeof o === 'string' ? { value: o } : o));
+  const enabled = opts.filter((o) => o.disabled !== true);
+  // The one Tab stop: the mode in force if it can be chosen, else the first that can.
+  const stop = enabled.find((o) => o.value === value) ?? enabled[0];
+  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>): void => {
+    const step = NEXT[e.key];
+    if (!onChange || step === undefined || enabled.length === 0) return;
+    e.preventDefault();
+    const at = Math.max(
+      0,
+      enabled.findIndex((o) => o.value === value),
+    );
+    const to =
+      step === 'first'
+        ? 0
+        : step === 'last'
+          ? enabled.length - 1
+          : (at + step + enabled.length) % enabled.length;
+    const next = enabled[to]!;
+    if (next.value !== value) onChange(next.value);
+    e.currentTarget.querySelector<HTMLElement>(`[data-value="${CSS.escape(next.value)}"]`)?.focus();
+  };
   return (
     <div
       className="rx-chips"
       role="radiogroup"
       aria-label={label}
+      aria-readonly={onChange === undefined ? true : undefined}
       data-status={status}
       data-tone={tone}
+      onKeyDown={onKeyDown}
     >
-      {options.map((o) => {
-        const opt: ModeOption = typeof o === 'string' ? { value: o } : o;
+      {opts.map((opt) => {
         const on = opt.value === value;
+        if (onChange === undefined)
+          return (
+            <span
+              key={opt.value}
+              role="radio"
+              className="rx-chip"
+              aria-checked={on}
+              aria-disabled={!on || undefined}
+              data-on={on ? 'true' : undefined}
+              data-readonly=""
+            >
+              {opt.label ?? opt.value}
+            </span>
+          );
         return (
           <button
             key={opt.value}
@@ -52,8 +100,10 @@ export function ModeChips({
             className="rx-chip"
             aria-checked={on}
             data-on={on ? 'true' : undefined}
-            disabled={opt.disabled === true || (onChange === undefined && !on)}
-            onClick={onChange && !on ? () => onChange(opt.value) : undefined}
+            data-value={opt.value}
+            tabIndex={opt === stop ? 0 : -1}
+            disabled={opt.disabled === true}
+            onClick={!on ? () => onChange(opt.value) : undefined}
           >
             {opt.label ?? opt.value}
           </button>

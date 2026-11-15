@@ -19,26 +19,41 @@ export function duration(seconds: number): string {
   return `${(s / 3600).toFixed(1)} h`;
 }
 
+/**
+ * One formatter per format, made once (S15: `toLocaleString` builds a new one on every call,
+ * hundreds of times a second on SYSTEMS). Same output as `toLocaleString('en-US', options)`.
+ */
+const GROUPED = new Intl.NumberFormat('en-US');
+const FIXED_GROUPED = new Map<number, Intl.NumberFormat>();
+const grouped = (digits: number): Intl.NumberFormat => {
+  let f = FIXED_GROUPED.get(digits);
+  if (!f)
+    FIXED_GROUPED.set(
+      digits,
+      (f = new Intl.NumberFormat('en-US', {
+        minimumFractionDigits: digits,
+        maximumFractionDigits: digits,
+      })),
+    );
+  return f;
+};
+
 /** Metres as m or km. */
 export function dist(metres: number): string {
   const m = Math.abs(metres);
   if (!Number.isFinite(m)) return '—';
   if (m < 10_000) return `${metres.toFixed(0)} m`;
   if (m < 1_000_000) return `${(metres / 1000).toFixed(1)} km`;
-  return `${Math.round(metres / 1000).toLocaleString('en-US')} km`;
+  return `${GROUPED.format(Math.round(metres / 1000))} km`;
 }
 
-export const km = (metres: number, digits = 0): string =>
-  (metres / 1000).toLocaleString('en-US', {
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
-  });
+export const km = (metres: number, digits = 0): string => grouped(digits).format(metres / 1000);
 
 export const fixed = (value: number, digits = 1): string =>
   Number.isFinite(value) ? value.toFixed(digits) : '—';
 
 export const whole = (value: number): string =>
-  Number.isFinite(value) ? Math.round(value).toLocaleString('en-US') : '—';
+  Number.isFinite(value) ? GROUPED.format(Math.round(value)) : '—';
 
 /** A value with as many significant figures as its uncertainty warrants: 1.02e10 ± 3e8. */
 export function sci(value: number, digits = 3): string {
@@ -83,4 +98,5 @@ export function bytes(n: number): string {
 export const name = (id: string): string => id.replace(/-/g, ' ');
 
 /** Degrees from radians, 0–360. */
-export const degrees = (radians: number): number => (((radians * 180) / Math.PI) % 360 + 360) % 360;
+export const degrees = (radians: number): number =>
+  ((((radians * 180) / Math.PI) % 360) + 360) % 360;

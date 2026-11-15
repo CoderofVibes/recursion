@@ -36,6 +36,7 @@ import {
   colour,
   hex,
   holoWire,
+  hudMotion,
   lossSequence,
   roomBloom,
   roomMotion,
@@ -74,6 +75,9 @@ export interface RoomEvents {
   blackBox(): void;
 }
 
+/** Seconds after the console view arrives before its screen is fully up and opaque. */
+const SCREEN_SETTLED = hudMotion.screenIn / 1000 + 0.25;
+
 /** What the room draws this frame. */
 export interface RoomFrame extends FlightFrame {
   readonly chart: Chart;
@@ -99,7 +103,12 @@ export class RoomView {
   private readonly holoRoot = new Group();
   private readonly holoTilt = new Group();
   private readonly cone;
-  private readonly player = { x: DOOR.x as number, z: DOOR.z as number, yaw: DOOR.yaw as number, pitch: DOOR.pitch as number };
+  private readonly player = {
+    x: DOOR.x as number,
+    z: DOOR.z as number,
+    yaw: DOOR.yaw as number,
+    pitch: DOOR.pitch as number,
+  };
   private current: ViewMode = 'room';
   private inRegion = false;
   private trans: {
@@ -109,6 +118,12 @@ export class RoomView {
   } | null = null;
   private tilt = 0;
   private tiltUser = 0;
+  /** How each hologram was framed at first, for resetFraming(). */
+  private readonly framingAtRest: {
+    readonly range: number;
+    readonly map: Quaternion;
+    readonly ship: Quaternion;
+  };
   private readonly cur = {
     level: VIEW.room.level,
     veil: VIEW.room.veil,
@@ -125,6 +140,12 @@ export class RoomView {
   private time = 0;
   private width = 0;
   private height = 0;
+  /** The canvas's size as last observed; read here, never from layout during a frame (S15). */
+  private observed = { w: 0, h: 0 };
+  /** Real seconds the console view has been settled (arrived, its screen fully up). */
+  private consoleFor = 0;
+  /** The chart the map was last given: rebuilt only when the loop hands over a new one. */
+  private lastChart: RoomFrame['chart'] | null = null;
   private readonly cleanup: (() => void)[] = [];
   private readonly canvas: HTMLCanvasElement;
   private readonly events: RoomEvents;
@@ -138,14 +159,23 @@ export class RoomView {
   ) {
     this.canvas = canvas;
     this.events = events;
-    this.renderer = new WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+    this.renderer = new WebGLRenderer({
+      canvas,
+      antialias: true,
+      powerPreference: 'high-performance',
+    });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.setClearColor(hex(roomSurface.void));
     this.camera.rotation.order = 'YXZ';
     this.composer = new EffectComposer(this.renderer);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
     this.composer.addPass(
-      new UnrealBloomPass(new Vector2(1, 1), roomBloom.strength, roomBloom.radius, roomBloom.threshold),
+      new UnrealBloomPass(
+        new Vector2(1, 1),
+        roomBloom.strength,
+        roomBloom.radius,
+        roomBloom.threshold,
+      ),
     );
     this.composer.addPass(new OutputPass());
     this.labels = new CSS2DRenderer({ element: labels });
@@ -185,8 +215,24 @@ export class RoomView {
     this.ship = makeShipHolo(definition);
     this.map = makeMapHolo();
     this.holoTilt.add(this.flight.group, this.map.group, this.ship.group);
+    this.framingAtRest = {
+      range: this.flight.range(),
+      map: this.map.spin.quaternion.clone(),
+      ship: this.ship.spin.quaternion.clone(),
+    };
 
     if (!options?.scripted) this.bind();
+    // The canvas's size, from an observer: reading clientWidth every frame forced a layout of
+    // the whole page (the console included) inside the frame (S15).
+    this.observed = { w: canvas.clientWidth, h: canvas.clientHeight };
+    if (typeof ResizeObserver !== 'undefined') {
+      const watch = new ResizeObserver((entries) => {
+        const box = entries[0]?.contentRect;
+        if (box) this.observed = { w: Math.round(box.width), h: Math.round(box.height) };
+      });
+      watch.observe(canvas);
+      this.cleanup.push(() => watch.disconnect());
+    }
     this.resize();
     const pose = this.poseOf('room');
     this.camera.position.copy(pose.pos);
@@ -229,6 +275,10 @@ export class RoomView {
   dying(): boolean {
     return this.death !== null;
   }
+  /** No camera travel or loss sequence under way: the view is still (A20 may thin its frames). */
+  settled(): boolean {
+    return this.trans === null && this.death === null;
+  }
   locked(): boolean {
     return document.pointerLockElement === this.canvas;
   }
@@ -245,6 +295,46 @@ export class RoomView {
     this.syncVisibility();
     this.trans = { t: instant ? 1 : 0, from, to: this.poseOf(mode) };
     this.events.mode(mode, this.inRegion);
+  }
+
+  // ---- Framing (S9 R13): the wheel, the drag, keys and buttons all come here -------------------
+  // Framing moves the camera on a hologram only: it never senses, points or fires anything.
+
+  /** Range of the view's hologram: a factor above 1 zooms out, below 1 zooms in. */
+  frameZoom(factor: number): void {
+    const mode = this.current;
+    if (mode === 'flight' || (mode === 'map' && this.inRegion))
+      this.flight.setRange(this.flight.range() * factor);
+    else if (mode === 'map')
+      this.map.spin.scale.setScalar(clamp(this.map.spin.scale.x / factor, 0.7, 2.4));
+    else if (mode === 'ship')
+      this.ship.group.scale.setScalar(clamp(this.ship.group.scale.x / factor, 0.6, 2.6));
+  }
+  /** Turn MAP or SHIP about the vertical, radians. */
+  frameOrbit(radians: number): void {
+    if (this.current === 'ship') this.ship.spin.rotateY(radians);
+    else if (this.current === 'map' && !this.inRegion) this.map.spin.rotateY(radians);
+  }
+  /** Tilt the hologram toward or away from the player, radians. */
+  frameTilt(radians: number): void {
+    const mode = this.current;
+    if (mode === 'flight') this.tiltUser = clamp(this.tiltUser + radians, -0.3, 0.6);
+    else if (mode === 'map' || mode === 'ship')
+      this.tiltUser = clamp(this.tiltUser + radians, -0.25, 0.8);
+  }
+  /** Back to how the view first framed its hologram. */
+  resetFraming(): void {
+    this.tiltUser = 0;
+    const mode = this.current;
+    if (mode === 'flight' || (mode === 'map' && this.inRegion))
+      this.flight.setRange(this.framingAtRest.range);
+    else if (mode === 'map') {
+      this.map.spin.quaternion.copy(this.framingAtRest.map);
+      this.map.spin.scale.setScalar(1);
+    } else if (mode === 'ship') {
+      this.ship.spin.quaternion.copy(this.framingAtRest.ship);
+      this.ship.group.scale.setScalar(1);
+    }
   }
 
   /** Step back one level: out of an isolated system, out of a region, out of a view. */
@@ -279,15 +369,25 @@ export class RoomView {
     const { camera, cur } = this;
     const mode = this.current;
 
+    // Settled at the console: its opaque screen covers the whole view, so nothing behind it is
+    // drawn (S15). The game, the recorder and alerts run on in the loop regardless; any
+    // transition, a loss, or a view change brings the room back on its first frame.
+    this.consoleFor = mode === 'console' && !this.trans && !this.death ? this.consoleFor + dt : 0;
+    if (this.consoleFor > SCREEN_SETTLED) return;
+
     this.outside.update(data.snapshot);
-    this.map.setChart(data.chart);
+    if (data.chart !== this.lastChart) {
+      this.lastChart = data.chart;
+      this.map.setChart(data.chart);
+    }
     // The drawing follows the ship as it reports itself: wings out when they are out.
     this.ship.setConfig(data.snapshot.world.ship.configuration);
 
     // Walking.
     if (mode === 'room' && !this.trans && !this.death) {
       const k = this.keys;
-      const f = (k.has('w') || k.has('arrowup') ? 1 : 0) - (k.has('s') || k.has('arrowdown') ? 1 : 0);
+      const f =
+        (k.has('w') || k.has('arrowup') ? 1 : 0) - (k.has('s') || k.has('arrowdown') ? 1 : 0);
       const s = (k.has('d') ? 1 : 0) - (k.has('a') ? 1 : 0);
       const turn = (k.has('arrowleft') ? 1 : 0) - (k.has('arrowright') ? 1 : 0);
       const p = this.player;
@@ -345,14 +445,17 @@ export class RoomView {
     this.holoRoot.visible = cur.holo > 0.05;
     // In a focus view nothing of the room is lit by the hologram.
     this.shell.setHologramLight(cur.holo * (1 - cur.veil));
-    this.shell.setRecorderLamp(data.recording ? 0.55 + 0.45 * Math.sin(this.time * 2.6) ** 2 : 0.45);
+    this.shell.setRecorderLamp(
+      data.recording ? 0.55 + 0.45 * Math.sin(this.time * 2.6) ** 2 : 0.45,
+    );
 
     // The cursor: what it has found on the console.
     let found: Hotspot | null = null;
     if (mode === 'room' && !this.trans && !this.death) {
       this.ray.setFromCamera(this.locked() ? new Vector2(0, 0) : this.mouse, camera);
       const hit = this.ray.intersectObjects(this.shell.hotspots, false)[0];
-      if (hit && hit.distance < REACH) found = (hit.object.userData.hot as Hotspot | undefined) ?? null;
+      if (hit && hit.distance < REACH)
+        found = (hit.object.userData.hot as Hotspot | undefined) ?? null;
     }
     if (found !== this.hot) {
       this.hot = found;
@@ -424,7 +527,11 @@ export class RoomView {
       };
     }
     const pos = new Vector3(...v.pos);
-    const m = new Matrix4().lookAt(pos, new Vector3(...v.look), new Vector3(...(v.up ?? [0, 1, 0])));
+    const m = new Matrix4().lookAt(
+      pos,
+      new Vector3(...v.look),
+      new Vector3(...(v.up ?? [0, 1, 0])),
+    );
     return { pos, quat: new Quaternion().setFromRotationMatrix(m) };
   }
 
@@ -494,7 +601,8 @@ export class RoomView {
       this.camera.position.y += Math.sin(t * 41) * L.shake * k + Math.sin(t * 17) * L.shake * 0.4;
       this.camera.rotateZ(Math.sin(t * 29 + 1) * L.roll * k);
       this.shell.setLevel(
-        this.cur.level * (Math.sin(t * 53) > -0.2 ? 0.35 + 0.65 * Math.abs(Math.sin(t * 23)) : 0.05),
+        this.cur.level *
+          (Math.sin(t * 53) > -0.2 ? 0.35 + 0.65 * Math.abs(Math.sin(t * 23)) : 0.05),
       );
       this.holoRoot.visible = Math.sin(t * 61) > -0.3 && t < L.hologramEnd;
       return;
@@ -523,8 +631,7 @@ export class RoomView {
   }
 
   private resize(): void {
-    const w = this.canvas.clientWidth;
-    const h = this.canvas.clientHeight;
+    const { w, h } = this.observed;
     if (w === this.width && h === this.height) return;
     this.width = w;
     this.height = h;
@@ -551,22 +658,41 @@ export class RoomView {
       this.cleanup.push(() => target.removeEventListener(type, handler as EventListener, options));
     };
     const typing = (e: Event): boolean => {
-      const tag = (e.target as HTMLElement | null)?.tagName;
-      return tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA';
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName;
+      return (
+        tag === 'INPUT' ||
+        tag === 'SELECT' ||
+        tag === 'TEXTAREA' ||
+        target?.isContentEditable === true
+      );
     };
+    // A focused control keeps the keys that work it: Space and Enter press it, arrows, Home and
+    // End move within it (S9 R10). Every other key still reaches the scene, so a click on a
+    // warp step does not stop the flight keys.
+    const controlKey = (e: KeyboardEvent, k: string): boolean =>
+      (k === ' ' || k === 'enter' || k === 'home' || k === 'end' || k.startsWith('arrow')) &&
+      (e.target as HTMLElement | null)?.closest?.(
+        'button, a[href], summary, [role="radio"], [role="tab"], [role="switch"], [tabindex]:not(canvas)',
+      ) != null;
     const point = (e: MouseEvent): void => {
       const r = canvas.getBoundingClientRect();
-      this.mouse.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+      this.mouse.set(
+        ((e.clientX - r.left) / r.width) * 2 - 1,
+        -((e.clientY - r.top) / r.height) * 2 + 1,
+      );
     };
 
     on(window, 'keydown', (e: KeyboardEvent) => {
       if (e.repeat) return;
       const k = e.key.toLowerCase();
       if (k === 'escape') {
-        this.back();
+        // Editing a field: the first Escape leaves the field, the next steps back.
+        if (typing(e)) (e.target as HTMLElement).blur();
+        else this.back();
         return;
       }
-      if (typing(e)) return;
+      if (typing(e) || controlKey(e, k)) return;
       this.keys.add(k);
       if (this.current === 'flight' && (k.startsWith('arrow') || k === ' ')) e.preventDefault();
       if (k === 'backspace') this.back();
@@ -577,8 +703,18 @@ export class RoomView {
       if (k === '3') this.go('console');
       if (k === '4') this.go('flight');
       if (k === '0') this.go('room');
-      if (k === 'u' && this.current === 'flight') this.flight.setHeadingUp(!this.flight.headingUp());
-      if ((k === 'f' || k === 'enter') && this.current === 'room' && this.hot) this.activate(this.hot);
+      if (k === 'u' && this.current === 'flight')
+        this.flight.setHeadingUp(!this.flight.headingUp());
+      // Framing by key (S9 R13), clear of the flight keys: - = zoom, , . orbit, [ ] tilt, / reset.
+      if (k === '-' || k === '_') this.frameZoom(roomMotion.frameZoom);
+      if (k === '=' || k === '+') this.frameZoom(1 / roomMotion.frameZoom);
+      if (k === ',') this.frameOrbit(-roomMotion.frameOrbit);
+      if (k === '.') this.frameOrbit(roomMotion.frameOrbit);
+      if (k === '[') this.frameTilt(-roomMotion.frameTilt);
+      if (k === ']') this.frameTilt(roomMotion.frameTilt);
+      if (k === '/') this.resetFraming();
+      if ((k === 'f' || k === 'enter') && this.current === 'room' && this.hot)
+        this.activate(this.hot);
     });
     on(window, 'keyup', (e: KeyboardEvent) => this.keys.delete(e.key.toLowerCase()));
     on(window, 'blur', () => this.keys.clear());
@@ -604,7 +740,9 @@ export class RoomView {
         this.ray.setFromCamera(this.mouse, this.camera);
         this.ship.select(this.ship.pick(this.ray));
       } else if (mode === 'flight') {
-        this.events.flightPick(this.flight.pick(this.mouse.x, this.mouse.y, this.camera, this.height));
+        this.events.flightPick(
+          this.flight.pick(this.mouse.x, this.mouse.y, this.camera, this.height),
+        );
       }
     });
     on(window, 'mousemove', (e: MouseEvent) => {
@@ -623,12 +761,9 @@ export class RoomView {
       if (mode === 'room') {
         p.yaw += e.movementX * roomMotion.dragLook;
         p.pitch = clamp(p.pitch + e.movementY * roomMotion.dragLook, -1.25, 1.25);
-      } else if (mode === 'map' || mode === 'ship') {
-        if (mode === 'ship') this.ship.spin.rotateY(e.movementX * 0.006);
-        else if (!this.inRegion) this.map.spin.rotateY(e.movementX * 0.006);
-        this.tiltUser = clamp(this.tiltUser + e.movementY * roomMotion.dragLook, -0.25, 0.8);
-      } else if (mode === 'flight') {
-        this.tiltUser = clamp(this.tiltUser + e.movementY * roomMotion.dragLook, -0.3, 0.6);
+      } else if (mode === 'map' || mode === 'ship' || mode === 'flight') {
+        this.frameOrbit(e.movementX * 0.006);
+        this.frameTilt(e.movementY * roomMotion.dragLook);
       }
     });
     on(
@@ -636,13 +771,7 @@ export class RoomView {
       'wheel',
       (e: WheelEvent) => {
         e.preventDefault();
-        const k = Math.exp(e.deltaY * 0.0012);
-        const mode = this.current;
-        if (mode === 'flight' || (mode === 'map' && this.inRegion))
-          this.flight.setRange(this.flight.range() * k);
-        else if (mode === 'map') this.map.spin.scale.setScalar(clamp(this.map.spin.scale.x / k, 0.7, 2.4));
-        else if (mode === 'ship')
-          this.ship.group.scale.setScalar(clamp(this.ship.group.scale.x / k, 0.6, 2.6));
+        this.frameZoom(Math.exp(e.deltaY * 0.0012));
       },
       { passive: false },
     );

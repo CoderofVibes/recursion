@@ -1,0 +1,37 @@
+.cl-instrument {
+  display: grid;
+  gap: var(--rx-gap);
+  min-width: 0;
+}
+
+.cl-instrument > * {
+  min-width: 0;
+}
+.cl-instrument .rx-alert {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+}
+.cl-instrument .rx-alert__detail {
+  grid-column: 2;
+  white-space: normal;
+}
+
+.cl-legend {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--rx-row-gap);
+  font-size: var(--rx-size-label);
+  color: var(--rx-ink-dim);
+}
+
+.cl-legend [data-kind='strand'] {
+  color: var(--rx-lattice);
+}
+.cl-legend [data-kind='covered'] {
+  color: var(--rx-coverage);
+}
+.cl-note {
+  margin: 0;
+  font-size: var(--rx-size-body);
+  color: var(--rx-ink-dim);
+}
