@@ -9,7 +9,7 @@ import {
 import { describe, expect, it } from 'vitest';
 import type { BelievedField, JsonValue } from '../../../contracts/index.ts';
 import { viewSnapshot } from '../../../contracts/fixtures/index.ts';
-import { opacity, render } from '../../../theme/index.ts';
+import { lineStyles, render } from '../../../theme/index.ts';
 import { toScene } from '../../adapter.ts';
 import { LineSet } from '../../gfx.ts';
 import { makeWellView } from './index.ts';
@@ -25,6 +25,7 @@ import {
 const acquired: WellFunnelVisual = {
   schema: 'well-funnel-observation-v2',
   phase: 'precursor',
+  brightness: 0.3,
   provenance: {
     attemptId: 'A3',
     frameId: 'P03',
@@ -63,6 +64,7 @@ const optical: WindowFunnelVisual = {
   observedAt: 10,
   visible: true,
   phase: 'precursor',
+  brightness: 0.3,
   segments: [
     { from: { x: 1, y: 0, z: 0 }, to: { x: 0.6, y: 0.8, z: 0 }, depth: 0 },
     { from: { x: 0.6, y: 0.8, z: 0 }, to: { x: 0, y: 0.8, z: 0.6 }, depth: 1 },
@@ -70,6 +72,17 @@ const optical: WindowFunnelVisual = {
 };
 
 describe('A19 observed physical funnel', () => {
+  it('requires acquired brightness and accepts visible phases without an inhibition diagnosis', () => {
+    for (const phase of ['precursor', 'ramping', 'active', 'fading']) {
+      expect(readWellFunnelVisual(field({ ...acquired, phase }))?.phase).toBe(phase);
+      expect(readWindowFunnelVisual({ ...optical, phase })?.phase).toBe(phase);
+    }
+    for (const brightness of [undefined, -0.1, 1.1, NaN]) {
+      expect(readWellFunnelVisual(field({ ...acquired, brightness }))).toBeUndefined();
+      expect(readWindowFunnelVisual({ ...optical, brightness })).toBeUndefined();
+    }
+    expect(readWindowFunnelVisual({ ...optical, phase: 'cancelled' })).toBeUndefined();
+  });
   it('requires acquired profile stations and a unit axis without default physical dimensions', () => {
     expect(readWellFunnelVisual(field())).toEqual(acquired);
     for (const patch of [
@@ -218,6 +231,35 @@ describe('A19 observed physical funnel', () => {
 });
 
 describe('visible funnel through the window', () => {
+  it('uses supplied brightness and contour completion through precursor, ramp and fade without a local timer', () => {
+    const group = new Group();
+    const view = makeOpticalFunnelView(group, 300);
+    const wire = group.children[0] as LineSegments<BufferGeometry, LineBasicMaterial>;
+    view.update(optical, 10);
+    const geometry = wire.geometry;
+    const dim = lineStyles.wellMouth.opacity * optical.brightness;
+    expect(wire.material.opacity).toBe(dim);
+    // A long time interval and a phase label alone cannot manufacture brighter light.
+    view.update({ ...optical, observedAt: 3_600, phase: 'ramping' }, 3_600);
+    expect(wire.material.opacity).toBe(dim);
+    expect(wire.geometry).toBe(geometry);
+    view.update({ ...optical, phase: 'ramping', brightness: 0.7 }, 10);
+    expect(wire.material.opacity).toBe(lineStyles.wellMouth.opacity * 0.7);
+    expect(wire.geometry).toBe(geometry);
+    view.update({ ...optical, phase: 'active', brightness: 1 }, 10);
+    expect(wire.material.opacity).toBe(lineStyles.wellMouth.opacity);
+    view.update(
+      { ...optical, phase: 'fading', brightness: 0.1, segments: optical.segments.slice(0, 1) },
+      10,
+    );
+    expect(wire.material.opacity).toBe(lineStyles.wellMouth.opacity * 0.1);
+    expect(wire.geometry.getAttribute('position').count).toBe(2);
+    expect(wire.userData.phase).toBe('fading');
+    view.update({ ...optical, phase: 'fading', brightness: 0 }, 10);
+    expect(wire.visible).toBe(false);
+    view.dispose();
+  });
+
   it('accepts only angular contour rays and never infers range from a measured FLIGHT shape', () => {
     expect(readWindowFunnelVisual(optical)).toEqual(optical);
     expect(readWindowFunnelVisual(acquired)).toBeUndefined();
@@ -250,7 +292,7 @@ describe('visible funnel through the window', () => {
     const view = makeOpticalFunnelView(group, 300);
     const wire = group.children[0] as LineSegments<BufferGeometry, LineBasicMaterial>;
     view.update(optical, 10);
-    expect(wire.material.opacity).toBe(opacity.priorEvidence);
+    expect(wire.material.opacity).toBe(lineStyles.wellMouth.opacity * optical.brightness);
     view.update({ ...optical, phase: 'active' }, 10);
     expect(wire.userData.phase).toBe('active');
     view.update({ ...optical, visible: false }, 10);

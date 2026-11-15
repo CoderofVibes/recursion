@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import vectors from '../../../tools/studies/s5/vectors.json';
 import gardenVectors from '../../content/inverse-wells/s16-reference.json';
+import funnelVectors from '../../content/inverse-wells/s22-reference.json';
 import type { FieldInstanceSpec, TruthWorld } from '../../contracts/truth/index.ts';
 import * as quat from '../../lib/quat.ts';
 import { createRng } from '../../lib/rng.ts';
@@ -11,13 +12,24 @@ import { createSimulation } from '../simulation.ts';
 import { actuators, asteroid, body, makeWorld, massProps, thrust } from '../test-helpers.ts';
 import {
   accumulateWellWork,
+  accumulateFunnelWork,
   applyRadialResponse,
   createWellRegistry,
   createWellSpatialIndex,
+  createFunnelCrushIndex,
   DEFAULT_WELL_PROFILE,
   evaluateWell,
+  evaluateFunnel,
+  funnelBirthGuard,
+  funnelBirthGuardCenter,
   funnelBounds,
   funnelCoordinates,
+  funnelCrushPoint,
+  funnelCrushSegment,
+  funnelSpec,
+  funnelSupportBounds,
+  readFunnelParameters,
+  sampleFunnel,
   readWellParameters,
   sampleWell,
   segmentWellCrossings,
@@ -286,6 +298,12 @@ describe('neutral A19 funnel geometry and spatial index', () => {
     expect(() => applyRadialResponse(v3.UNIT_X, v3.UNIT_X, 2)).toThrow(/weight/);
     expect(() => applyRadialResponse({ x: NaN, y: 0, z: 0 }, v3.UNIT_X, 0)).toThrow(/finite/);
     expect(() => smoothWellWeight(NaN)).toThrow(/finite/);
+    for (const edge of [Number.EPSILON, 1e-12, 1e-8, 1 - 1e-8, 1 - Number.EPSILON]) {
+      const weight = smoothWellWeight(edge);
+      expect(weight).toBeGreaterThanOrEqual(0);
+      expect(weight).toBeLessThanOrEqual(1);
+      expect(() => applyRadialResponse(v3.UNIT_X, v3.UNIT_X, weight)).not.toThrow();
+    }
   });
 
   it('provides axial/radial coordinates without imposing a force or inside rule', () => {
@@ -742,6 +760,380 @@ describe('committed S16 vectors through production simulation', () => {
           result.events.filter((event) => event.surface === 'outer').map((event) => event.well),
         ),
       ]).toEqual(reference.influences_met);
+    });
+  }
+});
+
+describe('S22 prototype funnels: pull, response and terminal geometry', () => {
+  const funnel = funnelSpec('funnel-0', v3.ZERO, v3.UNIT_X);
+  const tolerance = funnelVectors.port_tolerances;
+
+  it('uses an explicit version, copies activation, rejects malformed profiles and all-reserved overlap', () => {
+    const parsed = readFunnelParameters(funnel);
+    expect(parsed.profile).toBe('s22-funnel-v1');
+    expect(parsed.activation).toEqual({ phase: 'initial' });
+    expect(() => readFunnelParameters(well)).toThrow(/profile/);
+    expect(() => funnelSpec('bad', v3.ZERO, { x: 2, y: 0, z: 0 })).toThrow(/unit/);
+    const params = funnel.params as Record<string, unknown>;
+    expect(() =>
+      readFunnelParameters({
+        ...funnel,
+        params: { ...params, capLength: 0 } as FieldInstanceSpec['params'],
+      }),
+    ).toThrow(/dimensions/);
+    const pending = funnelSpec('pending', { x: 1000, y: 0, z: 0 }, v3.UNIT_X, { phase: 'pending' });
+    expect(() => validateWellSpecs([funnel, pending])).toThrow(/overlap/);
+    expect(() =>
+      funnelSpec('bad', v3.ZERO, v3.UNIT_X, { phase: 'active', activeSince: Infinity }),
+    ).toThrow(/finite/);
+  });
+
+  it('matches independent axial projection, transverse preservation, rear pull and half-weight edge', () => {
+    const ref = funnelVectors.projection;
+    const result = evaluateFunnel(
+      funnel,
+      vec(ref.nominal_force_N),
+      vec(ref.position_m),
+      v3.ZERO,
+      30374,
+      0,
+    );
+    expect(v3.distance(result.force, vec(ref.modified_force_N))).toBeLessThan(tolerance.force_N);
+    expect(v3.distance(result.pull, vec(ref.pull_m_s2))).toBeLessThan(tolerance.acceleration_m_s2);
+    closeVec(v3.scale(result.force, 1 / 30374), vec(ref.accelerometer_inertial_m_s2), 12);
+    const edge = evaluateFunnel(
+      funnel,
+      vec(ref.nominal_force_N),
+      vec(ref.edge_midpoint_position_m),
+      v3.ZERO,
+      30374,
+      0,
+    );
+    expect(edge.weight).toBeCloseTo(ref.edge_weight, 14);
+    expect(edge.force.x).toBeCloseTo(0, 10);
+    expect(edge.force.y).toBe(4000);
+    expect(edge.force.z).toBe(-6000);
+    expect(edge.pull.x).toBeGreaterThan(0);
+    closeVec(
+      sampleFunnel(funnel, vec(ref.rear_cap.position_m), 0).pull,
+      vec(ref.rear_cap.pull_m_s2),
+      12,
+    );
+    for (const position of [
+      { x: 0, y: 0, z: 0 },
+      { x: 125000, y: 0, z: 0 },
+      { x: 60000, y: 20000, z: 0 },
+    ])
+      expect(sampleFunnel(funnel, position, 0).weight).toBe(0);
+    const rear = { x: 123000, y: 0, z: 0 };
+    expect(
+      createWellSpatialIndex([{ id: 'support', bounds: funnelSupportBounds(funnel) }]).candidatesAt(
+        rear,
+      ),
+    ).toEqual(['support']);
+    const field = createWellRegistry([funnel]).create(funnel);
+    closeVec(field.acceleration!(rear, 0), vec(ref.rear_cap.pull_m_s2), 12);
+    for (const tangent of [v3.UNIT_Y, v3.UNIT_Z])
+      expect(
+        evaluateFunnel(funnel, tangent, vec(ref.edge_midpoint_position_m), v3.ZERO, 1, 0).force,
+      ).toEqual(tangent);
+  });
+
+  it('rotates the whole directional field and keeps nominal torque and IMU semantics', () => {
+    const q = quat.fromAxisAngle(v3.normalize({ x: 1, y: 2, z: -3 }), 1.2);
+    const offset = { x: 8000, y: -17000, z: 23000 };
+    const rotated = funnelSpec('rotated', offset, quat.rotate(q, v3.UNIT_X));
+    const p = { x: 40000, y: 1000, z: 500 };
+    const f = { x: -24000, y: 4000, z: -6000 };
+    const a = evaluateFunnel(funnel, f, p, { x: 20, y: 2, z: 3 }, 30374, 0);
+    const b = evaluateFunnel(
+      rotated,
+      quat.rotate(q, f),
+      v3.add(offset, quat.rotate(q, p)),
+      quat.rotate(q, { x: 20, y: 2, z: 3 }),
+      30374,
+      0,
+    );
+    closeVec(b.force, quat.rotate(q, a.force), 8);
+    closeVec(b.pull, quat.rotate(q, a.pull), 12);
+    expect(b.pullPower).toBeCloseTo(a.pullPower, 8);
+    const world = makeWorld({
+      position: p,
+      attitude: q,
+      asteroids: [asteroid('dust', { x: 41000, y: 1200, z: 800 }, v3.ZERO, 1)],
+    });
+    const actual = createSimulation(withWells(world, [funnel]), {
+      dt: 0.01,
+      registry: createWellRegistry([funnel]),
+    });
+    const coast = actual.step(actual.initial).state;
+    expect(coast.specificForce).toEqual(v3.ZERO);
+    expect(coast.world.ship.kinematics.velocity.x).toBeGreaterThan(0);
+    expect(coast.world.asteroids[0]!.velocity.x).toBeGreaterThan(0);
+    const nominal = createSimulation(world, { dt: 0.01 });
+    const input = {
+      actuators: actuators([thrust({ x: -7, y: 0.7, z: 0.5 }, { x: 2000, y: 0, z: 0 })]),
+    };
+    const n = nominal.step(nominal.initial, input).state;
+    const w = actual.step(actual.initial, input).state;
+    expect(w.world.ship.kinematics.attitude).toEqual(n.world.ship.kinematics.attitude);
+    expect(w.world.ship.kinematics.angularVelocity).toEqual(
+      n.world.ship.kinematics.angularVelocity,
+    );
+    const expectedSpecific = quat.rotateInverse(
+      q,
+      v3.scale(
+        applyRadialResponse(quat.rotate(q, { x: 2000, y: 0, z: 0 }), v3.UNIT_X, 1),
+        1 / 10000,
+      ),
+    );
+    closeVec(w.specificForce, expectedSpecific, 5);
+    const couple = actuators([
+      thrust({ x: 0, y: 2, z: 0 }, { x: 10, y: 0, z: 0 }),
+      thrust({ x: 0, y: -2, z: 0 }, { x: -10, y: 0, z: 0 }),
+    ]);
+    expect(actual.step(actual.initial, { actuators: couple }).state.specificForce).toEqual(v3.ZERO);
+  });
+
+  it('matches birth ramp and guard vectors without scheduling, retrying or mutating a phase', () => {
+    const ref = funnelVectors.popup;
+    const axis = vec(ref.funnel.axis);
+    const center = vec(ref.funnel.center);
+    const mouth = v3.addScaled(center, axis, -62500);
+    const active = funnelSpec('popup', mouth, axis, {
+      phase: 'active',
+      activeSince: ref.scheduled_on_s,
+    });
+    const p = v3.addScaled(mouth, axis, 40000);
+    for (const sample of ref.samples)
+      expect(sampleFunnel(active, p, sample.t_s).activationGain).toBeCloseTo(sample.force_gain, 13);
+    expect(
+      funnelBirthGuard(
+        active,
+        vec(ref.outside_state.position_m),
+        vec(ref.outside_state.velocity_m_s),
+        20,
+      ),
+    ).toBeCloseTo(ref.outside_guard_m, 7);
+    expect(
+      funnelBirthGuardCenter(
+        center,
+        vec(ref.fast_state.position_m),
+        vec(ref.fast_state.velocity_m_s),
+        20,
+      ),
+    ).toBeLessThan(0);
+    expect(
+      funnelBirthGuardCenter(
+        center,
+        vec(ref.inside_state.position_m),
+        vec(ref.inside_state.velocity_m_s),
+        20,
+      ),
+    ).toBeLessThan(0);
+    for (const phase of ['pending', 'cancelled'] as const) {
+      const off = funnelSpec('off', mouth, axis, { phase });
+      expect(sampleFunnel(off, p, 100000).weight).toBe(0);
+      expect(funnelCrushPoint(off, v3.addScaled(mouth, axis, 120000), 100000).contact).toBe(false);
+    }
+    expect(sampleFunnel(active, p, 0).weight).toBe(0);
+    expect(sampleFunnel(JSON.parse(JSON.stringify(active)), p, 1260)).toEqual(
+      sampleFunnel(active, p, 1260),
+    );
+  });
+
+  it('separates bounded force continuation from point and swept absorbing-throat contact', () => {
+    const throat = { x: 120000, y: 0, z: 0 };
+    expect(sampleFunnel(funnel, throat, 0).terminal).toBe(true);
+    expect(v3.isFinite3(evaluateFunnel(funnel, force, throat, v3.ZERO, 30000, 0).force)).toBe(true);
+    expect(funnelCrushPoint(funnel, { x: 118980, y: 0, z: 0 }, 0, 20).contact).toBe(true);
+    expect(funnelCrushPoint(funnel, { x: 118979, y: 0, z: 0 }, 0, 20).contact).toBe(false);
+    const from = { x: 118000, y: 0, z: 0 },
+      to = { x: 122000, y: 0, z: 0 };
+    const crossing = funnelCrushSegment(funnel, from, to, 0, 1, 20);
+    expect(crossing.firstContactFraction).toBeCloseTo(980 / 4000, 14);
+    expect(crossing.clearance).toBe(-1020);
+    expect(
+      funnelCrushSegment(
+        funnel,
+        { x: 118000, y: 1020, z: 0 },
+        { x: 122000, y: 1020, z: 0 },
+        0,
+        1,
+        20,
+      ).firstContactFraction,
+    ).toBe(0.5);
+    const born = funnelSpec('born', v3.ZERO, v3.UNIT_X, { phase: 'active', activeSince: 0.6 });
+    expect(sampleFunnel(born, throat, 0.6).weight).toBe(0);
+    expect(sampleFunnel(born, throat, 0.6).terminal).toBe(true);
+    expect(funnelCrushSegment(born, from, to, 0, 1, 20).firstContactFraction).toBe(0.6);
+    const late = funnelSpec('late', v3.ZERO, v3.UNIT_X, { phase: 'active', activeSince: 0.9 });
+    expect(funnelCrushSegment(late, from, to, 0, 1, 20).contact).toBe(false);
+    const index = createFunnelCrushIndex([funnel]);
+    expect(
+      index.candidatesAlongSegment({ x: 118000, y: 1010, z: 0 }, { x: 122000, y: 1010, z: 0 }),
+    ).toEqual([]);
+    expect(
+      index.candidatesAlongSegment({ x: 118000, y: 1010, z: 0 }, { x: 122000, y: 1010, z: 0 }, 20),
+    ).toEqual(['funnel-0']);
+  });
+
+  it('indexes all 2601 reserved funnels with one pull/thrust dispatcher and matches committed kernel vectors', () => {
+    const fields = funnelVectors.nominalField.funnels.map((f) =>
+      funnelSpec(
+        `funnel-${f.id}`,
+        v3.addScaled(vec(f.center), vec(f.axis), -62500),
+        vec(f.axis),
+        f.on === 0 ? { phase: 'initial' } : { phase: 'active', activeSince: f.on },
+      ),
+    );
+    const registry = createWellRegistry(fields);
+    const instances = fields.map((spec) => registry.create(spec));
+    expect(instances.filter((f) => f.modifyThrust)).toHaveLength(1);
+    expect(instances.filter((f) => f.acceleration)).toHaveLength(1);
+    const dispatch = instances.find((f) => f.modifyThrust)!;
+    for (const query of funnelVectors.kernel_queries) {
+      expect(
+        v3.distance(
+          dispatch.modifyThrust!(vec(query.force_N), vec(query.position_m), v3.ZERO, query.t_s),
+          vec(query.modified_force_N),
+        ),
+      ).toBeLessThan(tolerance.force_N);
+      expect(
+        v3.distance(dispatch.acceleration!(vec(query.position_m), query.t_s), vec(query.pull_m_s2)),
+      ).toBeLessThan(tolerance.acceleration_m_s2);
+    }
+    const reversed = createWellRegistry([...fields].reverse());
+    const leader = reversed.create(fields[0]!);
+    const point = { x: 40000, y: 0, z: 0 };
+    expect(leader.acceleration!(point, 5000)).toEqual(dispatch.acceleration!(point, 5000));
+  });
+
+  type Reference = {
+    initial: { position_m: number[]; velocity_m_s: number[]; mass_kg: number };
+    commands: { start_s: number; duration_s: number; force_N: number[] }[];
+    t_s: number;
+  };
+  function flight(reference: Reference, dt: number) {
+    let world = withWells(
+      makeWorld({
+        position: vec(reference.initial.position_m),
+        velocity: vec(reference.initial.velocity_m_s),
+        mp: massProps({ mass: reference.initial.mass_kg }),
+      }),
+      [funnel],
+    );
+    let mass = reference.initial.mass_kg;
+    let work = { nominalJ: 0, fieldJ: 0, pullJ: 0 };
+    let massEnergy = 0;
+    let firstCrush: number | undefined;
+    let minimumClearance = Infinity;
+    const cuts = [
+      ...new Set([
+        0,
+        reference.t_s,
+        ...reference.commands.flatMap((c) => [c.start_s, c.start_s + c.duration_s]),
+      ]),
+    ]
+      .filter((t) => t <= reference.t_s)
+      .sort((a, b) => a - b);
+    for (let k = 1; k < cuts.length; k++) {
+      const begin = cuts[k - 1]!,
+        span = cuts[k]! - begin;
+      const steps = Math.ceil(span / dt),
+        h = span / steps;
+      const f = reference.commands
+        .filter((c) => c.start_s <= begin && begin < c.start_s + c.duration_s)
+        .reduce((sum, c) => v3.add(sum, vec(c.force_N)), v3.ZERO);
+      const rate = v3.length(f) / (320 * 9.80665);
+      const sim = createSimulation(world, { dt: h, registry: createWellRegistry([funnel]) });
+      let state = sim.initial;
+      const initialMass = mass;
+      for (let i = 0; i < steps; i++) {
+        const t = begin + i * h,
+          before = state.world.ship.kinematics;
+        const beforeMass = initialMass - i * h * rate,
+          afterMass = initialMass - (i + 1) * h * rate;
+        const result = sim.step(state, {
+          actuators: actuators(
+            [thrust(v3.ZERO, f)],
+            massProps({ mass: (beforeMass + afterMass) / 2 }),
+          ),
+        });
+        const after = result.state.world.ship.kinematics;
+        work = accumulateFunnelWork(
+          work,
+          evaluateFunnel(funnel, f, before.position, before.velocity, beforeMass, t),
+          evaluateFunnel(funnel, f, after.position, after.velocity, afterMass, t + h),
+          h,
+        );
+        massEnergy -=
+          rate * h * 0.25 * (v3.lengthSq(before.velocity) + v3.lengthSq(after.velocity));
+        const contact = funnelCrushSegment(funnel, before.position, after.position, t, t + h, 20);
+        minimumClearance = Math.min(minimumClearance, contact.clearance! - (1.434 * h * h) / 8);
+        if (contact.firstContactFraction !== undefined && firstCrush === undefined)
+          firstCrush = t + h * contact.firstContactFraction;
+        state = result.state;
+      }
+      mass = initialMass - span * rate;
+      world = state.world;
+    }
+    const kin = world.ship.kinematics;
+    const energyChange =
+      0.5 * mass * v3.lengthSq(kin.velocity) -
+      0.5 * reference.initial.mass_kg * v3.lengthSq(vec(reference.initial.velocity_m_s));
+    return {
+      kin,
+      mass,
+      firstCrush,
+      minimumClearance,
+      work,
+      residual: energyChange - work.nominalJ - work.fieldJ - work.pullJ - massEnergy,
+    };
+  }
+
+  it('matches independent edge convergence and closes pull/reversal/expelled-mass work without resource credits', () => {
+    const ref = funnelVectors.edge_convergence.reference;
+    const coarse = flight(ref, 1),
+      half = flight(ref, 0.5),
+      fine = flight(ref, 1 / 64);
+    const error = (r: ReturnType<typeof flight>) =>
+      v3.distance(r.kin.position, vec(ref.final.position_m));
+    expect(error(coarse) / error(half)).toBeGreaterThan(3.8);
+    expect(error(coarse) / error(half)).toBeLessThan(4.2);
+    expect(error(fine)).toBeLessThan(tolerance.position_m);
+    expect(v3.distance(fine.kin.velocity, vec(ref.final.velocity_m_s))).toBeLessThan(
+      tolerance.velocity_m_s,
+    );
+    expect(Math.abs(fine.mass - ref.final.mass_kg)).toBeLessThan(tolerance.mass_kg);
+    expect(fine.work.pullJ).toBeGreaterThan(0);
+    expect(fine.work.fieldJ).toBeLessThan(0);
+    expect(Math.abs(fine.residual)).toBeLessThan(2);
+  });
+
+  for (const [name, ref] of [
+    ['coast toward crush', funnelVectors.coast_pulled_to_crush],
+    ['instinctive outward burn', funnelVectors.instinctive_burn.actual],
+    ['negative transverse escape', funnelVectors.sideways_escapes[0]!],
+    ['positive transverse escape', funnelVectors.sideways_escapes[1]!],
+    ['delayed recovery', funnelVectors.instinctive_burn.rescue],
+  ] as const) {
+    it(`reproduces ${name} using production translation at 0.25 s, not an attitude-controller certificate`, () => {
+      const result = flight(ref, 0.25);
+      expect(v3.distance(result.kin.position, vec(ref.final.position_m))).toBeLessThan(
+        tolerance.position_m,
+      );
+      expect(v3.distance(result.kin.velocity, vec(ref.final.velocity_m_s))).toBeLessThan(
+        tolerance.velocity_m_s,
+      );
+      expect(Math.abs(result.mass - ref.final.mass_kg)).toBeLessThan(tolerance.mass_kg);
+      if (ref.outcome === 'crush') {
+        expect(result.firstCrush).toBeDefined();
+        expect(Math.abs(result.firstCrush! - ref.t_s)).toBeLessThan(tolerance.crush_time_s);
+      } else {
+        expect(result.firstCrush).toBeUndefined();
+        expect(result.minimumClearance).toBeGreaterThan(15_000);
+      }
     });
   }
 });

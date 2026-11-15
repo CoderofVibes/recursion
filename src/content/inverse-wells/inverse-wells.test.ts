@@ -78,8 +78,8 @@ describe('P03 content provider', () => {
     expect(JSON.stringify(a.definition.briefing)).not.toMatch(
       /innerRadius|outerRadius|radialGain|inverse-well"/,
     );
-    expect(a.contentStatus).toBe('study-layout');
-    expect(a.definition.world.fields).toHaveLength(3);
+    expect(a.contentStatus).toBe('funnel-prototype');
+    expect(a.definition.world.fields).toHaveLength(2601);
     expect(a.fieldRegistry.kinds()).toEqual(['inverse-well']);
     expect(a.exits.map((exit) => exit.destination)).toEqual(['P04', 'N03']);
   });

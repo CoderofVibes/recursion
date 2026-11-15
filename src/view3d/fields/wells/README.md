@@ -7,7 +7,8 @@ reference comparisons. A v2 payload never falls back to the old spherical drawin
 ## A19 FLIGHT and console
 
 The proposed `WellFunnelVisual` in `funnel.ts` carries acquired lineage, current frame,
-support, freshness, visible precursor/active phase, and measured mouth position, unit axis
+support, freshness, visible precursor/ramping/active/fading phase and normalized observed
+brightness, and measured mouth position, unit axis
 toward the throat, length and mouth/throat radii with uncertainties. Its ordered contour
 stations must include mouth and throat. Missing profile stations or dimensions have no
 defaults. Seeing a shape does not supply its pull, reversal, or crushing rule.
@@ -22,7 +23,8 @@ draws uncertainty around those same stations, never spherical field boundaries. 
 radius and small-angle axis uncertainty. These are guides, not a certified whole-ship
 clearance test. Stale data retain dim contour guides; unresolved/archived data are hidden.
 The producer owns freshness. All styling uses existing theme tokens; no onset duration,
-special lighting or field parameter is invented while S22 is pending.
+special lighting or field parameter is invented by the view. S22's committed appearance
+specification is consumed through observed geometry/brightness/phase, not a second timeline.
 
 The existing `WellEvidencePanel` now displays v2 mouth/throat/length/axis estimates and
 observed phase separately from retained motion-response comparisons and model rule status.
@@ -30,8 +32,19 @@ observed phase separately from retained motion-response comparisons and model ru
 ## A19 window: angular light only
 
 `WindowFunnelVisual` / `readWindowFunnelVisual` propose `well-optical-v1`: `observedAt`,
-`visible`, observed precursor/active phase, and contour segments containing two inertial
-unit rays plus a colour-depth coordinate. There is no range or physical size.
+`visible`, `phase: precursor | ramping | active | fading`, required `brightness` in `[0,1]`,
+and contour segments containing two inertial unit rays plus a colour-depth coordinate.
+There is no range or physical size. The adapter supplies only visible/completed arcs.
+The colour-depth coordinate selects the existing theme's falloff (0 brightest, 1 dimmest);
+it is not a physical distance. S22's luminous throat can map axial fraction to `1−fraction`
+in the optical adapter without passing the physical length.
+
+The renderer multiplies the theme's fixed active opacity by the **supplied** brightness.
+Changing the phase label or elapsed time alone never changes brightness or completes arcs.
+`fading` reports disappearing light, not the hidden cause of inhibited formation. The
+optical/acquisition adapter owns ramp/fade chronology, exposure, occlusion and photometry;
+the view defines no birth timer, fade duration or force-strength conversion. Missing,
+nonfinite or out-of-range brightness is rejected rather than assigned a default.
 
 `makeOpticalFunnelView(group, displayRadius)` exposes `update(opticalPayload, t)` and
 `dispose()`. The window owner supplies its presentation shell radius; it is not a measured

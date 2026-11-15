@@ -43,6 +43,12 @@ export function WellEvidencePanel({ field, t }: WellEvidencePanelProps) {
           {visual.schema === 'well-funnel-observation-v2' ? (
             <>
               <Line label="visible state">{visual.phase}</Line>
+              <Readout
+                label="Observed brightness"
+                value={(100 * visual.brightness).toFixed(1)}
+                unit="%"
+                status={supported ? 'nominal' : 'stale'}
+              />
               <ReadoutGrid columns={3}>
                 {(
                   [

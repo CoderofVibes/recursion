@@ -5,6 +5,12 @@ import type { MassiveBody, ShipKinematics, Sun } from '../../contracts/truth/ind
 export interface GardenWell {
   readonly id: string;
   readonly center: Vec3;
+  /** A19/S22: center is the reserved-ball anchor, never the force direction. */
+  readonly funnel?: {
+    readonly mouth: Vec3;
+    readonly axis: Vec3;
+    readonly birthOffset: number | null;
+  };
 }
 
 export interface GardenExit {
@@ -14,11 +20,13 @@ export interface GardenExit {
   readonly radius: number;
   /** Absent for a spherical transit volume; present for an outward disc crossing. */
   readonly outwardNormal?: Vec3;
+  /** Interim reach-region destination; distinct from a study's disc-crossing certificate. */
+  readonly destinationRegion?: { readonly center: Vec3; readonly radius: number };
 }
 
 export interface GardenLayout {
   readonly version: string;
-  readonly status: 'mechanics-preview' | 'study-layout';
+  readonly status: 'mechanics-preview' | 'study-layout' | 'funnel-prototype';
   readonly wells: readonly GardenWell[];
   /** Ordinary optical landmarks, independent of the fictional propulsion rule. */
   readonly landmarks: readonly MassiveBody[];

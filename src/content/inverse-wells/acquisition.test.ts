@@ -15,7 +15,7 @@ import { createBlackBox } from '../../game/belief/blackbox.ts';
 import { contextFromBriefing, ModelService } from '../../model/index.ts';
 import { createSimulation } from '../../sim/index.ts';
 import { stepShipSystems } from '../../ship/index.ts';
-import { createInverseWells, LAW, MECHANICS_PREVIEW } from './index.ts';
+import { createInverseWells, LAW, MECHANICS_PREVIEW, s16Layout } from './index.ts';
 
 describe('Well Garden default acquisition', () => {
   it(
@@ -23,7 +23,7 @@ describe('Well Garden default acquisition', () => {
     { timeout: 30_000 },
     () => {
       // Compatibility probe only: this does not import or validate an S16 layout.
-      const setup = createInverseWells('source-free-acquisition');
+      const setup = createInverseWells('source-free-acquisition', { layout: s16Layout() });
       const { ship: definition } = setup.definition;
       const cores = setup.definition.world.bodies.filter((body) => body.id.endsWith('-core'));
       const core = cores[0]!;

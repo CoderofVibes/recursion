@@ -22,6 +22,7 @@ export type {
   WellFunnelVisual,
   FunnelGeometryEstimate,
   FunnelStation,
+  FunnelAppearancePhase,
   WindowFunnelVisual,
 } from './funnel.ts';
 

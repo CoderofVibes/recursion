@@ -47,6 +47,7 @@ describe('well observation panel', () => {
       visual: {
         schema: 'well-funnel-observation-v2',
         phase: 'precursor',
+        brightness: 0.3,
         provenance: {
           attemptId: 'A2',
           frameId: 'P03',
@@ -77,6 +78,8 @@ describe('well observation panel', () => {
     const html = renderToStaticMarkup(<WellEvidencePanel field={funnel} t={15} />);
     expect(html).toContain('Observed funnel');
     expect(html).toContain('precursor');
+    expect(html).toContain('Observed brightness');
+    expect(html).toContain('30.0');
     expect(html).toContain('Mouth radius');
     expect(html).toContain('Throat radius');
     expect(html).toContain('20.00');

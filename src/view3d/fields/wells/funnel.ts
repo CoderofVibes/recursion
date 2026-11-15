@@ -35,10 +35,15 @@ export interface FunnelGeometryEstimate {
   readonly stations: readonly FunnelStation[];
 }
 
+/** An observed appearance, never an activation deadline or an inhibition diagnosis. */
+export type FunnelAppearancePhase = 'precursor' | 'ramping' | 'active' | 'fading';
+
 export interface WellFunnelVisual extends WellObservation {
   readonly schema: 'well-funnel-observation-v2';
   /** Reported visible state; no hidden activation deadline is accepted. */
-  readonly phase: 'precursor' | 'active';
+  readonly phase: FunnelAppearancePhase;
+  /** Normalized observed brightness, supplied by the acquisition adapter, not a UI clock. */
+  readonly brightness: number;
   readonly geometry: FunnelGeometryEstimate;
 }
 
@@ -51,6 +56,9 @@ const unit = (v: unknown): v is Vec3 =>
   vector(v) && Math.abs(Math.hypot(v.x, v.y, v.z) - 1) <= 1e-6;
 const estimate = (v: unknown): v is WellEstimate =>
   object(v) && nonnegative(v.value) && nonnegative(v.sigma);
+const fraction = (v: unknown): v is number => nonnegative(v) && v <= 1;
+const appearancePhase = (v: unknown): v is FunnelAppearancePhase =>
+  v === 'precursor' || v === 'ramping' || v === 'active' || v === 'fading';
 
 export function validFunnelGeometry(g: unknown): g is FunnelGeometryEstimate {
   if (
@@ -101,7 +109,8 @@ export function readWellFunnelVisual(field: BelievedField): WellFunnelVisual | u
     v.schema !== 'well-funnel-observation-v2' ||
     !validWellObservation(v) ||
     !validFunnelGeometry(v.geometry) ||
-    (v.phase !== 'precursor' && v.phase !== 'active')
+    !appearancePhase(v.phase) ||
+    !fraction(v.brightness)
   )
     return undefined;
   return v as unknown as WellFunnelVisual;
@@ -178,7 +187,7 @@ export const makeFunnelView: FieldViewFactory = ({ group, lines }) => {
       const v = readWellFunnelVisual(frame.field);
       const state = wellDisplayState(v, frame.snapshot.t);
       pose.visible = state === 'current' || state === 'stale';
-      wire.visible = state === 'current';
+      wire.visible = state === 'current' && !!v && v.brightness > 0;
       if (!v || !pose.visible) return;
       const g = v.geometry;
       toScene(g.mouth, pose.position);
@@ -188,8 +197,7 @@ export const makeFunnelView: FieldViewFactory = ({ group, lines }) => {
       pose.userData.phase = v.phase;
       bounds.material.opacity =
         state === 'stale' ? opacity.staleInstrument : lineStyles.wellBoundary.opacity;
-      wire.material.opacity =
-        v.phase === 'precursor' ? opacity.priorEvidence : lineStyles.wellMouth.opacity;
+      wire.material.opacity = lineStyles.wellMouth.opacity * v.brightness;
       // Pose updates belong on the group. Rebuild local buffers only when their shape changes;
       // tracking a new mouth/axis must not upload every contour again for every visible well.
       const shapeKey = JSON.stringify([
@@ -222,8 +230,11 @@ export interface WindowFunnelVisual {
   readonly schema: 'well-optical-v1';
   readonly observedAt: number;
   readonly visible: boolean;
-  readonly phase: 'precursor' | 'active';
-  /** Inertial unit rays from the eye. Depth only selects the theme's contour colour. */
+  readonly phase: FunnelAppearancePhase;
+  /** Observed brightness, 0..1. The adapter owns light, distance, exposure and phase evolution. */
+  readonly brightness: number;
+  /** Inertial unit rays from the eye. Only visible/completed arcs are supplied. Depth is a
+   * theme colour coordinate (0 brightest), not physical distance or a force parameter. */
   readonly segments: readonly { readonly from: Vec3; readonly to: Vec3; readonly depth: number }[];
 }
 
@@ -233,7 +244,8 @@ export function readWindowFunnelVisual(v: unknown): WindowFunnelVisual | undefin
     v.schema !== 'well-optical-v1' ||
     !finite(v.observedAt) ||
     typeof v.visible !== 'boolean' ||
-    (v.phase !== 'precursor' && v.phase !== 'active') ||
+    !appearancePhase(v.phase) ||
+    !fraction(v.brightness) ||
     !Array.isArray(v.segments) ||
     v.segments.length === 0 ||
     !v.segments.every(
@@ -260,11 +272,10 @@ export function makeOpticalFunnelView(group: Group, displayRadius: number) {
     update(input: unknown, t: number) {
       const v = readWindowFunnelVisual(input);
       // An eye frame is instantaneous. Missing/currently occluded data must not persist as sight.
-      wire.visible = !!v && v.visible && v.observedAt === t;
+      wire.visible = !!v && v.visible && v.brightness > 0 && v.observedAt === t;
       if (!v || !wire.visible) return;
       wire.userData.phase = v.phase;
-      wire.material.opacity =
-        v.phase === 'precursor' ? opacity.priorEvidence : lineStyles.wellMouth.opacity;
+      wire.material.opacity = lineStyles.wellMouth.opacity * v.brightness;
       const key = JSON.stringify(v.segments);
       if (key === cached) return;
       cached = key;

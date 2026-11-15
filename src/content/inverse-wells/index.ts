@@ -8,24 +8,44 @@ import { DEFAULT_PLAY } from '../../game/encounter.ts';
 import { createArrivalSystems } from '../../game/arrival.ts';
 import { createRng } from '../../lib/rng.ts';
 import { fromRotationVector, multiply } from '../../lib/quat.ts';
-import { distance } from '../../lib/vec3.ts';
+import { distance, addScaled, length, isFinite3 } from '../../lib/vec3.ts';
 import { loadShipDefinition } from '../../ship/index.ts';
-import { createWellRegistry, DEFAULT_WELL_PROFILE, wellSpec } from '../../sim/fields/wells.ts';
+import {
+  createWellRegistry,
+  DEFAULT_WELL_PROFILE,
+  DEFAULT_FUNNEL_PROFILE,
+  wellSpec,
+  funnelSpec,
+} from '../../sim/fields/wells.ts';
 import { hullInWorld } from '../../sim/snapshot.ts';
 import { validateWorld } from '../../sim/index.ts';
 import type { GardenLayout, GardenExit } from './layout.ts';
-import { seededS16Layout } from './s16-layout.ts';
+import { s22Layout, seededS22Layout, S22_ANCHOR_OFFSET } from './s22-layout.ts';
+import { createFunnelHullHazards } from './hazards.ts';
+import {
+  createFunnelLifecycle,
+  restoreFunnelLifecycle,
+  funnelLifecycleActivation,
+  type FunnelLifecycleState,
+} from './lifecycle.ts';
 
 export { MECHANICS_PREVIEW, type GardenLayout, type GardenExit } from './layout.ts';
 export { s16Layout, seededS16Layout, certifyArrival, S16_CATALOGUE_SEEDS } from './s16-layout.ts';
+export { s22Layout, seededS22Layout, S22_CATALOGUE_SEEDS } from './s22-layout.ts';
+export * from './lifecycle.ts';
+export { createFunnelHullHazards } from './hazards.ts';
+export { projectFunnelOptics } from './optics.ts';
 export const ENCOUNTER_ID = 'inverse-wells';
 export const SEED = 'well-garden-1';
-export const SAVE_FORMAT = 2;
+export const SAVE_FORMAT = 3;
 export const LAW = { exponent: 2.5, referenceRadius: 1_000_000 } as const;
 
 export interface GardenOptions {
   readonly layout?: GardenLayout;
   readonly entrance?: 'power' | 'cross-transfer';
+  /** Continuous expedition epoch and saved decisions, required for a late funnel arrival. */
+  readonly runEpoch?: number;
+  readonly lifecycle?: FunnelLifecycleState;
   /** 3D supplies the actual ship in this layout's inertial frame; never repaired/refilled. */
   readonly arrival?: {
     readonly ship: ShipTruth;
@@ -44,6 +64,7 @@ export interface InverseWellsSetup extends EncounterSetup {
   readonly exits: readonly GardenExit[];
   readonly contentVersion: string;
   readonly contentStatus: GardenLayout['status'];
+  readonly funnelLifecycle?: FunnelLifecycleState;
 }
 
 /**
@@ -72,7 +93,7 @@ function survey(world: TruthWorld, seed: string, layout: GardenLayout): Encounte
       id: exit.id,
       kind: 'reach-region',
       label: exit.id === 'forward' ? 'FORWARD TRANSIT' : 'CROSS-TRANSFER',
-      region: { center: exit.center, radius: exit.radius },
+      region: exit.destinationRegion ?? { center: exit.center, radius: exit.radius },
     })),
     arrivalEstimate: {
       t: world.t,
@@ -119,12 +140,12 @@ function survey(world: TruthWorld, seed: string, layout: GardenLayout): Encounte
   };
 }
 
-/** Every excluded core is a real solid collision object, with no invented gravity. */
+/** Truth content and indexed hazards; shared game code owns terminal event policy. */
 export function createInverseWells(
   seed: string = SEED,
   options: GardenOptions = {},
 ): InverseWellsSetup {
-  const layout = options.layout ?? seededS16Layout(seed);
+  const layout = options.layout ?? seededS22Layout(seed);
   if (!layout.wells.length) throw new Error('Garden needs at least one well');
   if (
     options.arrival &&
@@ -132,8 +153,6 @@ export function createInverseWells(
       options.arrival.briefing.arrivalEstimate.t !== options.arrival.ship.systems.t)
   )
     throw new Error('carried Garden briefing must match the encounter and arrival epoch');
-  const fields = layout.wells.map((well) => wellSpec(well.id, well.center));
-  const fieldRegistry = createWellRegistry(fields, 1);
   const definition = options.arrival?.definition ?? loadShipDefinition();
   const entrance = layout.entrances[options.entrance ?? 'power'];
   if (!options.arrival && !entrance)
@@ -142,21 +161,102 @@ export function createInverseWells(
     kinematics: entrance!,
     systems: createArrivalSystems(definition, {}, seed),
   };
+  const isFunnel = layout.status === 'funnel-prototype';
+  if (layout.wells.some((well) => !!well.funnel !== isFunnel))
+    throw new Error('Garden layout must use one declared geometry version');
+  if (isFunnel && layout.landmarks.some((body) => body.gm !== 0))
+    throw new Error('S22 birth guard requires the certified source-free force bound');
+  if (
+    isFunnel &&
+    layout.wells.some((well) => {
+      const funnel = well.funnel!;
+      return (
+        !isFinite3(well.center) ||
+        !isFinite3(funnel.mouth) ||
+        !isFinite3(funnel.axis) ||
+        length(funnel.axis) === 0 ||
+        distance(
+          well.center,
+          addScaled(funnel.mouth, funnel.axis, S22_ANCHOR_OFFSET / length(funnel.axis)),
+        ) > 1e-6
+      );
+    })
+  )
+    throw new Error('funnel lifecycle anchor must match its actual support geometry');
+  const lifecycle = isFunnel
+    ? options.lifecycle
+      ? restoreFunnelLifecycle(options.lifecycle)
+      : createFunnelLifecycle(
+          layout.wells.map((well) => ({
+            id: well.id,
+            center: well.center,
+            birthOffset: well.funnel!.birthOffset,
+          })),
+          options.runEpoch ?? 0,
+        )
+    : undefined;
+  if (
+    lifecycle &&
+    (lifecycle.t !== ship.systems.t ||
+      (options.runEpoch !== undefined && lifecycle.runEpoch !== options.runEpoch))
+  )
+    throw new Error('funnel arrival requires saved lifecycle decisions at its actual epoch');
+  const sites = new Map(lifecycle?.sites.map((site) => [site.id, site]));
+  if (
+    lifecycle &&
+    (sites.size !== layout.wells.length ||
+      layout.wells.some((well) => {
+        const site = sites.get(well.id);
+        return (
+          !site ||
+          distance(site.center, well.center) > 1e-7 ||
+          site.nominalBirth !==
+            (well.funnel!.birthOffset === null
+              ? null
+              : lifecycle.runEpoch + well.funnel!.birthOffset)
+        );
+      }))
+  )
+    throw new Error('saved funnel lifecycle does not match this layout');
+  const fields = layout.wells.map((well) =>
+    well.funnel
+      ? funnelSpec(
+          well.id,
+          well.funnel.mouth,
+          well.funnel.axis,
+          funnelLifecycleActivation(sites.get(well.id)!),
+        )
+      : wellSpec(well.id, well.center),
+  );
+  const fieldRegistry = createWellRegistry(fields, 1);
+  // One established throat is a legitimate optical navigation reference. Other throats
+  // stay in the spatial hazard index, never thousands of generic bodies/occluders.
+  const referenceWells = isFunnel
+    ? layout.wells.filter((well) => well.funnel!.birthOffset === null).slice(0, 1)
+    : layout.wells;
+  if (!layout.landmarks.length && !referenceWells.length)
+    throw new Error('Garden needs an established optical navigation reference');
   const world: TruthWorld = {
     t: ship.systems.t,
     law: LAW,
     ship,
     fields,
-    hidden: {},
+    hidden: {}, // Numeric calibration map only; structured lifecycle save is a shared-owner seam.
     sun: layout.sun,
     bodies: [
       ...layout.landmarks,
-      ...layout.wells.map((well) => ({
+      ...referenceWells.map((well) => ({
         id: `${well.id}-core`,
-        name: 'Dark landmark',
+        name: isFunnel ? 'Entrance throat' : 'Dark landmark',
         gm: 0,
-        radius: DEFAULT_WELL_PROFILE.coreRadius,
-        position: well.center,
+        radius: isFunnel ? DEFAULT_FUNNEL_PROFILE.throatRadius : DEFAULT_WELL_PROFILE.coreRadius,
+        position: well.funnel
+          ? addScaled(
+              well.funnel.mouth,
+              well.funnel.axis,
+              DEFAULT_FUNNEL_PROFILE.length / length(well.funnel.axis),
+            )
+          : well.center,
         velocity: { x: 0, y: 0, z: 0 },
         fixed: true,
       })),
@@ -165,7 +265,8 @@ export function createInverseWells(
   };
   const problems = validateWorld(world);
   if (problems.length) throw new Error(`invalid Garden arrival: ${problems.join('; ')}`);
-  // Conservative enclosing sphere covers every deployed/jammed hull point at arrival.
+  // Legacy spherical fixtures keep their conservative arrival guard. Funnel arrivals
+  // use occupied prisms so a clear extended hull is not rejected by its bounding sphere.
   const radius = Math.max(
     0,
     ...hullInWorld(ship.kinematics, ship.systems.massProperties)
@@ -173,10 +274,17 @@ export function createInverseWells(
       .map((point) => distance(point, ship.kinematics.position)),
   );
   if (
-    layout.wells.some(
-      (well) =>
-        distance(well.center, ship.kinematics.position) <= DEFAULT_WELL_PROFILE.coreRadius + radius,
-    )
+    isFunnel
+      ? createFunnelHullHazards(fields).contactsAt(
+          ship.kinematics,
+          ship.systems.massProperties,
+          world.t,
+        ).length > 0
+      : layout.wells.some(
+          (well) =>
+            distance(well.center, ship.kinematics.position) <=
+            DEFAULT_WELL_PROFILE.coreRadius + radius,
+        )
   )
     throw new Error('Garden arrival intersects an excluded core with the whole ship');
   return {
@@ -195,21 +303,34 @@ export function createInverseWells(
           {
             kind: 'point',
             sensor: 'camera',
-            target: layout.landmarks[0]?.id ?? `${layout.wells[0]!.id}-core`,
+            target: world.bodies[0]!.id,
           },
         ],
     arrivalMass: ship.systems.massProperties.mass,
-    objectiveRules: [], // 2F must supply reach-region evaluation; never substitute a visit flag.
+    objectiveRules: layout.exits.flatMap((exit) => {
+      // Legacy disc fixtures stay exact numerical references until they have a destination.
+      if (exit.outwardNormal && !exit.destinationRegion) return [];
+      const region = exit.destinationRegion ?? exit;
+      return [
+        {
+          kind: 'reach-region' as const,
+          objective: exit.id,
+          center: region.center,
+          radius: region.radius,
+        },
+      ];
+    }),
     play: { ...DEFAULT_PLAY, recorderRate: 1, forecastSpan: 3600 },
     fieldRegistry,
     fields: fieldRegistry,
     exits: layout.exits,
     contentVersion: layout.version,
     contentStatus: layout.status,
+    ...(lifecycle ? { funnelLifecycle: lifecycle } : {}),
   };
 }
 
-/** 2F owns inserting this entry in its encounter loader; all content stays in this lane. */
+/** Registered through the owner-authorized entry in 2F's encounter loader. */
 export const INVERSE_WELLS_ENTRY = {
   id: ENCOUNTER_ID,
   name: 'Well Garden · prototype',
@@ -218,6 +339,9 @@ export const INVERSE_WELLS_ENTRY = {
   create(run: number): InverseWellsSetup {
     if (!Number.isInteger(run) || run < 0)
       throw new Error('Garden run must be a nonnegative integer');
-    return createInverseWells(run === 0 ? SEED : `${SEED}/run:${run}`);
+    return createInverseWells(
+      run === 0 ? SEED : `${SEED}/run:${run}`,
+      run === 0 ? { layout: s22Layout(22000) } : {},
+    );
   },
 } satisfies EncounterEntry;
