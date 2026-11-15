@@ -40,6 +40,7 @@ import {
 } from './engine.ts';
 import type { Arc } from './dynamics.ts';
 import { attemptOfArc, isProbeArc } from './probes.ts';
+import { diagnoseHeldOut, plainLabel, type HeldOutDiagnosis } from './verdict.ts';
 import { earnedHedge, localFit, makeWindows, mergeSpans, rangeFixes } from './tierL.ts';
 
 /** Extensions the model can fit (unseen-body and region thrust response are specified only). */
@@ -54,6 +55,8 @@ export function isTestableExtension(ext: ExtensionId): boolean {
 export interface ExtensionRecord extends ExtensionTestRecord {
   readonly heldOutTest?: Omit<HeldOutResult, 'fit' | 'globalShiftSigma'> & {
     readonly globalShiftSigma: Readonly<Record<string, number>>;
+    /** Why it passed or failed, in plain words (R47). Absent in tests saved before it. */
+    readonly diagnosis?: HeldOutDiagnosis;
   };
 }
 
@@ -92,7 +95,7 @@ function trainAndHoldOut(
   const trainParams = problem.params.filter(
     (p) => p.group === 'global' || trainArcIds.has(p.group),
   );
-  const opts = { dt: s.dt, h: s.fdStep };
+  const opts = { dt: s.dt, h: s.fdStep, firstStageSpan: s.arcGrowthFirstSpan };
   const fit = stagedFit(problem.structure, trainArcs, trainParams, opts);
   const heldIds = new Set([heldArc.id, ...heldProbes.map((a) => a.id)]);
   const local = problem.params.filter((p) => heldIds.has(p.group));
@@ -265,6 +268,11 @@ export function testExtension(
     }
   }
   const adoptable = pass && ev.evidence && ident.identifiable;
+  const names = {
+    bodies: Object.fromEntries(ctx.bodies.map((b) => [b.id, b.name])),
+    equipment: Object.fromEntries(ctx.ship.equipment.map((e) => [e.id, e.name])),
+  };
+  const diagnosis = diagnoseHeldOut(ho, extd.fit.converged, (id) => plainLabel(id, names));
   const { fit: _f, globalShiftSigma, ...hoRest } = ho;
   return {
     state: {
@@ -278,7 +286,7 @@ export function testExtension(
     heldOut: heldOutId,
     evidence: ev,
     identifiable: ident,
-    heldOutTest: { ...hoRest, globalShiftSigma },
+    heldOutTest: { ...hoRest, globalShiftSigma, diagnosis },
     fitted,
     adoptable,
   };

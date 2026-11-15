@@ -20,6 +20,12 @@ export interface ModelSettings {
   readonly dt: number;
   /** Central finite-difference step, in units of each parameter's scale (§4.3). */
   readonly fdStep: number;
+  /**
+   * [2C] Arc growing (§4.5) on a long arc: no first stage spans more than this, s; the stages
+   * then double up to the spec's 25%. A dive's 25% (about 2 h) is within it and keeps the spec's
+   * stages; a 39 h attempt's 10 h first stage lost the fit (R47), where 2–3 h stages converge.
+   */
+  readonly arcGrowthFirstSpan: number;
   /** Window rule (§5.1). */
   readonly windowSweep: number;
   readonly windowLnRange: number;
@@ -116,6 +122,7 @@ export const DEFAULT_SETTINGS: ModelSettings = {
   r0: 1.0e6,
   dt: 30,
   fdStep: 1e-3,
+  arcGrowthFirstSpan: 10_800,
   windowSweep: 0.7,
   windowLnRange: 0.15,
   windowMinFixes: 12,
