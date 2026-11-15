@@ -1,0 +1,14 @@
+{
+  "typecheck": "pass (full app/test TypeScript program with proposed source in memory)",
+  "equivalence": "pass",
+  "cases": 240,
+  "reused": 210,
+  "checks": [
+    "position bytes",
+    "dash-distance bytes",
+    "bounding box",
+    "bounding sphere",
+    "instance count",
+    "buffer identity at unchanged count"
+  ]
+}
