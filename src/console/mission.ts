@@ -145,6 +145,8 @@ export interface Debrief {
     readonly label: string;
     readonly value: string;
     readonly bad: boolean;
+    /** A measurement shown beside the forecasts, not a forecast. */
+    readonly measured?: boolean;
   }[];
 }
 
@@ -382,6 +384,14 @@ export function debrief(
   const stored = channelSpan(record, 'black-box.bytes');
   const closest = closestMeasured(record);
 
+  // Clearance can only be judged against objects the ship ranged.
+  let tightest: { id: string; clearance: number } | undefined;
+  for (const [id, r] of closest) {
+    const radius = bodies.find((b) => b.id === id)?.radius ?? 0;
+    const c = r - radius;
+    if (!tightest || c < tightest.clearance) tightest = { id, clearance: c };
+  }
+
   const constraints: DebriefLine[] = [];
   if (design) {
     constraints.push({
@@ -390,13 +400,6 @@ export function debrief(
       measured: main ? `${whole(main.last)} kg` : 'not recorded',
       met: main ? main.last >= design.reserve : null,
     });
-    // Clearance can only be judged against objects the ship ranged.
-    let tightest: { id: string; clearance: number } | undefined;
-    for (const [id, r] of closest) {
-      const radius = bodies.find((b) => b.id === id)?.radius ?? 0;
-      const c = r - radius;
-      if (!tightest || c < tightest.clearance) tightest = { id, clearance: c };
-    }
     constraints.push({
       label: 'clearance',
       planned: `≥ ${dist(design.clearance)}`,
@@ -453,13 +456,18 @@ export function debrief(
     .filter((x) => x.d.firstBeyond3Sigma !== null)
     .sort((a, b) => a.d.firstBeyond3Sigma! - b.d.firstBeyond3Sigma!)[0];
   if (record.outcome.kind === 'lost') {
+    const lostAt = record.outcome.t;
+    const forecastAtLoss = record.forecasts.some(
+      (f) => f.issuedAt <= lostAt && f.horizon >= lostAt,
+    );
     limiting = {
       label: `ship lost · ${record.outcome.cause}`,
       detail:
-        `T+${clock(record.outcome.t)}` +
+        `T+${clock(lostAt)}` +
         (contact && contact.kind === 'contact'
           ? ` · contact with ${contact.with ?? 'an object the ship could not identify'}`
-          : ''),
+          : '') +
+        (forecastAtLoss ? '' : ' · outside forecast coverage'),
     };
   } else if (firstLeft) {
     limiting = {
@@ -487,15 +495,43 @@ export function debrief(
     },
   ];
 
-  const forecasts = divergences.map(({ f, d }) => ({
-    label: `forecast T+${clock(f.issuedAt)} · v${f.modelVersion}`,
-    value: d.unmeasured
-      ? 'nothing measured while it was valid'
-      : d.firstBeyond3Sigma !== null
-        ? `left at T+${clock(d.firstBeyond3Sigma)} · worst ${fixed(d.maxSigmas ?? 0, 1)}σ`
-        : `held · worst ${fixed(d.maxSigmas ?? 0, 1)}σ`,
-    bad: d.firstBeyond3Sigma !== null,
-  }));
+  // Each forecast is judged only over what it covered and what was measured inside it (S9 R5):
+  // "held" says through when, and nothing after its end is credited to it or held against it.
+  const forecasts: Debrief['forecasts'][number][] = divergences.map(({ f, d }) => {
+    const ends = `ends T+${clock(f.horizon)}`;
+    const lastCompared = d.points.at(-1)?.t;
+    return {
+      label: `forecast T+${clock(f.issuedAt)} · v${f.modelVersion}`,
+      value: d.unmeasured
+        ? `not recorded: nothing measured while it ran · ${ends}`
+        : d.firstBeyond3Sigma !== null
+          ? `left at T+${clock(d.firstBeyond3Sigma)} · worst ${fixed(d.maxSigmas ?? 0, 1)}σ · ${ends}`
+          : `within envelope through T+${clock(lastCompared ?? f.issuedAt)} · worst ${fixed(d.maxSigmas ?? 0, 1)}σ · ${ends}`,
+      bad: d.firstBeyond3Sigma !== null,
+    };
+  });
+  // After the last forecast's end nothing was predicted: say so, rather than let "held" stand
+  // for the whole attempt, or a loss out there read as a disproved prediction.
+  const covered = Math.max(-Infinity, ...record.forecasts.map((f) => f.horizon));
+  if (Number.isFinite(covered) && lastT > covered)
+    forecasts.push({
+      label: 'no forecast after',
+      value:
+        `T+${clock(covered)}` +
+        (record.outcome.kind === 'lost'
+          ? ` · lost at T+${clock(lastT)}, outside forecast coverage`
+          : ` · flown to T+${clock(lastT)}`),
+      bad: record.outcome.kind === 'lost',
+    });
+  else if (!Number.isFinite(covered) && record.outcome.kind === 'lost')
+    forecasts.push({ label: 'forecast', value: 'none was issued this attempt', bad: true });
+  // Beside the forecasts, what was actually measured: the closest the ship came to anything it ranged.
+  forecasts.push({
+    label: 'closest measured',
+    value: tightest ? `${dist(tightest.clearance)} from ${tightest.id}` : 'nothing ranged',
+    bad: false,
+    measured: true,
+  });
 
   return {
     attemptId: record.id,

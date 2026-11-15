@@ -21,7 +21,7 @@ import {
 import { Actions, Button, Caption, Line } from '../controls.tsx';
 import { recorder } from '../data.ts';
 import type { Desk } from '../desk.ts';
-import { bytes, clock, duration, fixed, whole } from '../format.ts';
+import { bytes, clock, dist, duration, fixed, whole } from '../format.ts';
 import { APPROACH, EVIDENCE, debrief, describeDiff } from '../mission.ts';
 import type { Debrief } from '../mission.ts';
 
@@ -35,8 +35,23 @@ const outcomeText = (a: AttemptRecord): string =>
       ? 'completed'
       : a.outcome.kind;
 
+/** Distances one attempt measured the pull at, per body, from the model's local fits. */
+export interface MeasuredSpan {
+  readonly body: string;
+  readonly text: string;
+}
+
 /** The attempt judged against its own design. */
-export function DebriefView({ report }: { readonly report: Debrief }) {
+export function DebriefView({
+  report,
+  measured,
+  onModel,
+}: {
+  readonly report: Debrief;
+  /** What the attempt measured of the pull (S9 R6); absent until the model's report arrives. */
+  readonly measured?: readonly MeasuredSpan[];
+  readonly onModel?: () => void;
+}) {
   return (
     <>
       <ReadoutGrid columns={3}>
@@ -74,10 +89,36 @@ export function DebriefView({ report }: { readonly report: Debrief }) {
         <p className="cs-note">none recorded</p>
       )}
       {report.forecasts.map((f) => (
-        <Line key={f.label} label={f.label} tone="forecast" status={f.bad ? 'caution' : 'nominal'}>
+        <Line
+          key={f.label}
+          label={f.label}
+          tone={f.measured ? 'measured' : 'forecast'}
+          status={f.measured ? undefined : f.bad ? 'caution' : 'nominal'}
+        >
           {f.value}
         </Line>
       ))}
+      {measured ? (
+        <>
+          <Caption>the pull, measured</Caption>
+          {measured.length ? (
+            measured.map((m) => (
+              <Line key={m.body} label={m.body} tone="measured">
+                {m.text}
+              </Line>
+            ))
+          ) : (
+            <p className="cs-note">no local fit of the pull from this attempt</p>
+          )}
+          {onModel ? (
+            <Actions>
+              <Button tone="forecast" onClick={onModel}>
+                OPEN MODEL
+              </Button>
+            </Actions>
+          ) : null}
+        </>
+      ) : null}
       <Caption>cost</Caption>
       {report.cost.map((c) => (
         <Line key={c.label} label={c.label}>
@@ -139,6 +180,30 @@ export function BlackBoxPage({ desk }: { readonly desk: Desk }) {
     : [];
   const overlaid =
     desk.compare !== undefined && a && b && desk.compare[0] === a.id && desk.compare[1] === b.id;
+
+  // The distances this attempt measured the pull at, with their uncertainty (S9 R6).
+  const measured: MeasuredSpan[] | undefined =
+    desk.report && focused
+      ? desk.report.strength.flatMap((s) => {
+          const mine = s.points.filter((p) => p.attempt === focused.id && p.converged);
+          if (mine.length === 0) return [];
+          const lo = Math.min(...mine.map((p) => p.rMin));
+          const hi = Math.max(...mine.map((p) => p.rMax));
+          const rel = mine.map((p) => p.scaleSigma / Math.max(1e-9, Math.abs(p.scale)));
+          const best = Math.min(...rel);
+          const worst = Math.max(...rel);
+          return [
+            {
+              body: s.body,
+              text:
+                `${dist(lo)} – ${dist(hi)} · ${mine.length} fit${mine.length === 1 ? '' : 's'} · ±` +
+                (worst - best < 0.005
+                  ? `${fixed(best * 100, 1)}%`
+                  : `${fixed(best * 100, 1)}–${fixed(worst * 100, 1)}%`),
+            },
+          ];
+        })
+      : undefined;
 
   const rec = recorder(
     snapshot.world.ship,
@@ -225,7 +290,15 @@ export function BlackBoxPage({ desk }: { readonly desk: Desk }) {
           focused?.outcome.kind === 'in-progress' ? 'attempt in progress: so far' : undefined
         }
       >
-        {report ? <DebriefView report={report} /> : <p className="cs-note">no attempt on record</p>}
+        {report ? (
+          <DebriefView
+            report={report}
+            {...(measured ? { measured } : {})}
+            onModel={() => desk.setPage('model')}
+          />
+        ) : (
+          <p className="cs-note">no attempt on record</p>
+        )}
       </Panel>
 
       <Panel

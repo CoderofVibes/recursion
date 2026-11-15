@@ -260,6 +260,36 @@
   font-size: var(--rx-size-small);
   color: var(--rx-ink-dim);
 }
+/* The numbers behind a plot, folded away until asked for. */
+.cs-details {
+  font-size: var(--rx-size-small);
+  color: var(--rx-ink-dim);
+}
+.cs-details summary {
+  cursor: pointer;
+  letter-spacing: var(--rx-tracking-label);
+  text-transform: uppercase;
+}
+.cs-details summary:focus-visible {
+  outline: var(--rx-line-rule) solid var(--rx-ink);
+  outline-offset: var(--rx-unit);
+}
+.cs-table {
+  width: 100%;
+  margin-top: var(--rx-unit);
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+.cs-table th {
+  text-align: left;
+  font-weight: var(--rx-weight-regular);
+  color: var(--rx-ink-faint);
+  border-bottom: var(--rx-line-rule) solid var(--rx-panel-edge);
+}
+.cs-table td {
+  padding: var(--rx-unit) var(--rx-unit) 0 0;
+  color: var(--rx-ink);
+}
 .cs-change {
   margin: 0;
   padding-left: var(--rx-row-pad-x);

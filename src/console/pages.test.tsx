@@ -25,6 +25,8 @@ import { FlightHud } from './FlightHud.tsx';
 import { MapPlate } from './MapPlate.tsx';
 import { designMark, defaultDesign } from './mission.ts';
 import { ShipPanels } from './ShipPanels.tsx';
+import { testVerdict } from './pages/ModelPage.tsx';
+import type { ExtensionRecord } from '../model/index.ts';
 
 const pending = <T,>(): Promise<T> => new Promise<T>(() => undefined);
 
@@ -100,6 +102,53 @@ describe('console pages on the fixtures', () => {
     const { game } = stubGame();
     const html = renderToStaticMarkup(<ConsoleScreen desk={new Desk(game)} visible={false} />);
     expect(html).not.toContain('rx-panel');
+  });
+
+  it('says how many attempts are finished and what the next test fits and checks (S9 R6, R7)', () => {
+    const { game } = stubGame();
+    const desk = new Desk(game);
+    desk.page = 'model';
+    const html = renderToStaticMarkup(<ConsoleScreen desk={desk} visible />);
+    const finished = archive.attempts.filter((a) => a.outcome.kind !== 'in-progress');
+    expect(html).toContain('finished attempts');
+    if (finished.length >= 2) {
+      const held = finished.at(-1)!;
+      expect(html).toContain(`check on attempt ${held.index}`);
+      expect(html).not.toContain(`attempt${finished.length > 2 ? 's' : ''} ${held.index} ·`);
+    } else expect(html).toContain('test unavailable');
+    // The data behind the plot can be read without it.
+    expect(html).toContain('cs-table');
+  });
+
+  it('words a test result before its statistics, and never as ready when it is not', () => {
+    const base = {
+      state: { id: 'distance-law', status: 'candidate' },
+      training: ['a1'],
+      heldOut: 'a2',
+    } as unknown as ExtensionRecord;
+    expect(testVerdict(undefined, false)).toBeNull();
+    expect(testVerdict(undefined, true)?.text).toBe('adopted');
+    expect(testVerdict({ error: 'no fittable arc' }, false)?.text).toBe('no test: no fittable arc');
+    expect(testVerdict({ ...base, adoptable: true }, false)).toEqual({
+      text: 'passes · not adopted',
+      status: 'nominal',
+    });
+    const fails = {
+      ...base,
+      adoptable: false,
+      heldOutTest: { pass: false },
+    } as unknown as ExtensionRecord;
+    expect(testVerdict(fails, false)?.text).toMatch(/^fails/);
+    const weak = {
+      ...base,
+      adoptable: false,
+      heldOutTest: { pass: true },
+      evidence: { evidence: false, deltaCost: 1, penalty: 9 },
+    } as unknown as ExtensionRecord;
+    expect(testVerdict(weak, false)).toEqual({
+      text: 'insufficient evidence: the fit does not beat its penalty',
+      status: 'caution',
+    });
   });
 
   it('records the design and sets the ship up through commands only', () => {

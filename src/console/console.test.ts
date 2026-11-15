@@ -143,6 +143,37 @@ describe('debrief', () => {
     const reserved = withDesign(b!, { ...design, reserve: design.reserve - 500 });
     expect(changes(reserved, withDesign(a!)).some((l) => l.startsWith('reserve'))).toBe(true);
   });
+
+  it('bounds a forecast by its own end, and calls a later loss outside its coverage (S9 R5)', () => {
+    const lost = attempts.find((a) => a.outcome.kind === 'lost')!;
+    const lostAt = lost.outcome.kind === 'lost' ? lost.outcome.t : 0;
+    // The forecast ended before the loss.
+    const short = {
+      ...lost,
+      forecasts: lost.forecasts.map((f) => ({ ...f, horizon: Math.min(f.horizon, lostAt - 28) })),
+    } as AttemptRecord;
+    const report = debrief(short, { ...archive, attempts: [short] }, bodies);
+    const after = report.forecasts.find((f) => f.label === 'no forecast after');
+    expect(after?.value).toBe(
+      `T+${clock(lostAt - 28)} · lost at T+${clock(lostAt)}, outside forecast coverage`,
+    );
+    expect(report.limiting?.detail).toContain('outside forecast coverage');
+    // Each forecast's own line names its end, and never says plain "held".
+    for (const f of report.forecasts.filter((x) => x.label.startsWith('forecast T+')))
+      expect(f.value).toMatch(/ends T\+|^left at/);
+    expect(report.forecasts.some((f) => f.value.startsWith('held'))).toBe(false);
+  });
+
+  it('keeps the moment a forecast was left, and reports an unmeasured one as not recorded', () => {
+    const lost = attempts.find((a) => a.outcome.kind === 'lost')!;
+    const report = debrief(lost, archive, bodies);
+    for (const f of report.forecasts.filter((x) => x.label.startsWith('forecast T+')))
+      expect(f.value).toMatch(/^(left at T\+\S+|within envelope through T\+\S+|not recorded: )/);
+    const blind = { ...lost, measurements: [] } as AttemptRecord;
+    const none = debrief(blind, { ...archive, attempts: [blind] }, bodies);
+    for (const f of none.forecasts.filter((x) => x.label.startsWith('forecast T+')))
+      expect(f.value).toMatch(/^not recorded/);
+  });
 });
 
 describe('instrument rows', () => {

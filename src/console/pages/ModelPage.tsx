@@ -21,7 +21,7 @@ import type { Status } from '../../theme/components/index.ts';
 import { Actions, Button, Caption, Line, SelectField } from '../controls.tsx';
 import { validatedSpans, visited } from '../data.ts';
 import type { Desk } from '../desk.ts';
-import { dist, duration, fixed, sci } from '../format.ts';
+import { dist, duration, fixed, sci, whole } from '../format.ts';
 import { StrengthPlot } from '../StrengthPlot.tsx';
 import type { StrengthDot } from '../StrengthPlot.tsx';
 
@@ -54,6 +54,30 @@ function ruleStatus(ext: ExtensionState | undefined): { text: string; status: St
 const isRecord = (t: ExtensionRecord | { error: string } | undefined): t is ExtensionRecord =>
   t !== undefined && !('error' in t);
 
+/**
+ * A test's result in plain words before its statistics (S9 R7): insufficient evidence, fails,
+ * passes but not adopted, or adopted. Never a readiness state the numbers do not support.
+ */
+export function testVerdict(
+  result: ExtensionRecord | { error: string } | undefined,
+  adopted: boolean,
+): { text: string; status: Status } | null {
+  if (adopted) return { text: 'adopted', status: 'nominal' };
+  if (!result) return null;
+  if ('error' in result) return { text: `no test: ${result.error}`, status: 'caution' };
+  if (result.adoptable) return { text: 'passes · not adopted', status: 'nominal' };
+  if (result.heldOutTest && !result.heldOutTest.pass)
+    return { text: 'fails: the held-out attempt departs from it', status: 'caution' };
+  if (result.identifiable && !result.identifiable.identifiable)
+    return {
+      text: `insufficient evidence: ${result.identifiable.reasons.join('; ') || 'not identifiable'}`,
+      status: 'caution',
+    };
+  if (result.evidence && !result.evidence.evidence)
+    return { text: 'insufficient evidence: the fit does not beat its penalty', status: 'caution' };
+  return { text: 'not adoptable', status: 'caution' };
+}
+
 export function ModelPage({ desk }: { readonly desk: Desk }) {
   const { game } = desk;
   const [heldOut, setHeldOut] = useState('');
@@ -72,7 +96,12 @@ export function ModelPage({ desk }: { readonly desk: Desk }) {
 
   // Strength against distance: the model's local fits. The report says which attempt and which
   // tracked rock each came from; until it arrives, the state's own calibration windows are drawn.
-  const strength: { body: string; points: StrengthDot[] }[] = report
+  // The same fits as rows, for reading without the plot (S9 R7): source, distance, strength ± σ.
+  const strength: {
+    body: string;
+    points: StrengthDot[];
+    rows: { key: string; source: string; distance: string; value: string }[];
+  }[] = report
     ? report.strength.map((body) => ({
         body: body.body,
         points: body.points
@@ -84,6 +113,15 @@ export function ModelPage({ desk }: { readonly desk: Desk }) {
             probe: pt.probe !== undefined,
             current: pt.attempt === status.attemptId,
           })),
+        rows: body.points.map((pt) => ({
+          key: pt.window,
+          source:
+            `attempt ${archive.attempts.find((a) => a.id === pt.attempt)?.index ?? '—'}` +
+            (pt.probe ? ` · rock ${pt.probe}` : '') +
+            (pt.converged ? '' : ' · not converged'),
+          distance: `${dist(pt.distance)} (${dist(pt.rMin)} – ${dist(pt.rMax)})`,
+          value: `${fixed(pt.scale, 3)} ±${fixed(pt.scaleSigma, 3)}`,
+        })),
       }))
     : model.calibration.map((profile) => ({
         body: profile.body,
@@ -93,6 +131,12 @@ export function ModelPage({ desk }: { readonly desk: Desk }) {
           sigma: w.sigma,
           probe: false,
           current: false,
+        })),
+        rows: profile.windows.map((w, i) => ({
+          key: String(i),
+          source: 'calibration',
+          distance: dist(w.distance),
+          value: `${fixed(w.scale, 3)} ±${fixed(w.sigma, 3)}`,
         })),
       }));
 
@@ -106,10 +150,11 @@ export function ModelPage({ desk }: { readonly desk: Desk }) {
     : model.parameters.filter((p) => /^(thruster|sensor)\./.test(p.id) && !p.arc);
 
   const test = (rule: string): void => {
-    const training = finished.filter((a) => a.id !== held).map((a) => a.id);
-    if (!game.rules || !held || training.length === 0) return;
+    // Training never includes the held-out attempt.
+    const fitOn = finished.filter((a) => a.id !== held).map((a) => a.id);
+    if (!game.rules || !held || fitOn.length === 0) return;
     setBusy(rule);
-    game.rules.test(rule, training, held).then(
+    game.rules.test(rule, fitOn, held).then(
       (result) => {
         desk.tests.set(rule, result);
         setBusy('');
@@ -143,6 +188,27 @@ export function ModelPage({ desk }: { readonly desk: Desk }) {
   const confounding = report?.confounding;
   const failure = desk.modelError();
 
+  // Which finished attempts the model could use, and why TEST is unavailable when it is (S9 R6).
+  const indexOf = (id: string): number | string =>
+    archive.attempts.find((a) => a.id === id)?.index ?? id;
+  const unused = new Map(
+    (report?.coverage ?? [])
+      .filter((c) => !c.used)
+      .map((c) => [c.attempt, c.missing[0] ?? 'nothing the model can fit'] as const),
+  );
+  const training = finished.filter((a) => a.id !== held);
+  const usableTraining = training.filter((a) => !unused.has(a.id));
+  const unavailable = !game.rules
+    ? 'the model here is a stand-in: rules cannot be tested'
+    : finished.length < 2
+      ? `a test needs two finished attempts: one to fit the rule, one held out to check it (${finished.length} finished)`
+      : unused.has(held)
+        ? `attempt ${indexOf(held)} cannot be held out: ${unused.get(held)}`
+        : usableTraining.length === 0
+          ? `no attempt left to fit the rule: ${training.map((a) => `attempt ${a.index}: ${unused.get(a.id)}`).join('; ')}`
+          : null;
+  const latest = snapshot.forecasts.at(-1);
+
   return (
     <div className="cs-grid">
       <Panel
@@ -152,9 +218,11 @@ export function ModelPage({ desk }: { readonly desk: Desk }) {
         statusLine={
           failure
             ? `model fault: ${failure}`
-            : `${model.basedOn.attempts.length} attempts · ${model.basedOn.measurementCount.toLocaleString('en-US')} measurements`
+            : report?.fitFailure
+              ? `▲ the joint fit could not be solved: ${report.fitFailure}. Shared values held at their priors; each attempt fitted on its own`
+              : `${model.basedOn.attempts.length} attempts · ${whole(model.basedOn.measurementCount)} measurements`
         }
-        status={failure ? 'warning' : 'nominal'}
+        status={failure ? 'warning' : report?.fitFailure ? 'caution' : 'nominal'}
       >
         <ReadoutGrid columns={3}>
           <Readout label="Version" value={`v${model.version}`} tone="forecast" />
@@ -216,6 +284,31 @@ export function ModelPage({ desk }: { readonly desk: Desk }) {
               validated={spans.get(body.body) ?? []}
               {...(visits.get(body.body) ? { visits: visits.get(body.body)! } : {})}
             />
+            {body.rows.length ? (
+              <details className="cs-details">
+                <summary>
+                  data · {body.rows.length} fit{body.rows.length === 1 ? '' : 's'}
+                </summary>
+                <table className="cs-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">source</th>
+                      <th scope="col">distance</th>
+                      <th scope="col">strength ±σ</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {body.rows.map((r) => (
+                      <tr key={r.key}>
+                        <td>{r.source}</td>
+                        <td>{r.distance}</td>
+                        <td>{r.value}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </details>
+            ) : null}
           </div>
         ))}
         <p className="cs-legend">
@@ -236,11 +329,20 @@ export function ModelPage({ desk }: { readonly desk: Desk }) {
           onChange={setHeldOut}
           disabled={finished.length < 2}
         />
-        {finished.length < 2 ? (
-          <p className="cs-note">
-            a test needs two finished attempts: one to fit the rule, one held out to check it
-          </p>
-        ) : null}
+        <Line label="finished attempts" status={finished.length >= 2 ? 'nominal' : 'stale'}>
+          {finished.length}
+          {report ? ` · ${finished.filter((a) => !unused.has(a.id)).length} used by the model` : ''}
+        </Line>
+        {unavailable ? (
+          <Line label="test unavailable" status="caution">
+            {unavailable}
+          </Line>
+        ) : (
+          <Line label="next test">
+            fit on attempt{training.length > 1 ? 's' : ''} {training.map((a) => a.index).join(', ')}{' '}
+            · check on attempt {indexOf(held)}
+          </Line>
+        )}
         {RULES.map((rule) => {
           const ext = model.extensions.find((e) => e.id === rule.id);
           const state = ruleStatus(ext);
@@ -249,6 +351,7 @@ export function ModelPage({ desk }: { readonly desk: Desk }) {
           const adoptable = isRecord(result) ? result.adoptable : false;
           const v = isRecord(result) ? result.heldOutTest : undefined;
           const fitted = isRecord(result) ? Object.entries(result.fitted ?? {}) : [];
+          const verdict = testVerdict(result, adopted);
           return (
             <div className="cs-item" key={rule.id}>
               <div className="cs-item__head">
@@ -258,6 +361,35 @@ export function ModelPage({ desk }: { readonly desk: Desk }) {
                 </span>
               </div>
               <p className="cs-note">{rule.detail}</p>
+              {isRecord(result) ? (
+                <Line label="tested">
+                  fit on attempt{result.training.length > 1 ? 's' : ''}{' '}
+                  {result.training.map(indexOf).join(', ')}
+                  {result.heldOut ? ` · checked on attempt ${indexOf(result.heldOut)}` : ''}
+                </Line>
+              ) : null}
+              {verdict ? (
+                <Line label="result" status={verdict.status} tone="forecast">
+                  {verdict.text}
+                </Line>
+              ) : null}
+              {adopted ? (
+                // Adoption changes the model, never a plan: the next forecast is the player's to
+                // ask for (S9 R8).
+                <>
+                  <Line label="in force" tone="forecast">
+                    forecasts from now use model v{model.version}
+                    {latest && latest.modelVersion < model.version
+                      ? ` · the issued forecast is from v${latest.modelVersion}`
+                      : ''}
+                  </Line>
+                  <Actions>
+                    <Button tone="forecast" onClick={() => desk.setPage('plan')}>
+                      OPEN PLAN
+                    </Button>
+                  </Actions>
+                </>
+              ) : null}
               {v ? (
                 <>
                   <Line
@@ -295,7 +427,7 @@ export function ModelPage({ desk }: { readonly desk: Desk }) {
               <Actions>
                 <Button
                   tone="forecast"
-                  disabled={!game.rules || finished.length < 2 || adopted || busy !== ''}
+                  disabled={unavailable !== null || adopted || busy !== ''}
                   onClick={() => test(rule.id)}
                 >
                   {busy === rule.id ? 'TESTING' : 'TEST'}
@@ -374,12 +506,12 @@ export function ModelPage({ desk }: { readonly desk: Desk }) {
             ρ {fixed(pair.rho, 2)}
           </Line>
         ))}
-        <Caption>what each attempt lacks</Caption>
+        <Caption>what each attempt gives the model</Caption>
         {(report?.coverage ?? []).slice(-4).map((c) => (
           <Line
             key={c.attempt}
-            label={c.attempt.replace('attempt-', 'attempt ')}
-            status={c.missing.length ? 'caution' : 'nominal'}
+            label={`attempt ${indexOf(c.attempt)} · ${c.used ? 'used' : 'not used'}`}
+            status={!c.used ? 'warning' : c.missing.length ? 'caution' : 'nominal'}
           >
             {c.missing.length
               ? c.missing.join('; ')

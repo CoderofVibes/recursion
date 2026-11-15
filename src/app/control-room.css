@@ -409,12 +409,24 @@ body,
   box-shadow: var(--rx-pip-glow) var(--rx-blackbox);
 }
 .cr-black span {
+  /* Hangs just under the pip, however many lines it has. */
   transform: translateX(-50%);
-  bottom: calc(12vh - var(--rx-hud-margin));
+  bottom: auto;
+  top: calc(100% - 12vh + var(--rx-gap));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--rx-unit);
   font-size: var(--rx-size-small);
   font-weight: var(--rx-weight-strong);
   letter-spacing: var(--rx-tracking-label);
+  white-space: nowrap;
   color: var(--rx-blackbox);
+}
+.cr-black small {
+  font-size: var(--rx-size-small);
+  font-weight: var(--rx-weight-regular);
+  opacity: var(--rx-stale);
 }
 .cr-black:is([data-stage='pip'], [data-stage='reset']) :is(i, span) {
   opacity: 1;

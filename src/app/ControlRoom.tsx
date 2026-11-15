@@ -69,6 +69,10 @@ export function ControlRoom({ game, modelError, erase }: ControlRoomProps) {
   const title =
     ui.mode === 'map' && ui.region ? `MAP  ›  ${game.briefing.name.toUpperCase()}` : TITLE[ui.mode];
   const dying = ui.loss !== null;
+  // Finished attempts Black Box holds, counted only while the loss screen is up.
+  const kept = dying
+    ? game.blackBox.archive().attempts.filter((a) => a.outcome.kind !== 'in-progress').length
+    : 0;
 
   return (
     <main
@@ -142,7 +146,15 @@ export function ControlRoom({ game, modelError, erase }: ControlRoomProps) {
       {/* Loss of the ship: black, then one orange pip that survives. */}
       <div className="cr-black" data-stage={ui.loss ?? undefined}>
         <i />
-        <span>ATTEMPT {status.attemptIndex + (status.phase === 'ended' ? 1 : 0)}</span>
+        <span>
+          ATTEMPT {status.attemptIndex + (status.phase === 'ended' ? 1 : 0)}
+          {/* What survives, as a measured fact (S9 R6): nothing about what it means. */}
+          {kept > 0 ? (
+            <small>
+              BLACK BOX RETAINED · {kept} ATTEMPT{kept === 1 ? '' : 'S'}
+            </small>
+          ) : null}
+        </span>
       </div>
       <div className="cr-hit" />
     </main>
