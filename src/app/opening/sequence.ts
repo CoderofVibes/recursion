@@ -1,59 +1,166 @@
-import { hudMotion, lossSequence, motion, roomMotion } from '../../theme/index.ts';
+import { lossSequence } from '../../theme/index.ts';
 
-/** Seconds on the presentation clock. The simulation clock is still held at arrival. */
-const calmEnd = lossSequence.resetAt;
-const alarmEnd = calmEnd + motion.settle / 1000;
-const impactEnd = alarmEnd + lossSequence.shakeEnd;
-const darkEnd = impactEnd + roomMotion.travel;
-const titleEnd = darkEnd + motion.breathe / 1000;
-export const OPENING_END = titleEnd + hudMotion.lossFade / 1000;
+const TREMOR = 2.8;
+const STUMBLE = 4.1;
+const FAILURE = 5.65;
+const CUT = FAILURE + lossSequence.shakeEnd;
+const TITLE = 8;
+const TITLE_FADE = 10.8;
+const ARRIVAL_SKY = 11.55;
+const REVEAL = 12.2;
+const SETTLED = 13.75;
+export const OPENING_END = 14;
 
-/** A complete pulse takes at least two alert-in beats (1.67 Hz with the stock theme). */
-export const ALARM_PERIOD = Math.max(1 / 3, (2 * motion.alertIn) / 1000);
+/** S23 pulse starts. The envelope stays local to two room strips. */
+export const ALARM_STARTS = [2.9, 4.1, 4.77, 5.65, 6.32] as const;
+export const ALARM_DURATION = 0.24;
 
-export type OpeningBeat = 'home' | 'alarm' | 'impact' | 'dark' | 'title' | 'wake' | 'end';
+const CUES = [
+  { at: 2.8, id: 'opening-rumble' },
+  { at: 2.9, id: 'opening-alarm' },
+  { at: 4.1, id: 'opening-alarm' },
+  { at: 4.77, id: 'opening-alarm' },
+  { at: 5.65, id: 'loss-failure' },
+  { at: 6.95, id: 'black-cut' },
+  { at: 8, id: 'opening-title' },
+  { at: 12.2, id: 'room-wake' },
+] as const;
+export type OpeningCue = (typeof CUES)[number]['id'];
+export const openingCues = (from: number, to: number) =>
+  CUES.filter(({ at }) => from < at && at <= to);
+
+type Vector = readonly [number, number, number];
+const ZERO: Vector = [0, 0, 0];
+
+export type OpeningBeat =
+  'home' | 'alarm' | 'stumble' | 'impact' | 'dark' | 'title' | 'arrival' | 'wake' | 'end';
 
 export interface OpeningFrame {
   readonly beat: OpeningBeat;
   readonly blackout: number;
   readonly title: number;
   readonly alarm: number;
-  readonly shakeY: number;
-  readonly roll: number;
+  readonly light: number;
+  readonly console: 'cruise' | 'caution' | 'warning' | 'off';
+  readonly translation: Vector;
+  /** Pitch, yaw and roll, radians. */
+  readonly rotation: Vector;
+  readonly lens: number;
+  readonly wake: number;
+  readonly ambience: number;
 }
 
-const lerp01 = (n: number) => Math.min(1, Math.max(0, n));
-const ease = (n: number) => {
-  const u = lerp01(n);
-  return u * u * (3 - 2 * u);
-};
+const clamp01 = (n: number) => Math.min(1, Math.max(0, n));
+const range = (t: number, from: number, to: number) => clamp01((t - from) / (to - from));
+const mix = (a: number, b: number, u: number) => a + (b - a) * u;
+const ease = (u: number) => u * u * (3 - 2 * u);
+const radians = (degrees: number) => (degrees * Math.PI) / 180;
+const STUMBLES = [
+  [STUMBLE, ZERO, ZERO],
+  [4.35, [0.1, -0.07, 0.06], [-2.5, -1.5, 2.8]],
+  [4.78, [0.025, -0.015, 0.015], [-0.5, -0.3, 0.5]],
+  [5.02, ZERO, ZERO],
+  [5.22, [-0.08, -0.05, 0.045], [-1.7, 1.2, -2.2]],
+  [FAILURE, ZERO, ZERO],
+] as const;
 
-/** Deterministic at a given time. Alerts form one continuous pulse train across the impact. */
-export function sampleOpening(t: number, reducedMotion: boolean): OpeningFrame {
-  const base = { blackout: 0, title: 0, alarm: 0, shakeY: 0, roll: 0 };
-  if (t < calmEnd) return { ...base, beat: 'home' };
-  if (t < impactEnd) {
-    const alarmTime = t - calmEnd;
-    const impactTime = Math.max(0, t - alarmEnd);
-    const phase = (alarmTime / ALARM_PERIOD) % 1;
-    const alarm = reducedMotion ? 1 : (1 - Math.cos(2 * Math.PI * phase)) / 2;
-    const jolt = ease(impactTime / (motion.fast / 1000));
+function stumbleAt(t: number): { translation: Vector; rotation: Vector } {
+  for (let i = 1; i < STUMBLES.length; i++) {
+    const [from, p, r] = STUMBLES[i - 1]!;
+    const [to, q, s] = STUMBLES[i]!;
+    if (t < from || t > to) continue;
+    const progress = ease(range(t, from, to));
     return {
-      ...base,
-      beat: t < alarmEnd ? 'alarm' : 'impact',
-      alarm,
-      shakeY: reducedMotion ? 0 : Math.sin(impactTime * 24) * lossSequence.shake * jolt,
-      roll: reducedMotion ? 0 : Math.sin(impactTime * 11) * lossSequence.roll * jolt,
+      translation: [
+        mix(p[0], q[0], progress),
+        mix(p[1], q[1], progress),
+        mix(p[2], q[2], progress),
+      ],
+      rotation: [
+        radians(mix(r[0], s[0], progress)),
+        radians(mix(r[1], s[1], progress)),
+        radians(mix(r[2], s[2], progress)),
+      ],
     };
   }
-  if (t < darkEnd) return { ...base, beat: 'dark', blackout: 1 };
-  if (t < titleEnd) {
-    const titleIn = ease((t - darkEnd) / (motion.settle / 1000));
-    const titleOut = ease((titleEnd - t) / (motion.base / 1000));
-    return { ...base, beat: 'title', blackout: 1, title: Math.min(titleIn, titleOut) };
+  return { translation: ZERO, rotation: ZERO };
+}
+
+function shakeAt(t: number): { translation: Vector; rotation: Vector } {
+  const tremor = Math.max(0, t - TREMOR);
+  const stumble = range(t, STUMBLE, FAILURE);
+  const failureTime = Math.max(0, t - FAILURE);
+  const failure = ease(range(t, FAILURE, FAILURE + 0.12));
+  const decay = 1 - ease(range(t, FAILURE + 0.12, CUT));
+  const rise = range(t, TREMOR, 3.8);
+  const y = mix(0.012 * rise + 0.026 * stumble, lossSequence.shake, failure) * decay;
+  const roll = mix(radians(0.2 * rise + 0.35 * stumble), lossSequence.roll, failure) * decay;
+  const cyclesAtFailure = (FAILURE - TREMOR) * 3.2 + (FAILURE - STUMBLE) * 0.65;
+  const base = cyclesAtFailure + failureTime * 4.5;
+  const ramp = Math.min(failureTime, 0.12);
+  const extra = failureTime - ramp + (ramp * ramp) / (2 * 0.12);
+  const cycles =
+    t < FAILURE ? tremor * 3.2 + (FAILURE - STUMBLE) * 0.65 * stumble ** 2 : base + 2 * extra;
+  const rollCycles = t < FAILURE ? cycles : base + 0.1 * extra;
+  const offset = stumbleAt(t);
+  const [dx, dy, dz] = offset.translation;
+  const [pitch, yaw, tilt] = offset.rotation;
+  return {
+    translation: [dx, dy + Math.sin(2 * Math.PI * cycles) * y, dz],
+    rotation: [pitch, yaw, tilt + Math.sin(2 * Math.PI * rollCycles) * roll],
+  };
+}
+
+function alarmAt(t: number): number {
+  const start = ALARM_STARTS.find((at) => at <= t && t < at + ALARM_DURATION);
+  if (start === undefined) return 0;
+  const age = t - start;
+  return ease(range(age, 0, 0.06)) * (1 - ease(range(age, 0.14, ALARM_DURATION)));
+}
+
+/** Sample the authored S23 beat sheet with visible elapsed seconds. */
+export function sampleOpening(t: number, reducedMotion: boolean): OpeningFrame {
+  const wake = reducedMotion ? 1 : ease(range(t, REVEAL, SETTLED));
+  const base: OpeningFrame = {
+    beat: 'home',
+    blackout: 0,
+    title: 0,
+    alarm: 0,
+    light: 1,
+    console: 'cruise',
+    translation: ZERO,
+    rotation: ZERO,
+    lens: 0,
+    wake,
+    ambience: 1,
+  };
+  if (t < TREMOR) return base;
+  if (t < CUT) {
+    const pose = reducedMotion ? { translation: ZERO, rotation: ZERO } : shakeAt(t);
+    return {
+      ...base,
+      ...pose,
+      beat: t < STUMBLE ? 'alarm' : t < FAILURE ? 'stumble' : 'impact',
+      light:
+        t < FAILURE
+          ? mix(1, 0.65, range(t, STUMBLE, FAILURE))
+          : mix(0.65, 0.1, range(t, FAILURE, CUT)),
+      console: t < 5.02 ? 'caution' : t < FAILURE + lossSequence.hologramEnd ? 'warning' : 'off',
+      alarm: reducedMotion ? (t < FAILURE + lossSequence.hologramEnd ? 1 : 0) : alarmAt(t),
+      lens: reducedMotion ? 0 : ease(range(t, 5.35, 6.35)),
+      ambience: 1 - range(t, FAILURE, CUT),
+    };
   }
+  if (t < TITLE) return { ...base, beat: 'dark', blackout: 1, ambience: 0 };
+  if (t < 11.35) {
+    const title = ease(range(t, TITLE, 8.65)) * (1 - ease(range(t, TITLE_FADE, 11.35)));
+    return { ...base, beat: 'title', blackout: 1, title, ambience: 0 };
+  }
+  if (t < ARRIVAL_SKY) return { ...base, beat: 'dark', blackout: 1, ambience: 0 };
+  if (t < REVEAL) return { ...base, beat: 'arrival', blackout: 1, ambience: 0 };
   if (t < OPENING_END) {
-    return { ...base, beat: 'wake', blackout: 1 - ease((t - titleEnd) / (OPENING_END - titleEnd)) };
+    const reveal = ease(range(t, REVEAL, SETTLED));
+    return { ...base, beat: 'wake', blackout: 1 - reveal, ambience: reveal };
   }
   return { ...base, beat: 'end' };
 }

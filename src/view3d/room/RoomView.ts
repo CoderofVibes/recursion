@@ -206,14 +206,16 @@ export class RoomView {
     const { camera } = this;
     camera.position.set(...shot.position);
     camera.rotation.set(...shot.rotation, 'YXZ');
-    this.shell.setLevel(shot.light);
+    this.shell.setLevel(shot.light, shot.alarm);
     this.shell.setConsole(shot.console, null);
+    this.shell.setConsoleMap(shot.consoleMap);
     this.shell.setHologramLight(0);
     const hadHologram = this.holoRoot.visible;
     const hadCone = this.cone.visible;
     this.holoRoot.visible = false;
     this.cone.visible = false;
     this.composer.render();
+    this.shell.setConsoleMap();
     this.holoRoot.visible = hadHologram;
     this.cone.visible = hadCone;
   }
@@ -270,7 +272,7 @@ export class RoomView {
     this.events.loss('start');
   }
 
-  frame(dt: number, data: RoomFrame): void {
+  frame(dt: number, data: RoomFrame, cameraOverride?: Pick<RoomShot, 'position' | 'rotation'>): void {
     this.time += dt;
     this.resize();
     if (this.width === 0 || this.height === 0) return;
@@ -299,7 +301,10 @@ export class RoomView {
     }
 
     // Camera.
-    if (this.trans) {
+    if (cameraOverride) {
+      camera.position.set(...cameraOverride.position);
+      camera.rotation.set(...cameraOverride.rotation, 'YXZ');
+    } else if (this.trans) {
       const tr = this.trans;
       tr.t = Math.min(1, tr.t + dt / roomMotion.travel);
       const e = ease(tr.t);

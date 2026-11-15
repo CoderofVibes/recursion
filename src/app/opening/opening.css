@@ -1,0 +1,65 @@
+.rx-opening {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--rx-void);
+  color: var(--rx-ink);
+  font-family: var(--rx-font);
+}
+
+.rx-opening-canvas,
+.rx-opening-labels,
+.rx-opening-black {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.rx-opening-labels,
+.rx-opening-black {
+  pointer-events: none;
+}
+
+.rx-opening-black {
+  background: var(--rx-void);
+}
+
+.rx-opening-title {
+  position: relative;
+  margin: 0;
+  font-size: clamp(var(--rx-hud-margin), 7vw, var(--rx-hud-top));
+  font-weight: var(--rx-weight-strong);
+  letter-spacing: var(--rx-tracking-label);
+}
+
+.rx-opening-controls {
+  position: absolute;
+  right: var(--rx-gap);
+  bottom: var(--rx-gap);
+  display: flex;
+  align-items: center;
+  gap: var(--rx-gap);
+  padding: var(--rx-panel-pad-y) var(--rx-panel-pad-x);
+  background: var(--rx-hud-plate);
+  border: var(--rx-line-rule) solid var(--rx-panel-edge);
+  border-radius: var(--rx-panel-radius);
+  font-size: var(--rx-size-label);
+}
+
+.rx-opening-controls label {
+  display: flex;
+  align-items: center;
+  gap: var(--rx-row-gap);
+}
+
+.rx-opening-controls button {
+  font: inherit;
+  color: inherit;
+  background: var(--rx-panel);
+  border: var(--rx-line-rule) solid var(--rx-panel-edge);
+  border-radius: var(--rx-panel-radius);
+  padding: var(--rx-panel-pad-y) var(--rx-panel-pad-x);
+}
