@@ -9,11 +9,12 @@ import console from 'node:console';
 import { createServer } from 'vite';
 
 const root = fileURLToPath(new URL('../../../', import.meta.url));
-const output = fileURLToPath(new URL('./admission-reports/', import.meta.url));
+const output = fileURLToPath(new URL('./admission-reports/live-field-v2/', import.meta.url));
 const args = process.argv.slice(2);
-if (args.length !== 1 || !/^(all|list|s22-\d+-[a-z-]+)$/.test(args[0]))
+const repeat = args[1] === '--repeat';
+if (args.length !== (repeat ? 2 : 1) || !/^(all|list|s22-\d+-[a-z-]+)$/.test(args[0]))
   throw new Error(
-    'Usage: node src/content/inverse-wells/admission-runner.mjs all|list|s22-22000-negative-y',
+    'Usage: node src/content/inverse-wells/admission-runner.mjs all|list|s22-22000-negative-y [--repeat]',
   );
 const hash = (value) => createHash('sha256').update(value).digest('hex');
 async function fingerprint() {
@@ -57,6 +58,9 @@ try {
     const chosen = args[0] === 'all' ? cases : cases.filter((entry) => idOf(entry) === args[0]);
     if (!chosen.length) throw new Error(`Unknown admission case ${args[0]}`);
     const { runFlight } = await server.ssrLoadModule('/tools/harness/flight.ts');
+    const { observeGardenAdmission } = await server.ssrLoadModule(
+      '/src/content/inverse-wells/admission-observer.ts',
+    );
     await mkdir(output, { recursive: true });
     for (const entry of chosen) {
       const { flight, setup, condition } = gardenAdmission(entry.catalogueSeed, entry.variant);
@@ -65,21 +69,43 @@ try {
       );
       const report = {
         protocol: ADMISSION_PROTOCOL,
-        command: ['node', 'src/content/inverse-wells/admission-runner.mjs', idOf(entry)],
+        command: [
+          'node',
+          'src/content/inverse-wells/admission-runner.mjs',
+          idOf(entry),
+          ...(repeat ? ['--repeat'] : []),
+        ],
         provenance: before,
         entry: { ...entry, condition, contentVersion: setup.contentVersion },
         acceptance: {
           status: 'incomplete',
           blockers: [
-            'R30: births, precursor warp policy, saved lifecycle, whole-hull throat loss and work ledger are not wired in this baseline.',
-            'R31/R32: optical funnels and acquired field geometry/response are not mounted/produced. Packet counts do not certify precursor coverage.',
+            'R30 lifecycle and fixed-attitude throat sweeps are wired; continuous rotating/deploying hull clearance, field work and whole-session restoration remain uncertified.',
+            'A production seen flag or packet count does not certify precursor visibility, camera detection or an inferred funnel rule (R31/R32/R36/R45).',
             '3E clearance covers bodies/asteroids only: its wholeFlightSweptMinimumMeters is NOT all-funnel clearance.',
             "Continuous late arrivals, both branch orders, cross-transfer and carried-rule comparison need the retained owners' integration.",
           ],
         },
       };
       try {
-        report.result = await runFlight(flight, setup);
+        const observer = observeGardenAdmission(setup);
+        report.result = await runFlight(flight, observer.setup);
+        report.fieldObservations = observer.finish();
+        if (repeat) {
+          console.log(
+            `Repeating ${flight.id} for exact result and field-observation comparison...`,
+          );
+          const second = gardenAdmission(entry.catalogueSeed, entry.variant);
+          const observer2 = observeGardenAdmission(second.setup);
+          const result2 = await runFlight(second.flight, observer2.setup);
+          const firstHash = hash(
+            JSON.stringify({ result: report.result, fields: report.fieldObservations }),
+          );
+          const secondHash = hash(JSON.stringify({ result: result2, fields: observer2.finish() }));
+          report.repeat = { passed: firstHash === secondHash, firstHash, secondHash };
+          if (!report.repeat.passed)
+            throw new Error('Full result or field observation differs on exact repetition');
+        }
         report.execution = report.result.modelError === null ? 'completed' : 'model-error';
         const r = report.result.metrics.resources;
         report.budgetTargets = {

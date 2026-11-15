@@ -1,5 +1,83 @@
 # S22 production-harness admission probes
 
+## Live-field continuation
+
+Request 9 now uses the merged production lifecycle and throat-hazard integration.
+The updated runner writes a separate `admission-reports/live-field-v2/` directory,
+preserving every static-field report below. It repeats full results and the
+content-owned observations of production hooks with:
+
+```
+node src/content/inverse-wells/admission-runner.mjs all --repeat
+node src/content/inverse-wells/admission-summary.mjs
+node src/content/inverse-wells/admission-probes.mjs
+```
+
+The 24-case matrix retains the original 22 controls and adds positive-y
+recorder/model and cutoff-abort cases. Read-only hook observers collect actual
+birth/veto epochs, phase counts, throat contacts and sweep coverage. They return
+the production results unchanged. No lifecycle, loss policy, solver, recorder,
+field geometry or player model is replaced. This is author admission evidence;
+it does not certify camera precursor detection or acquired-rule playability.
+
+**Results: execution completed; admission remains incomplete.** See the
+[24-case table and source manifests](admission-reports/live-field-v2/SUMMARY.md).
+Every complete result and hook-observation object repeated exactly. The nominal
+catalogue reaches the forward exit in **11 of 14** flights; seed 22020 negative-y
+and both directions for seed 22029 remain in progress at 36,000 s. Each nominal
+flight consumes **122.365946 kg main** and **0.556209–0.584019 kg RCS**, below the
+1,000 kg / 30 kg targets, with no reported resource failure. All 650 scheduled
+births occur in each nominal flight, leaving all 2,601 sites active; none is vetoed
+in those nominal starts. The production throat hook runs on every flight tick.
+
+Seed 22000 negative-y now completes at 25,468 s. Worn positive-y completes at
+22,866 s (previously 23,102 s). Several integrations changed since the static-field
+baseline, so neither change is attributed to births alone. Both eight-second
+cutoffs survive their 3,600 s windows with 61.182973 kg main. The delayed negative-y
+control still misses the ten-hour window; delayed positive-y completes at 22,946 s.
+The two real-model flights complete with no reported model error, but issue **zero
+forecasts** and record **no field-signal products**. The dispatcher is integrated;
+the current game environment still supplies no funnel camera scene. These runs
+therefore establish neither acquired geometry nor learned pull/reversal.
+
+The two ordinary negative controls still lose to the entrance reference-body
+collision before the throat sweep's reported contact. Two separate, explicitly
+authored initial-state probes exercise the R30 safety paths without that masking:
+
+- [Off-reference throat](admission-reports/safety-probes-v1/off-reference-throat.json):
+  start 5 km upstream of `funnel-1`'s throat, at 10 m/s along its axis. The production
+  game loses the ship to **structural** damage at **203.241987 s**, exactly the
+  throat hook's reported first contact, without a generic-body collision.
+- [Unsafe birth](admission-reports/safety-probes-v1/unsafe-birth-veto.json): start
+  stationary in dormant `funnel-4`'s reserved centre. The real birth guard vetoes
+  that site at **1,200 s**; the ship survives to 1,300 s with no throat contact.
+
+Both probes use the unchanged full field, real ship/recorder and 3E runner, consume
+zero main/RCS propellant and repeat exactly. They are independent author fixtures,
+not supported encounter arrivals, live teleports or a continuous expedition.
+
+The combined published baseline is merge `6344b17` (main `0ee3d1c` plus 3C's
+`8a1713b`, consumed unchanged) and the content-owned runner changes. Matrix source
+SHA-256: `47643105ec09674ac13077bed6a5df907cf7f88e11a8cdb4548c2065d88cedf0`.
+All 434 recorded inputs still match. The two later probes add only their runner
+to that manifest (435 files), with SHA-256
+`44418ee9855f12f4c38a9ba75a96423e2adaa7a97980825bf5a7ebcec6ee5159`.
+No layout or physics tuning occurred. The hook-observer regression compares every
+production tick, measurement, event and RNG state through a precursor and birth.
+`npm run check` passes 1,329 tests, one existing skip, plus the isolated performance
+test. `npm run build` passes with the existing large-bundle and lattice import
+advisories. All recorded matrix/probe source inputs and matrix report hashes were
+verified, with no mismatches. `src/ship/sensors/` matches 3C's `8a1713b` unchanged.
+
+Remaining admission gaps: real precursor visibility/detection and warning margin;
+funnel response inference and issued forecasts; continuous rotating/deploying
+hull clearance; field work accounting; whole-session restoration; and real
+late/branch/cross-transfer arrivals. The production `seen` flag currently marks
+all precursors, without an optical visibility test. It is not detection evidence.
+The existing generic hull-clearance number covers bodies, not all funnels.
+
+## Historical static-field baseline — checkpoint `0eccbc4`
+
 **Execution completed; encounter admission remains incomplete.** These runs use
 3E's existing `runFlight(flight, setup)` with the real game, ship, recorder and
 resource metrics. They do not replace dynamics or install missing game events.

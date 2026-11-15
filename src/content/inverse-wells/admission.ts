@@ -8,7 +8,7 @@ import { rotate } from '../../lib/quat.ts';
 import { createInverseWells, type InverseWellsSetup } from './index.ts';
 import { s22Layout, S22_CATALOGUE_SEEDS } from './s22-layout.ts';
 
-export const ADMISSION_PROTOCOL = 's22-production-harness-v1';
+export const ADMISSION_PROTOCOL = 's22-production-harness-v2';
 export interface GardenAdmission {
   readonly flight: FlightCase;
   readonly setup: InverseWellsSetup;
@@ -28,6 +28,8 @@ export const ADMISSION_VARIANTS = [
   'delayed-negative-y',
   'delayed-positive-y',
   'model-negative-y',
+  'model-positive-y',
+  'cutoff-abort-positive-y',
 ] as const;
 export type AdmissionVariant = (typeof ADMISSION_VARIANTS)[number];
 
@@ -82,10 +84,11 @@ export function gardenAdmission(catalogueSeed: number, variant: AdmissionVariant
           attitude: { reference: 'direction', direction },
           lead: 480,
         });
-  if (variant === 'cutoff-abort')
-    controls.push({ at: burnAt + 8, command: { kind: 'cutoff', thruster: 'all' } });
+  const abort = variant.startsWith('cutoff-abort');
+  const realModel = variant.startsWith('model-');
+  if (abort) controls.push({ at: burnAt + 8, command: { kind: 'cutoff', thruster: 'all' } });
   const negativeControl = variant === 'coast' || variant === 'axial-away';
-  const shortWindow = negativeControl || variant === 'cutoff-abort';
+  const shortWindow = negativeControl || abort;
   return {
     catalogueSeed,
     variant,
@@ -94,14 +97,10 @@ export function gardenAdmission(catalogueSeed: number, variant: AdmissionVariant
     flight: {
       id: `s22-${catalogueSeed}-${variant}`,
       seed,
-      mode: variant === 'model-negative-y' ? 'recorder-model' : 'navigation-probe',
+      mode: realModel ? 'recorder-model' : 'navigation-probe',
       duration: shortWindow ? 3600 : 36_000,
       controls,
-      expected: negativeControl
-        ? 'lost'
-        : variant === 'cutoff-abort'
-          ? 'survive-window'
-          : 'completed',
+      expected: negativeControl ? 'lost' : abort ? 'survive-window' : 'completed',
       knowledge: [
         '[ASSUMED] Author-supplied inertial direction from S22 geometry; no acquired funnel rule or player inference is claimed.',
         "The nominal +/-y controls port S22's 16 s, 24 kN burn at t=600 through actual main propulsion, with a real roll-held direction command 480 s beforehand and rate nulling 5 s after cutoff.",
@@ -111,10 +110,10 @@ export function gardenAdmission(catalogueSeed: number, variant: AdmissionVariant
         delayed
           ? 'Sensitivity fixture: turn and burn delayed 300 s. This is not a continuous late-arrival/frame transfer.'
           : '',
-        variant === 'cutoff-abort'
+        abort
           ? 'Authored eight-second cutoff; outcome and subsequent acquisition are measured, not presumed safe.'
           : '',
-        variant === 'model-negative-y'
+        realModel
           ? 'Production recorder/model enabled; an ordinary model is not a fitted well-response model.'
           : 'Navigator stand-in only; forecasts are not fitted-model evidence.',
       ]
