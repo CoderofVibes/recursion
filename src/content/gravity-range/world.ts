@@ -49,16 +49,21 @@ export const SUN: Sun = {
 
 /**
  * [ASSUMED] True hardware calibration the model has to find (parameter IDs: contracts README).
- * The engine runs 2.5% under its rating with the baseline's 3 mrad mount error; each IMU has a
- * fixed accelerometer bias within 1C's stated 5e-5 m/s².
+ * The engine runs 2.5% under its rating with the baseline's 3 mrad mount error to the side and
+ * a 2 mrad one downward; each IMU has a fixed accelerometer bias on each axis within 1C's
+ * stated 5e-5 m/s². (The engine's gimbal also trims about 16 mrad downward through the centre
+ * of mass, which sits below the hull axis; that is the design, not an error.)
  */
 export const HIDDEN: HiddenParameters = {
   'thruster.main-engine.scale': 0.975,
   'thruster.main-engine.misalignment': 0.003,
+  'thruster.main-engine.misalignment-pitch': -0.002,
   'sensor.imu-a.bias-x': 4e-5,
   'sensor.imu-a.bias-y': -2e-5,
+  'sensor.imu-a.bias-z': 3e-5,
   'sensor.imu-b.bias-x': -3e-5,
   'sensor.imu-b.bias-y': 1e-5,
+  'sensor.imu-b.bias-z': -2e-5,
 };
 
 /** Direction from Alpha to the arriving ship: the side away from Beta. */

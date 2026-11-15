@@ -17,9 +17,9 @@ Owner: 2F; 2G for the 3D conversion. Truth side. `createGravityRange()` returns 
 - [ASSUMED] Alpha's field (`a-01`…`a-16`): 14 asteroids in a disc 580–960 km from Alpha and 2 that dip to about 500 km, radii 0.4–3.5 km, orbits tilted up to 6° out of the plane. Where a careful player probes the law.
 - [ASSUMED] **Beta's ring** (`b-001`…`b-320`), the belt of A6. See below.
 - [ASSUMED] One sun (A3): azimuth 200°, 12° above the plane, 600 W/m². Brightness is an owner content value (P14 item 3).
-- [ASSUMED] Hidden: main engine at 97.5% of rated thrust with a 3 mrad mount error; IMU biases within 1C's 5×10⁻⁵ m/s².
+- [ASSUMED] Hidden: main engine at 97.5% of rated thrust with mount errors of 3 mrad to the side and 2 mrad downward; IMU accelerometer biases on all three axes within 1C's 5×10⁻⁵ m/s². The briefing's prior on the downward angle is 0 ± 0.02 rad, wide enough for the gimbal's 16 mrad trim through the low centre of mass, which the model's nominal thrust line does not include.
 - [ASSUMED] One sensor value retuned (`rangeShip()`): camera range noise per fix 0.2% of range (1G spec §2.1) in place of the baseline's 5% (2F handoff, request 1).
-- `SAVE_FORMAT` names the save slot; bump it when a change here would make earlier Black Box records describe a different world or ship. It is 4 since the ring, the 3D simulation and the 3D ship (3 was the lift to 3D types).
+- `SAVE_FORMAT` names the save slot; bump it when a change here would make earlier Black Box records describe a different world or ship. It is 5 since the 3D ship's hidden calibration (4: the ring, the 3D simulation and ship; 3: the lift to 3D types).
 
 ## Objective (owner, A6): leave on a slingshot past Beta
 

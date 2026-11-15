@@ -62,8 +62,18 @@ export const PRIORS: readonly ParameterPrior[] = [
     value: 0,
     sigma: 0.01,
   },
+  {
+    // Wide enough to take in the gimbal's trim toward the low centre of mass (about 16 mrad),
+    // which the model's nominal thrust line (body +x) does not know about.
+    id: 'thruster.main-engine.misalignment-pitch',
+    label: 'Main thrust pitch',
+    unit: 'rad',
+    value: 0,
+    sigma: 0.02,
+  },
   { id: 'sensor.imu-a.bias-x', label: 'IMU A bias x', unit: 'm/s²', value: 0, sigma: 5e-5 },
   { id: 'sensor.imu-a.bias-y', label: 'IMU A bias y', unit: 'm/s²', value: 0, sigma: 5e-5 },
+  { id: 'sensor.imu-a.bias-z', label: 'IMU A bias z', unit: 'm/s²', value: 0, sigma: 5e-5 },
   {
     id: 'law.gravity.exponent',
     label: 'Distance-law exponent',
