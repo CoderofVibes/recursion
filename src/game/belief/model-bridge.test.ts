@@ -115,6 +115,73 @@ describe('model bridge', () => {
     expect(bridge.lastError()).toBeUndefined();
   });
 
+  it('keeps one timed hand-over out at a time: a slow model never grows a queue, and no record is dropped', async () => {
+    let ms = 0;
+    const { client, calls } = recordingClient();
+    // A model that takes its time over each refresh: it answers only when let go.
+    const waiting: (() => void)[] = [];
+    const quick = client.refresh.bind(client);
+    Object.assign(client, {
+      refresh: () => new Promise((done) => waiting.push(() => done(quick()))),
+    });
+    const bridge = createModelBridge(client, { referenceRadius: 1e6, clock: () => ms });
+    const box = createBlackBox();
+    bridge.beginAttempt(start, box.beginAttempt(start, 0));
+    const flush = async () => {
+      for (let i = 0; i < 20; i++) await Promise.resolve();
+    };
+    bridge.ingest(batch(0));
+    await flush();
+    expect(calls).toEqual(['init:30374', 'begin:attempt-0001', 'append:attempt-0001:1']);
+    expect(waiting).toHaveLength(1);
+
+    // Five more seconds of flight while that refresh is still out: nothing more is queued.
+    for (const t of [20, 40, 60, 80, 100]) {
+      ms += 1200;
+      bridge.ingest(batch(t));
+    }
+    await flush();
+    expect(calls).toHaveLength(3);
+    expect(waiting).toHaveLength(1);
+
+    // The model answers. The next hand-over carries everything recorded meanwhile, in one call.
+    waiting.shift()!();
+    await flush();
+    ms += 1200;
+    bridge.ingest(batch(120));
+    await flush();
+    expect(calls.slice(3)).toEqual(['refresh', 'append:attempt-0001:6']);
+    expect(waiting).toHaveLength(1);
+
+    // A forecast does not wait its turn behind a pile: the one refresh out, then its own
+    // hand-over (a refit, the last being over 5 s old) with what was recorded since.
+    ms += 1200;
+    bridge.ingest(batch(140));
+    const forecast = bridge.forecast({
+      id: 'f1',
+      attemptId: 'attempt-0001',
+      issuedAt: 140,
+      plan,
+      span: 3600,
+    });
+    await flush();
+    expect(calls).toHaveLength(5);
+    waiting.shift()!();
+    await forecast;
+    expect(waiting).toHaveLength(0);
+    expect(calls.slice(5)).toEqual([
+      'refresh',
+      'append:attempt-0001:1',
+      'refit',
+      'forecast:140:3600:30374',
+    ]);
+    // Every measurement recorded reached the model once: 1 + 6 + 1.
+    const appended = calls
+      .filter((c) => c.startsWith('append:'))
+      .reduce((n, c) => n + Number(c.split(':')[2]), 0);
+    expect(appended).toBe(8);
+  });
+
   it('refits in flight at most once a minute, and before a forecast when records are new', async () => {
     let ms = 0;
     const { client, calls } = recordingClient();

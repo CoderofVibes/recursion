@@ -12,6 +12,12 @@
  * forecast, and the final record when an attempt ends (Tier G). Calls are queued so they reach
  * the model in order; a failure is kept in `lastError` and does not stop the loop.
  *
+ * One timed hand-over at a time: on a long record a refresh takes longer than the interval, and
+ * hand-overs queued one a second behind it would hold everything after them (the fit at the end
+ * of the attempt, a rule test, a commit's forecast) for minutes (S20). So while one is still
+ * with the model, what is recorded waits here and goes in the next, in order; nothing is dropped,
+ * and a forecast still takes everything recorded up to its moment first.
+ *
  * Refit in flight: the global fit (Tier G) also runs during an attempt, at most once a minute
  * of real time (1G spec §11.2) and before a forecast when new records have arrived. Besides
  * updating the numbers, it is what gives the attempt in progress its own solution: until then
@@ -96,6 +102,8 @@ export function createModelBridge(client: ModelClient, options: ModelBridgeOptio
   let lastRefit = -Infinity;
   /** Records have reached the model since its last global fit. */
   let stale = false;
+  /** Timed hand-overs handed to the queue that have not come back from the model. */
+  let handoversOut = 0;
   let queue: Promise<void> = Promise.resolve();
 
   /** Run a model call after everything queued before it; keep the loop alive if it fails. */
@@ -140,9 +148,15 @@ export function createModelBridge(client: ModelClient, options: ModelBridgeOptio
       lastRefit = clock();
       stale = false;
     } else stale = true;
+    handoversOut++;
     void run(async () => {
-      if (fresh) await client.append(id, delta);
-      take(await (refit ? client.refit() : client.refresh()));
+      // Counted back in before the queue moves on, so whoever waits on the queue sees it free.
+      try {
+        if (fresh) await client.append(id, delta);
+        take(await (refit ? client.refit() : client.refresh()));
+      } finally {
+        handoversOut--;
+      }
     }).catch(() => undefined);
   };
 
@@ -182,7 +196,8 @@ export function createModelBridge(client: ModelClient, options: ModelBridgeOptio
       for (const m of batch.measurements) measurements.push(m);
       for (const e of batch.executed) executed.push(e);
       for (const e of batch.events) events.push(e);
-      if (clock() - lastHandover >= interval) handover(refitInterval);
+      // Not while the last one is still with the model (see the header): these records wait.
+      if (clock() - lastHandover >= interval && handoversOut === 0) handover(refitInterval);
     },
 
     endAttempt(final) {

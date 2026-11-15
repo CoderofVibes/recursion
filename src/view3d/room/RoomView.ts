@@ -80,6 +80,9 @@ export interface RoomEvents {
 /** Seconds after the console view arrives before its screen is fully up and opaque. */
 const SCREEN_SETTLED = hudMotion.screenIn / 1000 + 0.25;
 
+/** Seconds between the flight hologram's updates while it is not on show (its alerts, A12). */
+const FOLLOW_FLIGHT = 0.2;
+
 /** What the room draws this frame. */
 export interface RoomFrame extends FlightFrame {
   readonly chart: Chart;
@@ -146,6 +149,8 @@ export class RoomView {
   private observed = { w: 0, h: 0 };
   /** Real seconds the console view has been settled (arrived, its screen fully up). */
   private consoleFor = 0;
+  /** Real seconds since the flight hologram last worked out its alerts while not on show. */
+  private sinceFlight = 0;
   /** The chart the map was last given: rebuilt only when the loop hands over a new one. */
   private lastChart: RoomFrame['chart'] | null = null;
   private readonly cleanup: (() => void)[] = [];
@@ -394,7 +399,10 @@ export class RoomView {
     // drawn (S15). The game, the recorder and alerts run on in the loop regardless; any
     // transition, a loss, or a view change brings the room back on its first frame.
     this.consoleFor = mode === 'console' && !this.trans && !this.death ? this.consoleFor + dt : 0;
-    if (this.consoleFor > SCREEN_SETTLED) return;
+    if (this.consoleFor > SCREEN_SETTLED) {
+      this.followFlight(data, dt);
+      return;
+    }
 
     this.outside.update(data.snapshot);
     if (data.chart !== this.lastChart) {
@@ -502,7 +510,10 @@ export class RoomView {
     this.flight.setPixelsPerUnit(px);
     this.ship.setPixelsPerUnit(px * this.ship.group.scale.x);
     this.map.setPixelsPerUnit(px);
-    if (this.flight.group.visible) this.flight.update(data, dt, this.time);
+    if (this.flight.group.visible) {
+      this.flight.update(data, dt, this.time);
+      this.sinceFlight = 0;
+    } else this.followFlight(data, dt);
     if (this.map.group.visible) this.map.update(dt, this.time);
     if (this.ship.group.visible) this.ship.update(dt);
 
@@ -612,6 +623,19 @@ export class RoomView {
       this.events.blackBox();
       this.go('console');
     } else this.go(id);
+  }
+
+  /**
+   * The flight hologram is not on show (the console's screen, SHIP, the MAP), but what it works
+   * out is not only a drawing: the passes ahead and the miss from the issued forecast are the
+   * instruments' alerts, and a new one drops warp (A12). Keep them current a few times a second,
+   * so a ship coasting at warp behind the console still meets its alerts.
+   */
+  private followFlight(data: RoomFrame, dt: number): void {
+    this.sinceFlight += dt;
+    if (this.sinceFlight < FOLLOW_FLIGHT) return;
+    this.flight.update(data, this.sinceFlight, this.time);
+    this.sinceFlight = 0;
   }
 
   private stepDeath(dt: number): void {
