@@ -1,5 +1,7 @@
 # TR, continued — finish the 30-second trailer
 
+**Carried out by the FINAL thread (2026-11-15, afternoon)** through step 7, except the owner's shot review (step 3) and the 12 sounds still to come (step 4): where it stands is `docs/handoffs/tr.md`, Update 2. Steps 3, 4, 8 and 9 remain, with the owner.
+
 **Thread:** Claude (integration and screens) · **Worktree:** `.worktrees/tr` (its `node_modules` is linked) · **Branch:** `p3/tr-trailer` · Written by the first TR thread at the owner's wrap-up, 2026-11-15.
 
 You take over the 30-second demo video end to end: the trailer page the owner records, its timeline, cuts, captions, sound and final card, and the merging of the room shots. The goal hasn't changed: **the owner records the finished video in one take from the page, picture and sound together, and it is the owner's vision.** The owner makes the scope calls; ask before anything large.

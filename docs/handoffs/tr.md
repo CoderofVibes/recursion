@@ -1,8 +1,38 @@
 # Handoff: TR — The 30-second trailer
 
-Thread: Claude (Opus 5.5) · Branch: `p3/tr-trailer` · Date (Pacific): 2026-11-15 · **Status: paused at the owner's wrap-up; the page works end to end with stand-ins and the first sound files**
+Thread: Claude (Opus 5.5) · Branch: `p3/tr-trailer` · Date (Pacific): 2026-11-15 · **Status: every picture is in (TV's shots merged, the montage built); the owner's review, 12 sounds and the take remain. Update 2 below is current**
 
-## Where it stands
+## Update 2: the FINAL thread (2026-11-15, afternoon)
+
+The trailer now plays end to end with every picture in place. What it still needs is the owner: the shot review, the remaining sounds, the take.
+
+**Merged into `p3/tr-trailer`:** TV's five room shots (`p3/tr-visuals`, clean; `RoomView.ts` keeps PF's code, 3F's veil and TV's one method, `renderScriptedFrame`), then `main` twice (3F's console; then the judges' README, credits and R65's alarm cap at `0cc8df0`).
+
+**Checks, after TV and the first merge of `main`** (`383fab0`): `npm run check` passed whole: typecheck, lint, 163 test files (1 skipped), 1,577 tests passed and 1 skipped, and the speed test; neither load-sensitive test timed out. `npm run build` green; the trailer is not in `dist` (no trailer class, still or fixture; the one trace is the name of TV's authorized method in `RoomView.ts`). After the second merge of `main`: typecheck, lint of `src/trailer`, the trailer's, the audio's and the console pages' tests (54), and the build again.
+
+**The montage (13.1–23.9 s) is built** (`scenes/montage/`): eight stills of the game's real screens, 1920 × 1080 (1536 × 864 CSS pixels at 1.25), from one played session; `stills.test.ts` holds one still per screen at that size. Nothing in a still is drawn, assigned or retouched.
+
+- The session (`scenes/montage/capture/`): Twin Deeps on this branch's production build at `383fab0` (`vite preview`), a fresh headless Chrome profile, NIGHT's driver with real keys and clicks. Attempt 1: a 9.85 m/s retrograde burn at T+00:10:00, flown past T+08:20, RECALL (30,324 records). Attempt 2: 5 m/s retrograde, flown to T+08:29:03, RECALL (27,381 records); it held its forecast, worst 2.8σ. MODEL › TEST (fit on attempt 1, checked on attempt 2): passes, 1.04 against 1.12, exponent 2.5001; ADOPT gave model v3. Attempt 3: 16 m/s retrograde, PREVIEW, COMMIT, ENTER, the burn flown at T+00:10:00, then on at 1×.
+- The stills: `flight` (attempt 3, T+00:20:05), `map` (attempt 3, about T+00:14), `region` (MAP › ENTER REGION, attempt 3, about T+00:19), `explore` (EXPLORATION, attempt 3 before its plan), `model` (MODEL after ADOPT, the same measurements with and before the rule), `plan` (attempt 2's committed plan before ENTER), `blackbox` (attempt 2 after RECALL: predicted against flown), `ship` (SHIP › POWER, attempt 3, about T+00:20: 3,003 W made, 2,865 W drawn).
+- Two things about the driving, for honesty: in MAP and SHIP the driver's text finder met a hidden twin of ENTER REGION and POWER, so the visible button was focused by script and pressed with a real Enter, and focus was dropped before the still so no keyboard ring shows. And `play.sh` ran the session through the third forecast; the last steps (the flight and the room's views) were driven by hand through the same driver, and the script records them as they were done.
+- The captions sit over the bottom of each screen (FLIGHT's stores strip, the console's step bar).
+
+**The organizer's labels:** a small line in the top left corner of every frame, black beats included: "Gameplay, edited · built with AI assistance · audio: ElevenLabs, AI-generated" (`CORNER_LABEL` in `timeline.ts`, tested). The top left is the one corner the game's own screens leave free. The final card already carried the full labels and the link, as the owner drafted them in `video.md`; unchanged.
+
+**A room shot is drawn ahead of its cut** (`main.ts`, `PREROLL`): for 0.3 s before a cut into a room shot from black or from the montage, the shot is drawn out of sight under the picture on screen. The canvas had been hidden through the montage, and the console shot's first frames ran long (frames 5 to 15 of the beat); after the change, none at the cut. Stills just before and after the cut confirm nothing shows early.
+
+**Rehearsal** (`node src/trailer/rehearse.mjs`; report `docs/handoffs/tr/rehearsal.json`, a still of every beat in `docs/handoffs/tr/beat-*.jpg`): headless Chrome on the RTX 4050, 1536 × 864 at 1.25, `?quality=full`, started with a real Space. [DEMONSTRATED: four runs] 19 beat changes, the worst 0.006 to 0.007 s after the sheet (bar 0.05 s); no page errors. [DEMONSTRATED: the three runs that measured it] **the room's render target stayed 1920 × 1080, the canvas's size, on every frame** (R59: PF's adaptive scale never engaged; TV's scripted frames don't feed it, and `?quality=full` pins it besides). Frames: median 6.1 ms on the 165 Hz panel in every beat. Long frames (18 to 30 ms; 49 ms once, at the console's cut before the change above) land in the room shots, on different frames each run, while other work was running on the machine; the montage had none in any run. A headless run has no screen recorder's load: the owner's take is the real check.
+
+**For the owner's eye at the review:**
+- The braid reads dark and sparse as a still (thin streaks, three small funnels, room light at 0.18). It may read better in motion; say if it should be brighter or busier.
+- The console's Earth is small in the window (it is the opening's own Earth and pose).
+- The lattice's light dips are the game's loss animation in the scene; the page adds no veil over them.
+
+**Still to do (the owner, with FINAL):** the shot review (holds below); the 12 sounds and their levels in `cues.ts`; the final card's wording; the take; then merge `p3/tr-trailer` into `main`.
+
+**Review and record:** `http://localhost:5190/src/trailer/?quality=full` (the dev server in `.worktrees/tr`). Space or a click plays, R replays, C captions, F full screen, H hides the status line. Holds: slingshot `&still=3.55`, wells `&still=6.05`, lattice `&still=8.8`, braid `&still=11.55`, console `&still=25.05`; any moment with `&from=12.5`.
+
+## Where it stood at the first thread's wrap-up
 
 - **The page** (`src/trailer/`, dev only, `/src/trailer/` on any dev server): a black page; Space or a click plays exactly 30.0 s, R replays, C hides captions, F full screen, H hides the status line; `?from=12.5` plays from 12.5 s, `?still=6.1` holds a frame. The picture is drawn from the audio clock's output time and every sound is scheduled on it at Start, so Game Bar records both in sync.
 - **Built and final:** the timeline (owner's sheet and updates, `timeline.ts`), the title in the game's style with three flickers, the braid's flicker before the snap, hard cuts and snaps, the eight montage captions as the owner chose them, the sound scheduler and limiter (`sound.ts`, `cues.ts`).
