@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react';
+import { AudioMount } from '../audio/mount.tsx';
 import { REGIONS } from '../console/regions.tsx';
 import { applyTheme } from '../theme/index.ts';
-import { ControlRoom } from './ControlRoom.tsx';
 import { createGame, type Game } from './game.ts';
 import { appOpening, BROWSER_SLOT, openingLaunch } from './opening/launch.ts';
-import { OpeningGate } from './opening/OpeningGate.tsx';
 
 /**
  * App shell. It owns the running game and hands its belief-side controls to the one screen
@@ -35,5 +34,5 @@ export function App() {
     );
   const room = { game: game.controls, modelError: game.modelError, erase: game.erase };
   const opening = appOpening(game.controls.briefing.id, REGIONS[0]!.id, location.search);
-  return opening ? <OpeningGate {...room} {...opening} /> : <ControlRoom {...room} />;
+  return <AudioMount room={room} opening={opening} />;
 }

@@ -25,10 +25,9 @@ import {
   Vector3,
   WebGLRenderer,
 } from 'three';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import type { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import type { Object3D } from 'three';
 import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 import type { ShipDefinition } from '../../contracts/index.ts';
@@ -38,7 +37,6 @@ import {
   holoWire,
   hudMotion,
   lossSequence,
-  roomBloom,
   roomMotion,
   roomSurface,
 } from '../../theme/index.ts';
@@ -49,6 +47,7 @@ import { clamp, ease, thin } from '../gfx.ts';
 import { makeMapHolo } from '../map/MapHolo.ts';
 import type { Chart, MapHolo } from '../map/MapHolo.ts';
 import type { RoomShot } from '../opening/shot.ts';
+import { BudgetBloomPass, BudgetComposer, createQualityHook } from '../perf/quality.ts';
 import { makeShipHolo } from '../ship/ShipHolo.ts';
 import type { ShipHolo } from '../ship/ShipHolo.ts';
 import { CON, DOOR, HOLO, REACH, ROOM, VIEW } from './layout.ts';
@@ -101,6 +100,7 @@ export class RoomView {
   private readonly scene = new Scene();
   private readonly camera = new PerspectiveCamera(VIEW.room.fov, 1, 0.06, 9000);
   private readonly composer: EffectComposer;
+  private readonly quality: ReturnType<typeof createQualityHook>;
   private readonly labels: CSS2DRenderer;
   private readonly shell;
   private readonly outside;
@@ -176,23 +176,24 @@ export class RoomView {
     this.reduceMotion = options?.reduceMotion ?? (() => false);
     this.renderer = new WebGLRenderer({
       canvas,
-      antialias: true,
+      // The composer draws the scene into its own targets. Default-framebuffer MSAA only
+      // antialiases its fullscreen output triangle and does not smooth scene geometry.
+      antialias: false,
       powerPreference: 'high-performance',
     });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.setClearColor(hex(roomSurface.void));
     this.camera.rotation.order = 'YXZ';
-    this.composer = new EffectComposer(this.renderer);
+    this.composer = new BudgetComposer(this.renderer);
     this.composer.addPass(new RenderPass(this.scene, this.camera));
-    this.composer.addPass(
-      new UnrealBloomPass(
-        new Vector2(1, 1),
-        roomBloom.strength,
-        roomBloom.radius,
-        roomBloom.threshold,
-      ),
-    );
+    const bloom = new BudgetBloomPass();
+    this.composer.addPass(bloom);
     this.composer.addPass(new OutputPass());
+    this.quality = createQualityHook(this.renderer, this.composer, options?.scripted);
+    this.cleanup.push(() => {
+      this.quality.dispose();
+      bloom.dispose();
+    });
     this.labels = new CSS2DRenderer({ element: labels });
 
     this.shell = buildRoom(this.scene);
@@ -406,6 +407,13 @@ export class RoomView {
     if (this.width === 0 || this.height === 0) return;
     const { camera, cur } = this;
     const mode = this.current;
+
+    this.quality.frame(
+      mode !== 'console' && !this.trans && !this.death,
+      data.snapshot.warp,
+      mode,
+      data.snapshot.t,
+    );
 
     // Settled at the console: its opaque screen covers the whole view, so nothing behind it is
     // drawn (S15). The game, the recorder and alerts run on in the loop regardless; any

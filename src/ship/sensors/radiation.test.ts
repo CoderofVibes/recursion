@@ -24,6 +24,7 @@ import { RADIATION_MONITOR as spec } from './radiation-spec.ts';
 import {
   advanceRadiationMonitor,
   initializeRadiationMonitorStream,
+  latestRadiationReading,
   radiationMonitorDue,
   recordRadiationMonitor,
 } from './radiation.ts';
@@ -341,7 +342,9 @@ describe('radiation monitor power and real packet retention', () => {
       const result = packet(scheduled, 0.25, 0.05, small);
       expect(result.state.recorder.bytesUsed - state.recorder.bytesUsed).toBe(bytesPerSample);
       expect(readings(result.measurements)).toHaveLength(bytesPerSample === 152 ? 1 : 0);
-      if (bytesPerSample === 151) expect(result.state.rng).toEqual(state.rng);
+      // R52: the monitor senses on board whether or not a packet takes the reading; one that
+      // does not fit stays on board, out of the record.
+      expect(latestRadiationReading(result.state)?.t).toBe(0.25);
       const repeated = packet(result.state, 0.25, 0.05, small);
       expect(repeated.measurements).toEqual([]);
       expect(repeated.state.recorder.bytesUsed).toBe(result.state.recorder.bytesUsed);
@@ -361,6 +364,29 @@ describe('radiation monitor power and real packet retention', () => {
     }
     expect(readings(observed).map((r) => r.t)).toEqual([1, 2, 3]);
     expect(state.recorder.bytesUsed).toBe(4 * baseline.recorder.bytesPerSample);
+  });
+
+  it('R52: senses every second on board, records at the player’s rate, the spike in full and its end', () => {
+    // The Gravity range's cadence: 1 s ticks, one ordinary packet every 20 s (the recorder at its
+    // 15 W minimum, so one physical packet a second at most).
+    let state = initial();
+    state = { ...state, recorder: { ...state.recorder, sampleRate: 0.05 } };
+    state = stepPower(state, definition, environment(0), 0.1).state;
+    const spike = (t: number) => (t >= 20 && t < 30 ? 0.05 : 0);
+    const recordedAt: number[] = [];
+    const sensedAt: number[] = [];
+    for (let t = 0; t < 60; t++) {
+      const result = stepSensors({ ...state, t }, definition, environment(t, spike(t)), 1);
+      state = result.state;
+      for (const r of readings(result.measurements)) recordedAt.push(r.t);
+      const sensed = latestRadiationReading(state);
+      if (sensed?.t === t) sensedAt.push(t);
+    }
+    // On board: every second once settled.
+    expect(sensedAt).toEqual(Array.from({ length: 59 }, (_, i) => i + 1));
+    // In the record: the player's packets (20 s, 40 s); every reading above the 0.02 U threshold
+    // (21 to 30 s: the response lags the input by a tick); the first back below it (31 s).
+    expect(recordedAt).toEqual([20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 40]);
   });
 
   it('preserves navigation draws independently and exactly resumes saved response and recording state', () => {

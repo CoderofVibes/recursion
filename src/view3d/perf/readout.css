@@ -1,0 +1,23 @@
+.rx-perf {
+  position: fixed;
+  z-index: 100;
+  right: var(--rx-hud-margin);
+  bottom: var(--rx-hud-margin);
+  width: var(--rx-hud-column);
+  max-width: calc(100vw - 2 * var(--rx-hud-margin));
+  max-height: calc(100vh - 2 * var(--rx-hud-margin));
+  overflow: auto;
+  background: var(--rx-panel);
+  color: var(--rx-ink);
+  font-family: var(--rx-font);
+  font-size: var(--rx-size-body);
+}
+
+.rx-perf summary,
+.rx-perf p {
+  margin: var(--rx-panel-pad-y) var(--rx-panel-pad-x);
+}
+
+.rx-perf summary {
+  cursor: pointer;
+}

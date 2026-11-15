@@ -239,6 +239,11 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
   let flown: Flown[] = [];
   let primaryFixT: number | undefined;
   let arrivalMass: number | undefined;
+  // Snapshots outnumber recorded equipment/tank changes. These immutable derived values
+  // depend only on the briefing, accepted configuration/mode commands and telemetry below;
+  // the navigation state, measurement order and all arithmetic remain unchanged (PF).
+  let cachedMassProperties: MassProperties | undefined;
+  let cachedEquipment: Record<string, EquipmentStatus> | undefined;
 
   const param = (id: string, fallback: number): number => parameters.get(id) ?? fallback;
   const exponent = (): number => param('law.gravity.exponent', 2);
@@ -309,6 +314,7 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
    * assembly's intrinsic inertia where the design states one.
    */
   const massProperties = (): MassProperties => {
+    if (cachedMassProperties) return cachedMassProperties;
     const def = ship!;
     const config = def.configurations.find((c) => c.id === configuration) ?? def.configurations[0]!;
     const items: { m: number; p: Vec3 }[] = [
@@ -340,12 +346,12 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
       ]);
     }
     const principal = principalAxes(tensor);
-    return {
+    return (cachedMassProperties = {
       mass: ungauged() ? arrivalMass! : mass,
       centerOfMass: { x: cx, y: cy, z: cz },
       inertia: { moments: principal.values, axes: principal.axes },
       hull: config.hull,
-    };
+    });
   };
   const believedMass = (): number =>
     ungauged()
@@ -862,7 +868,7 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
   });
 
   const equipmentStatus = (): Record<string, EquipmentStatus> =>
-    Object.fromEntries(
+    (cachedEquipment ??= Object.fromEntries(
       ship!.equipment.map((e) => [
         e.id,
         {
@@ -880,7 +886,7 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
           ),
         } satisfies EquipmentStatus,
       ]),
-    );
+    ));
 
   const believedBodies = (t: number, origin: Particle): BelievedBody[] =>
     briefing!.knownBodies.map((b, i) =>
@@ -998,6 +1004,8 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
       configuration = briefing.arrivalConfiguration;
       telemetry = {};
       modes = {};
+      cachedMassProperties = undefined;
+      cachedEquipment = undefined;
       burns = [];
       flown = [];
       turnChangedAt = -Infinity;
@@ -1052,10 +1060,16 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
               t: done.t,
               rate: centred || !handsOnTurn ? { x: 0, y: 0, z: 0 } : handsOnTurn(c.input),
             };
-        } else if (c.kind === 'mode') modes[c.equipment] = c.mode;
+        } else if (c.kind === 'mode') {
+          modes[c.equipment] = c.mode;
+          cachedEquipment = undefined;
+        }
       }
       for (const e of batch.events)
-        if (e.kind === 'configuration-changed') configuration = e.configuration;
+        if (e.kind === 'configuration-changed') {
+          configuration = e.configuration;
+          cachedMassProperties = undefined;
+        }
 
       const p = primary();
       /** The bearing taken with a range fix: same packet, same target, same instant. */
@@ -1079,6 +1093,8 @@ export function createStandInModel(options: StandInModelOptions): StandInModel {
         const sigma = m.sigma[0] ?? 0;
         if (m.kind === 'telemetry' && m.channel) {
           telemetry[m.channel] = { t: m.t, value, sigma };
+          cachedEquipment = undefined;
+          if (m.channel.endsWith('.propellant')) cachedMassProperties = undefined;
         } else if (m.kind === 'attitude') {
           // A star-tracker fix: the rotation vector of the body-to-inertial attitude.
           attitude = {

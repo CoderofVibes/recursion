@@ -117,6 +117,27 @@ describe('the radiation monitor in the game loop', () => {
     expect(s.status().alerts.map((a) => a.id)).toContain('radiation-high');
   });
 
+  it('R52: in clear space the record keeps the player’s rate; on board it reads every second', () => {
+    const blackBox = createBlackBox();
+    const s = createGameSession(setup, {
+      model: createStandInModel({ referenceRadius: LAW.referenceRadius }),
+      blackBox,
+      now: () => 'now',
+    });
+    let sensed = 0;
+    for (let i = 0; i < 400; i++) {
+      s.stepTicks(1);
+      sensed += s.lastTick()!.sensed.length;
+    }
+    // Sensed every second once settled; recorded with the ordinary packet, one every 20 s.
+    expect(sensed).toBe(399);
+    const recorded = blackBox
+      .attempt(s.status().attemptId)!
+      .measurements.filter((m) => m.channel === CHANNEL)
+      .map((m) => m.t);
+    expect(recorded).toEqual(Array.from({ length: 19 }, (_, i) => 20 * (i + 1)));
+  });
+
   it(
     'in the Cathedral the first word at warp is the radiation caution, well before any loss',
     { timeout: 120_000 },
@@ -144,6 +165,35 @@ describe('the radiation monitor in the game loop', () => {
       // advance warning).
       expect(first).toMatchObject({ id: 'radiation-high', warp: 1 });
       expect(outcome.t - first!.t).toBeGreaterThan(1);
+    },
+  );
+
+  it(
+    'R52: the spike before a failure is in the record in full, every reading over the threshold',
+    { timeout: 120_000 },
+    () => {
+      const blackBox = createBlackBox();
+      const s = createGameSession(encounterEntry('chain-link').create(0), {
+        model: createStandInModel({ referenceRadius: 1e6 }),
+        blackBox,
+        now: () => 'now',
+      });
+      const over: number[] = [];
+      while (s.status().outcome.kind === 'in-progress' && s.status().t < 1_000) {
+        s.stepTicks(1);
+        for (const m of s.lastTick()!.sensed)
+          if (m.value[0]! > RADIATION_MONITOR.hazardThreshold || m.value[1] === 1) over.push(m.t);
+      }
+      expect(s.status().outcome.kind).toBe('lost');
+      const recorded = new Set(
+        blackBox
+          .attempt(s.status().attemptId)!
+          .measurements.filter((m) => m.channel === CHANNEL)
+          .map((m) => m.t),
+      );
+      // The lattice's spike: sensed on board over the threshold, and every one of them recorded.
+      expect(over.length).toBeGreaterThan(1);
+      for (const t of over) expect(recorded.has(t)).toBe(true);
     },
   );
 });

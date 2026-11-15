@@ -373,7 +373,7 @@ export function empiricalReport(snap: ModelSnapshot, ctx: ModelContext): Empiric
   const prof = d.profiles.find((p) => p.body === body) ?? null;
   const ref = referenceFor(d, body, arcs[0]!.id, ctx);
   const s = d.spec.settings;
-  const emp = empiricalFit(ref, prof, arcs, { dt: s.dt, h: s.fdStep });
+  const emp = empiricalFit(ref, prof, arcs, { dt: s.dt, h: s.fdStep, firstStageSpan: s.arcGrowthFirstSpan });
   return {
     body,
     rows: emp.table.map((r) => ({ ...r, attempt: r.window.split('.emp')[0]!.split('~')[0]! })),

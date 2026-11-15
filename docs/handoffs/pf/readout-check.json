@@ -1,0 +1,240 @@
+{
+  "text": "Performance · flight\nLOCAL LAPTOP CHECK\n136 FRAMES\nFIRST DRAW\n6640.1ms\nFRAME P95\n127.3ms\nWORST FRAME\n187.8ms\nOVER 100 MS\n28\nREQUESTED WARP\n1×\nACHIEVED\n0.9ship s/s\n\nTarget: load ≤2500 ms · 1× p95 ≤33 ms.\n\n11 s in view · render scale 70%.\n\nChange view or warp to restart. This readout adds some overhead; use S15 for recorded evidence.",
+  "rect": {
+    "x": 1012,
+    "y": 418,
+    "width": 326,
+    "height": 322,
+    "top": 418,
+    "right": 1338,
+    "bottom": 740,
+    "left": 1012
+  },
+  "inventory": {
+    "vendor": "Google Inc. (Intel)",
+    "renderer": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+    "viewport": [
+      1366,
+      768,
+      1
+    ],
+    "canvas": [
+      1366,
+      768
+    ],
+    "presentation": {
+      "antialias": false,
+      "target": [
+        956.1999999999999,
+        537.5999999999999
+      ]
+    },
+    "memory": {
+      "geometries": 226,
+      "textures": 38
+    },
+    "programs": 29,
+    "scene": {
+      "objects": 639,
+      "uniqueGeometries": 471,
+      "vertices": 296892,
+      "indexTriples": 112690.33333333331,
+      "textures": [
+        {
+          "name": "",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "",
+          "width": 256,
+          "height": 256
+        },
+        {
+          "name": "",
+          "width": 256,
+          "height": 256
+        },
+        {
+          "name": "",
+          "width": 256,
+          "height": 144
+        },
+        {
+          "name": "",
+          "width": 256,
+          "height": 144
+        },
+        {
+          "name": "",
+          "width": 256,
+          "height": 144
+        },
+        {
+          "name": "",
+          "width": 256,
+          "height": 144
+        },
+        {
+          "name": "",
+          "width": 256,
+          "height": 144
+        },
+        {
+          "name": "",
+          "width": 256,
+          "height": 144
+        },
+        {
+          "name": "",
+          "width": 256,
+          "height": 144
+        },
+        {
+          "name": "",
+          "width": 256,
+          "height": 144
+        },
+        {
+          "name": "",
+          "width": 256,
+          "height": 144
+        },
+        {
+          "name": "",
+          "width": 256,
+          "height": 144
+        },
+        {
+          "name": "",
+          "width": 256,
+          "height": 256
+        },
+        {
+          "name": "",
+          "width": 256,
+          "height": 144
+        },
+        {
+          "name": "",
+          "width": 256,
+          "height": 256
+        },
+        {
+          "name": "",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "name": "",
+          "width": 1536,
+          "height": 840
+        },
+        {
+          "name": "",
+          "width": 512,
+          "height": 180
+        },
+        {
+          "name": "",
+          "width": 512,
+          "height": 180
+        },
+        {
+          "name": "",
+          "width": 512,
+          "height": 180
+        },
+        {
+          "name": "",
+          "width": 512,
+          "height": 180
+        },
+        {
+          "name": "",
+          "width": 512,
+          "height": 256
+        }
+      ]
+    },
+    "passes": [
+      {
+        "type": "Yx",
+        "enabled": true
+      },
+      {
+        "type": "jS",
+        "enabled": true,
+        "bloomMipSizes": [
+          [
+            240,
+            135
+          ],
+          [
+            120,
+            68
+          ],
+          [
+            60,
+            34
+          ],
+          [
+            30,
+            17
+          ],
+          [
+            15,
+            9
+          ]
+        ]
+      },
+      {
+        "type": "Jx",
+        "enabled": true
+      }
+    ],
+    "appDeveloperHandle": "undefined"
+  },
+  "reducedMotion": true,
+  "hosts": 1,
+  "openingReady": 6656.199999988079,
+  "openingText": "Performance · opening\nLOCAL LAPTOP CHECK\n20 FRAMES\nFIRST DRAW\n6640.1ms\nFRAME P95\n78.8ms\nWORST FRAME\n84.8ms\nOVER 100 MS\n0\nREQUESTED WARP\n1×\nACHIEVED\n—ship s/s\n\nTarget: load ≤2500 ms · 1× p95 ≤33 ms.\n\n1 s in view · render scale 100%.\n\nChange view or warp to restart. This readout adds some overhead; use S15 for recorded evidence.",
+  "consoleText": "Performance · SYSTEMS\nLOCAL LAPTOP CHECK\n172 FRAMES\nFIRST DRAW\n6640.1ms\nFRAME P95\n6.3ms\nWORST FRAME\n18.2ms\nOVER 100 MS\n0\nREQUESTED WARP\n1×\nACHIEVED\n0.9ship s/s\n\nTarget: load ≤2500 ms · 1× p95 ≤33 ms.\n\n1 s in view · render scale 70%.\n\nChange view or warp to restart. This readout adds some overhead; use S15 for recorded evidence.",
+  "errors": [],
+  "note": "Ad hoc visual/readout check; not a formal S15 timing trial. CPU4x and reduced motion enabled; fresh opening through room handoff checked."
+}
