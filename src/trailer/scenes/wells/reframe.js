@@ -2,7 +2,7 @@
 // Evaluate in the trailer's origin. Reproduce the same coast; offset ONLY the display eye.
 (async () => {
   const { createGame } = await import('/src/app/game.ts');
-  const { createInverseWells } = await import('/src/content/inverse-wells/index.ts');
+  const { INVERSE_WELLS_ENTRY } = await import('/src/content/inverse-wells/index.ts');
   const { createFunnelWindow } = await import('/src/game/funnel-window.ts');
   const { buildWindowView } = await import('/src/game/window.ts');
   const { readFunnelParameters } = await import('/src/sim/fields/wells.ts');
@@ -26,7 +26,9 @@
     ...truth,
     ship: { ...truth.ship, kinematics: { ...original, position: eye } },
   };
-  const setup = createInverseWells();
+  // Run 0 selects catalogue 22000 explicitly; the default factory selects a catalogue by seed.
+  // The precursor birth table must come from this same encounter setup as the played field.
+  const setup = INVERSE_WELLS_ENTRY.create(0);
   const optics = createFunnelWindow(setup)(displayed);
   const ids = new Set(optics.map((field) => field.id));
   return {
