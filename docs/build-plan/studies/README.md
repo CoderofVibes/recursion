@@ -10,8 +10,8 @@ Design and physics studies that run in parallel with the build. Each one answers
 | S4 | The expedition in 3D: regions and route | [S4-expedition.md](S4-expedition.md) |
 | S5 | Inverse wells and the lattice in 3D | [S5-wells-lattice-3d.md](S5-wells-lattice-3d.md) |
 | S6 | Paired openings (system X) | [S6-paired-openings.md](S6-paired-openings.md) |
-| S7 | The model fault and the slow tests | [S7-model-fault.md](S7-model-fault.md) |
-| S8 | Twin Deeps in 3D: the varied geometry and the slingshot exit | [S8-twin-deeps.md](S8-twin-deeps.md) |
+| S7 | Withdrawn before launch: 2G fixed the model fault (`ab7801a`) and the slow tests on its branch | [S7-model-fault.md](S7-model-fault.md) |
+| S8 | Twin Deeps in 3D: an independent check of 2G's slingshot study, and admissible seeds | [S8-twin-deeps.md](S8-twin-deeps.md) |
 | S9 | The first five minutes: a cold player in the Gravity range | [S9-first-five-minutes.md](S9-first-five-minutes.md) |
 | S10 | Submission groundwork: assets, licences, NASA data, AI use | [S10-submission-audit.md](S10-submission-audit.md) |
 | S11 | The owner's decision queue from S1–S6 | [S11-decision-queue.md](S11-decision-queue.md) |

@@ -1,25 +1,28 @@
-# S8 — Twin Deeps in 3D: the varied geometry and the slingshot exit
+# S8 — Twin Deeps in 3D: an independent check of 2G's slingshot study
 
-**Thread:** GPT/Codex · **Branch:** `st/s8-twin-deeps` · **Read:** [the study rules](README.md), then DECISIONS A6, A10, A11, A12, A13 and P16, `docs/design/regions/c02-twin-deeps.md` (S4), `docs/physics/derivation.md`, `src/content/gravity-range/` (`world.ts`, `briefing.ts`, `index.ts`), `data/ship-baseline.json`, and `docs/handoffs/2D.md` (R1, R2).
+**Thread:** GPT/Codex · **Branch:** `st/s8-twin-deeps` · **Read:** [the study rules](README.md), then DECISIONS A6, A10, A11 and P16, `docs/physics/derivation.md`, and `docs/design/regions/c02-twin-deeps.md` (S4). From 2G's branch, read only, with `git show p2/2g-3d-flight:<path>`:
+- `docs/handoffs/2G.md`, especially "The 3D slingshot study (DECISIONS A6)" and "The belt";
+- `src/content/gravity-range/world.ts` and `index.ts`;
+- `data/ship-baseline.json`.
 
 ## Question
-The Gravity range (Twin Deeps) is the first encounter and the one judges will play. Its bodies, masses and law are fixed (A10). Its geometry changes from run to run. The player leaves by a slingshot at Beta through its orbiting belt (A6). In 3D, which geometries make a fair, beautiful, learnable encounter, and what exactly counts as leaving?
+Thread 2G built the Gravity range in 3D: Beta's ring (the belt), the `depart` objective, and a slingshot study whose route and ring numbers came from a scratch propagator that is not in the repository. The study's own scripts are scratch work. The Gravity range is the encounter judges will play. Do its numbers hold up when someone else computes them, and which run-to-run geometries (A10) keep it fair and learnable?
 
 ## Deliver
-In `docs/studies/s8/`, with a Python reference in `tools/studies/s8/`:
-1. **The range in 3D:** Alpha, Beta, the Sun and the belt with today's values, and every quantity A10 lets vary: arrival direction and inclination, Beta's phase, the belt's plane and phase, and anything else. Give ranges for each.
-2. **Admissible seeds:** for each varied quantity, the range in which:
-   - an informed player (law learned) can reach the low-orbit band and then make the Beta exit, inside the ship's propellant with a stated margin;
-   - a player flying on the wrong law (the Newtonian inverse-square guess) gets a forecast that is visibly wrong before it is lethal, so failure teaches (A9, P6);
-   - no seed is lethal on arrival or forces a single exact solution.
+In `docs/studies/s8/`, with a deterministic Python reference in `tools/studies/s8/`:
+1. **Independent reproduction:** rebuild the range from 2G's committed values (bodies, law, ring, ship), without reading 2G's code beyond those values, and recompute:
+   - the representative route and turn-angle table;
+   - the ring-pass table: flown in the plane without looking, lifted over the ring, threaded with trims;
+   - the out-of-plane result: a vertical kick at departure oscillates instead of adding height, so the lift goes a few hours before the pass.
+
+   Report every number that agrees, and every one that doesn't, with the size of the difference.
+2. **Admissible seeds:** with masses, sizes and the law fixed (A10), the ranges of arrival direction, Beta's phase and the ring's phase in which:
+   - an informed player can reach the low-orbit band and then make the exit, with a stated propellant margin;
+   - a player flying the Newtonian guess gets a forecast that is visibly wrong before it is lethal (A9, P6);
+   - no seed is lethal on arrival or demands one exact solution.
 
    Give rejection rules a seed generator can apply, and the fraction of seeds they reject.
-3. **The exit:** a physical definition of the `depart` objective (2D's R1): what state, measured where, proves the ship left by the slingshot through the belt rather than drifting out. Give the gain the slingshot provides against a plain burn out, in m/s.
-4. **The belt:** rock count, sizes and spacing so that crossing it is a real hazard with a readable safe line. Say which rocks can serve as known-size targets for ranging (R2) and what that ranging could teach about the law.
-5. **Reference vectors** for 2G's step 5 tests:
-   - an informed run to band and exit;
-   - a wrong-law run that fails readably;
-   - a rejected seed;
-   - a belt crossing with closest approaches.
+3. **The `depart` objective:** check that 2G's rule can't be met by drifting out or burning straight out, and give the slingshot's gain against a plain burn, in m/s.
+4. **Reference vectors** 2G or 2F can port as tests: an informed exit, a wrong-law run that fails readably, a rejected seed, and a ring crossing with its closest approaches.
 
-Thread 2G builds this as its step 5. Say what to build and test; don't edit `src/`.
+Don't edit `src/` or 2G's branch.

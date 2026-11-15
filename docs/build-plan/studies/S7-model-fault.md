@@ -1,5 +1,7 @@
 # S7 — The model fault and the slow tests
 
+**Withdrawn before launch.** Thread 2G fixed the singular-matrix fault on its branch (`ab7801a`, with regression tests) and gave the slow tests explicit timeouts. Kept for the record; don't run it.
+
 **Thread:** GPT/Codex · **Branch:** `st/s7-model-fault` · **Read:** [the study rules](README.md), then `docs/handoffs/2D.md` (request 2 and Update 3), `src/model/README.md`, `docs/model/estimator-spec.md`, and `src/model/` (start with `service.ts`, `engine.ts`, `solve.ts`, `linalg.ts`).
 
 ## Question
