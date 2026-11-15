@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import baselineData from '../../data/ship-baseline.json';
 import { HANDS_ON_NEUTRAL, type Command, type HandsOnInput } from '../contracts/commands.ts';
 import type {
   EnvironmentEffects,
@@ -9,7 +10,12 @@ import type {
 import { angleBetween, axisX, fromYaw } from '../lib/quat.ts';
 import type { Vec3 } from '../lib/vec3.ts';
 import { applyCommands, HANDS_ON_TURN_RATE } from './commands.ts';
-import { createShipSystemsState, loadShipDefinition, stepShipSystems } from './index.ts';
+import {
+  createShipSystemsState,
+  handsOnBodyRate,
+  loadShipDefinition,
+  stepShipSystems,
+} from './index.ts';
 import { controlSettings } from './propulsion/control.ts';
 import { fly as flight, netWrench, rcsPropellant, RESTING } from './test-helpers.ts';
 
@@ -376,5 +382,16 @@ describe('hands-on flying in three dimensions (rigid body integrated in the test
     state = cut.state;
     for (let tick = 0; tick < 30; tick++) state = step(state).state;
     expect(rcsPropellant(state)).toBe(propellant);
+  });
+});
+
+describe('hands-on body rate, for a navigator', () => {
+  it('is the rate the ship turns to: yaw about +z, pitch about -y, a diagonal capped', () => {
+    const definition = loadShipDefinition();
+    const rate = baselineData.propulsion.attitudeControl.handsOnTurnRate;
+    expect(handsOnBodyRate(definition, { yaw: 1, pitch: 0 })).toEqual({ x: 0, y: 0, z: rate });
+    expect(handsOnBodyRate(definition, { yaw: 0, pitch: 1 })).toEqual({ x: 0, y: -rate, z: 0 });
+    const diagonal = handsOnBodyRate(definition, { yaw: 1, pitch: 1 });
+    expect(Math.hypot(diagonal.y, diagonal.z)).toBeCloseTo(rate, 15);
   });
 });

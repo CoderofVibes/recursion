@@ -10,7 +10,7 @@ const result = stepShipSystems(initial, definition, commands, environment, dt);
 // { state, actuators, measurements, events }
 ```
 
-`step` aliases `stepShipSystems`. Also exported: `computeMassProperties`, and `nominalJets` and `handsOnFirings` (§ Drawing thrust). Use the real definition/state together: contract fixtures describe a different mock ship. The loader projects structure once, 41 other assemblies, seven resource tanks including reactants/product water, four buses, four thermal nodes and four configurations. Full 1C detail is retained under `systems`.
+`step` aliases `stepShipSystems`. Also exported: `computeMassProperties`, `handsOnBodyRate(definition, input)` (the body rate a hands-on yaw and pitch demand turns the ship at, for a navigator), and `nominalJets` and `handsOnFirings` (§ Drawing thrust). Use the real definition/state together: contract fixtures describe a different mock ship. The loader projects structure once, 41 other assemblies, seven resource tanks including reactants/product water, four buses, four thermal nodes and four configurations. Full 1C detail is retained under `systems`.
 
 ## Frames and geometry
 

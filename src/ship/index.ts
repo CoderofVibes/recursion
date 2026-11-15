@@ -19,6 +19,21 @@ export {
   type NominalJet,
 } from './propulsion/nominal.ts';
 
+import type { HandsOnInput } from '../contracts/commands.ts';
+import type { Vec3 } from '../lib/vec3.ts';
+import { controlSettings, handsOnRate } from './propulsion/control.ts';
+
+/**
+ * The body rate (rad/s) the ship's flight software turns to for a hands-on yaw and pitch
+ * demand: yaw about +z, pitch about −y, roll zero, scaled so a diagonal never exceeds the
+ * hands-on turn rate. The same law the ship step uses, so a navigator can follow a stick the
+ * moment it moves instead of waiting for the next star-tracker fix.
+ */
+export const handsOnBodyRate = (
+  definition: ShipDefinition,
+  input: Pick<HandsOnInput, 'yaw' | 'pitch'>,
+): Vec3 => handsOnRate(input, controlSettings(definition));
+
 const SENSING_KINDS = new Set(['optical-tracker', 'accelerometer', 'star-tracker', 'gyro']);
 const sensorIdTables = new WeakMap<ShipDefinition, readonly string[]>();
 /** Ids of the instruments the sensor step owns, found once per definition. */
