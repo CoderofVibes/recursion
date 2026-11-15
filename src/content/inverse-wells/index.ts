@@ -10,6 +10,7 @@ import { createRng } from '../../lib/rng.ts';
 import { fromRotationVector, multiply } from '../../lib/quat.ts';
 import { distance, addScaled, length, isFinite3 } from '../../lib/vec3.ts';
 import { loadShipDefinition } from '../../ship/index.ts';
+import { initializeWellCameraStream } from '../../ship/sensors/wells.ts';
 import {
   createWellRegistry,
   DEFAULT_WELL_PROFILE,
@@ -34,7 +35,7 @@ export { s16Layout, seededS16Layout, certifyArrival, S16_CATALOGUE_SEEDS } from 
 export { s22Layout, seededS22Layout, S22_CATALOGUE_SEEDS } from './s22-layout.ts';
 export * from './lifecycle.ts';
 export { createFunnelHullHazards } from './hazards.ts';
-export { projectFunnelOptics } from './optics.ts';
+export { projectFunnelOptics, funnelOpticalSegments } from './optics.ts';
 export const ENCOUNTER_ID = 'inverse-wells';
 export const SEED = 'well-garden-1';
 export const SAVE_FORMAT = 3;
@@ -159,7 +160,7 @@ export function createInverseWells(
     throw new Error('this entrance requires the actual surviving ship and acquired briefing');
   const ship = options.arrival?.ship ?? {
     kinematics: entrance!,
-    systems: createArrivalSystems(definition, {}, seed),
+    systems: initializeWellCameraStream(createArrivalSystems(definition, {}, seed), seed),
   };
   const isFunnel = layout.status === 'funnel-prototype';
   if (layout.wells.some((well) => !!well.funnel !== isFunnel))
