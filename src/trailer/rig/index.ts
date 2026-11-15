@@ -162,6 +162,24 @@ export function roomScene(
   return scene;
 }
 
+/**
+ * For the rehearsal (R59): the room's canvas and the composer's render target, in device pixels.
+ * They are equal while the composer draws at the renderer's pixel ratio; PF's adaptive scale
+ * would shrink the target. Null until a room shot has been prepared.
+ */
+export function renderSize(): [number, number, number, number] | null {
+  if (!shared) return null;
+  const { composer } = shared.room as unknown as {
+    composer: { renderTarget1: { width: number; height: number } };
+  };
+  const target = composer.renderTarget1;
+  return [shared.canvas.width, shared.canvas.height, target.width, target.height];
+}
+// The rehearsal asks through the page, so it reaches the module instance that built the rig (a
+// hot-updated module and a plain import of the same file are separate instances).
+(globalThis as unknown as { __trailerRenderSize?: typeof renderSize }).__trailerRenderSize =
+  renderSize;
+
 /** Dev-only capture entry: samples the actual registered scene, including backwards seeks. */
 export async function sampleForReview(id: string, local: number): Promise<void> {
   const scene = reviewScenes.get(id);

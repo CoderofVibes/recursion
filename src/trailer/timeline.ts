@@ -8,6 +8,13 @@
 /** The whole trailer, seconds. */
 export const TOTAL = 30;
 
+/**
+ * The organizer's label, small in a corner of every frame (docs/submission/requirements.md: say
+ * where AI was used; acknowledge AI-generated audio). The final card carries the full labels.
+ */
+export const CORNER_LABEL =
+  'Gameplay, edited · built with AI assistance · audio: ElevenLabs, AI-generated';
+
 export interface Beat {
   /** Unique, used in logs and the rehearsal record. */
   readonly id: string;

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   BEATS,
   BRAID_DIPS,
+  CORNER_LABEL,
   MONTAGE,
   TITLE_DIPS,
   TOTAL,
@@ -39,6 +40,12 @@ describe("the trailer's timeline", () => {
 
   it("puts every beat where the owner's sheet does", () => {
     for (const [id, start] of SHEET) expect(beat(id).start).toBe(start);
+  });
+
+  it("carries the organizer's label for every frame: edited gameplay, AI assistance, AI audio", () => {
+    expect(CORNER_LABEL).toBe(
+      'Gameplay, edited · built with AI assistance · audio: ElevenLabs, AI-generated',
+    );
   });
 
   it('holds eight montage screens of 1.35 s, each with its caption, FLIGHT first', () => {

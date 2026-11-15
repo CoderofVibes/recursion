@@ -139,3 +139,51 @@ body {
   letter-spacing: var(--rx-tracking-body);
   color: var(--rx-ink-dim);
 }
+
+/* The montage: stills of the game's real screens, pixel for pixel at the recording size. */
+.tr-montage {
+  background: var(--rx-void);
+}
+
+.tr-montage > img,
+.tr-montage > .tr-montage-missing {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.tr-montage > img {
+  object-fit: contain;
+}
+
+.tr-montage > [hidden] {
+  display: none;
+}
+
+.tr-montage-missing {
+  display: grid;
+  place-items: center;
+  font-size: var(--rx-size-value);
+  color: var(--rx-caution);
+}
+
+/*
+ * The organizer's label, on every frame (docs/submission/requirements.md). Above the veil, in
+ * the top left corner: the one corner the game's own screens leave empty (the view's name sits
+ * just below it, the clock and warp at the top right, the key hints along the bottom).
+ */
+.tr-label {
+  position: absolute;
+  left: var(--rx-gap);
+  top: calc(var(--rx-gap) * 0.5);
+  z-index: 1;
+  font-size: var(--rx-size-label);
+  letter-spacing: var(--rx-tracking-label);
+  color: var(--rx-ink-dim);
+  text-shadow:
+    0 0 2px var(--rx-void),
+    0 0 6px var(--rx-void);
+  pointer-events: none;
+  white-space: nowrap;
+}

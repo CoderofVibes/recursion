@@ -13,7 +13,7 @@ import { applyTheme } from '../theme/index.ts';
 import type { SceneFactory, TrailerScene } from './scene.ts';
 import { createSlate } from './slate.ts';
 import { loadSound, type Sound } from './sound.ts';
-import { BEATS, TOTAL, beatAt, levelAt } from './timeline.ts';
+import { BEATS, CORNER_LABEL, TOTAL, beatAt, levelAt } from './timeline.ts';
 import './trailer.css';
 
 const modules = import.meta.glob<{ createScene: SceneFactory }>('./scenes/*/index.ts', {
@@ -43,8 +43,10 @@ const stage = make('tr-stage');
 const caption = make('tr-caption');
 const veil = make('tr-veil');
 const status = make('tr-status');
+const label = make('tr-label');
+label.textContent = CORNER_LABEL;
 caption.hidden = true;
-root.append(stage, caption, veil, status);
+root.append(stage, caption, veil, label, status);
 
 // Scenes: one per folder under scenes/, a stand-in slate for any beat whose scene isn't built.
 const scenes = new Map<string, TrailerScene>();
