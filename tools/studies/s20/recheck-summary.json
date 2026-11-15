@@ -1,0 +1,6105 @@
+{
+  "run": "recheck",
+  "source": {
+    "commit": "19a9adafdf9c9e430fd2505ce087ace60065f554",
+    "srcTree": "e933bee0bbdd6af423144cad6088aa2205178222",
+    "dataTree": "c5a09fa693bf2132c89251682a05c9f567a49a8f",
+    "branch": "st/s20-3d-recheck",
+    "dirtyInputs": ""
+  },
+  "totalBytes": 1513143,
+  "gzipBytes": 444444,
+  "loads": [
+    {
+      "profile": "native",
+      "cache": "cold",
+      "ready": {
+        "n": 5,
+        "median": 816.1000000014901,
+        "p95": 2593.3000000044703,
+        "worst": 2593.3000000044703
+      },
+      "firstInteraction": {
+        "n": 5,
+        "median": 852.1999999955297,
+        "p95": 2622.39999999851,
+        "worst": 2622.39999999851
+      },
+      "keyToAck": {
+        "n": 5,
+        "median": 7.5,
+        "p95": 8.599999994039536,
+        "worst": 8.599999994039536
+      },
+      "consoleReady": {
+        "n": 5,
+        "median": 1710.1999999955297,
+        "p95": 3474.7000000029802,
+        "worst": 3474.7000000029802
+      },
+      "transfers": [
+        441817,
+        441817,
+        441817,
+        441817,
+        441817
+      ],
+      "fcp": {
+        "n": 5,
+        "median": 152,
+        "p95": 260,
+        "worst": 260
+      }
+    },
+    {
+      "profile": "native",
+      "cache": "warm",
+      "ready": {
+        "n": 5,
+        "median": 761.3000000044703,
+        "p95": 1043.1000000014901,
+        "worst": 1043.1000000014901
+      },
+      "firstInteraction": {
+        "n": 5,
+        "median": 791.3999999985099,
+        "p95": 1131.3999999985099,
+        "worst": 1131.3999999985099
+      },
+      "keyToAck": {
+        "n": 5,
+        "median": 7.299999997019768,
+        "p95": 10.799999997019768,
+        "worst": 10.799999997019768
+      },
+      "consoleReady": {
+        "n": 5,
+        "median": 1616.7000000029802,
+        "p95": 1909.7000000029802,
+        "worst": 1909.7000000029802
+      },
+      "transfers": [
+        1500,
+        1500,
+        1500,
+        1500,
+        1500
+      ],
+      "fcp": {
+        "n": 5,
+        "median": 192,
+        "p95": 260,
+        "worst": 260
+      }
+    },
+    {
+      "profile": "modest",
+      "cache": "cold",
+      "ready": {
+        "n": 5,
+        "median": 4110.60000000149,
+        "p95": 4886.5,
+        "worst": 4886.5
+      },
+      "firstInteraction": {
+        "n": 5,
+        "median": 4638.5,
+        "p95": 5147.10000000149,
+        "worst": 5147.10000000149
+      },
+      "keyToAck": {
+        "n": 5,
+        "median": 71.20000000298023,
+        "p95": 129.19999999552965,
+        "worst": 129.19999999552965
+      },
+      "consoleReady": {
+        "n": 5,
+        "median": 5962.60000000149,
+        "p95": 6262.89999999851,
+        "worst": 6262.89999999851
+      },
+      "transfers": [
+        441817,
+        441817,
+        441817,
+        441817,
+        441817
+      ],
+      "fcp": {
+        "n": 5,
+        "median": 1032,
+        "p95": 1284,
+        "worst": 1284
+      }
+    },
+    {
+      "profile": "modest",
+      "cache": "warm",
+      "ready": {
+        "n": 5,
+        "median": 3134.39999999851,
+        "p95": 4125.5,
+        "worst": 4125.5
+      },
+      "firstInteraction": {
+        "n": 5,
+        "median": 3333.60000000149,
+        "p95": 4521.70000000298,
+        "worst": 4521.70000000298
+      },
+      "keyToAck": {
+        "n": 5,
+        "median": 58.399999998509884,
+        "p95": 122.60000000149012,
+        "worst": 122.60000000149012
+      },
+      "consoleReady": {
+        "n": 5,
+        "median": 4398.89999999851,
+        "p95": 5762,
+        "worst": 5762
+      },
+      "transfers": [
+        1500,
+        1500,
+        1500,
+        1500,
+        1500
+      ],
+      "fcp": {
+        "n": 5,
+        "median": 756,
+        "p95": 1024,
+        "worst": 1024
+      }
+    }
+  ],
+  "frames": [
+    {
+      "key": "native/room/1",
+      "profile": "native",
+      "view": "room",
+      "warp": 1,
+      "n": 934,
+      "median": 18.19999999999891,
+      "p95": 24.200000000000728,
+      "worst": 36.399999999999636,
+      "wall": 16.01319999999553,
+      "ship": 16,
+      "shipPerWall": 0.9991756800642263,
+      "saturationPercent": 0,
+      "saturated": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "worst": null,
+        "shipPerWall": null
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        24.299999999999272,
+        24.199999999999818
+      ]
+    },
+    {
+      "key": "native/mission/1",
+      "profile": "native",
+      "view": "mission",
+      "warp": 1,
+      "n": 1032,
+      "median": 12.300000000000182,
+      "p95": 18.30000000000109,
+      "worst": 48.5,
+      "wall": 16.00379999999702,
+      "ship": 16,
+      "shipPerWall": 0.9997625563930428,
+      "saturationPercent": 0,
+      "saturated": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "worst": null,
+        "shipPerWall": null
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        18.300000000000182,
+        24.30000000000109
+      ]
+    },
+    {
+      "key": "native/plan/1",
+      "profile": "native",
+      "view": "plan",
+      "warp": 1,
+      "n": 1093,
+      "median": 12.200000000000728,
+      "p95": 18.300000000000182,
+      "worst": 48.5,
+      "wall": 15.992200000002981,
+      "ship": 16,
+      "shipPerWall": 1.0004877377719774,
+      "saturationPercent": 0,
+      "saturated": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "worst": null,
+        "shipPerWall": null
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        18.299999999999272,
+        18.30000000000109
+      ]
+    },
+    {
+      "key": "native/model/1",
+      "profile": "native",
+      "view": "model",
+      "warp": 1,
+      "n": 1060,
+      "median": 12.200000000000728,
+      "p95": 18.30000000000109,
+      "worst": 30.399999999999636,
+      "wall": 15.991699999995529,
+      "ship": 16,
+      "shipPerWall": 1.0005190192415112,
+      "saturationPercent": 0,
+      "saturated": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "worst": null,
+        "shipPerWall": null
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        18.200000000000728,
+        24.200000000000728
+      ]
+    },
+    {
+      "key": "native/blackbox/1",
+      "profile": "native",
+      "view": "blackbox",
+      "warp": 1,
+      "n": 1061,
+      "median": 12.200000000000728,
+      "p95": 18.30000000000109,
+      "worst": 30.300000000000182,
+      "wall": 16.01319999999553,
+      "ship": 16,
+      "shipPerWall": 0.9991756800642263,
+      "saturationPercent": 0,
+      "saturated": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "worst": null,
+        "shipPerWall": null
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        18.200000000000728,
+        24.200000000000728
+      ]
+    },
+    {
+      "key": "native/systems/1",
+      "profile": "native",
+      "view": "systems",
+      "warp": 1,
+      "n": 1061,
+      "median": 12.200000000000728,
+      "p95": 24.299999999999272,
+      "worst": 42.5,
+      "wall": 15.9965,
+      "ship": 16,
+      "shipPerWall": 1.0002187978620323,
+      "saturationPercent": 0,
+      "saturated": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "worst": null,
+        "shipPerWall": null
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        18.299999999999272,
+        30.199999999999818
+      ]
+    },
+    {
+      "key": "native/flight/1",
+      "profile": "native",
+      "view": "flight",
+      "warp": 1,
+      "n": 884,
+      "median": 18.199999999999818,
+      "p95": 24.300000000000182,
+      "worst": 30.399999999999636,
+      "wall": 16.01010000000149,
+      "ship": 16,
+      "shipPerWall": 0.9993691482250898,
+      "saturationPercent": 0,
+      "saturated": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "worst": null,
+        "shipPerWall": null
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        24.199999999999818,
+        24.300000000000182
+      ]
+    },
+    {
+      "key": "native/map/1",
+      "profile": "native",
+      "view": "map",
+      "warp": 1,
+      "n": 1250,
+      "median": 12.100000000000364,
+      "p95": 18.200000000000728,
+      "worst": 18.5,
+      "wall": 15.97940000000596,
+      "ship": 16,
+      "shipPerWall": 1.0012891597928604,
+      "saturationPercent": 0,
+      "saturated": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "worst": null,
+        "shipPerWall": null
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        18.200000000000728,
+        18.200000000000728
+      ]
+    },
+    {
+      "key": "native/ship/1",
+      "profile": "native",
+      "view": "ship",
+      "warp": 1,
+      "n": 958,
+      "median": 18,
+      "p95": 30.299999999999272,
+      "worst": 48.69999999999982,
+      "wall": 15.99510000000149,
+      "ship": 16,
+      "shipPerWall": 1.0003063438177011,
+      "saturationPercent": 0,
+      "saturated": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "worst": null,
+        "shipPerWall": null
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        18.300000000000182,
+        36.399999999999636
+      ]
+    },
+    {
+      "key": "native/room/2000",
+      "profile": "native",
+      "view": "room",
+      "warp": 2000,
+      "n": 661,
+      "median": 24.199999999999818,
+      "p95": 42.5,
+      "worst": 60.600000000000364,
+      "wall": 15.98919999999553,
+      "ship": 13746,
+      "shipPerWall": 859.7053010784682,
+      "saturationPercent": 97.88199697428139,
+      "saturated": {
+        "n": 647,
+        "median": 24.199999999999818,
+        "p95": 42.5,
+        "worst": 60.600000000000364,
+        "shipPerWall": 848.5934601259506
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        24.399999999999636,
+        48.600000000000364
+      ]
+    },
+    {
+      "key": "native/mission/2000",
+      "profile": "native",
+      "view": "mission",
+      "warp": 2000,
+      "n": 701,
+      "median": 18.200000000000728,
+      "p95": 42.399999999999636,
+      "worst": 78.80000000000018,
+      "wall": 15.99510000000894,
+      "ship": 14581,
+      "shipPerWall": 911.5916749499441,
+      "saturationPercent": 99.57203994293866,
+      "saturated": {
+        "n": 698,
+        "median": 18.200000000000728,
+        "p95": 42.399999999999636,
+        "worst": 78.80000000000018,
+        "shipPerWall": 909.290165012367
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        24.200000000000728,
+        54.399999999999636
+      ]
+    },
+    {
+      "key": "native/plan/2000",
+      "profile": "native",
+      "view": "plan",
+      "warp": 2000,
+      "n": 739,
+      "median": 18.200000000000728,
+      "p95": 42.399999999999636,
+      "worst": 54.600000000000364,
+      "wall": 15.971499999999999,
+      "ship": 15011,
+      "shipPerWall": 939.8616285258116,
+      "saturationPercent": 97.56427604871448,
+      "saturated": {
+        "n": 721,
+        "median": 18.200000000000728,
+        "p95": 42.399999999999636,
+        "worst": 54.600000000000364,
+        "shipPerWall": 926.6409266409263
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        18.400000000001455,
+        42.5
+      ]
+    },
+    {
+      "key": "native/model/2000",
+      "profile": "native",
+      "view": "model",
+      "warp": 2000,
+      "n": 777,
+      "median": 18.200000000000728,
+      "p95": 36.30000000000109,
+      "worst": 54.5,
+      "wall": 15.976299999997021,
+      "ship": 18710,
+      "shipPerWall": 1171.1097062526046,
+      "saturationPercent": 93.82239382239382,
+      "saturated": {
+        "n": 729,
+        "median": 18.200000000000728,
+        "p95": 36.30000000000109,
+        "worst": 54.5,
+        "shipPerWall": 1135.623681400254
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        24.200000000000728,
+        42.30000000000109
+      ]
+    },
+    {
+      "key": "native/blackbox/2000",
+      "profile": "native",
+      "view": "blackbox",
+      "warp": 2000,
+      "n": 833,
+      "median": 18.199999999999818,
+      "p95": 30.300000000000182,
+      "worst": 54.600000000000364,
+      "wall": 15.967300000004471,
+      "ship": 20301,
+      "shipPerWall": 1271.410946120779,
+      "saturationPercent": 88.35534213685474,
+      "saturated": {
+        "n": 736,
+        "median": 18.199999999999818,
+        "p95": 30.30000000000109,
+        "worst": 54.600000000000364,
+        "shipPerWall": 1205.1982000993876
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        24.300000000000182,
+        30.399999999999636
+      ]
+    },
+    {
+      "key": "native/systems/2000",
+      "profile": "native",
+      "view": "systems",
+      "warp": 2000,
+      "n": 607,
+      "median": 24.299999999999272,
+      "p95": 42.5,
+      "worst": 60.600000000000364,
+      "wall": 16.01360000000149,
+      "ship": 13533,
+      "shipPerWall": 845.0941699554592,
+      "saturationPercent": 94.39868204283361,
+      "saturated": {
+        "n": 573,
+        "median": 24.30000000000109,
+        "p95": 42.5,
+        "worst": 60.600000000000364,
+        "shipPerWall": 814.9675370410672
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        48.399999999999636,
+        42.399999999999636
+      ]
+    },
+    {
+      "key": "native/flight/2000",
+      "profile": "native",
+      "view": "flight",
+      "warp": 2000,
+      "n": 822,
+      "median": 18.200000000000728,
+      "p95": 24.300000000000182,
+      "worst": 42.399999999999636,
+      "wall": 15.99789999999851,
+      "ship": 17783,
+      "shipPerWall": 1111.5833953207393,
+      "saturationPercent": 98.78345498783455,
+      "saturated": {
+        "n": 812,
+        "median": 18.200000000000728,
+        "p95": 24.300000000000182,
+        "worst": 42.399999999999636,
+        "shipPerWall": 1104.7429711042996
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        24.399999999999636,
+        24.300000000000182
+      ]
+    },
+    {
+      "key": "native/map/2000",
+      "profile": "native",
+      "view": "map",
+      "warp": 2000,
+      "n": 909,
+      "median": 18.19999999999891,
+      "p95": 24.200000000000728,
+      "worst": 36.30000000000018,
+      "wall": 15.983600000001491,
+      "ship": 19597,
+      "shipPerWall": 1226.0692209513609,
+      "saturationPercent": 97.24972497249725,
+      "saturated": {
+        "n": 884,
+        "median": 18.19999999999891,
+        "p95": 24.200000000000728,
+        "worst": 36.30000000000018,
+        "shipPerWall": 1210.3121452170437
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        24.200000000000728,
+        24.100000000000364
+      ]
+    },
+    {
+      "key": "native/ship/2000",
+      "profile": "native",
+      "view": "ship",
+      "warp": 2000,
+      "n": 941,
+      "median": 18.100000000000364,
+      "p95": 24.399999999999636,
+      "worst": 60.400000000001455,
+      "wall": 15.98880000000447,
+      "ship": 20749,
+      "shipPerWall": 1297.7209046328803,
+      "saturationPercent": 68.86291179596174,
+      "saturated": {
+        "n": 648,
+        "median": 18.199999999999818,
+        "p95": 30.299999999999272,
+        "worst": 60.400000000001455,
+        "shipPerWall": 1099.6300548539346
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        30.399999999999636,
+        18.30000000000109
+      ]
+    },
+    {
+      "key": "modest/room/1",
+      "profile": "modest",
+      "view": "room",
+      "warp": 1,
+      "n": 215,
+      "median": 66.70000000000073,
+      "p95": 121.5,
+      "worst": 188,
+      "wall": 15.861,
+      "ship": 15,
+      "shipPerWall": 0.9457159069415547,
+      "saturationPercent": 0,
+      "saturated": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "worst": null,
+        "shipPerWall": null
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        133.39999999999964,
+        115.10000000000036
+      ]
+    },
+    {
+      "key": "modest/mission/1",
+      "profile": "modest",
+      "view": "mission",
+      "warp": 1,
+      "n": 434,
+      "median": 36.29999999999927,
+      "p95": 66.59999999999854,
+      "worst": 145.60000000000036,
+      "wall": 15.965,
+      "ship": 16,
+      "shipPerWall": 1.0021922956467273,
+      "saturationPercent": 0,
+      "saturated": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "worst": null,
+        "shipPerWall": null
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        54.600000000000364,
+        78.70000000000073
+      ]
+    },
+    {
+      "key": "modest/plan/1",
+      "profile": "modest",
+      "view": "plan",
+      "warp": 1,
+      "n": 586,
+      "median": 24.100000000000364,
+      "p95": 54.599999999998545,
+      "worst": 78.80000000000109,
+      "wall": 15.96029999998957,
+      "ship": 16,
+      "shipPerWall": 1.0024874219162834,
+      "saturationPercent": 0,
+      "saturated": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "worst": null,
+        "shipPerWall": null
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        66.70000000000073,
+        30.30000000000109
+      ]
+    },
+    {
+      "key": "modest/model/1",
+      "profile": "modest",
+      "view": "model",
+      "warp": 1,
+      "n": 458,
+      "median": 30.399999999999636,
+      "p95": 60.5,
+      "worst": 127.19999999999891,
+      "wall": 15.997999999992551,
+      "ship": 16,
+      "shipPerWall": 1.000125015627419,
+      "saturationPercent": 0,
+      "saturated": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "worst": null,
+        "shipPerWall": null
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        60.600000000000364,
+        54.599999999998545
+      ]
+    },
+    {
+      "key": "modest/blackbox/1",
+      "profile": "modest",
+      "view": "blackbox",
+      "warp": 1,
+      "n": 314,
+      "median": 42.29999999999927,
+      "p95": 121.29999999999927,
+      "worst": 181.79999999999927,
+      "wall": 15.956100000008941,
+      "ship": 15,
+      "shipPerWall": 0.9400793426959968,
+      "saturationPercent": 0,
+      "saturated": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "worst": null,
+        "shipPerWall": null
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        133.40000000000146,
+        103
+      ]
+    },
+    {
+      "key": "modest/systems/1",
+      "profile": "modest",
+      "view": "systems",
+      "warp": 1,
+      "n": 199,
+      "median": 42.5,
+      "p95": 333.2999999999993,
+      "worst": 460.5,
+      "wall": 16.00440000000596,
+      "ship": 11,
+      "shipPerWall": 0.6873109894776377,
+      "saturationPercent": 0,
+      "saturated": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "worst": null,
+        "shipPerWall": null
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        418.39999999999964,
+        278.8000000000011
+      ]
+    },
+    {
+      "key": "modest/flight/1",
+      "profile": "modest",
+      "view": "flight",
+      "warp": 1,
+      "n": 275,
+      "median": 54.600000000000364,
+      "p95": 84.79999999999927,
+      "worst": 133.29999999999927,
+      "wall": 15.99139999999851,
+      "ship": 16,
+      "shipPerWall": 1.0005377890617138,
+      "saturationPercent": 0,
+      "saturated": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "worst": null,
+        "shipPerWall": null
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        84.79999999999927,
+        84.79999999999927
+      ]
+    },
+    {
+      "key": "modest/map/1",
+      "profile": "modest",
+      "view": "map",
+      "warp": 1,
+      "n": 363,
+      "median": 42.5,
+      "p95": 66.69999999999891,
+      "worst": 85,
+      "wall": 16.00029999999702,
+      "ship": 16,
+      "shipPerWall": 0.9999812503517422,
+      "saturationPercent": 0,
+      "saturated": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "worst": null,
+        "shipPerWall": null
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        72.70000000000073,
+        54.600000000000364
+      ]
+    },
+    {
+      "key": "modest/ship/1",
+      "profile": "modest",
+      "view": "ship",
+      "warp": 1,
+      "n": 268,
+      "median": 54.5,
+      "p95": 97.10000000000036,
+      "worst": 133.29999999999927,
+      "wall": 15.98330000000447,
+      "ship": 16,
+      "shipPerWall": 1.0010448405520467,
+      "saturationPercent": 0,
+      "saturated": {
+        "n": 0,
+        "median": null,
+        "p95": null,
+        "worst": null,
+        "shipPerWall": null
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        115.20000000000073,
+        66.80000000000109
+      ]
+    },
+    {
+      "key": "modest/room/2000",
+      "profile": "modest",
+      "view": "room",
+      "warp": 2000,
+      "n": 183,
+      "median": 78.89999999999964,
+      "p95": 133.29999999999927,
+      "worst": 242.39999999999964,
+      "wall": 15.79520000001043,
+      "ship": 1464,
+      "shipPerWall": 92.68638573737802,
+      "saturationPercent": 100,
+      "saturated": {
+        "n": 183,
+        "median": 78.89999999999964,
+        "p95": 133.29999999999927,
+        "worst": 242.39999999999964,
+        "shipPerWall": 91.78798480231737
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        151.5,
+        127.30000000000109
+      ]
+    },
+    {
+      "key": "modest/mission/2000",
+      "profile": "modest",
+      "view": "mission",
+      "warp": 2000,
+      "n": 259,
+      "median": 60.5,
+      "p95": 91,
+      "worst": 157.5,
+      "wall": 15.97209999999404,
+      "ship": 2072,
+      "shipPerWall": 129.72621007887335,
+      "saturationPercent": 100,
+      "saturated": {
+        "n": 259,
+        "median": 60.5,
+        "p95": 91,
+        "worst": 157.5,
+        "shipPerWall": 129.61422253360766
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        78.70000000000073,
+        103
+      ]
+    },
+    {
+      "key": "modest/plan/2000",
+      "profile": "modest",
+      "view": "plan",
+      "warp": 2000,
+      "n": 356,
+      "median": 42.400000000001455,
+      "p95": 66.5,
+      "worst": 115.10000000000036,
+      "wall": 15.93019999999553,
+      "ship": 2848,
+      "shipPerWall": 178.7799274334785,
+      "saturationPercent": 100,
+      "saturated": {
+        "n": 356,
+        "median": 42.400000000001455,
+        "p95": 66.5,
+        "worst": 115.10000000000036,
+        "shipPerWall": 178.49308715326077
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        60.70000000000073,
+        66.5
+      ]
+    },
+    {
+      "key": "modest/model/2000",
+      "profile": "modest",
+      "view": "model",
+      "warp": 2000,
+      "n": 177,
+      "median": 84.90000000000055,
+      "p95": 187.89999999999782,
+      "worst": 327.1999999999989,
+      "wall": 15.9205,
+      "ship": 1416,
+      "shipPerWall": 88.94193021575956,
+      "saturationPercent": 100,
+      "saturated": {
+        "n": 177,
+        "median": 84.90000000000055,
+        "p95": 187.89999999999782,
+        "worst": 327.1999999999989,
+        "shipPerWall": 88.91288922935883
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        133.29999999999927,
+        206
+      ]
+    },
+    {
+      "key": "modest/blackbox/2000",
+      "profile": "modest",
+      "view": "blackbox",
+      "warp": 2000,
+      "n": 155,
+      "median": 91.20000000000073,
+      "p95": 193.90000000000146,
+      "worst": 254.40000000000146,
+      "wall": 15.887800000004471,
+      "ship": 1240,
+      "shipPerWall": 78.0473067384818,
+      "saturationPercent": 100,
+      "saturated": {
+        "n": 155,
+        "median": 91.20000000000073,
+        "p95": 193.90000000000146,
+        "worst": 254.40000000000146,
+        "shipPerWall": 77.80392156862744
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        151.60000000000036,
+        206.20000000000073
+      ]
+    },
+    {
+      "key": "modest/systems/2000",
+      "profile": "modest",
+      "view": "systems",
+      "warp": 2000,
+      "n": 120,
+      "median": 84.80000000000291,
+      "p95": 424.2999999999993,
+      "worst": 533.3000000000011,
+      "wall": 15.98690000000596,
+      "ship": 960,
+      "shipPerWall": 60.04916525402937,
+      "saturationPercent": 100,
+      "saturated": {
+        "n": 120,
+        "median": 84.80000000000291,
+        "p95": 424.2999999999993,
+        "worst": 533.3000000000011,
+        "shipPerWall": 59.870529978920565
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        199.8000000000011,
+        490.8000000000029
+      ]
+    },
+    {
+      "key": "modest/flight/2000",
+      "profile": "modest",
+      "view": "flight",
+      "warp": 2000,
+      "n": 193,
+      "median": 72.79999999999927,
+      "p95": 145.5,
+      "worst": 187.89999999999964,
+      "wall": 15.929699999995531,
+      "ship": 1560,
+      "shipPerWall": 97.93028117293092,
+      "saturationPercent": 100,
+      "saturated": {
+        "n": 193,
+        "median": 72.79999999999927,
+        "p95": 145.5,
+        "worst": 187.89999999999964,
+        "shipPerWall": 97.91983127659842
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        97,
+        151.60000000000036
+      ]
+    },
+    {
+      "key": "modest/map/2000",
+      "profile": "modest",
+      "view": "map",
+      "warp": 2000,
+      "n": 134,
+      "median": 115.19999999999891,
+      "p95": 175.79999999999927,
+      "worst": 266.6999999999989,
+      "wall": 15.88569999999553,
+      "ship": 1072,
+      "shipPerWall": 67.4820750738275,
+      "saturationPercent": 100,
+      "saturated": {
+        "n": 134,
+        "median": 115.19999999999891,
+        "p95": 175.79999999999927,
+        "worst": 266.6999999999989,
+        "shipPerWall": 67.10947232673301
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        175.8000000000011,
+        139.3000000000011
+      ]
+    },
+    {
+      "key": "modest/ship/2000",
+      "profile": "modest",
+      "view": "ship",
+      "warp": 2000,
+      "n": 127,
+      "median": 121.29999999999927,
+      "p95": 187.89999999999964,
+      "worst": 266.6999999999989,
+      "wall": 15.903,
+      "ship": 1016,
+      "shipPerWall": 63.887316858454376,
+      "saturationPercent": 100,
+      "saturated": {
+        "n": 127,
+        "median": 121.29999999999927,
+        "p95": 187.89999999999964,
+        "worst": 266.6999999999989,
+        "shipPerWall": 63.65276663993585
+      },
+      "warningDrops": 0,
+      "modelErrors": [],
+      "perRunP95": [
+        218.10000000000036,
+        133.3000000000011
+      ]
+    }
+  ],
+  "cpu": [
+    {
+      "file": "health-main.cpuprofile.gz",
+      "sampledMs": 20016.68,
+      "self": [
+        {
+          "name": "(program)",
+          "source": null,
+          "selfMs": 5431.776999999994,
+          "inclusiveMs": 5431.776999999994
+        },
+        {
+          "name": "dispatchPower",
+          "source": {
+            "source": "src/ship/power/index.ts",
+            "line": 107,
+            "column": 9,
+            "name": "dispatchPower"
+          },
+          "selfMs": 1088.8899999999987,
+          "inclusiveMs": 1652.6199999999974
+        },
+        {
+          "name": "stepPower",
+          "source": {
+            "source": "src/ship/power/index.ts",
+            "line": 36,
+            "column": 16,
+            "name": "stepPower"
+          },
+          "selfMs": 667.5260000000001,
+          "inclusiveMs": 2335.1829999999973
+        },
+        {
+          "name": "targetVisibility",
+          "source": {
+            "source": "src/game/environment.ts",
+            "line": 105,
+            "column": 16,
+            "name": "targetVisibility"
+          },
+          "selfMs": 604.9669999999995,
+          "inclusiveMs": 607.3139999999996
+        },
+        {
+          "name": "updateMatrixWorld",
+          "source": {
+            "source": "node_modules/three/build/three.core.js",
+            "line": 13071,
+            "column": 1,
+            "name": null
+          },
+          "selfMs": 412.70900000000023,
+          "inclusiveMs": 492.623
+        },
+        {
+          "name": "stepShipSystems",
+          "source": {
+            "source": "src/ship/index.ts",
+            "line": 50,
+            "column": 13,
+            "name": "stepShipSystems"
+          },
+          "selfMs": 363.18099999999976,
+          "inclusiveMs": 4508.014000000015
+        },
+        {
+          "name": "load",
+          "source": {
+            "source": "src/sim/simulation.ts",
+            "line": 376,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 358.8319999999999,
+          "inclusiveMs": 391.0559999999999
+        },
+        {
+          "name": "setProgram",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 18220,
+            "column": 11,
+            "name": "setProgram"
+          },
+          "selfMs": 307.4210000000001,
+          "inclusiveMs": 1330.2140000000002
+        },
+        {
+          "name": "(garbage collector)",
+          "source": null,
+          "selfMs": 300.84999999999997,
+          "inclusiveMs": 300.84999999999997
+        },
+        {
+          "name": "stepThermal",
+          "source": {
+            "source": "src/ship/thermal/index.ts",
+            "line": 16,
+            "column": 16,
+            "name": "stepThermal"
+          },
+          "selfMs": 300.6570000000002,
+          "inclusiveMs": 404.56300000000033
+        },
+        {
+          "name": "store",
+          "source": {
+            "source": "src/sim/simulation.ts",
+            "line": 506,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 299.3069999999998,
+          "inclusiveMs": 314.5199999999999
+        },
+        {
+          "name": "sensorTargets",
+          "source": {
+            "source": "src/sim/snapshot.ts",
+            "line": 49,
+            "column": 16,
+            "name": "sensorTargets"
+          },
+          "selfMs": 264.5939999999999,
+          "inclusiveMs": 264.5939999999999
+        },
+        {
+          "name": "stepPropulsion",
+          "source": {
+            "source": "src/ship/propulsion/propulsion.ts",
+            "line": 232,
+            "column": 16,
+            "name": "stepPropulsion"
+          },
+          "selfMs": 239.95500000000007,
+          "inclusiveMs": 888.4569999999998
+        },
+        {
+          "name": "projectObject",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17696,
+            "column": 11,
+            "name": "projectObject"
+          },
+          "selfMs": 211.428,
+          "inclusiveMs": 388.32200000000034
+        },
+        {
+          "name": "allocate",
+          "source": {
+            "source": "src/ship/power/index.ts",
+            "line": 332,
+            "column": 8,
+            "name": "allocate"
+          },
+          "selfMs": 203.77299999999997,
+          "inclusiveMs": 203.77299999999997
+        },
+        {
+          "name": "computeAccelerations",
+          "source": {
+            "source": "src/sim/simulation.ts",
+            "line": 619,
+            "column": 9,
+            "name": "computeAccelerations"
+          },
+          "selfMs": 178.9029999999999,
+          "inclusiveMs": 178.9029999999999
+        },
+        {
+          "name": "(anonymous)",
+          "source": {
+            "source": "src/game/belief/standin-model.ts",
+            "line": 866,
+            "column": 27,
+            "name": null
+          },
+          "selfMs": 168.07400000000004,
+          "inclusiveMs": 279.0800000000002
+        },
+        {
+          "name": "preparePropulsion",
+          "source": {
+            "source": "src/ship/propulsion/propulsion.ts",
+            "line": 118,
+            "column": 16,
+            "name": "preparePropulsion"
+          },
+          "selfMs": 158.92800000000008,
+          "inclusiveMs": 301.97899999999987
+        },
+        {
+          "name": "build",
+          "source": {
+            "source": "src/ship/massprops/massprops.ts",
+            "line": 25,
+            "column": 9,
+            "name": "build"
+          },
+          "selfMs": 158.23000000000008,
+          "inclusiveMs": 318.3010000000001
+        },
+        {
+          "name": "advance",
+          "source": {
+            "source": "src/sim/simulation.ts",
+            "line": 836,
+            "column": 9,
+            "name": "advance"
+          },
+          "selfMs": 156.882,
+          "inclusiveMs": 478.88700000000006
+        },
+        {
+          "name": "resize",
+          "source": {
+            "source": "src/view3d/room/RoomView.ts",
+            "line": 493,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 152.51899999999998,
+          "inclusiveMs": 152.51899999999998
+        },
+        {
+          "name": "param",
+          "source": {
+            "source": "src/game/belief/standin-model.ts",
+            "line": 243,
+            "column": 8,
+            "name": "param"
+          },
+          "selfMs": 151.82200000000003,
+          "inclusiveMs": 151.82200000000003
+        },
+        {
+          "name": "pull",
+          "source": {
+            "source": "src/game/belief/standin-model.ts",
+            "line": 251,
+            "column": 8,
+            "name": "pull"
+          },
+          "selfMs": 149.56599999999997,
+          "inclusiveMs": 162.071
+        },
+        {
+          "name": "bindVertexArray",
+          "source": null,
+          "selfMs": 146.09700000000007,
+          "inclusiveMs": 146.09700000000007
+        },
+        {
+          "name": "massProperties",
+          "source": {
+            "source": "src/game/belief/standin-model.ts",
+            "line": 311,
+            "column": 8,
+            "name": "massProperties"
+          },
+          "selfMs": 139.72700000000003,
+          "inclusiveMs": 190.2150000000001
+        },
+        {
+          "name": "update",
+          "source": {
+            "source": "src/ship/power/index.ts",
+            "line": 135,
+            "column": 8,
+            "name": "update"
+          },
+          "selfMs": 137.914,
+          "inclusiveMs": 137.914
+        },
+        {
+          "name": "clearanceAndContact",
+          "source": {
+            "source": "src/sim/simulation.ts",
+            "line": 996,
+            "column": 9,
+            "name": "clearanceAndContact"
+          },
+          "selfMs": 131.9,
+          "inclusiveMs": 135.01600000000002
+        },
+        {
+          "name": "step",
+          "source": {
+            "source": "src/game/truth-step.ts",
+            "line": 130,
+            "column": 4,
+            "name": null
+          },
+          "selfMs": 125.60399999999998,
+          "inclusiveMs": 7033.806999999999
+        },
+        {
+          "name": "(idle)",
+          "source": null,
+          "selfMs": 124.44800000000001,
+          "inclusiveMs": 124.44800000000001
+        },
+        {
+          "name": "massDetail",
+          "source": {
+            "source": "src/ship/massprops/massprops.ts",
+            "line": 125,
+            "column": 16,
+            "name": "massDetail"
+          },
+          "selfMs": 122.82100000000003,
+          "inclusiveMs": 530.848
+        },
+        {
+          "name": "drawElements",
+          "source": null,
+          "selfMs": 117.75099999999998,
+          "inclusiveMs": 117.75099999999998
+        },
+        {
+          "name": "multiplyMatrices",
+          "source": {
+            "source": "node_modules/three/build/three.core.js",
+            "line": 10564,
+            "column": 1,
+            "name": null
+          },
+          "selfMs": 110.89000000000001,
+          "inclusiveMs": 110.89000000000001
+        },
+        {
+          "name": "uniformMatrix4fv",
+          "source": null,
+          "selfMs": 107.70700000000001,
+          "inclusiveMs": 107.70700000000001
+        },
+        {
+          "name": "activeJets",
+          "source": {
+            "source": "src/ship/propulsion/jets.ts",
+            "line": 46,
+            "column": 16,
+            "name": "activeJets"
+          },
+          "selfMs": 104.97200000000004,
+          "inclusiveMs": 104.97200000000004
+        },
+        {
+          "name": "renderBufferDirect",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17023,
+            "column": 28,
+            "name": null
+          },
+          "selfMs": 100.563,
+          "inclusiveMs": 2181.182999999998
+        },
+        {
+          "name": "stepSensors",
+          "source": {
+            "source": "src/ship/sensors/index.ts",
+            "line": 189,
+            "column": 16,
+            "name": "stepSensors"
+          },
+          "selfMs": 97.18500000000002,
+          "inclusiveMs": 152.725
+        },
+        {
+          "name": "(anonymous)",
+          "source": {
+            "source": "src/game/belief/standin-model.ts",
+            "line": 878,
+            "column": 23,
+            "name": null
+          },
+          "selfMs": 96.707,
+          "inclusiveMs": 96.707
+        },
+        {
+          "name": "stepRock",
+          "source": {
+            "source": "src/game/belief/standin-model.ts",
+            "line": 582,
+            "column": 8,
+            "name": "stepRock"
+          },
+          "selfMs": 93.118,
+          "inclusiveMs": 481.3900000000001
+        },
+        {
+          "name": "setMaterial",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 10205,
+            "column": 10,
+            "name": "setMaterial"
+          },
+          "selfMs": 85.14299999999997,
+          "inclusiveMs": 178.48900000000003
+        },
+        {
+          "name": "(anonymous)",
+          "source": {
+            "source": "src/game/belief/standin-model.ts",
+            "line": 903,
+            "column": 15,
+            "name": null
+          },
+          "selfMs": 82.356,
+          "inclusiveMs": 117.76399999999997
+        },
+        {
+          "name": "sunIncidence",
+          "source": {
+            "source": "src/ship/power/sun.ts",
+            "line": 15,
+            "column": 16,
+            "name": "sunIncidence"
+          },
+          "selfMs": 79.679,
+          "inclusiveMs": 87.20700000000001
+        },
+        {
+          "name": "hideObject",
+          "source": {
+            "source": "node_modules/three/examples/jsm/renderers/CSS2DRenderer.js",
+            "line": 213,
+            "column": 11,
+            "name": "hideObject"
+          },
+          "selfMs": 79.48400000000001,
+          "inclusiveMs": 79.48400000000001
+        },
+        {
+          "name": "renderObject",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17991,
+            "column": 11,
+            "name": "renderObject"
+          },
+          "selfMs": 76.97999999999999,
+          "inclusiveMs": 2336.5989999999956
+        },
+        {
+          "name": "deploymentOf",
+          "source": {
+            "source": "src/ship/config/configuration.ts",
+            "line": 86,
+            "column": 9,
+            "name": "deploymentOf"
+          },
+          "selfMs": 75.18000000000002,
+          "inclusiveMs": 76.66400000000002
+        },
+        {
+          "name": "getBindingState",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 1680,
+            "column": 10,
+            "name": "getBindingState"
+          },
+          "selfMs": 72.91399999999999,
+          "inclusiveMs": 72.91399999999999
+        },
+        {
+          "name": "setValueV3f",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 4941,
+            "column": 9,
+            "name": "setValueV3f"
+          },
+          "selfMs": 72.52799999999998,
+          "inclusiveMs": 110.688
+        },
+        {
+          "name": "O",
+          "source": {
+            "source": "src/game/belief/standin-model.ts",
+            "line": 246,
+            "column": 14,
+            "name": null
+          },
+          "selfMs": 70.625,
+          "inclusiveMs": 209.94200000000004
+        },
+        {
+          "name": "d",
+          "source": {
+            "source": "src/ship/power/index.ts",
+            "line": 122,
+            "column": 19,
+            "name": null
+          },
+          "selfMs": 70.48100000000001,
+          "inclusiveMs": 70.48100000000001
+        },
+        {
+          "name": "copyArray",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 4860,
+            "column": 9,
+            "name": "copyArray"
+          },
+          "selfMs": 69.81799999999998,
+          "inclusiveMs": 69.81799999999998
+        },
+        {
+          "name": "rotateSym3",
+          "source": {
+            "source": "src/lib/sym3.ts",
+            "line": 54,
+            "column": 16,
+            "name": "rotateSym3"
+          },
+          "selfMs": 69.22899999999998,
+          "inclusiveMs": 94.99999999999999
+        }
+      ],
+      "inclusive": [
+        {
+          "name": "(root)",
+          "source": null,
+          "selfMs": 0,
+          "inclusiveMs": 20016.68000000001
+        },
+        {
+          "name": "v",
+          "source": {
+            "source": "src/app/loop.ts",
+            "line": 173,
+            "column": 16,
+            "name": null
+          },
+          "selfMs": 5.4079999999999995,
+          "inclusiveMs": 13283.60700000001
+        },
+        {
+          "name": "_",
+          "source": {
+            "source": "src/app/loop.ts",
+            "line": 101,
+            "column": 17,
+            "name": null
+          },
+          "selfMs": 33.594,
+          "inclusiveMs": 13268.31700000001
+        },
+        {
+          "name": "advance",
+          "source": {
+            "source": "src/game/session.ts",
+            "line": 444,
+            "column": 4,
+            "name": null
+          },
+          "selfMs": 14.775,
+          "inclusiveMs": 7370.862999999997
+        },
+        {
+          "name": "tickOnce",
+          "source": {
+            "source": "src/game/session.ts",
+            "line": 259,
+            "column": 11,
+            "name": "tickOnce"
+          },
+          "selfMs": 47.303000000000004,
+          "inclusiveMs": 7334.936999999998
+        },
+        {
+          "name": "step",
+          "source": {
+            "source": "src/game/truth-step.ts",
+            "line": 130,
+            "column": 4,
+            "name": null
+          },
+          "selfMs": 125.60399999999998,
+          "inclusiveMs": 7033.806999999999
+        },
+        {
+          "name": "(program)",
+          "source": null,
+          "selfMs": 5431.776999999994,
+          "inclusiveMs": 5431.776999999994
+        },
+        {
+          "name": "frame",
+          "source": {
+            "source": "src/view3d/room/RoomView.ts",
+            "line": 246,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 23.771000000000004,
+          "inclusiveMs": 4542.3439999999955
+        },
+        {
+          "name": "stepShipSystems",
+          "source": {
+            "source": "src/ship/index.ts",
+            "line": 50,
+            "column": 13,
+            "name": "stepShipSystems"
+          },
+          "selfMs": 363.18099999999976,
+          "inclusiveMs": 4508.014000000015
+        },
+        {
+          "name": "render",
+          "source": {
+            "source": "node_modules/three/examples/jsm/postprocessing/EffectComposer.js",
+            "line": 214,
+            "column": 1,
+            "name": null
+          },
+          "selfMs": 32.676,
+          "inclusiveMs": 3555.9989999999916
+        },
+        {
+          "name": "render",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17464,
+            "column": 16,
+            "name": null
+          },
+          "selfMs": 59.03000000000001,
+          "inclusiveMs": 3294.082999999991
+        },
+        {
+          "name": "render",
+          "source": {
+            "source": "node_modules/three/examples/jsm/postprocessing/RenderPass.js",
+            "line": 121,
+            "column": 1,
+            "name": null
+          },
+          "selfMs": 0,
+          "inclusiveMs": 2669.0249999999933
+        },
+        {
+          "name": "renderScene",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17814,
+            "column": 11,
+            "name": "renderScene"
+          },
+          "selfMs": 9.384,
+          "inclusiveMs": 2429.3429999999944
+        },
+        {
+          "name": "renderObjects",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17964,
+            "column": 11,
+            "name": "renderObjects"
+          },
+          "selfMs": 60.62999999999999,
+          "inclusiveMs": 2413.637999999995
+        },
+        {
+          "name": "renderObject",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17991,
+            "column": 11,
+            "name": "renderObject"
+          },
+          "selfMs": 76.97999999999999,
+          "inclusiveMs": 2336.5989999999956
+        },
+        {
+          "name": "stepPower",
+          "source": {
+            "source": "src/ship/power/index.ts",
+            "line": 36,
+            "column": 16,
+            "name": "stepPower"
+          },
+          "selfMs": 667.5260000000001,
+          "inclusiveMs": 2335.1829999999973
+        },
+        {
+          "name": "renderBufferDirect",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17023,
+            "column": 28,
+            "name": null
+          },
+          "selfMs": 100.563,
+          "inclusiveMs": 2181.182999999998
+        },
+        {
+          "name": "dispatchPower",
+          "source": {
+            "source": "src/ship/power/index.ts",
+            "line": 107,
+            "column": 9,
+            "name": "dispatchPower"
+          },
+          "selfMs": 1088.8899999999987,
+          "inclusiveMs": 1652.6199999999974
+        },
+        {
+          "name": "snapshot",
+          "source": {
+            "source": "src/game/session.ts",
+            "line": 400,
+            "column": 4,
+            "name": null
+          },
+          "selfMs": 7.622,
+          "inclusiveMs": 1434.2809999999995
+        },
+        {
+          "name": "believedWorld",
+          "source": {
+            "source": "src/game/belief/model-bridge.ts",
+            "line": 198,
+            "column": 4,
+            "name": null
+          },
+          "selfMs": 14.289,
+          "inclusiveMs": 1384.5500000000004
+        },
+        {
+          "name": "believedWorld",
+          "source": {
+            "source": "src/game/belief/standin-model.ts",
+            "line": 1167,
+            "column": 4,
+            "name": null
+          },
+          "selfMs": 58.847,
+          "inclusiveMs": 1368.8130000000003
+        },
+        {
+          "name": "step",
+          "source": {
+            "source": "src/sim/simulation.ts",
+            "line": 1381,
+            "column": 4,
+            "name": null
+          },
+          "selfMs": 52.074000000000005,
+          "inclusiveMs": 1366.1820000000005
+        },
+        {
+          "name": "setProgram",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 18220,
+            "column": 11,
+            "name": "setProgram"
+          },
+          "selfMs": 307.4210000000001,
+          "inclusiveMs": 1330.2140000000002
+        },
+        {
+          "name": "buildEnvironment",
+          "source": {
+            "source": "src/game/environment.ts",
+            "line": 145,
+            "column": 16,
+            "name": "buildEnvironment"
+          },
+          "selfMs": 30.693999999999996,
+          "inclusiveMs": 903.8779999999999
+        },
+        {
+          "name": "stepPropulsion",
+          "source": {
+            "source": "src/ship/propulsion/propulsion.ts",
+            "line": 232,
+            "column": 16,
+            "name": "stepPropulsion"
+          },
+          "selfMs": 239.95500000000007,
+          "inclusiveMs": 888.4569999999998
+        },
+        {
+          "name": "(anonymous)",
+          "source": {
+            "source": "node_modules/react-dom/cjs/react-dom-client.production.js",
+            "line": 13579,
+            "column": 20,
+            "name": null
+          },
+          "selfMs": 0.218,
+          "inclusiveMs": 777.2559999999999
+        },
+        {
+          "name": "processRootScheduleInMicrotask",
+          "source": {
+            "source": "node_modules/react-dom/cjs/react-dom-client.production.js",
+            "line": 13456,
+            "column": 9,
+            "name": "processRootScheduleInMicrotask"
+          },
+          "selfMs": 0.114,
+          "inclusiveMs": 777.0379999999999
+        },
+        {
+          "name": "flushSyncWorkAcrossRoots_impl",
+          "source": {
+            "source": "node_modules/react-dom/cjs/react-dom-client.production.js",
+            "line": 13408,
+            "column": 9,
+            "name": "flushSyncWorkAcrossRoots_impl"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 776.2549999999999
+        },
+        {
+          "name": "performSyncWorkOnRoot",
+          "source": {
+            "source": "node_modules/react-dom/cjs/react-dom-client.production.js",
+            "line": 13574,
+            "column": 9,
+            "name": "performSyncWorkOnRoot"
+          },
+          "selfMs": 0.106,
+          "inclusiveMs": 776.2549999999999
+        },
+        {
+          "name": "performWorkOnRoot",
+          "source": {
+            "source": "node_modules/react-dom/cjs/react-dom-client.production.js",
+            "line": 12069,
+            "column": 9,
+            "name": "performWorkOnRoot"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 776.1489999999999
+        }
+      ],
+      "groups": [
+        {
+          "group": "(program)",
+          "ms": 5431.776999999994
+        },
+        {
+          "group": "src/ship",
+          "ms": 4378.769000000019
+        },
+        {
+          "group": "Three.js + addons",
+          "ms": 3295.797999999993
+        },
+        {
+          "group": "src/game",
+          "ms": 2570.165000000004
+        },
+        {
+          "group": "src/sim",
+          "ms": 1583.3150000000014
+        },
+        {
+          "group": "src/view3d",
+          "ms": 438.57899999999995
+        },
+        {
+          "group": "React + DOM + scheduler",
+          "ms": 427.19199999999995
+        },
+        {
+          "group": "(garbage collector)",
+          "ms": 300.84999999999997
+        },
+        {
+          "group": "src/lib",
+          "ms": 249.60500000000013
+        },
+        {
+          "group": "src/console",
+          "ms": 160.142
+        },
+        {
+          "group": "bindVertexArray",
+          "ms": 146.09700000000007
+        },
+        {
+          "group": "(idle)",
+          "ms": 124.44800000000001
+        },
+        {
+          "group": "drawElements",
+          "ms": 117.75099999999998
+        },
+        {
+          "group": "uniformMatrix4fv",
+          "ms": 107.70700000000001
+        },
+        {
+          "group": "bindTexture",
+          "ms": 63.44699999999999
+        },
+        {
+          "group": "src/blackbox",
+          "ms": 49.958999999999996
+        },
+        {
+          "group": "src/contracts",
+          "ms": 48.416000000000004
+        },
+        {
+          "group": "uniform1fv",
+          "ms": 47.14599999999999
+        },
+        {
+          "group": "src/app",
+          "ms": 42.359
+        },
+        {
+          "group": "useProgram",
+          "ms": 41.885
+        },
+        {
+          "group": "uniformMatrix3fv",
+          "ms": 37.726
+        },
+        {
+          "group": "bindFramebuffer",
+          "ms": 33.494
+        },
+        {
+          "group": "uniform3f",
+          "ms": 33.033
+        },
+        {
+          "group": "clear",
+          "ms": 27.679999999999996
+        },
+        {
+          "group": "bufferSubData",
+          "ms": 24.287000000000003
+        },
+        {
+          "group": "uniform2f",
+          "ms": 21.244000000000003
+        },
+        {
+          "group": "src/theme",
+          "ms": 20.418
+        },
+        {
+          "group": "postMessage",
+          "ms": 18.318
+        },
+        {
+          "group": "src/model",
+          "ms": 17.877000000000006
+        },
+        {
+          "group": "uniform1f",
+          "ms": 14.941
+        },
+        {
+          "group": "drawArrays",
+          "ms": 13.825999999999999
+        },
+        {
+          "group": "now",
+          "ms": 10.484000000000002
+        },
+        {
+          "group": "frontFace",
+          "ms": 9.318999999999999
+        },
+        {
+          "group": "enable",
+          "ms": 8.647
+        },
+        {
+          "group": "scissor",
+          "ms": 8.572000000000001
+        },
+        {
+          "group": "activeTexture",
+          "ms": 7.9559999999999995
+        },
+        {
+          "group": "requestAnimationFrame",
+          "ms": 7.7379999999999995
+        },
+        {
+          "group": "viewport",
+          "ms": 7.428
+        },
+        {
+          "group": "drawElementsInstanced",
+          "ms": 7.270999999999999
+        },
+        {
+          "group": "queueMicrotask",
+          "ms": 6.564
+        },
+        {
+          "group": "bindBuffer",
+          "ms": 6.199999999999999
+        },
+        {
+          "group": "disable",
+          "ms": 5.977
+        },
+        {
+          "group": "drawArraysInstanced",
+          "ms": 5.9639999999999995
+        },
+        {
+          "group": "toggle",
+          "ms": 5.625
+        },
+        {
+          "group": "(anonymous)",
+          "ms": 5.475
+        },
+        {
+          "group": "put",
+          "ms": 5.335999999999999
+        },
+        {
+          "group": "depthMask",
+          "ms": 4.368
+        },
+        {
+          "group": "uniform3fv",
+          "ms": 3.22
+        },
+        {
+          "group": "getRootNode",
+          "ms": 2.928
+        },
+        {
+          "group": "blendFuncSeparate",
+          "ms": 1.691
+        },
+        {
+          "group": "blendFunc",
+          "ms": 1.612
+        },
+        {
+          "group": "PerformanceObserver.observe.type",
+          "ms": 1.605
+        },
+        {
+          "group": "removeChild",
+          "ms": 1.521
+        },
+        {
+          "group": "setAttribute",
+          "ms": 1.494
+        },
+        {
+          "group": "tick",
+          "ms": 1.4340000000000002
+        }
+      ]
+    },
+    {
+      "file": "health-worker-0.cpuprofile.gz",
+      "sampledMs": 20324.05,
+      "self": [
+        {
+          "name": "(idle)",
+          "source": null,
+          "selfMs": 19788.945999999894,
+          "inclusiveMs": 19788.945999999894
+        },
+        {
+          "name": "simulate",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 682,
+            "column": 16,
+            "name": "simulate"
+          },
+          "selfMs": 160.22700000000003,
+          "inclusiveMs": 335.643
+        },
+        {
+          "name": "accel",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 808,
+            "column": 8,
+            "name": "accel"
+          },
+          "selfMs": 78.17900000000002,
+          "inclusiveMs": 90.74300000000002
+        },
+        {
+          "name": "rk4",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 868,
+            "column": 8,
+            "name": "rk4"
+          },
+          "selfMs": 54.962999999999994,
+          "inclusiveMs": 145.706
+        },
+        {
+          "name": "residuals",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 1011,
+            "column": 16,
+            "name": "residuals"
+          },
+          "selfMs": 39.86,
+          "inclusiveMs": 361.4730000000001
+        },
+        {
+          "name": "(garbage collector)",
+          "source": null,
+          "selfMs": 31.964000000000002,
+          "inclusiveMs": 31.964000000000002
+        },
+        {
+          "name": "resolve",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 626,
+            "column": 9,
+            "name": "resolve"
+          },
+          "selfMs": 21.673000000000002,
+          "inclusiveMs": 23.027
+        },
+        {
+          "name": "h",
+          "source": {
+            "source": "src/lib/quat.ts",
+            "line": 119,
+            "column": 35,
+            "name": null
+          },
+          "selfMs": 16.129,
+          "inclusiveMs": 16.129
+        },
+        {
+          "name": "solve",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 404,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 10.317999999999998,
+          "inclusiveMs": 419.06400000000014
+        },
+        {
+          "name": "normal",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 495,
+            "column": 9,
+            "name": "normal"
+          },
+          "selfMs": 7.586,
+          "inclusiveMs": 7.586
+        },
+        {
+          "name": "V",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 891,
+            "column": 23,
+            "name": null
+          },
+          "selfMs": 7.351999999999999,
+          "inclusiveMs": 7.351999999999999
+        },
+        {
+          "name": "scaleOf",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 744,
+            "column": 8,
+            "name": "scaleOf"
+          },
+          "selfMs": 6.543,
+          "inclusiveMs": 6.543
+        },
+        {
+          "name": "luDecompose",
+          "source": {
+            "source": "src/model/linalg.ts",
+            "line": 102,
+            "column": 16,
+            "name": "luDecompose"
+          },
+          "selfMs": 6.13,
+          "inclusiveMs": 6.13
+        },
+        {
+          "name": "pull",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 741,
+            "column": 8,
+            "name": "pull"
+          },
+          "selfMs": 6.021,
+          "inclusiveMs": 6.021
+        },
+        {
+          "name": "priorTerms",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 350,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 5.7829999999999995,
+          "inclusiveMs": 5.7829999999999995
+        },
+        {
+          "name": "compileArc",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 439,
+            "column": 16,
+            "name": "compileArc"
+          },
+          "selfMs": 5.526,
+          "inclusiveMs": 7.947
+        },
+        {
+          "name": "luSolve",
+          "source": {
+            "source": "src/model/linalg.ts",
+            "line": 139,
+            "column": 16,
+            "name": "luSolve"
+          },
+          "selfMs": 4.698,
+          "inclusiveMs": 4.698
+        },
+        {
+          "name": "val",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 584,
+            "column": 9,
+            "name": "val"
+          },
+          "selfMs": 4.5969999999999995,
+          "inclusiveMs": 4.5969999999999995
+        },
+        {
+          "name": "rotateBy",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 314,
+            "column": 9,
+            "name": "rotateBy"
+          },
+          "selfMs": 3.776,
+          "inclusiveMs": 3.776
+        },
+        {
+          "name": "residualAndJacobian",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 228,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 3.495,
+          "inclusiveMs": 366.0770000000002
+        },
+        {
+          "name": "briefingBodiesAt",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 237,
+            "column": 16,
+            "name": "briefingBodiesAt"
+          },
+          "selfMs": 3.4520000000000004,
+          "inclusiveMs": 9.057
+        },
+        {
+          "name": "stagedFit",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 542,
+            "column": 16,
+            "name": "stagedFit"
+          },
+          "selfMs": 3.357,
+          "inclusiveMs": 267.09899999999993
+        },
+        {
+          "name": "zeros",
+          "source": {
+            "source": "src/model/linalg.ts",
+            "line": 16,
+            "column": 16,
+            "name": "zeros"
+          },
+          "selfMs": 3.215,
+          "inclusiveMs": 3.215
+        },
+        {
+          "name": "planMeasurements",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 967,
+            "column": 16,
+            "name": "planMeasurements"
+          },
+          "selfMs": 3.169,
+          "inclusiveMs": 4.772
+        },
+        {
+          "name": "toModelState",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 1355,
+            "column": 9,
+            "name": "toModelState"
+          },
+          "selfMs": 2.953,
+          "inclusiveMs": 6.3100000000000005
+        },
+        {
+          "name": "presentState",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 1140,
+            "column": 16,
+            "name": "presentState"
+          },
+          "selfMs": 2.904,
+          "inclusiveMs": 91.42800000000003
+        },
+        {
+          "name": "directed",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 271,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 2.528,
+          "inclusiveMs": 3.6009999999999995
+        },
+        {
+          "name": "lineOfSight",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 223,
+            "column": 16,
+            "name": "lineOfSight"
+          },
+          "selfMs": 2.316,
+          "inclusiveMs": 2.316
+        },
+        {
+          "name": "quadGuess",
+          "source": {
+            "source": "src/model/tierL.ts",
+            "line": 325,
+            "column": 16,
+            "name": "quadGuess"
+          },
+          "selfMs": 1.9809999999999999,
+          "inclusiveMs": 3.408
+        },
+        {
+          "name": "(anonymous)",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 1380,
+            "column": 24,
+            "name": null
+          },
+          "selfMs": 1.723,
+          "inclusiveMs": 1.723
+        },
+        {
+          "name": "referenceFor",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 656,
+            "column": 16,
+            "name": "referenceFor"
+          },
+          "selfMs": 1.701,
+          "inclusiveMs": 1.701
+        },
+        {
+          "name": "inverse",
+          "source": {
+            "source": "src/model/linalg.ts",
+            "line": 161,
+            "column": 16,
+            "name": "inverse"
+          },
+          "selfMs": 1.673,
+          "inclusiveMs": 9.600999999999999
+        },
+        {
+          "name": "toCalibrationProfile",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 1294,
+            "column": 16,
+            "name": "toCalibrationProfile"
+          },
+          "selfMs": 1.634,
+          "inclusiveMs": 1.634
+        },
+        {
+          "name": "makeWindows",
+          "source": {
+            "source": "src/model/tierL.ts",
+            "line": 235,
+            "column": 16,
+            "name": "makeWindows"
+          },
+          "selfMs": 1.632,
+          "inclusiveMs": 1.632
+        },
+        {
+          "name": "(anonymous)",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 180,
+            "column": 36,
+            "name": null
+          },
+          "selfMs": 1.609,
+          "inclusiveMs": 1.609
+        },
+        {
+          "name": "tierGProblem",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 315,
+            "column": 16,
+            "name": "tierGProblem"
+          },
+          "selfMs": 1.607,
+          "inclusiveMs": 28.776
+        },
+        {
+          "name": "x",
+          "source": {
+            "source": "src/lib/quat.ts",
+            "line": 221,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 1.603,
+          "inclusiveMs": 1.603
+        },
+        {
+          "name": "st",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 167,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 1.582,
+          "inclusiveMs": 13.346
+        },
+        {
+          "name": "flatProfile",
+          "source": {
+            "source": "src/model/tierL.ts",
+            "line": 694,
+            "column": 16,
+            "name": "flatProfile"
+          },
+          "selfMs": 1.571,
+          "inclusiveMs": 1.571
+        },
+        {
+          "name": "visit",
+          "source": {
+            "source": "src/lib/hash.ts",
+            "line": 73,
+            "column": 9,
+            "name": "visit"
+          },
+          "selfMs": 1.567,
+          "inclusiveMs": 1.567
+        },
+        {
+          "name": "buildOnce",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 851,
+            "column": 9,
+            "name": "buildOnce"
+          },
+          "selfMs": 1.522,
+          "inclusiveMs": 500.41200000000015
+        },
+        {
+          "name": "arcFit",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 580,
+            "column": 16,
+            "name": "arcFit"
+          },
+          "selfMs": 1.52,
+          "inclusiveMs": 268.6189999999999
+        },
+        {
+          "name": "(program)",
+          "source": null,
+          "selfMs": 1.401,
+          "inclusiveMs": 1.401
+        },
+        {
+          "name": "me",
+          "source": {
+            "source": "src/model/adapt.ts",
+            "line": 349,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 1.31,
+          "inclusiveMs": 1.31
+        },
+        {
+          "name": "(anonymous)",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 665,
+            "column": 19,
+            "name": null
+          },
+          "selfMs": 1.2759999999999998,
+          "inclusiveMs": 1.3539999999999999
+        },
+        {
+          "name": "(anonymous)",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 536,
+            "column": 55,
+            "name": null
+          },
+          "selfMs": 1.269,
+          "inclusiveMs": 1.269
+        },
+        {
+          "name": "arcsFromRecord",
+          "source": {
+            "source": "src/model/adapt.ts",
+            "line": 721,
+            "column": 16,
+            "name": "arcsFromRecord"
+          },
+          "selfMs": 1.204,
+          "inclusiveMs": 21.408
+        },
+        {
+          "name": "postMessage",
+          "source": null,
+          "selfMs": 1.203,
+          "inclusiveMs": 1.203
+        },
+        {
+          "name": "estMeasurements",
+          "source": {
+            "source": "src/model/adapt.ts",
+            "line": 515,
+            "column": 16,
+            "name": "estMeasurements"
+          },
+          "selfMs": 1.174,
+          "inclusiveMs": 2.063
+        },
+        {
+          "name": "solve",
+          "source": {
+            "source": "src/model/linalg.ts",
+            "line": 157,
+            "column": 16,
+            "name": "solve"
+          },
+          "selfMs": 1.17,
+          "inclusiveMs": 4.07
+        }
+      ],
+      "inclusive": [
+        {
+          "name": "(root)",
+          "source": null,
+          "selfMs": 0,
+          "inclusiveMs": 20324.049999999894
+        },
+        {
+          "name": "(idle)",
+          "source": null,
+          "selfMs": 19788.945999999894,
+          "inclusiveMs": 19788.945999999894
+        },
+        {
+          "name": "vr.onmessage",
+          "source": {
+            "source": "src/model/worker.ts",
+            "line": 17,
+            "column": 19,
+            "name": null
+          },
+          "selfMs": 0.056,
+          "inclusiveMs": 501.7390000000002
+        },
+        {
+          "name": "dispatch",
+          "source": {
+            "source": "src/model/rpc.ts",
+            "line": 35,
+            "column": 16,
+            "name": "dispatch"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 500.4800000000002
+        },
+        {
+          "name": "refresh",
+          "source": {
+            "source": "src/model/service.ts",
+            "line": 189,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 0,
+          "inclusiveMs": 500.4800000000002
+        },
+        {
+          "name": "build",
+          "source": {
+            "source": "src/model/service.ts",
+            "line": 118,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 0,
+          "inclusiveMs": 500.4800000000002
+        },
+        {
+          "name": "buildModel",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 813,
+            "column": 16,
+            "name": "buildModel"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 500.41200000000015
+        },
+        {
+          "name": "attempt",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 814,
+            "column": 8,
+            "name": "attempt"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 500.41200000000015
+        },
+        {
+          "name": "buildOnce",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 851,
+            "column": 9,
+            "name": "buildOnce"
+          },
+          "selfMs": 1.522,
+          "inclusiveMs": 500.41200000000015
+        },
+        {
+          "name": "solve",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 404,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 10.317999999999998,
+          "inclusiveMs": 419.06400000000014
+        },
+        {
+          "name": "residualAndJacobian",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 228,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 3.495,
+          "inclusiveMs": 366.0770000000002
+        },
+        {
+          "name": "residuals",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 1011,
+            "column": 16,
+            "name": "residuals"
+          },
+          "selfMs": 39.86,
+          "inclusiveMs": 361.4730000000001
+        },
+        {
+          "name": "simulate",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 682,
+            "column": 16,
+            "name": "simulate"
+          },
+          "selfMs": 160.22700000000003,
+          "inclusiveMs": 335.643
+        },
+        {
+          "name": "arcFit",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 580,
+            "column": 16,
+            "name": "arcFit"
+          },
+          "selfMs": 1.52,
+          "inclusiveMs": 268.6189999999999
+        },
+        {
+          "name": "stagedFit",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 542,
+            "column": 16,
+            "name": "stagedFit"
+          },
+          "selfMs": 3.357,
+          "inclusiveMs": 267.09899999999993
+        },
+        {
+          "name": "rk4",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 868,
+            "column": 8,
+            "name": "rk4"
+          },
+          "selfMs": 54.962999999999994,
+          "inclusiveMs": 145.706
+        },
+        {
+          "name": "(anonymous)",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 964,
+            "column": 44,
+            "name": null
+          },
+          "selfMs": 0,
+          "inclusiveMs": 100.39999999999999
+        },
+        {
+          "name": "fitWindows",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 925,
+            "column": 8,
+            "name": "fitWindows"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 100.39999999999999
+        },
+        {
+          "name": "localFitDetailed",
+          "source": {
+            "source": "src/model/tierL.ts",
+            "line": 447,
+            "column": 16,
+            "name": "localFitDetailed"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 91.78599999999999
+        },
+        {
+          "name": "presentState",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 1140,
+            "column": 16,
+            "name": "presentState"
+          },
+          "selfMs": 2.904,
+          "inclusiveMs": 91.42800000000003
+        },
+        {
+          "name": "accel",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 808,
+            "column": 8,
+            "name": "accel"
+          },
+          "selfMs": 78.17900000000002,
+          "inclusiveMs": 90.74300000000002
+        },
+        {
+          "name": "anchorState",
+          "source": {
+            "source": "src/model/tierL.ts",
+            "line": 758,
+            "column": 16,
+            "name": "anchorState"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 88.52400000000002
+        },
+        {
+          "name": "(garbage collector)",
+          "source": null,
+          "selfMs": 31.964000000000002,
+          "inclusiveMs": 31.964000000000002
+        },
+        {
+          "name": "tierGProblem",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 315,
+            "column": 16,
+            "name": "tierGProblem"
+          },
+          "selfMs": 1.607,
+          "inclusiveMs": 28.776
+        },
+        {
+          "name": "resolve",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 626,
+            "column": 9,
+            "name": "resolve"
+          },
+          "selfMs": 21.673000000000002,
+          "inclusiveMs": 23.027
+        },
+        {
+          "name": "arcsFromRecord",
+          "source": {
+            "source": "src/model/adapt.ts",
+            "line": 721,
+            "column": 16,
+            "name": "arcsFromRecord"
+          },
+          "selfMs": 1.204,
+          "inclusiveMs": 21.408
+        },
+        {
+          "name": "pe",
+          "source": {
+            "source": "src/model/adapt.ts",
+            "line": 307,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 0.55,
+          "inclusiveMs": 16.679000000000002
+        },
+        {
+          "name": "h",
+          "source": {
+            "source": "src/lib/quat.ts",
+            "line": 119,
+            "column": 35,
+            "name": null
+          },
+          "selfMs": 16.129,
+          "inclusiveMs": 16.129
+        },
+        {
+          "name": "normal",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 391,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 0,
+          "inclusiveMs": 13.671
+        },
+        {
+          "name": "residual",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 209,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 0,
+          "inclusiveMs": 13.469
+        }
+      ],
+      "groups": [
+        {
+          "group": "(idle)",
+          "ms": 19788.945999999894
+        },
+        {
+          "group": "src/model",
+          "ms": 481.23700000000025
+        },
+        {
+          "group": "(garbage collector)",
+          "ms": 31.964000000000002
+        },
+        {
+          "group": "src/lib",
+          "ms": 19.299000000000003
+        },
+        {
+          "group": "(program)",
+          "ms": 1.401
+        },
+        {
+          "group": "postMessage",
+          "ms": 1.203
+        }
+      ]
+    },
+    {
+      "file": "worst-main.cpuprofile.gz",
+      "sampledMs": 10464.34,
+      "self": [
+        {
+          "name": "(program)",
+          "source": null,
+          "selfMs": 4341.294999999999,
+          "inclusiveMs": 4341.294999999999
+        },
+        {
+          "name": "resize",
+          "source": {
+            "source": "src/view3d/room/RoomView.ts",
+            "line": 493,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 454.6530000000003,
+          "inclusiveMs": 454.6530000000003
+        },
+        {
+          "name": "dispatchPower",
+          "source": {
+            "source": "src/ship/power/index.ts",
+            "line": 107,
+            "column": 9,
+            "name": "dispatchPower"
+          },
+          "selfMs": 367.6280000000001,
+          "inclusiveMs": 584.3700000000005
+        },
+        {
+          "name": "ze",
+          "source": {
+            "source": "src/console/format.ts",
+            "line": 40,
+            "column": 22,
+            "name": null
+          },
+          "selfMs": 284.90299999999985,
+          "inclusiveMs": 284.90299999999985
+        },
+        {
+          "name": "stepPower",
+          "source": {
+            "source": "src/ship/power/index.ts",
+            "line": 36,
+            "column": 16,
+            "name": "stepPower"
+          },
+          "selfMs": 237.359,
+          "inclusiveMs": 828.0800000000003
+        },
+        {
+          "name": "targetVisibility",
+          "source": {
+            "source": "src/game/environment.ts",
+            "line": 105,
+            "column": 16,
+            "name": "targetVisibility"
+          },
+          "selfMs": 178.51200000000003,
+          "inclusiveMs": 255.395
+        },
+        {
+          "name": "setProgram",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 18220,
+            "column": 11,
+            "name": "setProgram"
+          },
+          "selfMs": 143.26899999999992,
+          "inclusiveMs": 438.45499999999987
+        },
+        {
+          "name": "load",
+          "source": {
+            "source": "src/sim/simulation.ts",
+            "line": 376,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 125.82700000000004,
+          "inclusiveMs": 137.35700000000006
+        },
+        {
+          "name": "updateMatrixWorld",
+          "source": {
+            "source": "node_modules/three/build/three.core.js",
+            "line": 13071,
+            "column": 1,
+            "name": null
+          },
+          "selfMs": 125.60699999999996,
+          "inclusiveMs": 153.639
+        },
+        {
+          "name": "store",
+          "source": {
+            "source": "src/sim/simulation.ts",
+            "line": 506,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 122.43099999999997,
+          "inclusiveMs": 125.66399999999997
+        },
+        {
+          "name": "stepShipSystems",
+          "source": {
+            "source": "src/ship/index.ts",
+            "line": 50,
+            "column": 13,
+            "name": "stepShipSystems"
+          },
+          "selfMs": 112.062,
+          "inclusiveMs": 1603.7239999999974
+        },
+        {
+          "name": "stepPropulsion",
+          "source": {
+            "source": "src/ship/propulsion/propulsion.ts",
+            "line": 232,
+            "column": 16,
+            "name": "stepPropulsion"
+          },
+          "selfMs": 98.79899999999996,
+          "inclusiveMs": 331.01599999999996
+        },
+        {
+          "name": "stepThermal",
+          "source": {
+            "source": "src/ship/thermal/index.ts",
+            "line": 16,
+            "column": 16,
+            "name": "stepThermal"
+          },
+          "selfMs": 98.773,
+          "inclusiveMs": 142.09199999999993
+        },
+        {
+          "name": "(garbage collector)",
+          "source": null,
+          "selfMs": 96.86400000000003,
+          "inclusiveMs": 96.86400000000003
+        },
+        {
+          "name": "(anonymous)",
+          "source": {
+            "source": "src/game/belief/standin-model.ts",
+            "line": 866,
+            "column": 27,
+            "name": null
+          },
+          "selfMs": 91.22400000000003,
+          "inclusiveMs": 122.09600000000005
+        },
+        {
+          "name": "sensorTargets",
+          "source": {
+            "source": "src/sim/snapshot.ts",
+            "line": 49,
+            "column": 16,
+            "name": "sensorTargets"
+          },
+          "selfMs": 89.92,
+          "inclusiveMs": 89.92
+        },
+        {
+          "name": "computeAccelerations",
+          "source": {
+            "source": "src/sim/simulation.ts",
+            "line": 619,
+            "column": 9,
+            "name": "computeAccelerations"
+          },
+          "selfMs": 71.69599999999998,
+          "inclusiveMs": 71.69599999999998
+        },
+        {
+          "name": "allocate",
+          "source": {
+            "source": "src/ship/power/index.ts",
+            "line": 332,
+            "column": 8,
+            "name": "allocate"
+          },
+          "selfMs": 65.99900000000001,
+          "inclusiveMs": 65.99900000000001
+        },
+        {
+          "name": "gravity",
+          "source": {
+            "source": "src/game/belief/standin-model.ts",
+            "line": 262,
+            "column": 8,
+            "name": "gravity"
+          },
+          "selfMs": 64.167,
+          "inclusiveMs": 168.96399999999994
+        },
+        {
+          "name": "inShadow",
+          "source": {
+            "source": "src/game/environment.ts",
+            "line": 35,
+            "column": 16,
+            "name": "inShadow"
+          },
+          "selfMs": 62.98200000000002,
+          "inclusiveMs": 62.98200000000002
+        },
+        {
+          "name": "pull",
+          "source": {
+            "source": "src/game/belief/standin-model.ts",
+            "line": 251,
+            "column": 8,
+            "name": "pull"
+          },
+          "selfMs": 62.349999999999994,
+          "inclusiveMs": 62.349999999999994
+        },
+        {
+          "name": "massProperties",
+          "source": {
+            "source": "src/game/belief/standin-model.ts",
+            "line": 311,
+            "column": 8,
+            "name": "massProperties"
+          },
+          "selfMs": 61.820999999999984,
+          "inclusiveMs": 91.896
+        },
+        {
+          "name": "(anonymous)",
+          "source": {
+            "source": "src/console/data.ts",
+            "line": 55,
+            "column": 31,
+            "name": null
+          },
+          "selfMs": 61.629999999999995,
+          "inclusiveMs": 61.629999999999995
+        },
+        {
+          "name": "projectObject",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17696,
+            "column": 11,
+            "name": "projectObject"
+          },
+          "selfMs": 58.057,
+          "inclusiveMs": 124.74899999999998
+        },
+        {
+          "name": "advance",
+          "source": {
+            "source": "src/sim/simulation.ts",
+            "line": 836,
+            "column": 9,
+            "name": "advance"
+          },
+          "selfMs": 57.31200000000001,
+          "inclusiveMs": 168.26299999999998
+        },
+        {
+          "name": "update",
+          "source": {
+            "source": "src/ship/power/index.ts",
+            "line": 135,
+            "column": 8,
+            "name": "update"
+          },
+          "selfMs": 56.637000000000015,
+          "inclusiveMs": 56.637000000000015
+        },
+        {
+          "name": "preparePropulsion",
+          "source": {
+            "source": "src/ship/propulsion/propulsion.ts",
+            "line": 118,
+            "column": 16,
+            "name": "preparePropulsion"
+          },
+          "selfMs": 55.90300000000003,
+          "inclusiveMs": 97.24499999999999
+        },
+        {
+          "name": "(idle)",
+          "source": null,
+          "selfMs": 52.206,
+          "inclusiveMs": 52.206
+        },
+        {
+          "name": "build",
+          "source": {
+            "source": "src/ship/massprops/massprops.ts",
+            "line": 25,
+            "column": 9,
+            "name": "build"
+          },
+          "selfMs": 50.41099999999999,
+          "inclusiveMs": 114.04
+        },
+        {
+          "name": "bindVertexArray",
+          "source": null,
+          "selfMs": 48.919999999999995,
+          "inclusiveMs": 48.919999999999995
+        },
+        {
+          "name": "step",
+          "source": {
+            "source": "src/game/truth-step.ts",
+            "line": 130,
+            "column": 4,
+            "name": null
+          },
+          "selfMs": 46.471000000000004,
+          "inclusiveMs": 2565.277999999999
+        },
+        {
+          "name": "drawElements",
+          "source": null,
+          "selfMs": 44.968,
+          "inclusiveMs": 44.968
+        },
+        {
+          "name": "deploymentOf",
+          "source": {
+            "source": "src/ship/config/configuration.ts",
+            "line": 86,
+            "column": 9,
+            "name": "deploymentOf"
+          },
+          "selfMs": 44.52699999999999,
+          "inclusiveMs": 44.52699999999999
+        },
+        {
+          "name": "sight",
+          "source": {
+            "source": "src/game/window.ts",
+            "line": 29,
+            "column": 8,
+            "name": "sight"
+          },
+          "selfMs": 42.626,
+          "inclusiveMs": 42.626
+        },
+        {
+          "name": "multiplyMatrices",
+          "source": {
+            "source": "node_modules/three/build/three.core.js",
+            "line": 10564,
+            "column": 1,
+            "name": null
+          },
+          "selfMs": 42.164,
+          "inclusiveMs": 42.164
+        },
+        {
+          "name": "activeJets",
+          "source": {
+            "source": "src/ship/propulsion/jets.ts",
+            "line": 46,
+            "column": 16,
+            "name": "activeJets"
+          },
+          "selfMs": 41.826,
+          "inclusiveMs": 41.826
+        },
+        {
+          "name": "stepSensors",
+          "source": {
+            "source": "src/ship/sensors/index.ts",
+            "line": 189,
+            "column": 16,
+            "name": "stepSensors"
+          },
+          "selfMs": 40.856,
+          "inclusiveMs": 62.182000000000016
+        },
+        {
+          "name": "tickOnce",
+          "source": {
+            "source": "src/game/session.ts",
+            "line": 259,
+            "column": 11,
+            "name": "tickOnce"
+          },
+          "selfMs": 40.440000000000005,
+          "inclusiveMs": 2723.7330000000006
+        },
+        {
+          "name": "occluded",
+          "source": {
+            "source": "src/game/environment.ts",
+            "line": 73,
+            "column": 16,
+            "name": "occluded"
+          },
+          "selfMs": 35.824999999999996,
+          "inclusiveMs": 35.824999999999996
+        },
+        {
+          "name": "renderBufferDirect",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17023,
+            "column": 28,
+            "name": null
+          },
+          "selfMs": 34.534,
+          "inclusiveMs": 705.9230000000006
+        },
+        {
+          "name": "massDetail",
+          "source": {
+            "source": "src/ship/massprops/massprops.ts",
+            "line": 125,
+            "column": 16,
+            "name": "massDetail"
+          },
+          "selfMs": 34.315,
+          "inclusiveMs": 190.29800000000003
+        },
+        {
+          "name": "clearanceAndContact",
+          "source": {
+            "source": "src/sim/simulation.ts",
+            "line": 996,
+            "column": 9,
+            "name": "clearanceAndContact"
+          },
+          "selfMs": 33.446,
+          "inclusiveMs": 35.037
+        },
+        {
+          "name": "updateProperties",
+          "source": {
+            "source": "node_modules/react-dom/cjs/react-dom-client.production.js",
+            "line": 15035,
+            "column": 9,
+            "name": "updateProperties"
+          },
+          "selfMs": 32.375,
+          "inclusiveMs": 67.61900000000001
+        },
+        {
+          "name": "update",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 242,
+            "column": 10,
+            "name": "update"
+          },
+          "selfMs": 30.770000000000003,
+          "inclusiveMs": 41.120999999999995
+        },
+        {
+          "name": "d",
+          "source": {
+            "source": "src/ship/power/index.ts",
+            "line": 122,
+            "column": 19,
+            "name": null
+          },
+          "selfMs": 29.14,
+          "inclusiveMs": 29.14
+        },
+        {
+          "name": "uniformMatrix4fv",
+          "source": null,
+          "selfMs": 28.690999999999995,
+          "inclusiveMs": 28.690999999999995
+        },
+        {
+          "name": "principalAxes",
+          "source": {
+            "source": "src/lib/sym3.ts",
+            "line": 93,
+            "column": 16,
+            "name": "principalAxes"
+          },
+          "selfMs": 28.401,
+          "inclusiveMs": 33.114000000000004
+        },
+        {
+          "name": "SystemsPage",
+          "source": {
+            "source": "src/console/pages/SystemsPage.tsx",
+            "line": 111,
+            "column": 16,
+            "name": "SystemsPage"
+          },
+          "selfMs": 27.955,
+          "inclusiveMs": 456.917
+        },
+        {
+          "name": "setFromAxisAngle",
+          "source": {
+            "source": "node_modules/three/build/three.core.js",
+            "line": 4246,
+            "column": 1,
+            "name": null
+          },
+          "selfMs": 27.779999999999998,
+          "inclusiveMs": 27.779999999999998
+        },
+        {
+          "name": "rotateSym3",
+          "source": {
+            "source": "src/lib/sym3.ts",
+            "line": 54,
+            "column": 16,
+            "name": "rotateSym3"
+          },
+          "selfMs": 27.762999999999998,
+          "inclusiveMs": 41.89600000000001
+        }
+      ],
+      "inclusive": [
+        {
+          "name": "(root)",
+          "source": null,
+          "selfMs": 0,
+          "inclusiveMs": 10464.340000000031
+        },
+        {
+          "name": "v",
+          "source": {
+            "source": "src/app/loop.ts",
+            "line": 173,
+            "column": 16,
+            "name": null
+          },
+          "selfMs": 3.114,
+          "inclusiveMs": 5114.960999999999
+        },
+        {
+          "name": "_",
+          "source": {
+            "source": "src/app/loop.ts",
+            "line": 101,
+            "column": 17,
+            "name": null
+          },
+          "selfMs": 16.544000000000004,
+          "inclusiveMs": 5111.116999999998
+        },
+        {
+          "name": "(program)",
+          "source": null,
+          "selfMs": 4341.294999999999,
+          "inclusiveMs": 4341.294999999999
+        },
+        {
+          "name": "advance",
+          "source": {
+            "source": "src/game/session.ts",
+            "line": 444,
+            "column": 4,
+            "name": null
+          },
+          "selfMs": 7.16,
+          "inclusiveMs": 2733.3650000000007
+        },
+        {
+          "name": "tickOnce",
+          "source": {
+            "source": "src/game/session.ts",
+            "line": 259,
+            "column": 11,
+            "name": "tickOnce"
+          },
+          "selfMs": 40.440000000000005,
+          "inclusiveMs": 2723.7330000000006
+        },
+        {
+          "name": "step",
+          "source": {
+            "source": "src/game/truth-step.ts",
+            "line": 130,
+            "column": 4,
+            "name": null
+          },
+          "selfMs": 46.471000000000004,
+          "inclusiveMs": 2565.277999999999
+        },
+        {
+          "name": "frame",
+          "source": {
+            "source": "src/view3d/room/RoomView.ts",
+            "line": 246,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 20.168000000000003,
+          "inclusiveMs": 1906.059999999999
+        },
+        {
+          "name": "stepShipSystems",
+          "source": {
+            "source": "src/ship/index.ts",
+            "line": 50,
+            "column": 13,
+            "name": "stepShipSystems"
+          },
+          "selfMs": 112.062,
+          "inclusiveMs": 1603.7239999999974
+        },
+        {
+          "name": "render",
+          "source": {
+            "source": "node_modules/three/examples/jsm/postprocessing/EffectComposer.js",
+            "line": 214,
+            "column": 1,
+            "name": null
+          },
+          "selfMs": 16.634,
+          "inclusiveMs": 1119.9310000000023
+        },
+        {
+          "name": "render",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17464,
+            "column": 16,
+            "name": null
+          },
+          "selfMs": 15.231000000000002,
+          "inclusiveMs": 1038.3050000000019
+        },
+        {
+          "name": "render",
+          "source": {
+            "source": "node_modules/three/examples/jsm/postprocessing/RenderPass.js",
+            "line": 121,
+            "column": 1,
+            "name": null
+          },
+          "selfMs": 1.42,
+          "inclusiveMs": 856.9940000000007
+        },
+        {
+          "name": "(anonymous)",
+          "source": {
+            "source": "node_modules/react-dom/cjs/react-dom-client.production.js",
+            "line": 13579,
+            "column": 20,
+            "name": null
+          },
+          "selfMs": 0,
+          "inclusiveMs": 830.5359999999994
+        },
+        {
+          "name": "processRootScheduleInMicrotask",
+          "source": {
+            "source": "node_modules/react-dom/cjs/react-dom-client.production.js",
+            "line": 13456,
+            "column": 9,
+            "name": "processRootScheduleInMicrotask"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 830.5359999999994
+        },
+        {
+          "name": "flushSyncWorkAcrossRoots_impl",
+          "source": {
+            "source": "node_modules/react-dom/cjs/react-dom-client.production.js",
+            "line": 13408,
+            "column": 9,
+            "name": "flushSyncWorkAcrossRoots_impl"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 830.4119999999994
+        },
+        {
+          "name": "performSyncWorkOnRoot",
+          "source": {
+            "source": "node_modules/react-dom/cjs/react-dom-client.production.js",
+            "line": 13574,
+            "column": 9,
+            "name": "performSyncWorkOnRoot"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 830.4119999999994
+        },
+        {
+          "name": "performWorkOnRoot",
+          "source": {
+            "source": "node_modules/react-dom/cjs/react-dom-client.production.js",
+            "line": 12069,
+            "column": 9,
+            "name": "performWorkOnRoot"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 830.4119999999994
+        },
+        {
+          "name": "stepPower",
+          "source": {
+            "source": "src/ship/power/index.ts",
+            "line": 36,
+            "column": 16,
+            "name": "stepPower"
+          },
+          "selfMs": 237.359,
+          "inclusiveMs": 828.0800000000003
+        },
+        {
+          "name": "renderScene",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17814,
+            "column": 11,
+            "name": "renderScene"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 774.7290000000007
+        },
+        {
+          "name": "renderObjects",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17964,
+            "column": 11,
+            "name": "renderObjects"
+          },
+          "selfMs": 18.761,
+          "inclusiveMs": 770.2190000000007
+        },
+        {
+          "name": "renderObject",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17991,
+            "column": 11,
+            "name": "renderObject"
+          },
+          "selfMs": 17.372,
+          "inclusiveMs": 748.6650000000008
+        },
+        {
+          "name": "renderRootSync",
+          "source": {
+            "source": "node_modules/react-dom/cjs/react-dom-client.production.js",
+            "line": 12522,
+            "column": 9,
+            "name": "renderRootSync"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 719.6739999999995
+        },
+        {
+          "name": "workLoopSync",
+          "source": {
+            "source": "node_modules/react-dom/cjs/react-dom-client.production.js",
+            "line": 12583,
+            "column": 9,
+            "name": "workLoopSync"
+          },
+          "selfMs": 2.926,
+          "inclusiveMs": 719.6739999999995
+        },
+        {
+          "name": "renderBufferDirect",
+          "source": {
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17023,
+            "column": 28,
+            "name": null
+          },
+          "selfMs": 34.534,
+          "inclusiveMs": 705.9230000000006
+        },
+        {
+          "name": "beginWork",
+          "source": {
+            "source": "node_modules/react-dom/cjs/react-dom-client.production.js",
+            "line": 7768,
+            "column": 9,
+            "name": "beginWork"
+          },
+          "selfMs": 9.744000000000002,
+          "inclusiveMs": 694.5799999999995
+        },
+        {
+          "name": "updateFunctionComponent",
+          "source": {
+            "source": "node_modules/react-dom/cjs/react-dom-client.production.js",
+            "line": 6791,
+            "column": 9,
+            "name": "updateFunctionComponent"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 632.8869999999997
+        },
+        {
+          "name": "renderWithHooks",
+          "source": {
+            "source": "node_modules/react-dom/cjs/react-dom-client.production.js",
+            "line": 4627,
+            "column": 9,
+            "name": "renderWithHooks"
+          },
+          "selfMs": 17.053,
+          "inclusiveMs": 630.0289999999999
+        },
+        {
+          "name": "snapshot",
+          "source": {
+            "source": "src/game/session.ts",
+            "line": 400,
+            "column": 4,
+            "name": null
+          },
+          "selfMs": 3.165,
+          "inclusiveMs": 598.8309999999996
+        },
+        {
+          "name": "dispatchPower",
+          "source": {
+            "source": "src/ship/power/index.ts",
+            "line": 107,
+            "column": 9,
+            "name": "dispatchPower"
+          },
+          "selfMs": 367.6280000000001,
+          "inclusiveMs": 584.3700000000005
+        },
+        {
+          "name": "believedWorld",
+          "source": {
+            "source": "src/game/belief/model-bridge.ts",
+            "line": 198,
+            "column": 4,
+            "name": null
+          },
+          "selfMs": 9.323,
+          "inclusiveMs": 549.1499999999996
+        }
+      ],
+      "groups": [
+        {
+          "group": "(program)",
+          "ms": 4341.294999999999
+        },
+        {
+          "group": "src/ship",
+          "ms": 1546.5959999999982
+        },
+        {
+          "group": "src/game",
+          "ms": 1092.9429999999988
+        },
+        {
+          "group": "Three.js + addons",
+          "ms": 1074.1100000000008
+        },
+        {
+          "group": "src/view3d",
+          "ms": 572.2250000000004
+        },
+        {
+          "group": "src/sim",
+          "ms": 566.2710000000002
+        },
+        {
+          "group": "src/console",
+          "ms": 425.78499999999997
+        },
+        {
+          "group": "React + DOM + scheduler",
+          "ms": 223.28400000000002
+        },
+        {
+          "group": "src/lib",
+          "ms": 112.64500000000001
+        },
+        {
+          "group": "(garbage collector)",
+          "ms": 96.86400000000003
+        },
+        {
+          "group": "(idle)",
+          "ms": 52.206
+        },
+        {
+          "group": "bindVertexArray",
+          "ms": 48.919999999999995
+        },
+        {
+          "group": "drawElements",
+          "ms": 44.968
+        },
+        {
+          "group": "uniformMatrix4fv",
+          "ms": 28.690999999999995
+        },
+        {
+          "group": "src/theme",
+          "ms": 24.125
+        },
+        {
+          "group": "src/app",
+          "ms": 21.85
+        },
+        {
+          "group": "uniform1fv",
+          "ms": 21.812
+        },
+        {
+          "group": "src/contracts",
+          "ms": 21.728
+        },
+        {
+          "group": "uniformMatrix3fv",
+          "ms": 18.384999999999998
+        },
+        {
+          "group": "uniform3f",
+          "ms": 15.740000000000002
+        },
+        {
+          "group": "bindTexture",
+          "ms": 11.84
+        },
+        {
+          "group": "useProgram",
+          "ms": 10.191
+        },
+        {
+          "group": "bindFramebuffer",
+          "ms": 9.137
+        },
+        {
+          "group": "uniform3fv",
+          "ms": 8.707
+        },
+        {
+          "group": "src/model",
+          "ms": 7.978999999999999
+        },
+        {
+          "group": "setAttribute",
+          "ms": 6.2589999999999995
+        },
+        {
+          "group": "bufferSubData",
+          "ms": 5.651999999999999
+        },
+        {
+          "group": "postMessage",
+          "ms": 5.435
+        },
+        {
+          "group": "scissor",
+          "ms": 4.85
+        },
+        {
+          "group": "requestAnimationFrame",
+          "ms": 4.473000000000001
+        },
+        {
+          "group": "clear",
+          "ms": 4.067
+        },
+        {
+          "group": "disable",
+          "ms": 3.493
+        },
+        {
+          "group": "uniform2f",
+          "ms": 3.239
+        },
+        {
+          "group": "viewport",
+          "ms": 3.2140000000000004
+        },
+        {
+          "group": "uniform1f",
+          "ms": 2.99
+        },
+        {
+          "group": "now",
+          "ms": 2.969
+        },
+        {
+          "group": "tick",
+          "ms": 2.367
+        },
+        {
+          "group": "drawArrays",
+          "ms": 1.754
+        },
+        {
+          "group": "clearColor",
+          "ms": 1.639
+        },
+        {
+          "group": "(anonymous)",
+          "ms": 1.625
+        },
+        {
+          "group": "drawArraysInstanced",
+          "ms": 1.566
+        },
+        {
+          "group": "enable",
+          "ms": 1.53
+        },
+        {
+          "group": "activeTexture",
+          "ms": 1.477
+        },
+        {
+          "group": "bindBuffer",
+          "ms": 1.457
+        },
+        {
+          "group": "colorMask",
+          "ms": 1.439
+        },
+        {
+          "group": "toggle",
+          "ms": 1.374
+        },
+        {
+          "group": "queueMicrotask",
+          "ms": 1.312
+        },
+        {
+          "group": "src/blackbox",
+          "ms": 1.153
+        },
+        {
+          "group": "probe.status",
+          "ms": 0.498
+        },
+        {
+          "group": "getEntries",
+          "ms": 0.159
+        },
+        {
+          "group": "PerformanceObserver.observe.type",
+          "ms": 0.052
+        }
+      ]
+    },
+    {
+      "file": "worst-worker-0.cpuprofile.gz",
+      "sampledMs": 11263.904,
+      "self": [
+        {
+          "name": "(idle)",
+          "source": null,
+          "selfMs": 11125.767999999965,
+          "inclusiveMs": 11125.767999999965
+        },
+        {
+          "name": "simulate",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 682,
+            "column": 16,
+            "name": "simulate"
+          },
+          "selfMs": 36.482000000000006,
+          "inclusiveMs": 65.98900000000002
+        },
+        {
+          "name": "me",
+          "source": {
+            "source": "src/model/adapt.ts",
+            "line": 349,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 17.158,
+          "inclusiveMs": 17.158
+        },
+        {
+          "name": "residuals",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 1011,
+            "column": 16,
+            "name": "residuals"
+          },
+          "selfMs": 12.76,
+          "inclusiveMs": 68.63700000000001
+        },
+        {
+          "name": "accel",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 808,
+            "column": 8,
+            "name": "accel"
+          },
+          "selfMs": 8.077,
+          "inclusiveMs": 12.671
+        },
+        {
+          "name": "rk4",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 868,
+            "column": 8,
+            "name": "rk4"
+          },
+          "selfMs": 6.061000000000001,
+          "inclusiveMs": 18.732
+        },
+        {
+          "name": "(garbage collector)",
+          "source": null,
+          "selfMs": 4.924,
+          "inclusiveMs": 4.924
+        },
+        {
+          "name": "V",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 891,
+            "column": 23,
+            "name": null
+          },
+          "selfMs": 4.709,
+          "inclusiveMs": 4.709
+        },
+        {
+          "name": "resolve",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 626,
+            "column": 9,
+            "name": "resolve"
+          },
+          "selfMs": 4.263,
+          "inclusiveMs": 6.066
+        },
+        {
+          "name": "arcFit",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 580,
+            "column": 16,
+            "name": "arcFit"
+          },
+          "selfMs": 3.468,
+          "inclusiveMs": 77.59599999999999
+        },
+        {
+          "name": "buildOnce",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 851,
+            "column": 9,
+            "name": "buildOnce"
+          },
+          "selfMs": 3.19,
+          "inclusiveMs": 131.16500000000005
+        },
+        {
+          "name": "pull",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 741,
+            "column": 8,
+            "name": "pull"
+          },
+          "selfMs": 3.0540000000000003,
+          "inclusiveMs": 3.0540000000000003
+        },
+        {
+          "name": "briefingBodiesAt",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 237,
+            "column": 16,
+            "name": "briefingBodiesAt"
+          },
+          "selfMs": 3.0229999999999997,
+          "inclusiveMs": 6.3069999999999995
+        },
+        {
+          "name": "residualAndJacobian",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 228,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 2.577,
+          "inclusiveMs": 78.042
+        },
+        {
+          "name": "visit",
+          "source": {
+            "source": "src/lib/hash.ts",
+            "line": 73,
+            "column": 9,
+            "name": "visit"
+          },
+          "selfMs": 1.973,
+          "inclusiveMs": 3.284
+        },
+        {
+          "name": "(anonymous)",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 451,
+            "column": 13,
+            "name": null
+          },
+          "selfMs": 1.66,
+          "inclusiveMs": 1.66
+        },
+        {
+          "name": "vr.onmessage",
+          "source": {
+            "source": "src/model/worker.ts",
+            "line": 17,
+            "column": 19,
+            "name": null
+          },
+          "selfMs": 1.641,
+          "inclusiveMs": 133.21200000000005
+        },
+        {
+          "name": "directed",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 271,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 1.63,
+          "inclusiveMs": 1.63
+        },
+        {
+          "name": "luSolve",
+          "source": {
+            "source": "src/model/linalg.ts",
+            "line": 139,
+            "column": 16,
+            "name": "luSolve"
+          },
+          "selfMs": 1.625,
+          "inclusiveMs": 1.625
+        },
+        {
+          "name": "luDecompose",
+          "source": {
+            "source": "src/model/linalg.ts",
+            "line": 102,
+            "column": 16,
+            "name": "luDecompose"
+          },
+          "selfMs": 1.616,
+          "inclusiveMs": 1.616
+        },
+        {
+          "name": "(anonymous)",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 355,
+            "column": 16,
+            "name": null
+          },
+          "selfMs": 1.612,
+          "inclusiveMs": 1.612
+        },
+        {
+          "name": "powerCycles",
+          "source": {
+            "source": "src/model/aging.ts",
+            "line": 134,
+            "column": 16,
+            "name": "powerCycles"
+          },
+          "selfMs": 1.544,
+          "inclusiveMs": 1.544
+        },
+        {
+          "name": "scaleOf",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 744,
+            "column": 8,
+            "name": "scaleOf"
+          },
+          "selfMs": 1.54,
+          "inclusiveMs": 1.54
+        },
+        {
+          "name": "(anonymous)",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 185,
+            "column": 13,
+            "name": null
+          },
+          "selfMs": 1.523,
+          "inclusiveMs": 1.523
+        },
+        {
+          "name": "solve",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 404,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 1.508,
+          "inclusiveMs": 87.23799999999999
+        },
+        {
+          "name": "i",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 1277,
+            "column": 18,
+            "name": null
+          },
+          "selfMs": 1.33,
+          "inclusiveMs": 1.33
+        },
+        {
+          "name": "word",
+          "source": {
+            "source": "src/lib/hash.ts",
+            "line": 26,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 1.311,
+          "inclusiveMs": 1.311
+        },
+        {
+          "name": "(anonymous)",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 665,
+            "column": 19,
+            "name": null
+          },
+          "selfMs": 1.265,
+          "inclusiveMs": 1.803
+        },
+        {
+          "name": "priorTerms",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 350,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 1.205,
+          "inclusiveMs": 2.817
+        },
+        {
+          "name": "makeWindows",
+          "source": {
+            "source": "src/model/tierL.ts",
+            "line": 235,
+            "column": 16,
+            "name": "makeWindows"
+          },
+          "selfMs": 1.185,
+          "inclusiveMs": 1.185
+        },
+        {
+          "name": "quadGuess",
+          "source": {
+            "source": "src/model/tierL.ts",
+            "line": 325,
+            "column": 16,
+            "name": "quadGuess"
+          },
+          "selfMs": 1.143,
+          "inclusiveMs": 1.143
+        },
+        {
+          "name": "stagedFit",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 542,
+            "column": 16,
+            "name": "stagedFit"
+          },
+          "selfMs": 0.917,
+          "inclusiveMs": 74.128
+        },
+        {
+          "name": "tangentBasis",
+          "source": {
+            "source": "src/model/adapt.ts",
+            "line": 615,
+            "column": 9,
+            "name": "tangentBasis"
+          },
+          "selfMs": 0.673,
+          "inclusiveMs": 0.673
+        },
+        {
+          "name": "val",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 584,
+            "column": 9,
+            "name": "val"
+          },
+          "selfMs": 0.538,
+          "inclusiveMs": 0.538
+        },
+        {
+          "name": "postMessage",
+          "source": null,
+          "selfMs": 0.406,
+          "inclusiveMs": 0.406
+        },
+        {
+          "name": "burnsFromExecuted",
+          "source": {
+            "source": "src/model/adapt.ts",
+            "line": 214,
+            "column": 16,
+            "name": "burnsFromExecuted"
+          },
+          "selfMs": 0.294,
+          "inclusiveMs": 0.294
+        },
+        {
+          "name": "arcsFromRecord",
+          "source": {
+            "source": "src/model/adapt.ts",
+            "line": 721,
+            "column": 16,
+            "name": "arcsFromRecord"
+          },
+          "selfMs": 0.229,
+          "inclusiveMs": 18.375999999999998
+        },
+        {
+          "name": "pe",
+          "source": {
+            "source": "src/model/adapt.ts",
+            "line": 307,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 0.022,
+          "inclusiveMs": 0.022
+        },
+        {
+          "name": "(root)",
+          "source": null,
+          "selfMs": 0,
+          "inclusiveMs": 11263.903999999953
+        },
+        {
+          "name": "dispatch",
+          "source": {
+            "source": "src/model/rpc.ts",
+            "line": 35,
+            "column": 16,
+            "name": "dispatch"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 131.16500000000005
+        },
+        {
+          "name": "refresh",
+          "source": {
+            "source": "src/model/service.ts",
+            "line": 189,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 0,
+          "inclusiveMs": 131.16500000000005
+        },
+        {
+          "name": "build",
+          "source": {
+            "source": "src/model/service.ts",
+            "line": 118,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 0,
+          "inclusiveMs": 131.16500000000005
+        },
+        {
+          "name": "buildModel",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 813,
+            "column": 16,
+            "name": "buildModel"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 131.16500000000005
+        },
+        {
+          "name": "attempt",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 814,
+            "column": 8,
+            "name": "attempt"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 131.16500000000005
+        },
+        {
+          "name": "tierGProblem",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 315,
+            "column": 16,
+            "name": "tierGProblem"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 27.005000000000003
+        },
+        {
+          "name": "estMeasurements",
+          "source": {
+            "source": "src/model/adapt.ts",
+            "line": 515,
+            "column": 16,
+            "name": "estMeasurements"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 0.673
+        },
+        {
+          "name": "normalPoints",
+          "source": {
+            "source": "src/model/adapt.ts",
+            "line": 662,
+            "column": 16,
+            "name": "normalPoints"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 0.673
+        },
+        {
+          "name": "(anonymous)",
+          "source": {
+            "source": "src/model/adapt.ts",
+            "line": 697,
+            "column": 20,
+            "name": null
+          },
+          "selfMs": 0,
+          "inclusiveMs": 0.673
+        },
+        {
+          "name": "meanDirection",
+          "source": {
+            "source": "src/model/adapt.ts",
+            "line": 628,
+            "column": 9,
+            "name": "meanDirection"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 0.673
+        },
+        {
+          "name": "guessShip",
+          "source": {
+            "source": "src/model/tierL.ts",
+            "line": 339,
+            "column": 16,
+            "name": "guessShip"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 1.143
+        }
+      ],
+      "inclusive": [
+        {
+          "name": "(root)",
+          "source": null,
+          "selfMs": 0,
+          "inclusiveMs": 11263.903999999953
+        },
+        {
+          "name": "(idle)",
+          "source": null,
+          "selfMs": 11125.767999999965,
+          "inclusiveMs": 11125.767999999965
+        },
+        {
+          "name": "vr.onmessage",
+          "source": {
+            "source": "src/model/worker.ts",
+            "line": 17,
+            "column": 19,
+            "name": null
+          },
+          "selfMs": 1.641,
+          "inclusiveMs": 133.21200000000005
+        },
+        {
+          "name": "dispatch",
+          "source": {
+            "source": "src/model/rpc.ts",
+            "line": 35,
+            "column": 16,
+            "name": "dispatch"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 131.16500000000005
+        },
+        {
+          "name": "refresh",
+          "source": {
+            "source": "src/model/service.ts",
+            "line": 189,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 0,
+          "inclusiveMs": 131.16500000000005
+        },
+        {
+          "name": "build",
+          "source": {
+            "source": "src/model/service.ts",
+            "line": 118,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 0,
+          "inclusiveMs": 131.16500000000005
+        },
+        {
+          "name": "buildModel",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 813,
+            "column": 16,
+            "name": "buildModel"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 131.16500000000005
+        },
+        {
+          "name": "attempt",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 814,
+            "column": 8,
+            "name": "attempt"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 131.16500000000005
+        },
+        {
+          "name": "buildOnce",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 851,
+            "column": 9,
+            "name": "buildOnce"
+          },
+          "selfMs": 3.19,
+          "inclusiveMs": 131.16500000000005
+        },
+        {
+          "name": "solve",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 404,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 1.508,
+          "inclusiveMs": 87.23799999999999
+        },
+        {
+          "name": "residualAndJacobian",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 228,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 2.577,
+          "inclusiveMs": 78.042
+        },
+        {
+          "name": "arcFit",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 580,
+            "column": 16,
+            "name": "arcFit"
+          },
+          "selfMs": 3.468,
+          "inclusiveMs": 77.59599999999999
+        },
+        {
+          "name": "stagedFit",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 542,
+            "column": 16,
+            "name": "stagedFit"
+          },
+          "selfMs": 0.917,
+          "inclusiveMs": 74.128
+        },
+        {
+          "name": "residuals",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 1011,
+            "column": 16,
+            "name": "residuals"
+          },
+          "selfMs": 12.76,
+          "inclusiveMs": 68.63700000000001
+        },
+        {
+          "name": "simulate",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 682,
+            "column": 16,
+            "name": "simulate"
+          },
+          "selfMs": 36.482000000000006,
+          "inclusiveMs": 65.98900000000002
+        },
+        {
+          "name": "tierGProblem",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 315,
+            "column": 16,
+            "name": "tierGProblem"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 27.005000000000003
+        },
+        {
+          "name": "rk4",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 868,
+            "column": 8,
+            "name": "rk4"
+          },
+          "selfMs": 6.061000000000001,
+          "inclusiveMs": 18.732
+        },
+        {
+          "name": "arcsFromRecord",
+          "source": {
+            "source": "src/model/adapt.ts",
+            "line": 721,
+            "column": 16,
+            "name": "arcsFromRecord"
+          },
+          "selfMs": 0.229,
+          "inclusiveMs": 18.375999999999998
+        },
+        {
+          "name": "(anonymous)",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 964,
+            "column": 44,
+            "name": null
+          },
+          "selfMs": 0,
+          "inclusiveMs": 17.216
+        },
+        {
+          "name": "fitWindows",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 925,
+            "column": 8,
+            "name": "fitWindows"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 17.216
+        },
+        {
+          "name": "me",
+          "source": {
+            "source": "src/model/adapt.ts",
+            "line": 349,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 17.158,
+          "inclusiveMs": 17.158
+        },
+        {
+          "name": "localFitDetailed",
+          "source": {
+            "source": "src/model/tierL.ts",
+            "line": 447,
+            "column": 16,
+            "name": "localFitDetailed"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 15.55
+        },
+        {
+          "name": "accel",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 808,
+            "column": 8,
+            "name": "accel"
+          },
+          "selfMs": 8.077,
+          "inclusiveMs": 12.671
+        },
+        {
+          "name": "trajectory",
+          "source": {
+            "source": "src/model/solve.ts",
+            "line": 205,
+            "column": 2,
+            "name": null
+          },
+          "selfMs": 0,
+          "inclusiveMs": 6.827999999999999
+        },
+        {
+          "name": "briefingBodiesAt",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 237,
+            "column": 16,
+            "name": "briefingBodiesAt"
+          },
+          "selfMs": 3.0229999999999997,
+          "inclusiveMs": 6.3069999999999995
+        },
+        {
+          "name": "toModelState",
+          "source": {
+            "source": "src/model/engine.ts",
+            "line": 1355,
+            "column": 9,
+            "name": "toModelState"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 6.1579999999999995
+        },
+        {
+          "name": "resolve",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 626,
+            "column": 9,
+            "name": "resolve"
+          },
+          "selfMs": 4.263,
+          "inclusiveMs": 6.066
+        },
+        {
+          "name": "(garbage collector)",
+          "source": null,
+          "selfMs": 4.924,
+          "inclusiveMs": 4.924
+        },
+        {
+          "name": "V",
+          "source": {
+            "source": "src/model/dynamics.ts",
+            "line": 891,
+            "column": 23,
+            "name": null
+          },
+          "selfMs": 4.709,
+          "inclusiveMs": 4.709
+        },
+        {
+          "name": "hashState",
+          "source": {
+            "source": "src/lib/hash.ts",
+            "line": 116,
+            "column": 16,
+            "name": "hashState"
+          },
+          "selfMs": 0,
+          "inclusiveMs": 3.284
+        }
+      ],
+      "groups": [
+        {
+          "group": "(idle)",
+          "ms": 11125.767999999965
+        },
+        {
+          "group": "src/model",
+          "ms": 129.52200000000002
+        },
+        {
+          "group": "(garbage collector)",
+          "ms": 4.924
+        },
+        {
+          "group": "src/lib",
+          "ms": 3.284
+        },
+        {
+          "group": "postMessage",
+          "ms": 0.406
+        }
+      ]
+    }
+  ],
+  "trace": [
+    {
+      "name": "RunTask",
+      "n": 21113,
+      "median": 0.018,
+      "p95": 6.027,
+      "worst": 446.738,
+      "totalMs": 18797.55800000254
+    },
+    {
+      "name": "v8.callFunction",
+      "n": 225,
+      "median": 0.645,
+      "p95": 158.649,
+      "worst": 347.393,
+      "totalMs": 6819.714000000003
+    },
+    {
+      "name": "FunctionCall",
+      "n": 225,
+      "median": 0.42,
+      "p95": 122.356,
+      "worst": 347.19,
+      "totalMs": 5947.636000000002
+    },
+    {
+      "name": "FireAnimationFrame",
+      "n": 83,
+      "median": 73.417,
+      "p95": 191.232,
+      "worst": 347.757,
+      "totalMs": 5829.6179999999995
+    },
+    {
+      "name": "Layout",
+      "n": 21,
+      "median": 2.887,
+      "p95": 228.227,
+      "worst": 235.101,
+      "totalMs": 2092.685
+    },
+    {
+      "name": "Paint",
+      "n": 45,
+      "median": 7.412,
+      "p95": 16.049,
+      "worst": 23.944,
+      "totalMs": 372.7320000000001
+    },
+    {
+      "name": "GPUTask",
+      "n": 327,
+      "median": 0.477,
+      "p95": 2.255,
+      "worst": 11.281,
+      "totalMs": 268.983
+    },
+    {
+      "name": "HandlePostMessage",
+      "n": 29,
+      "median": 1.445,
+      "p95": 22.835,
+      "worst": 35.149,
+      "totalMs": 150.223
+    },
+    {
+      "name": "PrePaint",
+      "n": 63,
+      "median": 0.614,
+      "p95": 8.221,
+      "worst": 13.562,
+      "totalMs": 115.74000000000005
+    },
+    {
+      "name": "Commit",
+      "n": 42,
+      "median": 1.045,
+      "p95": 6.353,
+      "worst": 8.501,
+      "totalMs": 85.89900000000002
+    },
+    {
+      "name": "MinorGC",
+      "n": 23,
+      "median": 0.504,
+      "p95": 8.05,
+      "worst": 9.578,
+      "totalMs": 44.628999999999984
+    },
+    {
+      "name": "UpdateLayoutTree",
+      "n": 50,
+      "median": 0.617,
+      "p95": 2.248,
+      "worst": 3.523,
+      "totalMs": 44.542000000000016
+    },
+    {
+      "name": "V8.GC_SCAVENGER_BACKGROUND_SCAVENGE_PARALLEL",
+      "n": 75,
+      "median": 0.174,
+      "p95": 1.686,
+      "worst": 1.773,
+      "totalMs": 43.31199999999999
+    },
+    {
+      "name": "V8.GCScavenger",
+      "n": 23,
+      "median": 0.441,
+      "p95": 7.419,
+      "worst": 8.786,
+      "totalMs": 40.93499999999999
+    },
+    {
+      "name": "V8.GC_SCAVENGER",
+      "n": 23,
+      "median": 0.377,
+      "p95": 6.793,
+      "worst": 8.769,
+      "totalMs": 38.949000000000005
+    },
+    {
+      "name": "V8.GC_SCAVENGER_SCAVENGE",
+      "n": 23,
+      "median": 0.361,
+      "p95": 6.766,
+      "worst": 8.575,
+      "totalMs": 37.903999999999996
+    },
+    {
+      "name": "Layerize",
+      "n": 42,
+      "median": 0.191,
+      "p95": 3.249,
+      "worst": 3.901,
+      "totalMs": 37.781
+    },
+    {
+      "name": "UpdateLayer",
+      "n": 125,
+      "median": 0.004,
+      "p95": 2.47,
+      "worst": 4.291,
+      "totalMs": 28.585000000000015
+    },
+    {
+      "name": "V8.GC_MC_BACKGROUND_MARKING",
+      "n": 18,
+      "median": 0.1,
+      "p95": 3.745,
+      "worst": 3.745,
+      "totalMs": 26.242
+    },
+    {
+      "name": "HitTest",
+      "n": 28,
+      "median": 0.632,
+      "p95": 1.063,
+      "worst": 3.28,
+      "totalMs": 20.012999999999995
+    },
+    {
+      "name": "MajorGC",
+      "n": 1,
+      "median": 19.263,
+      "p95": 19.263,
+      "worst": 19.263,
+      "totalMs": 19.263
+    },
+    {
+      "name": "V8.GCFinalizeMC",
+      "n": 1,
+      "median": 18.677,
+      "p95": 18.677,
+      "worst": 18.677,
+      "totalMs": 18.677
+    },
+    {
+      "name": "V8.GC_MARK_COMPACTOR",
+      "n": 1,
+      "median": 18.666,
+      "p95": 18.666,
+      "worst": 18.666,
+      "totalMs": 18.666
+    },
+    {
+      "name": "V8.GC_BACKGROUND_YOUNG_ARRAY_BUFFER_SWEEP",
+      "n": 23,
+      "median": 0.597,
+      "p95": 1.689,
+      "worst": 2.643,
+      "totalMs": 17.663
+    },
+    {
+      "name": "EventDispatch",
+      "n": 17,
+      "median": 1.003,
+      "p95": 2.268,
+      "worst": 2.268,
+      "totalMs": 16.924
+    },
+    {
+      "name": "V8.GC_SCAVENGER_SCAVENGE_PARALLEL_PHASE",
+      "n": 23,
+      "median": 0.206,
+      "p95": 2.242,
+      "worst": 3.095,
+      "totalMs": 15.199000000000002
+    },
+    {
+      "name": "RasterTask",
+      "n": 41,
+      "median": 0.201,
+      "p95": 0.565,
+      "worst": 0.581,
+      "totalMs": 10.508000000000001
+    },
+    {
+      "name": "V8.GCIncrementalMarking",
+      "n": 24,
+      "median": 0.206,
+      "p95": 2.033,
+      "worst": 2.271,
+      "totalMs": 10.066
+    },
+    {
+      "name": "V8.GC_MC_INCREMENTAL",
+      "n": 24,
+      "median": 0.2,
+      "p95": 2.027,
+      "worst": 2.266,
+      "totalMs": 9.446000000000002
+    },
+    {
+      "name": "V8.GC_MC_EVACUATE",
+      "n": 2,
+      "median": 0.003,
+      "p95": 9.384,
+      "worst": 9.384,
+      "totalMs": 9.387
+    },
+    {
+      "name": "V8.GC_MC_INCREMENTAL_EMBEDDER_TRACING",
+      "n": 24,
+      "median": 0.193,
+      "p95": 2.02,
+      "worst": 2.253,
+      "totalMs": 7.585999999999999
+    },
+    {
+      "name": "V8.GC_MC_EVACUATE_UPDATE_POINTERS",
+      "n": 1,
+      "median": 6.976,
+      "p95": 6.976,
+      "worst": 6.976,
+      "totalMs": 6.976
+    },
+    {
+      "name": "V8.GC_SCAVENGER_SCAVENGE_FINALIZE",
+      "n": 23,
+      "median": 0.06,
+      "p95": 1.477,
+      "worst": 1.626,
+      "totalMs": 6.504
+    },
+    {
+      "name": "V8.GC_BACKGROUND_SAFEPOINT",
+      "n": 11,
+      "median": 0.432,
+      "p95": 1.2,
+      "worst": 1.2,
+      "totalMs": 5.62
+    },
+    {
+      "name": "V8.GC_MC_EVACUATE_UPDATE_POINTERS_TO_NEW_ROOTS",
+      "n": 1,
+      "median": 5.309,
+      "p95": 5.309,
+      "worst": 5.309,
+      "totalMs": 5.309
+    },
+    {
+      "name": "V8.GC_MC_BACKGROUND_SWEEPING",
+      "n": 9,
+      "median": 0.825,
+      "p95": 1.052,
+      "worst": 1.052,
+      "totalMs": 4.8790000000000004
+    },
+    {
+      "name": "V8.GC_SCAVENGER_SCAVENGE_ROOTS",
+      "n": 23,
+      "median": 0.068,
+      "p95": 0.817,
+      "worst": 0.87,
+      "totalMs": 3.921
+    },
+    {
+      "name": "V8.GCIncrementalMarkingStart",
+      "n": 1,
+      "median": 3.891,
+      "p95": 3.891,
+      "worst": 3.891,
+      "totalMs": 3.891
+    },
+    {
+      "name": "V8.GC_MC_INCREMENTAL_START",
+      "n": 1,
+      "median": 3.667,
+      "p95": 3.667,
+      "worst": 3.667,
+      "totalMs": 3.667
+    },
+    {
+      "name": "V8.GC_MC_MARK",
+      "n": 1,
+      "median": 3.655,
+      "p95": 3.655,
+      "worst": 3.655,
+      "totalMs": 3.655
+    },
+    {
+      "name": "V8.GC_SCAVENGER_SCAVENGE_WEAK_GLOBAL_HANDLES_PROCESS",
+      "n": 23,
+      "median": 0.022,
+      "p95": 0.646,
+      "worst": 1.839,
+      "totalMs": 3.2479999999999993
+    },
+    {
+      "name": "EvaluateScript",
+      "n": 1,
+      "median": 2.877,
+      "p95": 2.877,
+      "worst": 2.877,
+      "totalMs": 2.877
+    },
+    {
+      "name": "V8.GC_MC_MARK_ROOTS",
+      "n": 3,
+      "median": 0.606,
+      "p95": 2.213,
+      "worst": 2.213,
+      "totalMs": 2.823
+    },
+    {
+      "name": "V8.GC_SCAVENGER_SCAVENGE_PARALLEL",
+      "n": 13,
+      "median": 0.061,
+      "p95": 1.857,
+      "worst": 1.857,
+      "totalMs": 2.763
+    },
+    {
+      "name": "V8.DeoptimizeCode",
+      "n": 15,
+      "median": 0.045,
+      "p95": 0.796,
+      "worst": 0.796,
+      "totalMs": 2.745999999999999
+    },
+    {
+      "name": "V8.GC_SCAVENGER_SCAVENGE_WEAK_GLOBAL_HANDLES_IDENTIFY",
+      "n": 23,
+      "median": 0.027,
+      "p95": 0.443,
+      "worst": 1.016,
+      "totalMs": 2.6699999999999986
+    },
+    {
+      "name": "V8.GC_SCAVENGER_FREE_REMEMBERED_SET",
+      "n": 23,
+      "median": 0.005,
+      "p95": 0.781,
+      "worst": 1.034,
+      "totalMs": 2.5319999999999987
+    },
+    {
+      "name": "V8.GC_HEAP_EXTERNAL_EPILOGUE",
+      "n": 24,
+      "median": 0.01,
+      "p95": 0.448,
+      "worst": 0.802,
+      "totalMs": 1.8459999999999996
+    },
+    {
+      "name": "V8.GC_MC_MARK_FULL_CLOSURE_PARALLEL",
+      "n": 1,
+      "median": 1.813,
+      "p95": 1.813,
+      "worst": 1.813,
+      "totalMs": 1.813
+    },
+    {
+      "name": "V8.GC_MC_CLEAR",
+      "n": 1,
+      "median": 1.67,
+      "p95": 1.67,
+      "worst": 1.67,
+      "totalMs": 1.67
+    },
+    {
+      "name": "V8.GC_MC_EVACUATE_COPY",
+      "n": 1,
+      "median": 1.43,
+      "p95": 1.43,
+      "worst": 1.43,
+      "totalMs": 1.43
+    },
+    {
+      "name": "V8.GC_MC_SWEEP",
+      "n": 4,
+      "median": 0.006,
+      "p95": 0.8,
+      "worst": 0.8,
+      "totalMs": 1.2000000000000002
+    },
+    {
+      "name": "V8.GC_MC_CLEAR_JOIN_JOB",
+      "n": 1,
+      "median": 1.067,
+      "p95": 1.067,
+      "worst": 1.067,
+      "totalMs": 1.067
+    },
+    {
+      "name": "V8.GC_HEAP_EMBEDDER_TRACING_EPILOGUE",
+      "n": 1,
+      "median": 1.022,
+      "p95": 1.022,
+      "worst": 1.022,
+      "totalMs": 1.022
+    },
+    {
+      "name": "V8.GC_MC_BACKGROUND_EVACUATE_COPY",
+      "n": 4,
+      "median": 0.207,
+      "p95": 0.41,
+      "worst": 0.41,
+      "totalMs": 1.02
+    },
+    {
+      "name": "V8.GC_SCAVENGER_SWEEP_ARRAY_BUFFERS",
+      "n": 23,
+      "median": 0.011,
+      "p95": 0.202,
+      "worst": 0.378,
+      "totalMs": 0.9980000000000002
+    },
+    {
+      "name": "V8.GC_SCAVENGER_TRACED_HANDLES_COMPUTE_WEAKNESS_PARALLEL",
+      "n": 15,
+      "median": 0.004,
+      "p95": 0.404,
+      "worst": 0.404,
+      "totalMs": 0.984
+    },
+    {
+      "name": "V8.GC_SCAVENGER_SCAVENGE_COLLECT_OLD_TO_NEW_PAGES",
+      "n": 23,
+      "median": 0.003,
+      "p95": 0.202,
+      "worst": 0.585,
+      "totalMs": 0.899
+    },
+    {
+      "name": "V8.GC_MC_EVACUATE_UPDATE_POINTERS_POINTER_TABLES",
+      "n": 1,
+      "median": 0.824,
+      "p95": 0.824,
+      "worst": 0.824,
+      "totalMs": 0.824
+    },
+    {
+      "name": "V8.GC_MC_EVACUATE_UPDATE_POINTERS_SLOTS_MAIN",
+      "n": 1,
+      "median": 0.807,
+      "p95": 0.807,
+      "worst": 0.807,
+      "totalMs": 0.807
+    },
+    {
+      "name": "V8.GC_BACKGROUND_UNPARK",
+      "n": 3,
+      "median": 0.205,
+      "p95": 0.406,
+      "worst": 0.406,
+      "totalMs": 0.8
+    },
+    {
+      "name": "V8.GC_TIME_TO_SAFEPOINT",
+      "n": 25,
+      "median": 0.004,
+      "p95": 0.134,
+      "worst": 0.178,
+      "totalMs": 0.741
+    },
+    {
+      "name": "V8.GC_HEAP_ENSURE_SWEEPING_COMPLETED",
+      "n": 2,
+      "median": 0.187,
+      "p95": 0.42,
+      "worst": 0.42,
+      "totalMs": 0.607
+    },
+    {
+      "name": "V8.GC_MC_FINISH",
+      "n": 1,
+      "median": 0.606,
+      "p95": 0.606,
+      "worst": 0.606,
+      "totalMs": 0.606
+    },
+    {
+      "name": "V8.GC_HEAP_PROLOGUE",
+      "n": 24,
+      "median": 0.003,
+      "p95": 0.17,
+      "worst": 0.193,
+      "totalMs": 0.591
+    },
+    {
+      "name": "V8.GC_SCAVENGER_SCAVENGE_RESTORE_AND_QUARANTINE_PINNED",
+      "n": 23,
+      "median": 0.002,
+      "p95": 0.018,
+      "worst": 0.396,
+      "totalMs": 0.4740000000000001
+    },
+    {
+      "name": "V8.GC_HEAP_EPILOGUE",
+      "n": 24,
+      "median": 0.003,
+      "p95": 0.016,
+      "worst": 0.377,
+      "totalMs": 0.47300000000000003
+    },
+    {
+      "name": "V8.GC_MC_MARK_WEAK_CLOSURE_EPHEMERON_MARKING",
+      "n": 4,
+      "median": 0.002,
+      "p95": 0.428,
+      "worst": 0.428,
+      "totalMs": 0.436
+    },
+    {
+      "name": "V8.GC_MC_EVACUATE_COPY_PARALLEL",
+      "n": 1,
+      "median": 0.435,
+      "p95": 0.435,
+      "worst": 0.435,
+      "totalMs": 0.435
+    },
+    {
+      "name": "V8.GC_MC_CLEAR_STRING_TABLE",
+      "n": 8,
+      "median": 0.049,
+      "p95": 0.072,
+      "worst": 0.072,
+      "totalMs": 0.427
+    },
+    {
+      "name": "V8.GC_MC_BACKGROUND_EVACUATE_UPDATE_POINTERS",
+      "n": 5,
+      "median": 0.104,
+      "p95": 0.143,
+      "worst": 0.143,
+      "totalMs": 0.413
+    },
+    {
+      "name": "V8.GC_MC_MARK_EMBEDDER_PROLOGUE",
+      "n": 2,
+      "median": 0.004,
+      "p95": 0.402,
+      "worst": 0.402,
+      "totalMs": 0.406
+    },
+    {
+      "name": "V8.GC_MC_COMPLETE_SWEEPING",
+      "n": 1,
+      "median": 0.406,
+      "p95": 0.406,
+      "worst": 0.406,
+      "totalMs": 0.406
+    },
+    {
+      "name": "V8.GC_MC_CLEAR_SWEEP_JS_DISPATCH_TABLE",
+      "n": 1,
+      "median": 0.39,
+      "p95": 0.39,
+      "worst": 0.39,
+      "totalMs": 0.39
+    },
+    {
+      "name": "V8.GC_HEAP_EXTERNAL_PROLOGUE",
+      "n": 24,
+      "median": 0.01,
+      "p95": 0.015,
+      "worst": 0.182,
+      "totalMs": 0.37500000000000006
+    },
+    {
+      "name": "V8.GC_MC_CLEAR_SWEEP_EXTERNAL_POINTER_TABLE",
+      "n": 1,
+      "median": 0.27,
+      "p95": 0.27,
+      "worst": 0.27,
+      "totalMs": 0.27
+    },
+    {
+      "name": "V8.GC_HEAP_EPILOGUE_SAFEPOINT",
+      "n": 24,
+      "median": 0.004,
+      "p95": 0.011,
+      "worst": 0.172,
+      "totalMs": 0.269
+    },
+    {
+      "name": "V8.GC_MC_MARK_EMBEDDER_TRACING",
+      "n": 4,
+      "median": 0.001,
+      "p95": 0.237,
+      "worst": 0.237,
+      "totalMs": 0.244
+    },
+    {
+      "name": "V8.GC_MC_CLEAR_WEAK_REFERENCES_TRIVIAL",
+      "n": 1,
+      "median": 0.233,
+      "p95": 0.233,
+      "worst": 0.233,
+      "totalMs": 0.233
+    },
+    {
+      "name": "V8.GC_SCAVENGER_RESIZE_NEW_SPACE",
+      "n": 23,
+      "median": 0.002,
+      "p95": 0.008,
+      "worst": 0.169,
+      "totalMs": 0.22100000000000003
+    },
+    {
+      "name": "V8.GC_MC_MARK_RETAIN_MAPS",
+      "n": 1,
+      "median": 0.2,
+      "p95": 0.2,
+      "worst": 0.2,
+      "totalMs": 0.2
+    },
+    {
+      "name": "V8.GC_MC_EVACUATE_PROLOGUE",
+      "n": 1,
+      "median": 0.192,
+      "p95": 0.192,
+      "worst": 0.192,
+      "totalMs": 0.192
+    },
+    {
+      "name": "Major concurrent marking rescheduled",
+      "n": 6,
+      "median": 0.002,
+      "p95": 0.162,
+      "worst": 0.162,
+      "totalMs": 0.17600000000000002
+    },
+    {
+      "name": "V8.GC_MC_FINISH_SWEEP_ARRAY_BUFFERS",
+      "n": 1,
+      "median": 0.17,
+      "p95": 0.17,
+      "worst": 0.17,
+      "totalMs": 0.17
+    },
+    {
+      "name": "ClearTrivialWeakRefJob started",
+      "n": 1,
+      "median": 0.163,
+      "p95": 0.163,
+      "worst": 0.163,
+      "totalMs": 0.163
+    },
+    {
+      "name": "V8.GC_MINOR_MS_BACKGROUND_SWEEPING",
+      "n": 23,
+      "median": 0.006,
+      "p95": 0.015,
+      "worst": 0.016,
+      "totalMs": 0.15000000000000008
+    },
+    {
+      "name": "V8.GC_MC_CLEAR_WEAK_GLOBAL_HANDLES",
+      "n": 1,
+      "median": 0.15,
+      "p95": 0.15,
+      "worst": 0.15,
+      "totalMs": 0.15
+    },
+    {
+      "name": "ConcurrentMarking::RunMajor Finished",
+      "n": 18,
+      "median": 0.002,
+      "p95": 0.04,
+      "worst": 0.04,
+      "totalMs": 0.10000000000000002
+    },
+    {
+      "name": "ArrayBufferSweeper Finished",
+      "n": 24,
+      "median": 0.003,
+      "p95": 0.012,
+      "worst": 0.016,
+      "totalMs": 0.09100000000000001
+    },
+    {
+      "name": "V8.GC_MC_CLEAR_WEAK_LISTS",
+      "n": 1,
+      "median": 0.088,
+      "p95": 0.088,
+      "worst": 0.088,
+      "totalMs": 0.088
+    },
+    {
+      "name": "V8.GC_BACKGROUND_FULL_ARRAY_BUFFER_SWEEP",
+      "n": 1,
+      "median": 0.083,
+      "p95": 0.083,
+      "worst": 0.083,
+      "totalMs": 0.083
+    },
+    {
+      "name": "V8.GC_MC_CLEAR_SWEEP_TRUSTED_POINTER_TABLE",
+      "n": 1,
+      "median": 0.064,
+      "p95": 0.064,
+      "worst": 0.064,
+      "totalMs": 0.064
+    },
+    {
+      "name": "V8.GC_HEAP_PROLOGUE_SAFEPOINT",
+      "n": 22,
+      "median": 0.001,
+      "p95": 0.005,
+      "worst": 0.02,
+      "totalMs": 0.05700000000000002
+    },
+    {
+      "name": "V8.GC_SCAVENGER_TRACED_HANDLES_RESET_PARALLEL",
+      "n": 14,
+      "median": 0.003,
+      "p95": 0.01,
+      "worst": 0.01,
+      "totalMs": 0.054000000000000006
+    },
+    {
+      "name": "ClearWeaknessProcessor start",
+      "n": 21,
+      "median": 0.002,
+      "p95": 0.008,
+      "worst": 0.009,
+      "totalMs": 0.04600000000000001
+    },
+    {
+      "name": "V8.GC_MC_CLEAR_MAPS",
+      "n": 1,
+      "median": 0.04,
+      "p95": 0.04,
+      "worst": 0.04,
+      "totalMs": 0.04
+    },
+    {
+      "name": "Parallel scavenge started",
+      "n": 22,
+      "median": 0.001,
+      "p95": 0.003,
+      "worst": 0.006,
+      "totalMs": 0.03800000000000001
+    },
+    {
+      "name": "Sweeper::ConcurrentMajorSweeper Finished",
+      "n": 16,
+      "median": 0.001,
+      "p95": 0.013,
+      "worst": 0.013,
+      "totalMs": 0.038000000000000006
+    },
+    {
+      "name": "V8.GC_MC_CLEAR_WEAK_COLLECTIONS",
+      "n": 1,
+      "median": 0.038,
+      "p95": 0.038,
+      "worst": 0.038,
+      "totalMs": 0.038
+    },
+    {
+      "name": "ComputeWeaknessProcessor start",
+      "n": 23,
+      "median": 0.001,
+      "p95": 0.003,
+      "worst": 0.003,
+      "totalMs": 0.03600000000000001
+    },
+    {
+      "name": "V8.GC_MC_CLEAR_EXTERNAL_STRING_TABLE",
+      "n": 1,
+      "median": 0.036,
+      "p95": 0.036,
+      "worst": 0.036,
+      "totalMs": 0.036
+    },
+    {
+      "name": "V8.GC_MC_CLEAR_WEAK_REFERENCES_NON_TRIVIAL",
+      "n": 1,
+      "median": 0.031,
+      "p95": 0.031,
+      "worst": 0.031,
+      "totalMs": 0.031
+    },
+    {
+      "name": "V8.GC_SCAVENGER_BACKGROUND_TRACED_HANDLES_RESET_PARALLEL",
+      "n": 2,
+      "median": 0.013,
+      "p95": 0.016,
+      "worst": 0.016,
+      "totalMs": 0.028999999999999998
+    },
+    {
+      "name": "V8.GC_MC_INCREMENTAL_EXTERNAL_PROLOGUE",
+      "n": 1,
+      "median": 0.015,
+      "p95": 0.015,
+      "worst": 0.015,
+      "totalMs": 0.015
+    },
+    {
+      "name": "V8.GC_SCAVENGER_BACKGROUND_TRACED_HANDLES_COMPUTE_WEAKNESS_PARALLEL",
+      "n": 1,
+      "median": 0.014,
+      "p95": 0.014,
+      "worst": 0.014,
+      "totalMs": 0.014
+    },
+    {
+      "name": "V8.GC_MC_PROLOGUE",
+      "n": 1,
+      "median": 0.014,
+      "p95": 0.014,
+      "worst": 0.014,
+      "totalMs": 0.014
+    },
+    {
+      "name": "V8.GC_MC_INCREMENTAL_EXTERNAL_EPILOGUE",
+      "n": 1,
+      "median": 0.013,
+      "p95": 0.013,
+      "worst": 0.013,
+      "totalMs": 0.013
+    },
+    {
+      "name": "V8.GC_MC_CLEAR_JS_WEAK_REFERENCES",
+      "n": 1,
+      "median": 0.013,
+      "p95": 0.013,
+      "worst": 0.013,
+      "totalMs": 0.013
+    },
+    {
+      "name": "V8.GC_MC_SWEEP_START_JOBS",
+      "n": 1,
+      "median": 0.013,
+      "p95": 0.013,
+      "worst": 0.013,
+      "totalMs": 0.013
+    },
+    {
+      "name": "V8.GC_MC_EVACUATE_UPDATE_POINTERS_WEAK",
+      "n": 1,
+      "median": 0.008,
+      "p95": 0.008,
+      "worst": 0.008,
+      "totalMs": 0.008
+    },
+    {
+      "name": "V8.GC_MC_MARK_FULL_CLOSURE_SERIAL",
+      "n": 1,
+      "median": 0.007,
+      "p95": 0.007,
+      "worst": 0.007,
+      "totalMs": 0.007
+    },
+    {
+      "name": "PointersUpdatingJob started",
+      "n": 1,
+      "median": 0.007,
+      "p95": 0.007,
+      "worst": 0.007,
+      "totalMs": 0.007
+    },
+    {
+      "name": "V8.GC_MC_EVACUATE_UPDATE_POINTERS_CLIENT_HEAPS",
+      "n": 1,
+      "median": 0.006,
+      "p95": 0.006,
+      "worst": 0.006,
+      "totalMs": 0.006
+    },
+    {
+      "name": "ClearStringTableJob started",
+      "n": 5,
+      "median": 0.001,
+      "p95": 0.001,
+      "worst": 0.001,
+      "totalMs": 0.005
+    },
+    {
+      "name": "V8.GC_HEAP_EXTERNAL_WEAK_GLOBAL_HANDLES",
+      "n": 1,
+      "median": 0.005,
+      "p95": 0.005,
+      "worst": 0.005,
+      "totalMs": 0.005
+    },
+    {
+      "name": "V8.GCPhantomHandleProcessingCallback",
+      "n": 1,
+      "median": 0.005,
+      "p95": 0.005,
+      "worst": 0.005,
+      "totalMs": 0.005
+    },
+    {
+      "name": "Major concurrent marking started",
+      "n": 1,
+      "median": 0.004,
+      "p95": 0.004,
+      "worst": 0.004,
+      "totalMs": 0.004
+    },
+    {
+      "name": "V8.GC_MC_MARK_FINISH_INCREMENTAL",
+      "n": 1,
+      "median": 0.004,
+      "p95": 0.004,
+      "worst": 0.004,
+      "totalMs": 0.004
+    },
+    {
+      "name": "V8.GC_MC_MARK_CLIENT_HEAPS",
+      "n": 1,
+      "median": 0.004,
+      "p95": 0.004,
+      "worst": 0.004,
+      "totalMs": 0.004
+    },
+    {
+      "name": "V8.GC_MC_CLEAR_FLUSHED_JS_FUNCTIONS",
+      "n": 1,
+      "median": 0.004,
+      "p95": 0.004,
+      "worst": 0.004,
+      "totalMs": 0.004
+    },
+    {
+      "name": "PageEvacuationJob started",
+      "n": 1,
+      "median": 0.004,
+      "p95": 0.004,
+      "worst": 0.004,
+      "totalMs": 0.004
+    },
+    {
+      "name": "V8.GC_MC_EVACUATE_EPILOGUE",
+      "n": 1,
+      "median": 0.004,
+      "p95": 0.004,
+      "worst": 0.004,
+      "totalMs": 0.004
+    },
+    {
+      "name": "V8.GC_MC_CLEAR_SWEEP_WASM_CODE_POINTER_TABLE",
+      "n": 1,
+      "median": 0.003,
+      "p95": 0.003,
+      "worst": 0.003,
+      "totalMs": 0.003
+    },
+    {
+      "name": "V8.GC_MC_CLEAR_FLUSHABLE_BYTECODE",
+      "n": 1,
+      "median": 0.003,
+      "p95": 0.003,
+      "worst": 0.003,
+      "totalMs": 0.003
+    },
+    {
+      "name": "V8.GC_MC_CLEAR_WEAK_REFERENCES_TRUSTED",
+      "n": 1,
+      "median": 0.003,
+      "p95": 0.003,
+      "worst": 0.003,
+      "totalMs": 0.003
+    },
+    {
+      "name": "V8.GC_MC_EVACUATE_CLEAN_UP",
+      "n": 1,
+      "median": 0.003,
+      "p95": 0.003,
+      "worst": 0.003,
+      "totalMs": 0.003
+    },
+    {
+      "name": "V8.GC_MC_EVACUATE_REBALANCE",
+      "n": 1,
+      "median": 0.003,
+      "p95": 0.003,
+      "worst": 0.003,
+      "totalMs": 0.003
+    },
+    {
+      "name": "V8.GC_MC_EPILOGUE",
+      "n": 1,
+      "median": 0.003,
+      "p95": 0.003,
+      "worst": 0.003,
+      "totalMs": 0.003
+    },
+    {
+      "name": "V8.GC_CONSERVATIVE_STACK_SCANNING",
+      "n": 1,
+      "median": 0.002,
+      "p95": 0.002,
+      "worst": 0.002,
+      "totalMs": 0.002
+    },
+    {
+      "name": "V8.GC_MC_SWEEP_NEW_LO",
+      "n": 1,
+      "median": 0.002,
+      "p95": 0.002,
+      "worst": 0.002,
+      "totalMs": 0.002
+    },
+    {
+      "name": "ClearTrustedWeakRefJob started",
+      "n": 1,
+      "median": 0.001,
+      "p95": 0.001,
+      "worst": 0.001,
+      "totalMs": 0.001
+    },
+    {
+      "name": "ClearNonTrivialWeakRefs started",
+      "n": 1,
+      "median": 0.001,
+      "p95": 0.001,
+      "worst": 0.001,
+      "totalMs": 0.001
+    },
+    {
+      "name": "V8.GC_HEAP_EXTERNAL_SECOND_PASS_CALLBACKS",
+      "n": 1,
+      "median": 0.001,
+      "p95": 0.001,
+      "worst": 0.001,
+      "totalMs": 0.001
+    }
+  ],
+  "validity": {
+    "browserExceptions": 0,
+    "frames": 72,
+    "invalid": [],
+    "modelErrors": 0,
+    "maxObserverMsPerFrame": 0.20606060642184634
+  }
+}
