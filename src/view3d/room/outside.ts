@@ -29,6 +29,8 @@ import { colour, hex, outsideStyle, render } from '../../theme/index.ts';
 import { bodyMaterial, rockMaterial, setSun } from '../../theme/three/index.ts';
 import { attitudeToScene, toScene, windowFields } from '../adapter.ts';
 import { windowViewFor } from '../windowViews.ts';
+import { FUNNEL_KIND, makeFunnelSky } from './funnelSky.ts';
+import type { FunnelSkyStats } from './funnelSky.ts';
 import type { WindowView as EyeView } from '../windowViews.ts';
 import { dressingRandom } from '../gfx.ts';
 import { HORIZON_Y } from './layout.ts';
@@ -52,6 +54,8 @@ const compress = (d: number): number => NEAR + (SPAN * d) / (d + HALF);
 
 export interface Outside {
   update(snapshot: ViewSnapshot): void;
+  /** What the funnel sky drew last frame (offered, culled, thinned, drawn, segments). */
+  funnels(): FunnelSkyStats;
   dispose(): void;
 }
 
@@ -203,9 +207,15 @@ export function buildOutside(scene: Scene): Outside {
   // Phenomena the eye can see (A19: the wells' funnels), each drawn by its section's window
   // view (windowViews.ts) from the window channel's light-only data.
   const phenomena = new Map<string, { kind: string; group: Group; view: EyeView }>();
+  // The wells' funnels, all of them in one draw (funnelSky.ts).
+  const sky = makeFunnelSky({ displayRadius: SHELL });
+  rot.add(sky.object);
+  let funnelStats: FunnelSkyStats = { offered: 0, culled: 0, thinned: 0, drawn: 0, segments: 0 };
   const drawPhenomena = (view: object, t: number): void => {
     const visible = new Set<string>();
     for (const field of windowFields(view)) {
+      // Wells are drawn together by the funnel sky below, not one view each.
+      if (field.kind === FUNNEL_KIND) continue;
       let entry = phenomena.get(field.id);
       if (!entry || entry.kind !== field.kind) {
         if (entry) retire(field.id);
@@ -243,6 +253,7 @@ export function buildOutside(scene: Scene): Outside {
       if (view) {
         fromWindow(view);
         drawPhenomena(view, snapshot.t);
+        funnelStats = sky.update(windowFields(view), snapshot.t, rot.quaternion);
         return;
       }
 
@@ -267,8 +278,10 @@ export function buildOutside(scene: Scene): Outside {
       rocks.count = n;
       rocks.instanceMatrix.needsUpdate = true;
     },
+    funnels: () => funnelStats,
     dispose() {
       for (const id of [...phenomena.keys()]) retire(id);
+      sky.dispose();
       sphere.dispose();
       rockGeo.dispose();
       for (const m of materials) m.dispose();

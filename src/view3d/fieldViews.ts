@@ -25,6 +25,14 @@ export interface FieldViewContext {
   readonly group: Group;
   /** Fat lines in this frame, with dashes kept in screen pixels. Use theme `LineStyle`s. */
   readonly lines: LineSet;
+  /**
+   * The part of the segment a→b (this frame) inside the projection volume, as fractions of a→b,
+   * against the hologram's current projection; undefined when none of it is (3B). The same as
+   * the frame's `clipSegment`, here for a plugin that clips outside `update`.
+   */
+  clipSegment?(a: Vector3, b: Vector3): readonly [from: number, to: number] | undefined;
+  /** The projection's current revision: changes whenever every clip would. */
+  clipRevision?(): number;
 }
 
 /** What a plugin is given every frame while its field is detected. */

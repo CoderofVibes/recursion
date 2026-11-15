@@ -1125,7 +1125,15 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
         if (!factory) continue;
         const fieldGroup = new Group();
         trans.add(fieldGroup);
-        entry = { view: factory({ group: fieldGroup, lines: linesE }), group: fieldGroup };
+        entry = {
+          view: factory({
+            group: fieldGroup,
+            lines: linesE,
+            clipSegment,
+            clipRevision: () => clipRevision,
+          }),
+          group: fieldGroup,
+        };
         fieldViews.set(field.id, entry);
       }
       entry.view.update({
