@@ -1,0 +1,18 @@
+{
+  "catalogue_cases": 7,
+  "solar_phase_cases": 28,
+  "robust_controls": 9,
+  "manual_error_controls": 9,
+  "catalogue_passing_controls": {
+    "-15": 9,
+    "-10": 8,
+    "-5": 9,
+    "0": 9,
+    "5": 9,
+    "10": 9,
+    "15": 9
+  },
+  "finite_thrust_checked": true,
+  "fully_dark_upper_bound_s": 204452.8859060403,
+  "scope": "Finite catalogue and reduced resource schedules; production model, thermal, input and UI tests remain integration work"
+}

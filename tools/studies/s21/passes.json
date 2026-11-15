@@ -1,0 +1,250 @@
+[
+  {
+    "burn_m_s": 13.601848319172857,
+    "summary": {
+      "beta_peri_m": 680000.0106885695,
+      "beta_peri_t": 108480.0,
+      "beta_peri_relative_speed": 80.95627658724956,
+      "alpha_min_m": 1000000.0,
+      "exit_t": 289440.0,
+      "exit_speed": 49.04160577930767,
+      "exit_position": [
+        -8867108.628636003,
+        1566816.650541037,
+        0.0
+      ],
+      "exit_velocity": [
+        -44.68394581558388,
+        -20.209504787673247,
+        0.0
+      ],
+      "qualifies": false
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 121349.11105005602,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    }
+  },
+  {
+    "burn_m_s": 13.797104385495185,
+    "summary": {
+      "beta_peri_m": 829999.9735223607,
+      "beta_peri_t": 108840.0,
+      "beta_peri_relative_speed": 71.59444224595585,
+      "alpha_min_m": 1000000.0,
+      "exit_t": 242880.0,
+      "exit_speed": 63.771612382301775,
+      "exit_position": [
+        -6967957.436401757,
+        5701975.168307842,
+        0.0
+      ],
+      "exit_velocity": [
+        -63.610903964416025,
+        4.524537840308906,
+        0.0
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 53488.5402115623,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    }
+  },
+  {
+    "burn_m_s": 13.997999951243402,
+    "summary": {
+      "beta_peri_m": 979999.9785645045,
+      "beta_peri_t": 108240.0,
+      "beta_peri_relative_speed": 65.17201308452564,
+      "alpha_min_m": 1000000.0,
+      "exit_t": 230160.0,
+      "exit_speed": 66.31339777305799,
+      "exit_position": [
+        -4950682.274851396,
+        7516919.390768557,
+        0.0
+      ],
+      "exit_velocity": [
+        -61.81743833633469,
+        24.00147999064369,
+        0.0
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 178.43764463994992,
+      "peak_intensity": 0.05,
+      "sampled_support_clearance_lower_bound_m": -20.0,
+      "caution_t": 100168.79338104915,
+      "standard_failure_t": 116438.68632122697,
+      "power_switch_failure_t": 117904.94615585465,
+      "hardened_failure_t": null
+    }
+  },
+  {
+    "burn_m_s": 14.196503832936289,
+    "summary": {
+      "beta_peri_m": 1119999.996343852,
+      "beta_peri_t": 106920.0,
+      "beta_peri_relative_speed": 60.90039884115904,
+      "alpha_min_m": 1000000.0,
+      "exit_t": 227880.0,
+      "exit_speed": 64.3896591638882,
+      "exit_position": [
+        -3385561.4736749018,
+        8339755.410248446,
+        0.0
+      ],
+      "exit_velocity": [
+        -53.98956012665216,
+        35.08782701411278,
+        0.0
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 1209.7900859160584,
+      "peak_intensity": 0.05,
+      "sampled_support_clearance_lower_bound_m": -20.0,
+      "caution_t": 101057.17076249464,
+      "standard_failure_t": 103241.04421751219,
+      "power_switch_failure_t": 104641.04421751219,
+      "hardened_failure_t": 108041.04421751219
+    }
+  },
+  {
+    "burn_m_s": 14.39466800391674,
+    "summary": {
+      "beta_peri_m": 1249999.9957922497,
+      "beta_peri_t": 105000.0,
+      "beta_peri_relative_speed": 58.01442133818193,
+      "alpha_min_m": 1000000.0,
+      "exit_t": 229800.0,
+      "exit_speed": 61.01313604115982,
+      "exit_position": [
+        -2174351.490072261,
+        8737348.01051357,
+        0.0
+      ],
+      "exit_velocity": [
+        -45.4464516783202,
+        40.70900145455772,
+        0.0
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 1733.082699529633,
+      "peak_intensity": 0.05,
+      "sampled_support_clearance_lower_bound_m": -20.0,
+      "caution_t": 102018.34021370597,
+      "standard_failure_t": 104327.66027383013,
+      "power_switch_failure_t": 105727.66027383013,
+      "hardened_failure_t": 109127.66027383013
+    }
+  },
+  {
+    "burn_m_s": 14.64504453241825,
+    "summary": {
+      "beta_peri_m": 1400000.0293044816,
+      "beta_peri_t": 102240.0,
+      "beta_peri_relative_speed": 55.7339102525404,
+      "alpha_min_m": 1000000.0,
+      "exit_t": 234720.0,
+      "exit_speed": 56.36633338125538,
+      "exit_position": [
+        -972998.2678921678,
+        8951454.574357033,
+        0.0
+      ],
+      "exit_velocity": [
+        -35.899675061974015,
+        43.45545845220719,
+        0.0
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 2384.263198492629,
+      "peak_intensity": 0.05,
+      "sampled_support_clearance_lower_bound_m": -20.0,
+      "caution_t": 103279.83427921223,
+      "standard_failure_t": 105773.88389194943,
+      "power_switch_failure_t": 107173.88389194943,
+      "hardened_failure_t": 110573.88389194943
+    }
+  },
+  {
+    "burn_m_s": 14.964454993605614,
+    "summary": {
+      "beta_peri_m": 1569999.982762875,
+      "beta_peri_t": 98280.0,
+      "beta_peri_relative_speed": 54.290022358804094,
+      "alpha_min_m": 1000000.0,
+      "exit_t": 242400.0,
+      "exit_speed": 50.89607271061685,
+      "exit_position": [
+        232801.04099044704,
+        8998664.257560829,
+        0.0
+      ],
+      "exit_velocity": [
+        -26.29272799236098,
+        43.57869516270668,
+        0.0
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 1969.2946595371006,
+      "peak_intensity": 0.05,
+      "sampled_support_clearance_lower_bound_m": -20.0,
+      "caution_t": 104999.51610477983,
+      "standard_failure_t": 107768.82300417987,
+      "power_switch_failure_t": 109170.18629159303,
+      "hardened_failure_t": 112570.18629159303
+    }
+  },
+  {
+    "burn_m_s": 15.151966670155526,
+    "summary": {
+      "beta_peri_m": 1659999.973528118,
+      "beta_peri_t": 96000.0,
+      "beta_peri_relative_speed": 53.96997688822791,
+      "alpha_min_m": 1000000.0,
+      "exit_t": 247080.0,
+      "exit_speed": 48.07752756698258,
+      "exit_position": [
+        831384.3901500304,
+        8965354.572949816,
+        0.0
+      ],
+      "exit_velocity": [
+        -21.788427829326803,
+        42.85689057409773,
+        0.0
+      ],
+      "qualifies": false
+    },
+    "cloud": {
+      "raw_exposure": 1701.5924637326189,
+      "peak_intensity": 0.05,
+      "sampled_support_clearance_lower_bound_m": -20.0,
+      "caution_t": 106074.83266666564,
+      "standard_failure_t": 109034.5738257069,
+      "power_switch_failure_t": 110443.03380785747,
+      "hardened_failure_t": 113843.03380785747
+    }
+  }
+]
