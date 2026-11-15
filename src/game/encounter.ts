@@ -7,6 +7,7 @@
 import type { Command } from '../contracts/commands.ts';
 import type {
   EnvironmentEffects,
+  EnvironmentField,
   FieldInstanceSpec,
   FieldRegistry,
   TruthWorld,
@@ -156,6 +157,13 @@ export interface EncounterSetup {
    */
   readonly fields?: FieldRegistry;
   /**
+   * Intensity the encounter adds at this state beyond the simulation's own fields (the Gravity
+   * range's radiation clouds, which turn with the binary): point sources, sampled like the
+   * simulation's at each equipment item and at the radiation monitor (A24, R37). Pure; called
+   * once per tick at its start. An empty list where there are none.
+   */
+  readonly intensityFields?: (state: SimState) => readonly EnvironmentField[];
+  /**
    * For fields that need more than the game's point sampling (3C's lattice sweeps each item's
    * whole occupied geometry): given the state at the start of the tick and the effects the game
    * built, return the effects the ship receives. Pure; called once per tick before the ship
@@ -176,6 +184,35 @@ export interface EncounterSetup {
   readonly window?: (world: TruthWorld) => readonly WindowField[];
   /** Structural hazards of the current fields (3B's throats), swept over each tick. */
   readonly hazards?: (fields: readonly FieldInstanceSpec[]) => EncounterHazards;
+  /**
+   * A truth-side account the encounter keeps over the attempt (3B's request 4: the work its
+   * fields do on the ship), advanced each tick from the ship's actual state at the tick's start
+   * and end. Diagnostics: never recorded, never shown. Kept in the truth state, plain JSON.
+   */
+  readonly ledger?: EncounterLedger;
+}
+
+/** The ship at one end of a tick, as an encounter's ledger takes it. */
+export interface LedgerStage {
+  readonly t: Seconds;
+  readonly position: Vec3;
+  readonly velocity: Vec3;
+  readonly mass: Kilograms;
+  /** The thrust commanded over the tick, net and inertial, before any field changes it, N. */
+  readonly force: Vec3;
+}
+
+export interface EncounterLedger {
+  /** The account at arrival. Plain JSON: saved with the truth state. */
+  readonly initial: JsonValue;
+  /** The account after one tick of `dt` seconds through these fields. Pure. */
+  account(
+    state: JsonValue,
+    fields: readonly FieldInstanceSpec[],
+    start: LedgerStage,
+    end: LedgerStage,
+    dt: Seconds,
+  ): JsonValue;
 }
 
 /** The ship as an encounter's dynamics sees it at a due epoch: its actual committed state. */

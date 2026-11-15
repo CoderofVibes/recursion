@@ -22,10 +22,38 @@ import type {
   ShipDefinition,
   ViewSnapshot,
 } from '../../contracts/index.ts';
+import type {
+  RadiationCaution,
+  RadiationDoseRateReading,
+} from '../../contracts/radiation-monitor.ts';
 import type { PlanStep } from './maneuver.ts';
 import type { DepartureProgress } from './departure.ts';
 import type { PowerAlert } from './power.ts';
 import type { BlackBoxPort, ModelPort, RuleControls } from './ports.ts';
+
+/**
+ * The forecast in force has ended and the ship flies on past it (A6, A12): the model said
+ * nothing about where it goes from here (it ends a forecast early where it lacks evidence, as
+ * before a close pass it has not learned). Raised once per forecast, as ship time passes its last
+ * sample: a new caution, so warp drops to 1×. It stands until a forecast that reaches past the
+ * present arrives (PREVIEW and COMMIT, or a coast forecast on releasing the controls).
+ */
+export interface ForecastEnded {
+  readonly id: 'forecast-ended';
+  readonly level: 'caution';
+  /** The forecast that ended, and the ship time of its last sample. */
+  readonly forecast: string;
+  readonly endedAt: Seconds;
+}
+
+/** An alert the session raises: the ship's own instruments, and the end of the forecast. */
+export type SessionAlert = PowerAlert | RadiationCaution | ForecastEnded;
+
+/** The radiation monitor's reading as recorded (3C's codec), with its caution threshold. */
+export interface RadiationReading extends RadiationDoseRateReading {
+  /** Above this dose rate the monitor raises its caution, U. */
+  readonly threshold: number;
+}
 
 /** A plan before it is committed: times are seconds after the moment of commitment. */
 export interface PlanDraft {
@@ -107,10 +135,18 @@ export interface SessionStatus {
   readonly committing: boolean;
   readonly attitude: AttitudeMode;
   /**
-   * What the ship's own gauges warn about now (A18 (5)): stored energy running low, or life
-   * support unpowered. A new one drops warp to 1× (A12); the screen shows them.
+   * What the ship's own instruments warn about now: the power gauges (A18 (5)), stored energy
+   * running low or life support unpowered, and the radiation monitor (A24), a recorded dose rate
+   * above its hazard threshold (3C's `RadiationCaution`, kept until a fresh low reading clears
+   * it). A new one drops warp to 1× (A12); the screen shows them.
    */
-  readonly alerts: readonly PowerAlert[];
+  readonly alerts: readonly SessionAlert[];
+  /**
+   * The radiation monitor's latest recorded reading (A24, R37), with the threshold its caution
+   * is raised above. A reading past `validUntil` is stale: the monitor has said nothing since.
+   * Absent until the monitor has recorded one this attempt.
+   */
+  readonly radiation?: RadiationReading;
   /**
    * How each `depart` objective stands, as the ship believes it (S20, R17): distance and outward
    * speed relative to the bodies' believed centre of mass against the gate, Δv by the gauges

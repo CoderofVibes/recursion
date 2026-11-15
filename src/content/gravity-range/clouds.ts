@@ -25,14 +25,9 @@
  */
 
 import type { BodyId } from '../../contracts/ids.ts';
-import type { ShipDefinition } from '../../contracts/ship.ts';
-import type {
-  EnvironmentEffects,
-  EnvironmentField,
-  TruthWorld,
-} from '../../contracts/truth/index.ts';
+import type { EnvironmentField, TruthWorld } from '../../contracts/truth/index.ts';
 import type { WindowCloudBank } from '../../contracts/view.ts';
-import { fieldIntensity, occluded } from '../../game/environment.ts';
+import { occluded } from '../../game/environment.ts';
 import type { Vec3 } from '../../lib/vec3.ts';
 import type { SimState } from '../../sim/index.ts';
 
@@ -141,33 +136,34 @@ export function crescentIntensity(
   return spec.peak * radial * Math.max(crescent, caps);
 }
 
+/** What the ship carries, and the furthest any of it (the monitor included) sits from the COM, m. */
+const NEAR = 100;
+
 /**
- * The encounter's environment hook (`EncounterSetup.environment`): adds the clouds' intensity at
- * each equipment item to what the game built. Far from the clouds' shell (more than 100 m inside
- * or outside it, at the centre of mass) it adds nothing and costs a distance.
+ * The clouds as the encounter's point source (`EncounterSetup.intensityFields`), in the binary's
+ * frame at this state: the game samples it at each equipment item and at the radiation monitor
+ * (A24, R37). Far from the clouds' shell (more than 100 m inside or outside it, at the centre of
+ * mass) there is none, at the cost of a distance.
  */
-export function cloudEnvironment(
-  ship: ShipDefinition,
+export function cloudFields(
   spec: CrescentSpec = CRESCENT,
-): (state: SimState, effects: EnvironmentEffects) => EnvironmentEffects {
-  return (state, effects) => {
+): (state: SimState) => readonly EnvironmentField[] {
+  const none: readonly EnvironmentField[] = [];
+  return (state) => {
     const world = state.world;
     const body = world.bodies.find((b) => b.id === spec.body);
-    if (!body) return effects;
+    if (!body) return none;
     const p = world.ship.kinematics.position;
     const d = Math.hypot(p.x - body.position.x, p.y - body.position.y, p.z - body.position.z);
-    if (d < spec.inner - 100 || d > spec.outer + 100) return effects;
+    if (d < spec.inner - NEAR || d > spec.outer + NEAR) return none;
     const axes = binaryAxes(world, spec);
-    const field: EnvironmentField = {
-      id: 'beta-crescent',
-      kind: 'radiation-crescent',
-      intensity: (point) => crescentIntensity(point, axes, spec),
-    };
-    const clouds = fieldIntensity(world, [field], ship);
-    if (Object.keys(clouds).length === 0) return effects;
-    const intensity: Record<string, number> = { ...effects.intensity };
-    for (const id in clouds) intensity[id] = (intensity[id] ?? 0) + clouds[id]!;
-    return { ...effects, intensity };
+    return [
+      {
+        id: 'beta-crescent',
+        kind: 'radiation-crescent',
+        intensity: (point) => crescentIntensity(point, axes, spec),
+      },
+    ];
   };
 }
 

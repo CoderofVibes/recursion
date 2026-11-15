@@ -13,6 +13,7 @@ import { createStandInModel } from './belief/standin-model.ts';
 import type { EncounterSetup } from './encounter.ts';
 import { adaptSetup } from './adapters.ts';
 import { encounterEntry } from './encounters.ts';
+import { NO_WORK, type PullWork } from './funnels.ts';
 import { createGameSession } from './session.ts';
 import { createTruthStepper, type GameTruthState } from './truth-step.ts';
 
@@ -90,6 +91,78 @@ describe('Inverse Wells in the truth tick', () => {
       expect(status.paused).toBe(false);
       expect(status.sightings.length).toBeGreaterThan(100);
       expect(status.sightings[0]).toMatchObject({ kind: 'precursor', seenAt: 300, until: 1_200 });
+    },
+  );
+
+  it(
+    'the lifecycle and the work ledger survive a save mid-flight: the restored state flies on the same',
+    { timeout: 120_000 },
+    () => {
+      const stepper = createTruthStepper(garden());
+      let state: GameTruthState = stepper.initial;
+      expect(state.ledger).toEqual(NO_WORK);
+      for (let i = 0; i < 1_210 && !state.lost; i++) state = stepper.step(state).state;
+      expect(state.lost).toBeUndefined();
+      // The entrance funnel has been pulling the coasting ship: its pull did positive work, and
+      // with nothing commanded the thrust did none.
+      const work = state.ledger as unknown as PullWork;
+      expect(work.pullJ).toBeGreaterThan(0);
+      expect(work.nominalJ).toBe(0);
+      // Saved as JSON (what a save of the truth holds) and restored, it flies on to the bit.
+      let saved = JSON.parse(JSON.stringify(state)) as GameTruthState;
+      let live = state;
+      for (let i = 0; i < 200 && !live.lost; i++) {
+        const a = stepper.step(live);
+        const b = stepper.step(saved);
+        expect(b).toEqual(a);
+        live = a.state;
+        saved = b.state;
+      }
+    },
+  );
+
+  it(
+    'an attempt, a RECALL mid-lifecycle and a reload each meet the field from its start',
+    { timeout: 300_000 },
+    () => {
+      const entry = encounterEntry('inverse-wells');
+      const blackBox = createBlackBox();
+      const session = (box: ReturnType<typeof createBlackBox>) =>
+        createGameSession((run) => entry.create(run), {
+          model: createStandInModel({ referenceRadius: LAW.referenceRadius }),
+          blackBox: box,
+          now: () => 'now',
+        });
+      /** Fly from arrival to `until` s (or the loss); the precursors and births seen on the way. */
+      const fly = (s: ReturnType<typeof session>, until: number) => {
+        const seen: { kind: string; t: number }[] = [];
+        expect(s.status().t).toBe(0);
+        // Each attempt starts from the arrival's field: nothing born, the lifecycle at its start.
+        const start = s.truth();
+        expect(phases(start.sim.world.fields).active ?? 0).toBe(0);
+        expect(start.ledger).toEqual(NO_WORK);
+        while (s.status().outcome.kind === 'in-progress' && s.status().t < until) {
+          s.stepTicks(1);
+          for (const e of s.lastTick()!.dynamics ?? []) seen.push({ kind: e.kind, t: e.t });
+        }
+        return seen;
+      };
+      const s = session(blackBox);
+      // 1. An attempt through the first births (or to its loss).
+      const first = fly(s, 1_260);
+      expect(first.some((e) => e.kind === 'precursor' && e.t === 300)).toBe(true);
+      // 2. RECALL with precursors announced and their births still to come.
+      s.recall();
+      const second = fly(s, 600);
+      expect(second.some((e) => e.kind === 'precursor' && e.t === 300)).toBe(true);
+      s.recall();
+      // 3. A reload: a new session from the saved archive goes on with the next run.
+      const reloaded = session(createBlackBox({ archive: blackBox.archive() }));
+      expect(reloaded.status().attemptIndex).toBe(4);
+      const third = fly(reloaded, 1_260);
+      expect(third.some((e) => e.kind === 'precursor' && e.t === 300)).toBe(true);
+      if (reloaded.status().outcome.kind === 'in-progress')
+        expect(third.some((e) => e.kind === 'birth' && e.t === 1_200)).toBe(true);
     },
   );
 
