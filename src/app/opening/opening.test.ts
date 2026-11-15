@@ -1,12 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { claimOpening, openingLaunch, resetOpening } from './launch.ts';
+import { appOpening, BROWSER_SLOT, claimOpening, openingLaunch, resetOpening } from './launch.ts';
 import {
   ALARM_DURATION,
   DARK_AFTER_TITLE,
   EARTH_BEARING,
   ALARM_STARTS,
   OPENING_END,
-  REDUCED_SHADOW,
   openingCues,
   sampleOpening,
   TITLE_FLICKERS,
@@ -46,17 +45,42 @@ describe('scripted opening', () => {
     expect(reduced.every((f) => [...f.translation, ...f.rotation].every((v) => v === 0))).toBe(
       true,
     );
-    // The window's anomaly stays, but its dark never swells over the window.
-    expect(reduced.every((f) => f.lens.shadow <= REDUCED_SHADOW)).toBe(true);
+    // A fully still sky (R44): no anomaly bends or darkens anything in the window.
+    expect(reduced.every((f) => f.lens === null)).toBe(true);
+    expect(samples.every((t) => sampleOpening(t, false).lens !== null)).toBe(true);
     expect(reduced.filter((f) => f.beat === 'wake').every((f) => f.wake === 1)).toBe(true);
     expect(sampleOpening(8.1, true).alarm).toBe(1);
     expect(sampleOpening(10.6, true).alarm).toBe(0);
+    // The alarm light comes on once and goes off once: steady, never a pulse.
+    const lamp = reduced.map((f) => f.alarm);
+    expect(lamp.filter((v, i) => i > 0 && v !== lamp[i - 1]!)).toHaveLength(2);
+  });
+
+  it('fades plainly to black in reduced motion, where full motion cuts (R44)', () => {
+    const cue = (id: string) => openingCues(0, OPENING_END).find((c) => c.id === id)!.at;
+    const failure = cue('loss-failure');
+    const title = cue('opening-title');
+    const before = samples.filter((t) => t < title);
+    const curtain = before.map((t) => sampleOpening(t, true).blackout);
+    // Nothing before the failure, then only ever darker, and fully black well before the title.
+    expect(
+      before.filter((t) => t <= failure).every((t) => sampleOpening(t, true).blackout === 0),
+    ).toBe(true);
+    expect(curtain.every((v, i) => i === 0 || v >= curtain[i - 1]!)).toBe(true);
+    const black = before.find((t) => sampleOpening(t, true).blackout === 1)!;
+    expect(black - failure).toBeGreaterThan(1);
+    expect(title - black).toBeGreaterThanOrEqual(1);
+    // A fade, not a cut: no step between samples (10 ms apart) is larger than a twentieth.
+    expect(curtain.every((v, i) => i === 0 || v - curtain[i - 1]! < 0.05)).toBe(true);
+    // Full motion keeps its cut: clear until the dark has the window, then black at once.
+    const full = before.map((t) => sampleOpening(t, false).blackout);
+    expect(new Set(full)).toEqual(new Set([0, 1]));
   });
 
   it('shows the anomaly by what it does: stars, the console, then the dark, never Earth', () => {
     const ms = Array.from({ length: Math.ceil(OPENING_END * 1000) }, (_, i) => i / 1000);
     const cue = (id: string) => openingCues(0, OPENING_END).find((c) => c.id === id)!.at;
-    const lens = (t: number) => sampleOpening(t, false).lens;
+    const lens = (t: number) => sampleOpening(t, false).lens!;
     const offEarth = (t: number) =>
       Math.hypot(lens(t).az - EARTH_BEARING.az, lens(t).el - EARTH_BEARING.el);
     // Through the calm it bends light but its dark is under a pixel (0.086° at 720 px, 62° fov).
@@ -65,8 +89,8 @@ describe('scripted opening', () => {
     expect(lens(0).az).toBeLessThan(-10);
     // It drifts without jumping.
     for (let i = 1; i < ms.length; i++) {
-      const a = sampleOpening(ms[i - 1]!, false).lens;
-      const b = sampleOpening(ms[i]!, false).lens;
+      const a = lens(ms[i - 1]!);
+      const b = lens(ms[i]!);
       expect(Math.abs(b.az - a.az)).toBeLessThan(0.02);
     }
     // Earth is never doubled or ringed (owner): the lens stays 10° off and moves Earth's light
@@ -76,7 +100,7 @@ describe('scripted opening', () => {
     expect(shown.every((t) => lens(t).einstein ** 2 / offEarth(t) < 0.2)).toBe(true);
     // Its own dark shows by the failure, then fills the window (150° wide) before the cut.
     expect(lens(cue('loss-failure')).shadow).toBeGreaterThan(0.25);
-    expect(sampleOpening(cue('black-cut'), false).lens.shadow).toBeGreaterThan(75);
+    expect(lens(cue('black-cut')).shadow).toBeGreaterThan(75);
     // The console's measured track leaves the forecast during the calm and keeps going.
     const drift = shown.map((t) => sampleOpening(t, false).drift);
     expect(drift.every((v, i) => i === 0 || v >= drift[i - 1]!)).toBe(true);
@@ -148,5 +172,24 @@ describe('scripted opening', () => {
     expect(openingLaunch('other', false, false)).toBe('first');
     resetOpening('new');
     expect(openingLaunch('new', false, false)).toBe('first');
+  });
+
+  it('gates the app once per browser, ahead of the starting region only (A25)', async () => {
+    const start = 'gravity-range';
+    // One marker whatever is loaded; recorded progress does not bypass it.
+    const gate = appOpening(start, start, '')!;
+    expect(gate).toEqual({ saveSlot: BROWSER_SLOT, hasProgress: false, replay: false });
+    expect(appOpening(start, start, '?encounter=gravity-range&opening=replay')!.replay).toBe(true);
+    // A region opened by its own address keeps its normal entry.
+    expect(appOpening('inverse-wells', start, '?encounter=inverse-wells')).toBeNull();
+    expect(appOpening('chain-link', start, '?opening=replay')).toBeNull();
+    // First in this browser, then never again without an explicit replay; an erase restores it.
+    const launch = (replay = false) => openingLaunch(gate.saveSlot, gate.hasProgress, replay);
+    expect(launch()).toBe('first');
+    expect(await claimOpening(gate.saveSlot, new AbortController().signal)).toBe(true);
+    expect(launch()).toBe('direct');
+    expect(launch(true)).toBe('replay');
+    resetOpening(gate.saveSlot);
+    expect(launch()).toBe('first');
   });
 });

@@ -104,6 +104,17 @@ export const NEAR_RANGE: Readonly<Record<string, number>> = { 'chain-link': 120 
 
 /** The shortest range FLIGHT allows in an encounter. */
 export const rangeMinFor = (encounterId: string): number => NEAR_RANGE[encounterId] ?? RANGE_MIN;
+
+/**
+ * The range FLIGHT opens at, from how far the nearest briefed body is at arrival: it sits two
+ * thirds of the way to the rim, as Alpha does in the Gravity range (1,000 km away, the standard
+ * 1,500 km). An encounter a few kilometres across then opens at its own scale instead of as a
+ * dot in an empty volume. Two figures, never past the standard range nor under the floor.
+ */
+export function openingRange(nearest: number | undefined, floor = RANGE_MIN): number {
+  if (nearest === undefined || !Number.isFinite(nearest) || nearest <= 0) return RANGE_DEFAULT;
+  return clamp(Number((1.5 * nearest).toPrecision(2)), floor, RANGE_DEFAULT);
+}
 /** Seconds between rebuilds of clipped paths as the ship moves through the volume. */
 const RECLIP = 0.25;
 
@@ -604,6 +615,8 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
   const displayQ = new Quaternion();
   const shipQ = new Quaternion();
   let displayReady = false;
+  /** The snapshot time the display orientation last followed. */
+  let displayT = 0;
   let reclip = 0;
   let trailCount = -1;
   let forecastKey = '';
@@ -977,6 +990,10 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
     // Display orientation: heading-up follows the ship, but never turns faster than the theme
     // allows, so a tumbling ship under time warp does not spin the hologram.
     attitudeToScene(ship.attitude, shipQ);
+    // A clock that runs backwards is a new attempt (a loss, a Recall): the display starts on the
+    // arrival's heading, as on a first frame, instead of turning round from the last attempt's.
+    if (snapshot.t < displayT) displayReady = false;
+    displayT = snapshot.t;
     if (!displayReady) {
       displayQ.copy(shipQ);
       displayReady = true;

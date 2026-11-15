@@ -392,6 +392,8 @@ export function debrief(
   const hydrogen = channelSpan(record, 'fuel-cell-hydrogen.propellant');
   const stored = channelSpan(record, 'black-box.bytes');
   const closest = closestMeasured(record);
+  /** A body by the name the briefing gives it, not its id (the wells' throat is `funnel-0-core`). */
+  const named = (id: string): string => bodies.find((b) => b.id === id)?.name ?? id;
 
   // Clearance can only be judged against objects the ship ranged.
   let tightest: { id: string; clearance: number } | undefined;
@@ -412,7 +414,9 @@ export function debrief(
     constraints.push({
       label: 'clearance',
       planned: `≥ ${dist(design.clearance)}`,
-      measured: tightest ? `${dist(tightest.clearance)} from ${tightest.id}` : 'nothing ranged',
+      measured: tightest
+        ? `${dist(tightest.clearance)} from ${named(tightest.id)}`
+        : 'nothing ranged',
       met: tightest ? tightest.clearance >= design.clearance : null,
     });
     const probeFixes = record.measurements.filter(
@@ -423,7 +427,7 @@ export function debrief(
     ).length;
     const heldOut = (archive.extensionTests ?? []).filter((t) => t.heldOut === record.id);
     const objective = record.events.filter((e) => e.kind === 'objective');
-    const spans = [...closest].map(([id, r]) => `${id} to ${dist(r)}`).join(', ');
+    const spans = [...closest].map(([id, r]) => `${named(id)} to ${dist(r)}`).join(', ');
     const evidence: Readonly<Record<EvidenceGoal, DebriefLine>> = {
       calibrate: {
         label: 'evidence',
@@ -546,7 +550,7 @@ export function debrief(
   // Beside the forecasts, what was actually measured: the closest the ship came to anything it ranged.
   forecasts.push({
     label: 'closest measured',
-    value: tightest ? `${dist(tightest.clearance)} from ${tightest.id}` : 'nothing ranged',
+    value: tightest ? `${dist(tightest.clearance)} from ${named(tightest.id)}` : 'nothing ranged',
     bad: false,
     measured: true,
   });

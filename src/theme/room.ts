@@ -104,11 +104,24 @@ export const outsideStyle = {
 /**
  * Loss of the ship (A8, A9): shake and flicker, cut to black, one orange pip, back at the door.
  * Seconds from the moment of loss. About 6 s end to end (owner may change).
+ *
+ * Photosensitivity (R43): the lights fail in a few authored dips, never a free-running flicker,
+ * so no second of the sequence holds more than three flashes (WCAG 2.3.1). The hologram blinks
+ * with the dips and goes out for good with the last one; the cut to black is the last change.
  */
 export const lossSequence = {
   shakeEnd: 1.5,
-  /** The hologram dies a little before the room does. */
+  /** The hologram dies a little before the room does, as the last dip begins. */
   hologramEnd: 1.1,
+  /** The dips: when each starts and how long the lights stay down, seconds. */
+  dips: [
+    { at: 0.14, length: 0.08 },
+    { at: 0.6, length: 0.1 },
+    { at: 1.1, length: 0.12 },
+  ],
+  /** The lights during a dip, and what is left of them just before the cut, as shares of full. */
+  dipLevel: 0.06,
+  dim: 0.14,
   pipAt: 2.3,
   resetAt: 3.6,
   fadeAt: 4.4,

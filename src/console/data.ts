@@ -10,15 +10,42 @@ import type {
   Forecast,
   ForecastDraft,
   ModelState,
+  Objective,
   ShipDefinition,
   ViewSnapshot,
 } from '../contracts/index.ts';
 import type { DepartureProgress } from '../game/belief/departure.ts';
 import type { Status } from '../theme/components/index.ts';
 import { distance } from '../view3d/adapter.ts';
-import { whole } from './format.ts';
+import type { GameVec } from '../view3d/adapter.ts';
+import { dist, fixed, whole } from './format.ts';
 
 const G0 = 9.80665;
+
+/**
+ * An objective as MISSION states it: its kind in a word, its name, and its conditions (S20), so
+ * the player knows what the attempt is asked to do. A region to reach is given by its size and
+ * how far its edge is from where the ship believes it is now.
+ */
+export function objectiveLine(
+  objective: Objective,
+  index: number,
+  ship: GameVec,
+): { readonly label: string; readonly text: string } {
+  const o = objective;
+  const label =
+    o.kind === 'custom' ? `objective ${index + 1}` : o.kind === 'reach-region' ? 'reach' : o.kind;
+  let text = o.label;
+  if (o.kind === 'reach-region' && o.region) {
+    const edge = distance(ship, o.region.center) - o.region.radius;
+    text += ` · a region ${dist(2 * o.region.radius)} across, `;
+    text += edge > 0 ? `${dist(edge)} from the ship` : 'around the ship';
+  }
+  if (o.depart)
+    text += ` · ${whole(o.depart.minSpeed)} m/s from the centre of mass, beyond ${dist(o.depart.beyond)}`;
+  if (o.maxDeltaV !== undefined) text += ` · at most ${fixed(o.maxDeltaV, 0)} m/s spent on leaving`;
+  return { label, text };
+}
 
 /** How far the hull reaches from the centre of mass in any direction, m: the whole hull, not a point. */
 export function hullReach(ship: Pick<ViewSnapshot['ship'], 'hull' | 'centerOfMass'>): number {

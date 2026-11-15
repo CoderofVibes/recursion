@@ -65,6 +65,32 @@ export function resetOpening(saveSlot: string, storage = browserStorage()): void
   }
 }
 
+/**
+ * The app's one marker (A25): the opening plays once per browser, not once per save or region.
+ * Every region's page shares it, so a region opened from the picker never replays the opening.
+ */
+export const BROWSER_SLOT = 'recursion';
+
+/**
+ * What the app hands the gate for the encounter it loaded, or null where the room is entered
+ * directly. The opening wakes into the region the expedition starts in (`startRegion`); a
+ * region opened by its own address keeps its normal entry and leaves the marker alone. Recorded
+ * progress does not bypass it: the gate is the browser's, not a save's. `?opening=replay`
+ * replays an opening this browser has already seen, with Skip.
+ */
+export function appOpening(
+  region: string,
+  startRegion: string,
+  search: string,
+): { readonly saveSlot: string; readonly hasProgress: false; readonly replay: boolean } | null {
+  if (region !== startRegion) return null;
+  return {
+    saveSlot: BROWSER_SLOT,
+    hasProgress: false,
+    replay: new URLSearchParams(search).get('opening') === 'replay',
+  };
+}
+
 const MOTION_PREFERENCE = 'recursion:opening-reduced-motion';
 
 export function readMotionPreference(): boolean | undefined {

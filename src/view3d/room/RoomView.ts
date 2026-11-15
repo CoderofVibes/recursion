@@ -52,6 +52,7 @@ import type { RoomShot } from '../opening/shot.ts';
 import { makeShipHolo } from '../ship/ShipHolo.ts';
 import type { ShipHolo } from '../ship/ShipHolo.ts';
 import { CON, DOOR, HOLO, REACH, ROOM, VIEW } from './layout.ts';
+import { sampleLoss } from './loss.ts';
 import type { Hotspot, ViewMode } from './layout.ts';
 import { buildOutside } from './outside.ts';
 import type { Outside } from './outside.ts';
@@ -78,6 +79,9 @@ export interface RoomEvents {
 
 /** Seconds after the console view arrives before its screen is fully up and opaque. */
 const SCREEN_SETTLED = hudMotion.screenIn / 1000 + 0.25;
+
+/** Seconds between the flight hologram's updates while it is not on show (its alerts, A12). */
+const FOLLOW_FLIGHT = 0.2;
 
 /** What the room draws this frame. */
 export interface RoomFrame extends FlightFrame {
@@ -121,7 +125,7 @@ export class RoomView {
   private tiltUser = 0;
   /** How each hologram was framed at first, for resetFraming(). */
   private readonly framingAtRest: {
-    readonly range: number;
+    range: number;
     readonly map: Quaternion;
     readonly ship: Quaternion;
   };
@@ -133,7 +137,7 @@ export class RoomView {
     lift: VIEW.room.lift,
     fov: VIEW.room.fov,
   };
-  private death: { t: number; shake: boolean; stage: LossStage } | null = null;
+  private death: { t: number; shake: boolean; still: boolean; stage: LossStage } | null = null;
   private readonly mouse = new Vector2();
   private readonly ray = new Raycaster();
   private drag: { x: number; y: number; moved: boolean } | null = null;
@@ -145,21 +149,29 @@ export class RoomView {
   private observed = { w: 0, h: 0 };
   /** Real seconds the console view has been settled (arrived, its screen fully up). */
   private consoleFor = 0;
+  /** Real seconds since the flight hologram last worked out its alerts while not on show. */
+  private sinceFlight = 0;
   /** The chart the map was last given: rebuilt only when the loop hands over a new one. */
   private lastChart: RoomFrame['chart'] | null = null;
   private readonly cleanup: (() => void)[] = [];
   private readonly canvas: HTMLCanvasElement;
   private readonly events: RoomEvents;
+  private readonly reduceMotion: () => boolean;
 
   constructor(
     canvas: HTMLCanvasElement,
     labels: HTMLElement,
     definition: ShipDefinition,
     events: RoomEvents,
-    options?: { readonly scripted?: boolean },
+    options?: {
+      readonly scripted?: boolean;
+      /** Whether the player asked for less motion: the loss then neither shakes nor flickers. */
+      readonly reduceMotion?: () => boolean;
+    },
   ) {
     this.canvas = canvas;
     this.events = events;
+    this.reduceMotion = options?.reduceMotion ?? (() => false);
     this.renderer = new WebGLRenderer({
       canvas,
       antialias: true,
@@ -327,6 +339,11 @@ export class RoomView {
     else if (mode === 'map' || mode === 'ship')
       this.tiltUser = clamp(this.tiltUser + radians, -0.25, 0.8);
   }
+  /** The range FLIGHT starts at and a reset returns to: the host sets it to the encounter's scale. */
+  setFlightRange(metres: number): void {
+    this.flight.setRange(metres);
+    this.framingAtRest.range = this.flight.range();
+  }
   /** Back to how the view first framed its hologram. */
   resetFraming(): void {
     this.tiltUser = 0;
@@ -362,12 +379,21 @@ export class RoomView {
    */
   lose(shake = true): void {
     if (this.death) return;
-    this.death = { t: shake ? 0 : lossSequence.shakeEnd, shake, stage: 'start' };
+    this.death = {
+      t: shake ? 0 : lossSequence.shakeEnd,
+      shake,
+      still: this.reduceMotion(),
+      stage: 'start',
+    };
     if (document.pointerLockElement) document.exitPointerLock();
     this.events.loss('start');
   }
 
-  frame(dt: number, data: RoomFrame, cameraOverride?: Pick<RoomShot, 'position' | 'rotation'>): void {
+  frame(
+    dt: number,
+    data: RoomFrame,
+    cameraOverride?: Pick<RoomShot, 'position' | 'rotation'>,
+  ): void {
     this.time += dt;
     this.resize();
     if (this.width === 0 || this.height === 0) return;
@@ -378,7 +404,10 @@ export class RoomView {
     // drawn (S15). The game, the recorder and alerts run on in the loop regardless; any
     // transition, a loss, or a view change brings the room back on its first frame.
     this.consoleFor = mode === 'console' && !this.trans && !this.death ? this.consoleFor + dt : 0;
-    if (this.consoleFor > SCREEN_SETTLED) return;
+    if (this.consoleFor > SCREEN_SETTLED) {
+      this.followFlight(data, dt);
+      return;
+    }
 
     this.outside.update(data.snapshot);
     if (data.chart !== this.lastChart) {
@@ -486,12 +515,24 @@ export class RoomView {
     this.flight.setPixelsPerUnit(px);
     this.ship.setPixelsPerUnit(px * this.ship.group.scale.x);
     this.map.setPixelsPerUnit(px);
-    if (this.flight.group.visible) this.flight.update(data, dt, this.time);
+    if (this.flight.group.visible) {
+      this.flight.update(data, dt, this.time);
+      this.sinceFlight = 0;
+    } else this.followFlight(data, dt);
     if (this.map.group.visible) this.map.update(dt, this.time);
     if (this.ship.group.visible) this.ship.update(dt);
 
     if (this.death) this.stepDeath(dt);
 
+    // Cut to black: the canvas itself goes dark on this frame, so the lit room never shows for
+    // a frame between the last of the shake and the overlay's curtain arriving (R43).
+    const black = this.death?.stage === 'black' || this.death?.stage === 'pip';
+    this.labels.domElement.style.visibility = black ? 'hidden' : '';
+    if (black) {
+      this.renderer.setRenderTarget(null);
+      this.renderer.clear();
+      return;
+    }
     this.composer.render();
     this.labels.render(this.scene, camera);
   }
@@ -589,6 +630,19 @@ export class RoomView {
     } else this.go(id);
   }
 
+  /**
+   * The flight hologram is not on show (the console's screen, SHIP, the MAP), but what it works
+   * out is not only a drawing: the passes ahead and the miss from the issued forecast are the
+   * instruments' alerts, and a new one drops warp (A12). Keep them current a few times a second,
+   * so a ship coasting at warp behind the console still meets its alerts.
+   */
+  private followFlight(data: RoomFrame, dt: number): void {
+    this.sinceFlight += dt;
+    if (this.sinceFlight < FOLLOW_FLIGHT) return;
+    this.flight.update(data, this.sinceFlight, this.time);
+    this.sinceFlight = 0;
+  }
+
   private stepDeath(dt: number): void {
     const d = this.death;
     if (!d) return;
@@ -601,15 +655,14 @@ export class RoomView {
       this.events.loss(s);
     };
     if (t < L.shakeEnd) {
-      // Shake up and down, lights and hologram flickering out.
-      const k = 1 - t / (L.shakeEnd * 1.27);
-      this.camera.position.y += Math.sin(t * 41) * L.shake * k + Math.sin(t * 17) * L.shake * 0.4;
-      this.camera.rotateZ(Math.sin(t * 29 + 1) * L.roll * k);
-      this.shell.setLevel(
-        this.cur.level *
-          (Math.sin(t * 53) > -0.2 ? 0.35 + 0.65 * Math.abs(Math.sin(t * 23)) : 0.05),
-      );
-      this.holoRoot.visible = Math.sin(t * 61) > -0.3 && t < L.hologramEnd;
+      // Shake up and down while the lights and the hologram fail, in the theme's authored dips
+      // (R43: never more than three flashes in a second; see loss.ts).
+      const now = sampleLoss(t, d.still);
+      this.camera.position.y += now.lift;
+      this.camera.rotateZ(now.roll);
+      this.shell.setLevel(this.cur.level * now.light);
+      this.holoRoot.visible &&= now.hologram;
+      if (!now.hologram) this.shell.setHologramLight(0);
       return;
     }
     if (t < L.pipAt) stage('black');

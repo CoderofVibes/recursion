@@ -96,8 +96,11 @@ export interface OpeningFrame {
   readonly translation: Vector;
   /** Pitch, yaw and roll, radians. */
   readonly rotation: Vector;
-  /** The anomaly as seen through the window (an invisible lens; it is never named on screen). */
-  readonly lens: Lens;
+  /**
+   * The anomaly as seen through the window (an invisible lens; it is never named on screen).
+   * Null with reduced motion: the sky is fully still (R44).
+   */
+  readonly lens: Lens | null;
   /** How far the console's measured track has pulled away from its forecast, 0 to 1. */
   readonly drift: number;
   readonly wake: number;
@@ -190,10 +193,8 @@ export const LENS_KEYS = [
 ] as const;
 /** Earth's bearing in the window, degrees (S23). */
 export const EARTH_BEARING = { az: 4.7, el: 2.0 } as const;
-/** In reduced motion the dark never swells over the window: the room simply goes black. */
-export const REDUCED_SHADOW = LENS_KEYS[3][4];
 
-function lensAt(t: number, reducedMotion: boolean): Lens {
+function lensAt(t: number): Lens {
   let i = 1;
   while (i < LENS_KEYS.length - 1 && t > LENS_KEYS[i]![0]) i++;
   const a = LENS_KEYS[i - 1]!;
@@ -202,19 +203,25 @@ function lensAt(t: number, reducedMotion: boolean): Lens {
   const last = i === LENS_KEYS.length - 1;
   // The last stretch accelerates: the dark takes the window all at once.
   const k = last ? u ** 3 : ease(u);
-  const shadow = mix(a[4], b[4], k);
   return {
     az: mix(a[1], b[1], k),
     el: mix(a[2], b[2], k),
     einstein: mix(a[3], b[3], k),
-    shadow: reducedMotion ? Math.min(shadow, REDUCED_SHADOW) : shadow,
+    shadow: mix(a[4], b[4], k),
   };
 }
 
 /** The console's measured track leaves the forecast during the calm and keeps going. */
 const DRIFT_FROM = 2;
 
-/** Sample the authored S23 beat sheet with visible elapsed seconds. */
+/**
+ * Sample the authored S23 beat sheet with visible elapsed seconds.
+ *
+ * With reduced motion (R44) nothing moves: no shake, no anomaly in the sky (the stars and Earth
+ * hold still), the alarm light steady, and a plain fade to black over the failure in place of the
+ * dark swelling over the window. The console's track still leaves its forecast, and the title
+ * fades in without its flicker.
+ */
 export function sampleOpening(t: number, reducedMotion: boolean): OpeningFrame {
   const wake = reducedMotion ? 1 : ease(range(t, REVEAL, SETTLED));
   const base: OpeningFrame = {
@@ -226,7 +233,7 @@ export function sampleOpening(t: number, reducedMotion: boolean): OpeningFrame {
     console: 'cruise',
     translation: ZERO,
     rotation: ZERO,
-    lens: lensAt(t, reducedMotion),
+    lens: reducedMotion ? null : lensAt(t),
     drift: ease(range(t, DRIFT_FROM, FAILURE)),
     wake,
     ambience: 1,
@@ -238,6 +245,7 @@ export function sampleOpening(t: number, reducedMotion: boolean): OpeningFrame {
       ...base,
       ...pose,
       beat: t < STUMBLE ? 'alarm' : t < FAILURE ? 'stumble' : 'impact',
+      blackout: reducedMotion ? ease(range(t, FAILURE, CUT)) : 0,
       light:
         t < FAILURE
           ? mix(1, 0.65, range(t, STUMBLE, FAILURE))

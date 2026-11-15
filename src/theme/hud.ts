@@ -54,8 +54,6 @@ export const hudOpacity = {
   /** The cursor's dot at rest, and its ring when it has found something. */
   reticle: 0.75,
   reticleHot: 0.95,
-  /** Low point of the two-cycle flicker at the moment of loss. */
-  flicker: 0.2,
 } as const;
 
 /** Overlay timings, ms. */

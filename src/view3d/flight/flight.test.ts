@@ -17,7 +17,9 @@ import { registerFieldView } from '../fieldViews.ts';
 import { LineSet } from '../gfx.ts';
 import {
   makeFlightHolo,
+  openingRange,
   pastAndAhead,
+  RANGE_DEFAULT,
   RANGE_MAX,
   RANGE_MIN,
   rangeMinFor,
@@ -46,6 +48,36 @@ const frame = (snapshot: ViewSnapshot, extra: { selected?: string } = {}) => ({
 
 describe('flight hologram', () => {
   afterEach(() => vi.unstubAllGlobals());
+
+  it('starts a new attempt on the arrival’s heading instead of turning round from the last', () => {
+    // The ship as the last attempt left it: late in the flight and turned 2.5 rad about its up.
+    const ship = viewSnapshot.world.ship;
+    const half = 2.5 / 2;
+    const turned = { x: 0, y: 0, z: Math.sin(half), w: Math.cos(half) };
+    const lost: ViewSnapshot = {
+      ...viewSnapshot,
+      t: viewSnapshot.t + 20_000,
+      world: { ...viewSnapshot.world, ship: { ...ship, attitude: turned as typeof ship.attitude } },
+    };
+    const arrival: ViewSnapshot = { ...viewSnapshot, t: 0 };
+    /** The display's orientation: the group that turns the environment into the display frame. */
+    const display = (holo: ReturnType<typeof make>) => holo.group.children[0]!.quaternion;
+
+    const fresh = make();
+    fresh.update(frame(arrival), 0.016, 0);
+    const recurred = make();
+    recurred.update(frame(lost), 0.016, 0);
+    expect(display(recurred).angleTo(display(fresh))).toBeGreaterThan(1);
+    // The clock ran backwards: a new attempt. One frame later the display is the arrival's.
+    recurred.update(frame(arrival), 0.016, 0.016);
+    expect(display(recurred).angleTo(display(fresh))).toBeLessThan(1e-9);
+
+    // Within an attempt it still turns no faster than the theme allows, however fast the ship.
+    const tumbling = make();
+    tumbling.update(frame(arrival), 0.016, 0);
+    tumbling.update(frame({ ...lost, t: 1 }), 0.016, 0.016);
+    expect(display(tumbling).angleTo(display(fresh))).toBeLessThan(0.05);
+  });
 
   it('draws the fixture snapshot and the two-attempt overlay', () => {
     const holo = make();
@@ -218,6 +250,23 @@ describe('coverage from earlier attempts (2G coverageEarlier)', () => {
     expect(kept.length).toBeLessThanOrEqual(24);
     for (let i = 1; i < kept.length; i++)
       expect(kept[i - 1]!.fresh).toBeGreaterThanOrEqual(kept[i]!.fresh);
+  });
+});
+
+describe('the range FLIGHT opens at', () => {
+  it('puts the nearest briefed body two thirds of the way out, at each encounter’s scale', () => {
+    // The Gravity range: Alpha 1,000 km away (with the arrival's survey error) is the standard.
+    expect(openingRange(1_000_700)).toBe(RANGE_DEFAULT);
+    // The Well Garden: the entrance throat 108.8 km away.
+    expect(openingRange(108_800)).toBe(160_000);
+    // The Unseen Cathedral: the survey rock 1,452 m away, under the encounter's 120 m floor never.
+    expect(openingRange(1452, rangeMinFor('chain-link'))).toBe(2200);
+    expect(openingRange(10, rangeMinFor('chain-link'))).toBe(120);
+    expect(openingRange(1452)).toBe(RANGE_MIN);
+    // Never wider than the standard, and the standard when nothing is briefed.
+    expect(openingRange(9_000_000)).toBe(RANGE_DEFAULT);
+    expect(openingRange(undefined)).toBe(RANGE_DEFAULT);
+    expect(openingRange(Infinity)).toBe(RANGE_DEFAULT);
   });
 });
 

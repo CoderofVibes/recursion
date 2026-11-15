@@ -4,7 +4,7 @@ The live state of the build between threads: who is running, who holds which sha
 
 **Integrator, after a compaction or in a new main thread:** read this file first (the "Morning" section, if it's still there), then `git log --oneline -15`, then the handoffs of any thread marked running.
 
-**Last updated:** 2026-11-15 morning. The overnight threads reported; **nothing is merged yet**. The owner is moving the integrator to a new main thread, which starts at the "Morning" section below.
+**Last updated:** 2026-11-15 morning, new main thread. Merging the overnight branches in the Morning section's order: **NIGHT merged**; VX, 3C, 3B, ART and S23 to follow.
 
 ## Threads
 
@@ -24,7 +24,7 @@ The live state of the build between threads: who is running, who holds which sha
 | S23 the opening | GPT/Codex | `.worktrees/s23` · `st/s23-the-opening` | **Done, unmerged** (`3d93895`, 1 ahead) | OP built from it; merge for the record | — |
 | OP the opening | GPT (base) then Opus 5.5 | `.worktrees/op` · `p3/op-opening` | **Merged** (`6ac2397`): the 19.5 s opening, replay and Skip, reduced motion, room hooks (R23), the home window shared with the ending. Not yet in the game: only the dev preview plays it (R41). Its dev server and launch entry are removed | Gate once per browser (A25) | `6ac2397` |
 | VX window and sky visuals | GPT/Codex (GPT-6 Astra) | `.worktrees/vx` · `p3/vx-visuals` | **Overnight done, unmerged** (`ac5be1e`, 4 ahead): sky, the opening's look, fx helpers, wired into the window | See Morning | — |
-| NIGHT judge's run | Claude (Fable 5.2) | `.worktrees/night` · `p3/night-hardening` | **Done, unmerged** (`cb1ace1`, 10 ahead); report `docs/handoffs/night.md` | See Morning | — |
+| NIGHT judge's run | Claude (Fable 5.2) | `.worktrees/night` · `p3/night-hardening` | **Done, merged** (this commit, from `cb1ace1`); report `docs/handoffs/night.md`; judge-run driver in `docs/handoffs/night/judge-run/` | Its found-not-fixed list feeds R46–R48 | (this commit) |
 | AU basic audio | GPT/Codex | `.worktrees/au` · `p3/au-audio` | **No work on the branch**: 0 ahead of main, worktree clean at `b5f84ac` | Ask the owner whether AU ran, or where its work is | — |
 | ART window references | Owner's choice (Claude or GPT) | `.worktrees/art` · `art/window-references` | **Running, unmerged** (`49cfd09`, 9 ahead; through round 7 prompts). **References only (A23): no image ships or is committed** | Outputs `docs/art/`; merge docs only | — |
 | S22 well field (real funnels) | GPT/Codex | `.worktrees/s22` · `st/s22-big-well-field` | **Done**: funnels 120 km long, 20 km mouth, 1 km throat, pull 0.02–0.10 m/s²; 2,601 sites, 650 appearing; owner questions open | Feeds 3B (R12) | `15171df` |
@@ -51,7 +51,7 @@ In the morning the integrator merges in this order: the paused threads' checkpoi
 
 Nothing below is merged. **Merge in this order**, each `--no-ff`, with `npm run check`, `npm run build` and a smoke test of the production build after each, updating this ledger in the same commit:
 
-1. **NIGHT** `p3/night-hardening` (`cb1ace1`, 10 commits; 1,254 tests). Report: `docs/handoffs/night.md`, 14 screenshots and the replay driver in `docs/handoffs/night/`.
+1. **Merged.** **NIGHT** `p3/night-hardening` (`cb1ace1`, 10 commits; 1,254 tests). Report: `docs/handoffs/night.md`, 14 screenshots and the replay driver in `docs/handoffs/night/`.
    - Fixed: R43 (the loss sequence's busiest second went from ~13 flashes to at most 3, on an authored schedule, tested; reduced motion neither shakes nor flickers). R41 and R44 (the opening plays in the game once per browser and wakes into the Gravity range; reduced motion is a still sky and a plain fade). Twin Deeps blockers: the model fell minutes behind after a long attempt, so TEST hung for 9+ minutes (now under 30 s); no off-forecast or close-pass alert fired on CONSOLE, SHIP or MAP, so warp never dropped there (now it does). Cathedral dead ends: FLIGHT opened at 1,500 km in a region a few km across (now per-region scale); the Black Box function was on no screen (now beside FLIGHT, wired to the model's lattice). Smaller: the hologram after a loss, MODEL's sideways scroll, objectives on MISSION, one counted line for 216 precursors, two labels.
    - **Touched 3C's lane:** `src/console/encounters/chain-link/index.ts`, judged a dead-end fix. Keep unless the owner says otherwise.
    - Found, not fixed (ranked; eight more in the report): (1) the Cathedral can't be threaded: on the twenty-fence lattice the model supports 0 of 2,952 fitted features after 201 frames at 1,000 W (2C's fit; NIGHT didn't touch its thresholds); (2) the true law fails its held-out TEST on long or messy attempts though the fitted exponent is right (2.5001), so the judge's README needs the recipe: two dives of a few hours each, Recall after each, then TEST; (3) the wells aren't drawn in the window: FLIGHT says "216 precursors in the window" and the window shows stars.
@@ -153,12 +153,16 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 
 | R40 | Owner → 2D | The region picker (A25) | **Done** `0ee3d1c`: a Regions panel at the top of MISSION, with the owner's label | NIGHT: item 2 is already done |
 
-| R41 | OP → 2D, OP | Put the opening in the game: 2D mounts `OpeningGate` in the app entry (`src/app/App.tsx`) ahead of the room, waking into the Gravity range. OP changes its gate (`src/app/opening/launch.ts`) from once per save to once per browser (A25) | **Open**: relay; with the picker (R40) | The owner wants judges to see it first |
+| R41 | OP → 2D, OP | Put the opening in the game: 2D mounts `OpeningGate` in the app entry (`src/app/App.tsx`) ahead of the room, waking into the Gravity range. OP changes its gate (`src/app/opening/launch.ts`) from once per save to once per browser (A25) | **Done** (NIGHT, merged with this ledger): once per browser; `?opening=replay` replays with Skip; a region opened by its own address leaves the marker alone | Owner's call if the opening should precede whichever region a browser opens first: one line, `appOpening` in `launch.ts` |
 | R42 | OP → AU | Cue times moved with the 19.5 s opening: opening-rumble 6.5 s, alarms 6.6/7.8/8.47, loss-failure 9.35, black-cut 10.65, opening-title 11.95, **new** title-out 15.9, room-wake 17.9 | **Open**: relay | |
-| R43 | OP → 2D | **Photosensitivity:** the ordinary loss sequence (A8) flickers faster than 3 times a second. Fix it before the ending (A17) reuses it. Also: Earth and title-size tokens | **Open**: relay, high priority | It's in the live game |
-| R44 | Integrator | Reduced motion in the opening keeps the slow star bending but not the swelling dark. Integrator's call: a fully still sky with the alarm light and a plain fade to black, the safer choice for motion sensitivity. The owner may overrule | **Open**: relay to VX with the opening | |
+| R43 | OP → 2D | **Photosensitivity:** the ordinary loss sequence (A8) flickers faster than 3 times a second. Fix it before the ending (A17) reuses it. Also: Earth and title-size tokens | **Done** (NIGHT): an authored schedule, at most three flashes in any second, tested at 24–144 frames/s; reduced motion neither shakes nor flickers. Earth and title tokens: VX | `motion.flicker` is defined and unused; gate it if anything adopts it |
+| R44 | Integrator | Reduced motion in the opening keeps the slow star bending but not the swelling dark. Integrator's call: a fully still sky with the alarm light and a plain fade to black, the safer choice for motion sensitivity. The owner may overrule | **Done** (NIGHT): still sky, steady alarm light, plain fade | The owner may still overrule |
 
 | R45 | 3C → 3B | 3B's funnel channel (`4692625`) imports the removed `sensorFunctionAvailable` and counts leakage heat as camera power | **Overnight: 3C takes `src/ship/sensors/wells*` and fixes it**, then wires it (R36). Not merged until fixed | Main has no `sensorFunctionAvailable` |
+
+| R46 | NIGHT → 2C (with 3C) | **The Cathedral can't be threaded.** At 1,000 W for 150 s: 201 frames, 19,296 fragments, 18,999 tracks, 2,952 fitted features, **0 supported** ("too few" observations); nearly every fragment starts its own track. 2C's flight test passes on one 160 m fence; the encounter has twenty overlapping fences. Repro: `src/game/lattice-loop.test.ts` with `survey` → `thread` | **Open**: owner decides today (fix, or present as a preview) | NIGHT left 2C's gates and thresholds alone. NIGHT also registered `ChainLinkPanel` in 3C's `src/console/encounters/chain-link/index.ts` (2D's request 13); kept, tell 3C |
+| R47 | NIGHT → 2C | The true law fails its held-out TEST on long or messy attempts (39 h held out: T/ν 926,160,514 against 1.05) though the fitted exponent is 2.5001; the page reads as "the law is wrong" | **Open**: owner decides today | Meanwhile the judge's README gives the recipe: two dives of a few hours, RECALL after each, then TEST |
+| R48 | NIGHT → integrator | S15's and S20's runners and `prototypes/shots/capture.mjs` wait for the room on a fresh profile, now behind the 19.5 s opening: set `localStorage['recursion:opening-seen'] = '1'` before page scripts, or load `?encounter=…` | **Open** | Needed before any S15 rerun |
 
 Add new rows at the bottom with the next ID. Never renumber.
 
@@ -174,7 +178,8 @@ Decided: A15 (S11's queue), A16 (the lattice), A17 (the ending) and A18 (the Gra
 
 | Commit | What |
 |---|---|
-| (this commit) | Ledger: the overnight results recorded for the new main thread (nothing merged) |
+| (this commit) | NIGHT merged (`cb1ace1`): R43 photosensitivity, R41/R44 the opening in the game, Twin Deeps' two loop blockers, the Cathedral's dead ends, judge-run driver. Check 1,254 tests + speed test, build, harness smoke (3 pass), production smoke of the opening and all three regions with no page errors |
+| `a60b76d` | Ledger: the overnight results recorded for the new main thread (nothing merged) |
 | `d95f599` | Ledger: 2D, 2F, 2C paused and merged; overnight plan live |
 | `0ee3d1c` | 2D (paused): region picker (A25), 2F's screen data, funnels in the window, A24 monitor, A20 slice; OP's room hooks kept |
 | `ec5189f` | 2C (paused): checkpoint |

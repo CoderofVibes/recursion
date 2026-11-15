@@ -86,7 +86,7 @@ export function playOpening({
         position: [DOOR.x, ROOM.eye, DOOR.z],
         rotation: [fromPitch + (DOOR.pitch - fromPitch) * sampled.wake, DOOR.yaw, 0],
       });
-    } else if (sampled.blackout === 0 && sampled.beat !== 'end') {
+    } else if (sampled.blackout < 1 && sampled.beat !== 'end') {
       const [pitch, yaw, roll] = sampled.rotation;
       at.set(...sampled.translation)
         .applyEuler(orientation)

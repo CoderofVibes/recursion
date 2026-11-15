@@ -475,12 +475,7 @@ body,
   opacity: 0;
   box-shadow: var(--rx-hud-hit);
 }
+/* Steady while the ship fails: the room's lights carry the only flicker (R43, loss.ts). */
 .cr[data-dying] .cr-hit {
   opacity: 1;
-  animation: cr-flick calc(var(--rx-t-fast)) steps(2) 3;
-}
-@keyframes cr-flick {
-  50% {
-    opacity: var(--rx-hud-o-flicker);
-  }
 }

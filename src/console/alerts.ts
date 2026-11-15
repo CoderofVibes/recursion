@@ -85,21 +85,34 @@ export function raisedAlerts(alerts: readonly object[], t: number): AlertItem[] 
  * precursor, until what it announces is due. The session drops warp on a new one.
  */
 export function sightingAlerts(sightings: readonly Sighting[], t: number): AlertItem[] {
-  return sightings.map((s) => {
+  // A field of wells announces hundreds at once: those of one kind due together are one line
+  // with a count, not a stack of the same line.
+  const groups = new Map<string, Sighting[]>();
+  for (const s of sightings) {
+    const key = `${s.kind}|${s.until ?? ''}`;
+    const group = groups.get(key);
+    if (group) group.push(s);
+    else groups.set(key, [s]);
+  }
+  return [...groups.values()].map((group): AlertItem => {
+    const s = group[0]!;
+    const n = group.length;
     const due = s.until === undefined ? '' : `due in ${clock(s.until - t)}`;
-    return s.kind === 'precursor'
-      ? {
-          id: `sighting-${s.field}`,
-          level: 'caution',
-          text: 'Precursor in the window',
-          ...(due ? { detail: due } : {}),
-        }
-      : {
-          id: `sighting-${s.field}`,
-          level: 'caution',
-          text: `Seen: ${name(s.kind)}`,
-          ...(due ? { detail: due } : {}),
-        };
+    const words = name(s.kind);
+    return {
+      // One sighting keeps its own id; a group's id changes when it grows, so it counts as new.
+      id: n === 1 ? `sighting-${s.field}` : `sighting-${s.kind}-${s.until ?? 'open'}-${n}`,
+      level: 'caution',
+      text:
+        s.kind === 'precursor'
+          ? n === 1
+            ? 'Precursor in the window'
+            : `${n} precursors in the window`
+          : n === 1
+            ? `Seen: ${words}`
+            : `Seen: ${n} × ${words}`,
+      ...(due ? { detail: due } : {}),
+    };
   });
 }
 

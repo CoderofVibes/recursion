@@ -28,7 +28,7 @@ import {
   stores,
 } from '../data.ts';
 import type { Desk } from '../desk.ts';
-import { fixed, name, whole } from '../format.ts';
+import { configurationName, fixed, name, whole } from '../format.ts';
 import { doseRate, doseRateView, rateText } from '../radiation.ts';
 
 /** Assemblies that are structure or stores: listed last and quietly. */
@@ -248,7 +248,10 @@ export function SystemsPage({ desk }: { readonly desk: Desk }) {
         <Caption>configuration</Caption>
         <ModeChips
           label="Configuration"
-          options={game.ship.configurations.map((c) => ({ value: c.id, label: c.name }))}
+          options={game.ship.configurations.map((c) => ({
+            value: c.id,
+            label: configurationName(c.name),
+          }))}
           value={ship.configuration}
           {...(ended
             ? {}

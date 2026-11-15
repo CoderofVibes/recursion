@@ -21,13 +21,14 @@ import {
   heat,
   hullReach,
   nearestClearance,
+  objectiveLine,
   recorderEstimate,
   spendable,
   stores,
   validatedSpans,
   visited,
 } from './data.ts';
-import { bytes, clock, dist, duration, km, sci, whole } from './format.ts';
+import { bytes, clock, configurationName, dist, duration, km, sci, whole } from './format.ts';
 import { changes, debrief, defaultDesign, designMark, designOf, setupCommands } from './mission.ts';
 
 const { readFileSync } = (await import(/* @vite-ignore */ `node:${'fs'}`)) as {
@@ -103,6 +104,24 @@ describe('debrief', () => {
     // Whatever was not measured is reported as such, never guessed.
     for (const line of report.constraints)
       if (line.met === null) expect(line.measured).toMatch(/not recorded|nothing ranged|not yet/);
+  });
+
+  it('names what the ship ranged as the briefing does, not by its id', () => {
+    const record = withDesign(attempts[0]!);
+    const text = (named: typeof bodies) => {
+      const report = debrief(record, { ...archive, attempts: [record] }, named);
+      return [
+        ...report.constraints.map((c) => c.measured),
+        ...report.forecasts.map((f) => f.value),
+      ].join(' | ');
+    };
+    const ranged = bodies.filter((b) => text(bodies).includes(`from ${b.id}`));
+    expect(ranged.length).toBeGreaterThan(0);
+    const renamed = bodies.map((b) => ({ ...b, name: `The ${b.id} throat` }));
+    for (const b of ranged) {
+      expect(text(renamed)).toContain(`from The ${b.id} throat`);
+      expect(text(renamed)).not.toContain(`from ${b.id}`);
+    }
   });
 
   it('lists a held burn by the time it ran, not the time it was commanded for', () => {
@@ -237,6 +256,56 @@ describe('formatting', () => {
     expect(bytes(2.5e6)).toBe('2.5 MB');
     expect(sci(1.02e10, 3)).toBe('1.02×10¹⁰');
     expect(sci(0.975)).toBe('0.975');
+  });
+
+  it('states an objective by its conditions, not only its name', () => {
+    const ship = { x: 0, y: 0, z: 0 };
+    const reach = objectiveLine(
+      {
+        id: 'forward',
+        kind: 'reach-region',
+        label: 'Forward transit',
+        region: { center: { x: 300_000, y: 400_000, z: 0 }, radius: 20_000 },
+      },
+      0,
+      ship,
+    );
+    // 500 km to the centre, so the edge is 480 km off; the sphere is 40 km across.
+    expect(reach).toEqual({
+      label: 'reach',
+      text: 'Forward transit · a region 40.0 km across, 480.0 km from the ship',
+    });
+    const inside = objectiveLine(
+      { id: 'here', kind: 'reach-region', label: 'Here', region: { center: ship, radius: 5 } },
+      0,
+      ship,
+    );
+    expect(inside.text).toBe('Here · a region 10 m across, around the ship');
+    // The Gravity range's departure reads as before.
+    const depart = objectiveLine(
+      {
+        id: 'depart',
+        kind: 'depart',
+        label: 'DEPART 50 M/S',
+        depart: { beyond: 9_000_000, minSpeed: 50 },
+        maxDeltaV: 16,
+      },
+      0,
+      ship,
+    );
+    expect(depart).toEqual({
+      label: 'depart',
+      text: 'DEPART 50 M/S · 50 m/s from the centre of mass, beyond 9,000 km · at most 16 m/s spent on leaving',
+    });
+    expect(objectiveLine({ id: 'c', kind: 'custom', label: 'Hold' }, 2, ship)).toEqual({
+      label: 'objective 3',
+      text: 'Hold',
+    });
+  });
+
+  it('names a configuration in words, however the ship spells it', () => {
+    expect(configurationName('allDeployed')).toBe('all deployed');
+    expect(configurationName('radiators')).toBe('radiators');
   });
 
   it('formats exactly as toLocaleString did, with formatters made once (S15)', () => {

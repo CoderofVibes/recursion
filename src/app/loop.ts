@@ -15,14 +15,15 @@ import { flightAlerts, freshAlerts, newlyRaised } from '../console/alerts.ts';
 import type { Desk } from '../console/desk.ts';
 import { isHandsOnNeutral } from '../contracts/index.ts';
 import type { GameControls } from '../game/belief/controls.ts';
-import { chartView } from '../view3d/adapter.ts';
+import { chartView, distance } from '../view3d/adapter.ts';
 import type { Chart } from '../view3d/map/MapHolo.ts';
 import type { Hotspot, ViewMode } from '../view3d/room/layout.ts';
-import { rangeMinFor } from '../view3d/flight/FlightHolo.ts';
+import { openingRange, rangeMinFor } from '../view3d/flight/FlightHolo.ts';
 import { RoomView } from '../view3d/room/RoomView.ts';
 import type { LossStage } from '../view3d/room/RoomView.ts';
 import { coastCadence } from '../theme/index.ts';
 import { createHandsOn } from './hands.ts';
+import { readMotionPreference } from './opening/launch.ts';
 
 /** What the room's overlays need to know about the view. */
 export interface RoomUi {
@@ -59,22 +60,40 @@ export function startControlRoom(
   desk: Desk,
   patch: (change: Partial<RoomUi>) => void,
 ): RunningRoom {
-  const view = new RoomView(canvas, labels, game.ship, {
-    mode: (mode, region) => patch({ mode, region, consoleUp: false }),
-    hot: (hot) => patch({ hot }),
-    pointerLock: (locked) => patch({ locked }),
-    consoleArrived: () => patch({ consoleUp: true }),
-    loss: (stage) => {
-      patch({ loss: stage === 'end' ? null : stage });
-      // Roguelikes are cruel: at the door again, at the beginning (A9).
-      if (stage === 'reset' && game.status().phase === 'ended') game.restart();
+  const lessMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const view = new RoomView(
+    canvas,
+    labels,
+    game.ship,
+    {
+      mode: (mode, region) => patch({ mode, region, consoleUp: false }),
+      hot: (hot) => patch({ hot }),
+      pointerLock: (locked) => patch({ locked }),
+      consoleArrived: () => patch({ consoleUp: true }),
+      loss: (stage) => {
+        patch({ loss: stage === 'end' ? null : stage });
+        // Roguelikes are cruel: at the door again, at the beginning (A9).
+        if (stage === 'reset' && game.status().phase === 'ended') game.restart();
+      },
+      flightPick: (id) => desk.select(id),
+      blackBox: () => desk.setPage('blackbox'),
     },
-    flightPick: (id) => desk.select(id),
-    blackBox: () => desk.setPage('blackbox'),
-  });
+    {
+      // The opening's "Reduce motion" choice, or else the system's, also stills the loss (R43).
+      reduceMotion: () => readMotionPreference() ?? lessMotion.matches,
+    },
+  );
   desk.keys = view.keys;
   // Some encounters are studied at close range: FLIGHT may zoom in that far there (3C, R4).
   view.flight.setRangeMin(rangeMinFor(game.briefing.id));
+  // FLIGHT opens at the encounter's own scale: the nearest briefed body two thirds of the way out.
+  {
+    const arrival = game.snapshot().world;
+    const nearest = Math.min(
+      ...arrival.bodies.map((b) => distance(b.position, arrival.ship.position)),
+    );
+    view.setFlightRange(openingRange(nearest, rangeMinFor(game.briefing.id)));
+  }
   const hands = createHandsOn(game);
 
   let raf = 0;
