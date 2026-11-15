@@ -6,6 +6,8 @@ import {
   OPENING_END,
   openingCues,
   sampleOpening,
+  TITLE_FLICKERS,
+  TITLE_OUT,
 } from './sequence.ts';
 
 describe('scripted opening', () => {
@@ -44,6 +46,28 @@ describe('scripted opening', () => {
     expect(reduced.filter((f) => f.beat === 'wake').every((f) => f.wake === 1)).toBe(true);
     expect(sampleOpening(4.4, true).alarm).toBe(1);
     expect(sampleOpening(6.9, true).alarm).toBe(0);
+  });
+
+  it('shows the title steady, flickers it at 3 flashes a second or fewer, then leaves black', () => {
+    const ms = Array.from({ length: Math.ceil(OPENING_END * 1000) }, (_, i) => i / 1000);
+    const title = ms.map((t) => sampleOpening(t, false).title);
+    // Steady at full before the flicker starts.
+    const before = ms.filter((t) => t >= 8.4 && t < TITLE_FLICKERS[0].at);
+    expect(before.every((t) => sampleOpening(t, false).title === 1)).toBe(true);
+    // Every drop of 0.1 or more is a flash; count them in every rolling second.
+    const drops: number[] = [];
+    for (let i = 1; i < title.length; i++) if (title[i - 1]! - title[i]! >= 0.1) drops.push(ms[i]!);
+    expect(drops.length).toBe(TITLE_FLICKERS.length + 1);
+    for (const at of drops)
+      expect(drops.filter((d) => d >= at && d < at + 1).length).toBeLessThanOrEqual(3);
+    // Out for good: black from TITLE_OUT until the room appears.
+    const after = ms.filter((t) => t >= TITLE_OUT && t < 12.2);
+    expect(after.every((t) => sampleOpening(t, false).title === 0)).toBe(true);
+    expect(after.every((t) => sampleOpening(t, false).blackout === 1)).toBe(true);
+    // Reduced motion: no flicker, the title simply goes out at the same moment.
+    const reduced = ms.filter((t) => t >= 8.4 && t < TITLE_OUT);
+    expect(reduced.every((t) => sampleOpening(t, true).title === 1)).toBe(true);
+    expect(sampleOpening(TITLE_OUT, true).title).toBe(0);
   });
 
   it('dispatches each cue edge once at multiple frame rates', () => {

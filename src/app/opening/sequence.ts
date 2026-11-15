@@ -5,11 +5,36 @@ const STUMBLE = 4.1;
 const FAILURE = 5.65;
 const CUT = FAILURE + lossSequence.shakeEnd;
 const TITLE = 8;
-const TITLE_FADE = 10.8;
 const ARRIVAL_SKY = 11.55;
 const REVEAL = 12.2;
 const SETTLED = 13.75;
 export const OPENING_END = 14;
+
+/**
+ * The title (owner, 2026-11-14): it appears and holds steady, starts to flicker like a failing
+ * screen, then goes out for good and leaves black. Each dip is [start, seconds, level during the
+ * dip]; after a dip the title returns at `after`. Dips start at least 0.4 s apart and the title
+ * goes out at TITLE_OUT, so any one second holds at most three flashes.
+ */
+const TITLE_IN = 8.35;
+export const TITLE_FLICKERS = [
+  { at: 9.7, length: 0.07, level: 0, after: 1 },
+  { at: 10.12, length: 0.05, level: 0.25, after: 0.85 },
+  { at: 10.52, length: 0.09, level: 0, after: 0.6 },
+] as const;
+export const TITLE_OUT = 10.9;
+
+function titleAt(t: number, reducedMotion: boolean): number {
+  if (t >= TITLE_OUT) return 0;
+  const shown = ease(range(t, TITLE, TITLE_IN));
+  if (reducedMotion) return shown;
+  let level = 1;
+  for (const dip of TITLE_FLICKERS) {
+    if (t < dip.at) break;
+    level = t < dip.at + dip.length ? dip.level : dip.after;
+  }
+  return shown * level;
+}
 
 /** S23 pulse starts. The envelope stays local to two room strips. */
 export const ALARM_STARTS = [2.9, 4.1, 4.77, 5.65, 6.32] as const;
@@ -23,6 +48,7 @@ const CUES = [
   { at: 5.65, id: 'loss-failure' },
   { at: 6.95, id: 'black-cut' },
   { at: 8, id: 'opening-title' },
+  { at: 10.9, id: 'title-out' },
   { at: 12.2, id: 'room-wake' },
 ] as const;
 export type OpeningCue = (typeof CUES)[number]['id'];
@@ -153,8 +179,7 @@ export function sampleOpening(t: number, reducedMotion: boolean): OpeningFrame {
   }
   if (t < TITLE) return { ...base, beat: 'dark', blackout: 1, ambience: 0 };
   if (t < 11.35) {
-    const title = ease(range(t, TITLE, 8.65)) * (1 - ease(range(t, TITLE_FADE, 11.35)));
-    return { ...base, beat: 'title', blackout: 1, title, ambience: 0 };
+    return { ...base, beat: 'title', blackout: 1, title: titleAt(t, reducedMotion), ambience: 0 };
   }
   if (t < ARRIVAL_SKY) return { ...base, beat: 'dark', blackout: 1, ambience: 0 };
   if (t < REVEAL) return { ...base, beat: 'arrival', blackout: 1, ambience: 0 };
