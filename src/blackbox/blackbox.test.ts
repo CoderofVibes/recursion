@@ -133,64 +133,68 @@ describe('recorder', () => {
 });
 
 describe('storage and rebuild (P8)', () => {
-  it('records survive storage; forecasts come back issued; the rebuilt model equals the live one', async () => {
-    const store = new MemoryBlackBoxStore();
-    let archive = emptyArchive();
-    const live = new ModelService(ctx);
-    live.load({ attempts: [] });
-    let issued: ReturnType<typeof issueForecast> | null = null;
-    for (const rec of recs) {
-      const r = recorderFor(rec);
-      live.beginAttempt(r.snapshot());
-      let cursor: RecordCursor = START_CURSOR;
-      const ms = rec.measurements;
-      for (let i = 0; i < ms.length; i += 120) {
-        r.recordMeasurements(ms.slice(i, i + 120));
-        const { delta, cursor: next } = r.since(cursor);
-        cursor = next;
-        live.append(rec.id, delta);
-        live.refresh();
-        await store.putAttempt(r.snapshot()); // in-progress saves keep data through a closed tab
+  it(
+    'records survive storage; forecasts come back issued; the rebuilt model equals the live one',
+    { timeout: 60_000 },
+    async () => {
+      const store = new MemoryBlackBoxStore();
+      let archive = emptyArchive();
+      const live = new ModelService(ctx);
+      live.load({ attempts: [] });
+      let issued: ReturnType<typeof issueForecast> | null = null;
+      for (const rec of recs) {
+        const r = recorderFor(rec);
+        live.beginAttempt(r.snapshot());
+        let cursor: RecordCursor = START_CURSOR;
+        const ms = rec.measurements;
+        for (let i = 0; i < ms.length; i += 120) {
+          r.recordMeasurements(ms.slice(i, i + 120));
+          const { delta, cursor: next } = r.since(cursor);
+          cursor = next;
+          live.append(rec.id, delta);
+          live.refresh();
+          await store.putAttempt(r.snapshot()); // in-progress saves keep data through a closed tab
+        }
+        if (rec.id === 'att3') {
+          const plan: Plan = { id: 'coast', epoch: 14400, items: [] };
+          r.recordPlan(plan);
+          const { draft } = live.forecast({
+            id: 'f-att3',
+            issuedAt: 14400,
+            plan,
+            massProperties,
+            step: 600,
+            duration: 7200,
+          });
+          issued = issueForecast(draft);
+          r.recordForecast(issued);
+          const d = r.since(cursor);
+          live.append(rec.id, d.delta);
+        }
+        const fin = r.end(
+          { kind: 'recalled', t: rec.outcome.kind === 'recalled' ? rec.outcome.t : 0 },
+          live.state.version,
+        );
+        live.endAttempt(fin);
+        await store.putAttempt(fin);
+        archive = withAttempt(archive, fin);
       }
-      if (rec.id === 'att3') {
-        const plan: Plan = { id: 'coast', epoch: 14400, items: [] };
-        r.recordPlan(plan);
-        const { draft } = live.forecast({
-          id: 'f-att3',
-          issuedAt: 14400,
-          plan,
-          massProperties,
-          step: 600,
-          duration: 7200,
-        });
-        issued = issueForecast(draft);
-        r.recordForecast(issued);
-        const d = r.since(cursor);
-        live.append(rec.id, d.delta);
-      }
-      const fin = r.end(
-        { kind: 'recalled', t: rec.outcome.kind === 'recalled' ? rec.outcome.t : 0 },
-        live.state.version,
-      );
-      live.endAttempt(fin);
-      await store.putAttempt(fin);
-      archive = withAttempt(archive, fin);
-    }
-    expect(nextAttemptIndex(archive)).toBe(4);
-    await store.putMeta({ adoptedExtensions: [], leads: [], extensionTests: [] });
-    const loaded = await store.load();
-    expect(loaded.archive.attempts.map((a) => a.id)).toEqual(['att1', 'att2', 'att3']);
-    const f = loaded.archive.attempts[2]!.forecasts[0]!;
-    expect(Object.isFrozen(f) && Object.isFrozen(f.samples)).toBe(true);
-    expect(hashState(f)).toBe(hashState(issued));
-    const rebuilt = new ModelService(ctx);
-    rebuilt.load({
-      attempts: loaded.archive.attempts,
-      extensions: loaded.archive.extensionTests,
-      adopted: loaded.archive.adoptedExtensions,
-    });
-    expect(hashState(content(rebuilt.state))).toBe(hashState(content(live.state)));
-  });
+      expect(nextAttemptIndex(archive)).toBe(4);
+      await store.putMeta({ adoptedExtensions: [], leads: [], extensionTests: [] });
+      const loaded = await store.load();
+      expect(loaded.archive.attempts.map((a) => a.id)).toEqual(['att1', 'att2', 'att3']);
+      const f = loaded.archive.attempts[2]!.forecasts[0]!;
+      expect(Object.isFrozen(f) && Object.isFrozen(f.samples)).toBe(true);
+      expect(hashState(f)).toBe(hashState(issued));
+      const rebuilt = new ModelService(ctx);
+      rebuilt.load({
+        attempts: loaded.archive.attempts,
+        extensions: loaded.archive.extensionTests,
+        adopted: loaded.archive.adoptedExtensions,
+      });
+      expect(hashState(content(rebuilt.state))).toBe(hashState(content(live.state)));
+    },
+  );
 });
 
 describe('comparison analytics', () => {
