@@ -6,12 +6,22 @@ import type {
 } from '../../contracts/truth/ship.ts';
 import type { ShipEvent } from '../../contracts/measurements.ts';
 import type { JsonValue } from '../../contracts/units.ts';
-import { yawOf } from '../../lib/quat.ts';
 import { getGeometry } from '../config/configuration.ts';
 import { requestedRecorderPower } from '../sensors/index.ts';
 import { bounded, modeOf, systems } from './baseline.ts';
+import { sunIncidence } from './sun.ts';
 
 type Side = 'a' | 'b';
+/** Functions whose active unit is essential: its spare inherits the priority when selected. */
+const ACTIVE_FUNCTIONS = ['eclss-', 'internal-pump-', 'external-pump-', 'flight-cpu-', 'imu-'];
+/**
+ * An equipment record while one dispatch is being worked out. It is a fresh copy made at the
+ * start of the dispatch, so filling it in place is invisible outside (2F's request 4: the
+ * copies made for every small change were most of the tick).
+ */
+type Working = { -readonly [K in keyof EquipmentState]: EquipmentState[K] } & {
+  values: Record<string, number>;
+};
 interface Load {
   id: string;
   side: Side;
@@ -103,7 +113,7 @@ function dispatchPower(
   if (!(dt > 0) || !Number.isFinite(dt))
     throw new RangeError('Power dt must be finite and positive');
   const data = systems(definition);
-  const equipment: Record<string, EquipmentState> = {};
+  const equipment: Record<string, Working> = {};
   const events: ShipEvent[] = [];
   const tanks = { ...state.tanks };
   const battery = data.generation.battery;
@@ -123,22 +133,17 @@ function dispatchPower(
     };
   }
   const update = (id: string, values: Record<string, number>, draw?: number): void => {
-    const old = equipment[id];
-    if (old)
-      equipment[id] = {
-        ...old,
-        ...(draw === undefined ? {} : { powerDraw: draw }),
-        values: { ...old.values, ...values },
-      };
+    const working = equipment[id];
+    if (!working) return;
+    if (draw !== undefined) working.powerDraw = draw;
+    Object.assign(working.values, values);
   };
   const pdu: Record<Side, boolean> = { a: healthy('pdu-a'), b: healthy('pdu-b') };
   const geometry = getGeometry(state, definition);
   // Sunlight arrives with body shadows already applied (irradiance 0 in shadow; DECISIONS A3).
   const irradiance = Math.max(0, env.sunlight.irradiance);
-  // LIFT(2G): planar sun incidence, from the sun's azimuth against the yaw of the body axis.
-  const sunAngle = Math.atan2(env.sunlight.direction.y, env.sunlight.direction.x);
-  const incidence =
-    irradiance > 0 ? Math.max(0, Math.cos(sunAngle - yawOf(env.kinematics.attitude))) : 0;
+  // The wings face along the array normal (body +x: feathered to face forward).
+  const incidence = sunIncidence(env, data.generation.solar.arrayNormal);
   const sources: Record<
     Side,
     { solar: number; fuel: number; discharge: number; optionalDischarge: number }
@@ -229,13 +234,7 @@ function dispatchPower(
       spec.id === data.recorder.equipmentId
         ? requestedRecorderPower(state.recorder.sampleRate, definition)
         : mode.power;
-    const activeFunction = [
-      'eclss-',
-      'internal-pump-',
-      'external-pump-',
-      'flight-cpu-',
-      'imu-',
-    ].some((prefix) => spec.id.startsWith(prefix));
+    const activeFunction = ACTIVE_FUNCTIONS.some((prefix) => spec.id.startsWith(prefix));
     const isEssential = activeFunction ? e.mode === 'active' : !spec.sheddable;
     let request = healthy(spec.id)
       ? Math.min(wanted, Math.max(isEssential ? wanted : 0, e.allocation))
@@ -468,7 +467,8 @@ function dispatchPower(
       load: spent[side],
       generated: solarOutput + fuelOutput,
       discharged: discharge,
-      transfer: side === 'a' ? -transfer : transfer,
+      // 0 − transfer, not −transfer: an open tie must store +0 (−0 does not survive a JSON save).
+      transfer: side === 'a' ? 0 - transfer : transfer,
     };
   }
   const consumedHydrogen = (fuelGenerated * dt) / (fc.netEfficiencyHHV * fc.hydrogenHHV);

@@ -42,7 +42,7 @@ function dive(session: GameSession, deltaV: number): PlanDraft {
   return {
     name: 'Dive',
     items: burnSteps({
-      at: 400,
+      at: 600,
       duration: burnDuration(session.ship, mass, deltaV),
       attitude: { reference: 'retrograde' },
     }),
@@ -148,27 +148,29 @@ describe('game session: prepare, operate', () => {
 describe('game session: commit a plan', () => {
   it('issues a frozen forecast, records plan and forecast, and executes the plan', async () => {
     const { session, blackBox } = start();
-    session.stepTicks(300);
+    // Committed at 100 s, so the burn (600 s later) is at 700 s as it always was; the turn now
+    // starts 480 s before it, because the ship turns no faster than its star trackers allow.
+    session.stepTicks(100);
     const forecast = await session.commit(dive(session, 9.85));
     expect(Object.isFrozen(forecast)).toBe(true);
     expect(Object.isFrozen(forecast.samples)).toBe(true);
     expect(forecast).toMatchObject({
       id: 'forecast-0001',
       attemptId: 'attempt-0001',
-      issuedAt: 300,
+      issuedAt: 100,
     });
     expect(forecast.samples.length).toBeGreaterThan(20);
     expect(session.status()).toMatchObject({ planId: 'plan-0001', pending: 3 });
     expect(session.snapshot().forecasts).toEqual([forecast]);
 
-    session.stepTicks(450);
+    session.stepTicks(650);
     const record = blackBox.attempt('attempt-0001')!;
     expect(record.plans).toHaveLength(1);
-    expect(record.plans[0]).toMatchObject({ id: 'plan-0001', name: 'Dive', epoch: 300 });
+    expect(record.plans[0]).toMatchObject({ id: 'plan-0001', name: 'Dive', epoch: 100 });
     expect(record.forecasts).toEqual([forecast]);
     const planned = record.executed.filter((e) => e.source === 'plan');
     expect(planned.map((e) => [e.t, e.command.kind, e.planItemId, e.status])).toEqual([
-      [400, 'attitude', 'plan-0001-1', 'executed'],
+      [220, 'attitude', 'plan-0001-1', 'executed'],
       [700, 'burn', 'plan-0001-2', 'executed'],
       [718, 'attitude', 'plan-0001-3', 'executed'],
     ]);
@@ -205,7 +207,7 @@ describe('game session: commit a plan', () => {
     session.stepTicks(1000);
     const executed = blackBox.attempt('attempt-0001')!.executed.filter((e) => e.source === 'plan');
     expect(executed.map((e) => [e.t, e.command.kind, e.planId])).toEqual([
-      [110, 'attitude', 'plan-0001'],
+      [130, 'attitude', 'plan-0001'],
       [240, 'mark', 'plan-0002'],
     ]);
     expect(session.snapshot().forecasts.map((f) => f.id)).toEqual([

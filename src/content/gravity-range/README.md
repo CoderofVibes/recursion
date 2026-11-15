@@ -59,7 +59,7 @@ The rocks move under the same law as everything else, so a model that has not le
 | The same six, lifted by 1 m/s eight hours out | At most 1 lost; the rest pass over 15 km above the plane and leave at over 50 m/s |
 | A scouting dive through the game loop (stand-in model) | The forecast against the navigation solution is within 6 km after 1 h and drifts after; it ends at its horizon more than an hour before the low point |
 | Real model, attempt 1 (Newtonian, nothing flown): dive of 9.85 m/s | The forecast leaves the distances it knows, is flagged extrapolating for over 80% of its length and ends more than an hour before the 503 km low point |
-| Real model, attempt 2: a shallower dive inside distances already flown | Nothing extrapolated; forecast low point within 30 km and within 2σ of the truth (the calibration table, A4) |
+| Real model, attempt 2: a shallower dive inside distances already flown | Nothing extrapolated; the ship is within 30 km and 2σ of the forecast 15,000 s in, and within 2σ where the forecast ends (the calibration table, A4). Forecast and truth are compared at the same moment |
 | Measured strength of Alpha's pull after two dives | 1.36–1.47 times stronger at 500 km than at 1,000 km against the model's law: a mass-only fix cannot hold at both |
 | The player tests the distance law (fitted on the shallow dive, held out on the deep one) and adopts it | Passes; exponent 2.5 to two decimals |
 | Attempt 3: a dive deeper than anything flown (to 391 km) | Table only: the forecast ends above 490 km. With the rule: it reaches more than 80 km deeper |

@@ -1,41 +1,60 @@
 import baseline from '../../../data/ship-baseline.json';
-import { prismHull, type Hull, type ShipDefinition } from '../../contracts/ship.ts';
+import type { Hull, HullPrism, ShipDefinition } from '../../contracts/ship.ts';
 import type { ShipEvent } from '../../contracts/measurements.ts';
 import type { ShipSystemsState } from '../../contracts/truth/ship.ts';
-import { cross, lerp, sub, type Vec2 } from '../../lib/vec2.ts';
+import { lerp, type Vec2 } from '../../lib/vec2.ts';
 import { lerp as lerp3, type Vec3 } from '../../lib/vec3.ts';
-
-// LIFT(2G): one prism over the planar footprint; the real heights come with the 3D ship.
-/** [ASSUMED] Half-height of that prism, m: equal to the hull's 2.5 m half-width. */
-export const HULL_HALF_HEIGHT = 2.5;
 
 const clamp = (n: number) => Math.max(0, Math.min(1, n));
 const vector = (p: readonly number[]): Vec2 => ({ x: p[0] ?? 0, y: p[1] ?? 0 });
-// LIFT(2G): baseline positions are planar; lifted with z = 0.
-const vector3 = (p: readonly number[]): Vec3 => ({ x: p[0] ?? 0, y: p[1] ?? 0, z: 0 });
+const vector3 = (p: readonly number[]): Vec3 => ({ x: p[0] ?? 0, y: p[1] ?? 0, z: p[2] ?? 0 });
 const dataFor = (definition: ShipDefinition) =>
   (definition.systems ?? baseline) as unknown as typeof baseline;
 
-/** The conservative occupied envelope, counter-clockwise, including space between wings. */
-function convexHull(points: readonly Vec2[]): Vec2[] {
-  const sorted = [...points].sort((a, b) => a.x - b.x || a.y - b.y);
-  const unique = sorted.filter(
-    (p, i) => i === 0 || p.x !== sorted[i - 1]!.x || p.y !== sorted[i - 1]!.y,
-  );
-  if (unique.length < 3) return unique;
-  const chain = (items: readonly Vec2[]) => {
-    const result: Vec2[] = [];
-    for (const point of items) {
-      while (
-        result.length > 1 &&
-        cross(sub(result.at(-1)!, result.at(-2)!), sub(point, result.at(-1)!)) <= 0
-      )
-        result.pop();
-      result.push(point);
-    }
-    return result.slice(0, -1);
-  };
-  return [...chain(unique), ...chain([...unique].reverse())];
+/** The ship's geometry at one set of appendage extensions. Treat as immutable: it is shared. */
+export interface Geometry {
+  /** Body-frame position of every assembly, appendages at their current extension. */
+  readonly positions: Readonly<Record<string, Vec3>>;
+  /** Intrinsic inertia about body z (yaw) through each assembly's own centre, kg·m². */
+  readonly intrinsicInertia: Readonly<Record<string, number>>;
+  /** The same about body x (roll). */
+  readonly intrinsicInertiaRoll: Readonly<Record<string, number>>;
+  /** The same about body y (pitch). */
+  readonly intrinsicInertiaPitch: Readonly<Record<string, number>>;
+  /** Extension of each appendage, 0 stowed to 1 deployed. */
+  readonly deployment: Readonly<Record<string, number>>;
+  /** Occupied volume: the pressure hull, then one thin prism per appendage. */
+  readonly hull: Hull;
+}
+
+/**
+ * [ASSUMED] The occupied volume as a union of convex prisms (contracts README § Conventions):
+ * the pressure hull over its 5 m diameter, and each radiator and solar wing as a thin prism over
+ * its polygon at the given extension. Nothing between the parts is included, so a wing can pass
+ * an object that the old single convex outline would have counted as touched.
+ */
+export function hullAt(
+  definition: ShipDefinition,
+  deployment: Readonly<Record<string, number>>,
+): Hull {
+  const data = dataFor(definition);
+  const body = data.ship.hull;
+  const hull: HullPrism[] = [
+    { outline: body.outline.map(vector), zMin: body.zMin, zMax: body.zMax, part: body.part },
+  ];
+  for (const appendage of data.configuration.appendages) {
+    const fraction = deployment[appendage.id];
+    if (fraction === undefined) continue;
+    hull.push({
+      outline: appendage.stowedPolygon.map((p, i) =>
+        lerp(vector(p), vector(appendage.deployedPolygon[i]!), fraction),
+      ),
+      zMin: appendage.zMin,
+      zMax: appendage.zMax,
+      part: appendage.id,
+    });
+  }
+  return hull;
 }
 
 export function configurationDeployment(
@@ -63,53 +82,100 @@ export function configurationDeployment(
     : 0;
 }
 
-export function getGeometry(
-  state: ShipSystemsState,
+/** Extension of every installed appendage in this state, in the baseline's order. */
+function deploymentOf(state: ShipSystemsState, definition: ShipDefinition): number[] {
+  const fractions: number[] = [];
+  for (const appendage of dataFor(definition).configuration.appendages) {
+    const equipment = state.equipment[appendage.id];
+    fractions.push(
+      equipment
+        ? clamp(
+            equipment.values.deployment ??
+              configurationDeployment(definition, state.configuration, appendage.id),
+          )
+        : -1,
+    );
+  }
+  return fractions;
+}
+
+function buildGeometry(
   definition: ShipDefinition,
-): {
-  positions: Record<string, Vec3>;
-  intrinsicInertia: Record<string, number>;
-  deployment: Record<string, number>;
-  hull: Hull;
-} {
+  configurationId: string,
+  fractions: readonly number[],
+): Geometry {
   const data = dataFor(definition);
-  const configuration = definition.configurations.find((c) => c.id === state.configuration);
+  const configuration = definition.configurations.find((c) => c.id === configurationId);
   const positions: Record<string, Vec3> = {};
   const intrinsicInertia: Record<string, number> = {};
+  const intrinsicInertiaRoll: Record<string, number> = {};
+  const intrinsicInertiaPitch: Record<string, number> = {};
   const deployment: Record<string, number> = {};
   for (const equipment of definition.equipment) {
     positions[equipment.id] =
       configuration?.equipmentPositions?.[equipment.id] ?? equipment.position;
-    intrinsicInertia[equipment.id] = equipment.params.intrinsicInertia ?? 0;
+    const yaw = equipment.params.intrinsicInertia ?? 0;
+    intrinsicInertia[equipment.id] = yaw;
+    intrinsicInertiaRoll[equipment.id] = equipment.params.intrinsicInertiaRoll ?? yaw;
+    intrinsicInertiaPitch[equipment.id] = equipment.params.intrinsicInertiaPitch ?? yaw;
   }
-  const points = data.ship.footprints.stowed.map(vector);
-  for (const appendage of data.configuration.appendages) {
-    if (!state.equipment[appendage.id]) continue;
-    const fraction = clamp(
-      state.equipment[appendage.id]!.values.deployment ??
-        configurationDeployment(definition, state.configuration, appendage.id),
-    );
+  data.configuration.appendages.forEach((appendage, index) => {
+    const fraction = fractions[index]!;
+    if (fraction < 0) return; // not installed
     deployment[appendage.id] = fraction;
     positions[appendage.id] = lerp3(
       vector3(appendage.stowedPosition),
       vector3(appendage.deployedPosition),
       fraction,
     );
+    // One extension drives all three terms, so a thin wing stays thin (yaw = roll + pitch).
     intrinsicInertia[appendage.id] =
       appendage.stowedInertia + fraction * (appendage.deployedInertia - appendage.stowedInertia);
-    points.push(
-      ...appendage.stowedPolygon.map((p, i) =>
-        lerp(vector(p), vector(appendage.deployedPolygon[i]!), fraction),
-      ),
-    );
-  }
-  // LIFT(2G): the occupied envelope is still the planar convex hull, extruded as one prism.
+    intrinsicInertiaRoll[appendage.id] =
+      appendage.stowedInertiaRoll +
+      fraction * (appendage.deployedInertiaRoll - appendage.stowedInertiaRoll);
+    intrinsicInertiaPitch[appendage.id] =
+      appendage.stowedInertiaPitch +
+      fraction * (appendage.deployedInertiaPitch - appendage.stowedInertiaPitch);
+  });
   return {
     positions,
     intrinsicInertia,
+    intrinsicInertiaRoll,
+    intrinsicInertiaPitch,
     deployment,
-    hull: prismHull(convexHull(points), -HULL_HALF_HEIGHT, HULL_HALF_HEIGHT),
+    hull: hullAt(definition, deployment),
   };
+}
+
+/**
+ * Geometry is a function of the design, the configuration and the appendage extensions only,
+ * and several subsystems ask for it every step, so the last few results are kept (2F's request
+ * 4). The memo holds values, never state: the same inputs always give the same geometry,
+ * computed or recalled.
+ */
+interface GeometryMemo {
+  readonly configuration: string;
+  readonly fractions: readonly number[];
+  readonly geometry: Geometry;
+}
+const geometryMemo = new WeakMap<ShipDefinition, GeometryMemo[]>();
+const GEOMETRY_MEMO_SIZE = 4;
+
+export function getGeometry(state: ShipSystemsState, definition: ShipDefinition): Geometry {
+  const fractions = deploymentOf(state, definition);
+  let entries = geometryMemo.get(definition);
+  if (!entries) geometryMemo.set(definition, (entries = []));
+  for (const entry of entries) {
+    let same =
+      entry.configuration === state.configuration && entry.fractions.length === fractions.length;
+    for (let i = 0; same && i < fractions.length; i++) same = entry.fractions[i] === fractions[i];
+    if (same) return entry.geometry;
+  }
+  const geometry = buildGeometry(definition, state.configuration, fractions);
+  if (entries.length >= GEOMETRY_MEMO_SIZE) entries.shift();
+  entries.push({ configuration: state.configuration, fractions, geometry });
+  return geometry;
 }
 
 /** Run before dispatch so motion consumes its declared motor power. */
@@ -133,7 +199,7 @@ export function prepareConfiguration(
   return { ...state, equipment };
 }
 
-/** Powered travel is the single source for position, inertia, footprint and cooling. */
+/** Powered travel is the single source for position, inertia, hull and cooling. */
 export function stepConfiguration(
   state: ShipSystemsState,
   definition: ShipDefinition,

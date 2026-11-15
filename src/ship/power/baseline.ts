@@ -14,10 +14,26 @@ export function systems(definition: ShipDefinition): Baseline {
   return (definition.systems ?? baseline) as unknown as Baseline;
 }
 
+const NO_MODE: OperatingMode = { power: 0, heat: 0, generatedPower: 0, dataRate: 0 };
+const modeTables = new WeakMap<object, Map<string, Record<string, OperatingMode>>>();
+
+/** Every assembly's mode table by id, built once per baseline payload (a lookup, not state). */
+function modesById(data: Baseline): Map<string, Record<string, OperatingMode>> {
+  let table = modeTables.get(data);
+  if (!table) {
+    table = new Map(
+      data.equipment.map((entry) => [
+        entry.id,
+        entry.modes as unknown as Record<string, OperatingMode>,
+      ]),
+    );
+    modeTables.set(data, table);
+  }
+  return table;
+}
+
 export function modeOf(definition: ShipDefinition, id: string, mode: string): OperatingMode {
-  const item = systems(definition).equipment.find((entry) => entry.id === id);
-  const modes = item?.modes as Record<string, OperatingMode> | undefined;
-  return modes?.[mode] ?? { power: 0, heat: 0, generatedPower: 0, dataRate: 0 };
+  return modesById(systems(definition)).get(id)?.[mode] ?? NO_MODE;
 }
 
 export const bounded = (x: number, min: number, max: number): number =>

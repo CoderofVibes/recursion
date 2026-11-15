@@ -70,7 +70,7 @@ describe('propulsion (C02, C10)', () => {
     for (let i = 0; i < 200; i++) {
       const result = stepPropulsion(state, definition, env, dt);
       const force = result.thrusts[0]!.force;
-      const impulse = Math.hypot(force.x, force.y) * dt;
+      const impulse = Math.hypot(force.x, force.y, force.z) * dt;
       const consumed = state.tanks['main-propellant']! - result.state.tanks['main-propellant']!;
       expect(consumed).toBeCloseTo(impulse / (320 * baseline.constants.g0.value), 10);
       integratedDeltaV +=
@@ -90,7 +90,10 @@ describe('propulsion (C02, C10)', () => {
     const state = { ...start, tanks: { ...start.tanks, 'main-propellant': 0.01 } };
     const result = stepPropulsion(state, definition, env, 1);
     const force = result.thrusts[0]!.force;
-    expect(Math.hypot(force.x, force.y)).toBeCloseTo(0.01 * 320 * baseline.constants.g0.value, 10);
+    expect(Math.hypot(force.x, force.y, force.z)).toBeCloseTo(
+      0.01 * 320 * baseline.constants.g0.value,
+      10,
+    );
     expect(result.state.tanks['main-propellant']).toBe(0);
     expect(result.events.filter((event) => event.kind === 'propellant-depleted')).toHaveLength(1);
     const next = stepPropulsion(result.state, definition, env, 1);
@@ -167,14 +170,19 @@ describe('propulsion (C02, C10)', () => {
     const result = stepPropulsion(state, definition, env, 1);
     expect(result).toEqual(stepPropulsion(state, definition, env, 1));
     expect(state).toEqual(before);
-    expect(result.thrusts).toHaveLength(4);
+    // A left turn is the lateral couple: the forward-right and aft-left pods, one jet each.
+    expect(result.thrusts.map((thrust) => thrust.source)).toEqual([
+      'rcs-forward-right',
+      'rcs-aft-left',
+    ]);
     expect(result.torque).toEqual({ x: 0, y: 0, z: 0 });
     expect(result.state.tanks['rcs-left']).toBeLessThan(150);
     const sum = result.thrusts.reduce(
-      (v, force) => ({ x: v.x + force.force.x, y: v.y + force.force.y }),
-      { x: 0, y: 0 },
+      (v, force) => ({ x: v.x + force.force.x, y: v.y + force.force.y, z: v.z + force.force.z }),
+      { x: 0, y: 0, z: 0 },
     );
     expect(sum.x).toBeCloseTo(0, 10);
     expect(sum.y).toBeCloseTo(0, 10);
+    expect(sum.z).toBeCloseTo(0, 10);
   });
 });

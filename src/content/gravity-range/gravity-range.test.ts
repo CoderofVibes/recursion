@@ -542,7 +542,7 @@ describe('Gravity range: flown through the game loop', () => {
       const dive = () => ({
         name: 'Dive',
         items: burnSteps({
-          at: 400,
+          at: 600,
           duration: burnDuration(session.ship, believed().mass, 9.85),
           attitude: { reference: 'retrograde' as const },
         }),

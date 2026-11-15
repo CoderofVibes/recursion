@@ -169,11 +169,12 @@ describe('plan helpers', () => {
   const ship = loadShipDefinition();
 
   it('turns, burns and releases', () => {
-    const steps = burnSteps({ at: 400, duration: 12, attitude: { reference: 'retrograde' } });
+    const steps = burnSteps({ at: 600, duration: 12, attitude: { reference: 'retrograde' } });
+    // The turn starts TURN_LEAD (480 s) before the burn: a half turn takes about 420 s.
     expect(steps.map((s) => [s.at, s.command.kind])).toEqual([
-      [100, 'attitude'],
-      [400, 'burn'],
-      [417, 'attitude'],
+      [120, 'attitude'],
+      [600, 'burn'],
+      [617, 'attitude'],
     ]);
     expect(steps[2]!.command).toEqual({ kind: 'attitude', target: { reference: 'free' } });
   });
