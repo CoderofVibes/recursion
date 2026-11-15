@@ -2,9 +2,9 @@
 
 The live state of the build between threads: who is running, who holds which shared file, and every open request or agreement between threads. **The integrator updates it on every relay, merge, launch and gate change, in the same commit as the change.** Threads read it; they don't edit it. They send changes to the integrator through the owner.
 
-**Integrator, after a compaction:** read this file first, then `git log --oneline -15`, then the handoffs of any thread marked running.
+**Integrator, after a compaction or in a new main thread:** read this file first (the "Morning" section, if it's still there), then `git log --oneline -15`, then the handoffs of any thread marked running.
 
-**Last updated:** 2026-11-15 night. 2D, 2F and 2C paused and merged (`0ee3d1c`, 1,234 tests green). The overnight plan below is live. Next merges, in the morning: NIGHT, VX, 3C, 3B, AU.
+**Last updated:** 2026-11-15 morning. The overnight threads reported; **nothing is merged yet**. The owner is moving the integrator to a new main thread, which starts at the "Morning" section below.
 
 ## Threads
 
@@ -14,18 +14,19 @@ The live state of the build between threads: who is running, who holds which sha
 | 2G speed pass | Opus 5.5 | `.worktrees/2g` · `p2/2g-3d-flight` | **Done**, evidence and handoff merged. Next per-tick target: the environment step (rock visibility); a quiet-machine rebaseline is still to run (R11) | — | `bc292a9` |
 | 2F game loop | Opus 5.5 | `.worktrees/2f` · `p2/2f-game` | **Paused overnight**; all merged (`0ee3d1c`), including R38's contract fields | Resumes from main with: the monitor's caution (R37, restore the tripwire), sensors within the tick, the wells' save seam | `0ee3d1c` |
 | 2C model and Black Box | Opus 5.5 | `.worktrees/2c` · `p2/2c-model` | **Paused overnight**; all merged | Resumes with: R32 once the funnel channel lands, R37's monitor in the Black Box | `0ee3d1c` |
-| 3B Inverse Wells | GPT/Codex | `.worktrees/3b` · `p3/3b-wells` | **Merged**: S22's funnels as an indexed field, the 900 s precursor lifecycle, the downstream exit sphere, registration (`?encounter=inverse-wells`) | Playable needs: crush loss, lifecycle in the tick, window funnels (R30, R31) | `91a666a` |
-| 3C Chain Link Fence | GPT/Codex (GPT-6 Astra) | `.worktrees/3c` · `p3/3c-lattice` | **Done**: twenty fences qualified; sensors on 3A's shared availability; leakage heat no longer boosts sensing or recording; 13 integration tests | Playable in the app once 2F (R20 acquisition scheduling, panel data) and 2C (R9 reconstruction) land | `43e18d9` |
+| 3B Inverse Wells | GPT/Codex | `.worktrees/3b` · `p3/3b-wells` | **Overnight done, unmerged** (`a6887f0`, 9 ahead): handed the channel to 3C and took its fix unchanged; harness admission rerun | See Morning; findings and owner requests in its `ADMISSION.md` | `91a666a` |
+| 3C Chain Link Fence | GPT/Codex (GPT-6 Astra) | `.worktrees/3c` · `p3/3c-lattice` | **Overnight done, unmerged** (`8a1713b`, 6 ahead): owns the wells channel now (R45 fixed) | See Morning | `43e18d9` |
 | 3E playability harness | GPT/Codex | `.worktrees/3e` · `p3/3e-harness` | **Done**: `npm run harness` (smoke, reference, learning, routes, all); its pending-acceptance list names the gaps | — | `44db2fc` |
 | 3A power and thermal | GPT/Codex | `.worktrees/3a` · `p3/3a-power-thermal` | **Done**: causal radiation and thermal faults, heaters, physical service signals (`electricalService`, `energizedEquipment`); command tape identical; 72 h transit sustainable | Its wiring is 2F's (R26) | `767100b` |
 | 3D expedition | Opus 5.5 | not created yet · `p3/3d-expedition` | **Gated** | After 2F's and 2C's first checkpoints merge | — |
 | 3F console v2 | Claude | — | **Gated** | After 2D hands off | — |
 | S16 Well Garden layout | GPT/Codex | `.worktrees/s16` · `st/s16-well-garden` | **Done**: three-well prototype, 25-entry catalogue, garden budget (A15 Q05) | — | `e6eb51d` |
-| S23 the opening | GPT/Codex | `.worktrees/s23` · `st/s23-the-opening` | Ready to launch | Feeds OP and AU | — |
+| S23 the opening | GPT/Codex | `.worktrees/s23` · `st/s23-the-opening` | **Done, unmerged** (`3d93895`, 1 ahead) | OP built from it; merge for the record | — |
 | OP the opening | GPT (base) then Opus 5.5 | `.worktrees/op` · `p3/op-opening` | **Merged** (`6ac2397`): the 19.5 s opening, replay and Skip, reduced motion, room hooks (R23), the home window shared with the ending. Not yet in the game: only the dev preview plays it (R41). Its dev server and launch entry are removed | Gate once per browser (A25) | `6ac2397` |
-| VX window and sky visuals | GPT/Codex (GPT-6 Astra) | `.worktrees/vx` · `p3/vx-visuals` | Ready to launch: a shared sky, the opening's look, shader helpers for funnels, clouds and precursors | The art bible (`docs/art/`) as it lands; takes over `src/view3d/opening/` from OP | — |
-| AU basic audio | GPT/Codex | `.worktrees/au` · `p3/au-audio` | Ready to launch | Cue list first, so the owner can generate in ElevenLabs; mount via R24 | — |
-| ART window references | Owner's choice (Claude or GPT) | `.worktrees/art` · `art/window-references` | Ready: MidJourney prompt library for the window views, worked through with the owner. **References only (A23): no image ships or is committed** | Outputs `docs/art/`; feeds 2D, 3B, OP | — |
+| VX window and sky visuals | GPT/Codex (GPT-6 Astra) | `.worktrees/vx` · `p3/vx-visuals` | **Overnight done, unmerged** (`ac5be1e`, 4 ahead): sky, the opening's look, fx helpers, wired into the window | See Morning | — |
+| NIGHT judge's run | Claude (Fable 5.2) | `.worktrees/night` · `p3/night-hardening` | **Done, unmerged** (`cb1ace1`, 10 ahead); report `docs/handoffs/night.md` | See Morning | — |
+| AU basic audio | GPT/Codex | `.worktrees/au` · `p3/au-audio` | **No work on the branch**: 0 ahead of main, worktree clean at `b5f84ac` | Ask the owner whether AU ran, or where its work is | — |
+| ART window references | Owner's choice (Claude or GPT) | `.worktrees/art` · `art/window-references` | **Running, unmerged** (`49cfd09`, 9 ahead; through round 7 prompts). **References only (A23): no image ships or is committed** | Outputs `docs/art/`; merge docs only | — |
 | S22 well field (real funnels) | GPT/Codex | `.worktrees/s22` · `st/s22-big-well-field` | **Done**: funnels 120 km long, 20 km mouth, 1 km throat, pull 0.02–0.10 m/s²; 2,601 sites, 650 appearing; owner questions open | Feeds 3B (R12) | `15171df` |
 | S17 lattice first contact | GPT/Codex | `.worktrees/s17` · `st/s17-lattice-first-contact` | **Done**; five owner questions open | Feeds 3C (R8), 3A, 2C | `ba7568e` |
 | S18 tether gate | GPT/Codex | `.worktrees/s18` · `st/s18-tether-gate` | **Done**: the load gate passes as a slower turning manoeuvre; four owner questions open | Future tether work | `32a8b67` |
@@ -45,6 +46,32 @@ Owner's plan, to remove copy-and-paste relays overnight. Claude threads 2D, 2F a
 - **AU** (GPT): audio, in its own lane.
 
 In the morning the integrator merges in this order: the paused threads' checkpoints, NIGHT, VX, 3C, 3B, AU. It smoke-tests each, and the owner reviews before anything else resumes.
+
+## Morning (2026-11-15): the overnight results, for the new main thread
+
+Nothing below is merged. **Merge in this order**, each `--no-ff`, with `npm run check`, `npm run build` and a smoke test of the production build after each, updating this ledger in the same commit:
+
+1. **NIGHT** `p3/night-hardening` (`cb1ace1`, 10 commits; 1,254 tests). Report: `docs/handoffs/night.md`, 14 screenshots and the replay driver in `docs/handoffs/night/`.
+   - Fixed: R43 (the loss sequence's busiest second went from ~13 flashes to at most 3, on an authored schedule, tested; reduced motion neither shakes nor flickers). R41 and R44 (the opening plays in the game once per browser and wakes into the Gravity range; reduced motion is a still sky and a plain fade). Twin Deeps blockers: the model fell minutes behind after a long attempt, so TEST hung for 9+ minutes (now under 30 s); no off-forecast or close-pass alert fired on CONSOLE, SHIP or MAP, so warp never dropped there (now it does). Cathedral dead ends: FLIGHT opened at 1,500 km in a region a few km across (now per-region scale); the Black Box function was on no screen (now beside FLIGHT, wired to the model's lattice). Smaller: the hologram after a loss, MODEL's sideways scroll, objectives on MISSION, one counted line for 216 precursors, two labels.
+   - **Touched 3C's lane:** `src/console/encounters/chain-link/index.ts`, judged a dead-end fix. Keep unless the owner says otherwise.
+   - Found, not fixed (ranked; eight more in the report): (1) the Cathedral can't be threaded: on the twenty-fence lattice the model supports 0 of 2,952 fitted features after 201 frames at 1,000 W (2C's fit; NIGHT didn't touch its thresholds); (2) the true law fails its held-out TEST on long or messy attempts though the fitted exponent is right (2.5001), so the judge's README needs the recipe: two dives of a few hours each, Recall after each, then TEST; (3) the wells aren't drawn in the window: FLIGHT says "216 precursors in the window" and the window shows stars.
+   - Judge's-run verdict: Twin Deeps is a complete loop (plan, fly, lose, recur, learn; "leave" not reached in one blind try). The Well Garden and the Unseen Cathedral are previews: arrive, meet the hazard, die, read why.
+   - Tooling: S15's and S20's runners and `prototypes/shots/capture.mjs` wait for the room on a fresh profile, now behind the 19.5 s opening; the report gives the one-line marker to set first. NIGHT added a `night-preview` entry (port 4311) to the main checkout's ignored `.claude/launch.json`.
+2. **VX** `p3/vx-visuals` (`ac5be1e`, 4 commits). The shared sky, the opening's look, fx helpers, wired into the window (scoped exception: `outside.ts`, the window parts of `RoomView.ts`). Zero console errors in all three regions. Handoff has before-and-after screenshots. **Limits:** live funnels wait for the Well Garden's optical-data producer; **S15's modest-profile release check fails** (evidence in its handoff). Expect conflicts with NIGHT in `src/view3d/` and the opening.
+3. **3C** `p3/3c-lattice` (`8a1713b`, 6 commits; 1,296 tests). Took over `src/ship/sensors/wells*`, merged 3B's `4692625` and fixed it (R45): funnel acquisition uses 3A's availability and useful-power helpers, records total draw, shares recorder capacity fairly with lattice data. Remaining for others: live scenes, reconstruction, radiation-triggered warp drop.
+4. **3B** `p3/3b-wells` (`a6887f0`, 9 commits; 1,329 tests). Consumed 3C's fix unchanged. 26 harness cases repeat exactly; 11 of 14 nominal flights complete (three miss the ten-hour window); crush and birth-veto controls pass. Admission incomplete; findings and owner requests in its `ADMISSION.md`.
+5. **ART** `art/window-references` (`49cfd09`, docs only; check no images are committed) and **S23** `st/s23-the-opening` (`3d93895`).
+6. **AU:** nothing to merge (see Threads).
+
+**Then** give the owner a short "here's the game now" and settle today's plan with them, one decision at a time. Open for today:
+- **The scope line for the submission:** Twin Deeps is the complete loop; the Well Garden and the Cathedral are previews. Which (if any) gets more work today, and which paused threads (2D, 2F, 2C) resume, on what.
+- **The Cathedral can't be threaded** (2C's fit): fix today, or present it honestly as a preview.
+- **Wells in the window:** who builds the optical-data producer VX needs (2D or 3B), or leave the Garden as a preview.
+- **S15's release check fails after VX:** tune VX's level of detail, or accept with a note.
+- **The judge's README:** the picker and the Twin Deeps recipe.
+- **AU:** did it run? Without it the game ships silent.
+- **Submission:** S12's opening line, demo format and capture, `docs/submission/`, the portal, and when the owner calls the switch (a couple of hours before 5 pm Pacific).
+- Still open from before: credits or a debrief after the ending; the loss audio at the reveal; reduced motion (R44, integrator chose a still sky).
 
 ## Shared files: who holds them now
 
@@ -147,7 +174,13 @@ Decided: A15 (S11's queue), A16 (the lattice), A17 (the ending) and A18 (the Gra
 
 | Commit | What |
 |---|---|
-| (this commit) | A21 as built; VX written; ledger R41–R44 |
+| (this commit) | Ledger: the overnight results recorded for the new main thread (nothing merged) |
+| `d95f599` | Ledger: 2D, 2F, 2C paused and merged; overnight plan live |
+| `0ee3d1c` | 2D (paused): region picker (A25), 2F's screen data, funnels in the window, A24 monitor, A20 slice; OP's room hooks kept |
+| `ec5189f` | 2C (paused): checkpoint |
+| `460111f` | 2F (paused): R38 contract fields; checkpoint |
+| `ed5e882` | Overnight plan: NIGHT, VX, 3C takes the wells channel (R45) |
+| `0c13a9e` | A21 as built; VX written; ledger R41–R44 |
 | `6ac2397` | OP: the opening |
 | `b877e53` | Tripwire for the radiation caution (R39); 30 s default test time limit; ledger |
 | `920a9ed` | 2F: wells, lattice environment, 3A wiring, clouds, A20 budget |
