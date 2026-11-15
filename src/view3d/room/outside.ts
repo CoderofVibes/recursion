@@ -9,30 +9,28 @@
  * to the believed world and a display sun.
  */
 import {
-  BufferGeometry,
   Color,
-  Float32BufferAttribute,
   Group,
   IcosahedronGeometry,
   InstancedMesh,
   Matrix4,
   Mesh,
-  Points,
-  PointsMaterial,
   Quaternion,
   SphereGeometry,
   Vector3,
 } from 'three';
-import type { Object3D, Scene, ShaderMaterial } from 'three';
+import type { Camera, Object3D, Scene, ShaderMaterial, WebGLRenderer } from 'three';
 import type { ViewSnapshot, WindowView } from '../../contracts/index.ts';
-import { colour, hex, outsideStyle, render } from '../../theme/index.ts';
+import { hex, outsideStyle, render } from '../../theme/index.ts';
 import { bodyMaterial, rockMaterial, setSun } from '../../theme/three/index.ts';
-import { attitudeToScene, toScene, windowFields } from '../adapter.ts';
+import { attitudeToScene, toScene, type WindowField } from '../adapter.ts';
 import { windowViewFor } from '../windowViews.ts';
-import { FUNNEL_KIND, makeFunnelSky } from './funnelSky.ts';
+import { FUNNEL_KIND, makeFunnelLight } from '../fx/funnels.ts';
+import { createCloudLight } from '../fx/clouds.ts';
+import { cloudBanks, opticalFields } from '../fx/window-light.ts';
 import type { FunnelSkyStats } from './funnelSky.ts';
 import type { WindowView as EyeView } from '../windowViews.ts';
-import { dressingRandom } from '../gfx.ts';
+import { createDeepSky } from '../sky/index.ts';
 import { HORIZON_Y } from './layout.ts';
 
 const MAX_ROCKS = 512;
@@ -41,7 +39,6 @@ const NEAR = 30;
 const SPAN = 5000;
 /** Distance (game metres) at which an object sits half way out. */
 const HALF = 2_000_000;
-const STARS = 6000;
 /** Scene metres: the shell a phenomenon with no known range is drawn on, between the bodies and the stars. */
 const SHELL = NEAR + SPAN * 0.6;
 
@@ -55,6 +52,7 @@ const compress = (d: number): number => NEAR + (SPAN * d) / (d + HALF);
 export interface Outside {
   update(snapshot: ViewSnapshot): void;
   setScenery(scenery: Object3D | null): void;
+  followEye(camera: Camera, renderer: WebGLRenderer): void;
   /** What the funnel sky drew last frame (offered, culled, thinned, drawn, segments). */
   funnels(): FunnelSkyStats;
   dispose(): void;
@@ -110,36 +108,8 @@ export function buildOutside(scene: Scene): Outside {
   rocks.count = 0;
   world.add(rocks);
 
-  // Stars.
-  {
-    const r = dressingRandom(99);
-    const pos: number[] = [];
-    const col: number[] = [];
-    const [warmG, warmB] = outsideStyle.starWarm;
-    for (let i = 0; i < outsideStyle.starCount; i++) {
-      const u = r() * 2 - 1;
-      const a = r() * 2 * Math.PI;
-      const s = Math.sqrt(1 - u * u);
-      pos.push(Math.cos(a) * s * STARS, u * STARS, Math.sin(a) * s * STARS);
-      const b = outsideStyle.starMin + r() ** 4 * (1 - outsideStyle.starMin);
-      const warm = r();
-      col.push(b, b * (warmG + warm * (1 - warmG - 0.02)), b * (warmB + warm * (1 - warmB - 0.02)));
-    }
-    const g = new BufferGeometry();
-    g.setAttribute('position', new Float32BufferAttribute(pos, 3));
-    g.setAttribute('color', new Float32BufferAttribute(col, 3));
-    const stars = new Points(
-      g,
-      new PointsMaterial({
-        size: outsideStyle.starSize,
-        sizeAttenuation: false,
-        vertexColors: true,
-        color: hex(colour.ink),
-      }),
-    );
-    stars.frustumCulled = false;
-    rot.add(stars);
-  }
+  const deepSky = createDeepSky();
+  rot.add(deepSky.object);
 
   const q = new Quaternion();
   const d = new Vector3();
@@ -212,14 +182,16 @@ export function buildOutside(scene: Scene): Outside {
   // view (windowViews.ts) from the window channel's light-only data.
   const phenomena = new Map<string, { kind: string; group: Group; view: EyeView }>();
   // The wells' funnels, all of them in one draw (funnelSky.ts).
-  const sky = makeFunnelSky({ displayRadius: SHELL });
+  const sky = makeFunnelLight({ displayRadius: SHELL });
   rot.add(sky.object);
+  const clouds = createCloudLight(SHELL);
+  rot.add(clouds.object);
   let funnelStats: FunnelSkyStats = { offered: 0, culled: 0, thinned: 0, drawn: 0, segments: 0 };
-  const drawPhenomena = (view: object, t: number): void => {
+  const drawPhenomena = (fields: readonly WindowField[], t: number): void => {
     const visible = new Set<string>();
-    for (const field of windowFields(view)) {
+    for (const field of fields) {
       // Wells are drawn together by the funnel sky below, not one view each.
-      if (field.kind === FUNNEL_KIND) continue;
+      if (field.kind === FUNNEL_KIND || field.kind === 'cloud-bank') continue;
       let entry = phenomena.get(field.id);
       if (!entry || entry.kind !== field.kind) {
         if (entry) retire(field.id);
@@ -252,7 +224,10 @@ export function buildOutside(scene: Scene): Outside {
         scene.add(scenery);
         rot.quaternion.identity();
       }
-      world.visible = scenery === null;
+      rot.visible = scenery === null;
+    },
+    followEye(camera, renderer) {
+      deepSky.followEye(camera, renderer);
     },
     update(snapshot) {
       if (scenery) return;
@@ -260,16 +235,23 @@ export function buildOutside(scene: Scene): Outside {
       // The room is the ship: bring the ship's nose onto the room's -z, the window.
       rot.quaternion.copy(attitudeToScene(ship.attitude, q)).invert();
       const view = snapshot.window;
+      deepSky.setSun(view);
       if (view?.sun) toScene(view.sun.direction, sunWorld).normalize();
       else sunWorld.copy(sunEnv);
       sunWorld.applyQuaternion(rot.quaternion);
       for (const m of materials) setSun(m, [sunWorld.x, sunWorld.y, sunWorld.z]);
       if (view) {
         fromWindow(view);
-        drawPhenomena(view, snapshot.t);
-        funnelStats = sky.update(windowFields(view), snapshot.t, rot.quaternion);
+        const fields = opticalFields(view);
+        drawPhenomena(fields, snapshot.t);
+        funnelStats = sky.update(fields, snapshot.t, rot.quaternion);
+        clouds.update(cloudBanks(view), rot.quaternion);
         return;
       }
+
+      drawPhenomena([], snapshot.t);
+      funnelStats = sky.update([], snapshot.t, rot.quaternion);
+      clouds.update([], rot.quaternion);
 
       // Without a window channel (stand-ins, old fixtures): the believed world.
       snapshot.world.bodies.forEach((b, i) => {
@@ -297,6 +279,9 @@ export function buildOutside(scene: Scene): Outside {
       if (scenery) scene.remove(scenery);
       for (const id of [...phenomena.keys()]) retire(id);
       sky.dispose();
+      clouds.dispose();
+      deepSky.dispose();
+      rot.removeFromParent();
       sphere.dispose();
       rockGeo.dispose();
       for (const m of materials) m.dispose();

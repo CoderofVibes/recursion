@@ -1,0 +1,1298 @@
+[
+  {
+    "run": "vx-before",
+    "source": {
+      "commit": "0ee3d1ce8d2832f740a3e25efc5e8d5f3b8c1dd0",
+      "srcTree": "7dd376e2633317f6ec7b42b5230f4bf92d73575c",
+      "dataTree": "7c28747036fc8aad8939a932d854458a46fe6fe8",
+      "branch": "p3/vx-visuals",
+      "dirtyInputs": ""
+    },
+    "viewport": [
+      1366,
+      768,
+      1
+    ],
+    "profile": {
+      "cpu": 4,
+      "latency": 40,
+      "downloadThroughput": 1250000,
+      "uploadThroughput": 125000,
+      "connectionType": "wifi"
+    },
+    "seconds": 8,
+    "loads": [],
+    "frames": [
+      {
+        "view": "room",
+        "repeat": 1,
+        "profile": "modest",
+        "warp": 1,
+        "n": 232,
+        "medianMs": 24.399999999999636,
+        "p95Ms": 72.80000000000109,
+        "worstMs": 139.29999999999927,
+        "longTasks": {
+          "n": 36,
+          "median": 65,
+          "p95": 107,
+          "worst": 139,
+          "mean": 69.83333333333333
+        },
+        "over33ms": 0.36637931034482757,
+        "shipSecondsPerWallSecond": 0.9986642865173412,
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "flight",
+        "repeat": 1,
+        "profile": "modest",
+        "warp": 1,
+        "n": 136,
+        "medianMs": 48.5,
+        "p95Ms": 115.10000000000036,
+        "worstMs": 175.8000000000011,
+        "longTasks": {
+          "n": 68,
+          "median": 73,
+          "p95": 137,
+          "worst": 176,
+          "mean": 79.69117647058823
+        },
+        "over33ms": 0.7867647058823529,
+        "shipSecondsPerWallSecond": 1.0006128753859875,
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      }
+    ],
+    "profiles": [],
+    "bundle": [
+      {
+        "file": "assets/index-BcIKVvT2.js",
+        "bytes": 1413954,
+        "gzipBytes": 416616,
+        "sha256": "858913a4f11ad68c21b50969d612904c3e787f213128d3b24ebbe5076103a3b7"
+      },
+      {
+        "file": "assets/index-BtkH-O7d.css",
+        "bytes": 35042,
+        "gzipBytes": 5728,
+        "sha256": "50b1675dd17c8a3df8c25a4dc6310465a884ce33fc0c0db3f35d5bc517a31c6d"
+      },
+      {
+        "file": "assets/rpc-CziiK21S.js",
+        "bytes": 773,
+        "gzipBytes": 307,
+        "sha256": "662c2d5c95e6e7a0d287467304ac89b1d4ba3698ac950e55a7f91f904d906302"
+      },
+      {
+        "file": "assets/service-DHBSFhhc.js",
+        "bytes": 135345,
+        "gzipBytes": 49259,
+        "sha256": "47328726d1634fe8346ed949d56bde164bacd146581c3532cd52e8e127fc86f7"
+      },
+      {
+        "file": "assets/worker-BjtGItL1.js",
+        "bytes": 140986,
+        "gzipBytes": 50887,
+        "sha256": "cc100f1a5c4cd2071df10df697637ab0b197f672f5a832da936fc6884c7c0438"
+      },
+      {
+        "file": "favicon.svg",
+        "bytes": 420,
+        "gzipBytes": 277,
+        "sha256": "25068945c916e7d281af774354407e8705dd8a9f6748db28e089fd2314e8e3b4"
+      },
+      {
+        "file": "index.html",
+        "bytes": 510,
+        "gzipBytes": 309,
+        "sha256": "0e43ee98d4b7a5bfefe6844d37913df81d60175fec7fcd2e82b2da5b1fe18838"
+      },
+      {
+        "file": "LICENSE",
+        "bytes": 11357,
+        "gzipBytes": 3928,
+        "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+      },
+      {
+        "file": "NOTICE",
+        "bytes": 362,
+        "gzipBytes": 262,
+        "sha256": "35279566fbe56e61d55c6d08fedc08879314ac6afda357e9ad68b170839b4970"
+      },
+      {
+        "file": "THIRD-PARTY-NOTICES.txt",
+        "bytes": 7698,
+        "gzipBytes": 1292,
+        "sha256": "ddb9535594cee8eb3ab0a0e49bed657ca195181edd74fc2f2b7353cbf4814b12"
+      }
+    ],
+    "errorCount": 0,
+    "caveats": [
+      "Shared development host; CPU/GPU contention was not controlled. No real modest-laptop qualification.",
+      "Baseline screenshot capture overlapped this exploratory two-view run; not a controlled before/after benchmark."
+    ]
+  },
+  {
+    "run": "vx-final",
+    "source": {
+      "commit": "2dbb0f1c4014e0d82e26e2ae5ea9fcf8a70ae832",
+      "srcTree": "c8f29d7fd07d6da4e72d5387e57d9d0949f21b35",
+      "dataTree": "7c28747036fc8aad8939a932d854458a46fe6fe8",
+      "branch": "p3/vx-visuals",
+      "dirtyInputs": ""
+    },
+    "viewport": [
+      1366,
+      768,
+      1
+    ],
+    "profile": {
+      "cpu": 4,
+      "latency": 40,
+      "downloadThroughput": 1250000,
+      "uploadThroughput": 125000,
+      "connectionType": "wifi"
+    },
+    "seconds": 8,
+    "loads": [
+      {
+        "cache": "cold",
+        "repeat": 1,
+        "readyMs": 4143.60000000149,
+        "interactionPaintMs": 4719.39999999851
+      },
+      {
+        "cache": "warm",
+        "repeat": 1,
+        "readyMs": 2562.3000000044703,
+        "interactionPaintMs": 2711.8000000044703
+      },
+      {
+        "cache": "cold",
+        "repeat": 2,
+        "readyMs": 2878.60000000149,
+        "interactionPaintMs": 3326.5
+      },
+      {
+        "cache": "warm",
+        "repeat": 2,
+        "readyMs": 2622.2000000029802,
+        "interactionPaintMs": 2822.10000000149
+      },
+      {
+        "cache": "cold",
+        "repeat": 3,
+        "readyMs": 3027.7999999970198,
+        "interactionPaintMs": 3392.7999999970198
+      },
+      {
+        "cache": "warm",
+        "repeat": 3,
+        "readyMs": 2367.6999999955297,
+        "interactionPaintMs": 2549.89999999851
+      }
+    ],
+    "frames": [
+      {
+        "view": "room",
+        "repeat": 1,
+        "profile": "modest",
+        "warp": 1,
+        "n": 135,
+        "medianMs": 54.600000000000364,
+        "p95Ms": 103,
+        "worstMs": 145.39999999999964,
+        "longTasks": {
+          "n": 77,
+          "median": 63,
+          "p95": 109,
+          "worst": 144,
+          "mean": 70.44155844155844
+        },
+        "over33ms": 0.9407407407407408,
+        "shipSecondsPerWallSecond": 1.003499705221774,
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "mission",
+        "repeat": 1,
+        "profile": "modest",
+        "warp": 1,
+        "n": 767,
+        "medianMs": 6.100000000000364,
+        "p95Ms": 24.200000000000728,
+        "worstMs": 121.19999999999891,
+        "longTasks": {
+          "n": 2,
+          "median": 51,
+          "p95": 118,
+          "worst": 118,
+          "mean": 84.5
+        },
+        "over33ms": 0.018252933507170794,
+        "shipSecondsPerWallSecond": 0.9978172747115684,
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "plan",
+        "repeat": 1,
+        "profile": "modest",
+        "warp": 1,
+        "n": 520,
+        "medianMs": 12.199999999998909,
+        "p95Ms": 36.399999999999636,
+        "worstMs": 84.89999999999964,
+        "longTasks": {
+          "n": 8,
+          "median": 59,
+          "p95": 82,
+          "worst": 82,
+          "mean": 64.625
+        },
+        "over33ms": 0.05961538461538462,
+        "shipSecondsPerWallSecond": 1.001176382248956,
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "model",
+        "repeat": 1,
+        "profile": "modest",
+        "warp": 1,
+        "n": 465,
+        "medianMs": 12.200000000000728,
+        "p95Ms": 42.400000000001455,
+        "worstMs": 121.20000000000073,
+        "longTasks": {
+          "n": 11,
+          "median": 54,
+          "p95": 122,
+          "worst": 122,
+          "mean": 68.72727272727273
+        },
+        "over33ms": 0.09462365591397849,
+        "shipSecondsPerWallSecond": 1.0005127627911168,
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "blackbox",
+        "repeat": 1,
+        "profile": "modest",
+        "warp": 1,
+        "n": 657,
+        "medianMs": 11.899999999999636,
+        "p95Ms": 30.299999999999272,
+        "worstMs": 60.600000000000364,
+        "longTasks": {
+          "n": 4,
+          "median": 51,
+          "p95": 58,
+          "worst": 58,
+          "mean": 53.25
+        },
+        "over33ms": 0.0243531202435312,
+        "shipSecondsPerWallSecond": 1.001627644923,
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "systems",
+        "repeat": 1,
+        "profile": "modest",
+        "warp": 1,
+        "n": 633,
+        "medianMs": 12,
+        "p95Ms": 30.399999999999636,
+        "worstMs": 96.89999999999964,
+        "longTasks": {
+          "n": 8,
+          "median": 62,
+          "p95": 93,
+          "worst": 93,
+          "mean": 67.5
+        },
+        "over33ms": 0.04897314375987362,
+        "shipSecondsPerWallSecond": 0.9998125351496594,
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "flight",
+        "repeat": 1,
+        "profile": "modest",
+        "warp": 1,
+        "n": 134,
+        "medianMs": 54.69999999999891,
+        "p95Ms": 90.89999999999964,
+        "worstMs": 109.29999999999927,
+        "longTasks": {
+          "n": 83,
+          "median": 65,
+          "p95": 96,
+          "worst": 107,
+          "mean": 67.97590361445783
+        },
+        "over33ms": 0.9850746268656716,
+        "shipSecondsPerWallSecond": 1.0047600507411347,
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "map",
+        "repeat": 1,
+        "profile": "modest",
+        "warp": 1,
+        "n": 134,
+        "medianMs": 48.600000000000364,
+        "p95Ms": 121.19999999999891,
+        "worstMs": 181.60000000000036,
+        "longTasks": {
+          "n": 65,
+          "median": 71,
+          "p95": 128,
+          "worst": 176,
+          "mean": 76.49230769230769
+        },
+        "over33ms": 0.9477611940298507,
+        "shipSecondsPerWallSecond": 1.0013267579544762,
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "ship",
+        "repeat": 1,
+        "profile": "modest",
+        "warp": 1,
+        "n": 165,
+        "medianMs": 48.5,
+        "p95Ms": 78.70000000000073,
+        "worstMs": 163.60000000000218,
+        "longTasks": {
+          "n": 74,
+          "median": 59,
+          "p95": 86,
+          "worst": 160,
+          "mean": 62.17567567567568
+        },
+        "over33ms": 0.8363636363636363,
+        "shipSecondsPerWallSecond": 1.0025565191235783,
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "room",
+        "repeat": 2,
+        "profile": "modest",
+        "warp": 1,
+        "n": 63,
+        "medianMs": 121.39999999999964,
+        "p95Ms": 200.10000000000218,
+        "worstMs": 248.10000000000036,
+        "longTasks": {
+          "n": 62,
+          "median": 119,
+          "p95": 199,
+          "worst": 241,
+          "mean": 125.58064516129032
+        },
+        "over33ms": 1,
+        "shipSecondsPerWallSecond": 0.7429144534009651,
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "mission",
+        "repeat": 2,
+        "profile": "modest",
+        "warp": 1,
+        "n": 281,
+        "medianMs": 24.200000000000728,
+        "p95Ms": 66.70000000000073,
+        "worstMs": 103.10000000000036,
+        "longTasks": {
+          "n": 30,
+          "median": 61,
+          "p95": 94,
+          "worst": 103,
+          "mean": 67.06666666666666
+        },
+        "over33ms": 0.24199288256227758,
+        "shipSecondsPerWallSecond": 1.0015022533800702,
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "plan",
+        "repeat": 2,
+        "profile": "modest",
+        "warp": 1,
+        "n": 522,
+        "medianMs": 12.199999999998909,
+        "p95Ms": 30.399999999999636,
+        "worstMs": 48.5,
+        "longTasks": {
+          "n": 1,
+          "median": 50,
+          "p95": 50,
+          "worst": 50,
+          "mean": 50
+        },
+        "over33ms": 0.040229885057471264,
+        "shipSecondsPerWallSecond": 1.0010761568688205,
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "model",
+        "repeat": 2,
+        "profile": "modest",
+        "warp": 1,
+        "n": 634,
+        "medianMs": 12.100000000000364,
+        "p95Ms": 30.299999999999272,
+        "worstMs": 66.70000000000073,
+        "longTasks": {
+          "n": 2,
+          "median": 63,
+          "p95": 64,
+          "worst": 64,
+          "mean": 63.5
+        },
+        "over33ms": 0.03627760252365931,
+        "shipSecondsPerWallSecond": 1.0000125001564382,
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "blackbox",
+        "repeat": 2,
+        "profile": "modest",
+        "warp": 1,
+        "n": 659,
+        "medianMs": 12,
+        "p95Ms": 24.299999999999272,
+        "worstMs": 66.69999999999982,
+        "longTasks": {
+          "n": 3,
+          "median": 65,
+          "p95": 66,
+          "worst": 66,
+          "mean": 61
+        },
+        "over33ms": 0.019726858877086494,
+        "shipSecondsPerWallSecond": 1.0007756010912185,
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "systems",
+        "repeat": 2,
+        "profile": "modest",
+        "warp": 1,
+        "n": 358,
+        "medianMs": 18.100000000000364,
+        "p95Ms": 66.5,
+        "worstMs": 127.29999999999927,
+        "longTasks": {
+          "n": 33,
+          "median": 62,
+          "p95": 104,
+          "worst": 130,
+          "mean": 67.78787878787878
+        },
+        "over33ms": 0.15921787709497207,
+        "shipSecondsPerWallSecond": 0.9986019572603935,
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "flight",
+        "repeat": 2,
+        "profile": "modest",
+        "warp": 1,
+        "n": 109,
+        "medianMs": 66.79999999999927,
+        "p95Ms": 121.20000000000073,
+        "worstMs": 175.59999999999854,
+        "longTasks": {
+          "n": 90,
+          "median": 73,
+          "p95": 119,
+          "worst": 170,
+          "mean": 76.86666666666666
+        },
+        "over33ms": 1,
+        "shipSecondsPerWallSecond": 1.0081788509279654,
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "map",
+        "repeat": 2,
+        "profile": "modest",
+        "warp": 1,
+        "n": 175,
+        "medianMs": 42.399999999999636,
+        "p95Ms": 73,
+        "worstMs": 109,
+        "longTasks": {
+          "n": 48,
+          "median": 57,
+          "p95": 92,
+          "worst": 107,
+          "mean": 63
+        },
+        "over33ms": 0.8457142857142858,
+        "shipSecondsPerWallSecond": 1.0021546324601627,
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "ship",
+        "repeat": 2,
+        "profile": "modest",
+        "warp": 1,
+        "n": 152,
+        "medianMs": 48.5,
+        "p95Ms": 78.90000000000146,
+        "worstMs": 97,
+        "longTasks": {
+          "n": 70,
+          "median": 61,
+          "p95": 86,
+          "worst": 95,
+          "mean": 64.41428571428571
+        },
+        "over33ms": 0.9407894736842105,
+        "shipSecondsPerWallSecond": 0.9994128449532177,
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      }
+    ],
+    "profiles": [
+      {
+        "label": "worst",
+        "view": "room",
+        "p95Ms": 109.10000000000036,
+        "functions": [
+          {
+            "name": "(program)",
+            "ms": 2453.741
+          },
+          {
+            "name": "setProgram",
+            "ms": 326.874,
+            "source": "node_modules/three/build/three.module.js",
+            "line": 18220
+          },
+          {
+            "name": "renderBufferDirect",
+            "ms": 187.209,
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17023
+          },
+          {
+            "name": "update",
+            "ms": 168.856,
+            "source": "src/view3d/fx/clouds.ts",
+            "line": 91
+          },
+          {
+            "name": "drawElements",
+            "ms": 144.063
+          },
+          {
+            "name": "bindVertexArray",
+            "ms": 114.114
+          },
+          {
+            "name": "(anonymous)",
+            "ms": 113.586,
+            "source": "src/game/belief/standin-model.ts",
+            "line": 866
+          },
+          {
+            "name": "(anonymous)",
+            "ms": 102.349,
+            "source": "src/game/belief/standin-model.ts",
+            "line": 903
+          },
+          {
+            "name": "setup",
+            "ms": 99.605,
+            "source": "node_modules/three/build/three.module.js",
+            "line": 1623
+          },
+          {
+            "name": "massProperties",
+            "ms": 99.559,
+            "source": "src/game/belief/standin-model.ts",
+            "line": 311
+          },
+          {
+            "name": "renderObject",
+            "ms": 89.116,
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17991
+          },
+          {
+            "name": "renderObjects",
+            "ms": 87.093,
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17964
+          },
+          {
+            "name": "bindVertexArray",
+            "ms": 82.74
+          },
+          {
+            "name": "(garbage collector)",
+            "ms": 78.284
+          },
+          {
+            "name": "setMaterial",
+            "ms": 74.867,
+            "source": "node_modules/three/build/three.module.js",
+            "line": 10205
+          },
+          {
+            "name": "getBindingState",
+            "ms": 65.869,
+            "source": "node_modules/three/build/three.module.js",
+            "line": 1680
+          },
+          {
+            "name": "uniformMatrix4fv",
+            "ms": 60.776
+          },
+          {
+            "name": "needsUpdate",
+            "ms": 57.337,
+            "source": "node_modules/three/build/three.module.js",
+            "line": 1759
+          }
+        ]
+      }
+    ],
+    "bundle": [
+      {
+        "file": "assets/index-BtkH-O7d.css",
+        "bytes": 35042,
+        "gzipBytes": 5728,
+        "sha256": "50b1675dd17c8a3df8c25a4dc6310465a884ce33fc0c0db3f35d5bc517a31c6d"
+      },
+      {
+        "file": "assets/index-Dq83QB8v.js",
+        "bytes": 1424007,
+        "gzipBytes": 420237,
+        "sha256": "bd6975ff3dc2d6b7da28f06845be20445a1a916a740cf1ca516f43ae32287096"
+      },
+      {
+        "file": "assets/rpc-CziiK21S.js",
+        "bytes": 773,
+        "gzipBytes": 307,
+        "sha256": "662c2d5c95e6e7a0d287467304ac89b1d4ba3698ac950e55a7f91f904d906302"
+      },
+      {
+        "file": "assets/service-D5UJST27.js",
+        "bytes": 135345,
+        "gzipBytes": 49260,
+        "sha256": "ed508fa701abe011719a11f8b3a7dd91a463fe01261a071244496db27a0c01d2"
+      },
+      {
+        "file": "assets/worker-BjtGItL1.js",
+        "bytes": 140986,
+        "gzipBytes": 50887,
+        "sha256": "cc100f1a5c4cd2071df10df697637ab0b197f672f5a832da936fc6884c7c0438"
+      },
+      {
+        "file": "favicon.svg",
+        "bytes": 420,
+        "gzipBytes": 277,
+        "sha256": "25068945c916e7d281af774354407e8705dd8a9f6748db28e089fd2314e8e3b4"
+      },
+      {
+        "file": "index.html",
+        "bytes": 510,
+        "gzipBytes": 310,
+        "sha256": "eccab5b06f46d2c39ed933139fd9f41d91a23186bf4ad2d923b0b3877b35ea37"
+      },
+      {
+        "file": "LICENSE",
+        "bytes": 11357,
+        "gzipBytes": 3928,
+        "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+      },
+      {
+        "file": "NOTICE",
+        "bytes": 362,
+        "gzipBytes": 262,
+        "sha256": "35279566fbe56e61d55c6d08fedc08879314ac6afda357e9ad68b170839b4970"
+      },
+      {
+        "file": "THIRD-PARTY-NOTICES.txt",
+        "bytes": 7698,
+        "gzipBytes": 1292,
+        "sha256": "ddb9535594cee8eb3ab0a0e49bed657ca195181edd74fc2f2b7353cbf4814b12"
+      }
+    ],
+    "errorCount": 0,
+    "caveats": [
+      "Shared development host; CPU/GPU contention was not controlled. No real modest-laptop qualification."
+    ]
+  },
+  {
+    "run": "vx-cached",
+    "source": {
+      "commit": "936fc5667ce8b5e2d44cc95f6ffa3f0f185477ff",
+      "srcTree": "02218477705bdb2850169387cefe094e155b10f3",
+      "dataTree": "7c28747036fc8aad8939a932d854458a46fe6fe8",
+      "branch": "p3/vx-visuals",
+      "dirtyInputs": ""
+    },
+    "viewport": [
+      1366,
+      768,
+      1
+    ],
+    "profile": {
+      "cpu": 4,
+      "latency": 40,
+      "downloadThroughput": 1250000,
+      "uploadThroughput": 125000,
+      "connectionType": "wifi"
+    },
+    "seconds": 8,
+    "loads": [
+      {
+        "cache": "cold",
+        "repeat": 1,
+        "readyMs": 3406.0999999940395,
+        "interactionPaintMs": 3569.5
+      },
+      {
+        "cache": "warm",
+        "repeat": 1,
+        "readyMs": 1881.5,
+        "interactionPaintMs": 2010.0999999940395
+      },
+      {
+        "cache": "cold",
+        "repeat": 2,
+        "readyMs": 2405.2999999970198,
+        "interactionPaintMs": 2531.5
+      },
+      {
+        "cache": "warm",
+        "repeat": 2,
+        "readyMs": 2311,
+        "interactionPaintMs": 2442.5999999940395
+      }
+    ],
+    "frames": [
+      {
+        "view": "room",
+        "repeat": 1,
+        "profile": "modest",
+        "warp": 1,
+        "n": 257,
+        "medianMs": 30.100000000000364,
+        "p95Ms": 54.69999999999891,
+        "worstMs": 114.89999999999964,
+        "longTasks": {
+          "n": 17,
+          "median": 61,
+          "p95": 113,
+          "worst": 113,
+          "mean": 68.05882352941177
+        },
+        "over33ms": 0.28793774319066145,
+        "shipSecondsPerWallSecond": 1.0028832894571893,
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "mission",
+        "repeat": 1,
+        "profile": "modest",
+        "warp": 1,
+        "n": 1004,
+        "medianMs": 6.100000000000364,
+        "p95Ms": 18.100000000000364,
+        "worstMs": 48.5,
+        "longTasks": {
+          "n": 0,
+          "median": null,
+          "p95": null,
+          "worst": null
+        },
+        "over33ms": 0.0049800796812749,
+        "shipSecondsPerWallSecond": 1.0002000400081879,
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "plan",
+        "repeat": 1,
+        "profile": "modest",
+        "warp": 1,
+        "n": 566,
+        "medianMs": 12.100000000000364,
+        "p95Ms": 30.30000000000109,
+        "worstMs": 78.79999999999927,
+        "longTasks": {
+          "n": 5,
+          "median": 55,
+          "p95": 82,
+          "worst": 82,
+          "mean": 61
+        },
+        "over33ms": 0.038869257950530034,
+        "shipSecondsPerWallSecond": 1.0003501225434492,
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "model",
+        "repeat": 1,
+        "profile": "modest",
+        "warp": 1,
+        "n": 1132,
+        "medianMs": 6.100000000000364,
+        "p95Ms": 12.199999999998909,
+        "worstMs": 163.5,
+        "longTasks": {
+          "n": 2,
+          "median": 69,
+          "p95": 164,
+          "worst": 164,
+          "mean": 116.5
+        },
+        "over33ms": 0.0035335689045936395,
+        "shipSecondsPerWallSecond": 1.0005002501250624,
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "blackbox",
+        "repeat": 1,
+        "profile": "modest",
+        "warp": 1,
+        "n": 1064,
+        "medianMs": 6.100000000000364,
+        "p95Ms": 18,
+        "worstMs": 78.69999999999982,
+        "longTasks": {
+          "n": 1,
+          "median": 76,
+          "p95": 76,
+          "worst": 76,
+          "mean": 76
+        },
+        "over33ms": 0.004699248120300752,
+        "shipSecondsPerWallSecond": 1.0006504227751767,
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "systems",
+        "repeat": 1,
+        "profile": "modest",
+        "warp": 1,
+        "n": 485,
+        "medianMs": 12.199999999998909,
+        "p95Ms": 42.29999999999927,
+        "worstMs": 96.90000000000146,
+        "longTasks": {
+          "n": 16,
+          "median": 65,
+          "p95": 94,
+          "worst": 94,
+          "mean": 65.5
+        },
+        "over33ms": 0.0865979381443299,
+        "shipSecondsPerWallSecond": 1.0031473748879636,
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "flight",
+        "repeat": 1,
+        "profile": "modest",
+        "warp": 1,
+        "n": 132,
+        "medianMs": 54.600000000000364,
+        "p95Ms": 109.10000000000036,
+        "worstMs": 169.60000000000036,
+        "longTasks": {
+          "n": 81,
+          "median": 68,
+          "p95": 118,
+          "worst": 167,
+          "mean": 72.64197530864197
+        },
+        "over33ms": 0.9242424242424242,
+        "shipSecondsPerWallSecond": 1.0078613182824152,
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "map",
+        "repeat": 1,
+        "profile": "modest",
+        "warp": 1,
+        "n": 171,
+        "medianMs": 42.399999999999636,
+        "p95Ms": 72.80000000000018,
+        "worstMs": 109.10000000000036,
+        "longTasks": {
+          "n": 51,
+          "median": 58,
+          "p95": 94,
+          "worst": 100,
+          "mean": 62.01960784313726
+        },
+        "over33ms": 0.9532163742690059,
+        "shipSecondsPerWallSecond": 1.0063526007925028,
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      },
+      {
+        "view": "ship",
+        "repeat": 1,
+        "profile": "modest",
+        "warp": 1,
+        "n": 129,
+        "medianMs": 60.599999999998545,
+        "p95Ms": 97,
+        "worstMs": 115.20000000000073,
+        "longTasks": {
+          "n": 91,
+          "median": 64,
+          "p95": 101,
+          "worst": 117,
+          "mean": 68.1978021978022
+        },
+        "over33ms": 0.9689922480620154,
+        "shipSecondsPerWallSecond": 0.999113286957639,
+        "saturated": 0,
+        "modelError": null,
+        "gpu": "ANGLE (Intel, Intel(R) UHD Graphics (0x0000A788) Direct3D11 vs_5_0 ps_5_0, D3D11)"
+      }
+    ],
+    "profiles": [
+      {
+        "label": "worst",
+        "view": "flight",
+        "p95Ms": 121.20000000000073,
+        "functions": [
+          {
+            "name": "(program)",
+            "ms": 2564.885
+          },
+          {
+            "name": "setProgram",
+            "ms": 291.697,
+            "source": "node_modules/three/build/three.module.js",
+            "line": 18220
+          },
+          {
+            "name": "renderBufferDirect",
+            "ms": 124.493,
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17023
+          },
+          {
+            "name": "(anonymous)",
+            "ms": 123.931,
+            "source": "src/game/belief/standin-model.ts",
+            "line": 903
+          },
+          {
+            "name": "(anonymous)",
+            "ms": 114.745,
+            "source": "src/game/belief/standin-model.ts",
+            "line": 866
+          },
+          {
+            "name": "(garbage collector)",
+            "ms": 90.682
+          },
+          {
+            "name": "update",
+            "ms": 85.834,
+            "source": "src/view3d/fx/clouds.ts",
+            "line": 92
+          },
+          {
+            "name": "bindVertexArray",
+            "ms": 83.588
+          },
+          {
+            "name": "uniformMatrix4fv",
+            "ms": 81.731
+          },
+          {
+            "name": "massProperties",
+            "ms": 79.473,
+            "source": "src/game/belief/standin-model.ts",
+            "line": 311
+          },
+          {
+            "name": "drawElements",
+            "ms": 74.588
+          },
+          {
+            "name": "renderObject",
+            "ms": 72.17,
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17991
+          },
+          {
+            "name": "setup",
+            "ms": 71.548,
+            "source": "node_modules/three/build/three.module.js",
+            "line": 1623
+          },
+          {
+            "name": "(anonymous)",
+            "ms": 61.608,
+            "source": "src/game/belief/standin-model.ts",
+            "line": 878
+          },
+          {
+            "name": "update",
+            "ms": 59.911,
+            "source": "src/view3d/flight/FlightHolo.ts",
+            "line": 971
+          },
+          {
+            "name": "setMaterial",
+            "ms": 54.831,
+            "source": "node_modules/three/build/three.module.js",
+            "line": 10205
+          },
+          {
+            "name": "renderObjects",
+            "ms": 53.851,
+            "source": "node_modules/three/build/three.module.js",
+            "line": 17964
+          },
+          {
+            "name": "bindVertexArray",
+            "ms": 51.64
+          }
+        ]
+      },
+      {
+        "label": "model-hitch",
+        "view": "model",
+        "p95Ms": 30.399999999999636,
+        "functions": [
+          {
+            "name": "(program)",
+            "ms": 3486.164
+          },
+          {
+            "name": "(anonymous)",
+            "ms": 728.294,
+            "source": "src/game/belief/standin-model.ts",
+            "line": 866
+          },
+          {
+            "name": "(anonymous)",
+            "ms": 350,
+            "source": "src/game/belief/standin-model.ts",
+            "line": 903
+          },
+          {
+            "name": "(anonymous)",
+            "ms": 235.933,
+            "source": "src/game/belief/standin-model.ts",
+            "line": 866
+          },
+          {
+            "name": "(idle)",
+            "ms": 227.996
+          },
+          {
+            "name": "e",
+            "ms": 215.546,
+            "source": "src/game/belief/standin-model.ts",
+            "line": 330
+          },
+          {
+            "name": "(anonymous)",
+            "ms": 205.727,
+            "source": "src/game/belief/standin-model.ts",
+            "line": 866
+          },
+          {
+            "name": "(anonymous)",
+            "ms": 180.249,
+            "source": "src/game/belief/standin-model.ts",
+            "line": 866
+          },
+          {
+            "name": "(garbage collector)",
+            "ms": 157.967
+          },
+          {
+            "name": "(anonymous)",
+            "ms": 130.908,
+            "source": "src/game/belief/standin-model.ts",
+            "line": 903
+          },
+          {
+            "name": "(anonymous)",
+            "ms": 126.108,
+            "source": "src/game/belief/standin-model.ts",
+            "line": 903
+          },
+          {
+            "name": "equipmentStatus",
+            "ms": 120.41,
+            "source": "src/game/belief/standin-model.ts",
+            "line": 864
+          },
+          {
+            "name": "sight",
+            "ms": 118.915,
+            "source": "src/game/window.ts",
+            "line": 29
+          },
+          {
+            "name": "e",
+            "ms": 97.291,
+            "source": "src/game/belief/standin-model.ts",
+            "line": 330
+          },
+          {
+            "name": "(anonymous)",
+            "ms": 94.977,
+            "source": "src/game/belief/standin-model.ts",
+            "line": 903
+          },
+          {
+            "name": "e",
+            "ms": 81.708,
+            "source": "src/game/belief/standin-model.ts",
+            "line": 330
+          },
+          {
+            "name": "massProperties",
+            "ms": 80.162,
+            "source": "src/game/belief/standin-model.ts",
+            "line": 311
+          },
+          {
+            "name": "believedAsteroids",
+            "ms": 66.849,
+            "source": "src/game/belief/standin-model.ts",
+            "line": 902
+          }
+        ]
+      }
+    ],
+    "bundle": [
+      {
+        "file": "assets/index-BtkH-O7d.css",
+        "bytes": 35042,
+        "gzipBytes": 5728,
+        "sha256": "50b1675dd17c8a3df8c25a4dc6310465a884ce33fc0c0db3f35d5bc517a31c6d"
+      },
+      {
+        "file": "assets/index-DMnam9_r.js",
+        "bytes": 1425334,
+        "gzipBytes": 420602,
+        "sha256": "b79786a02a195c02d02b4804b521e1c5b05cbbf3ac1445f2b4346447420cc445"
+      },
+      {
+        "file": "assets/rpc-CziiK21S.js",
+        "bytes": 773,
+        "gzipBytes": 307,
+        "sha256": "662c2d5c95e6e7a0d287467304ac89b1d4ba3698ac950e55a7f91f904d906302"
+      },
+      {
+        "file": "assets/service-5NxKEhmG.js",
+        "bytes": 135345,
+        "gzipBytes": 49258,
+        "sha256": "accc7226be6f9ec37849cb4194db29cff9259058973617fd2165a9060f970810"
+      },
+      {
+        "file": "assets/worker-BjtGItL1.js",
+        "bytes": 140986,
+        "gzipBytes": 50887,
+        "sha256": "cc100f1a5c4cd2071df10df697637ab0b197f672f5a832da936fc6884c7c0438"
+      },
+      {
+        "file": "favicon.svg",
+        "bytes": 420,
+        "gzipBytes": 277,
+        "sha256": "25068945c916e7d281af774354407e8705dd8a9f6748db28e089fd2314e8e3b4"
+      },
+      {
+        "file": "index.html",
+        "bytes": 510,
+        "gzipBytes": 309,
+        "sha256": "1964ce1b9d6ec5b4b60a745176ed80e1331e01e48ae8dad2c587093dddfb2af5"
+      },
+      {
+        "file": "LICENSE",
+        "bytes": 11357,
+        "gzipBytes": 3928,
+        "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+      },
+      {
+        "file": "NOTICE",
+        "bytes": 362,
+        "gzipBytes": 262,
+        "sha256": "35279566fbe56e61d55c6d08fedc08879314ac6afda357e9ad68b170839b4970"
+      },
+      {
+        "file": "THIRD-PARTY-NOTICES.txt",
+        "bytes": 7698,
+        "gzipBytes": 1292,
+        "sha256": "ddb9535594cee8eb3ab0a0e49bed657ca195181edd74fc2f2b7353cbf4814b12"
+      }
+    ],
+    "errorCount": 0,
+    "caveats": [
+      "Shared development host; CPU/GPU contention was not controlled. No real modest-laptop qualification."
+    ]
+  }
+]

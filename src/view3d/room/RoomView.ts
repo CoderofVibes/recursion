@@ -273,6 +273,7 @@ export class RoomView {
     const hadCone = this.cone.visible;
     this.holoRoot.visible = false;
     this.cone.visible = false;
+    this.outside.followEye(this.camera, this.renderer);
     this.composer.render();
     this.shell.setConsoleMap();
     this.holoRoot.visible = hadHologram;
@@ -533,6 +534,8 @@ export class RoomView {
       this.renderer.clear();
       return;
     }
+
+    this.outside.followEye(this.camera, this.renderer);
     this.composer.render();
     this.labels.render(this.scene, camera);
   }

@@ -1,0 +1,69 @@
+{
+  "label": "before",
+  "source": "0ee3d1c",
+  "fixture": "synthetic light-only contract; no game or physics",
+  "cases": [
+    {
+      "name": "sky",
+      "stats": {
+        "offered": 0,
+        "culled": 0,
+        "thinned": 0,
+        "drawn": 0,
+        "segments": 0
+      }
+    },
+    {
+      "name": "funnels",
+      "stats": {
+        "offered": 0,
+        "culled": 0,
+        "thinned": 0,
+        "drawn": 0,
+        "segments": 0
+      }
+    },
+    {
+      "name": "clouds",
+      "stats": {
+        "offered": 0,
+        "culled": 0,
+        "thinned": 0,
+        "drawn": 0,
+        "segments": 0
+      }
+    },
+    {
+      "name": "home",
+      "stats": {
+        "offered": 0,
+        "culled": 0,
+        "thinned": 0,
+        "drawn": 0,
+        "segments": 0
+      }
+    },
+    {
+      "name": "lens",
+      "stats": {
+        "offered": 0,
+        "culled": 0,
+        "thinned": 0,
+        "drawn": 0,
+        "segments": 0
+      }
+    },
+    {
+      "name": "title",
+      "stats": {
+        "offered": 0,
+        "culled": 0,
+        "thinned": 0,
+        "drawn": 0,
+        "segments": 0
+      }
+    }
+  ],
+  "errors": [],
+  "titleFitsMobile": true
+}

@@ -1,0 +1,11 @@
+/* Optical title treatment; the app still owns every timing and opacity cue. */
+.rx-opening .rx-opening-title {
+  font-size: clamp(calc(var(--rx-size-readout) * 1.5), 6.4vw, calc(var(--rx-size-readout) * 3.5));
+  letter-spacing: calc(var(--rx-tracking-label) * 2.8);
+  text-indent: calc(var(--rx-tracking-label) * 2.8);
+  font-weight: var(--rx-weight-regular);
+  max-width: 94vw;
+  text-align: center;
+  line-height: 1.2;
+  text-shadow: none;
+}
