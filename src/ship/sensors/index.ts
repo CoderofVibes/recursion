@@ -10,6 +10,7 @@ import { fromRotationVector, multiply, rotate, toRotationVector } from '../../li
 import { createRng, type RngState } from '../../lib/rng.ts';
 import { wrapAngle } from '../../lib/vec2.ts';
 import type { Vec3 } from '../../lib/vec3.ts';
+import { stepLatticeAcquisition } from './lattice.ts';
 
 type Sensing = typeof baseline.sensing;
 type Recorder = typeof baseline.recorder;
@@ -29,6 +30,8 @@ interface SensorMemory {
   readonly nextRecorderAt?: number;
   readonly nextSampleAt?: Readonly<Record<string, number>>;
   readonly capacityWarning?: boolean;
+  /** Recorder dictionary state: repeated telemetry uses a channel reference, not another payload. */
+  readonly packetValues?: Readonly<Record<string, readonly number[]>>;
 }
 
 const clamp = (n: number, low: number, high: number) => Math.min(high, Math.max(low, n));
@@ -277,6 +280,8 @@ export function stepSensors(
       const noise3d = createRng(0);
       noise3d.setState(saved3d);
       const condition = clamp(e.condition, Number.EPSILON, 1);
+      // A diagnosed condition is an instrument belief, not a free report of hidden damage.
+      const reportedCondition = clamp(e.values.reportedCondition ?? e.condition, Number.EPSILON, 1);
       const emit = (
         kind: Measurement['kind'],
         value: number[],
@@ -336,6 +341,18 @@ export function stepSensors(
               definition,
             );
             if (!quality) continue;
+            const reportedQuality =
+              reportedCondition === condition
+                ? quality
+                : opticalQuality(
+                    e.powerDraw,
+                    range,
+                    reportedCondition,
+                    exposure,
+                    separation(line, boresight),
+                    halfAngle,
+                    definition,
+                  )!;
             // An isotropic pointing error on the sphere: the same angle in elevation and across
             // it, which is 1 / cos(elevation) wider in azimuth (guarded at the poles).
             const sigmaAzimuth = quality.angularSigma / Math.max(Math.cos(elevation), POLE_COSINE);
@@ -345,12 +362,20 @@ export function stepSensors(
                 wrapAngle(noise.normal(bearing, sigmaAzimuth)),
                 clamp(noise3d.normal(elevation, quality.angularSigma), -Math.PI / 2, Math.PI / 2),
               ],
-              [sigmaAzimuth, quality.angularSigma],
+              [
+                reportedQuality.angularSigma / Math.max(Math.cos(elevation), POLE_COSINE),
+                reportedQuality.angularSigma,
+              ],
               target.id,
             );
             if (scene.knownSizeTargets?.includes(target.id)) {
               const sigmaRange = Math.max(c.rangeFloor, c.rangePriorFraction * range) / condition;
-              emit('range', [noise.normal(range, sigmaRange)], [sigmaRange], target.id);
+              emit(
+                'range',
+                [noise.normal(range, sigmaRange)],
+                [Math.max(c.rangeFloor, c.rangePriorFraction * range) / reportedCondition],
+                target.id,
+              );
             }
           }
         }
@@ -378,7 +403,7 @@ export function stepSensors(
                 noise.normal(env.specificForce.y + biasY, sigma),
                 noise3d.normal(env.specificForce.z + biasZ, sigma),
               ],
-              [sigma, sigma, sigma],
+              Array(3).fill(sensing.imu.accelerationSigma / reportedCondition) as number[],
             );
           }
           const sigma = sensing.imu.gyroSigma / condition;
@@ -389,7 +414,7 @@ export function stepSensors(
               noise3d.normal(bodyRate.y + gyroBiasY, sigma),
               noise.normal(bodyRate.z + gyroBias, sigma),
             ],
-            [sigma, sigma, sigma],
+            Array(3).fill(sensing.imu.gyroSigma / reportedCondition) as number[],
           );
         }
       } else if (
@@ -404,7 +429,11 @@ export function stepSensors(
         const errorZ = noise.normal(0, sigma);
         const error = { x: noise3d.normal(0, sigma), y: noise3d.normal(0, sigma), z: errorZ };
         const fix = toRotationVector(multiply(attitude, fromRotationVector(error)));
-        emit('attitude', [fix.x + 0, fix.y + 0, fix.z + 0], [sigma, sigma, sigma]);
+        emit(
+          'attitude',
+          [fix.x + 0, fix.y + 0, fix.z + 0],
+          Array(3).fill(sensing.starTracker.angularSigma / reportedCondition) as number[],
+        );
       }
       rng[streamName] = noise.getState();
       rng[streamName3d] = noise3d.getState();
@@ -423,7 +452,7 @@ export function stepSensors(
     for (const e of Object.values(equipment)) {
       telemetry(e.id, 'power', e.powerDraw);
       telemetry(e.id, 'allocation', e.allocation);
-      telemetry(e.id, 'condition', e.condition);
+      telemetry(e.id, 'condition', e.values.reportedCondition ?? e.condition);
       if (e.values.charge !== undefined) telemetry(e.id, 'charge', e.values.charge);
       if (e.values.output !== undefined) telemetry(e.id, 'output', e.values.output);
       if (e.values.generatedPower !== undefined)
@@ -445,29 +474,62 @@ export function stepSensors(
     telemetry(recorder.equipmentId, 'sample-rate', Math.min(rate, 1 / dt));
   }
 
-  return {
-    state: {
-      ...state,
-      equipment,
-      rng,
-      recorder: {
-        ...state.recorder,
-        bytesUsed: state.recorder.bytesUsed + (due ? recorder.bytesPerSample : 0),
-      },
-      ext: {
-        ...state.ext,
-        sensors: {
-          nextRecorderAt: due
-            ? nextCadence(memory.nextRecorderAt, env.t, rate)
-            : (memory.nextRecorderAt ?? env.t),
-          nextSampleAt,
-          capacityWarning,
-        },
+  const latticeAvailable = Object.values(env.fieldSignals).some(
+    (signal) =>
+      !!signal &&
+      typeof signal === 'object' &&
+      'kind' in signal &&
+      signal.kind === 'lattice-scene-v1',
+  );
+  const packetValues = latticeAvailable ? { ...memory.packetValues } : undefined;
+  let ordinaryBytes = 64;
+  if (packetValues)
+    for (const m of measurements) {
+      const key = `${m.source}/${m.kind}/${m.channel ?? ''}/${m.target ?? ''}`;
+      const payload = [...m.value, ...m.sigma];
+      const previous = packetValues[key];
+      const unchanged =
+        previous?.length === payload.length && payload.every((v, i) => v === previous[i]);
+      // Fixed channel dictionaries and repeated-value references are lossless. New readings retain
+      // all Float64 values and every nonzero declared sigma; no quantization buys extra coverage.
+      ordinaryBytes += unchanged
+        ? 2
+        : 8 + 8 * m.value.length + (m.sigma.some((s) => s !== 0) ? 8 * m.sigma.length : 0);
+      packetValues[key] = payload;
+    }
+  const ordinaryState: ShipSystemsState = {
+    ...state,
+    equipment,
+    rng,
+    recorder: {
+      ...state.recorder,
+      bytesUsed: state.recorder.bytesUsed + (due ? recorder.bytesPerSample : 0),
+    },
+    ext: {
+      ...state.ext,
+      sensors: {
+        nextRecorderAt: due
+          ? nextCadence(memory.nextRecorderAt, env.t, rate)
+          : (memory.nextRecorderAt ?? env.t),
+        nextSampleAt,
+        capacityWarning,
+        ...(packetValues ? { packetValues } : {}),
       },
     },
-    measurements,
-    events,
   };
+  // Packet dictionaries identify the fixed housekeeping channels. Numeric values/sigmas and
+  // a timestamp/source header still consume real capacity before optional frame fragments.
+  const lattice = latticeAvailable
+    ? stepLatticeAcquisition(
+        ordinaryState,
+        definition,
+        env,
+        dt,
+        due ? Math.max(0, recorder.bytesPerSample - ordinaryBytes) : 0,
+        rate,
+      )
+    : { state: ordinaryState, measurements: [] };
+  return { state: lattice.state, measurements: [...measurements, ...lattice.measurements], events };
 }
 
 function modePower(spec: EquipmentSpec, e: EquipmentState, definition: ShipDefinition): number {
