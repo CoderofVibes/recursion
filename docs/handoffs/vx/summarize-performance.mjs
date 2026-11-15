@@ -15,6 +15,7 @@ const summaries = runs.map((run) => {
     medianMs: f.median,
     p95Ms: f.p95,
     worstMs: f.worst,
+    longTasks: f.longTasks,
     over33ms: f.over33ms,
     shipSecondsPerWallSecond: f.achievedShipSecondsPerWallSecond,
     saturated: f.saturationFraction,
@@ -38,19 +39,25 @@ const summaries = runs.map((run) => {
       label: p.label,
       view: p.case.view,
       p95Ms: p.instrumentedFrames.p95,
-      functions: p.functions
-        .slice(0, 18)
-        .map((f) => ({
-          name: f.name,
-          ms: f.ms,
-          source: f.source?.source
-            ?.replace(/^.*?\/src\//, 'src/')
-            .replace(/^.*?\/node_modules\//, 'node_modules/'),
-          line: f.source?.line,
-        })),
+      functions: p.functions.slice(0, 18).map((f) => ({
+        name: f.source?.name ?? f.name,
+        ms: f.ms,
+        source: f.source?.source
+          ?.replace(/^.*?\/src\//, 'src/')
+          .replace(/^.*?\/node_modules\//, 'node_modules/'),
+        line: f.source?.line,
+      })),
     })),
     bundle: r.bundle,
     errorCount: r.errors.length,
+    caveats: [
+      'Shared development host; CPU/GPU contention was not controlled. No real modest-laptop qualification.',
+      ...(run === 'vx-before'
+        ? [
+            'Baseline screenshot capture overlapped this exploratory two-view run; not a controlled before/after benchmark.',
+          ]
+        : []),
+    ],
   };
 });
 const json = JSON.stringify(summaries, null, 2) + '\n';

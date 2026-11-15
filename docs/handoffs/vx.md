@@ -14,13 +14,45 @@ The ART files are not yet on this branch's main base. This pass read ART's curre
 
 ## Verification
 
-- `npm run check`: typecheck, lint, 1,239 passing tests / one skipped, plus the separate passing performance test (final cache/refinement run recorded below).
+- `npm run check`: typecheck, lint, 1,239 passing tests / one skipped, plus the separate passing performance test on the final source at `936fc56`.
 - `npm run build`: passes. Existing Vite chunk-size / ineffective-dynamic-import warnings remain.
 - `node docs/handoffs/vx/capture.mjs after`: serves the actual production build on 4186; audits browser exceptions, `console.error`, browser log errors, and the model error in Twin Deeps, Well Garden and Unseen Cathedral. [Console evidence](vx/after-console.json).
 - `node docs/handoffs/vx/capture-optics.mjs before` and `after`: compile the actual room and optical renderers with controlled light-only fixtures on 4187. The before variant loads the three replaced renderers from `0ee3d1c`; the after variant uses this branch. It covers active/end-on/precursor funnels, clouds, Earth, lens and title; title fits 360 px. [Fixture console evidence](vx/after-optics-console.json).
 - Six integration tests in `src/view3d/fx/light.test.ts` exercise the promoted optical contract, stale/malformed observations, precursor joining, invalid/absent cloud patches, complete scenery replacement/disposal, and eye-centred placement under a rotated parent. The existing funnel/window and opening tests also pass.
 
-Performance measurements with S15's modest profile follow in the final checkpoint. Port 4175 is reserved for that runner; nothing was installed.
+## Performance — release gate still fails
+
+[DEMONSTRATED: S15 production runs, `performance.json`] Final measured source: `936fc56` (`src` tree `02218477705bdb2850169387cefe094e155b10f3`). Installed headless Chrome, Intel UHD / ANGLE D3D11, 1366 × 768, DPR 1, 4× CPU throttle, 10/1 Mbit/s and 40 ms latency. One eight-second sample per view at 1× after the cache optimization, two cold/warm load pairs, followed by CPU/timeline profiles of FLIGHT and MODEL. No build, test or other VX browser ran during this final timed matrix. Other threads and host contention were not controlled.
+
+| View | Frame p95 (ms) | Worst frame (ms) |
+|---|---:|---:|
+| Room | 54.7 | 114.9 |
+| Mission | 18.1 | 48.5 |
+| Plan | 30.3 | 78.8 |
+| Model | 12.2 | 163.5 |
+| Black Box | 18.0 | 78.7 |
+| Systems | 42.3 | 96.9 |
+| Flight | 109.1 | 169.6 |
+| Map | 72.8 | 109.1 |
+| Ship | 97.0 | 115.2 |
+
+Cold room readiness was **3,406 / 2,405 ms**; first interaction paint was **3,570 / 2,532 ms**. This does **not** pass A18's 2.5 s / 33 ms release gate. A real modest-laptop check remains unperformed. All samples stayed in the intended view, reached 1× without saturation, and reported no model error.
+
+**Hitch investigation.** The initial room profile put 169 ms of its eight-second capture in cloud transforms; that prompted the bounded upload cadence. The final FLIGHT profile put 86 ms there and still spent substantial time in Three's program setup/draw submission and belief-side snapshot helpers (`standin-model.ts`). These are self-time samples from different views, not an apples-to-apples speedup claim. Room, Flight, Map and Ship all recorded browser long tasks, not only late presentation timestamps. The 164 ms MODEL long task was investigated with a separate MODEL profile; it did not reproduce (maximum frame 78.9 ms), while the belief-side snapshot helpers dominated named application samples. The remaining broad room/hologram/snapshot cost and the intermittent MODEL hitch need the integrator's quiet-machine follow-up; VX does not claim their causes are completely isolated.
+
+The expensive static dust shader now executes once into a cubemap. Room p95 in the un-cached matrix was 103.0 / 200.1 ms, compared with 54.7 ms in the final run, but the host was uncontrolled, so treat this as an observation rather than a controlled causal result. The exploratory pre-change two-view run overlapped screenshot capture and is retained only as context, not a valid comparative benchmark.
+
+[Portable measurements and profile attribution](vx/performance.json) retain all three runs. Raw frame/status vectors are in [the final compressed sample](vx/cached-frames.json.gz). Temporary absolute-path profiles and source maps were not committed. The final application grew by about 11.4 kB raw / 3.7 kB gzip in its main chunk versus the base; no optical image asset is downloaded.
+
+Reproduce from this worktree (use a fresh run name):
+
+```sh
+npm run build
+node tools/studies/s15/measure.mjs --phase all --views room,mission,plan,model,blackbox,systems,flight,map,ship --profiles modest --warps 1 --repeats 1 --seconds 8 --load-repeats 2 --no-build --run vx-release
+node tools/studies/s15/measure.mjs --phase profile --profiles modest --warps 1 --seconds 8 --no-build --run vx-release --profile-case modest:model:1 --profile-label model-hitch
+```
+
+Port 4175 was left to S15's runner; nothing was installed. Checkpoints: `1e54ba5` (visuals and window integration), `936fc56` (cached sky, bounded cloud uploads and robust malformed-arc handling).
 
 ## Before and after
 
