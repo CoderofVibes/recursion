@@ -1,0 +1,141 @@
+/* The trailer page. Every colour, font and size comes from the theme's variables (Convention 11). */
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--rx-void);
+  /* Never in the recording. */
+  cursor: none;
+}
+
+#trailer {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--rx-void);
+  color: var(--rx-ink);
+  font-family: var(--rx-font);
+}
+
+.tr-stage,
+.tr-scene,
+.tr-veil {
+  position: absolute;
+  inset: 0;
+}
+
+/* A hard cut: a scene off screen isn't drawn at all (the opening's classes set display: grid). */
+.tr-scene[hidden],
+.tr-caption[hidden],
+.tr-status[hidden] {
+  display: none !important;
+}
+
+/* The whole frame's brightness: black beats, snaps and flickers (timeline.ts, levelAt). */
+.tr-veil {
+  background: var(--rx-void);
+  pointer-events: none;
+}
+
+.tr-caption {
+  position: absolute;
+  left: 50%;
+  bottom: 9vh;
+  transform: translateX(-50%);
+  max-width: 80vw;
+  padding: 0.4em 1em;
+  background: var(--rx-hud-plate);
+  border: var(--rx-line-rule) solid var(--rx-panel-edge);
+  border-radius: var(--rx-panel-radius);
+  font-size: calc(var(--rx-size-readout) * 1.5);
+  letter-spacing: var(--rx-tracking-body);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.tr-status {
+  position: absolute;
+  left: var(--rx-gap);
+  bottom: var(--rx-gap);
+  z-index: 1;
+  font-size: var(--rx-size-label);
+  letter-spacing: var(--rx-tracking-label);
+  color: var(--rx-ink-faint);
+  white-space: pre;
+}
+
+/* Stand-ins: timing only. */
+.tr-slate {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: calc(var(--rx-gap) * 0.75);
+  background: var(--rx-panel);
+  box-shadow: var(--rx-hud-screen-inset);
+}
+
+.tr-slate-tag {
+  font-size: var(--rx-size-label);
+  letter-spacing: var(--rx-tracking-label);
+  text-transform: uppercase;
+  color: var(--rx-caution);
+}
+
+.tr-slate-label {
+  font-size: calc(var(--rx-size-readout) * 2.2);
+  letter-spacing: var(--rx-tracking-label);
+}
+
+.tr-slate-source {
+  max-width: 60vw;
+  text-align: center;
+  font-size: var(--rx-size-value);
+  color: var(--rx-ink-dim);
+}
+
+.tr-slate-time {
+  font-size: var(--rx-size-body);
+  font-variant-numeric: tabular-nums;
+  color: var(--rx-ink-faint);
+}
+
+.tr-slate-bar {
+  width: 30vw;
+  height: 2px;
+  background: var(--rx-grid);
+}
+
+.tr-slate-bar > div {
+  height: 100%;
+  background: var(--rx-ink-dim);
+}
+
+/* The final card. */
+.tr-card-block {
+  display: grid;
+  justify-items: center;
+  gap: calc(var(--rx-gap) * 1.5);
+}
+
+.tr-card-link {
+  font-size: calc(var(--rx-size-readout) * 1.2);
+  letter-spacing: var(--rx-tracking-label);
+  color: var(--rx-ink);
+}
+
+.tr-card-labels {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 7vh;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-align: center;
+  font-size: calc(var(--rx-size-body) * 1.15);
+  line-height: 1.7;
+  letter-spacing: var(--rx-tracking-body);
+  color: var(--rx-ink-dim);
+}
