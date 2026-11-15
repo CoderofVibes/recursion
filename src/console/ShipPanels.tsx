@@ -337,6 +337,7 @@ export function ShipPanels({ desk, holo }: { readonly desk: Desk; readonly holo:
               type="button"
               className="rx-chip"
               data-on={system === null ? '' : undefined}
+              aria-pressed={system === null}
               onClick={() => holo.setSystem(null)}
             >
               VEHICLE
@@ -347,6 +348,7 @@ export function ShipPanels({ desk, holo }: { readonly desk: Desk; readonly holo:
                 type="button"
                 className="rx-chip"
                 data-on={system === s.id ? '' : undefined}
+                aria-pressed={system === s.id}
                 onClick={() => holo.setSystem(s.id)}
               >
                 {s.name}

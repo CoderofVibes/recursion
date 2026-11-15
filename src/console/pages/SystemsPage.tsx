@@ -4,7 +4,7 @@
  * modes, allocation, readings and condition. A change here is a command to the ship, so its
  * effect shows up in the readings beside it, not in a description.
  */
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import type { EquipmentSpec } from '../../contracts/index.ts';
 import {
   ComponentList,
@@ -107,6 +107,7 @@ export function EquipmentDetail({
         <Actions>
           <Button
             status="caution"
+            disabled={ended}
             onClick={() => game.command({ kind: 'mode', equipment: spec.id, mode: 'reset' })}
           >
             RESET
@@ -127,11 +128,11 @@ export function SystemsPage({ desk }: { readonly desk: Desk }) {
   const camera = game.ship.equipment.find((e) => e.kind === 'optical-tracker');
   const balance = powerBalance(ship, game.ship);
   const battery = batteries(ship, game.ship);
-  const active = game.ship.equipment
-    .filter((e) => !PASSIVE.has(e.kind) || (ship.equipment[e.id]?.powerDraw ?? 0) > 0)
-    .sort(
-      (x, y) => (ship.equipment[y.id]?.powerDraw ?? 0) - (ship.equipment[x.id]?.powerDraw ?? 0),
-    );
+  // In the ship's own order, which never changes while the player works down it (S9 R12): a
+  // list sorted by live draw would move the row under the keyboard.
+  const active = game.ship.equipment.filter((e) => !PASSIVE.has(e.kind) || e.ratedPower > 0);
+  const detail = useRef<HTMLDivElement>(null);
+  const list = useRef<HTMLDivElement>(null);
 
   return (
     <div className="cs-grid">
@@ -221,7 +222,7 @@ export function SystemsPage({ desk }: { readonly desk: Desk }) {
       </Panel>
 
       <Panel title="Equipment" aside={`${active.length} assemblies`}>
-        <div className="cs-scroll">
+        <div className="cs-scroll" ref={list}>
           <ComponentList label="Equipment">
             {active.map((e) => {
               const s = ship.equipment[e.id];
@@ -240,6 +241,13 @@ export function SystemsPage({ desk }: { readonly desk: Desk }) {
             })}
           </ComponentList>
         </div>
+        {spec ? (
+          <Actions>
+            <Button onClick={() => detail.current?.focus()}>
+              ADJUST {spec.name.toUpperCase()} ▸
+            </Button>
+          </Actions>
+        ) : null}
       </Panel>
 
       <Panel
@@ -248,7 +256,23 @@ export function SystemsPage({ desk }: { readonly desk: Desk }) {
         tone={spec?.kind === 'recorder' ? 'blackbox' : 'measured'}
       >
         {spec ? (
-          <EquipmentDetail desk={desk} spec={spec} />
+          <div
+            ref={detail}
+            tabIndex={-1}
+            className="cs-anchor"
+            aria-label={`${spec.name} controls`}
+          >
+            <EquipmentDetail desk={desk} spec={spec} />
+            <Actions>
+              <Button
+                onClick={() =>
+                  list.current?.querySelector<HTMLElement>('[aria-pressed="true"]')?.focus()
+                }
+              >
+                ◂ BACK TO EQUIPMENT
+              </Button>
+            </Actions>
+          </div>
         ) : (
           <p className="cs-note">choose an assembly</p>
         )}

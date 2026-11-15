@@ -34,6 +34,16 @@ export interface ControlRoomProps {
   readonly erase?: () => Promise<void>;
 }
 
+/** What the scene surface is for, in each view, for assistive technology. */
+const SCENE_LABEL: Readonly<Record<ViewMode, string>> = {
+  room: 'Control room. W A S D to walk; 1 map, 2 ship, 3 console, 4 flight',
+  map: 'Map hologram. Escape steps back',
+  ship: 'Ship hologram. Escape steps back',
+  console: 'Console',
+  flight:
+    'Flight hologram. W main engine, S retro, A D sideways, R F up and down, Q E yaw, arrows pitch, X cut; Escape steps back',
+};
+
 const TITLE: Readonly<Record<ViewMode, string>> = {
   room: '',
   map: 'MAP',
@@ -65,6 +75,39 @@ export function ControlRoom({ game, modelError, erase }: ControlRoomProps) {
     };
   }, [game, desk]);
 
+  // Focus follows the view (S9 R9): the console's current page tab once the screen is up, the
+  // scene in the holograms, and back in the room the route the player left by, or the room.
+  const seen = useRef<{ mode: ViewMode; loss: RoomUi['loss']; route: string | null }>({
+    mode: INITIAL_UI.mode,
+    loss: null,
+    route: null,
+  });
+  useEffect(() => {
+    const was = seen.current;
+    seen.current = { mode: ui.mode, loss: ui.loss, route: was.route };
+    const canvas = canvasRef.current;
+    if (!canvas || ui.loss !== null) return;
+    const active = document.activeElement as HTMLElement | null;
+    if (was.mode === 'room' && ui.mode !== 'room')
+      seen.current.route = active?.closest<HTMLElement>('.cr-route')?.dataset.pad ?? null;
+    if (ui.mode === 'console') {
+      if (ui.consoleUp)
+        document.querySelector<HTMLElement>('.cs-tab[aria-current="page"]')?.focus();
+      return;
+    }
+    if (was.loss !== null) {
+      // Back at the door after a loss: the room itself.
+      canvas.focus({ preventScroll: true });
+      return;
+    }
+    if (ui.mode === was.mode) return;
+    const route =
+      ui.mode === 'room' && was.route
+        ? document.querySelector<HTMLElement>(`.cr-route[data-pad="${was.route}"]`)
+        : null;
+    (route ?? canvas).focus({ preventScroll: true });
+  }, [ui.mode, ui.consoleUp, ui.loss]);
+
   const status = game.status();
   const title =
     ui.mode === 'map' && ui.region ? `MAP  ›  ${game.briefing.name.toUpperCase()}` : TITLE[ui.mode];
@@ -82,8 +125,19 @@ export function ControlRoom({ game, modelError, erase }: ControlRoomProps) {
       data-dying={ui.loss === 'start' ? '' : undefined}
       data-lost={dying && ui.loss !== 'start' && ui.loss !== 'fade' ? '' : undefined}
     >
-      <canvas ref={canvasRef} className="cr-gl" />
+      {/* The scene is a surface the keyboard can be on: walking, the stations, flying. */}
+      <canvas
+        ref={canvasRef}
+        className="cr-gl"
+        tabIndex={ui.mode === 'console' ? -1 : 0}
+        role="application"
+        aria-label={SCENE_LABEL[ui.mode]}
+      />
       <div ref={labelsRef} className="cr-labels" />
+      {/* One polite status line for what the console just did; never the clock (S9 R11). */}
+      <div className="cr-status" role="status" aria-live="polite">
+        {desk.note}
+      </div>
 
       {/* The only thing on screen while walking: a small dot that opens when it finds something. */}
       <div className="cr-reticle" data-hot={ui.hot ? '' : undefined}>
@@ -91,7 +145,7 @@ export function ControlRoom({ game, modelError, erase }: ControlRoomProps) {
         <span>{ui.hot ? HOTSPOT_NAME[ui.hot] : ''}</span>
       </div>
 
-      <div className="cr-hud" data-hidden={dying ? '' : undefined}>
+      <div className="cr-hud" data-hidden={dying ? '' : undefined} inert={dying}>
         <div className="cr-title">{title}</div>
         {ui.mode !== 'room' && ui.mode !== 'console' ? (
           <button type="button" className="cr-back" onClick={() => room?.back()}>
@@ -106,6 +160,7 @@ export function ControlRoom({ game, modelError, erase }: ControlRoomProps) {
                 key={pad}
                 type="button"
                 className="cr-route"
+                data-pad={pad}
                 tabIndex={ui.locked ? -1 : undefined}
                 onClick={() => room?.go(pad)}
               >
@@ -141,7 +196,11 @@ export function ControlRoom({ game, modelError, erase }: ControlRoomProps) {
         ) : null}
       </div>
 
-      <ConsoleScreen desk={desk} visible={ui.mode === 'console' && ui.consoleUp && !dying} />
+      <ConsoleScreen
+        desk={desk}
+        visible={ui.mode === 'console' && ui.consoleUp && !dying}
+        onBack={() => room?.back()}
+      />
 
       {/* Loss of the ship: black, then one orange pip that survives. */}
       <div className="cr-black" data-stage={ui.loss ?? undefined}>

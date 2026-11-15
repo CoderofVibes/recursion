@@ -75,6 +75,11 @@
   overflow-y: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--rx-panel-edge) transparent;
+  outline: none;
+}
+/* The page has the keyboard (to scroll a long debrief): a hairline at its edge. */
+.cs-page:focus-visible {
+  box-shadow: inset 0 0 0 var(--rx-line-rule) var(--rx-ink-faint);
 }
 .cs-grid {
   /* Panels flow down columns, so a short panel does not leave a hole beside a tall one. */
@@ -118,7 +123,22 @@
   text-transform: uppercase;
 }
 .cs-foot__back {
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  letter-spacing: inherit;
   color: var(--rx-ink-faint);
+}
+button.cs-foot__back {
+  cursor: pointer;
+}
+button.cs-foot__back:hover {
+  color: var(--rx-ink-dim);
+}
+button.cs-foot__back:focus-visible {
+  outline: var(--rx-line-rule) solid var(--rx-ink);
+  outline-offset: var(--rx-unit);
 }
 
 /* ---- Controls --------------------------------------------------------------------------------- */
@@ -173,7 +193,8 @@
 }
 .cs-button:focus-visible,
 .cs-tab:focus-visible,
-.cs-field__input:focus-visible {
+.cs-field__input:focus-visible,
+.cs-item__close:focus-visible {
   outline: var(--rx-line-rule) solid var(--rx-ink);
   outline-offset: var(--rx-unit);
 }
@@ -333,6 +354,13 @@
 }
 .cs-item__close:hover {
   color: var(--rx-ink);
+}
+/* A place focus is sent to (a component's controls): no stop of its own, a hairline when on it. */
+.cs-anchor {
+  outline: none;
+}
+.cs-anchor:focus-visible {
+  box-shadow: 0 0 0 var(--rx-line-rule) var(--rx-ink-faint);
 }
 .cs-scroll {
   max-height: 60vh;

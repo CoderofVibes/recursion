@@ -18,7 +18,7 @@ import {
   ReadoutGrid,
   Trend,
 } from '../../theme/components/index.ts';
-import { Actions, Button, Caption, Line } from '../controls.tsx';
+import { Actions, Button, Caption, Line, SelectField } from '../controls.tsx';
 import { recorder } from '../data.ts';
 import type { Desk } from '../desk.ts';
 import { bytes, clock, dist, duration, fixed, whole } from '../format.ts';
@@ -151,19 +151,20 @@ export function BlackBoxPage({ desk }: { readonly desk: Desk }) {
     ...(live ? [live] : []),
   ].sort((a, b) => a.index - b.index);
   const finished = attempts.filter((a) => a.outcome.kind !== 'in-progress');
-  const [picked, setPicked] = useState<string[]>([]);
+  // A row chooses the debrief; A and B are chosen apart, in Compare (S9 R14).
+  const [picked, setPicked] = useState<readonly [string, string]>(() =>
+    desk.compare ? [desk.compare[0], desk.compare[1]] : ['', ''],
+  );
   const [focus, setFocus] = useState<string | undefined>(undefined);
   const focusId = focus ?? desk.debriefOf ?? finished.at(-1)?.id ?? attempts.at(-1)?.id;
   const focused = attempts.find((a) => a.id === focusId);
   const bodies = snapshot.world.bodies.map((b) => ({ id: b.id, radius: b.radius }));
   const report = focused ? debrief(focused, { ...archive, attempts }, bodies) : undefined;
+  const choices = [
+    { value: '', label: '—' },
+    ...attempts.map((x) => ({ value: x.id, label: `ATTEMPT ${x.index} · ${outcomeText(x)}` })),
+  ];
 
-  const pick = (id: string): void => {
-    setFocus(id);
-    setPicked((list) =>
-      list.includes(id) ? list.filter((x) => x !== id) : [...list.slice(-1), id],
-    );
-  };
   const a = attempts.find((x) => x.id === picked[0]);
   const b = attempts.find((x) => x.id === picked[1]);
   desk.refreshReport();
@@ -235,12 +236,143 @@ export function BlackBoxPage({ desk }: { readonly desk: Desk }) {
                     ? 'nominal'
                     : 'stale'
               }
-              selected={picked.includes(x.id) || focusId === x.id}
-              onSelect={() => pick(x.id)}
+              selected={focusId === x.id}
+              onSelect={() => setFocus(x.id)}
             />
           ))}
         </ComponentList>
-        <p className="cs-note">choose two attempts to compare them</p>
+        <p className="cs-note">choose an attempt to read its debrief; compare two below</p>
+      </Panel>
+
+      <Panel
+        title="Debrief"
+        tone="blackbox"
+        aside={focused ? `attempt ${focused.index}` : ''}
+        statusLine={
+          focused?.outcome.kind === 'in-progress' ? 'attempt in progress: so far' : undefined
+        }
+      >
+        {report ? (
+          <DebriefView
+            report={report}
+            {...(measured ? { measured } : {})}
+            onModel={() => desk.setPage('model')}
+          />
+        ) : (
+          <p className="cs-note">no attempt on record</p>
+        )}
+      </Panel>
+
+      <Panel
+        title="Compare"
+        tone="blackbox"
+        aside={a && b ? `A attempt ${a.index} · B attempt ${b.index}` : 'choose two'}
+      >
+        <div className="cs-fields">
+          <SelectField
+            label="A"
+            value={picked[0]}
+            options={choices}
+            onChange={(v) => setPicked(([, y]) => [v, y])}
+          />
+          <SelectField
+            label="B"
+            value={picked[1]}
+            options={choices}
+            onChange={(v) => setPicked(([x]) => [x, v])}
+          />
+        </div>
+        {comparison && a && b ? (
+          <>
+            <Line
+              label="configuration"
+              status={comparison.configurationDiffers ? 'caution' : 'nominal'}
+            >
+              {comparison.configurationDiffers
+                ? `${comparison.a.configuration.start} → ${comparison.b.configuration.start}`
+                : 'same'}
+            </Line>
+            <Caption>what was changed</Caption>
+            {changed.length === 0 ? (
+              <p className="cs-note">the same commands reached the ship</p>
+            ) : (
+              changed.slice(0, 8).map((line, i) => (
+                <p className="cs-change" key={i}>
+                  {line}
+                </p>
+              ))
+            )}
+            <Caption>where the outcome left the forecast</Caption>
+            {(['a', 'b'] as const).map((side) => {
+              const s = comparison[side];
+              const first = s.divergence.find((d) => d.firstBeyond3Sigma !== null);
+              const worst = Math.max(0, ...s.divergence.map((d) => d.maxSigmas ?? 0));
+              const through = Math.max(
+                -Infinity,
+                ...s.divergence.map((d) => d.points.at(-1)?.t ?? -Infinity),
+              );
+              return (
+                <Line
+                  key={side}
+                  label={side === 'a' ? `A · attempt ${a.index}` : `B · attempt ${b.index}`}
+                  tone="forecast"
+                  status={first ? 'caution' : s.divergence.length ? 'nominal' : 'stale'}
+                >
+                  {s.divergence.length === 0
+                    ? 'no forecast was issued'
+                    : first
+                      ? `left at T+${clock(first.firstBeyond3Sigma!)} · worst ${fixed(worst, 1)}σ`
+                      : Number.isFinite(through)
+                        ? `within envelope through T+${clock(through)} · worst ${fixed(worst, 1)}σ`
+                        : 'not recorded: nothing measured inside a forecast'}
+                </Line>
+              );
+            })}
+            <Caption>residuals · coasting / powered</Caption>
+            {(['a', 'b'] as const).map((side) => {
+              const s = comparison[side];
+              return (
+                <Line key={side} label={side === 'a' ? 'A' : 'B'}>
+                  {s.residuals.coast.length ? `${fixed(rms(s.residuals.coast), 2)}σ` : '—'} /{' '}
+                  {s.residuals.powered.length ? `${fixed(rms(s.residuals.powered), 2)}σ` : '—'}
+                </Line>
+              );
+            })}
+            {comparison.strengthSummary.map((s) => (
+              <Line key={s.body} label={`${s.body} strength slope`} tone="forecast">
+                {s.slope === null ? 'too few windows' : fixed(s.slope, 2)}
+              </Line>
+            ))}
+            {[...comparison.a.missing, ...comparison.b.missing].slice(0, 4).map((m, i) => (
+              <p className="cs-note" key={i}>
+                missing: {m}
+              </p>
+            ))}
+            <Actions>
+              {/* It sets what FLIGHT draws; it does not go there. */}
+              <Button
+                tone="blackbox"
+                primary={!overlaid}
+                disabled={a.outcome.kind === 'in-progress' || b.outcome.kind === 'in-progress'}
+                onClick={() => desk.setCompare(overlaid ? undefined : [a.id, b.id])}
+              >
+                {overlaid ? 'CLEAR FLIGHT OVERLAY' : 'SET FLIGHT OVERLAY'}
+              </Button>
+            </Actions>
+            {overlaid ? (
+              <p className="cs-note">FLIGHT draws A and B, labelled with their attempts</p>
+            ) : null}
+          </>
+        ) : (
+          <p className="cs-note">
+            two attempts side by side: what changed, what happened, where the result differed from
+            the prediction
+          </p>
+        )}
+      </Panel>
+
+      {/* Management after the evidence: the recorder, recurrence, and erasing (S9 R14). */}
+      <Panel title="Recorder and records" tone="blackbox">
         <Caption>recorder</Caption>
         <LevelBar
           label="Storage"
@@ -269,6 +401,7 @@ export function BlackBoxPage({ desk }: { readonly desk: Desk }) {
             {ended ? 'BEGIN AGAIN' : 'RECALL'}
           </Button>
           {desk.erase ? (
+            // The browser asks first; cancelling keeps every record.
             <Button
               status="warning"
               onClick={() => {
@@ -280,109 +413,10 @@ export function BlackBoxPage({ desk }: { readonly desk: Desk }) {
             </Button>
           ) : null}
         </Actions>
-      </Panel>
-
-      <Panel
-        title="Debrief"
-        tone="blackbox"
-        aside={focused ? `attempt ${focused.index}` : ''}
-        statusLine={
-          focused?.outcome.kind === 'in-progress' ? 'attempt in progress: so far' : undefined
-        }
-      >
-        {report ? (
-          <DebriefView
-            report={report}
-            {...(measured ? { measured } : {})}
-            onModel={() => desk.setPage('model')}
-          />
-        ) : (
-          <p className="cs-note">no attempt on record</p>
-        )}
-      </Panel>
-
-      <Panel
-        title="Compare"
-        tone="blackbox"
-        aside={a && b ? `A attempt ${a.index} · B attempt ${b.index}` : 'choose two'}
-      >
-        {comparison && a && b ? (
-          <>
-            <Line
-              label="configuration"
-              status={comparison.configurationDiffers ? 'caution' : 'nominal'}
-            >
-              {comparison.configurationDiffers
-                ? `${comparison.a.configuration.start} → ${comparison.b.configuration.start}`
-                : 'same'}
-            </Line>
-            <Caption>what was changed</Caption>
-            {changed.length === 0 ? (
-              <p className="cs-note">the same commands reached the ship</p>
-            ) : (
-              changed.slice(0, 8).map((line, i) => (
-                <p className="cs-change" key={i}>
-                  {line}
-                </p>
-              ))
-            )}
-            <Caption>where the outcome left the forecast</Caption>
-            {(['a', 'b'] as const).map((side) => {
-              const s = comparison[side];
-              const first = s.divergence.find((d) => d.firstBeyond3Sigma !== null);
-              const worst = Math.max(0, ...s.divergence.map((d) => d.maxSigmas ?? 0));
-              return (
-                <Line
-                  key={side}
-                  label={side === 'a' ? `A · attempt ${a.index}` : `B · attempt ${b.index}`}
-                  tone="forecast"
-                  status={first ? 'caution' : s.divergence.length ? 'nominal' : 'stale'}
-                >
-                  {s.divergence.length === 0
-                    ? 'no forecast was issued'
-                    : first
-                      ? `left at T+${clock(first.firstBeyond3Sigma!)} · worst ${fixed(worst, 1)}σ`
-                      : `held · worst ${fixed(worst, 1)}σ`}
-                </Line>
-              );
-            })}
-            <Caption>residuals · coasting / powered</Caption>
-            {(['a', 'b'] as const).map((side) => {
-              const s = comparison[side];
-              return (
-                <Line key={side} label={side === 'a' ? 'A' : 'B'}>
-                  {s.residuals.coast.length ? `${fixed(rms(s.residuals.coast), 2)}σ` : '—'} /{' '}
-                  {s.residuals.powered.length ? `${fixed(rms(s.residuals.powered), 2)}σ` : '—'}
-                </Line>
-              );
-            })}
-            {comparison.strengthSummary.map((s) => (
-              <Line key={s.body} label={`${s.body} strength slope`} tone="forecast">
-                {s.slope === null ? 'too few windows' : fixed(s.slope, 2)}
-              </Line>
-            ))}
-            {[...comparison.a.missing, ...comparison.b.missing].slice(0, 4).map((m, i) => (
-              <p className="cs-note" key={i}>
-                missing: {m}
-              </p>
-            ))}
-            <Actions>
-              <Button
-                tone="blackbox"
-                primary={!overlaid}
-                disabled={a.outcome.kind === 'in-progress' || b.outcome.kind === 'in-progress'}
-                onClick={() => desk.setCompare(overlaid ? undefined : [a.id, b.id])}
-              >
-                {overlaid ? 'CLEAR OVERLAY' : 'OVERLAY IN FLIGHT'}
-              </Button>
-            </Actions>
-          </>
-        ) : (
-          <p className="cs-note">
-            two attempts side by side: what changed, what happened, where the result differed from
-            the prediction
-          </p>
-        )}
+        <p className="cs-note">
+          {ended ? 'begin again' : 'recall'} starts a new attempt at arrival; Black Box and the
+          model keep their records
+        </p>
       </Panel>
     </div>
   );

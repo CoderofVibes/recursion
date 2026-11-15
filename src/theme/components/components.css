@@ -522,11 +522,18 @@ button.rx-row:hover {
     color var(--rx-t-fast) var(--rx-ease-out),
     background var(--rx-t-fast) var(--rx-ease-out);
 }
-:is(.rx-chip, .rx-toggle):not(:disabled) {
+:is(.rx-chip, .rx-toggle):not(:disabled, [data-readonly]) {
   cursor: pointer;
 }
-:is(.rx-chip, .rx-toggle):not(:disabled):hover {
+:is(.rx-chip, .rx-toggle):not(:disabled, [data-readonly]):hover {
   background: linear-gradient(var(--rx-wash-hover), var(--rx-wash-hover)), var(--rx-panel);
+}
+/* Shown, not offered: the modes as text. */
+.rx-chip[data-readonly] {
+  display: inline-block;
+}
+.rx-chip[data-readonly]:not([data-on]) {
+  color: var(--rx-ink-faint);
 }
 .rx-chip[data-on] {
   font-weight: var(--rx-weight-strong);

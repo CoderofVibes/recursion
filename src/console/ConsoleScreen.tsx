@@ -24,16 +24,25 @@ const PAGES: readonly { id: PageId; label: string }[] = [
 export function ConsoleScreen({
   desk,
   visible,
+  onBack,
 }: {
   readonly desk: Desk;
   readonly visible: boolean;
+  /** Leave the console for the room (the same as Escape). */
+  readonly onBack?: () => void;
 }) {
   useDesk(desk);
   const { game } = desk;
   const status = game.status();
   const go = (page: PageId): void => desk.setPage(page);
   return (
-    <div className="cs-screen" data-on={visible ? '' : undefined} aria-hidden={!visible}>
+    // Hidden, the screen is inert: nothing on it can be reached or pressed (S9 R9).
+    <div
+      className="cs-screen"
+      data-on={visible ? '' : undefined}
+      aria-hidden={!visible}
+      inert={!visible}
+    >
       <div className="cs-frame">
         <nav className="cs-tabs" aria-label="Console pages">
           {PAGES.map((p) => (
@@ -41,6 +50,7 @@ export function ConsoleScreen({
               key={p.id}
               type="button"
               className="cs-tab"
+              aria-current={desk.page === p.id ? 'page' : undefined}
               data-on={desk.page === p.id ? '' : undefined}
               data-tone={p.id === 'blackbox' ? 'blackbox' : undefined}
               data-flag={p.id === 'blackbox' && desk.debriefOf ? '' : undefined}
@@ -51,7 +61,13 @@ export function ConsoleScreen({
           ))}
           <span className="cs-tabs__name">{game.briefing.name}</span>
         </nav>
-        <div className="cs-page">
+        {/* A labelled region the keyboard can reach and scroll, for long pages (S9 R14). */}
+        <div
+          className="cs-page"
+          role="region"
+          tabIndex={0}
+          aria-label={PAGES.find((p) => p.id === desk.page)?.label ?? 'Console page'}
+        >
           {/* Pages are mounted only while the screen is up: they read the game as they render. */}
           {visible && desk.page === 'mission' ? <MissionPage desk={desk} /> : null}
           {visible && desk.page === 'plan' ? <PlanPage desk={desk} /> : null}
@@ -70,7 +86,13 @@ export function ConsoleScreen({
           <span className="cs-foot__note">
             {desk.warpDrop && desk.note.endsWith(desk.warpDrop) ? '' : desk.note}
           </span>
-          <span className="cs-foot__back">ESC ▸ STEP BACK</span>
+          {onBack ? (
+            <button type="button" className="cs-foot__back" onClick={onBack}>
+              ESC ▸ STEP BACK
+            </button>
+          ) : (
+            <span className="cs-foot__back">ESC ▸ STEP BACK</span>
+          )}
         </footer>
       </div>
     </div>

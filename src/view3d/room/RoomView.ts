@@ -542,9 +542,23 @@ export class RoomView {
       this.cleanup.push(() => target.removeEventListener(type, handler as EventListener, options));
     };
     const typing = (e: Event): boolean => {
-      const tag = (e.target as HTMLElement | null)?.tagName;
-      return tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA';
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName;
+      return (
+        tag === 'INPUT' ||
+        tag === 'SELECT' ||
+        tag === 'TEXTAREA' ||
+        target?.isContentEditable === true
+      );
     };
+    // A focused control keeps the keys that work it: Space and Enter press it, arrows, Home and
+    // End move within it (S9 R10). Every other key still reaches the scene, so a click on a
+    // warp step does not stop the flight keys.
+    const controlKey = (e: KeyboardEvent, k: string): boolean =>
+      (k === ' ' || k === 'enter' || k === 'home' || k === 'end' || k.startsWith('arrow')) &&
+      (e.target as HTMLElement | null)?.closest?.(
+        'button, a[href], summary, [role="radio"], [role="tab"], [role="switch"], [tabindex]:not(canvas)',
+      ) != null;
     const point = (e: MouseEvent): void => {
       const r = canvas.getBoundingClientRect();
       this.mouse.set(
@@ -557,10 +571,12 @@ export class RoomView {
       if (e.repeat) return;
       const k = e.key.toLowerCase();
       if (k === 'escape') {
-        this.back();
+        // Editing a field: the first Escape leaves the field, the next steps back.
+        if (typing(e)) (e.target as HTMLElement).blur();
+        else this.back();
         return;
       }
-      if (typing(e)) return;
+      if (typing(e) || controlKey(e, k)) return;
       this.keys.add(k);
       if (this.current === 'flight' && (k.startsWith('arrow') || k === ' ')) e.preventDefault();
       if (k === 'backspace') this.back();

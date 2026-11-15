@@ -3,9 +3,11 @@
  * button, labelled number and choice fields, a row of label and value, and the time controls.
  * Built on theme tokens (console.css); listed in docs/handoffs/2D.md for the UI lane to adopt.
  */
+import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 import type { Command, Forecast } from '../contracts/index.ts';
 import type { GameControls, SessionStatus } from '../game/belief/controls.ts';
+import { ModeChips } from '../theme/components/index.ts';
 import type { Status, Tone } from '../theme/components/index.ts';
 import { clock, name } from './format.ts';
 
@@ -225,6 +227,16 @@ export function TimeControls({
   readonly compact?: boolean;
 }) {
   const status = game.status();
+  // ENTER goes away once pressed: if it had the keyboard, the warp steps take it (S9 R9).
+  const box = useRef<HTMLDivElement>(null);
+  const phaseWas = useRef(status.phase);
+  useEffect(() => {
+    const entered = phaseWas.current === 'prepare' && status.phase === 'operate';
+    phaseWas.current = status.phase;
+    const lost = !document.activeElement || document.activeElement === document.body;
+    if (entered && lost)
+      box.current?.querySelector<HTMLElement>('[role="radio"][tabindex="0"]')?.focus();
+  }, [status.phase]);
   const marker = status.phase === 'ended' ? null : nextMarker(status, forecasts);
   // Before ENTER the encounter starts at 1×, whatever was chosen last time.
   const warp = status.phase === 'prepare' ? 1 : status.warp;
@@ -240,12 +252,10 @@ export function TimeControls({
   const ended = status.phase === 'ended';
   const dropped =
     reason && status.warp === 1 && !ended ? (
-      <span className="cs-time__reason" role="status">
-        ▲ warp to 1× · {reason}
-      </span>
+      <span className="cs-time__reason">▲ warp to 1× · {reason}</span>
     ) : null;
   return (
-    <div className="cs-time" data-compact={compact ? '' : undefined}>
+    <div className="cs-time" data-compact={compact ? '' : undefined} ref={box}>
       <div className="cs-time__row">
         <span className="cs-time__met">T+{clock(status.t)}</span>
         {status.phase === 'prepare' ? (
@@ -253,19 +263,17 @@ export function TimeControls({
             ENTER {game.briefing.name}
           </Button>
         ) : (
-          status.warpSteps.map((step) => (
-            <button
-              key={step}
-              type="button"
-              className="rx-chip"
-              data-on={step === status.warp ? '' : undefined}
-              aria-pressed={step === status.warp}
-              disabled={ended}
-              onClick={() => game.setWarp(step)}
-            >
-              {step}×
-            </button>
-          ))
+          // One Tab stop; arrows step the warp (S9 R11).
+          <ModeChips
+            label="Time warp"
+            options={status.warpSteps.map((step) => ({
+              value: String(step),
+              label: `${step}×`,
+              disabled: ended,
+            }))}
+            value={String(status.warp)}
+            onChange={(v) => game.setWarp(Number(v))}
+          />
         )}
         {status.committing ? <span className="cs-time__note">forecasting</span> : null}
         {status.saturated ? (

@@ -232,14 +232,6 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
             <div className="cs-item__head">
               <span>BURN {i + 1}</span>
               <span className="cs-item__value">{fixed(durationOf(b), 1)} s · main engine</span>
-              <button
-                type="button"
-                className="cs-item__close"
-                aria-label={`Remove burn ${i + 1}`}
-                onClick={() => removeBurn(b.key)}
-              >
-                ×
-              </button>
             </div>
             <div className="cs-fields">
               <NumberField
@@ -301,6 +293,15 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
                   patchBurn(b.key, { throttle: Math.min(1, Math.max(0.05, v / 100)) })
                 }
               />
+              {/* Removing comes after editing, in the order the keyboard meets them. */}
+              <button
+                type="button"
+                className="cs-item__close"
+                aria-label={`Remove burn ${i + 1}`}
+                onClick={() => removeBurn(b.key)}
+              >
+                ×
+              </button>
             </div>
           </div>
         ))}
@@ -456,14 +457,6 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
               <div className="cs-item__head">
                 <span>{p.name}</span>
                 <span className="cs-item__value">{p.items.length} commands</span>
-                <button
-                  type="button"
-                  className="cs-item__close"
-                  aria-label={`Forget ${p.name}`}
-                  onClick={() => forget(p.id)}
-                >
-                  ×
-                </button>
               </div>
               <Line label="conditions" status={match.matches ? 'nominal' : 'caution'}>
                 {match.matches ? 'match: replays exactly' : `differ: ${off.join(', ')}`}
@@ -472,6 +465,7 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
                 <Button tone="blackbox" disabled={ended} onClick={() => replay(p)}>
                   REPLAY FROM NOW
                 </Button>
+                <Button onClick={() => forget(p.id)}>FORGET</Button>
               </Actions>
             </div>
           );
@@ -492,6 +486,9 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
             {ended ? 'BEGIN AGAIN' : 'RECALL'}
           </Button>
         </Actions>
+        <p className="cs-note">
+          starts a new attempt at arrival; Black Box and the model keep their records
+        </p>
       </Panel>
     </div>
   );
