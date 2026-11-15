@@ -4,7 +4,7 @@ The live state of the build between threads: who is running, who holds which sha
 
 **Integrator, after a compaction:** read this file first, then `git log --oneline -15`, then the handoffs of any thread marked running.
 
-**Last updated:** 2026-11-14, S22 merged; A20 (faster coasting). Unannounced checkpoints sit on 2D, 2C and 3B; merge them when announced.
+**Last updated:** 2026-11-14, A19 after S22 (four of five answered). Unannounced checkpoints sit on 2D, 2C and 3B; merge them when announced.
 
 ## Threads
 
@@ -83,7 +83,7 @@ Add new rows at the bottom with the next ID. Never renumber.
 
 - **Submission:** the summary's opening and the demo format (S12, `docs/studies/s12/`). Taken at the submission switch.
 - **S9:** whether the five-minute target means insight plus a fresh observed forecast (recommended yes); whether to allow a shorter evidence opportunity if the UI fixes miss it (recommended yes). Show the 1–4 view shortcuts: folded into 2D's R1.
-- **S22 (funnels):** keep the very slow bypass valid (51.5 days, 727 kg); the reversal along the funnel's axis, with the prototype size and pull; the pull not felt by the accelerometer; the precursor timing (900 s warning, 120 s ramp, 240 s guard); the field size (2,601 sites, 650 appearing). All recommended yes.
+- **S22 Q4:** the precursor's lead time. The owner asked whether 900 s is too long; answered that it's ship time, sized to the ship's ~8-minute turn. Awaiting confirmation. S22's other four are answered (A19).
 - **S10:** keep the four reference pictures out of the release (recommended yes); confirm the live challenge listing and GMAT data eligibility (owner check).
 
 Decided: A15 (S11's queue), A16 (the lattice), A17 (the ending) and A18 (the Gravity range after 3D).
