@@ -8,7 +8,8 @@
 import { useState } from 'react';
 import type { AttemptRecord, BlackBoxArchive } from '../../contracts/index.ts';
 import type { ModelReport } from '../../model/index.ts';
-import { compareAttempts } from '../../blackbox/index.ts';
+import { compareAttempts, lossReview } from '../../blackbox/index.ts';
+import type { LossReview } from '../../blackbox/index.ts';
 import {
   BlackBoxMark,
   ComponentList,
@@ -24,8 +25,10 @@ import { Actions, Button, Caption, Line, SelectField } from '../controls.tsx';
 import { recorder } from '../data.ts';
 import type { Desk } from '../desk.ts';
 import { bytes, clock, dist, duration, fixed, whole } from '../format.ts';
+import { LossReviewView } from '../LossReview.tsx';
 import { APPROACH, EVIDENCE, debrief, describeDiff, worstOf } from '../mission.ts';
 import type { Debrief } from '../mission.ts';
+import { doseRate } from '../radiation.ts';
 
 const rms = (values: readonly { readonly value: number }[]): number =>
   values.length ? Math.sqrt(values.reduce((s, r) => s + r.value * r.value, 0) / values.length) : 0;
@@ -48,11 +51,17 @@ export function DebriefView({
   report,
   measured,
   onModel,
+  loss,
+  threshold,
 }: {
   readonly report: Debrief;
   /** What the attempt measured of the pull (S9 R6); absent until the model's report arrives. */
   readonly measured?: readonly MeasuredSpan[];
   readonly onModel?: () => void;
+  /** A lost attempt's review from its record: what failed first, and the radiation monitor. */
+  readonly loss?: LossReview;
+  /** The radiation monitor's hazard threshold, U, when the ship gives one. */
+  readonly threshold?: number;
 }) {
   return (
     <>
@@ -90,6 +99,10 @@ export function DebriefView({
       ) : (
         <p className="cs-note">none recorded</p>
       )}
+      {/* A loss, read from the record in the order it happened (A24, A16). */}
+      {loss ? (
+        <LossReviewView review={loss} {...(threshold !== undefined ? { threshold } : {})} />
+      ) : null}
       {report.forecasts.map((f) => (
         <Line
           key={f.label}
@@ -175,6 +188,25 @@ const debriefFor = memoLast(
 
 const comparisonFor = memoLast(compareAttempts);
 
+/**
+ * A lost attempt's review (2C's `lossReview`), from its record alone. The monitor's threshold
+ * and saturation limit come from the ship's latest reading when it has given one; without them
+ * the review finds the spike as a rise and flags no reading as over range.
+ */
+const lossReviewFor = memoLast(
+  (
+    record: AttemptRecord,
+    threshold: number | undefined,
+    saturation: number | undefined,
+    equipmentKey: string,
+  ): LossReview =>
+    lossReview(record, {
+      ...(threshold !== undefined ? { threshold } : {}),
+      ...(saturation !== undefined ? { saturation } : {}),
+      knownEquipment: equipmentKey.split('|'),
+    }),
+);
+
 const measuredFor = memoLast((strength: ModelReport['strength'], attempt: string): MeasuredSpan[] =>
   strength.flatMap((s) => {
     const mine = s.points.filter((p) => p.attempt === attempt && p.converged);
@@ -218,6 +250,17 @@ export function BlackBoxPage({ desk }: { readonly desk: Desk }) {
     snapshot.world.bodies.map((b) => ({ id: b.id, radius: b.radius, name: b.name })),
   );
   const report = focused ? debriefFor(focused, archive, attempts, bodyKey) : undefined;
+  // A lost attempt is reviewed from its record: what failed first, and what the monitor read.
+  const monitor = doseRate(status);
+  const loss =
+    focused?.outcome.kind === 'lost'
+      ? lossReviewFor(
+          focused,
+          monitor?.threshold,
+          monitor?.saturationRate,
+          game.ship.equipment.map((e) => e.id).join('|'),
+        )
+      : undefined;
   const choices = [
     { value: '', label: '—' },
     ...attempts.map((x) => ({ value: x.id, label: `ATTEMPT ${x.index} · ${outcomeText(x)}` })),
@@ -295,6 +338,8 @@ export function BlackBoxPage({ desk }: { readonly desk: Desk }) {
           <DebriefView
             report={report}
             {...(measured ? { measured } : {})}
+            {...(loss ? { loss } : {})}
+            {...(monitor?.threshold !== undefined ? { threshold: monitor.threshold } : {})}
             onModel={() => desk.setPage('model')}
           />
         ) : (

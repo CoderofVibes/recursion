@@ -236,14 +236,12 @@ export function ModelPage({ desk }: { readonly desk: Desk }) {
             value={model.noiseScale !== undefined ? fixed(model.noiseScale, 2) : '—'}
           />
           <Readout
-            label="Coast rms"
+            label={`Coast rms · ${whole(model.residuals.coast.n)} fixes`}
             value={dist(model.residuals.coast.rms)}
-            sigma={`n ${model.residuals.coast.n}`}
           />
           <Readout
-            label="Powered rms"
+            label={`Powered rms · ${whole(model.residuals.powered.n)} fixes`}
             value={dist(model.residuals.powered.rms)}
-            sigma={`n ${model.residuals.powered.n}`}
           />
           <Readout
             label="Rules"

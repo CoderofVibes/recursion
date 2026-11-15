@@ -216,12 +216,12 @@ export function FlightHud({
         {bus ? (
           <DragBar
             stacked
-            label={`Power · ${bus.label}`}
+            label="Power"
             value={bus.value}
             min={0}
             max={bus.max}
             step={1}
-            text={bus.status === 'stale' ? 'no reading' : `${whole(bus.value)} W`}
+            text={bus.status === 'stale' ? 'no reading' : `${whole(bus.value)} W · ${bus.label}`}
             tone="measured"
             status={bus.status}
             marks={[{ at: bus.mark ?? bus.max, kind: 'caution' }]}
@@ -235,7 +235,7 @@ export function FlightHud({
             min={0}
             max={battery.max}
             step={1}
-            text={battery.text}
+            text={battery.text.split(' · ').reverse().join(' · ')}
             tone="measured"
             status={battery.status}
           />
@@ -261,7 +261,7 @@ export function FlightHud({
           min={0}
           max={rec.capacity}
           step={1}
-          text={`${bytes(rec.bytes)} · ${fixed(rec.rate, 2)} Hz`}
+          text={`${fixed(rec.rate, 2)} Hz · ${bytes(rec.bytes)}`}
           tone="blackbox"
         />
       </div>

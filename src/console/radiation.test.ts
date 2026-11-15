@@ -71,6 +71,7 @@ describe("the session's own alerts", () => {
         },
         { id: 'radiation-high', level: 'caution', rate: 25, saturated: true, threshold: 0.02 },
         { id: 'hull-breach', level: 'warning' },
+        { id: 'forecast-ended', level: 'caution', forecast: 'forecast-0001', endedAt: 3600 },
       ],
       100,
     );
@@ -94,6 +95,12 @@ describe("the session's own alerts", () => {
         detail: '≥ 25.00 U · above 0.0200 U',
       },
       { id: 'game-hull-breach', level: 'warning', text: 'Hull breach' },
+      {
+        id: 'game-forecast-ended',
+        level: 'caution',
+        text: 'Forecast ended',
+        detail: 'T+01:00:00 · preview or commit to look ahead',
+      },
     ]);
   });
 

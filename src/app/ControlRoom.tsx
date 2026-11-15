@@ -19,7 +19,7 @@ import { HOTSPOT_NAME, PADS } from '../view3d/room/layout.ts';
 import type { ViewMode } from '../view3d/room/layout.ts';
 import type { RoomView } from '../view3d/room/RoomView.ts';
 import { AVAILABLE } from './hands.ts';
-import { onSoundMuted, setSoundMuted, soundMuted } from './sound.ts';
+import { onSoundMuted, setSoundMuted, soundAvailable, soundMuted } from './sound.ts';
 
 /** Before the encounter the flight controls do not answer (A12). */
 const NOT_YET = { throttle: false, yaw: false, pitch: false, translate: false } as const;
@@ -112,9 +112,12 @@ export function ControlRoom({ game, modelError, erase }: ControlRoomProps) {
     (route ?? canvas).focus({ preventScroll: true });
   }, [ui.mode, ui.consoleUp, ui.loss]);
 
-  // Sound on or off (AU, R24): the switch below, the console's footer, and the M key.
+  // Sound on or off (AU, R24): the switch below, the console's footer, and the M key. All
+  // three exist only while the game has sound: a switch for nothing is not shown (A26).
+  const hasSound = soundAvailable();
   const muted = useSyncExternalStore(onSoundMuted, soundMuted, soundMuted);
   useEffect(() => {
+    if (!hasSound) return;
     const onKey = (e: KeyboardEvent): void => {
       const tag = (e.target as HTMLElement | null)?.tagName;
       if (
@@ -129,17 +132,18 @@ export function ControlRoom({ game, modelError, erase }: ControlRoomProps) {
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, []);
-  const soundSwitch = (className: string) => (
-    <button
-      type="button"
-      className={className}
-      aria-pressed={muted}
-      onClick={() => setSoundMuted(!muted)}
-    >
-      M ▸ SOUND {muted ? 'OFF' : 'ON'}
-    </button>
-  );
+  }, [hasSound]);
+  const soundSwitch = (className: string) =>
+    hasSound ? (
+      <button
+        type="button"
+        className={className}
+        aria-pressed={muted}
+        onClick={() => setSoundMuted(!muted)}
+      >
+        M ▸ SOUND {muted ? 'OFF' : 'ON'}
+      </button>
+    ) : null;
 
   const status = game.status();
   const title =

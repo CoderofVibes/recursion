@@ -341,6 +341,39 @@ button.cs-foot__back:focus-visible {
   font-size: var(--rx-size-small);
   color: var(--rx-ink);
 }
+/* The order things failed in: a short strip, earliest first. */
+.cs-failures {
+  display: grid;
+  gap: var(--rx-unit);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--rx-size-small);
+}
+.cs-failures li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--rx-row-gap);
+  padding-left: var(--rx-row-pad-x);
+  border-left: var(--rx-line-rule) solid var(--rx-warning);
+  color: var(--rx-ink);
+}
+.cs-failures__t {
+  font-variant-numeric: tabular-nums;
+  color: var(--rx-ink-dim);
+}
+.cs-failures__what {
+  letter-spacing: var(--rx-tracking-label);
+  text-transform: uppercase;
+}
+.cs-failures__how {
+  color: var(--rx-warning);
+}
+.cs-failures li.cs-failures__more {
+  display: block;
+  border-left-color: var(--rx-panel-edge);
+  color: var(--rx-ink-dim);
+}
 .cs-item {
   display: flex;
   flex-direction: column;
