@@ -41,7 +41,7 @@ import {
   validatedHedges,
   type ExtensionRecord,
 } from './extensions.ts';
-import { buildForecast, type ForecastDetail, type ForecastRequest } from './forecast.ts';
+import { buildForecast, type ForecastRequest, type ModelForecastDetail } from './forecast.ts';
 import {
   burnReport,
   empiricalReport,
@@ -208,7 +208,7 @@ export class ModelService {
   /** Forecast for the attempt in progress (or the latest attempt). */
   forecast(req: Omit<ForecastRequest, 'record'> & { attemptId?: AttemptId }): {
     draft: ReturnType<typeof buildForecast>['draft'];
-    detail: ForecastDetail;
+    detail: ModelForecastDetail;
   } {
     const all = this.allAttempts();
     const rec = req.attemptId

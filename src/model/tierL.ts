@@ -30,7 +30,7 @@ import {
   type ThrustSegment,
 } from './dynamics.ts';
 import { fromRows, inverse, lstsq, sandwich, solve, symEig, zeros, type Matrix } from './linalg.ts';
-import { Problem, fitChi2Nu, fitGet, type Param } from './solve.ts';
+import { Problem, fitChi2Nu, fitGet, type FullPrior, type Param } from './solve.ts';
 
 export type { Fix } from './dynamics.ts';
 
@@ -736,6 +736,26 @@ export interface AnchorInfo {
   };
 }
 
+/** The hedge exponents a present-state fit considers (`anchorState`). */
+export interface ConsiderHedge {
+  /** σ_h0 of the default hedge. */
+  readonly sigmaH: number;
+  /** Per body: validated spans (m) and the earned σ_e that applies inside them. */
+  readonly validated?: Readonly<
+    Record<
+      string,
+      { readonly spans: readonly (readonly [number, number])[]; readonly sigmaE: number }
+    >
+  >;
+  /** Covered ranges of bodies without a profile (g ≡ 1). */
+  readonly flat?: readonly ProfileFit[];
+  /**
+   * σ of μ for the other bodies the forecast also treats as uncertain (those without a profile,
+   * §8.2): considered too, under the forecast's names (`f.mu.<id>`).
+   */
+  readonly mu?: Readonly<Record<string, number>>;
+}
+
 export interface Anchor {
   /** Time of the last fix used. */
   readonly tNow: number;
@@ -743,6 +763,13 @@ export interface Anchor {
   readonly state: Float64Array;
   /** 6×6 covariance (before s²). It contains the camera misalignment's share. */
   readonly covariance: Matrix;
+  /**
+   * With `considerHedge`: how the true state at the last fix differs from this estimate per unit
+   * of each shared source (`eta:<body>`, `etaE:<body>`, `f.mu.<body>`; six numbers each). The fit holds
+   * the exponents at zero, as the forecast's mean does; a law that bends by η outside the covered
+   * distances would have moved the fitted state by this much (consider parameters).
+   */
+  readonly hedge?: Readonly<Record<string, Float64Array>>;
   readonly info: AnchorInfo;
 }
 
@@ -754,6 +781,17 @@ export interface Anchor {
  * prior at the reference law's values: the unknown orientation of the picture is then part of
  * the state covariance (11 parameters in all). Without it the misalignment is held fixed, as in
  * the planar reduction.
+ *
+ * `bodyPriors` does the same for the other bodies (2F request 13): each named body's state at the
+ * first fix joins the fit, held by a prior at its believed state with that 6×6 covariance, so
+ * where the model is unsure the second body is (moved under a law it has not sampled there) is
+ * part of the present state's covariance and not a hidden bias.
+ *
+ * `considerHedge` treats the hedge exponents of every body's pull as consider parameters: the
+ * fit is unchanged, and `Anchor.hedge` says how the state would move if the law bent outside the
+ * covered distances (a second body pulls from far outside them: in the inverse-2.5 world Beta's
+ * tide on a ship near Alpha is about 0.6 of Newton's, which biased a dive's present state by
+ * kilometres with a σ of 150 m). `flat` gives covered ranges for bodies without a profile.
  */
 export function anchorState(
   ref: ReferenceLaw,
@@ -767,6 +805,8 @@ export function anchorState(
     slopeSigma?: number;
     extraProfiles?: readonly ProfileFit[];
     camSigma?: Vec3T | null;
+    bodyPriors?: Readonly<Record<string, Matrix>>;
+    considerHedge?: ConsiderHedge;
   } = {},
 ): Anchor {
   const h = opts.h ?? 1e-3;
@@ -790,9 +830,34 @@ export function anchorState(
   });
   const camSigma = opts.camSigma ?? null;
   const camKeys = ['x', 'y', 'z'] as const;
+  // Other bodies' states as prior-held parameters (components with no variance stay fixed).
+  const bodyParams: Param[] = [];
+  const fullPriors: FullPrior[] = [];
+  const bodies = base.bodies.map((b): BodyDef => {
+    const C = opts.bodyPriors?.[b.id];
+    if (!C || b.state === 'gauge') return b;
+    const mean = b.state as State6;
+    const use = [0, 1, 2, 3, 4, 5].filter((c) => C.data[c * 6 + c]! > 0);
+    if (use.length === 0) return b;
+    const names = use.map((c) => `${aid}.st.${b.id}.${STATE_KEYS[c]!}`);
+    use.forEach((c, k) =>
+      bodyParams.push({ name: names[k]!, init: mean[c]!, scale: BODY_SCALE[c]!, group: aid }),
+    );
+    const blk = zeros(use.length, use.length);
+    use.forEach((a, i) =>
+      use.forEach((c, j) => (blk.data[i * use.length + j] = C.data[a * 6 + c]!)),
+    );
+    fullPriors.push({ names, mean: Float64Array.from(use, (c) => mean[c]!), info: inverse(blk) });
+    const state = mean.map((v, c) => {
+      const k = use.indexOf(c);
+      return k >= 0 ? names[k]! : v;
+    }) as unknown as BodyDef['state'];
+    return { ...b, state };
+  });
+  const withBodies: Structure = bodyParams.length > 0 ? { ...base, bodies } : base;
   const st: Structure = camSigma
-    ? { ...base, camBias: ['{att}.cam.x', '{att}.cam.y', '{att}.cam.z'] }
-    : base;
+    ? { ...withBodies, camBias: ['{att}.cam.x', '{att}.cam.y', '{att}.cam.z'] }
+    : withBodies;
   const params: Param[] = [
     ...shipParams(aid, quadGuess(fixes, tFirst), ref.planar),
     {
@@ -814,8 +879,12 @@ export function anchorState(
           group: aid,
         }))
       : []),
+    ...bodyParams,
   ];
-  const prob = new Problem(st, [sub], params, { dt });
+  const prob = new Problem(st, [sub], params, {
+    dt,
+    ...(fullPriors.length > 0 ? { fullPriors } : {}),
+  });
   const res = prob.solve(params.map((p) => p.init));
   const q = res.x.length;
   const ca = compileArc(st, sub, prob.idx);
@@ -835,6 +904,21 @@ export function anchorState(
     for (let r = 0; r < 6; r++) Jm.data[r * q + i] = (sp[r]! - sm[r]!) / (2 * step);
   }
   const PNow = sandwich(Jm, res.P);
+  const hedge = opts.considerHedge
+    ? considerHedge(opts.considerHedge, {
+        st,
+        sub,
+        params,
+        fullPriors,
+        res,
+        Jm,
+        prof,
+        extra: opts.extraProfiles ?? [],
+        aid,
+        tLast,
+        dt,
+      })
+    : undefined;
   const [g, gS] = fitGet(res, `${aid}.g`);
   const [g1, g1S] = fitGet(res, `${aid}.g1`);
   const cam = camSigma ? camKeys.map((k) => fitGet(res, `${aid}.cam.${k}`)) : null;
@@ -842,6 +926,7 @@ export function anchorState(
     tNow: tLast,
     state: xNow,
     covariance: PNow,
+    ...(hedge ? { hedge } : {}),
     info: {
       windows: wins.map((w) => w.id),
       tFirst,
@@ -868,6 +953,131 @@ export function anchorState(
   };
 }
 
+/**
+ * Consider analysis of the present-state fit for the hedge exponents (see `anchorState`). The
+ * fit's estimate moves by S = P Jxᵀ Jη per unit η (Jx, Jη: −d(whitened residual)/d(parameter)),
+ * and η moves the propagation to the last fix by K; the estimate's error per unit η is
+ * G = Jm S − K, so the true state is the estimate minus G η.
+ */
+function considerHedge(
+  ch: ConsiderHedge,
+  f: {
+    readonly st: Structure;
+    readonly sub: Arc;
+    readonly params: readonly Param[];
+    readonly fullPriors: readonly FullPrior[];
+    readonly res: ReturnType<Problem['solve']>;
+    readonly Jm: Matrix;
+    readonly prof: ProfileFit | null;
+    readonly extra: readonly ProfileFit[];
+    readonly aid: string;
+    readonly tLast: number;
+    readonly dt: number;
+  },
+): Record<string, Float64Array> | undefined {
+  const all = [...(f.prof ? [f.prof] : []), ...f.extra];
+  for (const p of ch.flat ?? []) if (!all.some((q) => q.body === p.body)) all.push(p);
+  const etaParams: Param[] = [];
+  const shared: string[] = [];
+  const profiles: ProfileDef[] = all.map((p) => {
+    const name = `${f.aid}.h.${p.body}`;
+    etaParams.push({
+      name,
+      init: 0,
+      scale: 1e-2,
+      priorMean: 0,
+      priorSigma: ch.sigmaH,
+      group: f.aid,
+    });
+    shared.push(`eta:${p.body}`);
+    const v = ch.validated?.[p.body];
+    const earned =
+      v && v.spans.length > 0 ? { etaE: `${f.aid}.hE.${p.body}`, spans: v.spans } : undefined;
+    if (earned && v) {
+      etaParams.push({
+        name: earned.etaE,
+        init: 0,
+        scale: 1e-2,
+        priorMean: 0,
+        priorSigma: v.sigmaE,
+        group: f.aid,
+      });
+      shared.push(`etaE:${p.body}`);
+    }
+    return profileDef(p, undefined, name, earned);
+  });
+  // Masses of the other bodies the forecast treats as uncertain.
+  const muRef = new Map<string, string>();
+  for (const [id, sig] of Object.entries(ch.mu ?? {})) {
+    const b = f.st.bodies.find((q) => q.id === id);
+    if (!b || !(sig > 0) || typeof b.mu !== 'number') continue;
+    const name = `${f.aid}.m.${id}`;
+    etaParams.push({
+      name,
+      init: b.mu,
+      scale: Math.max(1e-3 * Math.abs(b.mu), sig * 1e-2),
+      priorMean: b.mu,
+      priorSigma: sig,
+      group: f.aid,
+    });
+    shared.push(`f.mu.${id}`);
+    muRef.set(id, name);
+  }
+  const k = etaParams.length;
+  if (k === 0) return undefined;
+  const q = f.res.x.length;
+  const stC: Structure = {
+    ...f.st,
+    profiles,
+    bodies: f.st.bodies.map((b) => (muRef.has(b.id) ? { ...b, mu: muRef.get(b.id)! } : b)),
+  };
+  const probC = new Problem(stC, [f.sub], [...f.params, ...etaParams], {
+    dt: f.dt,
+    ...(f.fullPriors.length > 0 ? { fullPriors: f.fullPriors } : {}),
+  });
+  const xC = Float64Array.from([...f.res.x, ...etaParams.map((e) => e.init)]);
+  const { J } = probC.residualAndJacobian(xC);
+  const m = J.rows;
+  const p = J.cols;
+  // A = Jxᵀ Jη (q × k), then S = P A.
+  const A = new Float64Array(q * k);
+  for (let r = 0; r < m; r++)
+    for (let j = 0; j < k; j++) {
+      const je = J.data[r * p + q + j]!;
+      if (je === 0) continue;
+      for (let i = 0; i < q; i++) A[i * k + j]! += J.data[r * p + i]! * je;
+    }
+  const P = f.res.P;
+  const S = new Float64Array(q * k);
+  for (let i = 0; i < q; i++)
+    for (let j = 0; j < k; j++) {
+      let v = 0;
+      for (let l = 0; l < q; l++) v += P.data[i * q + l]! * A[l * k + j]!;
+      S[i * k + j] = v;
+    }
+  const caC = compileArc(stC, f.sub, probC.idx);
+  const rel = (xv: ArrayLike<number>) => shipAndBodies(caC, xv, [f.tLast], f.dt).state[0]!;
+  const out: Record<string, Float64Array> = {};
+  const xp = Float64Array.from(xC);
+  for (let j = 0; j < k; j++) {
+    const step = shared[j]!.startsWith('f.mu.') ? 1e-3 * etaParams[j]!.scale * 1e3 : 1e-3;
+    xp[q + j] = xC[q + j]! + step;
+    const plus = rel(xp);
+    xp[q + j] = xC[q + j]! - step;
+    const minus = rel(xp);
+    xp[q + j] = xC[q + j]!;
+    const col = new Float64Array(6);
+    for (let r = 0; r < 6; r++) {
+      let jm = 0;
+      for (let i = 0; i < q; i++) jm += f.Jm.data[r * q + i]! * S[i * k + j]!;
+      const K = (plus[r]! - minus[r]!) / (2 * step);
+      col[r] = -(jm - K); // the true state minus the estimate, per unit of the source
+    }
+    out[shared[j]!] = col;
+  }
+  return out;
+}
+
 // ---------------------------------------------------------------------------------------------
 // Forecast core (§8.2–§8.4)
 // ---------------------------------------------------------------------------------------------
@@ -883,6 +1093,11 @@ export interface CovSplit {
   /** Engine scale and both misalignment angles of every thruster, and the RCS scale. */
   readonly engine: Matrix;
   readonly mass: Matrix;
+  /**
+   * The other bodies' believed states at the start (`ForecastCoreInput.othersCov`): where they
+   * are moves the ship through their pull. Zero when no body state is uncertain.
+   */
+  readonly bodies: Matrix;
   readonly total: Matrix;
 }
 
@@ -892,7 +1107,19 @@ export interface ForecastCoreResult {
   readonly mean: readonly Float64Array[];
   /** Other modelled bodies relative to the reference body, per time: six numbers per body. */
   readonly bodies: readonly Float64Array[];
+  /** The ship's position covariance (relative to the reference body), split by source. */
   readonly cov: readonly CovSplit[];
+  /**
+   * Per time, per other body: the 3×3 covariance of that body's position relative to the
+   * reference body, from every source (its own state, the law's hedge on the bodies' mutual
+   * pulls, the profiles, the masses). Empty records when there are no other bodies.
+   */
+  readonly bodyCov: readonly Readonly<Record<string, Matrix>>[];
+  /**
+   * Per time, per other body: the 3×3 covariance of the ship relative to that body (§8.7: the
+   * shared sources partly cancel). Relative to the reference body it is `cov[k].total`.
+   */
+  readonly relCov: readonly Readonly<Record<string, Matrix>>[];
   /**
    * Sensitivity of the relative position to each uncertain source, for covariances of
    * differences between two forecasts made with the same sources (§8.7).
@@ -906,6 +1133,13 @@ export interface ForecastSensitivity {
   readonly columns: ReadonlyMap<string, Float64Array>;
   /** Shared sources (profile nodes, hedge exponents, masses) and their covariance blocks. */
   readonly shared: readonly { readonly names: readonly string[]; readonly cov: Matrix }[];
+  /** The same columns for each other body's position relative to the reference body. */
+  readonly bodyColumns: ReadonlyMap<string, ReadonlyMap<string, Float64Array>>;
+  /**
+   * Covariance of the ship's position relative to `body` (or to the reference body, null) from
+   * the sources no other forecast shares: the present state, the engine and the bodies' states.
+   */
+  readonly independent: (k: number, body: string | null) => Matrix;
 }
 
 export interface ForecastCoreInput {
@@ -939,12 +1173,37 @@ export interface ForecastCoreInput {
   readonly rcsSigma?: number;
   /** σ of μ for frozen bodies without a profile (§8.2). */
   readonly muSigma?: Readonly<Record<string, number>>;
+  /**
+   * The forecast law (profiles and hedge) acts on the bodies' mutual pulls as well as on the
+   * ship (`Structure.bodyProfiles`; 2F request 13). Default false: the bodies move under the
+   * bare law, as in the reference.
+   */
+  readonly bodyLaw?: boolean;
+  /**
+   * Per other body: the 6×6 covariance of its state at tNow relative to the reference body (what
+   * the fits know of it). Each such body's state becomes six more uncertain sources.
+   */
+  readonly othersCov?: Readonly<Record<string, Matrix>>;
+  /**
+   * Per other body: how its state at tNow already depends on the shared hedge exponents (six
+   * numbers per source, named `eta:<body>` or `etaE:<body>` as in `sensitivity`), because the
+   * hedge acted on its motion before tNow too. A hedge exponent is one number for the whole
+   * forecast: moving it moves the body's starting state by this much as well.
+   */
+  readonly othersEta?: Readonly<Record<string, Readonly<Record<string, ArrayLike<number>>>>>;
+  /**
+   * How the true present state differs from `xNow` per unit of each shared source (six numbers
+   * per source, named as in `sensitivity`: `eta:<body>`, `etaE:<body>`, `f.mu.<body>`;
+   * `Anchor.hedge`): moving the source moves the starting state with it.
+   */
+  readonly xNowEta?: Readonly<Record<string, ArrayLike<number>>>;
   readonly h?: number;
 }
 
 /**
  * Linearised forecast (§8.3) from the present state under the calibrated law, with the 3×3
- * position covariance split by source: state, profile nodes, hedge, engine, body masses.
+ * position covariance split by source: state, profile nodes, hedge, engine, body masses and the
+ * other bodies' states; and the other bodies' own position covariances (§8.7).
  */
 export function forecastCore(inp: ForecastCoreInput): ForecastCoreResult {
   const { ref, profiles } = inp;
@@ -978,8 +1237,11 @@ export function forecastCore(inp: ForecastCoreInput): ForecastCoreResult {
   const etaIdx: number[] = [];
   const etaEIdx: [number, number][] = [];
   const nodeIdx: number[][] = [];
+  /** Shared hedge sources by name (`eta:<body>`, `etaE:<body>`) → parameter index. */
+  const etaByName = new Map<string, number>();
   const pdefs: ProfileDef[] = profiles.map((p, j) => {
     etaIdx.push(names.length);
+    etaByName.set(`eta:${p.body}`, names.length);
     names.push(`f.eta${j}`);
     x.push(0);
     scale.push(1e-2);
@@ -987,6 +1249,7 @@ export function forecastCore(inp: ForecastCoreInput): ForecastCoreResult {
     let earned: { etaE: string; spans: readonly (readonly [number, number])[] } | undefined;
     if (v && v.spans.length > 0) {
       etaEIdx.push([names.length, v.sigmaE]);
+      etaByName.set(`etaE:${p.body}`, names.length);
       names.push(`f.etaE${j}`);
       x.push(0);
       scale.push(1e-2);
@@ -1005,32 +1268,48 @@ export function forecastCore(inp: ForecastCoreInput): ForecastCoreResult {
     return profileDef(p, nodes, `f.eta${j}`, earned);
   });
   const muIdx: [number, number][] = [];
+  /** Per other body with an uncertain state: the indices of its six state parameters. */
+  const bodyStateIdx = new Map<string, number[]>();
   const others = (ref.others ?? []).map((o) => {
     const sig = inp.muSigma?.[o.id];
+    let muRef: string | number = o.mu;
     if (sig !== undefined && sig > 0) {
       muIdx.push([names.length, sig]);
       names.push(`f.mu.${o.id}`);
       x.push(o.mu);
       scale.push(Math.max(1e-3 * Math.abs(o.mu), sig * 1e-2));
-      return { ...o, muRef: `f.mu.${o.id}` as string | number };
+      muRef = `f.mu.${o.id}`;
     }
-    return { ...o, muRef: o.mu as string | number };
+    const s0 = o.stateAt(inp.tNow);
+    if (!inp.othersCov?.[o.id] && !inp.othersEta?.[o.id]) return { ...o, muRef, state: s0 };
+    const list: number[] = [];
+    STATE_KEYS.forEach((k, c) => {
+      list.push(names.length);
+      names.push(`f.st.${o.id}.${k}`);
+      x.push(s0[c]!);
+      scale.push(c < 3 ? 1e3 : 0.1);
+    });
+    bodyStateIdx.set(o.id, list);
+    const st = STATE_KEYS.map((k) => `f.st.${o.id}.${k}`) as unknown as BodyDef['state'];
+    return { ...o, muRef, state: st };
   });
+  const nO = others.length;
   const st: Structure = {
     r0: ref.r0,
     n: ref.n,
     bodies: [
       { id: ref.body, mu: ref.mu, state: 'gauge' },
-      ...others.map((o) => ({ id: o.id, mu: o.muRef, state: o.stateAt(inp.tNow) })),
+      ...others.map((o) => ({ id: o.id, mu: o.muRef, state: o.state })),
     ],
     ship: STATE_KEYS.map((k) => `fc.ship.${k}`) as unknown as Structure['ship'],
-    dynamicBodies: others.length > 0,
+    dynamicBodies: nO > 0,
     engine: { kE: 'f.kE', dE: 'f.dE', dP: 'f.dP' },
     engines,
     kR: 'f.kR',
     kA: 1,
     camBias: [0, 0, 0],
     profiles: pdefs,
+    ...(inp.bodyLaw ? { bodyProfiles: true } : {}),
   };
   const idx = new Map(names.map((n, i) => [n, i]));
   const ca = compileArc(st, { id: aid, epoch: inp.tNow, commands: inp.commands }, idx);
@@ -1040,51 +1319,141 @@ export function forecastCore(inp: ForecastCoreInput): ForecastCoreResult {
   const base = run(x);
   const q = x.length;
   const T = sortedTimes.length;
+  // A hedge exponent also moves the bodies' starting states (`othersEta`) and the ship's
+  // (`xNowEta`).
+  const coupling = new Map<number, [number, number][]>();
+  for (const [i, sig] of muIdx) if (sig > 0) etaByName.set(names[i]!, i);
+  for (const [nm, col] of Object.entries(inp.xNowEta ?? {})) {
+    const i = etaByName.get(nm);
+    if (i === undefined) continue;
+    const pairs = coupling.get(i) ?? [];
+    for (let c = 0; c < 6; c++) {
+      const v = col[c] ?? 0;
+      if (v !== 0 && Number.isFinite(v)) pairs.push([c, v]);
+    }
+    coupling.set(i, pairs);
+  }
+  for (const [id, byName] of Object.entries(inp.othersEta ?? {})) {
+    const list = bodyStateIdx.get(id);
+    if (!list) continue;
+    for (const [nm, col] of Object.entries(byName)) {
+      const i = etaByName.get(nm);
+      if (i === undefined) continue;
+      const pairs = coupling.get(i) ?? [];
+      list.forEach((k, c) => {
+        const v = col[c] ?? 0;
+        if (v !== 0 && Number.isFinite(v)) pairs.push([k, v]);
+      });
+      coupling.set(i, pairs);
+    }
+  }
+  // Covariance groups (each block independent of the others).
+  interface Group {
+    readonly cols: readonly number[];
+    readonly C: (a: number, b: number) => number;
+  }
+  const diag = (pairs: readonly [number, number][]): Group => ({
+    cols: pairs.map((p) => p[0]),
+    C: (a, b) => (a === b ? pairs[a]![1] ** 2 : 0),
+  });
+  const sh2 = inp.sigmaH * inp.sigmaH;
+  const gState: Group = {
+    cols: [0, 1, 2, 3, 4, 5],
+    C: (a, b) => inp.s2 * inp.PNow.data[a * 6 + b]!,
+  };
+  const gEngine = diag(engineCols);
+  const gHedgeD = diag(etaIdx.map((i) => [i, inp.sigmaH] as [number, number]));
+  const gHedgeE = diag(etaEIdx);
+  const gProfile: Group[] = profiles.map((p, j) => ({
+    cols: nodeIdx[j]!,
+    C: (a, b) => p.covariance.data[a * p.covariance.cols + b]!,
+  }));
+  const gMass = diag(muIdx);
+  const gBodies: Group[] = [...bodyStateIdx.entries()].flatMap(([id, list]) => {
+    const C = inp.othersCov?.[id];
+    return C ? [{ cols: list, C: (a: number, b: number) => C.data[a * 6 + b]! }] : [];
+  });
   // A source that cannot move the path, or carries no uncertainty, needs no propagation.
   const weight = new Float64Array(q);
-  for (let i = 0; i < 6; i++) weight[i] = 1;
-  for (const [i, s] of engineCols) weight[i] = s;
-  for (const i of etaIdx) weight[i] = inp.sigmaH;
-  for (const [i, s] of etaEIdx) weight[i] = s;
-  for (const [i, s] of muIdx) weight[i] = s;
-  nodeIdx.forEach((list, j) => {
-    const C = profiles[j]!.covariance;
-    list.forEach((i, b) => (weight[i] = C.data[b * C.cols + b]!));
-  });
-  const S: (Float64Array | null)[] = []; // per param: d(rel pos)/dq, length 3T (null: zero)
+  const mark = (g: Group) =>
+    g.cols.forEach((i, a) => (weight[i] = Math.max(weight[i]!, Math.abs(g.C(a, a)))));
+  [gState, gEngine, gHedgeD, gHedgeE, gMass, ...gProfile, ...gBodies].forEach(mark);
+  const S: (Float64Array | null)[] = []; // per param: d(ship rel pos)/dq, length 3T (null: zero)
+  const SB: (Float64Array | null)[] = []; // per param: d(bodies' rel pos)/dq, length 3·nO·T
   const xp = Float64Array.from(x);
   for (let i = 0; i < q; i++) {
-    if (!(weight[i]! > 0) || !ca.moves.has(i)) {
+    const couple = coupling.get(i) ?? [];
+    if (!(weight[i]! > 0) || (!ca.moves.has(i) && couple.length === 0)) {
       S.push(null);
+      SB.push(null);
       continue;
     }
     const step = h * scale[i]!;
-    xp[i] = x[i]! + step;
-    const plus = run(xp).state;
-    xp[i] = x[i]! - step;
-    const minus = run(xp).state;
+    const shift = (sgn: number) => {
+      xp[i] = x[i]! + sgn * step;
+      for (const [k, c] of couple) xp[k] = x[k]! + sgn * c * step;
+    };
+    shift(1);
+    const plus = run(xp);
+    shift(-1);
+    const minus = run(xp);
     xp[i] = x[i]!;
+    for (const [k] of couple) xp[k] = x[k]!;
     const col = new Float64Array(3 * T);
-    for (let k = 0; k < T; k++)
-      for (let c = 0; c < 3; c++) col[3 * k + c] = (plus[k]![c]! - minus[k]![c]!) / (2 * step);
+    const colB = new Float64Array(3 * nO * T);
+    for (let k = 0; k < T; k++) {
+      for (let c = 0; c < 3; c++)
+        col[3 * k + c] = (plus.state[k]![c]! - minus.state[k]![c]!) / (2 * step);
+      for (let o = 0; o < nO; o++)
+        for (let c = 0; c < 3; c++)
+          colB[3 * (nO * k + o) + c] =
+            (plus.bodies[k]![6 * o + c]! - minus.bodies[k]![6 * o + c]!) / (2 * step);
+    }
     S.push(col);
+    SB.push(nO > 0 ? colB : null);
   }
-  const outer = (
-    cols: readonly number[],
-    C: (a: number, b: number) => number,
-    k: number,
-  ): Matrix => {
+  /**
+   * Σ over a group of u_a C_ab u_bᵀ at time k, where u_a (three numbers) is the column of the
+   * combination `coefShip · ship − Σ coefBody · body` for parameter a.
+   */
+  const quad = (groups: readonly Group[], k: number, body: number | null, withShip = true) => {
     const m = zeros(3, 3);
-    for (let a = 0; a < cols.length; a++) {
-      const sa = S[cols[a]!];
-      if (!sa) continue;
-      for (let b = 0; b < cols.length; b++) {
-        const sb = S[cols[b]!];
-        if (!sb) continue;
-        const c = C(a, b);
-        if (c === 0) continue;
+    const u = (i: number, out: number[]): boolean => {
+      const s = S[i];
+      const sb = SB[i];
+      if (!s && !sb) return false;
+      for (let c = 0; c < 3; c++) {
+        let v = withShip && s ? s[3 * k + c]! : 0;
+        if (body !== null && sb) v -= sb[3 * (nO * k + body) + c]!;
+        out[c] = v;
+      }
+      return true;
+    };
+    const ua = [0, 0, 0];
+    for (const g of groups) {
+      const n = g.cols.length;
+      const U: (number[] | null)[] = g.cols.map((i) => {
+        const o = [0, 0, 0];
+        return u(i, o) ? o : null;
+      });
+      for (let a = 0; a < n; a++) {
+        const A = U[a];
+        if (!A) continue;
+        // w = Σ_b C_ab u_b, then m += A wᵀ
+        ua[0] = 0;
+        ua[1] = 0;
+        ua[2] = 0;
+        for (let b = 0; b < n; b++) {
+          const B = U[b];
+          if (!B) continue;
+          const c = g.C(a, b);
+          if (c === 0) continue;
+          ua[0]! += c * B[0]!;
+          ua[1]! += c * B[1]!;
+          ua[2]! += c * B[2]!;
+        }
         for (let r = 0; r < 3; r++)
-          for (let s = 0; s < 3; s++) m.data[3 * r + s]! += sa[3 * k + r]! * c * sb[3 * k + s]!;
+          for (let s = 0; s < 3; s++) m.data[3 * r + s]! += A[r]! * ua[s]!;
       }
     }
     return m;
@@ -1094,25 +1463,20 @@ export function forecastCore(inp: ForecastCoreInput): ForecastCoreResult {
     for (const q2 of ms) for (let i = 0; i < 9; i++) m.data[i]! += q2.data[i]!;
     return m;
   };
-  const stateCols = [0, 1, 2, 3, 4, 5];
-  const sh2 = inp.sigmaH * inp.sigmaH;
+  const allGroups = [gState, gEngine, gHedgeD, gHedgeE, gMass, ...gProfile, ...gBodies];
+  const indepGroups = [gState, gEngine, ...gBodies];
   const covs: CovSplit[] = new Array(T);
+  const bodyCovs: Record<string, Matrix>[] = new Array(T);
+  const relCovs: Record<string, Matrix>[] = new Array(T);
   for (let k = 0; k < T; k++) {
-    const state = outer(stateCols, (a, b) => inp.s2 * inp.PNow.data[a * 6 + b]!, k);
-    const engine = outer(
-      engineCols.map((c) => c[0]),
-      (a, b) => (a === b ? engineCols[a]![1] ** 2 : 0),
-      k,
-    );
-    const hedgeDefault = outer(etaIdx, (a, b) => (a === b ? sh2 : 0), k);
-    const hedgeEarned = add(...etaEIdx.map(([i, se]) => outer([i], () => se * se, k)));
+    const state = quad([gState], k, null);
+    const engine = quad([gEngine], k, null);
+    const hedgeDefault = quad([gHedgeD], k, null);
+    const hedgeEarned = quad([gHedgeE], k, null);
     const hedge = add(hedgeDefault, hedgeEarned);
-    const profile = add(
-      ...profiles.map((p, j) =>
-        outer(nodeIdx[j]!, (a, b) => p.covariance.data[a * p.covariance.cols + b]!, k),
-      ),
-    );
-    const mass = add(...muIdx.map(([i, sig]) => outer([i], () => sig * sig, k)));
+    const profile = quad(gProfile, k, null);
+    const mass = quad([gMass], k, null);
+    const bodies = quad(gBodies, k, null);
     covs[k] = {
       state,
       profile,
@@ -1121,17 +1485,32 @@ export function forecastCore(inp: ForecastCoreInput): ForecastCoreResult {
       hedgeDefault,
       engine,
       mass,
-      total: add(state, profile, hedge, engine, mass),
+      bodies,
+      total: add(state, profile, hedge, engine, mass, bodies),
     };
+    const bc: Record<string, Matrix> = {};
+    const rc: Record<string, Matrix> = {};
+    others.forEach((o, j) => {
+      bc[o.id] = quad(allGroups, k, j, false);
+      rc[o.id] = quad(allGroups, k, j);
+    });
+    bodyCovs[k] = bc;
+    relCovs[k] = rc;
   }
   // restore requested order
   const outMean: Float64Array[] = new Array(T);
   const outCov: CovSplit[] = new Array(T);
   const outBodies: Float64Array[] = new Array(T);
+  const outBodyCov: Record<string, Matrix>[] = new Array(T);
+  const outRelCov: Record<string, Matrix>[] = new Array(T);
+  const sortedOf = new Array<number>(T);
   order.forEach(([, i], k) => {
     outMean[i] = base.state[k]!;
     outCov[i] = covs[k]!;
     outBodies[i] = base.bodies[k]!;
+    outBodyCov[i] = bodyCovs[k]!;
+    outRelCov[i] = relCovs[k]!;
+    sortedOf[i] = k;
   });
   const unsort = (col: Float64Array) => {
     const o = new Float64Array(3 * T);
@@ -1140,7 +1519,18 @@ export function forecastCore(inp: ForecastCoreInput): ForecastCoreResult {
     });
     return o;
   };
+  const unsortBody = (col: Float64Array | null, j: number) => {
+    const o = new Float64Array(3 * T);
+    if (!col) return o;
+    order.forEach(([, i], k) => {
+      for (let c = 0; c < 3; c++) o[3 * i + c] = col[3 * (nO * k + j) + c]!;
+    });
+    return o;
+  };
   const columns = new Map<string, Float64Array>();
+  const bodyColumns = new Map<string, Map<string, Float64Array>>(
+    others.map((o) => [o.id, new Map<string, Float64Array>()]),
+  );
   const zero = new Float64Array(3 * T);
   // Sources shared with any other forecast under the same law are named by what they are, not
   // by their place in this forecast's list.
@@ -1154,35 +1544,46 @@ export function forecastCore(inp: ForecastCoreInput): ForecastCoreResult {
     }
     return names[i]!;
   };
+  const setCol = (i: number, nm: string) => {
+    columns.set(nm, S[i] ? unsort(S[i]) : zero);
+    others.forEach((o, j) => bodyColumns.get(o.id)!.set(nm, unsortBody(SB[i] ?? null, j)));
+  };
   const shared: { names: string[]; cov: Matrix }[] = [];
   profiles.forEach((p, j) => {
     const nm = nodeIdx[j]!.map(sharedName);
-    nodeIdx[j]!.forEach((i, b) => columns.set(nm[b]!, S[i] ? unsort(S[i]) : zero));
+    nodeIdx[j]!.forEach((i, b) => setCol(i, nm[b]!));
     shared.push({ names: nm, cov: p.covariance });
     const e = etaIdx[j]!;
-    columns.set(sharedName(e), S[e] ? unsort(S[e]) : zero);
+    setCol(e, sharedName(e));
     shared.push({ names: [sharedName(e)], cov: { rows: 1, cols: 1, data: Float64Array.of(sh2) } });
   });
   for (const [i, se] of etaEIdx) {
-    columns.set(sharedName(i), S[i] ? unsort(S[i]) : zero);
+    setCol(i, sharedName(i));
     shared.push({
       names: [sharedName(i)],
       cov: { rows: 1, cols: 1, data: Float64Array.of(se * se) },
     });
   }
   for (const [i, sig] of muIdx) {
-    columns.set(names[i]!, S[i] ? unsort(S[i]) : zero);
+    setCol(i, names[i]!);
     shared.push({
       names: [names[i]!],
       cov: { rows: 1, cols: 1, data: Float64Array.of(sig * sig) },
     });
   }
+  const bodyIndex = new Map(others.map((o, j) => [o.id, j]));
+  const independent = (k: number, body: string | null): Matrix => {
+    const j = body === null ? null : (bodyIndex.get(body) ?? null);
+    return quad(indepGroups, sortedOf[k]!, j);
+  };
   return {
     times: inp.times,
     mean: outMean,
     bodies: outBodies,
     cov: outCov,
-    sensitivity: { columns, shared },
+    bodyCov: outBodyCov,
+    relCov: outRelCov,
+    sensitivity: { columns, shared, bodyColumns, independent },
   };
 }
 

@@ -65,29 +65,78 @@ import {
   agingBetween,
   arcCalibration,
   arrivalState,
+  bodiesAt,
   contextFor,
+  latestWindows,
   misalignId,
   pitchId,
   presentState,
   referenceFor,
   scaleId,
-  windowRule,
   type ModelContext,
   type ModelSnapshot,
 } from './engine.ts';
-import { zeros, type Matrix } from './linalg.ts';
+import type { Matrix } from './linalg.ts';
 import { asteroidOf } from './probes.ts';
 import {
   anchorState,
   forecastCore,
   majorSigma,
-  makeWindows,
+  rangeFixes,
   wholeArcWindow,
   type ForecastCoreResult,
   type ProfileFit,
+  type Window,
 } from './tierL.ts';
 
 export type { AsteroidForecastNote, ForecastDetail } from '../contracts/index.ts';
+
+/** One sample's sizes by source, with the other bodies' share (`CovSplit.bodies`). */
+export interface ModelSigmaBySource extends ForecastSigmaBySource {
+  /** The other bodies' believed states at the present time (where they are pulls the ship), m. */
+  readonly bodies: number;
+}
+
+/**
+ * The model's forecast detail: the contract's (`ForecastDetail`), plus which body the present
+ * state was fixed against and how old it is (2F request 12).
+ */
+export interface ModelForecastDetail extends ForecastDetail {
+  readonly sigmaMajor: readonly ModelSigmaBySource[];
+  /**
+   * The body the present state was fixed against: the one the camera tracked most recently, and
+   * the forecast's reference. Every covariance in the forecast (the ship's samples, the other
+   * bodies' tracks) is relative to it; its own track carries none.
+   */
+  readonly presentBody: string;
+  /** Issue time minus the present state's time, s. */
+  readonly presentAge: number;
+  /**
+   * The present state is older than `settings.presentStaleAfter` (nothing was tracked lately):
+   * the forecast is then carried from that older state, and says so.
+   */
+  readonly stale: boolean;
+}
+
+/**
+ * The record as it stood at time t: what had been measured, executed and seen by then (A18: a
+ * forecast is computed from the moment of commitment while time keeps running, so records that
+ * arrive while it is being computed, the committed plan's own execution among them, must not
+ * enter it).
+ */
+export function recordAsOf(rec: AttemptRecord, t: number): AttemptRecord {
+  const later = <T extends { readonly t: number }>(a: readonly T[]) => a.some((x) => x.t > t);
+  const ended = rec.outcome.kind !== 'in-progress' && rec.outcome.t > t;
+  if (!later(rec.measurements) && !later(rec.executed) && !later(rec.events) && !ended) return rec;
+  const upTo = <T extends { readonly t: number }>(a: readonly T[]) => a.filter((x) => x.t <= t);
+  return {
+    ...rec,
+    measurements: upTo(rec.measurements),
+    executed: upTo(rec.executed),
+    events: upTo(rec.events),
+    ...(ended ? { outcome: { kind: 'in-progress' as const } } : {}),
+  };
+}
 
 export interface ForecastRequest {
   readonly id: ForecastId;
@@ -186,42 +235,57 @@ function handsOnTurnRate(ship: ShipDefinition): number {
   return typeof v === 'number' ? v : 0;
 }
 
-/** Build the forecast draft for a plan (not yet issued: pass it to issueForecast). */
+/**
+ * Build the forecast draft for a plan (not yet issued: pass it to issueForecast).
+ *
+ * It is computed as of `req.issuedAt`: the present state and the executed commands come from the
+ * record up to that time only, so a forecast asked for at the moment of commitment is the same
+ * however much has been recorded by the time it is served (A18).
+ */
 export function buildForecast(
   snap: ModelSnapshot,
   ctx: ModelContext,
   req: ForecastRequest,
-): { draft: ForecastDraft; detail: ForecastDetail } {
+): { draft: ForecastDraft; detail: ModelForecastDetail } {
   const d = snap.derived;
   const spec = d.spec;
   const s = spec.settings;
   const model = ctx;
+  const record = recordAsOf(req.record, req.issuedAt);
   // This attempt's geometry (A10): bodies, asteroids and arrival estimate from its briefing.
-  ctx = contextFor(model, req.record);
+  ctx = contextFor(model, record);
   const present =
-    (d.present && d.problem.builds.has(req.record.id) ? d.present : null) ??
-    presentState(d, model, req.record.id) ??
+    (d.present && d.problem.builds.has(record.id) && d.present.t <= req.issuedAt
+      ? d.present
+      : null) ??
+    presentState(d, model, record.id, req.issuedAt) ??
     arrivalState(ctx, spec);
   const tNow = present.t;
   // Nothing after the last sample can change the forecast, so every burn stops there at the
   // latest: a held burn is commanded for far longer than any forecast.
   const tStop = req.issuedAt + (req.duration ?? s.forecastMaxDuration);
   const untilStop = (b: Burn): Burn => (b.t1 > tStop ? { ...b, t1: tStop } : b);
-  const arcId = d.problem.builds.get(req.record.id)?.arcs.at(-1)?.id ?? req.record.id;
-  const ref = referenceFor(d, spec.primary, arcId, model);
+  const arcs = d.problem.builds.get(record.id)?.arcs ?? [];
+  const arcId = (arcs.filter((a) => a.epoch <= req.issuedAt).at(-1) ?? arcs[0])?.id ?? record.id;
+  // The forecast runs relative to the body the present state was fixed against (2F request 12),
+  // with what the model knows of the other bodies there (2F request 13).
+  const R = present.body;
+  const ref = referenceFor(d, R, arcId, model);
+  const bodiesNow = spec.dynamic ? bodiesAt(d, model, arcId, R, tNow, req.issuedAt) : null;
   const muOf = (id: string) => d.values[`body.${id}.mu`] ?? 0;
 
   // Executed burns not finished at the present state, then the plan's burns. A hands-on burn
   // still open when the forecast is issued stops at the last record (it is not known to go on);
   // a commanded burn of the attempt in progress runs on as commanded; once the attempt has
-  // ended, nothing thrusts past its end.
-  const att = new AttitudeLog(req.record.measurements);
-  const mass = new MassLog(ctx.ship, req.record.measurements, arrivalMassOf(ctx));
+  // ended, nothing thrusts past its end. The plan being forecast is in the plan: its own executed
+  // commands (one recorded at the moment of commitment, A18) are not counted again.
+  const att = new AttitudeLog(record.measurements);
+  const mass = new MassLog(ctx.ship, record.measurements, arrivalMassOf(ctx));
   const adaptCtx = { ship: ctx.ship, settings: s, bodies: spec.bodies, primary: spec.primary };
   const executed = burnsFromExecuted(
-    req.record.executed,
-    req.record.outcome.kind === 'in-progress' ? Infinity : req.record.outcome.t,
-    handsOnThrust(ctx.ship, recordEnd(req.record)),
+    record.executed.filter((e) => e.planId === undefined || e.planId !== req.plan.id),
+    record.outcome.kind === 'in-progress' ? Infinity : record.outcome.t,
+    handsOnThrust(ctx.ship, recordEnd(record)),
   )
     .map(untilStop)
     .filter((b) => b.t1 > tNow && b.t1 > b.t0);
@@ -252,8 +316,8 @@ export function buildForecast(
   };
   /** Believed game-frame state of the ship and bodies at t. */
   const frameAt = (rel: ArrayLike<number>, bodies: ArrayLike<number>, t: number) => {
-    // bodies: six numbers per other body, relative to the primary
-    let M = muOf(spec.primary);
+    // bodies: six numbers per other body, relative to the reference body R
+    let M = muOf(R);
     let bp: Vec3 = { x: 0, y: 0, z: 0 };
     let bv: Vec3 = { x: 0, y: 0, z: 0 };
     others.forEach((o, k) => {
@@ -262,19 +326,19 @@ export function buildForecast(
       bp = add(bp, scale(vec(bodies, 6 * k), m));
       bv = add(bv, scale(vec(bodies, 6 * k + 3), m));
     });
-    const primary = ctx.bodies.find((b) => b.id === spec.primary);
+    const refBody = ctx.bodies.find((b) => b.id === R);
     const zero = { x: 0, y: 0, z: 0 };
     let pp: Vec3;
     let pv: Vec3;
     if (!spec.dynamic || M <= 0) {
-      pv = primary?.velocity ?? zero;
-      pp = add(primary?.position ?? zero, scale(pv, t));
+      pv = refBody?.velocity ?? zero;
+      pp = add(refBody?.position ?? zero, scale(pv, t));
     } else {
       pp = sub(add(bc.p, scale(bc.v, t)), scale(bp, 1 / M));
       pv = sub(bc.v, scale(bv, 1 / M));
     }
     const ship = { position: add(pp, vec(rel, 0)), velocity: add(pv, vec(rel, 3)) };
-    const bodyPos: Record<string, Vec3> = { [spec.primary]: pp };
+    const bodyPos: Record<string, Vec3> = { [R]: pp };
     others.forEach((o, k) => (bodyPos[o.id] = add(pp, vec(bodies, 6 * k))));
     return { ship, bodyPos };
   };
@@ -416,15 +480,14 @@ export function buildForecast(
   // Engine terms for burns (§3.7, §8.2): the current arc's values and σ (arrival value plus its
   // deviation), else the arrival value, else the prior; plus aging from the last measurement
   // that constrained them to the time of issue.
-  const shipArcs = d.problem.builds.get(req.record.id)?.arcs ?? [];
-  const lastArc = shipArcs[shipArcs.length - 1];
+  const lastArc = arcs.find((a) => a.id === arcId);
   const current = new Map((lastArc ? arcCalibration(d, lastArc.id) : []).map((c) => [c.id, c]));
   const engineTerm = (id: string, fallback: number, fallbackSigma: number) => {
     const c = current.get(id);
     const prior = ctx.priors.find((p) => p.id === id);
     const value = c?.value ?? d.values[id] ?? prior?.value ?? fallback;
     const sigma = c?.sigma ?? d.sigmas[id] ?? prior?.sigma ?? fallbackSigma;
-    const aged = agingBetween(d, req.record, id, c?.tLast ?? 0, req.issuedAt).variance;
+    const aged = agingBetween(d, record, id, c?.tLast ?? 0, req.issuedAt).variance;
     return { value, sigma: Math.sqrt(sigma * sigma + aged) };
   };
   const engines: Record<string, { kE: number; dE: number; dP: number }> = {};
@@ -472,17 +535,21 @@ export function buildForecast(
     engineSigmas,
     rcsSigma: kR.sigma,
     muSigma,
+    ...(spec.dynamic ? { bodyLaw: true } : {}),
+    ...(bodiesNow ? { othersCov: bodiesNow.cov, othersEta: bodiesNow.eta } : {}),
+    ...(present.hedge ? { xNowEta: present.hedge } : {}),
     h: s.fdStep,
   });
 
-  // Horizon (§8.4) and samples.
+  // Horizon (§8.4) and samples. Distances and their uncertainty are taken relative to each body:
+  // the other bodies' believed motion is uncertain too (2F request 13).
   const radius = (id: string) => ctx.bodies.find((b) => b.id === id)?.radius ?? 0;
   // The farthest point of the hull from the centre of mass, in 3D.
   const hull = hullReach(req.massProperties.hull, req.massProperties.centerOfMass);
   const samples: ForecastSample[] = [];
-  const sigmaMajor: ForecastSigmaBySource[] = [];
-  /** The ship's samples inside the horizon: index into fc, position, believed frame origin. */
-  const kept: { k: number; t: number; ship: Vec3; primary: Vec3 }[] = [];
+  const sigmaMajor: ModelSigmaBySource[] = [];
+  /** The ship's samples inside the horizon: index into fc, position, believed body positions. */
+  const kept: { k: number; t: number; ship: Vec3; bodyPos: Readonly<Record<string, Vec3>> }[] = [];
   const tracks = new Map<string, { t: number; position: Vec3; positionCov: Cov3 }[]>(
     spec.bodies.map((b) => [b, []]),
   );
@@ -497,16 +564,23 @@ export function buildForecast(
     const cv = fc.cov[k]!;
     const total = majorSigma(cv.total);
     const shipRel = vec(rel);
-    const dist: Record<string, number> = { [spec.primary]: len(shipRel) };
+    const dist: Record<string, number> = { [R]: len(shipRel) };
     others.forEach((o, j) => (dist[o.id] = len(sub(shipRel, vec(bodies, 6 * j)))));
-    const nearest = Math.min(...Object.values(dist));
+    /** The ship's position covariance relative to body id (relative to R it is the total). */
+    const relCov = (id: string): Matrix => (id === R ? cv.total : fc.relCov[k]![id]!);
+    let nearest = R;
+    for (const id of Object.keys(dist)) if (dist[id]! < dist[nearest]!) nearest = id;
     // The line ends at the horizon, and wherever a number stops being finite.
-    if (!(total <= s.horizonFraction * nearest) || !rel.every(Number.isFinite)) break;
+    if (
+      !(majorSigma(relCov(nearest)) <= s.horizonFraction * dist[nearest]!) ||
+      !rel.every(Number.isFinite)
+    )
+      break;
     const t = fc.times[k]!;
     const frame = frameAt(rel, bodies, t);
     // Extrapolating: outside the covered range of the body that pulls hardest here.
     const n = spec.exponent ? (d.values[EXPONENT_ID] ?? 2) : 2;
-    let dominant = spec.primary;
+    let dominant = R;
     let best = -1;
     for (const [id, r] of Object.entries(dist)) {
       const a = (muOf(id) / (s.r0 * s.r0)) * Math.pow(s.r0 / r, n);
@@ -523,7 +597,7 @@ export function buildForecast(
       (d.validated[dominant]?.spans ?? []).some(
         ([lo, hi]) => lo <= dist[dominant]! && dist[dominant]! <= hi,
       );
-    kept.push({ k, t, ship: frame.ship.position, primary: frame.bodyPos[spec.primary]! });
+    kept.push({ k, t, ship: frame.ship.position, bodyPos: frame.bodyPos });
     samples.push({
       t,
       position: frame.ship.position,
@@ -539,13 +613,17 @@ export function buildForecast(
       hedge: majorSigma(cv.hedge),
       engine: majorSigma(cv.engine),
       mass: majorSigma(cv.mass),
+      bodies: majorSigma(cv.bodies),
       total,
     });
     for (const id of spec.bodies) {
       const bp = frame.bodyPos[id]!;
-      tracks.get(id)!.push({ t, position: bp, positionCov: [0, 0, 0, 0, 0, 0] });
+      // Every covariance is relative to R: the other bodies' tracks carry their own (2F
+      // request 13), R's none.
+      const positionCov: Cov3 = id === R ? [0, 0, 0, 0, 0, 0] : toCov3(fc.bodyCov[k]![id]!);
+      tracks.get(id)!.push({ t, position: bp, positionCov });
       // Relative to a modelled body, the ship's envelope is the relative position's (§8.7).
-      bodySeries.get(id)!.push({ t, d: sub(frame.ship.position, bp), cov: cv.total });
+      bodySeries.get(id)!.push({ t, d: sub(frame.ship.position, bp), cov: relCov(id) });
     }
   }
 
@@ -558,30 +636,39 @@ export function buildForecast(
   // Tracked asteroids (§10, §8.7): each from its latest probe arc, flown under the same law.
   const asteroidNotes: AsteroidForecastNote[] = [];
   const latestProbe = new Map<string, Arc>();
-  for (const a of d.probes.get(req.record.id) ?? []) latestProbe.set(asteroidOf(a.id)!, a);
-  const primaryProfile = d.profiles.find((p) => p.body === spec.primary) ?? null;
+  for (const a of d.probes.get(record.id) ?? []) latestProbe.set(asteroidOf(a.id)!, a);
   const keptAt = new Map(kept.map((q) => [q.t, q]));
-  for (const [ast, arc] of latestProbe) {
-    let wins = makeWindows(arc, spec.primary, windowRule(s))
-      .filter((w) => !w.powered && w.fixes.length >= s.windowKeepFixes)
-      .slice(-s.anchorWindows);
-    if (wins.length === 0) {
-      const all = wholeArcWindow(arc, spec.primary);
-      wins = all && all.fixes.length >= s.windowKeepFixes ? [all] : [];
+  for (const [ast, probe] of latestProbe) {
+    const arc = probe.meas.some((m) => m.t > req.issuedAt)
+      ? { ...probe, meas: probe.meas.filter((m) => m.t <= req.issuedAt) }
+      : probe;
+    // The asteroid's present state, like the ship's, from the body it was fixed against last.
+    let pick: { body: string; wins: Window[] } | null = latestWindows(arc, spec.bodies, s);
+    if (!pick) {
+      let lastFix = -Infinity;
+      for (const b of spec.bodies) {
+        const all = wholeArcWindow(arc, b);
+        const end = rangeFixes(arc, b).at(-1)?.t ?? -Infinity;
+        if (all && all.fixes.length >= s.windowKeepFixes && end > lastFix) {
+          pick = { body: b, wins: [all] };
+          lastFix = end;
+        }
+      }
     }
-    if (wins.length === 0) {
+    if (!pick) {
       asteroidNotes.push({ id: ast, forecast: false });
       continue;
     }
-    const aref = referenceFor(d, spec.primary, arc.id, model);
+    const Ra = pick.body;
+    const aref = referenceFor(d, Ra, arc.id, model);
     // A track whose present state cannot be fitted is not forecast; the ship's forecast stands.
     let anc: ReturnType<typeof anchorState>;
     try {
-      anc = anchorState(aref, primaryProfile, arc, wins, s.dt, {
+      anc = anchorState(aref, d.profiles.find((p) => p.body === Ra) ?? null, arc, pick.wins, s.dt, {
         h: s.fdStep,
         gPrior: [1, s.localScalePriorSigma],
         slopeSigma: s.anchorSlopePriorSigma,
-        extraProfiles: d.profiles.filter((p) => p.body !== spec.primary),
+        extraProfiles: d.profiles.filter((p) => p.body !== Ra),
       });
     } catch {
       asteroidNotes.push({ id: ast, forecast: false });
@@ -607,6 +694,7 @@ export function buildForecast(
       validated: d.validated,
       engineSigma: [0, 0, 0],
       muSigma,
+      ...(spec.dynamic ? { bodyLaw: true } : {}),
       h: s.fdStep,
     });
     const radiusA = ctx.asteroids?.find((q) => q.id === ast)?.radius ?? 0;
@@ -622,12 +710,12 @@ export function buildForecast(
       if (!(majorSigma(cv.total) <= s.horizonFraction * nearest)) break;
       const t = afc.times[k]!;
       const here = keptAt.get(t)!;
-      const position = add(here.primary, vec(rel));
+      const position = add(here.bodyPos[Ra]!, vec(rel));
       track.push({ t, position, positionCov: toCov3(cv.total) });
       series.push({
         t,
         d: sub(here.ship, position),
-        cov: relativeCovariance(fc, here.k, afc, k),
+        cov: relativeCovariance(fc, here.k, afc, k, Ra === R ? null : Ra),
       });
     }
     if (track.length > 0) tracks.set(ast, track);
@@ -646,7 +734,7 @@ export function buildForecast(
     others.forEach((o, k) => z.set(o.stateAt(tNow), 6 * k));
     return frameAt(present.state, z, tNow);
   })();
-  const rate = lastRate(req.record);
+  const rate = lastRate(record);
   const initial: ShipEstimate = {
     t: tNow,
     position: presentFrame.ship.position,
@@ -663,11 +751,14 @@ export function buildForecast(
   }));
   const adopted = snap.state.extensions.filter((e) => e.status === 'adopted').map((e) => e.id);
   const camera = present.camera;
-  const detail: ForecastDetail = {
+  const detail: ModelForecastDetail = {
     sigmaMajor,
     presentSource: present.source,
     presentTime: tNow,
     asteroids: asteroidNotes,
+    presentBody: R,
+    presentAge: req.issuedAt - tNow,
+    stale: req.issuedAt - tNow > s.presentStaleAfter,
   };
   const draft: ForecastDraft = {
     id: req.id,
@@ -739,25 +830,30 @@ function burnForce(
 /**
  * §8.7: covariance of the relative position d = r_object − r_ship at one sample. Not the sum of
  * the two envelopes: both paths respond to the same law, so the shared sources (profile nodes,
- * hedge exponents, unprofiled masses) enter through S_object − S_ship. The two present states
- * and the ship's engine terms are independent.
+ * hedge exponents, unprofiled masses) enter through S_object − S_ship. The two present states,
+ * the ship's engine terms and the bodies' states in the ship's forecast are independent.
+ *
+ * `via`: the body the object's forecast is relative to, when it is not the ship forecast's
+ * reference body: then d = (object − via) − (ship − via), and the ship's side is taken relative
+ * to that body.
  */
 function relativeCovariance(
   ship: ForecastCoreResult,
   ks: number,
   obj: ForecastCoreResult,
   ko: number,
+  via: string | null,
 ): Matrix {
-  const m = zeros(3, 3);
-  for (let i = 0; i < 9; i++)
-    m.data[i] =
-      ship.cov[ks]!.state.data[i]! + ship.cov[ks]!.engine.data[i]! + obj.cov[ko]!.state.data[i]!;
+  const m = ship.sensitivity.independent(ks, via);
+  for (let i = 0; i < 9; i++) m.data[i]! += obj.cov[ko]!.state.data[i]!;
   const col = (r: ForecastCoreResult, name: string, k: number, c: number) =>
     r.sensitivity.columns.get(name)?.[3 * k + c] ?? 0;
+  const viaCol = (name: string, c: number) =>
+    via === null ? 0 : (ship.sensitivity.bodyColumns.get(via)?.get(name)?.[3 * ks + c] ?? 0);
   for (const blk of ship.sensitivity.shared) {
     const n = blk.names.length;
     const S = blk.names.map((name) =>
-      [0, 1, 2].map((c) => col(obj, name, ko, c) - col(ship, name, ks, c)),
+      [0, 1, 2].map((c) => col(obj, name, ko, c) - (col(ship, name, ks, c) - viaCol(name, c))),
     );
     for (let a = 0; a < n; a++)
       for (let b = 0; b < n; b++) {

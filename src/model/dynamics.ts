@@ -119,6 +119,14 @@ export interface Structure {
   readonly camBias: Refs3;
   readonly emp?: EmpDef;
   readonly profiles?: readonly ProfileDef[];
+  /**
+   * The profiles' hedge also acts on the bodies' pulls on each other (2F request 13): one body
+   * pulls another from a distance the ship's data may never have sampled, and outside the
+   * covered range the law there is as uncertain as anywhere else (§8.2). Only the hedge factor
+   * applies, not the calibration: the bodies' believed motion (its mean) stays that of the bare
+   * law, as fitted. Off by default (fits and the reference vectors).
+   */
+  readonly bodyProfiles?: boolean;
 }
 
 export const SHIP_REFS: Refs6 = [
@@ -400,6 +408,8 @@ export interface CompiledArc {
   readonly gs: readonly ({ g0: Slot; g1: Slot; u0: number } | null)[];
   readonly ship: readonly Slot[];
   readonly dyn: boolean;
+  /** The profiles' hedge acts on the bodies' mutual pulls too (`Structure.bodyProfiles`). */
+  readonly bodyProf: boolean;
   readonly kA: Slot;
   readonly kR: Slot;
   /** Camera misalignment slots (body x, y, z), or null when it is the fixed number zero. */
@@ -540,6 +550,7 @@ export function compileArc(
     ),
     ship: st.ship.map((r) => sl(r)),
     dyn: st.dynamicBodies && st.bodies.length > 1,
+    bodyProf: st.bodyProfiles === true,
     kA: sl(st.kA, measuring),
     kR: anyRcs ? sl(st.kR ?? 1) : slotOf(1, idx, arc.id, s),
     cam: camZero
@@ -740,34 +751,40 @@ export function simulate(
   const empRef = emp ? 3 * emp.ref : 0;
   const pull = (j: number, rr: number, r: number) =>
     newton ? mu[j]! / (rr * r) : ((mu[j]! / r0sq) * Math.pow(r0 / r, n)) / r;
+  /** The hedge factor body j's profile puts on its pull at ln r = lr: 1 inside its covered range. */
+  const hedgeOf = (j: number, lr: number): number => {
+    const pf = R.prof[j];
+    if (!pf) return 1;
+    const L = lr > pf.lmax ? lr - pf.lmax : lr < pf.lmin ? lr - pf.lmin : 0;
+    if (L === 0) return 1;
+    // Part of the stretch from the covered edge to r inside validated spans (§8.2).
+    let Le = 0;
+    for (const [vlo, vhi] of pf.spans) {
+      if (lr < pf.lmin) Le -= Math.max(Math.min(vhi, pf.lmin) - Math.max(vlo, lr), 0);
+      else Le += Math.max(Math.min(vhi, lr) - Math.max(vlo, pf.lmax), 0);
+    }
+    return Math.exp(-pf.etaE * Le - pf.eta * (L - Le));
+  };
+  /** The multiplier body j's calibration profile and hedge put on its pull at ln r = lr (§8.2). */
+  const profileOf = (j: number, lr: number): number => {
+    const pf = R.prof[j]!;
+    const nn = pf.un.length;
+    const uc = Math.min(Math.max(lr, pf.lmin), pf.lmax);
+    const xq = Math.min(Math.max((uc - pf.un[0]!) / (pf.un[1]! - pf.un[0]!), 0), nn - 1);
+    const i0 = Math.min(Math.floor(xq), nn - 2);
+    const wq = xq - i0;
+    return ((1 - wq) * pf.g[i0]! + wq * pf.g[i0 + 1]!) * hedgeOf(j, lr);
+  };
   /** The multiplier a local scale and a calibration profile put on body j's pull at r² = rr. */
   const scaleOf = (j: number, rr: number): number => {
     let k = 1;
     const gs = R.gs[j];
-    const pf = R.prof[j];
     const lr = 0.5 * Math.log(rr);
     if (gs) k *= gs.g0 + gs.g1 * (lr - gs.u0);
-    if (pf) {
-      const nn = pf.un.length;
-      const uc = Math.min(Math.max(lr, pf.lmin), pf.lmax);
-      const xq = Math.min(Math.max((uc - pf.un[0]!) / (pf.un[1]! - pf.un[0]!), 0), nn - 1);
-      const i0 = Math.min(Math.floor(xq), nn - 2);
-      const wq = xq - i0;
-      const mult = (1 - wq) * pf.g[i0]! + wq * pf.g[i0 + 1]!;
-      const L = lr > pf.lmax ? lr - pf.lmax : lr < pf.lmin ? lr - pf.lmin : 0;
-      if (L === 0) k *= mult;
-      else {
-        // Part of the stretch from the covered edge to r inside validated spans (§8.2).
-        let Le = 0;
-        for (const [vlo, vhi] of pf.spans) {
-          if (lr < pf.lmin) Le -= Math.max(Math.min(vhi, pf.lmin) - Math.max(vlo, lr), 0);
-          else Le += Math.max(Math.min(vhi, lr) - Math.max(vlo, pf.lmax), 0);
-        }
-        k *= mult * Math.exp(-pf.etaE * Le - pf.eta * (L - Le));
-      }
-    }
+    if (R.prof[j]) k *= profileOf(j, lr);
     return k;
   };
+  const bodyProf = ca.bodyProf;
   /** Empirical acceleration on the ship (§6.4), added to `a` at the ship's slots. */
   const empirical = (p: Float64Array, v: Float64Array, a: Float64Array) => {
     const dx = p[ship]! - p[empRef]!;
@@ -819,8 +836,13 @@ export function simulate(
           const dz = p[3 * j + 2]! - zi;
           const rr = dx * dx + dy * dy + dz * dz;
           const r = Math.sqrt(rr);
-          const kj = pull(j, rr, r);
-          const ki = pull(i, rr, r);
+          let kj = pull(j, rr, r);
+          let ki = pull(i, rr, r);
+          if (bodyProf) {
+            const lr = 0.5 * Math.log(rr);
+            kj *= hedgeOf(j, lr);
+            ki *= hedgeOf(i, lr);
+          }
           a[3 * i]! += dx * kj;
           a[3 * i + 1]! += dy * kj;
           a[3 * i + 2]! += dz * kj;
