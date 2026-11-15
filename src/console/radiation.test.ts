@@ -4,6 +4,7 @@
  * that just came up names why warp dropped.
  */
 import { describe, expect, it } from 'vitest';
+import type { Sighting } from '../game/belief/controls.ts';
 import { newlyRaised, raisedAlerts } from './alerts.ts';
 import { doseRate, doseRateView } from './radiation.ts';
 
@@ -97,11 +98,21 @@ describe("the session's own alerts", () => {
   });
 
   it('finds the one that came up, so a warp drop can say why', () => {
+    const at = (alerts: object[], sightings: Sighting[] = []) => ({ alerts, sightings, t: 300 });
     const high = { id: 'radiation-high', level: 'caution', rate: 0.03, threshold: 0.02 };
-    expect(newlyRaised([], [high], 0)?.text).toBe('Radiation high');
-    expect(newlyRaised([high], [high], 0)).toBeUndefined();
+    expect(newlyRaised(at([]), at([high]))?.text).toBe('Radiation high');
+    expect(newlyRaised(at([high]), at([high]))).toBeUndefined();
     const low = { id: 'power-low', level: 'caution' };
     const worse = { id: 'power-low', level: 'warning' };
-    expect(newlyRaised([low], [worse], 0)?.level).toBe('warning');
+    expect(newlyRaised(at([low]), at([worse]))?.level).toBe('warning');
+    // A well's precursor in the window (A19) is one too, with when what it announces is due.
+    const precursor: Sighting = { kind: 'precursor', field: 'popup', seenAt: 300, until: 1200 };
+    expect(newlyRaised(at([]), at([], [precursor]))).toEqual({
+      id: 'sighting-popup',
+      level: 'caution',
+      text: 'Precursor in the window',
+      detail: 'due in 00:15:00',
+    });
+    expect(newlyRaised(at([], [precursor]), at([], [precursor]))).toBeUndefined();
   });
 });

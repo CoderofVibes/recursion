@@ -7,6 +7,7 @@
  * forecast's closest approaches, the miss from that forecast, the gauged reserve, the model's
  * own faults (P11).
  */
+import type { Sighting } from '../game/belief/controls.ts';
 import type { AlertItem, AlertLevel } from '../theme/components/index.ts';
 import { stores } from './data.ts';
 import type { Desk } from './desk.ts';
@@ -80,24 +81,58 @@ export function raisedAlerts(alerts: readonly object[], t: number): AlertItem[] 
 }
 
 /**
- * The session's alert that came up between two of its statuses: the reason when the session
- * dropped warp itself. Only one new at this level counts (as `freshAlerts`).
+ * What the eye has seen that the session calls out (`status().sightings`, A19): a well's
+ * precursor, until what it announces is due. The session drops warp on a new one.
+ */
+export function sightingAlerts(sightings: readonly Sighting[], t: number): AlertItem[] {
+  return sightings.map((s) => {
+    const due = s.until === undefined ? '' : `due in ${clock(s.until - t)}`;
+    return s.kind === 'precursor'
+      ? {
+          id: `sighting-${s.field}`,
+          level: 'caution',
+          text: 'Precursor in the window',
+          ...(due ? { detail: due } : {}),
+        }
+      : {
+          id: `sighting-${s.field}`,
+          level: 'caution',
+          text: `Seen: ${name(s.kind)}`,
+          ...(due ? { detail: due } : {}),
+        };
+  });
+}
+
+/** The session's own alerts and sightings, as the alert stack shows them. */
+export function sessionAlerts(status: {
+  readonly alerts: readonly object[];
+  readonly sightings?: readonly Sighting[];
+  readonly t: number;
+}): AlertItem[] {
+  return [
+    ...raisedAlerts(status.alerts, status.t),
+    ...sightingAlerts(status.sightings ?? [], status.t),
+  ];
+}
+
+/**
+ * What the session raised between two of its statuses (an alert, or a sighting): the reason
+ * when the session dropped warp itself. Only one new at this level counts (as `freshAlerts`).
  */
 export function newlyRaised(
-  before: readonly object[],
-  after: readonly object[],
-  t: number,
+  before: Parameters<typeof sessionAlerts>[0],
+  after: Parameters<typeof sessionAlerts>[0],
 ): AlertItem | undefined {
   const key = (a: AlertItem): string => `${a.id}:${a.level}`;
-  const seen = new Set(raisedAlerts(before, t).map(key));
-  return raisedAlerts(after, t).find((a) => a.level !== 'advisory' && !seen.has(key(a)));
+  const seen = new Set(sessionAlerts(before).map(key));
+  return sessionAlerts(after).find((a) => a.level !== 'advisory' && !seen.has(key(a)));
 }
 
 export function flightAlerts(desk: Desk): AlertItem[] {
   const { game } = desk;
   const status = game.status();
   const snapshot = desk.snapshot();
-  const items: AlertItem[] = raisedAlerts(status.alerts, status.t);
+  const items: AlertItem[] = sessionAlerts(status);
   const failure = desk.modelError();
   if (failure) items.push({ id: 'model', level: 'caution', text: 'Model fault', detail: failure });
   for (const a of desk.flightAlerts) {

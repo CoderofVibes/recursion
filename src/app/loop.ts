@@ -148,10 +148,10 @@ export function startControlRoom(
     const prior = status;
     if (!view.dying()) game.advance(dt);
     status = game.status();
-    // The session drops warp itself on a new alert of its own (power, radiation: A12, A24):
-    // say which beside time.
+    // The session drops warp itself on a new alert of its own (power, radiation: A12, A24) or a
+    // precursor in the window (A19): say which beside time.
     if (prior.warp > 1 && status.warp === 1) {
-      const raised = newlyRaised(prior.alerts, status.alerts, status.t);
+      const raised = newlyRaised(prior, status);
       if (raised) desk.dropWarp(raised.text.toLowerCase());
     }
 

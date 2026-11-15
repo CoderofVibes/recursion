@@ -8,9 +8,17 @@ import type { EquipmentSpec } from '../../contracts/index.ts';
 import { LevelBar, ModeChips, Panel, Readout, ReadoutGrid } from '../../theme/components/index.ts';
 import { Columns } from '../Columns.tsx';
 import { Actions, Button, Caption, Line, NumberField, enter } from '../controls.tsx';
-import { departProgress, fixRate, recorder, recorderEstimate, spendable, stores } from '../data.ts';
+import {
+  departMet,
+  departure,
+  fixRate,
+  recorder,
+  recorderEstimate,
+  spendable,
+  stores,
+} from '../data.ts';
 import type { Desk } from '../desk.ts';
-import { clock, dist, duration, fixed, whole } from '../format.ts';
+import { clock, dist, duration, fixed, name, whole } from '../format.ts';
 import { APPROACH, EVIDENCE } from '../mission.ts';
 import { RegionsPanel } from '../regions.tsx';
 import type { Approach, EvidenceGoal } from '../mission.ts';
@@ -32,7 +40,7 @@ export function MissionPage({ desk }: { readonly desk: Desk }) {
   const main = stores(ship, game.ship, design.reserve).find((s) => s.id === 'main-propellant');
   // What the propellant above the reserve buys (the same figure FLIGHT shows as "to spend").
   const budget = spendable(ship, game.ship, design.reserve);
-  const depart = departProgress(snapshot, game.model.state());
+  const depart = departure(status, snapshot, game.model.state());
   const targets = [
     ...snapshot.world.bodies.map((b) => ({ value: b.id, label: b.name.toUpperCase() })),
     ...snapshot.world.asteroids.map((a) => ({ value: a.id, label: a.id.toUpperCase() })),
@@ -64,18 +72,40 @@ export function MissionPage({ desk }: { readonly desk: Desk }) {
           </Line>
         ))}
         {depart ? (
-          // The frame the objective is judged in, as the ship believes it (S20).
-          <Line
-            label="from the centre of mass"
-            status={
-              depart.speed >= depart.minSpeed && depart.distance >= depart.beyond
-                ? 'nominal'
-                : undefined
-            }
-          >
-            {fixed(depart.speed, 1)} of {whole(depart.minSpeed)} m/s · {dist(depart.distance)} of{' '}
-            {dist(depart.beyond)} out
-          </Line>
+          <>
+            {/* The frame the objective is judged in, as the ship believes it (S20). */}
+            <Line
+              label="from the centre of mass"
+              status={departMet(depart) ? 'nominal' : undefined}
+            >
+              {fixed(depart.speed, 1)} of {whole(depart.minSpeed)} m/s
+              {depart.outward !== undefined && depart.outward <= 0 ? ' · moving inward' : ''} ·{' '}
+              {dist(depart.distance)} of {dist(depart.beyond)} out
+            </Line>
+            {depart.gaugedDeltaV !== undefined && depart.maxDeltaV !== undefined ? (
+              <Line label="spent on leaving">
+                at most {fixed(depart.gaugedDeltaV, 1)} of {fixed(depart.maxDeltaV, 0)} m/s (by the
+                gauges since arrival)
+              </Line>
+            ) : null}
+            {depart.closest && Object.keys(depart.closest).length ? (
+              <Line label="closest so far">
+                {Object.entries(depart.closest)
+                  .map(
+                    ([id, r]) =>
+                      `${snapshot.world.bodies.find((b) => b.id === id)?.name ?? name(id)} ${dist(r)}`,
+                  )
+                  .join(' · ')}
+              </Line>
+            ) : null}
+            {depart.status !== 'pending' ? (
+              <Line label="judged" status={depart.status === 'reached' ? 'nominal' : 'caution'}>
+                {depart.status === 'reached'
+                  ? 'reached: the attempt is complete'
+                  : 'missed on the way out: the attempt goes on'}
+              </Line>
+            ) : null}
+          </>
         ) : null}
         <Caption>evidence goal</Caption>
         <ModeChips

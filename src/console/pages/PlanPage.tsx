@@ -12,13 +12,18 @@ import { useEffect, useRef } from 'react';
 import type { AttitudeTarget, ForecastSigmaBySource, Procedure } from '../../contracts/index.ts';
 import { matchProcedure, saveProcedure } from '../../blackbox/index.ts';
 import type { PlanDraft } from '../../game/belief/controls.ts';
-import { burnDuration, burnSteps } from '../../game/belief/maneuver.ts';
-import type { PlanStep } from '../../game/belief/maneuver.ts';
+import {
+  burnDuration,
+  burnSteps,
+  DEFAULT_BURN_AT,
+  turnReadiness,
+} from '../../game/belief/maneuver.ts';
+import type { PlanStep, TurnReadiness } from '../../game/belief/maneuver.ts';
 import { LevelBar, ModeChips, Panel, Readout, ReadoutGrid } from '../../theme/components/index.ts';
 import { holdFromNose } from '../../view3d/adapter.ts';
 import { Columns } from '../Columns.tsx';
 import { Actions, Button, Caption, Line, NumberField, SelectField } from '../controls.tsx';
-import { visited } from '../data.ts';
+import { burnDirection, visited } from '../data.ts';
 import type { BurnDirection, BurnRow, Desk, DraftState, PlanEdit, PointRow } from '../desk.ts';
 import { clock, dist, duration, fixed, name } from '../format.ts';
 
@@ -46,6 +51,20 @@ const DRAFT_LINE: Readonly<Record<DraftState, string>> = {
   previewed: 'draft · previewed as shown · not scheduled',
   committed: 'committed as shown',
 };
+
+/** A burn's turn: how long it needs, and whether the plan leaves it that long. */
+export function TurnLine({ readiness }: { readonly readiness: TurnReadiness | undefined }) {
+  if (!readiness) return null;
+  const turn = `${fixed((readiness.angle * 180) / Math.PI, 0)}° turn needs ${duration(readiness.needed)}`;
+  return readiness.ready ? (
+    <Line label="turn">{turn}: ready by the burn</Line>
+  ) : (
+    <Line label="turn" status="caution">
+      {turn}; the burn is in {duration(readiness.lead)}: not ready, it fires before the nose is
+      round
+    </Line>
+  );
+}
 
 export function PlanPage({ desk }: { readonly desk: Desk }) {
   const { game } = desk;
@@ -85,6 +104,15 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
         // Relative to where the nose points now, as believed.
         return holdFromNose(ship.attitude, (b.offset * Math.PI) / 180);
     }
+  };
+  /**
+   * Whether the ship will have turned to the burn by its time (2F's `turnReadiness`): from the
+   * believed attitude now, at the design's slew limit. The game never delays a burn, so one
+   * planned sooner fires before the nose is round; the row says so.
+   */
+  const readinessOf = (b: BurnRow) => {
+    const direction = burnDirection(attitudeOf(b), ship, snapshot.world);
+    return direction ? turnReadiness(game.ship, ship.attitude, direction, b.at) : undefined;
   };
   const durationOf = (b: BurnRow): number =>
     b.sizing === 'duration'
@@ -128,7 +156,9 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
         ...e.burns,
         {
           key,
-          at: 600 + e.burns.length * 1200,
+          // 2F's default (S20, R17): the full turn allowance and two minutes more, so a burn as
+          // offered never fires before a half turn has settled; later rows follow 20 min apart.
+          at: DEFAULT_BURN_AT + e.burns.length * 1200,
           direction: 'prograde',
           target: primary,
           offset: 0,
@@ -322,6 +352,7 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
                   ×
                 </button>
               </div>
+              <TurnLine readiness={readinessOf(b)} />
             </div>
           ))}
           <Actions>
