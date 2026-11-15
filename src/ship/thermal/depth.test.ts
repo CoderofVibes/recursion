@@ -24,6 +24,31 @@ const power = (state: ShipSystemsState) =>
   stepPower(state, definition, environment(state), 1).state;
 
 describe('thermal failure paths and deliberate recovery', () => {
+  it.each([0, 0.85, undefined])(
+    'records reported thermal condition (%s), preserving permanent failure',
+    (reportedCondition) => {
+      let state = fresh();
+      const camera = state.equipment.camera!;
+      const values =
+        reportedCondition === undefined ? camera.values : { ...camera.values, reportedCondition };
+      state = edit(state, 'camera', { values });
+      state = { ...state, thermal: { ...state.thermal, service: 380 } };
+      const result = stepThermalProtection(state, definition, 30);
+      expect(result.state.equipment.camera!.condition).toBe(0);
+      expect(result.state.equipment.camera!.faults).toContain('thermal-damage');
+      expect(
+        result.events.filter((e) => e.kind === 'condition-changed' && e.equipment === 'camera'),
+      ).toEqual([
+        {
+          kind: 'condition-changed',
+          t: 30,
+          equipment: 'camera',
+          condition: reportedCondition ?? 0,
+        },
+      ]);
+    },
+  );
+
   it('powers the antifreeze heater while cold and applies thermostat hysteresis', () => {
     let state = edit(fresh(), 'interface-hx', {
       mode: 'antifreeze',

@@ -5,7 +5,15 @@
  */
 
 import type { Command } from '../contracts/commands.ts';
-import type { EnvironmentEffects, FieldRegistry } from '../contracts/truth/index.ts';
+import type {
+  EnvironmentEffects,
+  FieldInstanceSpec,
+  FieldRegistry,
+} from '../contracts/truth/index.ts';
+import type { LossCause } from '../contracts/measurements.ts';
+import type { MassProperties } from '../contracts/ship.ts';
+import type { JsonValue } from '../contracts/units.ts';
+import type { Quat } from '../lib/quat.ts';
 import type { SimState } from '../sim/index.ts';
 import type { Vec3 } from '../lib/vec3.ts';
 import type { BodyId, ObjectiveId, TankId } from '../contracts/ids.ts';
@@ -152,6 +160,70 @@ export interface EncounterSetup {
    * systems step.
    */
   readonly environment?: (state: SimState, effects: EnvironmentEffects) => EnvironmentEffects;
+  /**
+   * Truth that changes on its own schedule during an attempt (3B's appearing wells): advanced
+   * by the truth step at its due epochs with the ship's actual state, kept in the truth state,
+   * and turned into the world's field specs.
+   */
+  readonly dynamics?: EncounterDynamics;
+  /** Structural hazards of the current fields (3B's throats), swept over each tick. */
+  readonly hazards?: (fields: readonly FieldInstanceSpec[]) => EncounterHazards;
+}
+
+/** The ship as an encounter's dynamics sees it at a due epoch: its actual committed state. */
+export interface DynamicsSample {
+  readonly t: Seconds;
+  readonly position: Vec3;
+  readonly velocity: Vec3;
+  /** Encloses the whole hull as it is (deployed parts included), from the centre of mass, m. */
+  readonly hullRadius: number;
+}
+
+/** Something the dynamics did. `seen`: the eye sees it through the window (a precursor). */
+export interface DynamicsEvent {
+  readonly kind: string;
+  readonly t: Seconds;
+  readonly id: string;
+  readonly seen?: boolean;
+  /** For a precursor: when what it announces is due. */
+  readonly until?: Seconds;
+}
+
+export interface EncounterDynamics {
+  /** The state at arrival. Plain JSON: saved with the truth state. */
+  readonly initial: JsonValue;
+  /** The next epoch at which it must be advanced, s, or null. Due epochs fall on ticks. */
+  next(state: JsonValue): Seconds | null;
+  /** Advance to `to`, a due epoch, with the ship's actual state there. Pure. */
+  advance(
+    state: JsonValue,
+    to: Seconds,
+    ship: DynamicsSample,
+  ): { readonly state: JsonValue; readonly events: readonly DynamicsEvent[] };
+  /** The world's field specs for this state, from the ones it has now. */
+  fields(state: JsonValue, specs: readonly FieldInstanceSpec[]): readonly FieldInstanceSpec[];
+  /** A registry for changed specs, when the setup's own accepts only the ones it was built for. */
+  registry?(specs: readonly FieldInstanceSpec[]): FieldRegistry;
+}
+
+export interface HullPoseSample {
+  readonly position: Vec3;
+  readonly attitude: Quat;
+}
+
+export interface EncounterHazards {
+  /**
+   * Contacts of the whole hull (its prisms, at the centre of mass `hull` gives) with the
+   * hazards over a tick, the ship moving straight from `start` to `endPosition` with its start
+   * attitude, earliest first. Each ends the attempt with its cause.
+   */
+  sweep(
+    start: HullPoseSample,
+    hull: Pick<MassProperties, 'centerOfMass' | 'hull'>,
+    endPosition: Vec3,
+    t0: Seconds,
+    t1: Seconds,
+  ): readonly { readonly t: Seconds; readonly field: string; readonly cause: LossCause }[];
 }
 
 /**

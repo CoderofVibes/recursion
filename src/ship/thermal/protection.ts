@@ -115,7 +115,12 @@ export function stepThermalProtection(
       }
     }
     if (condition !== e.condition)
-      events.push({ kind: 'condition-changed', t: at, equipment: e.id, condition });
+      events.push({
+        kind: 'condition-changed',
+        t: at,
+        equipment: e.id,
+        condition: values.reportedCondition ?? condition,
+      });
     if (changed) {
       equipment ??= { ...state.equipment };
       equipment[e.id] = { ...e, values, faults, condition, tripped };

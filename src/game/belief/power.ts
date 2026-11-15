@@ -24,7 +24,7 @@ import type { BelievedShip, ShipDefinition, ShipEvent } from '../../contracts/in
 export type PowerAlertLevel = 'caution' | 'warning';
 
 export interface PowerAlert {
-  readonly id: 'power-low' | 'power-reserve' | 'critical-service';
+  readonly id: 'power-low' | 'power-reserve' | 'critical-service' | 'radiation';
   readonly level: PowerAlertLevel;
   /**
    * Seconds the stored energy lasts at the present demand with no generation (`power-low`), or
@@ -40,6 +40,8 @@ export interface PowerAlert {
   /** `critical-service`: when the shortage began, and when the attempt is lost if it lasts. */
   readonly since?: number;
   readonly deadline?: number;
+  /** `radiation`: the most any equipment item has taken, as the ship reported it, U s. */
+  readonly exposure?: number;
 }
 
 /** [ASSUMED] Nominal fuel-cell numbers when the design does not give them (1C's values). */
@@ -135,15 +137,35 @@ export function shortFunctions(ship: BelievedShip, definition: ShipDefinition): 
   return out;
 }
 
+/** Faults that take a unit out of service, at least for a while (3A). */
+const OUT_OF_SERVICE = new Set([
+  'power-shortfall',
+  'radiation-upset',
+  'radiation-dose-failure',
+  'radiation-burnout',
+  'overcurrent',
+  'overtemperature',
+  'thermal-damage',
+]);
+
 /**
- * The critical function a fault event reports short of power, if any: a `power-shortfall` on a
- * unit the ship may not shed. (A spare in standby being shed is a `load-shed`, and no shortage.)
+ * The critical function a fault event reports a unit of out of service, if any: a shortfall,
+ * an upset (a reboot), a failure or a trip on a unit the ship may not shed. Whether the function
+ * is out depends on its other units; the gauges' next sample says. (A spare in standby being
+ * shed is a `load-shed`, and no shortage.)
  */
 export function criticalFault(event: ShipEvent, definition: ShipDefinition): string | undefined {
-  if (event.kind !== 'equipment-fault' || event.fault !== 'power-shortfall') return undefined;
+  if (event.kind !== 'equipment-fault' || !OUT_OF_SERVICE.has(event.fault)) return undefined;
   const spec = definition.equipment.find((e) => e.id === event.equipment);
   return spec && spec.sheddable === false ? spec.redundancyGroup : undefined;
 }
+
+/**
+ * [ASSUMED: S21] The radiation caution: once the ship reports this much exposure on any one
+ * item, U s. At the clouds' peak it comes 100 s before the first upset; a last-resort cue, not
+ * the main chance to plan (S21 `belt.md`).
+ */
+export const RADIATION_CAUTION = 1;
 
 /** The power alerts the gauges raise now, most serious first. */
 export function powerAlerts(

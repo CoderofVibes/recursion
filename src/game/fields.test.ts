@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 import { createFieldRegistry, type FieldFactory } from '../contracts/truth/index.ts';
 import { createGravityRange } from '../content/gravity-range/index.ts';
 import type { EncounterSetup } from './encounter.ts';
+import { adaptSetup } from './adapters.ts';
 import { createTruthStepper } from './truth-step.ts';
 
 const range = createGravityRange();
@@ -88,5 +89,36 @@ describe('encounter fields in the truth step (R1)', () => {
     const stepper = createTruthStepper(range);
     const state = stepper.step(stepper.initial).state;
     expect(state.exposure).toBeUndefined();
+  });
+});
+
+describe('the registered field encounters load and run (R1)', () => {
+  it('the truth step gives each its hooks', async () => {
+    const { encounterEntry } = await import('./encounters.ts');
+    expect(adaptSetup(encounterEntry('chain-link').create(0)).environment).toBeDefined();
+    const range = encounterEntry('gravity-range').create(0);
+    expect(adaptSetup(range)).toBe(range);
+  });
+
+  it('chain-link: its registry reaches the simulation, its lattice environment the ship', async () => {
+    const { encounterEntry } = await import('./encounters.ts');
+    const setup = encounterEntry('chain-link').create(0);
+    const stepper = createTruthStepper(setup);
+    let state = stepper.initial;
+    for (let i = 0; i < 50; i++) state = stepper.step(state).state;
+    expect(state.lost).toBeUndefined();
+    expect(state.sim.world.t).toBeCloseTo(setup.definition.world.t + 5, 9);
+  });
+
+  it('inverse-wells: its registry, lifecycle and throats', async () => {
+    const { encounterEntry } = await import('./encounters.ts');
+    const setup = adaptSetup(encounterEntry('inverse-wells').create(0));
+    expect(setup.dynamics).toBeDefined();
+    expect(setup.hazards).toBeDefined();
+    const stepper = createTruthStepper(setup);
+    let state = stepper.initial;
+    for (let i = 0; i < 50; i++) state = stepper.step(state).state;
+    expect(state.lost).toBeUndefined();
+    expect(state.dynamics).toBeDefined();
   });
 });

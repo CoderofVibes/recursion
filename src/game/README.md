@@ -26,10 +26,11 @@ Prepare → commit plan (forecast issued and frozen) → operate (time warp) →
 
 | Call (`GameControls`) | Does |
 |---|---|
-| `status()` | Phase (`prepare` / `operate` / `ended`), attempt, time, pause, warp, outcome, pending plan items; `committing` (a committed plan's forecast is still being computed); `attitude` (what the attitude controller is doing: `free`, `hands-on`, `steady`, `hold`, `pointing`, `turning`); `alerts` (the power gauges' cautions and warnings, below) |
+| `status()` | Phase (`prepare` / `operate` / `ended`), attempt, time, pause, warp, outcome, pending plan items; `committing` (a committed plan's forecast is still being computed); `attitude` (what the attitude controller is doing: `free`, `hands-on`, `steady`, `hold`, `pointing`, `turning`); `alerts` (the gauges' cautions and warnings, below); `coasting` and `frameBudget` (A20, below); `departure` (each depart objective as believed, below); `sightings` (what the eye saw that the screens should call out: a well's precursor) |
 | `snapshot()` | `ViewSnapshot` from the believed world, recorded commands and Black Box, plus `window` (what the eye sees, the one part from truth; below) and `coverageEarlier` (what the sensors covered in earlier attempts, from Black Box) |
 | `chart()` | `Chart` for the MAP: one region (this encounter) at the origin, its radius, survey coverage and attempts; leads from the archive that carry a bearing |
-| `setPaused`, `setWarp`, `advance(realSeconds)` | Time. A new attempt starts paused. `advance` stops after `frameBudget` ms (default 10) and reports `saturated`. `setPaused` is for the shell (a hidden page holds the game); nothing in the loop relies on pausing (A12) |
+| `setPaused`, `setWarp`, `advance(realSeconds)` | Time. A new attempt starts paused. `advance` stops after the frame budget and reports `saturated`. `setPaused` is for the shell (a hidden page holds the game); nothing in the loop relies on pausing (A12) |
+| `setFrameBudget({ ms, coastingMs, coastingFrom })` | A20: the slice of each frame `advance` may spend stepping: `ms` ordinarily (10), `coastingMs` while coasting (14), coasting being `coastingFrom` warp (300) or more with nobody flying by hand. The loop sets it with its frame cadence. The step never changes, so every result is the same however the frames slice it [DEMONSTRATED: `frame-budget.test.ts`, 2G's command tape through the session at 10 and 200 ms slices, bit-identical truth and records] |
 | `preview(plan)` | Draft forecast, with its `detail`; nothing recorded or scheduled |
 | `commit(plan)` | Plan epoch = now. The plan is recorded and its items replace any still scheduled at once, and time keeps running (A18 (1)). The model's forecast is computed from the epoch and, when ready, frozen with `issueForecast`, recorded and drawn; it keeps its epoch (`issuedAt`), so the stretch flown before it arrived shows as past. Several commits may be in flight; one whose attempt ends first is not issued and its promise fails |
 | `command(command)` | Manual command, executed on the next tick |
@@ -52,31 +53,38 @@ Pass the state of the player's controls (`HandsOnInput`: translation along the b
 
 ## One tick (`truth-step.ts`)
 
+0. The encounter's **dynamics** (`EncounterSetup.dynamics`: 3B's well lifecycle, `funnels.ts`), due at the tick's start, are advanced with the ship's actual state then; the field specs they imply take effect, and the simulation, registry and hazards are rebuilt for them. Due epochs must fall on ticks.
 1. `buildEnvironment` (`environment.ts`): sensor scene, last step's specific force, sunlight, and `fieldSignals['ship-environment']` as the ship expects it: `visibility`, `knownSizeTargets`, `starsVisible: true` [ASSUMED: the two star trackers between them always see clear sky], `opticsValid: true`.
    - **Shadows** are cylinders of each body's radius behind it along the sun's 3D direction (A3).
    - **Visibility**: a target is not seen in a body's shadow, as the night side of a body the ship is hiding behind, within the sun exclusion angle (a cone about the direction to the sun), or behind another body's sphere.
    - **Known-size targets**: every briefed body and every briefed asteroid. The camera ranges them, so a rock it is pointed at gives azimuth, elevation and range.
-2. Commands due now are resolved from the believed navigation solution (`belief/resolve.ts`) and passed to the ship step. A reference that cannot be resolved is recorded as rejected and never reaches the ship.
+   - **Field intensity** (`fieldIntensity`): every field with an `intensity`, summed at each equipment item's position in the ship's configuration, in lattice units (A16, R14). An encounter's `environment` hook may add to all this (the Gravity range's radiation crescent; 3C's lattice scene, `lattice.ts`). The truth step keeps a raw exposure account (`GameTruthState.exposure`, U s).
+2. Commands due now are resolved from the believed navigation solution (`belief/resolve.ts`) and passed to the ship step. A reference that cannot be resolved is recorded as rejected and never reaches the ship. With field intensity or a reboot pending, the ship step runs through 3A's `integrateConditionedInterval` (`conditionedShipStep`): split at every dose failure, latch trip, upset or reboot end inside the tick, each piece's thrust given to the simulation as the impulse it delivered; otherwise it is the plain ship step [DEMONSTRATED: the command tape identical].
 3. The simulation step, with mass properties at the middle of the step: mass and centre of mass averaged, and the inertia the mean of the two **tensors** (`sym3.fromPrincipal`, then `sym3.principalAxes`), so it is right when the principal axes turn within a step.
-4. `StepResult.contacts` become `ShipEvent` `contact`, with `with` for a body the briefing told the ship about (it knows where those are, looking or not) or for anything the camera could see this tick; a new impact at or above `lossSpeed` loses the ship (`ship-lost`, cause `collision`). Objectives are judged on truth (`objectives.ts`) and reported as `objective` events. The running Δv adds the net thrust force over the mid-step mass each tick: the main engine and RCS translation count, a balanced attitude couple does not [DEMONSTRATED: `truth-step.test.ts`: a 10 s burn matches the rocket equation; a minute of sideways translation is 400 N over the mass; a quarter turn adds under 10⁻³ m/s of trims and a hands-on yaw nothing].
+4. `StepResult.contacts` become `ShipEvent` `contact`, with `with` for a body the briefing told the ship about (it knows where those are, looking or not) or for anything the camera could see this tick; a new impact at or above `lossSpeed` loses the ship (`ship-lost`, cause `collision`). The encounter's **hazards** (`EncounterSetup.hazards`: 3B's throats) are swept over the tick: the earliest contact of any part of the hull ends the attempt with its cause (`structural`). Then **power** (`power.ts`, below). Objectives are judged on truth (`objectives.ts`) and reported as `objective` events. The running Δv adds the net thrust force over the mid-step mass each tick: the main engine and RCS translation count, a balanced attitude couple does not [DEMONSTRATED: `truth-step.test.ts`: a 10 s burn matches the rocket equation; a minute of sideways translation is 400 N over the mass; a quarter turn adds under 10⁻³ m/s of trims and a hands-on yaw nothing].
 
 Out of the tick, toward belief: recorded measurements (telemetry thinned on change, `belief/telemetry.ts`), executed commands with status, and ShipEvents. Nothing else.
 
-`GameTruthState` (`sim`, `objectives`, `lost`) is plain JSON with no negative zero; the stepper is pure [DEMONSTRATED: `truth-step.test.ts`, also through a JSON save part way].
+`GameTruthState` (`sim`, `objectives`, `power`, `dynamics`, `exposure`, `lost`) is plain JSON with no negative zero; the stepper is pure [DEMONSTRATED: `truth-step.test.ts`, also through a JSON save part way]. The truth step gives each field encounter its hooks by encounter id (`adapters.ts`), whatever setup it is handed.
 
-After each tick the session also judges **power** (`power.ts`, A18 (5)): when every life-support unit that should run has gone without the power its mode needs for `play.power.lossGrace`, the ship is lost (`ship-lost`, cause `power`). [This belongs in the tick beside collision loss; it moves into `truth-step.ts` once 2G's speed pass has merged.]
+**Power** (`power.ts`, A16, A18 (5) after S21), one watch on 3A's `electricalService`: both PDUs destroyed loses the ship at once; a critical function (air, internal and external cooling, flight computer, inertial sensing) with no working unit for `play.power.lossGrace` (120 s) in a row loses it, cause `power`. Reboots, cold inhibition and radiation leakage count as not working. An outage that begins with a fault part way through a tick counts from the fault. On recurrence a cooled overtemperature indication is cleared, and damage stays.
 
-### Power cautions (`belief/power.ts`, A12, A18 (5))
+### Alerts (`belief/power.ts`, A12, A18 (5), S21)
 
-Every `play.power.checkEvery` of ship time the session reads the believed ship's gauges: stored energy (the batteries' charge, plus the fuel cells' remaining hydrogen, or oxygen at 8:1, at the spec sheet's specific energy and efficiency) and net drain (the generation buses' load less the arrays' output). `status().alerts` then holds:
+Every `play.power.checkEvery` of ship time, at once on a fault report, and every tick while a critical warning stands, the session reads the believed ship's gauges: stored energy (the batteries' charge as they deliver it, plus the fuel cells' remaining hydrogen, or oxygen at 8:1, at the spec sheet's specific energy and efficiency) and demand (the generation buses' load less the batteries' charging). `status().alerts` then holds:
 
 | Alert | Level | When |
 |---|---|---|
-| `power-low` | caution | The stored energy runs out within `cautionLead` at the present drain |
-| `power-reserve` | warning | The fuel cells are dry and the batteries carry the load |
-| `life-support` | warning | A running life-support unit is short of power (once the ship is dark its recorder stops too, so this one may never be read) |
+| `power-low` | caution | The no-generation endurance (stored energy over demand) is under `cautionLead`, 4 h |
+| `power-reserve` | caution | The fuel cells are dry and the batteries carry the load |
+| `critical-service` | warning | The ship reported a critical unit out of service (shortfall, upset, failure, trip), or the gauges show a critical function unserved. Names the functions; `since` and `deadline` (since + 120 s). Ends when a gauge sample newer than the latest report shows every function served |
+| `radiation` | caution | The ship has reported 1 U s of exposure on some item (S21) |
 
-A new alert, or one that worsened, drops warp to 1× and ends the frame's run of ticks (A12). [DEMONSTRATED: `power.test.ts`: with little stored energy, the caution, then the reserve warning, then the loss; warp at 1× after the caution; the loss more than the caution lead after it; load-shed events and the loss in Black Box.] With the arrays stowed the Gravity range's ship lasts about 45 hours (fuel cells about 40, batteries about 5 more); with them deployed and facing the sun it does not run down.
+A new alert, or one that worsened, drops warp to 1× and ends the frame's run of ticks (A12); a seen precursor does the same (`sightings`). [DEMONSTRATED: `power.test.ts`; `clouds.test.ts`: at the crescent's peak the radiation caution at 20 s, the critical warning's deadline the loss's time.] With the arrays stowed the Gravity range's ship lasts about 44 hours in the dark; with them deployed and facing the sun it does not run down.
+
+### Departure as believed (`belief/departure.ts`, S20, R17)
+
+`status().departure`, one per depart objective, from belief only: distance from the bodies' believed centre of mass (weighted by the model's μ, else the briefing's priors) against the gate; speed and its outward part relative to that centre against `minSpeed` (not the Alpha-relative speed FLIGHT shows); Δv by the propellant gauges since arrival against the cap (an upper bound: it includes turns and learning burns); the closest believed approach to each body; and the ship's own verdict once judged. `belief/maneuver.ts` gives PLAN `DEFAULT_BURN_AT` (600 s) and `turnReadiness` (the turn a burn needs at the slew limit plus 30 s to settle, against the time the plan gives it) [DEMONSTRATED: `maneuver.test.ts`: the real controller settles a half turn in 418 s against 423].
 
 ### The window (`window.ts`)
 
@@ -134,12 +142,12 @@ Content hands the loop an `EncounterSetup`: the `EncounterDefinition`, an arriva
 | `depart` | Judged when the ship crosses outward past `beyond` from the bodies' centre of mass (GM-weighted; a fixed body's velocity is left out), in any direction, or at once if it starts out there. Reached, completing the attempt, when it is moving away at `minSpeed` or more; with `maxDeltaV`, has spent no more than that; and with `assist`, a real gravity assist came first. Otherwise missed, once, with the reason in `progress.why` (`inward`, `speed`, `budget`, `assist`); the attempt goes on (A18 (3)) |
 | … `learningFree` | Thrust spent while the ship cannot leave the primary's lobe, its Jacobi constant above the value at the neck between the first two bodies (`jacobi.ts`; S8: 5,826.6 at the Gravity range's arrival, 5,468.3 at L1), does not count against `maxDeltaV`: dives and a low orbit are free. A burn that opens the lobe counts from the tick it ends below the neck |
 | … `assist` | A visit inside `within` of `body` from which the ship came out with at least `minGain` of specific energy given by the body's motion, ∫ v_body · a_body dt over the visit (S8's witness). A fast arrival that never swings round the body cannot meet it |
-| `reach-region` | The ship's centre of mass inside a sphere about an inertial point or a point carried with a body, below `maxSpeed` relative to it when given, inside `window` when given. The first objective reached completes the attempt and is named in the outcome, so several exits are several objectives. Missed, once, when the window closes |
+| `reach-region` | The whole ship inside a sphere about an inertial point or a point carried with a body at some instant of the tick (swept from the tick's start: the hull's farthest corner within the radius; 3C's R20), below `maxSpeed` relative to it then when given, inside `window` when given; the event carries the instant. The first objective reached completes the attempt and is named in the outcome, so several exits are several objectives. Missed, once, when the window closes |
 | `reserve` | Judged at completion: the tank still holds at least `minimum` |
 
 [DEMONSTRATED: `objectives.test.ts`; `depart.test.ts`: the Jacobi constants match S8's; a dive is free; S8's representative slingshot is reached with 2,400–2,800 m²/s² from Beta against the 1,000 threshold; the strongest plain 16 m/s exit is missed for speed with no Beta visit; S8's counterexample (already outside, fast, nothing spent) is missed for want of an assist; inward crossings are not departures; `reach-region` inertial, body-carried, speed-limited and windowed; `src/content/gravity-range/s8-vectors.test.ts`: S8's low-orbit-then-slingshot, rejected by the old cap at 45.2 m/s, is reached with 3–8 m/s counted.]
 
-`EncounterSetup.fields` carries a field registry for encounters with environment fields (3B, 3C); the truth step hands it to the simulation once 2G's speed pass has merged.
+`EncounterSetup.fields` carries a field registry for encounters with environment fields (3B, 3C); the truth step hands it to the simulation. `.environment`, `.dynamics` and `.hazards` are the encounter's hooks into the tick (above).
 
 ### Loading an encounter (`encounters.ts`)
 
@@ -173,7 +181,8 @@ Until 3D's expedition frame exists, `ENCOUNTERS` lists what the app can load: `{
 | Tracked | while the last fix is younger than 120 s (`TRACK_STALE`) | Six recorder periods |
 | Hands-on thrust drawn | firings of 1 N or more | The allocator trims the centre of mass's 2 mm offset with jets far below that |
 | Earlier coverage | a sample every 60 s, at most 2,000 looks | About 120 looks for a 40 h attempt |
-| Power | caution 6 h before stored energy runs out; loss after 30 min of life support without power; gauges read every 60 s | Placeholders until study S21 |
+| Power | caution 4 h before the no-generation endurance runs out; loss after 120 s without critical service; gauges read every 60 s | S21, approved by the owner |
+| Frame budget | 10 ms a frame, 14 ms while coasting (from 300×) | A20; 2D's cadence, approved |
 
 Plan helpers (`belief/maneuver.ts`): `burnSteps` turns to the burn attitude `TURN_LEAD` (480 s) early, because a half turn at the ship's 0.008 rad/s slew limit settles in 420 s; 5 s after the burn it releases to a zero-rate hold (not `free`: a burn leaves the ship turning, and a free ship goes on turning and smears the camera). `burnDuration` sizes a burn from nominal ratings and believed mass.
 
@@ -187,7 +196,9 @@ Measured side by side in one process, the committed planar game layer (`13df747`
 
 ## Limits
 
-- Loss has two causes, collision and power. Running out of propellant does not end an attempt.
+- Loss has three causes: collision, power (both PDUs, or 120 s without critical service) and structural (a well's throat). Running out of propellant does not end an attempt.
+- The conditioned step holds a tick's field intensity constant, and samples each item at its mount point; sensors acquire at each tick's start.
+- Swept exits (`reach-region`) and the throat crush take the ship as moving straight at its starting attitude over the tick.
 - Objectives are judged on truth; the `objective` event is how the ship learns the result.
 - The navigator and the model are two estimates of the ship's state. The forecast starts from the model's; the ship marker, the trail, command resolution and earlier coverage use the navigator's. They agree to about a kilometre while the camera has fixes on the primary.
 - The navigator's ship covariance carries only the primary's tide; an asteroid's fix adds the ship's position doubt without its correlation, so a rock's stated sigma is slightly optimistic just after a fix (measured up to 1.7σ in the first minutes).

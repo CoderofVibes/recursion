@@ -12,7 +12,8 @@ import { createBlackBox } from './belief/blackbox.ts';
 import { powerAlerts, powerBudget } from './belief/power.ts';
 import { createStandInModel } from './belief/standin-model.ts';
 import { DEFAULT_PLAY, type EncounterSetup } from './encounter.ts';
-import { criticalGroups, evaluatePower, initialPowerProgress, unservedFunctions } from './power.ts';
+import { electricalService } from '../ship/power/service.ts';
+import { evaluatePower, initialPowerProgress, unservedFunctions } from './power.ts';
 import { createGameSession } from './session.ts';
 import { createTruthStepper, type GameTruthState } from './truth-step.ts';
 
@@ -51,13 +52,12 @@ describe('critical electrical service', () => {
   it('S21 values: caution four hours ahead, loss after 120 s', () => {
     expect(DEFAULT_PLAY.power.cautionLead).toBe(4 * 3600);
     expect(DEFAULT_PLAY.power.lossGrace).toBe(120);
-    expect(criticalGroups(ship)).toEqual([
-      'eclss',
-      'internal-pump',
-      'external-pump',
-      'flight-cpu',
-      'imu',
-    ]);
+    // 3A's critical functions (`electricalService`).
+    const first = session(range);
+    first.stepTicks(1);
+    expect(
+      Object.keys(electricalService(first.truth().sim.world.ship.systems, ship).functions),
+    ).toEqual(['air', 'internalCooling', 'externalCooling', 'flightComputer', 'inertialSensing']);
   });
 
   it('a function is served while any working unit of it draws what its mode needs', () => {
@@ -70,13 +70,31 @@ describe('critical electrical service', () => {
       equipment: { ...s.equipment, [id]: { ...s.equipment[id]!, ...change } },
     });
     // The air train drawing 90% of its 1,800 W is short; at 96% it is served.
-    expect(unservedFunctions(set('eclss-a', { powerDraw: 1620 }), ship)).toEqual(['eclss']);
+    expect(unservedFunctions(set('eclss-a', { powerDraw: 1620 }), ship)).toEqual(['air']);
     expect(unservedFunctions(set('eclss-a', { powerDraw: 1730 }), ship)).toEqual([]);
     // A failed or tripped unit serves nothing...
-    expect(unservedFunctions(set('flight-cpu-a', { condition: 0 }), ship)).toEqual(['flight-cpu']);
-    expect(unservedFunctions(set('internal-pump-a', { tripped: true }), ship)).toEqual([
-      'internal-pump',
+    expect(unservedFunctions(set('flight-cpu-a', { condition: 0 }), ship)).toEqual([
+      'flightComputer',
     ]);
+    expect(unservedFunctions(set('internal-pump-a', { tripped: true }), ship)).toEqual([
+      'internalCooling',
+    ]);
+    // Rebooting after a radiation upset, or held off by cold, serves nothing either (3A).
+    const t = s.t;
+    const cpu = s.equipment['flight-cpu-a']!;
+    expect(
+      unservedFunctions(
+        set('flight-cpu-a', { values: { ...cpu.values, radiationRestartUntil: t + 30 } }),
+        ship,
+      ),
+    ).toEqual(['flightComputer']);
+    const pump = s.equipment['external-pump-a']!;
+    expect(
+      unservedFunctions(
+        set('external-pump-a', { values: { ...pump.values, thermalInhibited: 1 } }),
+        ship,
+      ),
+    ).toEqual(['externalCooling']);
     // ...but a healthy spare working in its place does (the ship substitutes; S21).
     const failed = set('eclss-a', { condition: 0 });
     const spare = {
@@ -101,13 +119,28 @@ describe('critical electrical service', () => {
     };
     let p = initialPowerProgress;
     for (let i = 0; i < 119; i++) p = evaluatePower(p, dark, ship, 1, 120).progress;
-    expect(p).toEqual({ unserved: 119, functions: ['eclss'] });
+    expect(p).toEqual({ unserved: 119, functions: ['air'] });
     // Power back for one tick: the count starts again.
     p = evaluatePower(p, s, ship, 1, 120).progress;
     expect(p).toBe(initialPowerProgress);
     for (let i = 0; i < 119; i++) expect(evaluatePower(p, dark, ship, 1, 120).lost).toBe(false);
     for (let i = 0; i < 119; i++) p = evaluatePower(p, dark, ship, 1, 120).progress;
     expect(evaluatePower(p, dark, ship, 1, 120).lost).toBe(true);
+  });
+
+  it('both PDUs destroyed (A16): lost at once, whatever else still runs', () => {
+    const first = session(range);
+    first.stepTicks(1);
+    const s = first.truth().sim.world.ship.systems;
+    const equipment = { ...s.equipment };
+    for (const id of ['pdu-a', 'pdu-b']) equipment[id] = { ...equipment[id]!, condition: 0 };
+    const judged = evaluatePower(initialPowerProgress, { ...s, equipment }, ship, 1, 120);
+    expect(judged).toMatchObject({ lost: true, why: 'distribution' });
+    // One of them: not a loss by itself.
+    const one = { ...s.equipment, 'pdu-a': { ...s.equipment['pdu-a']!, condition: 0 } };
+    expect(evaluatePower(initialPowerProgress, { ...s, equipment: one }, ship, 1, 120).lost).toBe(
+      false,
+    );
   });
 
   it('a dark ship is lost exactly once, 120 s in, and a save part way does not reset the count', () => {
