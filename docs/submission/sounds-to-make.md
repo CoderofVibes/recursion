@@ -8,7 +8,9 @@ For the owner, in ElevenLabs **Sound Effects**. For each one: set the duration, 
 
 **`home-reveal` is dropped too** (owner, 2026-11-15): the console with Earth keeps the room hum, the cabin sound the video already has.
 
-**In so far (4 of 10):** `warning`, `main-engine`, `well-hum`, `lattice-radiation`. **Still to make (6):** `montage-bed`, `final-hit`, `lattice-strike`, `braid-rush`, `well-groan`, `ship-creak`.
+**In so far (7 of 10):** `warning`, `main-engine`, `well-hum`, `lattice-radiation`, `montage-bed`, `final-hit`, `lattice-strike`. **Still to make (3):** `braid-rush`, `well-groan`, `ship-creak`.
+
+**The montage bed now leads under every scene** (owner, 2026-11-15), cut on its own accents, with the effects at half level; so the last three are background texture, not essential.
 
 You don't need to redo `opening-alarm` (R65): the game will play only its first double pip, and the video keeps the long take.
 
