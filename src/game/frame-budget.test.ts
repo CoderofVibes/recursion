@@ -77,6 +77,12 @@ describe('frame budget (A20)', () => {
       blackBox: createBlackBox(),
       now: () => 'now',
     });
+    // A20's approved defaults: 10 ms ordinarily, 14 ms while coasting.
+    session.setPaused(false);
+    session.setWarp(1000);
+    expect(session.status()).toMatchObject({ coasting: true, frameBudget: 14 });
+    session.setPaused(true);
+    session.setWarp(1);
     expect(session.setFrameBudget({ coastingMs: 80 })).toEqual({
       ms: 10,
       coastingMs: 80,

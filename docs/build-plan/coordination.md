@@ -12,7 +12,7 @@ The live state of the build between threads: who is running, who holds which sha
 |---|---|---|---|---|---|
 | 2D control room | Opus 5.5 | `.worktrees/2d` · `p2/2d-control-room` | Running. Merged: S9 R1–R15, S15 console fixes, 2G's screen data, 2C's forecast fields, S20 items, encounter panel mount and 120 m zoom (R4), A20 frame cadence (12 fps while coasting at 60×+), credits tab, elliptical envelopes | Next: OP's hooks (R23), AU's mount (R24), funnels in the window (R13); re-measure SYSTEMS | `635245f` |
 | 2G speed pass | Opus 5.5 | `.worktrees/2g` · `p2/2g-3d-flight` | **Done**, evidence and handoff merged. Next per-tick target: the environment step (rock visibility); a quiet-machine rebaseline is still to run (R11) | — | `bc292a9` |
-| 2F game loop | Opus 5.5 | `.worktrees/2f` · `p2/2f-game` | Running. Merged: fields reach the simulation (R1), S21's 120 s power rule in the tick, swept whole-ship exits, believed departure progress and turn allowance | Next, in order: wells crush loss and lifecycle (R30), A20 budget (R18), 3A wiring (R26), the cloud crescent (R14), R20's acquisition scheduling, R29 | `82f906b` |
+| 2F game loop | Opus 5.5 | `.worktrees/2f` · `p2/2f-game` | Running. Merged: wells in the tick (crush, pop-ups with a precursor warp drop), lattice environment per 0.1 s tick, ChainLinkPanel data, 3A's conditioned step and one power-loss watch, the clouds harm, A20 budget (14 ms coasting), S20's departure status, swept exits | Next: the radiation monitor's caution (R37), sensors acquiring within the tick (R20 remainder), the wells' save seam | `920a9ed` |
 | 2C model and Black Box | Opus 5.5 | `.worktrees/2c` · `p2/2c-model` | Running. Merged: the lattice rebuilt from recorded frames (R9), the Black Box lattice function, condition events by the ship's own ids (R27), coalesced model work (S20) | R32 (funnels) waits on a funnel camera channel (R36) | `e4df230` |
 | 3B Inverse Wells | GPT/Codex | `.worktrees/3b` · `p3/3b-wells` | **Merged**: S22's funnels as an indexed field, the 900 s precursor lifecycle, the downstream exit sphere, registration (`?encounter=inverse-wells`) | Playable needs: crush loss, lifecycle in the tick, window funnels (R30, R31) | `91a666a` |
 | 3C Chain Link Fence | GPT/Codex (GPT-6 Astra) | `.worktrees/3c` · `p3/3c-lattice` | **Done**: twenty fences qualified; sensors on 3A's shared availability; leakage heat no longer boosts sensing or recording; 13 integration tests | Playable in the app once 2F (R20 acquisition scheduling, panel data) and 2C (R9 reconstruction) land | `43e18d9` |
@@ -73,13 +73,13 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 
 | R13 | 3B → 2D | The funnels in the window view (A19: wells are visible, with striking visuals). 3B draws them in `src/view3d/fields/wells/`; 2D mounts them in the room's window and FLIGHT | **Open:** to relay | Folds into R4 |
 
-| R14 | S21 → 3C, 3A, 2F | The Gravity range's radiation-cloud crescent uses the lattice's exposure units and damage seam (3C, 3A); 2F places it as content | **Open:** after the owner approves S21 Q1 | |
+| R14 | S21 → 3C, 3A, 2F | The radiation-cloud crescent | **Done** `920a9ed`: the clouds harm through 3A's condition model; the arrival targets 830 km. Not yet visible in the window (R38) | |
 | R15 | 3C → integrator | Typed acquisition and coverage contracts (from `src/ship/sensors/lattice-observations.ts`; 3C's handoff, "A16 update — concrete shared seams"), plus an archive/save schema bump | **Granted to 3C as a scoped exception**: additive types only; 2C (Black Box) and 2F (save) agree the schema bump | Integrator reviews at merge |
 
 | R16 | 3C → integrator | Land 2F's deterministic-clock fix so 3C's full check goes green | **Done** `7b01be8` | |
 | R17 | S20 → 2F, 2C | Expose believed departure/progress, keep command and forecast epochs while time runs, reconcile PLAN's 400 s default with the 480 s turn allowance; make the real-model loop test deterministic; investigate the populated-archive commit wait | **Open**: relay | |
 
-| R18 | Owner → 2F, 2D | Faster coasting on slow machines (A20) | **2D's half done** (12 frames/s while coasting at 60×+, full rate on input or 1×). 2D proposes a **14 ms simulation budget while coasting** (10 ms otherwise); the integrator approves; 2F exposes it | 2D measures with S15's runner once 2F lands (port 4175) |
+| R18 | Owner → 2F, 2D | Faster coasting (A20) | **Both halves merged**: 2F's budget (10 ms, 14 ms coasting, `setFrameBudget`), 2D's 12 frames/s cadence. With a 40 ms stand-in slice, modest-profile warp went from 84–141× to 212–220×; the combined setting is still to be measured | 2D measures with S15's runner |
 
 | R19 | 3B → integrator | S22's forward exit is a disc crossing; `reach-region` takes spheres | **Decided by the integrator:** the prototype uses a destination sphere entirely beyond S22's exit plane; an exact disc waits for playtest evidence | |
 | R20 | 3C → 2F | In `truth-step.ts`: build the environment at every real acquisition state (`createChainLinkEnvironment(setup).at(state)`), not one frozen scene per second; schedule within the 1 s step to the earliest sensor, recorder, dose, trip or failure event, then integrate the rest; keep acquisition time separate from product availability; swept whole-ship admission for physical exits | **Open**: relay | After the fields wiring (R1) and A20 |
@@ -92,22 +92,27 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 | R24 | AU → 2D | One mount line in `src/app/` for the audio module, plus a mute control | **Open** | |
 | R25 | AU → owner | The cue list in `docs/audio/cues.md` with ElevenLabs prompts; the owner generates the files into `public/audio/` | **Open**: waits on AU's first checkpoint | Credit ElevenLabs (A22) |
 
-| R26 | 3A → 2F | Wrap the ship step with `integrateConditionedInterval`, capping intervals at electrical, resource and intensity edges, and re-dispatching after every fault; drive A16's dual-PDU loss and A18's 120 s rule from `electricalService`; extend `unservedFunctions` with reboot and cold inhibition; on recurrence, clear an overtemperature indication but keep damage, freeze rupture and exposure | **Open**: relay | One loss watch, not two |
+| R26 | 3A → 2F | 3A's wiring | **Done** `920a9ed` | |
 | R27 | 3A → 2C | Consume `condition-changed` events | **Done** `e4df230`; found that 3A emits true, not reported, condition (R34) | |
 | R28 | 3A → integrator | Console set to the `hardened` radiation profile (A16) | **Done** (this commit) | Save/field chronology versioning when the encounters land |
 
-| R29 | 2D → 2F | `src/game/model-loop.test.ts` failed once under the full suite and passes alone; give it an explicit timeout if it's load-sensitive | **Open**: relay | |
+| R29 | 2D → 2F | `model-loop` test under load | **Done**: timeout 900 s; the integrator also set a 30 s default per test (`vitest.config.ts`) | |
 
-| R30 | 3B → 2F (with integrator for `src/sim`) | Wells in the tick: structural loss at the earliest contact of any ship part with an active throat (3B's `createFunnelCrushIndex`, `createFunnelHullHazards`); the funnel lifecycle split at its events, with a newly seen precursor ending the warp batch and dropping to 1× (time keeps running); field snapshots rebuilt when activation changes; then the lifecycle in saves and the pull/correction work ledger | **Open**: relay | `docs/handoffs/3B.md` requests 2–4; 2F may touch the field-instance code in `src/sim/` it needs, telling the integrator |
+| R30 | 3B → 2F | Wells in the tick | **Done** `920a9ed`: crush loss at any hull contact with an active throat; the lifecycle advances with the ship's real state; a new precursor drops warp to 1×. Save seam and work ledger still open | |
 | R31 | 3B → 2D | Funnels in the window and FLIGHT: `projectFunnelOptics` / `makeOpticalFunnelView` with LOD and culling across ~2,600 sites; exact segment clipping in `FieldViewContext`; release disposed materials from `LineSet` | **Open**: relay | Folds R13. The registration cycle is already fixed by the integrator |
 | R32 | 3B → 2C | Acquire contour bearings and phase through the real camera; fit funnel geometry, pull and reversal separately from motion and IMU evidence; no catalogue coordinates as belief | **Open**: relay | After R9 |
 | R33 | Integrator | Fixes on merging 3B: its acquisition test imports `ModelService` from `src/model/service.ts` (2C's index exports the type only); the field-view registry moved onto a hoisted function (Vite's eager glob put plugin registration ahead of the const) | **Done** (this commit) | Tell 2D (its `fieldViews.ts`) and 3B |
 
-| R34 | 2C → 3A | `condition-changed` must carry the reported condition: emit `values.reportedCondition ?? condition` in `src/ship/condition/index.ts` and `src/ship/thermal/protection.ts`, or true damage reaches the record once the two differ | **Open**: relay | |
-| R35 | 2C → integrator | `exposure` events put each component's true absorbed dose into the Black Box. The ship has no instrument that measures it, so it's truth in the archive (P11) | **Integrator ruling:** true per-component dose stays out of recorded events (3A). **Owner: yes, a real radiation monitor (A24)**, see R37 | |
-| R36 | 2C → integrator | Who builds the funnel camera channel R32 needs | **Integrator ruling:** 3B, as 3C did for the lattice (scoped exception for `src/ship/sensors/wells*` plus additive contract types); then 2C infers geometry, pull and reversal | R32 after it; behind playability work |
+| R34 | 2C → 3A | `condition-changed` carries the reported condition | **Done** `246248c` | |
+| R35 | 2C → integrator | True per-component dose in the Black Box | **Done** `246248c`: 3A removed true-dose `exposure` events; the radiation monitor (A24) supplies the honest reading | |
+| R36 | 2C → integrator | The funnel camera channel R32 needs | **3B builds the channel and contract** in `src/ship/sensors/wells*`; **3C wires it into the dispatcher and recorder-packet budget** in `src/ship/sensors/index.ts` (3C's file, where it's already working), using 3B's published API | R32 after it |
 
-| R37 | Owner → 3C, 2C, 2D, 3A | The radiation monitor (A24): 3C builds the sensor and its recorded channel (`src/ship/sensors/`, additive contract type), folded into an existing avionics unit if possible; 2C records it and shows it in the Black Box's loss review; 2D shows the dose rate and its caution; 3A only if a new unit needs power or heat | **Open**: relay | A baseline change, if needed, goes through the integrator |
+| R37 | Owner → 3C, 2F, 2C, 2D | The radiation monitor (A24). 3C: the sensor, a point-sampling helper and a decoded radiation caution in `src/ship/sensors/`. **2F:** the environment supplies the monitor's point signal from all active fields, including the Gravity range's clouds; `session.ts` consumes the recorded caution at once, drops warp to 1× and stops that frame's remaining ticks. 2C records it and shows it in the loss review; 2D shows the dose rate and caution | **Open**: 3C building; relay to 2F | 3C publishes the exact APIs in its handoff |
+
+| R38 | 2F → integrator | Additive contract fields: a `WindowView` slot so the clouds (and, with 3B, the funnels) can be drawn; the departure's assist condition and why a departure missed | **Granted to 2F as a scoped exception**: additive fields only, reviewed at merge; 2D draws them | |
+| R39 | Integrator | On merging 2F: its radiation caution was driven by true per-component dose (removed in R35). `clouds.test.ts` now asserts no caution until the monitor's caution (R37) lands; that tripwire then fails and 2F restores the 20 s figure | **Done** (this commit) | |
+
+| R40 | Owner → 2D (OP, integrator) | The region picker (A25): Twin Deeps, Well Garden, Unseen Cathedral, through 2F's `?encounter=` loader, labelled as previews with the route between them not yet built. **OP:** the opening plays once per browser, not per region. **Integrator:** the judge README explains the picker once it lands | **Open**: relay; top of 2D's list | |
 
 Add new rows at the bottom with the next ID. Never renumber.
 
@@ -123,7 +128,11 @@ Decided: A15 (S11's queue), A16 (the lattice), A17 (the ending) and A18 (the Gra
 
 | Commit | What |
 |---|---|
-| (this commit) | 2C merged; ledger R34–R36 |
+| (this commit) | Tripwire for the radiation caution (R39); 30 s default test time limit; ledger |
+| `920a9ed` | 2F: wells, lattice environment, 3A wiring, clouds, A20 budget |
+| `cac0ea4` | 3A's fixes merged; ledger R34–R37 |
+| `246248c` | 3A: reported condition, no true-dose events |
+| `5542b25` | 2C merged; ledger R34–R36 |
 | `e4df230` | 2C: lattice reconstruction (R9), condition events (R27) |
 | `43e18d9` | 3C follow-up: shared availability, leakage fix, integration tests |
 | `1f0dfef` | Integrator fixes on merging 3B (R33); ledger R30–R33 |

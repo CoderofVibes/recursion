@@ -14,6 +14,10 @@ export default mergeConfig(
         'src/sim/performance.test.ts',
       ],
       environment: 'node',
+      // The suite is large and runs alongside other threads' work, so heavy flights pass 5 s under
+      // load (each passes alone). A per-test time limit, not a tolerance; the speed test keeps its
+      // own 100 ms bound and runs alone (vitest.perf.config.ts).
+      testTimeout: 30_000,
     },
   }),
 );
