@@ -57,7 +57,8 @@ Dotted paths, shared by the model's estimates and truth's `HiddenParameters`:
 | `thruster.<equipmentId>.scale` | Thrust scale factor (true / nominal) | — |
 | `thruster.<equipmentId>.misalignment` | Thrust direction error about body +z (tilts the thrust toward +y; the planar parameter) | rad |
 | `thruster.<equipmentId>.misalignment-pitch` | Thrust direction error about body −y (tilts the thrust toward +z) | rad |
-| `sensor.<equipmentId>.bias-x`, `.bias-y`, `.bias-z`, `.bias` | Sensor biases, body axes | sensor unit |
+| `thruster.rcs.scale` | One thrust scale shared by every RCS jet (true / nominal); `rcs` is the group, not an equipment id | — |
+| `sensor.<equipmentId>.bias-x`, `.bias-y`, `.bias-z`, `.bias` | Sensor biases, body axes. For an accelerometer: m/s² on each axis. For the camera: its misalignment to the star trackers, a small rotation fixed in the body frame, with `.bias` the part about body +z (the planar parameter) and `.bias-x`, `.bias-y` the other two | sensor unit |
 | `sensor.<equipmentId>.scale` | Accelerometer scale factor (true / nominal) | — |
 | `unmodeled.<n>.mu`, `.x`, `.y`, `.z` | Extra body never seen (extension `unmodeled-body`, unseen mode) | m³/s², m |
 | `empirical.ax`, `empirical.ay`, `empirical.az` | Constant unexplained acceleration (extension `empirical-acceleration`) | m/s² |
@@ -134,7 +135,8 @@ What the crew knows from the spec sheets. True deviations live in truth.
 - `KNOWN_EXTENSIONS` — `distance-law`, `unmodeled-body`, `thrust-response-region`, `empirical-acceleration`.
 
 ### `forecast.ts` (P6, P10)
-- `ForecastDraft` — id, attempt, `issuedAt`, `modelVersion`, `inputs` (initial `ShipEstimate`, mass properties, plan, parameter values, extensions, the `calibration` profiles used, `noiseScale` s², `hedge` = the default σ_h0, `earnedHedge` per body with the spans where σ_e applied instead, `engine` values and aged covariance for planned burns), `horizon`, `samples` (`ForecastSample`: CoM position, velocity, `positionCov` (a 3D uncertainty: the envelope is an ellipsoid along the path), `extrapolating`, and `validated` where an extrapolated sample lies inside a validated span), predicted `objects` tracks, `closestApproaches`.
+- `ForecastDraft` — id, attempt, `issuedAt`, `modelVersion`, `inputs` (initial `ShipEstimate`, mass properties, plan, parameter values, extensions, the `calibration` profiles used, `noiseScale` s², `hedge` = the default σ_h0, `earnedHedge` per body with the spans where σ_e applied instead, `engine` values and aged covariance for planned burns), `horizon`, `camera` (the camera misalignment the present state used), `plannedAttitudes` (the full attitude each planned burn was forecast with, roll held), `samples` (`ForecastSample`: CoM position, velocity, `positionCov` (a 3D uncertainty: the envelope is an ellipsoid along the path), `extrapolating`, and `validated` where an extrapolated sample lies inside a validated span), predicted `objects` tracks, `closestApproaches`.
+- `ForecastDetail` (optional `ForecastDraft.detail`) — what the envelope is made of: per sample, the one-sigma size of each uncertainty source (`ForecastSigmaBySource`: present state, calibration profile, hedge, engine, mass, total), how the present state was obtained, and which tracked asteroids were forecast (`AsteroidForecastNote`). It travels with the forecast through `preview` and `commit` and is recorded with it.
 - `Forecast` — an issued forecast: deep-frozen and branded. Only `issueForecast(draft)` creates one; it copies the draft first. When loading from storage, pass records through `issueForecast` again.
 
 ### `attempt.ts` — Black Box (P8)
@@ -142,15 +144,19 @@ What the crew knows from the spec sheets. True deviations live in truth.
   - **Measurement order is canonical:** Black Box appends measurements in acquisition order (time, then the order the ship step emitted them). The array index is the sequence number; the model sorts by (attempt, index), never re-sorts by value (1G spec §11.3).
   - **Thrust segments for the model** are derived belief-side from `executed` burn and cutoff commands × nominal ratings in `ShipDefinition`, with attitude from recorded attitude measurements, never from `ActuatorOutput` (truth). A `limited` burn is a segment whose commanded level is uncertain; give it a wider prior.
 - `TransitRecord` — the ship's history between encounters (ship time, commanded Δv, camera power cycles, condition changes) from the completed attempt that carried it onward. 3D writes it on arrival; the model ages ship calibrations with it (1G spec §3.7). Every attempt of an encounter repeats the same transit.
-- `Lead`, `LeadStatus` — the chart of leads.
+- `Lead`, `LeadStatus` — the chart of leads; a lead may carry the `bearing` it was seen on (from which encounter, direction, spread).
 - `BlackBoxArchive` — everything preserved across recurrence: attempts, procedures, adopted extensions, leads, `extensionTests` (`ExtensionTestRecord`: every rule test with its training and held-out attempts, evidence, identifiability, fitted values and resulting state; never edited), and `extensionDecisions` (every adopt and revoke, in order).
 
 ### `encounter.ts` — player-visible briefing
 - `Objective` — kind (including `depart`), short label, optional region (a sphere) / moving target / time window, a distance `band` about the target (a spherical shell), `depart` (leave beyond a distance in any direction at a minimum speed, e.g. a slingshot exit, A6) and `maxDeltaV`.
 - `EncounterBriefing` — objectives, arrival estimate and configuration, model `priors`, objects visible on arrival, and the law's shared `referenceRadius` r₀ (P4). Each run's briefing differs with its geometry (A10); attempts record theirs in `AttemptStart.briefing`.
 
+### `chart.ts` — what the MAP shows
+- `Chart` — only what has been charted: `ChartRegion`s (3D position in the chart frame, radius, survey coverage, the attempts Black Box recorded there, whether the ship is there now), `ChartCorridor`s flown between regions, `ChartLead`s (a bearing from a region, range unknown) and the `reach` of the propellant on board. The chart frame is the expedition's own: metres, the first charted region at the origin, no preferred plane. Built by the game layer (`GameControls.chart()`).
+
 ### `view.ts` — what the console and 3D view receive
-- `ViewSnapshot` — `t`, paused, warp, `world` (`BelievedWorld`), `ship` (`ShipView`: `hull`, CoM, `ThrustTick`s, all body frame), measured `trail`, issued `forecasts`, sensor `coverage` (`SensorCone`s: an inertial axis, a half-angle and a range; everything else is unknown), objectives, optional two-attempt `compare` (`AttemptOverlay`s) and `selection`.
+- `ViewSnapshot` — `t`, paused, warp, `world` (`BelievedWorld`), `ship` (`ShipView`: `hull`, CoM, `ThrustTick`s, all body frame), measured `trail`, issued `forecasts`, sensor `coverage` (`SensorCone`s: an inertial axis, a half-angle and a range; everything else is unknown), objectives, optional two-attempt `compare` (`AttemptOverlay`s) and `selection`, and `window`.
+- `WindowView` — what the unaided eye sees through the window (A3, A8): the sun's direction and whether it is in view, whether the ship is in sunlight, and each `WindowObject` light shows (a direction, an apparent size and whether it is lit: never a range). It holds nothing that needs an instrument, so it can show a rock the ship has not catalogued and never shows a field.
 
 ### `truth/` — TRUTH, not for belief-side code
 - `world.ts` — `GravityLaw` (`exponent` n and one shared `referenceRadius` r0), `MassiveBody` (`gm` in m³/s², `radius` as collision envelope only, `fixed`); acceleration toward a body is (gm / r0²)(r0 / r)ⁿ (P4, clarified by 1B); `Asteroid` (massless test particle), `HiddenParameters` (true values by parameter ID), `Sun` (one distant sun, DECISIONS A3: a 3D direction toward it and unobstructed irradiance in W/m²; light only, not in the gravity sum; a body's shadow is a cylinder of its radius behind it), `TruthWorld` (`sun` absent means no sunlight).

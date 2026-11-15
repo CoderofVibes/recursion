@@ -64,6 +64,38 @@ export interface AttemptOverlay {
   readonly forecast?: Forecast;
 }
 
+/**
+ * One thing the unaided eye can see through the window: light only, no sensor (A3, A8, P11).
+ * A direction and an apparent size, never a range.
+ */
+export interface WindowObject {
+  readonly id: ObjectId;
+  readonly kind: 'body' | 'asteroid';
+  /** Inertial unit vector from the ship toward the object's centre. */
+  readonly direction: Vec3;
+  /** Half the angle the object spans as seen from the ship. */
+  readonly angularRadius: Radians;
+  /** In sunlight (not inside another body's shadow). An unlit object is seen as a dark disc against the stars, if at all. */
+  readonly lit: boolean;
+}
+
+/**
+ * What is outside the window right now, as the eye sees it. Built by the game layer each
+ * frame; it holds no field and nothing that needs an instrument. Objects too small or too faint
+ * to see are absent, whether or not the ship has catalogued them, and an object the ship has
+ * never catalogued can be here.
+ */
+export interface WindowView {
+  /**
+   * The sun: inertial unit vector toward it, and whether it is in view (not behind a body).
+   * Absent where the encounter has no sun.
+   */
+  readonly sun?: { readonly direction: Vec3; readonly visible: boolean };
+  /** Sunlight reaches the ship (it is not in a body's shadow). */
+  readonly sunlit: boolean;
+  readonly objects: readonly WindowObject[];
+}
+
 export type Selection =
   | { readonly kind: 'object'; readonly id: ObjectId }
   | { readonly kind: 'equipment'; readonly id: EquipmentId };
@@ -83,4 +115,6 @@ export interface ViewSnapshot {
   readonly objectives: readonly Objective[];
   readonly compare?: readonly [AttemptOverlay, AttemptOverlay];
   readonly selection?: Selection;
+  /** The view through the window. Absent from fixtures and stand-ins that have no world. */
+  readonly window?: WindowView;
 }
