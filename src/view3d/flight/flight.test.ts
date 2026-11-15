@@ -11,11 +11,12 @@ import {
   viewSnapshotCompare,
 } from '../../contracts/fixtures/index.ts';
 import type { ViewSnapshot } from '../../contracts/index.ts';
-import { Vector3 } from 'three';
+import { Quaternion, Vector3 } from 'three';
 import { holoLines } from '../../theme/index.ts';
 import { registerFieldView } from '../fieldViews.ts';
 import { LineSet } from '../gfx.ts';
 import {
+  levelHeading,
   makeFlightHolo,
   openingRange,
   pastAndAhead,
@@ -77,6 +78,57 @@ describe('flight hologram', () => {
     tumbling.update(frame(arrival), 0.016, 0);
     tumbling.update(frame({ ...lost, t: 1 }), 0.016, 0.016);
     expect(display(tumbling).angleTo(display(fresh))).toBeLessThan(0.05);
+  });
+
+  it('keeps the reference disc level: the display turns with the heading only (A26)', () => {
+    const ship = viewSnapshot.world.ship;
+    // Yawed 40° left, nose 13° below the plane, rolled 25°: body → inertial, in the game's axes.
+    const q = (axis: Vector3, degrees: number): Quaternion =>
+      new Quaternion().setFromAxisAngle(axis, (degrees * Math.PI) / 180);
+    const attitude = (yaw: number, pitch: number, roll: number) => {
+      const a = q(new Vector3(0, 0, 1), yaw)
+        .multiply(q(new Vector3(0, 1, 0), pitch))
+        .multiply(q(new Vector3(1, 0, 0), roll));
+      return { x: a.x, y: a.y, z: a.z, w: a.w } as typeof ship.attitude;
+    };
+    const at = (yaw: number, pitch: number, roll: number): ViewSnapshot => ({
+      ...viewSnapshot,
+      t: 0,
+      world: { ...viewSnapshot.world, ship: { ...ship, attitude: attitude(yaw, pitch, roll) } },
+    });
+    const display = (holo: ReturnType<typeof make>) => holo.group.children[0]!.quaternion;
+
+    const straight = make();
+    straight.update(frame(at(0, 0, 0)), 0.016, 0);
+    const level = make();
+    level.update(frame(at(40, 0, 0)), 0.016, 0);
+    const tilted = make();
+    tilted.update(frame(at(40, 13, 25)), 0.016, 0);
+
+    // The disc's normal stays the display's up, however the ship is pitched and rolled.
+    const up = new Vector3(0, 1, 0).applyQuaternion(display(tilted));
+    expect(up.x).toBeCloseTo(0, 9);
+    expect(up.y).toBeCloseTo(1, 9);
+    expect(up.z).toBeCloseTo(0, 9);
+    // And the display has turned exactly as far as for the same heading flown level.
+    expect(display(tilted).angleTo(display(level))).toBeLessThan(1e-9);
+    // The heading is still followed: 40° of yaw turns the display 40° about its up.
+    expect(display(level).angleTo(display(straight))).toBeCloseTo((40 * Math.PI) / 180, 9);
+  });
+
+  it('reads a heading from the nose’s bearing, and keeps the last one when the nose is vertical', () => {
+    const about = (axis: Vector3, radians: number): Quaternion =>
+      new Quaternion().setFromAxisAngle(axis, radians);
+    // In the scene the drawing's nose is -z and up is +y.
+    expect(levelHeading(new Quaternion())).toBeCloseTo(0, 12);
+    expect(levelHeading(about(new Vector3(0, 1, 0), 0.7))).toBeCloseTo(0.7, 12);
+    // Pitch and roll do not change it.
+    const pitched = about(new Vector3(0, 1, 0), 0.7).multiply(about(new Vector3(1, 0, 0), 0.4));
+    expect(levelHeading(pitched)).toBeCloseTo(0.7, 12);
+    const rolled = pitched.clone().multiply(about(new Vector3(0, 0, 1), -0.9));
+    expect(levelHeading(rolled)).toBeCloseTo(0.7, 12);
+    // Nose straight up: no bearing, so the heading it had stands.
+    expect(levelHeading(about(new Vector3(1, 0, 0), Math.PI / 2), 1.2)).toBe(1.2);
   });
 
   it('draws the fixture snapshot and the two-attempt overlay', () => {

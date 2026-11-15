@@ -1,6 +1,6 @@
 /**
  * The region picker (A25). The expedition's route between regions (3D) is not built, so anyone
- * can play each built region from MISSION instead. Each is 2F's `?encounter=<id>` loader with its
+ * can play each built region from EXPLORATION instead. Each is 2F's `?encounter=<id>` loader with its
  * own save slot, so switching reloads the page and every region keeps its own Black Box records.
  *
  * The ids are 2F's `ENCOUNTERS` (src/game/encounters.ts, truth-side, so not imported here);

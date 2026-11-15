@@ -9,7 +9,7 @@ $D start
 $D open "${BASE:-http://localhost:4311/}" :: wait 23000 :: key 3 :: wait 1700
 
 dive() { # $1 = delta-v, $2 = tag
-  $D click "text=MISSION" :: wait 500 :: click "text=RECORD DESIGN AND SET UP" :: wait 600 \
+  $D click "text=EXPLORATION" :: wait 500 :: click "text=RECORD DESIGN AND SET UP" :: wait 600 \
      :: click "text=PLAN" :: wait 500 :: click "text=+ BURN" :: wait 400 \
      :: click ".cs-page select" :: wait 200 :: key ArrowDown :: key Enter \
      :: fill ".cs-page input[step='0.5']" "$1" :: wait 200 :: click "text=COMMIT" :: wait 3000 \

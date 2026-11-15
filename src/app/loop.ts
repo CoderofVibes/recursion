@@ -227,7 +227,15 @@ export function startControlRoom(
       ...(desk.preview ? { preview: desk.preview } : {}),
       selected: desk.selected,
       clearance: desk.design.clearance,
-      hands: { yaw: hand.input.yaw, pitch: hand.input.pitch },
+      hands: {
+        yaw: hand.input.yaw,
+        pitch: hand.input.pitch,
+        // Jets pushing the ship along an axis the hands hold are a burn the player commanded.
+        translating:
+          hand.input.translate.x !== 0 ||
+          hand.input.translate.y !== 0 ||
+          (hand.input.translate.z ?? 0) !== 0,
+      },
       chart,
       recording: !status.paused && status.phase !== 'ended',
     });
@@ -285,7 +293,7 @@ export function startControlRoom(
       view.go(wanted, true);
     const page = query.get('page');
     if (
-      page === 'mission' ||
+      page === 'exploration' ||
       page === 'plan' ||
       page === 'model' ||
       page === 'blackbox' ||

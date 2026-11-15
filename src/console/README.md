@@ -7,7 +7,7 @@ Everything on screen that is not three-dimensional. It reaches the game only thr
 | File | Holds |
 |---|---|
 | `ConsoleScreen.tsx` | CONSOLE: the screen that takes over the view (A8), with its pages and the time controls |
-| `pages/MissionPage.tsx` | Preparation as a visible step: evidence goal, reserve and clearance, sensor, recorder and configuration, approach. Committing records the design in Black Box and sets the ship up |
+| `pages/ExplorationPage.tsx` | EXPLORATION (it was MISSION until A26). Preparation as a visible step: evidence goal, reserve and clearance, sensor, recorder and configuration, approach. Committing records the design in Black Box and sets the ship up |
 | `pages/PlanPage.tsx` | Timed burns (prograde, retrograde, toward or away from a body, or from the body axis; by speed change or duration; throttle), sensor pointing, preview and commit with what the envelope is made of, saved procedures (in Black Box), Recall. The rows live on the desk |
 | `pages/ModelPage.tsx` | Parameters with uncertainty and share from data, strength against distance (with its data as a table), rules tested against a held-out attempt with adopt and revoke and a plain result, validated spans against the distances the flight visits, calibration freshness, the confounding indicator, what each attempt gives the model, and on request each burn's response and any pull the law does not explain |
 | `pages/BlackBoxPage.tsx` | Attempts, the debrief, the two-attempt comparison and its overlay, the recorder as a resource |

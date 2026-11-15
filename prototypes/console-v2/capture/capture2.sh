@@ -9,7 +9,7 @@ export JUDGE=d
 D="node do.mjs"
 X="node $S/dump.mjs"
 READY='(() => { const b = [...document.querySelectorAll("button")].find((e) => /^ENTER /i.test(e.textContent.trim()) && !e.closest("[inert]")); return !!b && !b.disabled; })()'
-$D click "text=MISSION" :: wait 500 :: click "text=RECORD DESIGN AND SET UP" :: wait 600 :: click "text=PLAN" :: wait 500 \
+$D click "text=EXPLORATION" :: wait 500 :: click "text=RECORD DESIGN AND SET UP" :: wait 600 :: click "text=PLAN" :: wait 500 \
    :: fill ".cs-page input[step='0.5']" 5 :: wait 300 :: click "text=COMMIT" :: wait 1000
 $D waitfor "$READY" 240000 :: js "document.querySelector('.cs-foot__note')?.textContent" :: click "text=ENTER GRAVITY RANGE" :: wait 1200
 node watch.mjs 240 "2000×" d3 --until 08:20

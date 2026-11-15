@@ -42,8 +42,10 @@ import type {
   ForecastDraft,
   Objective,
   ShipDefinition,
+  ThrustTick,
   ViewSnapshot,
 } from '../../contracts/index.ts';
+import { mainEngines, readThrust, thrustLine } from './thrust.ts';
 import {
   colour,
   envelopeStyle,
@@ -124,6 +126,8 @@ type AnyForecast = Forecast | ForecastDraft;
 export interface HandsOnMarks {
   readonly yaw: number;
   readonly pitch: number;
+  /** The hands hold a translation control: the jets firing are a burn the player commanded. */
+  readonly translating?: boolean;
 }
 
 export interface FlightFrame {
@@ -171,6 +175,20 @@ export interface FlightHolo {
   /** Screen pixels covered by one hologram metre at the hologram's distance from the camera. */
   setPixelsPerUnit(pixels: number): void;
   dispose(): void;
+}
+
+const UP = new Vector3(0, 1, 0);
+const NOSE = new Vector3();
+
+/**
+ * The ship's heading as the display follows it: the turn about the display's up that points the
+ * drawing's nose (-z) along the nose's bearing in the reference plane. Pitch and roll are left
+ * out, so a display turned by it stays level (A26 (2)). A nose pointing straight up or down has
+ * no bearing: the heading it had (`previous`) stands.
+ */
+export function levelHeading(attitude: Quaternion, previous = 0): number {
+  NOSE.set(0, 0, -1).applyQuaternion(attitude);
+  return Math.hypot(NOSE.x, NOSE.z) > 1e-6 ? Math.atan2(-NOSE.x, -NOSE.z) : previous;
 }
 
 /**
@@ -568,8 +586,11 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
   shipG.add(yawArc, pitchArc);
   const thrustMarks = linesH.fatSegs([], lineStyles.thrustChevron);
   const thrustAxis = linesH.fatSegs([], lineStyles.thrustLine);
-  thrustMarks.visible = thrustAxis.visible = false;
-  shipG.add(thrustMarks, thrustAxis);
+  const attitudeMarks = linesH.fatSegs([], lineStyles.attitudeJet);
+  const thrustTag = label('', 'thr');
+  thrustMarks.visible = thrustAxis.visible = attitudeMarks.visible = thrustTag.visible = false;
+  shipG.add(thrustMarks, thrustAxis, attitudeMarks, thrustTag);
+  const engines = mainEngines(definition);
   // Small symbol for the map's region view.
   const symbol = linesH.fat(
     [0, 0, -0.03, 0.014, 0, 0.018, -0.014, 0, 0.018, 0, 0, -0.03],
@@ -614,6 +635,9 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
   // ---- State kept between frames -----------------------------------------------------------
   const displayQ = new Quaternion();
   const shipQ = new Quaternion();
+  /** The ship's heading alone, as a turn about the display's up: what the display follows. */
+  const levelQ = new Quaternion();
+  let displayHeading = 0;
   let displayReady = false;
   /** The snapshot time the display orientation last followed. */
   let displayT = 0;
@@ -987,21 +1011,25 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
     const Sh = Rh / range;
     const shipScene = toScene(ship.position, new Vector3());
 
-    // Display orientation: heading-up follows the ship, but never turns faster than the theme
-    // allows, so a tumbling ship under time warp does not spin the hologram.
+    // Display orientation: heading-up follows the ship's heading, and only its heading (A26 (2)).
+    // The reference disc and grid stay level, parallel to the console, and the ship's model
+    // shows its pitch and roll against them. It never turns faster than the theme allows, so a
+    // tumbling ship under time warp does not spin the hologram.
     attitudeToScene(ship.attitude, shipQ);
+    displayHeading = levelHeading(shipQ, displayHeading);
+    levelQ.setFromAxisAngle(UP, displayHeading);
     // A clock that runs backwards is a new attempt (a loss, a Recall): the display starts on the
     // arrival's heading, as on a first frame, instead of turning round from the last attempt's.
     if (snapshot.t < displayT) displayReady = false;
     displayT = snapshot.t;
     if (!displayReady) {
-      displayQ.copy(shipQ);
+      displayQ.copy(levelQ);
       displayReady = true;
     } else {
-      const angle = displayQ.angleTo(shipQ);
+      const angle = displayQ.angleTo(levelQ);
       const step = motion.maxDisplayTurn * dt;
-      if (angle <= step || angle < 1e-6) displayQ.copy(shipQ);
-      else displayQ.slerp(shipQ, step / angle);
+      if (angle <= step || angle < 1e-6) displayQ.copy(levelQ);
+      else displayQ.slerp(levelQ, step / angle);
     }
     const hu = headingUp && !chart;
     rot.position.set(0, 0, hu ? SET_BACK : 0);
@@ -1340,11 +1368,14 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
       setThin(cones, flat);
     }
 
-    // Thrust at the points of application: chevrons down each plume, and the line of action.
+    // Thrust at the points of application (A26 (2)). A burn the player or a plan commanded:
+    // chevrons down each plume and the line of action, named. Attitude jets turning or
+    // steadying the ship: one quiet chevron each, no line of action, so they never read as a burn.
+    const firing = readThrust(snapshot.ship.thrust, engines, frame.hands?.translating ?? false);
     const chevrons: number[] = [];
     const axes: number[] = [];
-    for (const tick of snapshot.ship.thrust) {
-      if (!(tick.magnitude > 0)) continue;
+    const quiet: number[] = [];
+    const plumeOf = (tick: ThrustTick) => {
       const o = bodyToDrawing(tick.point, new Vector3())
         .multiplyScalar(holoSize.shipScale)
         .sub(com);
@@ -1353,30 +1384,51 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
       const across = new Vector3(0, 1, 0).cross(plume);
       if (across.lengthSq() < 1e-12) across.set(1, 0, 0);
       across.normalize().multiplyScalar(holoSize.chevron);
-      for (const k of [0.04, 0.075, 0.11])
-        for (const sign of [1, -1])
-          chevrons.push(
-            o.x + plume.x * k + across.x * sign,
-            o.y + plume.y * k + across.y * sign,
-            o.z + plume.z * k + across.z * sign,
-            o.x + plume.x * (k + 0.026),
-            o.y + plume.y * (k + 0.026),
-            o.z + plume.z * (k + 0.026),
-          );
+      return { o, force, plume, across };
+    };
+    const chevron = (
+      into: number[],
+      { o, plume, across }: ReturnType<typeof plumeOf>,
+      k: number,
+    ): void => {
+      for (const sign of [1, -1])
+        into.push(
+          o.x + plume.x * k + across.x * sign,
+          o.y + plume.y * k + across.y * sign,
+          o.z + plume.z * k + across.z * sign,
+          o.x + plume.x * (k + 0.026),
+          o.y + plume.y * (k + 0.026),
+          o.z + plume.z * (k + 0.026),
+        );
+    };
+    let burnForce = 0;
+    for (const tick of firing.burn) {
+      const p = plumeOf(tick);
+      for (const k of [0.04, 0.075, 0.11]) chevron(chevrons, p, k);
       axes.push(
-        o.x - force.x * 0.2,
-        o.y - force.y * 0.2,
-        o.z - force.z * 0.2,
-        o.x + force.x * 0.7,
-        o.y + force.y * 0.7,
-        o.z + force.z * 0.7,
+        p.o.x - p.force.x * 0.2,
+        p.o.y - p.force.y * 0.2,
+        p.o.z - p.force.z * 0.2,
+        p.o.x + p.force.x * 0.7,
+        p.o.y + p.force.y * 0.7,
+        p.o.z + p.force.z * 0.7,
       );
+      // The tag sits at the far end of the strongest burn's line of action.
+      if (tick.magnitude > burnForce) {
+        burnForce = tick.magnitude;
+        thrustTag.position.copy(p.o).addScaledVector(p.force, 0.74);
+      }
     }
+    for (const tick of firing.attitude) chevron(quiet, plumeOf(tick), 0.04);
     thrustMarks.visible = thrustAxis.visible = !chart && chevrons.length > 0;
     if (chevrons.length) {
       setFatSegs(thrustMarks, chevrons);
       setFatSegs(thrustAxis, axes);
     }
+    thrustTag.visible = thrustMarks.visible;
+    if (thrustTag.visible) setTag(thrustTag, `BURN · ${thrustLine(firing, engines).text}`);
+    attitudeMarks.visible = !chart && quiet.length > 0;
+    if (quiet.length) setFatSegs(attitudeMarks, quiet);
 
     // True hull, at true scale, where the ship is.
     const outline = hullOutline(snapshot.ship);

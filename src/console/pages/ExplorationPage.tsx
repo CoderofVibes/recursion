@@ -1,5 +1,6 @@
 /**
- * MISSION: preparation as a visible step (challenge fit; 5C-0 request 2). Before flying, the
+ * EXPLORATION (A26: the player is exploring, trying to find the way out of this universe; it was
+ * MISSION). Preparation as a visible step (challenge fit; 5C-0 request 2). Before flying, the
  * player sets what the attempt is for, the margins it must keep, how the sensor, recorder and
  * ship are set up, and an approach. Committing records the design in Black Box and sets the
  * ship up; the debrief judges the attempt against it.
@@ -30,7 +31,7 @@ const RECORDER_RATES = [0.05, 0.2, 1, 10];
 const modePower = (spec: EquipmentSpec | undefined, mode: string): number =>
   spec?.params[`mode.${mode}.power`] ?? 0;
 
-export function MissionPage({ desk }: { readonly desk: Desk }) {
+export function ExplorationPage({ desk }: { readonly desk: Desk }) {
   const { game, design } = desk;
   const status = game.status();
   const snapshot = desk.snapshot();

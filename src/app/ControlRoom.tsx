@@ -26,6 +26,7 @@ const NOT_YET = { throttle: false, yaw: false, pitch: false, translate: false } 
 import { INITIAL_UI, startControlRoom } from './loop.ts';
 import type { RoomUi } from './loop.ts';
 import '../console/console.css';
+import '../console/instruments/instruments.css';
 import './control-room.css';
 
 export interface ControlRoomProps {

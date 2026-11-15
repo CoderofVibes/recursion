@@ -1,18 +1,14 @@
 /**
- * The instruments around the FLIGHT hologram: the flight keys, what the ship is doing, the
- * margins that change as it flies (propellant, power, heat, recorder), alerts, time, and the
- * object the player has chosen. Everything here is belief: the navigation estimate, gauged
- * stores, and the forecast as issued.
+ * The instruments around the FLIGHT hologram: the flight keys, what the ship is doing (what is
+ * thrusting and why, the turn in progress), the margins that change as it flies (propellant,
+ * power, heat, recorder) in a strip along the bottom, alerts, time, and the object the player has
+ * chosen. Everything here is belief: the navigation estimate, gauged stores, and the forecast as
+ * issued.
  */
-import {
-  AlertStack,
-  LevelBar,
-  Panel,
-  Readout,
-  ReadoutGrid,
-  Trend,
-} from '../theme/components/index.ts';
-import { distance, heading, length, pitch } from '../view3d/adapter.ts';
+import { useMemo } from 'react';
+import { AlertStack, Panel, Readout, ReadoutGrid, Trend } from '../theme/components/index.ts';
+import { distance, heading, length, pitch, turnRates } from '../view3d/adapter.ts';
+import { TRANSLATE_KEYS, mainEngines, readThrust, thrustLine } from '../view3d/flight/thrust.ts';
 import { flightAlerts } from './alerts.ts';
 import { Actions, Button, Line, SelectField, TimeControls, wallTime } from './controls.tsx';
 import { FramingControls } from './Framing.tsx';
@@ -30,6 +26,8 @@ import {
 } from './data.ts';
 import type { Desk } from './desk.ts';
 import { EncounterSlot } from './encounterPanels.ts';
+import { RATE_FULL, turnReading } from './flightAction.ts';
+import { DragBar } from './instruments/DragBar.tsx';
 import { bytes, clock, degrees, dist, fixed, name, whole } from './format.ts';
 
 export interface FlightKeys {
@@ -73,6 +71,23 @@ const CAPS: readonly {
   { key: 'arrowdown', cap: '↓', label: 'NOSE DN', control: 'pitch' },
 ];
 
+/** A turn rate either side of zero: left and up to the left of centre, right and down to the right. */
+function Rate({ label, value }: { readonly label: string; readonly value: number }) {
+  const width = `${(Math.min(1, Math.abs(value) / RATE_FULL) * 50).toFixed(1)}%`;
+  return (
+    <span
+      className="fh-rate"
+      role="img"
+      aria-label={`${label} rate ${fixed(value, 2)} degrees a second`}
+    >
+      <b>{label}</b>
+      <i>
+        <em style={value >= 0 ? { right: '50%', width } : { left: '50%', width }} />
+      </i>
+    </span>
+  );
+}
+
 export function FlightHud({
   desk,
   available,
@@ -115,6 +130,23 @@ export function FlightHud({
 
   const items = flightAlerts(desk);
 
+  // What is thrusting, and why (A26 (2)): a burn the player or a plan commanded, or the jets
+  // holding the ship's attitude. And the turn in progress, from the first frame a key is held.
+  const engines = useMemo(() => mainEngines(game.ship), [game.ship]);
+  const held = (key: string): number => (keys.held.has(key) ? 1 : 0);
+  const thrust = thrustLine(
+    readThrust(
+      snapshot.ship.thrust,
+      engines,
+      TRANSLATE_KEYS.some((k) => keys.held.has(k)),
+    ),
+    engines,
+  );
+  const turn = turnReading(turnRates(ship), status.attitude, {
+    yaw: held('q') - held('e'),
+    pitch: held('arrowup') - held('arrowdown'),
+  });
+
   const chosen = desk.selected
     ? (snapshot.world.asteroids.find((a) => a.id === desk.selected) ??
       snapshot.world.bodies.find((b) => b.id === desk.selected))
@@ -125,6 +157,21 @@ export function FlightHud({
     <>
       <div className="fh-alerts">
         <AlertStack alerts={items} max={4} label="Flight alerts" />
+      </div>
+
+      <div className="fh-action" aria-label="What the ship is doing">
+        <p data-kind={thrust.kind}>
+          <b>THRUST</b>
+          <span>{thrust.text}</span>
+        </p>
+        <p data-on={turn.turning ? '' : undefined}>
+          <b>TURN</b>
+          <span>{turn.text}</span>
+        </p>
+        <div className="fh-rates">
+          <Rate label="yaw" value={turn.yaw} />
+          <Rate label="pitch" value={turn.pitch} />
+        </div>
       </div>
 
       <div className="fh-keys" aria-label="Flight controls">
@@ -138,6 +185,85 @@ export function FlightHud({
             <b>{c.label}</b>
           </i>
         ))}
+      </div>
+
+      <div className="fh-margins" role="group" aria-label="Margins">
+        {main ? (
+          <DragBar
+            stacked
+            label="Propellant"
+            value={main.value}
+            min={0}
+            max={main.max}
+            step={1}
+            text={`${whole(main.value)} kg`}
+            tone="measured"
+            status={main.status}
+            marks={[{ at: desk.design.reserve, kind: 'target', label: 'reserve' }]}
+          />
+        ) : null}
+        <DragBar
+          stacked
+          label="RCS"
+          value={rcsNow}
+          min={0}
+          max={Math.max(rcsMax, 1)}
+          step={1}
+          text={`${fixed(rcsNow, 1)} kg`}
+          tone="measured"
+          status={rcsNow < rcsMax * 0.2 ? 'caution' : 'nominal'}
+        />
+        {bus ? (
+          <DragBar
+            stacked
+            label={`Power · ${bus.label}`}
+            value={bus.value}
+            min={0}
+            max={bus.max}
+            step={1}
+            text={bus.status === 'stale' ? 'no reading' : `${whole(bus.value)} W`}
+            tone="measured"
+            status={bus.status}
+            marks={[{ at: bus.mark ?? bus.max, kind: 'caution' }]}
+          />
+        ) : null}
+        {battery ? (
+          <DragBar
+            stacked
+            label="Batteries"
+            value={battery.value}
+            min={0}
+            max={battery.max}
+            step={1}
+            text={battery.text}
+            tone="measured"
+            status={battery.status}
+          />
+        ) : null}
+        {node ? (
+          <DragBar
+            stacked
+            label={`Heat · ${node.label}`}
+            value={node.value}
+            min={0}
+            max={node.max}
+            step={1}
+            text={node.status === 'stale' ? 'no reading' : node.text.split(' · ').at(-1)!}
+            tone="measured"
+            status={node.status}
+            marks={[{ at: node.mark ?? node.max, kind: 'warning' }]}
+          />
+        ) : null}
+        <DragBar
+          stacked
+          label="Recorder"
+          value={rec.bytes}
+          min={0}
+          max={rec.capacity}
+          step={1}
+          text={`${bytes(rec.bytes)} · ${fixed(rec.rate, 2)} Hz`}
+          tone="blackbox"
+        />
       </div>
 
       <div className="fh-forecast" data-tone="forecast">
@@ -196,21 +322,27 @@ export function FlightHud({
               <Button onClick={onHeadingUp}>{headingUp ? 'CHART UP' : 'HEADING UP'}</Button>
               <span className="cs-note">range {dist(range)} · wheel · U</span>
             </Actions>
-            {/* What the hologram shows, by name: only what the ship senses (S9 R13, P11). */}
-            <SelectField
-              label="Look at"
-              value={chosen ? chosen.id : ''}
-              options={[
-                { value: '', label: '—' },
-                ...snapshot.world.bodies.map((b) => ({ value: b.id, label: b.name.toUpperCase() })),
-                ...snapshot.world.asteroids.map((a) => ({
-                  value: a.id,
-                  label: `${a.id.toUpperCase()} · ${a.tracked ? 'tracked' : 'seen'}`,
-                })),
-              ]}
-              onChange={(v) => desk.select(v || null)}
-            />
-            {framing ? <FramingControls view={framing} orbit={false} /> : null}
+            <details className="cs-details">
+              <summary>view · look at · zoom · tilt</summary>
+              {/* What the hologram shows, by name: only what the ship senses (S9 R13, P11). */}
+              <SelectField
+                label="Look at"
+                value={chosen ? chosen.id : ''}
+                options={[
+                  { value: '', label: '—' },
+                  ...snapshot.world.bodies.map((b) => ({
+                    value: b.id,
+                    label: b.name.toUpperCase(),
+                  })),
+                  ...snapshot.world.asteroids.map((a) => ({
+                    value: a.id,
+                    label: `${a.id.toUpperCase()} · ${a.tracked ? 'tracked' : 'seen'}`,
+                  })),
+                ]}
+                onChange={(v) => desk.select(v || null)}
+              />
+              {framing ? <FramingControls view={framing} orbit={false} /> : null}
+            </details>
           </Panel>
 
           {/* S8: what the ship measures against what was forecast, how close the hull is to
@@ -287,62 +419,6 @@ export function FlightHud({
 
           {/* The encounter's own instruments, from its section (3B, 3C: ledger R4). */}
           <EncounterSlot game={game} snapshot={snapshot} />
-
-          <Panel title="Margins">
-            {main ? (
-              <LevelBar
-                label="Main propellant"
-                value={main.value}
-                max={main.max}
-                text={`${whole(main.value)} kg`}
-                status={main.status}
-                marks={[{ at: desk.design.reserve, kind: 'target', label: 'reserve' }]}
-              />
-            ) : null}
-            <LevelBar
-              label="RCS"
-              value={rcsNow}
-              max={rcsMax}
-              text={`${fixed(rcsNow, 1)} kg`}
-              status={rcsNow < rcsMax * 0.2 ? 'caution' : 'nominal'}
-            />
-            {bus ? (
-              <LevelBar
-                label={`Power · ${bus.label}`}
-                value={bus.value}
-                max={bus.max}
-                text={`${whole(bus.value)} W`}
-                status={bus.status}
-                marks={[{ at: bus.mark ?? bus.max, kind: 'caution' }]}
-              />
-            ) : null}
-            {battery ? (
-              <LevelBar
-                label="Batteries"
-                value={battery.value}
-                max={battery.max}
-                text={battery.text}
-                status={battery.status}
-              />
-            ) : null}
-            {node ? (
-              <LevelBar
-                label={`Heat · ${node.label}`}
-                value={node.value}
-                max={node.max}
-                text={node.text}
-                status={node.status}
-                marks={[{ at: node.mark ?? node.max, kind: 'warning' }]}
-              />
-            ) : null}
-            <LevelBar
-              label="Recorder"
-              value={rec.bytes}
-              max={rec.capacity}
-              text={`${bytes(rec.bytes)} · ${fixed(rec.rate, 2)} Hz`}
-              tone="blackbox"
-            />
-          </Panel>
 
           {chosen ? (
             <Panel

@@ -838,3 +838,14 @@
 .ci-steps__list li {
   flex-basis: calc(var(--rx-unit) * 36);
 }
+/* A reading that is old or absent is hatched, never drawn as if it were live. */
+.ci-drag:is([data-status='stale'], [data-status='off']) .ci-drag__fill {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--rx-c) 0 var(--rx-unit),
+    transparent var(--rx-unit) calc(var(--rx-unit) * 2)
+  );
+}
+.ci-drag:is([data-status='stale'], [data-status='off']) .ci-drag__value {
+  color: var(--rx-ink-dim);
+}

@@ -155,7 +155,7 @@ export function consoleTopTexture(): CanvasTexture {
     trace(1116, 590, 380, 200, colour.blackbox);
     panel(460, 20, 616, 110, 'PLAN');
     trace(480, 50, 576, 60, colour.forecast, [4, 8]);
-    panel(460, 710, 616, 110, 'MISSION');
+    panel(460, 710, 616, 110, 'EXPLORATION');
     trace(480, 740, 576, 60, colour.ink);
     // Projector well in the middle.
     x.fillStyle = roomSurface.well;

@@ -100,7 +100,7 @@ function stubGame(
   return { game, commands };
 }
 
-const PAGES: readonly PageId[] = ['mission', 'plan', 'model', 'blackbox', 'systems', 'credits'];
+const PAGES: readonly PageId[] = ['exploration', 'plan', 'model', 'blackbox', 'systems', 'credits'];
 
 describe('console pages on the fixtures', () => {
   for (const page of PAGES)

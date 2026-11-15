@@ -21,7 +21,7 @@ import { defaultDesign, designMark, setupCommands } from './mission.ts';
 import type { MissionDesign } from './mission.ts';
 import { doseRate } from './radiation.ts';
 
-export type PageId = 'mission' | 'plan' | 'model' | 'blackbox' | 'systems' | 'credits';
+export type PageId = 'exploration' | 'plan' | 'model' | 'blackbox' | 'systems' | 'credits';
 
 /** A burn's direction: along or against the believed velocity, toward or away from a body, or the body axis. */
 export type BurnDirection = 'prograde' | 'retrograde' | 'toward' | 'away' | 'axis';
@@ -73,7 +73,7 @@ export class Desk {
   readonly modelError: () => string | undefined;
   readonly erase: (() => Promise<void>) | undefined;
 
-  page: PageId = 'mission';
+  page: PageId = 'exploration';
   design: MissionDesign;
   /** Sim time the design was last committed in this attempt; undefined until then. */
   designedAt: number | undefined;

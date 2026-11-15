@@ -1,7 +1,7 @@
 /**
  * CONSOLE: the screen set into the console's top, which takes over the view when the player
- * looks down into it (DECISIONS A8). Everything that is not a hologram lives here: the mission
- * design, the plan, the predictive model, Black Box and the ship's systems.
+ * looks down into it (DECISIONS A8). Everything that is not a hologram lives here: the
+ * exploration and its design, the plan, the predictive model, Black Box and the ship's systems.
  */
 import type { ReactNode } from 'react';
 import { BlackBoxMark } from '../theme/components/index.ts';
@@ -10,13 +10,13 @@ import { useDesk } from './desk.ts';
 import type { Desk, PageId } from './desk.ts';
 import { BlackBoxPage } from './pages/BlackBoxPage.tsx';
 import { CreditsPage } from './pages/CreditsPage.tsx';
-import { MissionPage } from './pages/MissionPage.tsx';
+import { ExplorationPage } from './pages/ExplorationPage.tsx';
 import { ModelPage } from './pages/ModelPage.tsx';
 import { PlanPage } from './pages/PlanPage.tsx';
 import { SystemsPage } from './pages/SystemsPage.tsx';
 
 const PAGES: readonly { id: PageId; label: string }[] = [
-  { id: 'mission', label: 'MISSION' },
+  { id: 'exploration', label: 'EXPLORATION' },
   { id: 'plan', label: 'PLAN' },
   { id: 'model', label: 'MODEL' },
   { id: 'blackbox', label: 'BLACK BOX' },
@@ -76,7 +76,7 @@ export function ConsoleScreen({
           aria-label={PAGES.find((p) => p.id === desk.page)?.label ?? 'Console page'}
         >
           {/* Pages are mounted only while the screen is up: they read the game as they render. */}
-          {visible && desk.page === 'mission' ? <MissionPage desk={desk} /> : null}
+          {visible && desk.page === 'exploration' ? <ExplorationPage desk={desk} /> : null}
           {visible && desk.page === 'plan' ? <PlanPage desk={desk} /> : null}
           {visible && desk.page === 'model' ? <ModelPage desk={desk} /> : null}
           {visible && desk.page === 'blackbox' ? <BlackBoxPage desk={desk} /> : null}

@@ -24,7 +24,7 @@ plan() { # $1 = delta-v (retrograde)
 }
 
 echo "=== attempt 1: preview 16 m/s on model v0 ==="
-$D click "text=MISSION" :: wait 500 :: click "text=RECORD DESIGN AND SET UP" :: wait 600
+$D click "text=EXPLORATION" :: wait 500 :: click "text=RECORD DESIGN AND SET UP" :: wait 600
 plan 16
 $D click "text=PREVIEW" :: wait 8000 :: js "window.__recursion.desk.note"
 $X "$S/A.js" "$S/a-preview-v0.json"
@@ -40,7 +40,7 @@ dive() { # $1 = delta-v, $2 = tag
 echo "=== dive 1 (9.85 m/s retrograde) ==="
 dive 9.85 d1
 echo "=== dive 2 (5 m/s retrograde) ==="
-$D click "text=MISSION" :: wait 500 :: click "text=RECORD DESIGN AND SET UP" :: wait 600
+$D click "text=EXPLORATION" :: wait 500 :: click "text=RECORD DESIGN AND SET UP" :: wait 600
 plan 5
 dive 5 d2
 echo "=== model ==="

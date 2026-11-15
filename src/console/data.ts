@@ -23,7 +23,7 @@ import { dist, fixed, whole } from './format.ts';
 const G0 = 9.80665;
 
 /**
- * An objective as MISSION states it: its kind in a word, its name, and its conditions (S20), so
+ * An objective as EXPLORATION states it: its kind in a word, its name, and its conditions (S20), so
  * the player knows what the attempt is asked to do. A region to reach is given by its size and
  * how far its edge is from where the ship believes it is now.
  */
