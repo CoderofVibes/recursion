@@ -6,8 +6,11 @@
  *
  * Loop: prepare (safe, paused) → commit plan (forecast issued and frozen) → operate (time
  * warp) → observe → compare → revise → try again. Warp changes how many ticks run per frame,
- * never the step size. Hands-on flying (`fly`, A8, A11) sends the controls as manual commands
- * and issues a coasting forecast when they are released.
+ * never the step size. Nothing holds time inside an encounter (A12): a committed plan runs from
+ * the moment of commitment and its forecast, computed from that moment, appears when it is
+ * ready (A18 (1)). Hands-on flying (`fly`, A8, A11) sends the controls as manual commands;
+ * releasing them stops the rotation only (A18 (6)) and issues a coasting forecast. Holding an
+ * attitude is a mode the player chooses (`holdAttitude`).
  *
  * Recurrence v0 (P8): loss, completion or a voluntary Recall ends the attempt; the next one
  * starts from exactly `EncounterDefinition.world` (ship, bodies, asteroids, noise streams),
@@ -41,7 +44,13 @@ import { HANDS_ON_NEUTRAL, isHandsOnNeutral, issueForecast } from '../contracts/
 import { handsOnBodyRate, handsOnFirings } from '../ship/index.ts';
 import { buildChart } from './belief/chart.ts';
 import { earlierCoverage, type CoverageReplayOptions } from './belief/coverage.ts';
-import type { GameControls, Phase, PlanDraft, SessionStatus } from './belief/controls.ts';
+import type {
+  AttitudeMode,
+  GameControls,
+  Phase,
+  PlanDraft,
+  SessionStatus,
+} from './belief/controls.ts';
 import type {
   AttemptStartInfo,
   BlackBoxPort,
@@ -99,6 +108,11 @@ interface Scheduled {
 }
 
 const UNRESOLVED = 'Attitude reference cannot be resolved from the navigation solution.';
+/** What releasing the controls leaves: the rotation stopped, the attitude free to drift (A18 (6)). */
+const STEADY: Command = {
+  kind: 'attitude',
+  target: { reference: 'rate', rate: { x: 0, y: 0, z: 0 } },
+};
 /**
  * [ASSUMED] Firings weaker than this are not drawn or followed, N. The allocator trims the
  * 2 mm sideways offset of the centre of mass with jets at well under a newton.
@@ -136,7 +150,10 @@ export function createGameSession(setup: EncounterSetup, options: SessionOptions
   let warp = play.warpSteps[0] ?? 1;
   let debt = 0;
   let saturated = false;
-  let committing = false;
+  /** Committed plans whose forecast is still being computed. Time does not wait for them. */
+  let committing = 0;
+  /** What the attitude controller was last told, from executed commands. */
+  let attitudeMode: AttitudeMode = 'free';
   let outcome: AttemptOutcome = { kind: 'in-progress' };
   let queue: Scheduled[] = [];
   let planId: PlanId | undefined;
@@ -218,6 +235,7 @@ export function createGameSession(setup: EncounterSetup, options: SessionOptions
     queue = setup.arrivalCommands.map((command) => ({ time: 0, command, source: 'procedure' }));
     planId = undefined;
     flown = HANDS_ON_NEUTRAL;
+    attitudeMode = 'free';
     commanded = initialCommandedState;
     drawn = undefined;
     trail = [];
@@ -296,8 +314,11 @@ export function createGameSession(setup: EncounterSetup, options: SessionOptions
     last = result;
     tick += 1;
 
-    for (const done of result.executed)
-      if (done.status !== 'rejected') commanded = applyCommanded(commanded, done.t, done.command);
+    for (const done of result.executed) {
+      if (done.status === 'rejected') continue;
+      commanded = applyCommanded(commanded, done.t, done.command);
+      attitudeMode = attitudeAfter(attitudeMode, done.command);
+    }
 
     const measurements = telemetry.filter(result.measurements);
     const executed = refused.length > 0 ? [...result.executed, ...refused] : result.executed;
@@ -327,10 +348,12 @@ export function createGameSession(setup: EncounterSetup, options: SessionOptions
 
   /**
    * Ask the model for the plan's forecast from its epoch, freeze it, record it and add it to
-   * the view. A committed plan is recorded with it. Returns undefined, with nothing recorded,
-   * when the attempt ended before the forecast arrived.
+   * the view. The request goes out now, so the model works from what was recorded up to the
+   * epoch; time runs on while it computes, and the forecast keeps its epoch (`issuedAt`), so
+   * the stretch flown before it arrived shows as past. Returns undefined, with nothing
+   * recorded, when the attempt ended before the forecast arrived.
    */
-  async function issue(plan: Plan, committed: boolean): Promise<Forecast | undefined> {
+  async function issue(plan: Plan): Promise<Forecast | undefined> {
     const attempt = attemptId;
     forecastCount += 1;
     const forecast = issueForecast(
@@ -343,7 +366,6 @@ export function createGameSession(setup: EncounterSetup, options: SessionOptions
       }),
     );
     if (attempt !== attemptId || !running()) return undefined;
-    if (committed) blackBox.recordPlan(attempt, plan);
     blackBox.recordForecast(attempt, forecast);
     forecasts.push(forecast);
     return forecast;
@@ -390,7 +412,8 @@ export function createGameSession(setup: EncounterSetup, options: SessionOptions
         warp,
         warpSteps: play.warpSteps,
         saturated,
-        committing,
+        committing: committing > 0,
+        attitude: attitudeMode,
         outcome,
         ...(planId ? { planId } : {}),
         pending: queue.filter((item) => item.source === 'plan').length,
@@ -443,7 +466,7 @@ export function createGameSession(setup: EncounterSetup, options: SessionOptions
 
     advance(realSeconds) {
       saturated = false;
-      if (paused || committing || !running()) return 0;
+      if (paused || !running()) return 0;
       debt += Math.max(0, realSeconds) * warp;
       const started = clock();
       let ran = 0;
@@ -483,28 +506,29 @@ export function createGameSession(setup: EncounterSetup, options: SessionOptions
 
     async commit(draft): Promise<Forecast> {
       if (!running()) throw new Error('the attempt has ended; restart before committing a plan');
-      if (committing) throw new Error('a plan is already being committed');
       const epoch = time();
       const plan = toPlan(draft, epoch);
-      committing = true;
+      // The plan runs from the moment of commitment, whether or not its forecast has arrived
+      // (A12, A18 (1)), and replaces whatever was still scheduled from an earlier one.
+      queue = [
+        ...queue.filter((item) => item.source !== 'plan'),
+        ...plan.items.map((item) => ({
+          time: epoch + item.at,
+          command: item.command,
+          source: 'plan' as const,
+          planId: plan.id,
+          planItemId: item.id,
+        })),
+      ].sort((a, b) => a.time - b.time);
+      planId = plan.items.length > 0 ? plan.id : undefined;
+      blackBox.recordPlan(attemptId, plan);
+      committing += 1;
       try {
-        const forecast = await issue(plan, true);
-        if (!forecast) throw new Error('the attempt ended before the plan was committed');
-        // The new plan replaces whatever was still scheduled from an earlier one.
-        queue = [
-          ...queue.filter((item) => item.source !== 'plan'),
-          ...plan.items.map((item) => ({
-            time: epoch + item.at,
-            command: item.command,
-            source: 'plan' as const,
-            planId: plan.id,
-            planItemId: item.id,
-          })),
-        ].sort((a, b) => a.time - b.time);
-        planId = plan.items.length > 0 ? plan.id : undefined;
+        const forecast = await issue(plan);
+        if (!forecast) throw new Error('the attempt ended before the forecast arrived');
         return forecast;
       } finally {
-        committing = false;
+        committing -= 1;
       }
     },
 
@@ -526,17 +550,33 @@ export function createGameSession(setup: EncounterSetup, options: SessionOptions
       };
       manual({ kind: 'fly', input: flown });
       if (!released) return;
-      // Controls released: a coasting forecast, which is an empty plan from the present state.
-      // It is issued and recorded like a committed plan's, but schedules nothing, leaves a
-      // scheduled plan alone and does not hold time. A failed model call is the model's to
-      // report; the loop goes on.
+      // Controls released: the rotation is stopped and nothing more (A18 (6)). Left to itself
+      // the ship would go on to hold the attitude it settles at, which costs RCS propellant for
+      // as long as it coasts; holding an attitude is the player's choice (`holdAttitude`).
+      manual(STEADY);
+      // A coasting forecast, which is an empty plan from the present state. It is issued and
+      // recorded like a committed plan's, but schedules nothing and leaves a scheduled plan
+      // alone. A failed model call is the model's to report; the loop goes on.
       const coast: Plan = {
         id: `coast-${pad(forecastCount + 1)}`,
         name: 'Coast',
         epoch: time(),
         items: [],
       };
-      void issue(coast, false).catch(() => undefined);
+      void issue(coast).catch(() => undefined);
+    },
+
+    holdAttitude(hold = true) {
+      if (!running()) return;
+      if (!hold) {
+        manual(STEADY);
+        return;
+      }
+      // The attitude the ship believes it has now, held until something else is commanded.
+      manual({
+        kind: 'attitude',
+        target: { reference: 'inertial', attitude: model.believedWorld(time()).ship.attitude },
+      });
     },
 
     recall() {
@@ -575,4 +615,29 @@ function toPreview(draft: PlanDraft): Omit<Plan, 'epoch'> {
     .sort((a, b) => a.at - b.at)
     .map((item, i) => ({ id: `preview-${i + 1}`, at: item.at, command: item.command }));
   return { id: 'preview', ...(draft.name ? { name: draft.name } : {}), items };
+}
+
+/** The attitude mode after an executed command (the ship's own rules, src/ship commands.ts). */
+function attitudeAfter(mode: AttitudeMode, command: Command): AttitudeMode {
+  switch (command.kind) {
+    case 'fly':
+      // A neutral input is followed by the steady command; anything else is the player's hands.
+      return isHandsOnNeutral(command.input) ? mode : 'hands-on';
+    case 'attitude': {
+      const target = command.target;
+      if (target.reference === 'free') return 'free';
+      if (target.reference === 'inertial') return 'hold';
+      if (target.reference === 'rate')
+        return target.rate.x === 0 && target.rate.y === 0 && target.rate.z === 0
+          ? 'steady'
+          : 'turning';
+      return 'pointing';
+    }
+    case 'burn':
+      return command.attitude ? 'pointing' : mode;
+    case 'cutoff':
+      return command.thruster === 'all' ? 'free' : mode;
+    default:
+      return mode;
+  }
 }
