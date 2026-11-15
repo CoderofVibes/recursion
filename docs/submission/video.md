@@ -1,6 +1,6 @@
 # The 30-second demo video
 
-The owner's vision (2026-11-15). The snap to black is the core of Recursion: the constant death loop. Thread TR builds a trailer page that plays this sequence ([phase-3-extras.md § TR](../build-plan/phase-3-extras.md#tr--the-30-second-trailer)); the owner records it and adds sound when it exists. Organizer rules are in [requirements.md](requirements.md): 30 seconds or less, a public link with no sign-in, visible labels on AI-generated media.
+The owner's vision (2026-11-15). The snap to black is the core of Recursion: the constant death loop. Thread TR owns the video end to end: a trailer page that plays this sequence, its staged visuals and its sound ([phase-3-extras.md § TR](../build-plan/phase-3-extras.md#tr--the-30-second-trailer)). The owner generates the sounds in ElevenLabs from TR's cue sheet and records the page in one take. Organizer rules are in [requirements.md](requirements.md): 30 seconds or less, a public link with no sign-in, visible labels on AI-generated media.
 
 ## Beats
 
@@ -29,7 +29,7 @@ The owner's vision (2026-11-15). The snap to black is the core of Recursion: the
 
 ## Capture
 
-The owner records the trailer page in a visible browser window at 1920 × 1080 with Windows Game Bar (Win+Alt+R), then trims it in Clipchamp if needed. The page plays the whole sequence itself, captions and snaps included, so recording is one take. Sound comes when AU's files exist.
+The owner records the trailer page in a visible browser window at 1920 × 1080 with Windows Game Bar (Win+Alt+R), which records the page's sound with the picture, then trims it in Clipchamp if needed. The page plays the whole sequence itself, captions, snaps and sound included, so recording is one take.
 
 ## Open
 
