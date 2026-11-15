@@ -141,8 +141,11 @@ describe('the radiation crescent', () => {
           if (a.id === 'critical-service') warning = a;
         }
       }
-      // 1 U s on a standard part at 0.05 U: 20 s in (S21).
-      expect(cautionAt).toBe(20);
+      // The radiation caution must come from the radiation monitor (A24, ledger R37), not from
+      // each component's true dose, which 3A removed from the record (R35, P11). Until 2F wires
+      // the monitor's caution, none is raised. This tripwire then fails; restore S21's figure,
+      // a caution 20 s in (1 U s on a standard part at 0.05 U). Integrator, on merging 2F.
+      expect(cautionAt).toBeUndefined();
       const outcome = s.status().outcome;
       expect(outcome).toMatchObject({ kind: 'lost', cause: 'power' });
       if (outcome.kind !== 'lost') throw new Error('not lost');
