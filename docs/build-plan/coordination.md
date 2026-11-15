@@ -4,18 +4,18 @@ The live state of the build between threads: who is running, who holds which sha
 
 **Integrator, after a compaction:** read this file first, then `git log --oneline -15`, then the handoffs of any thread marked running.
 
-**Last updated:** 2026-11-14, 3A merged; console hardened; lint fixed. Unannounced checkpoints sit on 2D, 3B and 3C; merge them when announced.
+**Last updated:** 2026-11-14, 3C and 2D merged. `?encounter=chain-link` stops on its loading screen until 2F passes fields into the simulation (R1). Unannounced checkpoints sit on 2D, 3B and 3C; merge them when announced.
 
 ## Threads
 
 | Thread | Model | Worktree · branch | Status | Gate or next step | Last merged into main |
 |---|---|---|---|---|---|
-| 2D control room | Opus 5.5 | `.worktrees/2d` · `p2/2d-control-room` | Running: S9's requests, S15's console fixes, 2G's screen data, S8's displays, credits link | — | `c7e8568` (update 4) |
+| 2D control room | Opus 5.5 | `.worktrees/2d` · `p2/2d-control-room` | Running. Merged: S9 R1–R15, S15 console fixes, 2G's screen data, 2C's forecast fields, S20 items, encounter panel mount and 120 m zoom (R4), A20 frame cadence (12 fps while coasting at 60×+), credits tab, elliptical envelopes | Next: OP's hooks (R23), AU's mount (R24), funnels in the window (R13); re-measure SYSTEMS | `635245f` |
 | 2G speed pass | Opus 5.5 | `.worktrees/2g` · `p2/2g-3d-flight` | **Done**, evidence and handoff merged. Next per-tick target: the environment step (rock visibility); a quiet-machine rebaseline is still to run (R11) | — | `bc292a9` |
 | 2F game loop | Opus 5.5 | `.worktrees/2f` · `p2/2f-game` | Running. Merged: A18 (1), (3), (4), (5) with placeholder power values, (6); S8's 70 catalogue flights as tests; encounter registry | Next: S21's power values and the cloud crescent (R14); fields into the simulation via `truth-step.ts` (R1), power-loss check next to collision loss | `7036c60` |
 | 2C model and Black Box | Opus 5.5 | `.worktrees/2c` · `p2/2c-model` | Round done and merged: bodies' track uncertainty, two moving bodies, forecast as of its issue time (A18 (1)), S8 checks with two fixes, lazy fallback | Next: 3C's reconstruction and Black Box function (R9), S17's requests, S20's (R17); 5% range-noise robustness still open | `4bf5359` |
 | 3B Inverse Wells | GPT/Codex | `.worktrees/3b` · `p3/3b-wells` | Running: field mechanics first | Layout from S16; loading via R1 | — |
-| 3C Chain Link Fence | GPT/Codex (GPT-6 Astra), reassigned by the owner | `.worktrees/3c` · `p3/3c-lattice` | Running: field and exposure mechanics first | S17's numbers when they land (R8) | — |
+| 3C Chain Link Fence | GPT/Codex (GPT-6 Astra) | `.worktrees/3c` · `p3/3c-lattice` | **Done**: twenty fences qualified (≤25.5 kg RCS of 100 kg, ≥21.6 m clearance), recorded reveal, raw diagnostics, stale readings, additive contracts, registration, save format 2. Integrator gave one slow test a 30 s timeout | Playable in the app once 2F wires fields (R1, R20) and 2C reconstructs (R9) | `acc648d` |
 | 3E playability harness | GPT/Codex | `.worktrees/3e` · `p3/3e-harness` | **Done**: `npm run harness` (smoke, reference, learning, routes, all); its pending-acceptance list names the gaps | — | `44db2fc` |
 | 3A power and thermal | GPT/Codex | `.worktrees/3a` · `p3/3a-power-thermal` | **Done**: causal radiation and thermal faults, heaters, physical service signals (`electricalService`, `energizedEquipment`); command tape identical; 72 h transit sustainable | Its wiring is 2F's (R26) | `767100b` |
 | 3D expedition | Opus 5.5 | not created yet · `p3/3d-expedition` | **Gated** | After 2F's and 2C's first checkpoints merge | — |
@@ -59,7 +59,7 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 | R1 | 3B, 3C → 2F | Loading interface: one line per encounter in `src/game/encounters.ts`, loaded via `?encounter=<id>` with its own save slot; the setup takes `run` and returns an `EncounterSetup` with `fields`; exits use `reach-region` | **Confirmed by 2F; 3C has registered `chain-link`. Blocking now: 2F must pass `setup.fields` into `createSimulation`** (main throws "world has fields but no field registry was given" on this route) | Top of 2F's list |
 | R2 | 3E → integrator | `npm run harness` → `node tools/harness/run.mjs` | **Done** `5b94ed2` | |
 | R3 | 2F ↔ 2C | A18 (1): the forecast is computed from the moment of commitment while time keeps running | **Agreed** (both prompted) | Model side is 2C's; game side is 2F's |
-| R4 | 3B, 3C → 2D | Mount points for encounter UI in `src/console/encounters/` and `src/view3d/fields/` | **Open:** 2D told to expect it | |
+| R4 | 3B, 3C → 2D | Mount points for encounter UI in `src/console/encounters/` and `src/view3d/fields/` | **Done** `635245f`: panels register themselves beside FLIGHT; FLIGHT zooms to 120 m in the Chain Link | The panel's data comes from 2F |
 | R5 | S20 → 2D | S9 replayed on the 3D build | **Landed** `6267a53`; relay to 2D | Most S9 fixes still open; priorities: retained PLAN drafts, routes and warp reasons, focus, comparison intervals, recorder estimates, departure frames; wire `WindowView` and `fitFailure` |
 | R6 | S21 → 2F, 3A | Belt size (A18 (2)) and power values (A18 (5)) | **Landed** `d9e986c`; relay once the owner answers S21's two questions | Radiation-cloud crescent, ~830 km pass target, 120 s critical-power rule, 4 h endurance caution |
 | R7 | S16 → 3B | Well Garden layout, seeds and vectors | **Done** `e6eb51d`: the three-well prototype for 3B's mechanics | The owner then asked for a big field (R12) |
@@ -78,7 +78,7 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 | R16 | 3C → integrator | Land 2F's deterministic-clock fix so 3C's full check goes green | **Done** `7b01be8` | |
 | R17 | S20 → 2F, 2C | Expose believed departure/progress, keep command and forecast epochs while time runs, reconcile PLAN's 400 s default with the 480 s turn allowance; make the real-model loop test deterministic; investigate the populated-archive commit wait | **Open**: relay | |
 
-| R18 | Owner → 2F, 2D | Faster coasting on slow machines (A20): at high warp with no hands-on flying, a bigger simulation slice per frame (2F) and fewer frames drawn (2D); results identical | **Agreed** (owner, A20); relay to both | 2F exposes the budget; 2D sets it with its frame cadence |
+| R18 | Owner → 2F, 2D | Faster coasting on slow machines (A20) | **2D's half done** (12 frames/s while coasting at 60×+, full rate on input or 1×). 2D proposes a **14 ms simulation budget while coasting** (10 ms otherwise); the integrator approves; 2F exposes it | 2D measures with S15's runner once 2F lands (port 4175) |
 
 | R19 | 3B → integrator | S22's forward exit is a disc crossing; `reach-region` takes spheres | **Decided by the integrator:** the prototype uses a destination sphere entirely beyond S22's exit plane; an exact disc waits for playtest evidence | |
 | R20 | 3C → 2F | In `truth-step.ts`: build the environment at every real acquisition state (`createChainLinkEnvironment(setup).at(state)`), not one frozen scene per second; schedule within the 1 s step to the earliest sensor, recorder, dose, trip or failure event, then integrate the rest; keep acquisition time separate from product availability; swept whole-ship admission for physical exits | **Open**: relay | After the fields wiring (R1) and A20 |
@@ -95,6 +95,8 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 | R27 | 3A → 2C | Consume `condition-changed` events with existing equipment IDs; no truth into the model or Black Box | **Open**: relay | |
 | R28 | 3A → integrator | Console set to the `hardened` radiation profile (A16) | **Done** (this commit) | Save/field chronology versioning when the encounters land |
 
+| R29 | 2D → 2F | `src/game/model-loop.test.ts` failed once under the full suite and passes alone; give it an explicit timeout if it's load-sensitive | **Open**: relay | |
+
 Add new rows at the bottom with the next ID. Never renumber.
 
 ## Owner decisions still open
@@ -109,7 +111,9 @@ Decided: A15 (S11's queue), A16 (the lattice), A17 (the ending) and A18 (the Gra
 
 | Commit | What |
 |---|---|
-| (this commit) | Console hardened (R28); ESLint gives docs scripts Node globals (main had failed lint since `bc292a9`); ledger R26–R28 |
+| (this commit) | Chain-link abort test gets a 30 s timeout (load); ledger |
+| `635245f`, `acc648d` | 2D (S9, S15 fixes, screens, A20 half); 3C (Chain Link Fence) |
+| `46a1783` | Console hardened (R28); ESLint gives docs scripts Node globals; ledger R26–R28 |
 | `767100b` | 3A: power, thermal and condition |
 | `b5f84ac` | A21, A22; S23, OP, AU; R23–R25 |
 | `bc292a9` | 2G's S15 rank 1 evidence |

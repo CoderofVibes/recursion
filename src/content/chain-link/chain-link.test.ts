@@ -255,7 +255,7 @@ describe('Unseen Cathedral content provider', () => {
     const pose = latticePoseFromShip(state.world.ship, setup.definition.ship);
     for (const component of pose.components)
       expect(sampleLatticeComponent(environment.field, pose, component).upper).toBe(0);
-  });
+  }, 30_000); // Flies the real ship systems; past 5 s under the full suite's load (integrator, as 2G did).
 });
 
 describe('S17 geometry qualification, separate from electrical/controller playability', () => {
