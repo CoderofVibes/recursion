@@ -30,21 +30,21 @@ At 12.8 s and 26.2 s **everything stops dead** and only the game's `black-cut` p
 
 ## The trailer's own cues (`src/trailer/audio/`)
 
-Times are seconds on the trailer's timeline. For each, set the duration in ElevenLabs Sound Effects to the length given, and trim one-shots to their transient.
+Times are seconds on the trailer's timeline. **Keep prompts simple** (owner, 2026-11-15): one sound per prompt, named plainly; the length goes in ElevenLabs' duration setting, not the prompt. The page layers the sounds at each moment, so no file has to do everything. Pick takes that start right away; silence at the end is harmless.
 
 | File | Start · length | At the cuts | Mood | Paste into ElevenLabs Sound Effects |
 |---|---|---|---|---|
-| `title-hit.mp3` | 0.5 s · 1.5 s | Faded out by 2.0 s, where the game's `title-out` takes over | Stark, heavy, sudden | A single deep cinematic impact, a heavy low struck-metal hit with a short sub-bass thump and a brief dark metallic ring that decays within one and a half seconds. Dry, close, no reverb wash, no riser, no whoosh, no music, no voice. |
-| `flicker-crackle.mp3` | Each flicker: title 0.95, 1.35, 1.72 s; braid 11.6, 12.0, 12.4 s · 0.15 s | Each plays out | Electrical, failing | One very short electrical crackle of a failing display, a dry buzzing snap of a phosphor screen losing power for an instant, under 0.15 seconds, clean end. No hum tail, beep, voice or music. |
-| `hull-strain.mp3` | 2.6 s · 2.2 s | Cut at 4.8 s | Straining, under load | A spacecraft hull straining under heavy load from inside the cabin, deep metal groaning and stressed panels flexing, low and physical, building slightly over two seconds. No explosion, no exterior roar, no voice, no music. |
-| `well-groan.mp3` | 4.8 s · 2.5 s | Cut at 7.3 s | Vast, uncanny | A deep slow groan of an enormous unseen force pulling on a spacecraft, a low bowed resonance that bends downward in pitch over two and a half seconds, felt more than heard. No whoosh, no melody, no voice, no music. |
-| `ship-creak.mp3` | 5.4 s · 1.8 s | Cut at 7.3 s | Twisting | The structure of a small spacecraft creaking as it is twisted and slowly rotated, long metal creaks and joints ticking under torsion, close and dry, about two seconds. No impact, no voice, no music. |
-| `lattice-strike.mp3` | 9.0 s · 1.2 s | Plays out; cut dead at 12.8 s at the latest | Sudden, invisible | A sudden sharp strike on a spacecraft hull from something invisible, a crisp electrical crack fused with a heavy metallic hit and a short burst of static, then a brief rattle settling within a second. No explosion fireball, no voice, no music. |
-| `braid-rush.mp3` | 10.3 s · 2.5 s | Cut dead at 12.8 s | Fast, rising, dangerous | Fast continuous rush of something streaking past both sides of a spacecraft at high speed, layered airy roars panning left and right and building in intensity over two and a half seconds, ending at full intensity with no tail. Heard from inside the cabin, no voice, no music. |
-| `montage-bed.mp3` | 13.1 s · 10.8 s | Cut at 23.9 s (the console) | Determined, quietly driving | Steady low pulsing drone for a technical montage, a soft deep pulse around 90 beats per minute under a warm electronic hum, even level for eleven seconds, no build to a climax, no drums, no melody, no voice. |
-| `final-hit.mp3` | 26.5 s · 3.5 s | Plays out by 30.0 s | Final, resonant | One huge deep cinematic hit with a long dark resonant tail, struck metal and sub-bass, decaying slowly to silence over three and a half seconds. No riser before it, no music, no voice. |
+| `title-hit.mp3` | 0.5 s · 1.5 s | Faded out by 2.0 s, where the game's `title-out` takes over | Stark, heavy, sudden | Deep cinematic boom hit with a metallic ring. |
+| `flicker-crackle.mp3` | Each flicker: title 0.95, 1.35, 1.72 s; braid 11.6, 12.0, 12.4 s · 0.15 s | Each plays out | Electrical, failing | Short electrical crackle of a flickering screen. |
+| `hull-strain.mp3` | 2.6 s · 2.2 s | Cut at 4.8 s | Straining, under load | Metal spaceship hull groaning under heavy strain. |
+| `well-groan.mp3` | 4.8 s · 2.5 s | Cut at 7.3 s | Vast, uncanny | Deep, slow, otherworldly groan of a huge force pulling. |
+| `ship-creak.mp3` | 5.4 s · 1.8 s | Cut at 7.3 s | Twisting | Spaceship metal frame creaking as it twists. |
+| `lattice-strike.mp3` | 9.0 s · 1.2 s | Plays out; cut dead at 12.8 s at the latest | Sudden, invisible | Sudden electrical impact hitting a metal spaceship hull. |
+| `braid-rush.mp3` | 10.3 s · 2.5 s | Cut dead at 12.8 s | Fast, rising, dangerous | Fast whoosh of debris streaking past on both sides. |
+| `montage-bed.mp3` | 13.1 s · 10.8 s | Cut at 23.9 s (the console) | Determined, quietly driving | Low, steady pulsing synth drone, calm and determined. |
+| `final-hit.mp3` | 26.5 s · 3.5 s | Plays out by 30.0 s | Final, resonant | Huge deep cinematic boom with a long dark tail. |
 
-**The montage's bed, if the owner prefers music:** use ElevenLabs Music instead, with the same file name and an 11 s length: "Minimal dark ambient electronic underscore, 90 BPM, a soft pulsing synth bass and a warm sustained pad, steady and determined, no drums, no melody, no vocals, 11 seconds, even level throughout."
+**The montage's bed, if the owner prefers music:** use ElevenLabs Music instead, with the same file name and an 11 s length: "Minimal dark ambient electronic underscore, 90 BPM, steady and determined."
 
 ## Credit
 
