@@ -11,7 +11,7 @@ import { burnDuration, burnSteps } from './belief/maneuver.ts';
 import { createBlackBox } from './belief/blackbox.ts';
 import { createStandInModel } from './belief/standin-model.ts';
 import type { PlanDraft } from './belief/controls.ts';
-import type { BlackBoxPort } from './belief/ports.ts';
+import type { BlackBoxPort, ModelPort } from './belief/ports.ts';
 import { createGameSession, type GameSession } from './session.ts';
 
 const setup = createGravityRange();
@@ -261,16 +261,74 @@ describe('game session: commit a plan', () => {
     });
   });
 
-  it('holds time still while a commit waits for its forecast', async () => {
-    const { session } = start(() => 0);
+  it('keeps time running while a committed plan waits for its forecast (A12, A18 (1))', async () => {
+    // A model whose forecast arrives only when the test says so.
+    const inner = createStandInModel({ referenceRadius: LAW.referenceRadius });
+    let deliver: (() => void) | undefined;
+    const slow: ModelPort = {
+      ...inner,
+      forecast: (request) =>
+        inner
+          .forecast(request)
+          .then((draft) => new Promise((resolve) => (deliver = () => resolve(draft)))),
+    };
+    const blackBox = createBlackBox();
+    const session = createGameSession(setup, { model: slow, blackBox, clock: () => 0 });
     session.setPaused(false);
     session.advance(5);
-    const pending = session.commit({ items: [] });
-    expect(session.status().committing).toBe(true);
-    expect(session.advance(5)).toBe(0);
-    await pending;
-    expect(session.status().committing).toBe(false);
+    const pending = session.commit({
+      name: 'Mark',
+      items: [{ at: 2, command: { kind: 'mark', label: 'during' } }],
+    });
+    // The plan is recorded and scheduled at once; time does not wait for the forecast.
+    expect(blackBox.attempt('attempt-0001')!.plans.map((p) => [p.id, p.epoch])).toEqual([
+      ['plan-0001', 5],
+    ]);
+    expect(session.status()).toMatchObject({ committing: true, planId: 'plan-0001', pending: 1 });
     expect(session.advance(5)).toBe(5);
+    const marks = () =>
+      blackBox
+        .attempt('attempt-0001')!
+        .executed.filter((e) => e.command.kind === 'mark')
+        .map((e) => [e.t, e.source, e.planItemId]);
+    expect(marks()).toEqual([[7, 'plan', 'plan-0001-1']]);
+    expect(session.snapshot().forecasts).toEqual([]);
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    deliver!();
+    const forecast = await pending;
+    // Computed from the moment of commitment: the five seconds flown since show as past.
+    expect(forecast.issuedAt).toBe(5);
+    expect(forecast.samples[0]!.t).toBe(5);
+    expect(session.status()).toMatchObject({ committing: false, t: 10 });
+    expect(session.snapshot().forecasts).toEqual([forecast]);
+    expect(blackBox.attempt('attempt-0001')!.forecasts).toEqual([forecast]);
+  });
+
+  it('a forecast that arrives after its attempt ended is not issued', async () => {
+    const inner = createStandInModel({ referenceRadius: LAW.referenceRadius });
+    let deliver: (() => void) | undefined;
+    const slow: ModelPort = {
+      ...inner,
+      forecast: (request) =>
+        inner
+          .forecast(request)
+          .then((draft) => new Promise((resolve) => (deliver = () => resolve(draft)))),
+    };
+    const blackBox = createBlackBox();
+    const session = createGameSession(setup, { model: slow, blackBox, now: () => 'now' });
+    session.stepTicks(5);
+    const pending = session.commit({ items: [] });
+    session.stepTicks(3);
+    session.recall();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    deliver!();
+    await expect(pending).rejects.toThrow(/ended/);
+    const first = blackBox.attempt('attempt-0001')!;
+    expect(first.plans).toHaveLength(1);
+    expect(first.forecasts).toEqual([]);
+    expect(session.snapshot().forecasts).toEqual([]);
+    expect(session.status().committing).toBe(false);
   });
 
   it('records a manual command, and a reference the navigator cannot resolve as rejected', () => {
@@ -501,6 +559,68 @@ describe('game session: hands-on flying (A8, A11)', () => {
       ['forecast-0002', 0],
     ]);
     expect(blackBox.attempt('attempt-0001')!.plans.map((p) => p.id)).toEqual(['plan-0001']);
+  });
+
+  it('releasing the controls stops the rotation only; holding attitude is chosen (A18 (6))', async () => {
+    const { session, blackBox } = start();
+    session.stepTicks(5);
+    expect(session.status().attitude).toBe('free');
+    session.fly(turn);
+    session.stepTicks(20);
+    expect(session.status().attitude).toBe('hands-on');
+    session.fly(HANDS_ON_NEUTRAL);
+    session.stepTicks(60);
+    await settle();
+    // The release is a neutral input and a zero-rate command, in that order, both executed.
+    const after = blackBox
+      .attempt('attempt-0001')!
+      .executed.filter((e) => e.t === 25)
+      .map((e) => [e.command.kind, e.status]);
+    expect(after).toEqual([
+      ['fly', 'executed'],
+      ['attitude', 'executed'],
+    ]);
+    expect(session.status().attitude).toBe('steady');
+    const systems = () => session.truth().sim.world.ship.systems;
+    expect(systems().attitudeTarget).toEqual({
+      reference: 'rate',
+      rate: { x: 0, y: 0, z: 0 },
+    });
+    expect(systems().ext?.handsOnHold ?? null).toBeNull();
+    const rate = session.truth().sim.world.ship.kinematics.angularVelocity;
+    expect(Math.hypot(rate.x, rate.y, rate.z)).toBeLessThan(1e-3);
+
+    // The player chooses to hold: the attitude the ship believes it has now.
+    session.holdAttitude();
+    session.stepTicks(1);
+    expect(session.status().attitude).toBe('hold');
+    const held = systems().attitudeTarget;
+    if (held.reference !== 'inertial') throw new Error('not an inertial hold');
+    const actual = session.truth().sim.world.ship.kinematics.attitude;
+    expect(quat.angleBetween(held.attitude, actual)).toBeLessThan(0.01);
+    session.holdAttitude(false);
+    session.stepTicks(1);
+    expect(session.status().attitude).toBe('steady');
+  });
+
+  it('a steady coast costs far less RCS than holding the attitude', { timeout: 60_000 }, () => {
+    const rcs = (hold: boolean): number => {
+      const { session } = start();
+      session.stepTicks(5);
+      session.fly(turn);
+      session.stepTicks(30);
+      session.fly(HANDS_ON_NEUTRAL);
+      session.stepTicks(120);
+      if (hold) session.holdAttitude();
+      const tanks = () => session.truth().sim.world.ship.systems.tanks;
+      const before = tanks()['rcs-left']! + tanks()['rcs-right']!;
+      session.stepTicks(3 * 3600);
+      return before - (tanks()['rcs-left']! + tanks()['rcs-right']!);
+    };
+    const steady = rcs(false);
+    const held = rcs(true);
+    expect(steady).toBeLessThan(0.5);
+    expect(held).toBeGreaterThan(steady);
   });
 
   it('forgets the controls when a new attempt begins', async () => {

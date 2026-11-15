@@ -3,22 +3,18 @@
  * This is the one place the app touches truth-side code; everything on screen goes through
  * `GameControls` (src/game/belief/controls.ts).
  *
+ * - Encounter: `?encounter=<id>` from the registry (src/game/encounters.ts), the Gravity range
+ *   by default; each run of a save meets its own geometry and noise (A10, A18 (4)).
  * - Predictive model: 2C's client (a Web Worker in the browser) behind `createModelBridge`.
  * - Black Box: 2C's recorder and archive, saved to IndexedDB (one slot per encounter build).
  * - On start a saved archive is restored and the model is rebuilt from it (P8).
  */
 
 import { createBlackBoxStore } from '../blackbox/index.ts';
-import {
-  createGravityRange,
-  ENCOUNTER_ID,
-  LAW,
-  SAVE_FORMAT,
-  SEED,
-} from '../content/gravity-range/index.ts';
 import { createBlackBox } from '../game/belief/blackbox.ts';
 import type { GameControls } from '../game/belief/controls.ts';
 import { createModelBridge } from '../game/belief/model-bridge.ts';
+import { encounterEntry, saveSlot } from '../game/encounters.ts';
 import { createGameSession } from '../game/session.ts';
 import { createModelClient } from '../model/index.ts';
 
@@ -30,18 +26,24 @@ export interface Game {
   erase(): Promise<void>;
 }
 
-export async function createGame(): Promise<Game> {
-  const setup = createGravityRange();
+export async function createGame(
+  encounterId = typeof location === 'undefined'
+    ? undefined
+    : new URLSearchParams(location.search).get('encounter'),
+): Promise<Game> {
+  const entry = encounterEntry(encounterId);
   // Records made by a different build of the encounter are not this world's evidence.
-  const store = createBlackBoxStore(`recursion-${ENCOUNTER_ID}-${SEED}-${SAVE_FORMAT}`);
+  const store = createBlackBoxStore(saveSlot(entry));
   const saved = await store.load().catch(() => undefined);
   const blackBox = createBlackBox({ ...(saved ? { archive: saved.archive } : {}), store });
   const archive = blackBox.archive();
 
+  const first = entry.create(0);
   const model = createModelBridge(createModelClient(), {
     // The P4 reference radius is the convention the believed law shares with the briefing's
     // GM values; it is not something the model has to discover.
-    referenceRadius: LAW.referenceRadius,
+    referenceRadius:
+      first.definition.briefing.referenceRadius ?? first.definition.world.law.referenceRadius,
     restored: {
       attempts: archive.attempts,
       extensions: saved?.archive.extensionTests ?? [],
@@ -53,6 +55,10 @@ export async function createGame(): Promise<Game> {
         .catch(() => undefined);
     },
   });
-  const controls = createGameSession(setup, { model, blackBox, rules: model.rules });
+  const controls = createGameSession((run) => (run === 0 ? first : entry.create(run)), {
+    model,
+    blackBox,
+    rules: model.rules,
+  });
   return { controls, modelError: model.lastError, erase: () => store.clear() };
 }
