@@ -57,7 +57,7 @@ const CUES = [
   { at: 7.8, id: 'opening-alarm' },
   { at: 8.47, id: 'opening-alarm' },
   { at: 9.35, id: 'loss-failure' },
-  { at: 10.65, id: 'black-cut' },
+  { at: CUT, id: 'black-cut' },
   { at: TITLE, id: 'opening-title' },
   { at: TITLE_OUT, id: 'title-out' },
   { at: REVEAL, id: 'room-wake' },

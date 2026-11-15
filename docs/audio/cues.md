@@ -120,8 +120,8 @@ with a clipped end. No reverberation, secondary click, voice or music.
 
 **When it plays**
 
-Opening at 10.65 s. Ordinary loss and the homeward sequence at the black stage
-(+1.50 s); silence follows.
+Opening at the cut to black (10.85 s). Ordinary loss and the homeward sequence
+at the black stage (+1.50 s). Silence follows.
 
 Mood · Final
 
