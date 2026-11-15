@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.app.json",
+  "compilerOptions": {
+    "types": ["vite/client", "node"],
+    "tsBuildInfoFile": "../../node_modules/.tmp/harness.tsbuildinfo"
+  },
+  "include": ["./**/*.ts"],
+  "exclude": []
+}

@@ -1,0 +1,1724 @@
+[
+  {
+    "offset_deg": -15.0,
+    "main_dv": 13.4,
+    "burn_t": 6360.0,
+    "lift_t": 86160,
+    "summary": {
+      "beta_peri_m": 811663.4048657881,
+      "beta_peri_t": 115320.0,
+      "beta_peri_relative_speed": 72.02211700132827,
+      "alpha_min_m": 999999.9999999999,
+      "exit_t": 258240.0,
+      "exit_speed": 60.911646542524856,
+      "exit_position": [
+        -7854034.2139150435,
+        4394360.634902046,
+        -110848.78071264969
+      ],
+      "exit_velocity": [
+        -60.55946848365504,
+        -6.496705880664032,
+        -0.7564880691838698
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 54068.00357363664,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "full_field": {
+      "phase_deg": 0.0,
+      "clearance_m": 6991.058366209911,
+      "closest_t": 118170.54183653899,
+      "rock": 109,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "arrival_rock_surface_gap_m": 306364.376295686,
+    "power_by_binary_phase": [
+      {
+        "phase_deg": 0,
+        "policy": "manual",
+        "events": {
+          "fuel_empty_t": null,
+          "caution_t": null,
+          "reserve_t": null,
+          "brownout_t": null,
+          "death_t": null
+        },
+        "hydrogen_kg": 3.3071074870274773,
+        "oxygen_kg": 26.456859896219818,
+        "product_water_kg": 24.236032616752706,
+        "batteries_J": [
+          36000000.0,
+          36000000.0
+        ],
+        "reserve_s": 91355.66127497726,
+        "eclipse_s": 0.0,
+        "ledger": {
+          "load_J": 857108968.4210749,
+          "solar_used_J": 681071494.7368591,
+          "solar_available_J": 1498188432.3359313,
+          "fuel_J": 191195368.4210539,
+          "battery_out_J": 0.0,
+          "battery_in_J": 15157894.73684226,
+          "unmet_J": 0.0,
+          "conversion_loss_J": 39755368.42105296
+        },
+        "ledger_residual_J": -4.157423973083496e-06,
+        "battery_residual_J": -1.4528632164001465e-07,
+        "snapshots": [],
+        "windows_s": [
+          [
+            0,
+            7200
+          ],
+          [
+            72000,
+            93600
+          ],
+          [
+            144000,
+            172800
+          ]
+        ],
+        "incidence_deg": 45,
+        "constant_overhead_W": 300.0,
+        "dt": 120.0
+      },
+      {
+        "phase_deg": 90,
+        "policy": "manual",
+        "events": {
+          "fuel_empty_t": null,
+          "caution_t": null,
+          "reserve_t": null,
+          "brownout_t": null,
+          "death_t": null
+        },
+        "hydrogen_kg": 3.3071074870274773,
+        "oxygen_kg": 26.456859896219818,
+        "product_water_kg": 24.236032616752706,
+        "batteries_J": [
+          36000000.0,
+          36000000.0
+        ],
+        "reserve_s": 91355.66127497726,
+        "eclipse_s": 0.0,
+        "ledger": {
+          "load_J": 857108968.4210749,
+          "solar_used_J": 681071494.7368591,
+          "solar_available_J": 1498188432.3359313,
+          "fuel_J": 191195368.4210539,
+          "battery_out_J": 0.0,
+          "battery_in_J": 15157894.73684226,
+          "unmet_J": 0.0,
+          "conversion_loss_J": 39755368.42105296
+        },
+        "ledger_residual_J": -4.157423973083496e-06,
+        "battery_residual_J": -1.4528632164001465e-07,
+        "snapshots": [],
+        "windows_s": [
+          [
+            0,
+            7200
+          ],
+          [
+            72000,
+            93600
+          ],
+          [
+            144000,
+            172800
+          ]
+        ],
+        "incidence_deg": 45,
+        "constant_overhead_W": 300.0,
+        "dt": 120.0
+      },
+      {
+        "phase_deg": 180,
+        "policy": "manual",
+        "events": {
+          "fuel_empty_t": null,
+          "caution_t": null,
+          "reserve_t": null,
+          "brownout_t": null,
+          "death_t": null
+        },
+        "hydrogen_kg": 3.2958885100074626,
+        "oxygen_kg": 26.3671080800597,
+        "product_water_kg": 24.337003409932837,
+        "batteries_J": [
+          36000000.0,
+          36000000.0
+        ],
+        "reserve_s": 91115.66127497726,
+        "eclipse_s": 2640.0,
+        "ledger": {
+          "load_J": 857108968.4210749,
+          "solar_used_J": 680274947.368438,
+          "solar_available_J": 1496396340.9096923,
+          "fuel_J": 191991915.78947496,
+          "battery_out_J": 0.0,
+          "battery_in_J": 15157894.73684226,
+          "unmet_J": 0.0,
+          "conversion_loss_J": 39755368.42105296
+        },
+        "ledger_residual_J": -4.157423973083496e-06,
+        "battery_residual_J": -1.4528632164001465e-07,
+        "snapshots": [],
+        "windows_s": [
+          [
+            0,
+            7200
+          ],
+          [
+            72000,
+            93600
+          ],
+          [
+            144000,
+            172800
+          ]
+        ],
+        "incidence_deg": 45,
+        "constant_overhead_W": 300.0,
+        "dt": 120.0
+      },
+      {
+        "phase_deg": 270,
+        "policy": "manual",
+        "events": {
+          "fuel_empty_t": null,
+          "caution_t": null,
+          "reserve_t": null,
+          "brownout_t": null,
+          "death_t": null
+        },
+        "hydrogen_kg": 3.3071074870274773,
+        "oxygen_kg": 26.456859896219818,
+        "product_water_kg": 24.236032616752706,
+        "batteries_J": [
+          36000000.0,
+          36000000.0
+        ],
+        "reserve_s": 91355.66127497726,
+        "eclipse_s": 0.0,
+        "ledger": {
+          "load_J": 857108968.4210749,
+          "solar_used_J": 681071494.7368591,
+          "solar_available_J": 1498188432.3359313,
+          "fuel_J": 191195368.4210539,
+          "battery_out_J": 0.0,
+          "battery_in_J": 15157894.73684226,
+          "unmet_J": 0.0,
+          "conversion_loss_J": 39755368.42105296
+        },
+        "ledger_residual_J": -4.157423973083496e-06,
+        "battery_residual_J": -1.4528632164001465e-07,
+        "snapshots": [],
+        "windows_s": [
+          [
+            0,
+            7200
+          ],
+          [
+            72000,
+            93600
+          ],
+          [
+            144000,
+            172800
+          ]
+        ],
+        "incidence_deg": 45,
+        "constant_overhead_W": 300.0,
+        "dt": 120.0
+      }
+    ]
+  },
+  {
+    "offset_deg": -10.0,
+    "main_dv": 13.600000000000001,
+    "burn_t": 5640.0,
+    "lift_t": 83280,
+    "summary": {
+      "beta_peri_m": 830642.3863274367,
+      "beta_peri_t": 112680.0,
+      "beta_peri_relative_speed": 71.28015353138673,
+      "alpha_min_m": 999999.9999999999,
+      "exit_t": 249360.0,
+      "exit_speed": 62.90785398430148,
+      "exit_position": [
+        -7337931.660793145,
+        5219115.146992295,
+        -105071.52257767954
+      ],
+      "exit_velocity": [
+        -62.902792154162086,
+        0.08939196383036438,
+        -0.7929950802388405
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 48507.6401071376,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "full_field": {
+      "phase_deg": 0.0,
+      "clearance_m": 7100.771574120181,
+      "closest_t": 109480.5057673307,
+      "rock": 109,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "arrival_rock_surface_gap_m": 318719.61115756904,
+    "power_by_binary_phase": [
+      {
+        "phase_deg": 0,
+        "policy": "manual",
+        "events": {
+          "fuel_empty_t": null,
+          "caution_t": null,
+          "reserve_t": null,
+          "brownout_t": null,
+          "death_t": null
+        },
+        "hydrogen_kg": 3.3071074870274773,
+        "oxygen_kg": 26.456859896219818,
+        "product_water_kg": 24.236032616752706,
+        "batteries_J": [
+          36000000.0,
+          36000000.0
+        ],
+        "reserve_s": 91355.66127497726,
+        "eclipse_s": 0.0,
+        "ledger": {
+          "load_J": 827636715.789495,
+          "solar_used_J": 651599242.1052792,
+          "solar_available_J": 1431881049.5650878,
+          "fuel_J": 191195368.4210539,
+          "battery_out_J": 0.0,
+          "battery_in_J": 15157894.73684226,
+          "unmet_J": 0.0,
+          "conversion_loss_J": 38388315.78947419
+        },
+        "ledger_residual_J": -4.157423973083496e-06,
+        "battery_residual_J": -1.4528632164001465e-07,
+        "snapshots": [],
+        "windows_s": [
+          [
+            0,
+            7200
+          ],
+          [
+            72000,
+            93600
+          ],
+          [
+            144000,
+            172800
+          ]
+        ],
+        "incidence_deg": 45,
+        "constant_overhead_W": 300.0,
+        "dt": 120.0
+      },
+      {
+        "phase_deg": 90,
+        "policy": "manual",
+        "events": {
+          "fuel_empty_t": null,
+          "caution_t": null,
+          "reserve_t": null,
+          "brownout_t": null,
+          "death_t": null
+        },
+        "hydrogen_kg": 3.3071074870274773,
+        "oxygen_kg": 26.456859896219818,
+        "product_water_kg": 24.236032616752706,
+        "batteries_J": [
+          36000000.0,
+          36000000.0
+        ],
+        "reserve_s": 91355.66127497726,
+        "eclipse_s": 0.0,
+        "ledger": {
+          "load_J": 827636715.789495,
+          "solar_used_J": 651599242.1052792,
+          "solar_available_J": 1431881049.5650878,
+          "fuel_J": 191195368.4210539,
+          "battery_out_J": 0.0,
+          "battery_in_J": 15157894.73684226,
+          "unmet_J": 0.0,
+          "conversion_loss_J": 38388315.78947419
+        },
+        "ledger_residual_J": -4.157423973083496e-06,
+        "battery_residual_J": -1.4528632164001465e-07,
+        "snapshots": [],
+        "windows_s": [
+          [
+            0,
+            7200
+          ],
+          [
+            72000,
+            93600
+          ],
+          [
+            144000,
+            172800
+          ]
+        ],
+        "incidence_deg": 45,
+        "constant_overhead_W": 300.0,
+        "dt": 120.0
+      },
+      {
+        "phase_deg": 180,
+        "policy": "manual",
+        "events": {
+          "fuel_empty_t": null,
+          "caution_t": null,
+          "reserve_t": null,
+          "brownout_t": null,
+          "death_t": null
+        },
+        "hydrogen_kg": 3.3071074870274773,
+        "oxygen_kg": 26.456859896219818,
+        "product_water_kg": 24.236032616752706,
+        "batteries_J": [
+          36000000.0,
+          36000000.0
+        ],
+        "reserve_s": 91355.66127497726,
+        "eclipse_s": 2760.0,
+        "ledger": {
+          "load_J": 827636715.789495,
+          "solar_used_J": 651599242.1052792,
+          "solar_available_J": 1431881049.5650878,
+          "fuel_J": 191195368.4210539,
+          "battery_out_J": 0.0,
+          "battery_in_J": 15157894.73684226,
+          "unmet_J": 0.0,
+          "conversion_loss_J": 38388315.78947419
+        },
+        "ledger_residual_J": -4.157423973083496e-06,
+        "battery_residual_J": -1.4528632164001465e-07,
+        "snapshots": [],
+        "windows_s": [
+          [
+            0,
+            7200
+          ],
+          [
+            72000,
+            93600
+          ],
+          [
+            144000,
+            172800
+          ]
+        ],
+        "incidence_deg": 45,
+        "constant_overhead_W": 300.0,
+        "dt": 120.0
+      },
+      {
+        "phase_deg": 270,
+        "policy": "manual",
+        "events": {
+          "fuel_empty_t": null,
+          "caution_t": null,
+          "reserve_t": null,
+          "brownout_t": null,
+          "death_t": null
+        },
+        "hydrogen_kg": 3.3071074870274773,
+        "oxygen_kg": 26.456859896219818,
+        "product_water_kg": 24.236032616752706,
+        "batteries_J": [
+          36000000.0,
+          36000000.0
+        ],
+        "reserve_s": 91355.66127497726,
+        "eclipse_s": 0.0,
+        "ledger": {
+          "load_J": 827636715.789495,
+          "solar_used_J": 651599242.1052792,
+          "solar_available_J": 1431881049.5650878,
+          "fuel_J": 191195368.4210539,
+          "battery_out_J": 0.0,
+          "battery_in_J": 15157894.73684226,
+          "unmet_J": 0.0,
+          "conversion_loss_J": 38388315.78947419
+        },
+        "ledger_residual_J": -4.157423973083496e-06,
+        "battery_residual_J": -1.4528632164001465e-07,
+        "snapshots": [],
+        "windows_s": [
+          [
+            0,
+            7200
+          ],
+          [
+            72000,
+            93600
+          ],
+          [
+            144000,
+            172800
+          ]
+        ],
+        "incidence_deg": 45,
+        "constant_overhead_W": 300.0,
+        "dt": 120.0
+      }
+    ]
+  },
+  {
+    "offset_deg": -5.0,
+    "main_dv": 13.600000000000001,
+    "burn_t": 4680.0,
+    "lift_t": 82200,
+    "summary": {
+      "beta_peri_m": 814191.9554318107,
+      "beta_peri_t": 111480.0,
+      "beta_peri_relative_speed": 72.16286684235088,
+      "alpha_min_m": 999999.9999999999,
+      "exit_t": 250680.0,
+      "exit_speed": 62.122466991474724,
+      "exit_position": [
+        -7481740.873241022,
+        5005534.301505341,
+        -109377.93040830556
+      ],
+      "exit_velocity": [
+        -62.09727114173777,
+        -1.586185381385071,
+        -0.7834780100604398
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 56712.74923539464,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "full_field": {
+      "phase_deg": 0.0,
+      "clearance_m": 6371.475929040313,
+      "closest_t": 111376.25501712388,
+      "rock": 130,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "arrival_rock_surface_gap_m": 320594.36587920587,
+    "power_by_binary_phase": [
+      {
+        "phase_deg": 0,
+        "policy": "manual",
+        "events": {
+          "fuel_empty_t": null,
+          "caution_t": null,
+          "reserve_t": null,
+          "brownout_t": null,
+          "death_t": null
+        },
+        "hydrogen_kg": 3.3071074870274773,
+        "oxygen_kg": 26.456859896219818,
+        "product_water_kg": 24.236032616752706,
+        "batteries_J": [
+          36000000.0,
+          36000000.0
+        ],
+        "reserve_s": 91355.66127497726,
+        "eclipse_s": 0.0,
+        "ledger": {
+          "load_J": 832017726.3158109,
+          "solar_used_J": 655980252.6315951,
+          "solar_available_J": 1441737552.4094024,
+          "fuel_J": 191195368.4210539,
+          "battery_out_J": 0.0,
+          "battery_in_J": 15157894.73684226,
+          "unmet_J": 0.0,
+          "conversion_loss_J": 38591526.31578995
+        },
+        "ledger_residual_J": -4.157423973083496e-06,
+        "battery_residual_J": -1.4528632164001465e-07,
+        "snapshots": [],
+        "windows_s": [
+          [
+            0,
+            7200
+          ],
+          [
+            72000,
+            93600
+          ],
+          [
+            144000,
+            172800
+          ]
+        ],
+        "incidence_deg": 45,
+        "constant_overhead_W": 300.0,
+        "dt": 120.0
+      },
+      {
+        "phase_deg": 90,
+        "policy": "manual",
+        "events": {
+          "fuel_empty_t": null,
+          "caution_t": null,
+          "reserve_t": null,
+          "brownout_t": null,
+          "death_t": null
+        },
+        "hydrogen_kg": 3.3071074870274773,
+        "oxygen_kg": 26.456859896219818,
+        "product_water_kg": 24.236032616752706,
+        "batteries_J": [
+          36000000.0,
+          36000000.0
+        ],
+        "reserve_s": 91355.66127497726,
+        "eclipse_s": 0.0,
+        "ledger": {
+          "load_J": 832017726.3158109,
+          "solar_used_J": 655980252.6315951,
+          "solar_available_J": 1441737552.4094024,
+          "fuel_J": 191195368.4210539,
+          "battery_out_J": 0.0,
+          "battery_in_J": 15157894.73684226,
+          "unmet_J": 0.0,
+          "conversion_loss_J": 38591526.31578995
+        },
+        "ledger_residual_J": -4.157423973083496e-06,
+        "battery_residual_J": -1.4528632164001465e-07,
+        "snapshots": [],
+        "windows_s": [
+          [
+            0,
+            7200
+          ],
+          [
+            72000,
+            93600
+          ],
+          [
+            144000,
+            172800
+          ]
+        ],
+        "incidence_deg": 45,
+        "constant_overhead_W": 300.0,
+        "dt": 120.0
+      },
+      {
+        "phase_deg": 180,
+        "policy": "manual",
+        "events": {
+          "fuel_empty_t": null,
+          "caution_t": null,
+          "reserve_t": null,
+          "brownout_t": null,
+          "death_t": null
+        },
+        "hydrogen_kg": 3.3071074870274773,
+        "oxygen_kg": 26.456859896219818,
+        "product_water_kg": 24.236032616752706,
+        "batteries_J": [
+          36000000.0,
+          36000000.0
+        ],
+        "reserve_s": 91355.66127497726,
+        "eclipse_s": 2760.0,
+        "ledger": {
+          "load_J": 832017726.3158109,
+          "solar_used_J": 655980252.6315951,
+          "solar_available_J": 1441737552.4094024,
+          "fuel_J": 191195368.4210539,
+          "battery_out_J": 0.0,
+          "battery_in_J": 15157894.73684226,
+          "unmet_J": 0.0,
+          "conversion_loss_J": 38591526.31578995
+        },
+        "ledger_residual_J": -4.157423973083496e-06,
+        "battery_residual_J": -1.4528632164001465e-07,
+        "snapshots": [],
+        "windows_s": [
+          [
+            0,
+            7200
+          ],
+          [
+            72000,
+            93600
+          ],
+          [
+            144000,
+            172800
+          ]
+        ],
+        "incidence_deg": 45,
+        "constant_overhead_W": 300.0,
+        "dt": 120.0
+      },
+      {
+        "phase_deg": 270,
+        "policy": "manual",
+        "events": {
+          "fuel_empty_t": null,
+          "caution_t": null,
+          "reserve_t": null,
+          "brownout_t": null,
+          "death_t": null
+        },
+        "hydrogen_kg": 3.3071074870274773,
+        "oxygen_kg": 26.456859896219818,
+        "product_water_kg": 24.236032616752706,
+        "batteries_J": [
+          36000000.0,
+          36000000.0
+        ],
+        "reserve_s": 91355.66127497726,
+        "eclipse_s": 0.0,
+        "ledger": {
+          "load_J": 832017726.3158109,
+          "solar_used_J": 655980252.6315951,
+          "solar_available_J": 1441737552.4094024,
+          "fuel_J": 191195368.4210539,
+          "battery_out_J": 0.0,
+          "battery_in_J": 15157894.73684226,
+          "unmet_J": 0.0,
+          "conversion_loss_J": 38591526.31578995
+        },
+        "ledger_residual_J": -4.157423973083496e-06,
+        "battery_residual_J": -1.4528632164001465e-07,
+        "snapshots": [],
+        "windows_s": [
+          [
+            0,
+            7200
+          ],
+          [
+            72000,
+            93600
+          ],
+          [
+            144000,
+            172800
+          ]
+        ],
+        "incidence_deg": 45,
+        "constant_overhead_W": 300.0,
+        "dt": 120.0
+      }
+    ]
+  },
+  {
+    "offset_deg": 0.0,
+    "main_dv": 13.8,
+    "burn_t": 3960.0,
+    "lift_t": 79440,
+    "summary": {
+      "beta_peri_m": 832661.91722471,
+      "beta_peri_t": 108840.0,
+      "beta_peri_relative_speed": 71.46394851536151,
+      "alpha_min_m": 1000000.0,
+      "exit_t": 242400.0,
+      "exit_speed": 63.89663056667601,
+      "exit_position": [
+        -6922818.980359874,
+        5751540.880757799,
+        -103238.71172973365
+      ],
+      "exit_velocity": [
+        -63.69717314683885,
+        4.978880163655858,
+        -0.8125781143132156
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 51606.54051209404,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "full_field": {
+      "phase_deg": 0.0,
+      "clearance_m": 6059.04396194182,
+      "closest_t": 88241.85760070209,
+      "rock": 140,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "arrival_rock_surface_gap_m": 306969.9255680376,
+    "power_by_binary_phase": [
+      {
+        "phase_deg": 0,
+        "policy": "manual",
+        "events": {
+          "fuel_empty_t": null,
+          "caution_t": null,
+          "reserve_t": null,
+          "brownout_t": null,
+          "death_t": null
+        },
+        "hydrogen_kg": 3.3071074870274773,
+        "oxygen_kg": 26.456859896219818,
+        "product_water_kg": 24.236032616752706,
+        "batteries_J": [
+          36000000.0,
+          36000000.0
+        ],
+        "reserve_s": 91355.66127497726,
+        "eclipse_s": 0.0,
+        "ledger": {
+          "load_J": 804536842.1052837,
+          "solar_used_J": 628499368.421068,
+          "solar_available_J": 1379910398.2041564,
+          "fuel_J": 191195368.4210539,
+          "battery_out_J": 0.0,
+          "battery_in_J": 15157894.73684226,
+          "unmet_J": 0.0,
+          "conversion_loss_J": 37316842.1052638
+        },
+        "ledger_residual_J": -4.157423973083496e-06,
+        "battery_residual_J": -1.4528632164001465e-07,
+        "snapshots": [],
+        "windows_s": [
+          [
+            0,
+            7200
+          ],
+          [
+            72000,
+            93600
+          ],
+          [
+            144000,
+            172800
+          ]
+        ],
+        "incidence_deg": 45,
+        "constant_overhead_W": 300.0,
+        "dt": 120.0
+      },
+      {
+        "phase_deg": 90,
+        "policy": "manual",
+        "events": {
+          "fuel_empty_t": null,
+          "caution_t": null,
+          "reserve_t": null,
+          "brownout_t": null,
+          "death_t": null
+        },
+        "hydrogen_kg": 3.3071074870274773,
+        "oxygen_kg": 26.456859896219818,
+        "product_water_kg": 24.236032616752706,
+        "batteries_J": [
+          36000000.0,
+          36000000.0
+        ],
+        "reserve_s": 91355.66127497726,
+        "eclipse_s": 0.0,
+        "ledger": {
+          "load_J": 804536842.1052837,
+          "solar_used_J": 628499368.421068,
+          "solar_available_J": 1379910398.2041564,
+          "fuel_J": 191195368.4210539,
+          "battery_out_J": 0.0,
+          "battery_in_J": 15157894.73684226,
+          "unmet_J": 0.0,
+          "conversion_loss_J": 37316842.1052638
+        },
+        "ledger_residual_J": -4.157423973083496e-06,
+        "battery_residual_J": -1.4528632164001465e-07,
+        "snapshots": [],
+        "windows_s": [
+          [
+            0,
+            7200
+          ],
+          [
+            72000,
+            93600
+          ],
+          [
+            144000,
+            172800
+          ]
+        ],
+        "incidence_deg": 45,
+        "constant_overhead_W": 300.0,
+        "dt": 120.0
+      },
+      {
+        "phase_deg": 180,
+        "policy": "manual",
+        "events": {
+          "fuel_empty_t": null,
+          "caution_t": null,
+          "reserve_t": null,
+          "brownout_t": null,
+          "death_t": null
+        },
+        "hydrogen_kg": 3.3071074870274773,
+        "oxygen_kg": 26.456859896219818,
+        "product_water_kg": 24.236032616752706,
+        "batteries_J": [
+          36000000.0,
+          36000000.0
+        ],
+        "reserve_s": 91355.66127497726,
+        "eclipse_s": 2640.0,
+        "ledger": {
+          "load_J": 804536842.1052837,
+          "solar_used_J": 628499368.421068,
+          "solar_available_J": 1379910398.2041564,
+          "fuel_J": 191195368.4210539,
+          "battery_out_J": 0.0,
+          "battery_in_J": 15157894.73684226,
+          "unmet_J": 0.0,
+          "conversion_loss_J": 37316842.1052638
+        },
+        "ledger_residual_J": -4.157423973083496e-06,
+        "battery_residual_J": -1.4528632164001465e-07,
+        "snapshots": [],
+        "windows_s": [
+          [
+            0,
+            7200
+          ],
+          [
+            72000,
+            93600
+          ],
+          [
+            144000,
+            172800
+          ]
+        ],
+        "incidence_deg": 45,
+        "constant_overhead_W": 300.0,
+        "dt": 120.0
+      },
+      {
+        "phase_deg": 270,
+        "policy": "manual",
+        "events": {
+          "fuel_empty_t": null,
+          "caution_t": null,
+          "reserve_t": null,
+          "brownout_t": null,
+          "death_t": null
+        },
+        "hydrogen_kg": 3.3071074870274773,
+        "oxygen_kg": 26.456859896219818,
+        "product_water_kg": 24.236032616752706,
+        "batteries_J": [
+          36000000.0,
+          36000000.0
+        ],
+        "reserve_s": 91355.66127497726,
+        "eclipse_s": 0.0,
+        "ledger": {
+          "load_J": 804536842.1052837,
+          "solar_used_J": 628499368.421068,
+          "solar_available_J": 1379910398.2041564,
+          "fuel_J": 191195368.4210539,
+          "battery_out_J": 0.0,
+          "battery_in_J": 15157894.73684226,
+          "unmet_J": 0.0,
+          "conversion_loss_J": 37316842.1052638
+        },
+        "ledger_residual_J": -4.157423973083496e-06,
+        "battery_residual_J": -1.4528632164001465e-07,
+        "snapshots": [],
+        "windows_s": [
+          [
+            0,
+            7200
+          ],
+          [
+            72000,
+            93600
+          ],
+          [
+            144000,
+            172800
+          ]
+        ],
+        "incidence_deg": 45,
+        "constant_overhead_W": 300.0,
+        "dt": 120.0
+      }
+    ]
+  },
+  {
+    "offset_deg": 5.0,
+    "main_dv": 13.8,
+    "burn_t": 3000.0,
+    "lift_t": 78360,
+    "summary": {
+      "beta_peri_m": 822836.8181193545,
+      "beta_peri_t": 107760.0,
+      "beta_peri_relative_speed": 71.99531490520889,
+      "alpha_min_m": 999999.9999999998,
+      "exit_t": 242520.0,
+      "exit_speed": 63.527034439601756,
+      "exit_position": [
+        -6985563.163133626,
+        5675222.524150603,
+        -105917.26623863791
+      ],
+      "exit_velocity": [
+        -63.374709305071,
+        4.321315844578912,
+        -0.8102805436918055
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 57506.82636120252,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "full_field": {
+      "phase_deg": 0.0,
+      "clearance_m": 7376.567500817319,
+      "closest_t": 112231.07419743776,
+      "rock": 48,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "arrival_rock_surface_gap_m": 310259.4759884566,
+    "power_by_binary_phase": [
+      {
+        "phase_deg": 0,
+        "policy": "manual",
+        "events": {
+          "fuel_empty_t": null,
+          "caution_t": null,
+          "reserve_t": null,
+          "brownout_t": null,
+          "death_t": null
+        },
+        "hydrogen_kg": 3.3071074870274773,
+        "oxygen_kg": 26.456859896219818,
+        "product_water_kg": 24.236032616752706,
+        "batteries_J": [
+          36000000.0,
+          36000000.0
+        ],
+        "reserve_s": 91355.66127497726,
+        "eclipse_s": 0.0,
+        "ledger": {
+          "load_J": 804935115.7894943,
+          "solar_used_J": 628897642.1052785,
+          "solar_available_J": 1380806443.917276,
+          "fuel_J": 191195368.4210539,
+          "battery_out_J": 0.0,
+          "battery_in_J": 15157894.73684226,
+          "unmet_J": 0.0,
+          "conversion_loss_J": 37335315.78947432
+        },
+        "ledger_residual_J": -4.157423973083496e-06,
+        "battery_residual_J": -1.4528632164001465e-07,
+        "snapshots": [],
+        "windows_s": [
+          [
+            0,
+            7200
+          ],
+          [
+            72000,
+            93600
+          ],
+          [
+            144000,
+            172800
+          ]
+        ],
+        "incidence_deg": 45,
+        "constant_overhead_W": 300.0,
+        "dt": 120.0
+      },
+      {
+        "phase_deg": 90,
+        "policy": "manual",
+        "events": {
+          "fuel_empty_t": null,
+          "caution_t": null,
+          "reserve_t": null,
+          "brownout_t": null,
+          "death_t": null
+        },
+        "hydrogen_kg": 3.3071074870274773,
+        "oxygen_kg": 26.456859896219818,
+        "product_water_kg": 24.236032616752706,
+        "batteries_J": [
+          36000000.0,
+          36000000.0
+        ],
+        "reserve_s": 91355.66127497726,
+        "eclipse_s": 0.0,
+        "ledger": {
+          "load_J": 804935115.7894943,
+          "solar_used_J": 628897642.1052785,
+          "solar_available_J": 1380806443.917276,
+          "fuel_J": 191195368.4210539,
+          "battery_out_J": 0.0,
+          "battery_in_J": 15157894.73684226,
+          "unmet_J": 0.0,
+          "conversion_loss_J": 37335315.78947432
+        },
+        "ledger_residual_J": -4.157423973083496e-06,
+        "battery_residual_J": -1.4528632164001465e-07,
+        "snapshots": [],
+        "windows_s": [
+          [
+            0,
+            7200
+          ],
+          [
+            72000,
+            93600
+          ],
+          [
+            144000,
+            172800
+          ]
+        ],
+        "incidence_deg": 45,
+        "constant_overhead_W": 300.0,
+        "dt": 120.0
+      },
+      {
+        "phase_deg": 180,
+        "policy": "manual",
+        "events": {
+          "fuel_empty_t": null,
+          "caution_t": null,
+          "reserve_t": null,
+          "brownout_t": null,
+          "death_t": null
+        },
+        "hydrogen_kg": 3.3071074870274773,
+        "oxygen_kg": 26.456859896219818,
+        "product_water_kg": 24.236032616752706,
+        "batteries_J": [
+          36000000.0,
+          36000000.0
+        ],
+        "reserve_s": 91355.66127497726,
+        "eclipse_s": 2760.0,
+        "ledger": {
+          "load_J": 804935115.7894943,
+          "solar_used_J": 628897642.1052785,
+          "solar_available_J": 1380806443.917276,
+          "fuel_J": 191195368.4210539,
+          "battery_out_J": 0.0,
+          "battery_in_J": 15157894.73684226,
+          "unmet_J": 0.0,
+          "conversion_loss_J": 37335315.78947432
+        },
+        "ledger_residual_J": -4.157423973083496e-06,
+        "battery_residual_J": -1.4528632164001465e-07,
+        "snapshots": [],
+        "windows_s": [
+          [
+            0,
+            7200
+          ],
+          [
+            72000,
+            93600
+          ],
+          [
+            144000,
+            172800
+          ]
+        ],
+        "incidence_deg": 45,
+        "constant_overhead_W": 300.0,
+        "dt": 120.0
+      },
+      {
+        "phase_deg": 270,
+        "policy": "manual",
+        "events": {
+          "fuel_empty_t": null,
+          "caution_t": null,
+          "reserve_t": null,
+          "brownout_t": null,
+          "death_t": null
+        },
+        "hydrogen_kg": 3.3071074870274773,
+        "oxygen_kg": 26.456859896219818,
+        "product_water_kg": 24.236032616752706,
+        "batteries_J": [
+          36000000.0,
+          36000000.0
+        ],
+        "reserve_s": 91355.66127497726,
+        "eclipse_s": 0.0,
+        "ledger": {
+          "load_J": 804935115.7894943,
+          "solar_used_J": 628897642.1052785,
+          "solar_available_J": 1380806443.917276,
+          "fuel_J": 191195368.4210539,
+          "battery_out_J": 0.0,
+          "battery_in_J": 15157894.73684226,
+          "unmet_J": 0.0,
+          "conversion_loss_J": 37335315.78947432
+        },
+        "ledger_residual_J": -4.157423973083496e-06,
+        "battery_residual_J": -1.4528632164001465e-07,
+        "snapshots": [],
+        "windows_s": [
+          [
+            0,
+            7200
+          ],
+          [
+            72000,
+            93600
+          ],
+          [
+            144000,
+            172800
+          ]
+        ],
+        "incidence_deg": 45,
+        "constant_overhead_W": 300.0,
+        "dt": 120.0
+      }
+    ]
+  },
+  {
+    "offset_deg": 10.0,
+    "main_dv": 14.0,
+    "burn_t": 2280.0,
+    "lift_t": 75600,
+    "summary": {
+      "beta_peri_m": 840315.3615743247,
+      "beta_peri_t": 105120.0,
+      "beta_peri_relative_speed": 71.3809350899961,
+      "alpha_min_m": 1000000.0000000001,
+      "exit_t": 235200.0,
+      "exit_speed": 64.99781291501768,
+      "exit_position": [
+        -6409285.843508281,
+        6323381.203610865,
+        -100077.27312566474
+      ],
+      "exit_velocity": [
+        -64.10783502827206,
+        10.686901264571159,
+        -0.831452394787877
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 51965.981410374865,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "full_field": {
+      "phase_deg": 0.0,
+      "clearance_m": 20112.549696477494,
+      "closest_t": 96051.10400704216,
+      "rock": 317,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "arrival_rock_surface_gap_m": 329935.770658542,
+    "power_by_binary_phase": [
+      {
+        "phase_deg": 0,
+        "policy": "manual",
+        "events": {
+          "fuel_empty_t": null,
+          "caution_t": null,
+          "reserve_t": null,
+          "brownout_t": null,
+          "death_t": null
+        },
+        "hydrogen_kg": 3.3071074870274773,
+        "oxygen_kg": 26.456859896219818,
+        "product_water_kg": 24.236032616752706,
+        "batteries_J": [
+          36000000.0,
+          36000000.0
+        ],
+        "reserve_s": 91355.66127497726,
+        "eclipse_s": 0.0,
+        "ledger": {
+          "load_J": 780640421.0526514,
+          "solar_used_J": 604602947.3684356,
+          "solar_available_J": 1326147655.416986,
+          "fuel_J": 191195368.4210539,
+          "battery_out_J": 0.0,
+          "battery_in_J": 15157894.73684226,
+          "unmet_J": 0.0,
+          "conversion_loss_J": 36208421.05263236
+        },
+        "ledger_residual_J": -4.157423973083496e-06,
+        "battery_residual_J": -1.4528632164001465e-07,
+        "snapshots": [],
+        "windows_s": [
+          [
+            0,
+            7200
+          ],
+          [
+            72000,
+            93600
+          ],
+          [
+            144000,
+            172800
+          ]
+        ],
+        "incidence_deg": 45,
+        "constant_overhead_W": 300.0,
+        "dt": 120.0
+      },
+      {
+        "phase_deg": 90,
+        "policy": "manual",
+        "events": {
+          "fuel_empty_t": null,
+          "caution_t": null,
+          "reserve_t": null,
+          "brownout_t": null,
+          "death_t": null
+        },
+        "hydrogen_kg": 3.3071074870274773,
+        "oxygen_kg": 26.456859896219818,
+        "product_water_kg": 24.236032616752706,
+        "batteries_J": [
+          36000000.0,
+          36000000.0
+        ],
+        "reserve_s": 91355.66127497726,
+        "eclipse_s": 0.0,
+        "ledger": {
+          "load_J": 780640421.0526514,
+          "solar_used_J": 604602947.3684356,
+          "solar_available_J": 1326147655.416986,
+          "fuel_J": 191195368.4210539,
+          "battery_out_J": 0.0,
+          "battery_in_J": 15157894.73684226,
+          "unmet_J": 0.0,
+          "conversion_loss_J": 36208421.05263236
+        },
+        "ledger_residual_J": -4.157423973083496e-06,
+        "battery_residual_J": -1.4528632164001465e-07,
+        "snapshots": [],
+        "windows_s": [
+          [
+            0,
+            7200
+          ],
+          [
+            72000,
+            93600
+          ],
+          [
+            144000,
+            172800
+          ]
+        ],
+        "incidence_deg": 45,
+        "constant_overhead_W": 300.0,
+        "dt": 120.0
+      },
+      {
+        "phase_deg": 180,
+        "policy": "manual",
+        "events": {
+          "fuel_empty_t": null,
+          "caution_t": null,
+          "reserve_t": null,
+          "brownout_t": null,
+          "death_t": null
+        },
+        "hydrogen_kg": 3.3071074870274773,
+        "oxygen_kg": 26.456859896219818,
+        "product_water_kg": 24.236032616752706,
+        "batteries_J": [
+          36000000.0,
+          36000000.0
+        ],
+        "reserve_s": 91355.66127497726,
+        "eclipse_s": 2760.0,
+        "ledger": {
+          "load_J": 780640421.0526514,
+          "solar_used_J": 604602947.3684356,
+          "solar_available_J": 1326147655.416986,
+          "fuel_J": 191195368.4210539,
+          "battery_out_J": 0.0,
+          "battery_in_J": 15157894.73684226,
+          "unmet_J": 0.0,
+          "conversion_loss_J": 36208421.05263236
+        },
+        "ledger_residual_J": -4.157423973083496e-06,
+        "battery_residual_J": -1.4528632164001465e-07,
+        "snapshots": [],
+        "windows_s": [
+          [
+            0,
+            7200
+          ],
+          [
+            72000,
+            93600
+          ],
+          [
+            144000,
+            172800
+          ]
+        ],
+        "incidence_deg": 45,
+        "constant_overhead_W": 300.0,
+        "dt": 120.0
+      },
+      {
+        "phase_deg": 270,
+        "policy": "manual",
+        "events": {
+          "fuel_empty_t": null,
+          "caution_t": null,
+          "reserve_t": null,
+          "brownout_t": null,
+          "death_t": null
+        },
+        "hydrogen_kg": 3.3071074870274773,
+        "oxygen_kg": 26.456859896219818,
+        "product_water_kg": 24.236032616752706,
+        "batteries_J": [
+          36000000.0,
+          36000000.0
+        ],
+        "reserve_s": 91355.66127497726,
+        "eclipse_s": 0.0,
+        "ledger": {
+          "load_J": 780640421.0526514,
+          "solar_used_J": 604602947.3684356,
+          "solar_available_J": 1326147655.416986,
+          "fuel_J": 191195368.4210539,
+          "battery_out_J": 0.0,
+          "battery_in_J": 15157894.73684226,
+          "unmet_J": 0.0,
+          "conversion_loss_J": 36208421.05263236
+        },
+        "ledger_residual_J": -4.157423973083496e-06,
+        "battery_residual_J": -1.4528632164001465e-07,
+        "snapshots": [],
+        "windows_s": [
+          [
+            0,
+            7200
+          ],
+          [
+            72000,
+            93600
+          ],
+          [
+            144000,
+            172800
+          ]
+        ],
+        "incidence_deg": 45,
+        "constant_overhead_W": 300.0,
+        "dt": 120.0
+      }
+    ]
+  },
+  {
+    "offset_deg": 15.0,
+    "main_dv": 14.0,
+    "burn_t": 1320.0,
+    "lift_t": 74520,
+    "summary": {
+      "beta_peri_m": 836090.307778199,
+      "beta_peri_t": 104040.0,
+      "beta_peri_relative_speed": 71.61518217896601,
+      "alpha_min_m": 1000000.0000000001,
+      "exit_t": 234480.0,
+      "exit_speed": 64.90603123382364,
+      "exit_position": [
+        -6391459.931745768,
+        6344049.269488435,
+        -101233.4750998899
+      ],
+      "exit_velocity": [
+        -63.978271989740406,
+        10.90324260582274,
+        -0.8324088006861184
+      ],
+      "qualifies": true
+    },
+    "cloud": {
+      "raw_exposure": 0.0,
+      "peak_intensity": 0.0,
+      "sampled_support_clearance_lower_bound_m": 55480.7645677781,
+      "caution_t": null,
+      "standard_failure_t": null,
+      "power_switch_failure_t": null,
+      "hardened_failure_t": null
+    },
+    "full_field": {
+      "phase_deg": 0.0,
+      "clearance_m": 13361.072141008266,
+      "closest_t": 107801.8813769844,
+      "rock": 297,
+      "contact_rock": -1,
+      "first_contact_t": null,
+      "first_20km_t": null
+    },
+    "arrival_rock_surface_gap_m": 363222.2621761075,
+    "power_by_binary_phase": [
+      {
+        "phase_deg": 0,
+        "policy": "manual",
+        "events": {
+          "fuel_empty_t": null,
+          "caution_t": null,
+          "reserve_t": null,
+          "brownout_t": null,
+          "death_t": null
+        },
+        "hydrogen_kg": 3.3071074870274773,
+        "oxygen_kg": 26.456859896219818,
+        "product_water_kg": 24.236032616752706,
+        "batteries_J": [
+          36000000.0,
+          36000000.0
+        ],
+        "reserve_s": 91355.66127497726,
+        "eclipse_s": 0.0,
+        "ledger": {
+          "load_J": 778250778.9473882,
+          "solar_used_J": 602213305.2631724,
+          "solar_available_J": 1320771381.138269,
+          "fuel_J": 191195368.4210539,
+          "battery_out_J": 0.0,
+          "battery_in_J": 15157894.73684226,
+          "unmet_J": 0.0,
+          "conversion_loss_J": 36097578.94736922
+        },
+        "ledger_residual_J": -4.157423973083496e-06,
+        "battery_residual_J": -1.4528632164001465e-07,
+        "snapshots": [],
+        "windows_s": [
+          [
+            0,
+            7200
+          ],
+          [
+            72000,
+            93600
+          ],
+          [
+            144000,
+            172800
+          ]
+        ],
+        "incidence_deg": 45,
+        "constant_overhead_W": 300.0,
+        "dt": 120.0
+      },
+      {
+        "phase_deg": 90,
+        "policy": "manual",
+        "events": {
+          "fuel_empty_t": null,
+          "caution_t": null,
+          "reserve_t": null,
+          "brownout_t": null,
+          "death_t": null
+        },
+        "hydrogen_kg": 3.3071074870274773,
+        "oxygen_kg": 26.456859896219818,
+        "product_water_kg": 24.236032616752706,
+        "batteries_J": [
+          36000000.0,
+          36000000.0
+        ],
+        "reserve_s": 91355.66127497726,
+        "eclipse_s": 0.0,
+        "ledger": {
+          "load_J": 778250778.9473882,
+          "solar_used_J": 602213305.2631724,
+          "solar_available_J": 1320771381.138269,
+          "fuel_J": 191195368.4210539,
+          "battery_out_J": 0.0,
+          "battery_in_J": 15157894.73684226,
+          "unmet_J": 0.0,
+          "conversion_loss_J": 36097578.94736922
+        },
+        "ledger_residual_J": -4.157423973083496e-06,
+        "battery_residual_J": -1.4528632164001465e-07,
+        "snapshots": [],
+        "windows_s": [
+          [
+            0,
+            7200
+          ],
+          [
+            72000,
+            93600
+          ],
+          [
+            144000,
+            172800
+          ]
+        ],
+        "incidence_deg": 45,
+        "constant_overhead_W": 300.0,
+        "dt": 120.0
+      },
+      {
+        "phase_deg": 180,
+        "policy": "manual",
+        "events": {
+          "fuel_empty_t": null,
+          "caution_t": null,
+          "reserve_t": null,
+          "brownout_t": null,
+          "death_t": null
+        },
+        "hydrogen_kg": 3.3071074870274773,
+        "oxygen_kg": 26.456859896219818,
+        "product_water_kg": 24.236032616752706,
+        "batteries_J": [
+          36000000.0,
+          36000000.0
+        ],
+        "reserve_s": 91355.66127497726,
+        "eclipse_s": 2280.0,
+        "ledger": {
+          "load_J": 778250778.9473882,
+          "solar_used_J": 602213305.2631724,
+          "solar_available_J": 1320771381.138269,
+          "fuel_J": 191195368.4210539,
+          "battery_out_J": 0.0,
+          "battery_in_J": 15157894.73684226,
+          "unmet_J": 0.0,
+          "conversion_loss_J": 36097578.94736922
+        },
+        "ledger_residual_J": -4.157423973083496e-06,
+        "battery_residual_J": -1.4528632164001465e-07,
+        "snapshots": [],
+        "windows_s": [
+          [
+            0,
+            7200
+          ],
+          [
+            72000,
+            93600
+          ],
+          [
+            144000,
+            172800
+          ]
+        ],
+        "incidence_deg": 45,
+        "constant_overhead_W": 300.0,
+        "dt": 120.0
+      },
+      {
+        "phase_deg": 270,
+        "policy": "manual",
+        "events": {
+          "fuel_empty_t": null,
+          "caution_t": null,
+          "reserve_t": null,
+          "brownout_t": null,
+          "death_t": null
+        },
+        "hydrogen_kg": 3.3071074870274773,
+        "oxygen_kg": 26.456859896219818,
+        "product_water_kg": 24.236032616752706,
+        "batteries_J": [
+          36000000.0,
+          36000000.0
+        ],
+        "reserve_s": 91355.66127497726,
+        "eclipse_s": 0.0,
+        "ledger": {
+          "load_J": 778250778.9473882,
+          "solar_used_J": 602213305.2631724,
+          "solar_available_J": 1320771381.138269,
+          "fuel_J": 191195368.4210539,
+          "battery_out_J": 0.0,
+          "battery_in_J": 15157894.73684226,
+          "unmet_J": 0.0,
+          "conversion_loss_J": 36097578.94736922
+        },
+        "ledger_residual_J": -4.157423973083496e-06,
+        "battery_residual_J": -1.4528632164001465e-07,
+        "snapshots": [],
+        "windows_s": [
+          [
+            0,
+            7200
+          ],
+          [
+            72000,
+            93600
+          ],
+          [
+            144000,
+            172800
+          ]
+        ],
+        "incidence_deg": 45,
+        "constant_overhead_W": 300.0,
+        "dt": 120.0
+      }
+    ]
+  }
+]

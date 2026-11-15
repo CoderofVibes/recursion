@@ -1,0 +1,17 @@
+{
+  "source_commit": "0b5cc25",
+  "sources": {
+    "data/ship-baseline.json": "aae1d0023749446706bf2d44243a4e248e7dc307c7ecd8e1ed0a5e69e051e51c",
+    "src/content/gravity-range/world.ts": "1eed487e0b6aee0838334b0652b0d51d9f2881da23f8f20e1b5c7e920a0cc6f5",
+    "src/content/gravity-range/briefing.ts": "d885ffa8526e8c6bb7d91951a617df60d9256d53f0bd5f36966ae9d1bbf75ff9",
+    "src/ship/power/index.ts": "f03133d19ccf81eb0c71aa2bd33f9356e204d9bb78c7ba97e87d677d84307168",
+    "tools/studies/s8/core.py": "01c718df0120bece9d313e2962f4057038d978e0cc5b1856849c6eb8a686a6af",
+    "tools/studies/s8/ring.py": "765d1ae6dd9108c2432ae39ea75dccd47502c4852dacd5a443a6b95d92dbd278",
+    "tools/studies/s8/pass-table.json": "2e48f81895b9ec4ef57bb2868b36c6286918c2617ee53733bd85bfc749e638ae",
+    "tools/studies/s8/seeds.json": "6445d8f9dfd7a0646c61a084396eed941e4f30fbb5a728f4d33c78b472e62dd6",
+    "docs/studies/s15/README.md": "4b8113d9d14f3bef252ef1afdb309bc49b7795601983324f400268d6f495f002",
+    "tools/studies/s21/reference.py": "f1898c58004d9f65d38ed7b11989296c980d3b79b0c2e957af1411e3c5480c20"
+  },
+  "runtime": "Python standard library + numpy; no downloads",
+  "independence": "Reuses S8 reference RK4 and initial rock distribution; new cloud, electrical, admission and comparison code. Does not import TypeScript."
+}

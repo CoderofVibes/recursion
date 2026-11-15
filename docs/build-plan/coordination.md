@@ -1,0 +1,106 @@
+# Coordination ledger
+
+The live state of the build between threads: who is running, who holds which shared file, and every open request or agreement between threads. **The integrator updates it on every relay, merge, launch and gate change, in the same commit as the change.** Threads read it; they don't edit it. They send changes to the integrator through the owner.
+
+**Integrator, after a compaction:** read this file first, then `git log --oneline -15`, then the handoffs of any thread marked running.
+
+**Last updated:** 2026-11-14, 3E, S17 and S21 merged. Unannounced checkpoints sit on 2D, 2F, 2C, 2G (its speed pass) and 3B; merge them when announced.
+
+## Threads
+
+| Thread | Model | Worktree · branch | Status | Gate or next step | Last merged into main |
+|---|---|---|---|---|---|
+| 2D control room | Opus 5.5 | `.worktrees/2d` · `p2/2d-control-room` | Running: S9's requests, S15's console fixes, 2G's screen data, S8's displays, credits link | — | `c7e8568` (update 4) |
+| 2G speed pass | Opus 5.5 | `.worktrees/2g` · `p2/2g-3d-flight` | Running: S15 rank 1, the ship's per-tick work | Its merge opens 3A and lets 2F into `truth-step.ts` | `a537c64` (3D, checkpoints 1–5) |
+| 2F game loop | Opus 5.5 | `.worktrees/2f` · `p2/2f-game` | Running: A18 (commit keeps time running, `depart` rule, power death, rate-only release, seed catalogue), S8's vectors | Belt and power values wait on S21 | before 2G |
+| 2C model and Black Box | Opus 5.5 | `.worktrees/2c` · `p2/2c-model` | Running: WIP committed, then redone on the 3D model; bodies' track uncertainty; A18 (1) with 2F | — | before 2G |
+| 3B Inverse Wells | GPT/Codex | `.worktrees/3b` · `p3/3b-wells` | Running: field mechanics first | Layout from S16; loading via R1 | — |
+| 3C Chain Link Fence | GPT/Codex (GPT-6 Astra), reassigned by the owner | `.worktrees/3c` · `p3/3c-lattice` | Running: field and exposure mechanics first | S17's numbers when they land (R8) | — |
+| 3E playability harness | GPT/Codex | `.worktrees/3e` · `p3/3e-harness` | **Done**: `npm run harness` (smoke, reference, learning, routes, all); its pending-acceptance list names the gaps | — | `44db2fc` |
+| 3A power and thermal | GPT/Codex | not created yet · `p3/3a-power-thermal` | **Gated** | After 2G's speed pass merges; integrator creates the worktree then | — |
+| 3D expedition | Opus 5.5 | not created yet · `p3/3d-expedition` | **Gated** | After 2F's and 2C's first checkpoints merge | — |
+| 3F console v2 | Claude | — | **Gated** | After 2D hands off | — |
+| S16 Well Garden layout | GPT/Codex | `.worktrees/s16` · `st/s16-well-garden` | **Done**: three-well prototype, 25-entry catalogue, garden budget (A15 Q05) | — | `e6eb51d` |
+| S22 well field (real funnels) | GPT/Codex | `.worktrees/s22` · `st/s22-big-well-field` | Ready to launch (rewritten for A19) | Feeds 3B (R12) | — |
+| S17 lattice first contact | GPT/Codex | `.worktrees/s17` · `st/s17-lattice-first-contact` | **Done**; five owner questions open | Feeds 3C (R8), 3A, 2C | `ba7568e` |
+| S18 tether gate | GPT/Codex | `.worktrees/s18` · `st/s18-tether-gate` | Running | Future tether work | — |
+| S19 tidal check | GPT/Codex | `.worktrees/s19` · `st/s19-tidal-check` | **Done**: Tidal Orchard deferred (A15 Q21) | — | merged, see log |
+| S20 3D recheck | GPT/Codex | `.worktrees/s20` · `st/s20-3d-recheck` | Running | Findings go to 2D (R5) and the submission | — |
+| S21 belt and power | GPT/Codex | `.worktrees/s21` · `st/s21-belt-power` | **Done**; two owner questions open | Values go to 2F (R6), 3A; cloud seam R14 | `d9e986c` |
+
+Prompts: Phase 2 in `phase-2/`, Phase 3 in `phase-3.md`, studies in `studies/`. The resume notes for 2D, 2G, 2F and 2C were sent through the owner on 2026-11-14 and are summarised in the Status column.
+
+## Shared files: who holds them now
+
+| Path | Holder | Until |
+|---|---|---|
+| `src/contracts/` (including `createFieldRegistry`) | Integrator | Always. Threads request changes. |
+| `package.json`, Vite/Vitest/TS/ESLint config | Integrator | Always. |
+| `docs/DECISIONS.md`, `docs/build-plan/` | Integrator | Always. |
+| `src/ship/{config,massprops,power,thermal,propulsion}/` | 2G (speed pass) | 2G's merge, then 3A |
+| `src/game/truth-step.ts` | 2G (speed pass) | 2G's merge, then 2F |
+| `src/game/` (rest), `src/content/`, `src/app/game.ts` | 2F | 2F's handoff. Encounter subfolders below excepted. |
+| `src/model/`, `src/blackbox/` | 2C | 2C's handoff |
+| `src/console/`, `src/view3d/`, `src/theme/`, rest of `src/app/` | 2D | 2D's handoff, then 3F (console and view3d) |
+| `src/sim/fields/wells*`, `src/content/inverse-wells/`, `src/view3d/fields/wells/`, `src/console/encounters/inverse-wells/` | 3B | 3B's handoff |
+| `src/sim/fields/lattice*`, `src/ship/sensors/`, `src/content/chain-link/`, `src/view3d/fields/lattice/`, `src/console/encounters/chain-link/` | 3C | 3C's handoff |
+| `tools/harness/` | 3E | 3E's handoff |
+| `src/lib/`, rest of `src/sim/`, `data/`, `tests/vectors/`, `tools/gmat/`, `docs/physics/`, `docs/verification/` | Integrator | Until a section is given it |
+
+## Requests and agreements between threads
+
+Status values: **open** (asked, not answered), **agreed** (answered, being built), **done** (merged), **dropped**.
+
+| ID | From → to | What | Status | Notes |
+|---|---|---|---|---|
+| R1 | 3B → 2F | Loading interface: 3B exports `createInverseWells(seed, options)` returning `EncounterSetup` plus a field registry built with `createFieldRegistry`. 2F wires the registry into `createTruthStepper`, loads it via `?encounter=inverse-wells` with its own save slot, and adds a `reach-region` objective for P03's exits. | **Open:** relayed to 2F, awaiting confirmation | Integrator approved the shape. The registry wiring waits for 2G's merge (`truth-step.ts`). 3C will reuse the same route and objective. |
+| R2 | 3E → integrator | `npm run harness` → `node tools/harness/run.mjs` | **Done** `5b94ed2` | |
+| R3 | 2F ↔ 2C | A18 (1): the forecast is computed from the moment of commitment while time keeps running | **Agreed** (both prompted) | Model side is 2C's; game side is 2F's |
+| R4 | 3B, 3C → 2D | Mount points for encounter UI in `src/console/encounters/` and `src/view3d/fields/` | **Open:** 2D told to expect it | |
+| R5 | S20 → 2D | S9 replayed on the 3D build: fixed, still there or new | **Open:** waits on S20 | Integrator forwards |
+| R6 | S21 → 2F, 3A | Belt size (A18 (2)) and power values (A18 (5)) | **Landed** `d9e986c`; relay once the owner answers S21's two questions | Radiation-cloud crescent, ~830 km pass target, 120 s critical-power rule, 4 h endurance caution |
+| R7 | S16 → 3B | Well Garden layout, seeds and vectors | **Done** `e6eb51d`: the three-well prototype for 3B's mechanics | The owner then asked for a big field (R12) |
+| R8 | S17 → 3C | First-contact numbers: dose, failure order, Black Box function cost, reconstruction | **Landed** `ba7568e`; relay with the owner's answers to S17's five questions | Also asks 3A (causal failures), 2C (reconstruction and retention), integrator (subtick acquisition schedule in `truth-step.ts`, contracts) |
+| R9 | 3C → 2C | The Black Box function in A16 (records sensors; FLIGHT shows the rebuilt lattice) | **Open:** 3C running | |
+| R10 | 3C ↔ 3A | Component faults from radiation: electrics and instruments (A16) | **Open:** 3C running; 3A gated | |
+| R11 | 2G → integrator | Release check from A18 (7) on 2G's speed pass: rerun S15's script, modest profile | **Open:** with 2G's merge | |
+
+| R12 | S22 → 3B | Wells as real funnels (A19), visible through the window: pull, reversal inside, crush at the throat; a big field through 3D at random orientations; wells that appear with a precursor; a reuse map | **Open:** S22 ready to launch | 3B keeps its reversal maths, registry and loading; generalises to an oriented funnel; adds the pull and the crush; doesn't tune a layout until S22 lands |
+
+| R13 | 3B → 2D | The funnels in the window view (A19: wells are visible, with striking visuals). 3B draws them in `src/view3d/fields/wells/`; 2D mounts them in the room's window and FLIGHT | **Open:** to relay | Folds into R4 |
+
+| R14 | S21 → 3C, 3A, 2F | The Gravity range's radiation-cloud crescent uses the lattice's exposure units and damage seam (3C, 3A); 2F places it as content | **Open:** after the owner approves S21 Q1 | |
+| R15 | S17, S21 → integrator | Contract additions: typed acquisition/coverage, field observation and power-loss interfaces; a subtick acquisition schedule in `truth-step.ts`; a save-schema bump | **Open** | Integrator applies to `src/contracts/` when a builder requests them |
+
+Add new rows at the bottom with the next ID. Never renumber.
+
+## Owner decisions still open
+
+- **Submission:** the summary's opening and the demo format (S12, `docs/studies/s12/`). Taken at the submission switch.
+- **S9:** whether the five-minute target means insight plus a fresh observed forecast (recommended yes); whether to allow a shorter evidence opportunity if the UI fixes miss it (recommended yes). Show the 1–4 view shortcuts: folded into 2D's R1.
+- **S17 (lattice):** harden the console; end the attempt on losing both PDUs; a 1 KiB channel tile at 1 Hz in the diagnostic packet; an eight-layer prototype at 1.4 m/s with a 125 kg RCS test budget; keep 8 GB with optional raw capture. All recommended yes.
+- **S21 (Gravity range):** the visible radiation-cloud crescent and ~830 km pass target; the 120 s critical-power loss rule with a 4 h endurance caution. Both recommended yes. (Its third question is already A18 (3).)
+- **S10:** keep the four reference pictures out of the release (recommended yes); confirm the live challenge listing and GMAT data eligibility (owner check).
+
+Decided: A15 (S11's queue), A16 (the lattice), A17 (the ending) and A18 (the Gravity range after 3D).
+
+## Merge log, newest first
+
+| Commit | What |
+|---|---|
+| (this commit) | Ledger after 3E, S17, S21 |
+| `d9e986c`, `ba7568e`, `44db2fc` | S21; S17; 3E (`npm run harness`) |
+| `b3ecb2d`, `636c2f4` | A19: wells are real funnels, visible; brief §7 clarified; S22 rewritten |
+| `303d268` | S16 merged (`e6eb51d`); owner's S16 answers in A15 Q05; S22 written |
+| `108f4fc` | S19 merged; Tidal Orchard deferred (A15 Q21) |
+| `ae562fe` | 3C reassigned to GPT/Codex and launched |
+| `682957b` | This ledger |
+| `5b94ed2` | `npm run harness`; wells and lattice paths split between 3B and 3C |
+| `393b5a8` | A18 (3): learning burns free, `depart` requires a real Beta assist |
+| `0b5cc25` | A18; study S21 |
+| `ad6bec0` | 3B reassigned to GPT/Codex |
+| `19a9ada` | Phase 3 applied, path releases, DECISIONS for 2G and S8, studies S16–S20 |
+| `e878b7c` | Independent check of 2G's slingshot study; reference vectors |
+| `454d9c8` | Speed test runs on its own after the suite |
+| `3bd3425`, `a537c64` | S15; 2G (3D end to end) |
+| `b82ccd8` | S13 (licence, notices, README), S14 (phases 3–5 refreshed) |

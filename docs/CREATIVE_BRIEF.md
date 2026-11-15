@@ -118,6 +118,8 @@ The initial predictive model and the player's instincts may recommend the wrong 
 
 This is an explicitly fictional local rule. Its exact profile, dimensions and difficulty remain implementation choices. Discovering the rule should help substantially without guaranteeing success.
 
+> **Owner's clarification (2026-11-14, recorded by the integrator; DECISIONS A19):** the funnels are real, not only a drawing. Wells are long, narrow funnels at random orientations through 3D. They pull the ship in, and the narrow end crushes it. There's a big field of them, and new ones appear. They're visible, with cool visuals in the window view.
+
 ## 8. Expedition structure and variety
 
 For this event, build one authored expedition. Defer fresh-game procedural world generation.
