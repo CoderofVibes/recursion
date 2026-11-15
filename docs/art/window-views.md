@@ -75,9 +75,11 @@ Internal names only. Nothing is ever labelled on screen (Night Watch §8).
 
 Transit is where the player spends the most time looking out (A12: time runs, nothing is dangerous, they prepare as long as they like). So it gets the richest sky, built honestly from three things.
 
-### 1. No dead direction
+### 1. No dead direction, and room to read
 
-The sky atlas is laid out so that **wherever the ship points, something is in the window**. Treat the sphere as about a dozen 60° cones. Every cone holds at least one landmark (the Galaxy's disc, Bulge, Scar or a Tip; the Ember Wheel; the Needle, Hollow or Eye; the Blue Cloud, Pair or Ember) or a stretch of band light. The space between landmarks is the quiet base sky (S02b `06ba5626` #2), never empty black. During transit the player can turn the ship freely and look around: each turn is a new view.
+The sky atlas is laid out so that **wherever the ship points, something worth noticing is in the window**. Treat the sphere as about a dozen 60° cones. Every cone holds at least one landmark (the Galaxy's disc, Bulge, Scar or a Tip; the Ember Wheel; the Needle, Hollow or Eye; the Blue Cloud, Pair or Ember) or a stretch of band light. The space between landmarks is the quiet base sky (S02b `06ba5626` #2), never empty black. During transit the player can turn the ship freely and look around: each turn is a new view.
+
+**Something worth noticing, not something everywhere.** Most of any 150° view stays quiet base sky, so the hologram and instruments read on top (art bible rule 3). One major landmark per view is the norm, two at most. **The exception is deliberate:** the Deep pole around the Turning Rim (C05 → C06) is the darkest sky in the game, so the first hairline can be seen. The coverage check exempts that cone.
 
 ### 2. Each leg points at something
 
@@ -86,13 +88,13 @@ The regions' 3D positions are authored (A13). Since the distant sky is free to a
 | Leg | Ahead (the landmark the course faces) | Also in the window (from data) | References |
 |---|---|---|---|
 | C01 → C02 | The whole edge-on **Galaxy** | Twin Deeps growing from two points into two crescents | `02429124` #0, `ca1c5c59` #2 |
-| C02 → C03 | The **Ember Wheel** rising | Aft: Twin Deeps shrinking, the radiation crescent a faint violet curve | `8911eeaa` #1 (aft view, chosen), `f80f640f` #2, `836473b2` #1 |
-| C03 → N01 | The **Bulge** | N01's unlit overhang growing as a starless patch that slowly eats into the Galaxy: an eclipse of a galaxy by a body you can't see | `8bbe8eef` #2 |
+| C02 → C03 | The **Ember Wheel** ahead | Aft: Twin Deeps shrinking, the radiation crescent a faint violet curve | `8911eeaa` #1 (aft view, chosen), `f80f640f` #2, `836473b2` #1 |
+| C03 → N01 | The **Bulge** | N01's unlit overhang growing as a starless patch that slowly eats into the Galaxy: an eclipse of a galaxy by a body you can't see. Its edge is razor-sharp, never soft | `82158aac` #2 (the Galaxy), `8bbe8eef` #2; eclipse still a gap (T01b) |
 | N01 → N02 | The **Blue Cloud** | Far Aperture's dark edges, a point of light winking between them | `5713ccd3` #2 |
 | N02 → N03 | The **Needle** beside a **Tip** | Two needles of light pointing the same way | `a4516a95` #3 |
 | C03 → P01 | The **Scar** | The Listening Shelf's pale slab growing, its glints flickering | `99085f82` #2 |
 | P01 → P02 | The far sun | A brilliant limb rising; the sky dimming as the eye adapts | layer 2 |
-| P02 → P03 | The **Hollow** | The Well Garden from afar: a faint violet frost of crossed threads, each ending in a spark, slowly resolving into funnels | `bce5f206` #1, `130bc062` #0 |
+| P02 → P03 | The **Hollow** | The Well Garden from afar: a faint violet frost of crossed threads, each ending in a spark, slowly resolving into funnels | `bce5f206` #1, `130bc062` #0; still a gap (T02b) |
 | P03 → P04 | **Deep pole** | Aft: the Garden receding into violet frost; ahead, a black disc eating stars | `8bbe8eef` #2 |
 | P03 ↔ N03 (cross-transfer) | The **Pair** | The Garden's frost on one side, a calm rock field on the other | — |
 | P04 or N03 → C04 | The **Ember Wheel**, low | Stillwater's limb with its hairline rim | `6a12a7aa` #0 |
@@ -107,11 +109,12 @@ The **Eye** stays at C01's arrival (low and easy to miss), so it's the first str
 All honest, all from data or the eye:
 
 - **Arriving and leaving.** The next region grows from a point to a disc ahead; the last one shrinks behind. Every body is drawn at its true angular size, so the approach itself is the show.
+- **What moves and what doesn't.** The distant sky never moves as the ship travels; a landmark only swings across the window when the ship turns. Everything that changes during a coast at a fixed heading comes from near bodies: their growing or shrinking size, and the way they slide across the fixed sky.
 - **Occultations.** As the ship moves, a near body slides across a landmark and hides it: a dark disc crossing the Ember Wheel, an overhang eating the Bulge. The parallax is real.
 - **Eye adaptation.** When the sun drops behind a body the stars and the galaxies come up over a few seconds (layer 2).
 - **Distant phenomena.** The Well Garden's precursors brighten far off, and a funnel being born is visible across the field (S22: the window sees phase without the camera).
 
-Because the sky never moves between legs, a player who has learned it can navigate by it: the Ember Wheel ahead means Lantern Field is behind them.
+Because the sky never moves, a player who has learned it can use it as a compass. A landmark gives **heading, not position**: the Ember Wheel ahead says which way the ship faces. Position comes from the near bodies, so the Ember Wheel ahead with Twin Deeps shrinking behind says this is the C02 → C03 leg.
 
 ## Build plan, layer by layer
 
@@ -128,7 +131,7 @@ Each layer stands alone and can merge alone. Tokens go in `src/theme/` (Conventi
 ## Checks
 
 - **Hologram contrast.** A theme test in the style of `theme.test.ts`: the sky's brightest pixel (the Bulge) stays below a set fraction of the hologram's line brightness, and the sky's mean hue keeps ΔE76 > 20 from `forecast`, `thrust`, `velocity`, `blackbox`, `caution` and `warning`.
-- **No dead direction.** A test samples the atlas in about a dozen 60° cones and asserts each holds a landmark or band light above a set brightness.
+- **No dead direction.** A test samples the atlas in about a dozen 60° cones and asserts each holds a landmark or band light above a set brightness, except the Deep pole cone (the Turning Rim's deliberate darkness). A companion check asserts no default leg view has more than two major landmarks, so the instruments stay readable.
 - **Determinism.** The atlas is identical on every run and every machine (fixed seed, no `Math.random`).
 - **Modest laptop (A18 item 7).** Cold load still within 2.5 s with the bake included; frame p95 unchanged within noise.
 - **Honesty.** Nothing drawn that the window channel or a phenomenon's own product doesn't supply, apart from the fixed distant sky. No lattice in N03.
