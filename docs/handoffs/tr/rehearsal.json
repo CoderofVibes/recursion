@@ -2,110 +2,108 @@
   "url": "/src/trailer/?quality=full",
   "state": "ended",
   "beatChanges": 19,
-  "worstLateS": 0.0059,
+  "worstLateS": 0.0058,
   "record": [
     {
       "beat": "open",
       "sheet": 0,
-      "late": 0.0046
+      "late": 0.0028
     },
     {
       "beat": "title",
       "sheet": 0.5,
-      "late": 0.0013
+      "late": 0.0057
     },
     {
       "beat": "after-title",
       "sheet": 2,
-      "late": 0.0044
+      "late": 0.0027
     },
     {
       "beat": "slingshot",
       "sheet": 2.3,
-      "late": 0.001
+      "late": 0.0055
     },
     {
       "beat": "wells",
       "sheet": 4.8,
-      "late": 0.0039
+      "late": 0.0021
     },
     {
       "beat": "lattice",
       "sheet": 7.3,
-      "late": 0.0004
+      "late": 0.0046
     },
     {
       "beat": "braid",
       "sheet": 10.3,
-      "late": 0.0059
+      "late": 0.0043
     },
     {
       "beat": "snap",
       "sheet": 12.8,
-      "late": 0.0024
+      "late": 0.0008
     },
     {
       "beat": "montage-flight",
       "sheet": 13.1,
-      "late": 0.0055
+      "late": 0.0039
     },
     {
       "beat": "montage-map",
       "sheet": 14.45,
-      "late": 0.001
+      "late": 0.0052
     },
     {
       "beat": "montage-region",
       "sheet": 15.8,
-      "late": 0.0022
+      "late": 0.0004
     },
     {
       "beat": "montage-explore",
       "sheet": 17.15,
-      "late": 0.0034
+      "late": 0.0016
     },
     {
       "beat": "montage-model",
       "sheet": 18.5,
-      "late": 0.0049
+      "late": 0.0032
     },
     {
       "beat": "montage-plan",
       "sheet": 19.85,
-      "late": 0
+      "late": 0.0044
     },
     {
       "beat": "montage-blackbox",
       "sheet": 21.2,
-      "late": 0.0014
+      "late": 0.0058
     },
     {
       "beat": "montage-ship",
       "sheet": 22.55,
-      "late": 0.0027
+      "late": 0.001
     },
     {
       "beat": "console",
       "sheet": 23.9,
-      "late": 0.0039
+      "late": 0.0023
     },
     {
       "beat": "before-card",
       "sheet": 26.2,
-      "late": 0.0005
+      "late": 0.0049
     },
     {
       "beat": "card",
       "sheet": 26.5,
-      "late": 0.0034
+      "late": 0.0021
     }
   ],
   "missingSounds": [
     "well-groan",
     "ship-creak",
-    "lattice-strike",
-    "braid-rush",
-    "final-hit"
+    "braid-rush"
   ],
   "cornerLabel": "Gameplay, edited · built with AI assistance · audio: ElevenLabs, AI-generated",
   "css": [
@@ -123,7 +121,7 @@
   "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4050 Laptop GPU (0x000028E1) Direct3D11 vs_5_0 ps_5_0, D3D11)",
   "frames": {
     "before": {
-      "frames": 49,
+      "frames": 48,
       "medianMs": 6.1,
       "p95Ms": 6.3,
       "worstMs": 12.1,
@@ -131,23 +129,23 @@
       "slowFrames": []
     },
     "open": {
-      "frames": 81,
+      "frames": 80,
       "medianMs": 6.1,
-      "p95Ms": 6.3,
-      "worstMs": 12,
+      "p95Ms": 6.4,
+      "worstMs": 12.3,
       "over16_7": 0,
       "slowFrames": []
     },
     "title": {
-      "frames": 240,
+      "frames": 236,
       "medianMs": 6.1,
-      "p95Ms": 6.4,
-      "worstMs": 12.1,
+      "p95Ms": 6.5,
+      "worstMs": 12.2,
       "over16_7": 0,
       "slowFrames": []
     },
     "after-title": {
-      "frames": 49,
+      "frames": 50,
       "medianMs": 6.1,
       "p95Ms": 6.3,
       "worstMs": 6.4,
@@ -155,133 +153,142 @@
       "slowFrames": []
     },
     "slingshot": {
-      "frames": 413,
+      "frames": 412,
       "medianMs": 6.1,
-      "p95Ms": 6.3,
-      "worstMs": 6.5,
+      "p95Ms": 6.2,
+      "worstMs": 6.6,
       "over16_7": 0,
       "slowFrames": []
     },
     "wells": {
-      "frames": 411,
+      "frames": 412,
       "medianMs": 6.1,
-      "p95Ms": 6.3,
-      "worstMs": 12.4,
+      "p95Ms": 6.2,
+      "worstMs": 12.1,
       "over16_7": 0,
       "slowFrames": []
     },
     "lattice": {
-      "frames": 494,
+      "frames": 478,
       "medianMs": 6.1,
       "p95Ms": 6.3,
-      "worstMs": 18.4,
-      "over16_7": 1,
+      "worstMs": 18.3,
+      "over16_7": 6,
       "slowFrames": [
-        79
+        384,
+        387,
+        390,
+        391,
+        402,
+        412
       ]
     },
     "braid": {
-      "frames": 412,
+      "frames": 399,
       "medianMs": 6.1,
-      "p95Ms": 6.3,
-      "worstMs": 7.4,
-      "over16_7": 0,
-      "slowFrames": []
+      "p95Ms": 6.2,
+      "worstMs": 18.2,
+      "over16_7": 2,
+      "slowFrames": [
+        71,
+        375
+      ]
     },
     "snap": {
-      "frames": 48,
+      "frames": 50,
       "medianMs": 6.1,
-      "p95Ms": 6.3,
-      "worstMs": 12,
+      "p95Ms": 6.2,
+      "worstMs": 6.3,
       "over16_7": 0,
       "slowFrames": []
     },
     "montage-flight": {
-      "frames": 215,
+      "frames": 223,
       "medianMs": 6.1,
       "p95Ms": 6.3,
-      "worstMs": 12.2,
+      "worstMs": 6.4,
       "over16_7": 0,
       "slowFrames": []
     },
     "montage-map": {
-      "frames": 213,
+      "frames": 222,
+      "medianMs": 6.1,
+      "p95Ms": 6.2,
+      "worstMs": 6.4,
+      "over16_7": 0,
+      "slowFrames": []
+    },
+    "montage-region": {
+      "frames": 215,
       "medianMs": 6.1,
       "p95Ms": 6.4,
       "worstMs": 12.1,
       "over16_7": 0,
       "slowFrames": []
     },
-    "montage-region": {
-      "frames": 214,
-      "medianMs": 6.1,
-      "p95Ms": 6.3,
-      "worstMs": 12.1,
-      "over16_7": 0,
-      "slowFrames": []
-    },
     "montage-explore": {
-      "frames": 216,
+      "frames": 209,
       "medianMs": 6.1,
-      "p95Ms": 6.3,
-      "worstMs": 12,
+      "p95Ms": 11.1,
+      "worstMs": 12.2,
       "over16_7": 0,
       "slowFrames": []
     },
     "montage-model": {
-      "frames": 215,
+      "frames": 216,
       "medianMs": 6.1,
       "p95Ms": 6.3,
-      "worstMs": 12.1,
+      "worstMs": 12.2,
       "over16_7": 0,
       "slowFrames": []
     },
     "montage-plan": {
-      "frames": 211,
+      "frames": 214,
       "medianMs": 6.1,
-      "p95Ms": 11.9,
+      "p95Ms": 6.5,
       "worstMs": 12.2,
       "over16_7": 0,
       "slowFrames": []
     },
     "montage-blackbox": {
-      "frames": 217,
+      "frames": 212,
       "medianMs": 6.1,
-      "p95Ms": 6.3,
+      "p95Ms": 6.4,
       "worstMs": 12.1,
       "over16_7": 0,
       "slowFrames": []
     },
     "montage-ship": {
-      "frames": 214,
+      "frames": 212,
       "medianMs": 6.1,
-      "p95Ms": 6.3,
-      "worstMs": 24.2,
-      "over16_7": 1,
-      "slowFrames": [
-        180
-      ]
-    },
-    "console": {
-      "frames": 374,
-      "medianMs": 6.1,
-      "p95Ms": 6.3,
+      "p95Ms": 11.9,
       "worstMs": 12.3,
       "over16_7": 0,
       "slowFrames": []
     },
+    "console": {
+      "frames": 372,
+      "medianMs": 6.1,
+      "p95Ms": 6.3,
+      "worstMs": 30.3,
+      "over16_7": 2,
+      "slowFrames": [
+        59,
+        65
+      ]
+    },
     "before-card": {
       "frames": 49,
       "medianMs": 6.1,
-      "p95Ms": 6.3,
-      "worstMs": 12,
+      "p95Ms": 6.2,
+      "worstMs": 6.3,
       "over16_7": 0,
       "slowFrames": []
     },
     "card": {
-      "frames": 562,
+      "frames": 547,
       "medianMs": 6.1,
-      "p95Ms": 6.3,
+      "p95Ms": 11.9,
       "worstMs": 12.2,
       "over16_7": 0,
       "slowFrames": []
