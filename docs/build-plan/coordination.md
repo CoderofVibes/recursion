@@ -4,7 +4,7 @@ The live state of the build between threads: who is running, who holds which sha
 
 **Integrator, after a compaction:** read this file first, then `git log --oneline -15`, then the handoffs of any thread marked running.
 
-**Last updated:** 2026-11-14, 2F's third checkpoint merged; 20 lattice fences and S18's answers recorded. Unannounced checkpoints sit on 2D, 2C and 3B; merge them when announced.
+**Last updated:** 2026-11-14, S22 merged; A20 (faster coasting). Unannounced checkpoints sit on 2D, 2C and 3B; merge them when announced.
 
 ## Threads
 
@@ -21,7 +21,7 @@ The live state of the build between threads: who is running, who holds which sha
 | 3D expedition | Opus 5.5 | not created yet · `p3/3d-expedition` | **Gated** | After 2F's and 2C's first checkpoints merge | — |
 | 3F console v2 | Claude | — | **Gated** | After 2D hands off | — |
 | S16 Well Garden layout | GPT/Codex | `.worktrees/s16` · `st/s16-well-garden` | **Done**: three-well prototype, 25-entry catalogue, garden budget (A15 Q05) | — | `e6eb51d` |
-| S22 well field (real funnels) | GPT/Codex | `.worktrees/s22` · `st/s22-big-well-field` | Ready to launch (rewritten for A19) | Feeds 3B (R12) | — |
+| S22 well field (real funnels) | GPT/Codex | `.worktrees/s22` · `st/s22-big-well-field` | **Done**: funnels 120 km long, 20 km mouth, 1 km throat, pull 0.02–0.10 m/s²; 2,601 sites, 650 appearing; owner questions open | Feeds 3B (R12) | `15171df` |
 | S17 lattice first contact | GPT/Codex | `.worktrees/s17` · `st/s17-lattice-first-contact` | **Done**; five owner questions open | Feeds 3C (R8), 3A, 2C | `ba7568e` |
 | S18 tether gate | GPT/Codex | `.worktrees/s18` · `st/s18-tether-gate` | **Done**: the load gate passes as a slower turning manoeuvre; four owner questions open | Future tether work | `32a8b67` |
 | S19 tidal check | GPT/Codex | `.worktrees/s19` · `st/s19-tidal-check` | **Done**: Tidal Orchard deferred (A15 Q21) | — | merged, see log |
@@ -65,7 +65,7 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 | R10 | 3C ↔ 3A | Component faults from radiation: electrics and instruments (A16) | **Open:** 3C running; 3A gated | |
 | R11 | 2G → integrator | Release check from A18 (7): achieved warp on the modest profile | **Measured; the limit is frames, not the ship.** Each frame runs exactly 8 ticks (the 10 ms budget is checked every 8 ticks, and 8 ticks already exceed it), so achieved warp = 8 ÷ frame interval: 67–264 ship-s per wall-s at best, under S15's pre-3D 270–490. 2G's cut saves about 2.7 ms per frame. See R18 | Rebaseline on a quiet machine; a real-laptop check |
 
-| R12 | S22 → 3B | Wells as real funnels (A19), visible through the window: pull, reversal inside, crush at the throat; a big field through 3D at random orientations; wells that appear with a precursor; a reuse map | **Open:** S22 ready to launch | 3B keeps its reversal maths, registry and loading; generalises to an oriented funnel; adds the pull and the crush; doesn't tune a layout until S22 lands |
+| R12 | S22 → 3B | Wells as real funnels (A19): pull, reversal along the axis, crush at the throat; 2,601 sites through 3D at random axes, 650 that appear (900 s precursor, 120 s ramp, a 240 s guard that cancels unsafe births); a reuse map | **Landed** `15171df`; relay once the owner answers S22's questions | Crossing ~122 kg main; slow bypass still 727 kg over 51.5 days; fast bypass 2,593 kg |
 
 | R13 | 3B → 2D | The funnels in the window view (A19: wells are visible, with striking visuals). 3B draws them in `src/view3d/fields/wells/`; 2D mounts them in the room's window and FLIGHT | **Open:** to relay | Folds into R4 |
 
@@ -75,7 +75,7 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 | R16 | 3C → integrator | Land 2F's deterministic-clock fix so 3C's full check goes green | **Done** `7b01be8` | |
 | R17 | S20 → 2F, 2C | Expose believed departure/progress, keep command and forecast epochs while time runs, reconcile PLAN's 400 s default with the 480 s turn allowance; make the real-model loop test deterministic; investigate the populated-archive commit wait | **Open**: relay | |
 
-| R18 | Owner → 2F, 2D | Top warp on slow machines: 3D frames cap it near 70–260×, so the 64 h slingshot coast can take 15–60 minutes on a weak laptop | **Open: owner decision** | Options: a bigger simulation slice per frame at high warp, fewer frames drawn while coasting, the simulation in a worker |
+| R18 | Owner → 2F, 2D | Faster coasting on slow machines (A20): at high warp with no hands-on flying, a bigger simulation slice per frame (2F) and fewer frames drawn (2D); results identical | **Agreed** (owner, A20); relay to both | 2F exposes the budget; 2D sets it with its frame cadence |
 
 Add new rows at the bottom with the next ID. Never renumber.
 
@@ -83,7 +83,7 @@ Add new rows at the bottom with the next ID. Never renumber.
 
 - **Submission:** the summary's opening and the demo format (S12, `docs/studies/s12/`). Taken at the submission switch.
 - **S9:** whether the five-minute target means insight plus a fresh observed forecast (recommended yes); whether to allow a shorter evidence opportunity if the UI fixes miss it (recommended yes). Show the 1–4 view shortcuts: folded into 2D's R1.
-- **R18, top warp on slow machines:** how to speed it up (see the requests table).
+- **S22 (funnels):** keep the very slow bypass valid (51.5 days, 727 kg); the reversal along the funnel's axis, with the prototype size and pull; the pull not felt by the accelerometer; the precursor timing (900 s warning, 120 s ramp, 240 s guard); the field size (2,601 sites, 650 appearing). All recommended yes.
 - **S10:** keep the four reference pictures out of the release (recommended yes); confirm the live challenge listing and GMAT data eligibility (owner check).
 
 Decided: A15 (S11's queue), A16 (the lattice), A17 (the ending) and A18 (the Gravity range after 3D).
@@ -92,7 +92,9 @@ Decided: A15 (S11's queue), A16 (the lattice), A17 (the ending) and A18 (the Gra
 
 | Commit | What |
 |---|---|
-| (this commit) | A16: twenty fences; A15 after S18; ledger (R1 confirmed, R11 measured, R18) |
+| (this commit) | A20: faster coasting; ledger |
+| `15171df` | S22: the funnel field |
+| `78f4dd5` | A16: twenty fences; A15 after S18; ledger (R1 confirmed, R11 measured, R18) |
 | `7036c60` | 2F checkpoint: power death (placeholders), S8's flights as tests |
 | `50654b2` | A16 and A18 after S17 and S21; ledger; 3A's gate open |
 | `6267a53`, `32a8b67` | S20; S18 |

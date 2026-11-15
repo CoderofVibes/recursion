@@ -1,10 +1,13 @@
 /**
  * TRUTH side. One simulation tick (src/contracts/README.md § One simulation tick):
  *
- *   1. build EnvironmentEffects from the truth world (sunlight, shadows, what the camera sees);
+ *   1. build EnvironmentEffects from the truth world (sunlight, shadows, what the camera sees,
+ *      the encounter's field intensity at each equipment item);
  *   2. ship systems (2B) step with the commands due now;
- *   3. simulation (2A) integrates bodies, asteroids and the ship with the actuators;
- *   4. contacts become ShipEvents, the world decides loss and objectives.
+ *   3. simulation (2A) integrates bodies, asteroids and the ship with the actuators and the
+ *      encounter's fields;
+ *   4. contacts become ShipEvents; the world decides loss (collision, then critical power) and
+ *      objectives.
  *
  * What comes out for the believed side is only what the ship sensed: recorded measurements and
  * ShipEvents. Truth stays in `GameTruthState`.
@@ -25,11 +28,20 @@ import {
   initialObjectiveProgress,
   type ObjectiveProgress,
 } from './objectives.ts';
+import { evaluatePower, initialPowerProgress, type PowerProgress } from './power.ts';
 
 /** Everything true about an attempt in flight. Plain JSON; save, restore and hash freely. */
 export interface GameTruthState {
   readonly sim: SimState;
   readonly objectives: ObjectiveProgress;
+  /** How long critical electrical service has been out (A18 (5)). Absent: never. */
+  readonly power?: PowerProgress;
+  /**
+   * Raw field exposure per equipment item, lattice-unit seconds (∫ intensity dt, before any
+   * susceptibility; A16, R14). Items never exposed are left out. What the exposure does to the
+   * equipment is the ship's damage model (3A); the truth step only keeps the account.
+   */
+  readonly exposure?: Readonly<Record<string, number>>;
   /** Set on the tick the ship was lost; no further ticks are allowed. */
   readonly lost?: LossCause;
 }
@@ -103,7 +115,11 @@ export function midStepMassProperties(
 
 export function createTruthStepper(setup: EncounterSetup): TruthStepper {
   const { definition, objectiveRules, play } = setup;
-  const simulation = createSimulation(definition.world, { dt: definition.dt });
+  const simulation = createSimulation(definition.world, {
+    dt: definition.dt,
+    ...(setup.fields ? { registry: setup.fields } : {}),
+  });
+  const intensityFields = simulation.fields.filter((f) => typeof f.intensity === 'function');
   // What the briefing told the ship about: it knows where these bodies are, and how big they
   // and the surveyed asteroids are.
   const briefedBodies = new Set(definition.briefing.knownBodies.map((b) => b.id));
@@ -115,7 +131,10 @@ export function createTruthStepper(setup: EncounterSetup): TruthStepper {
       ...definition.briefing.knownAsteroids.map((a) => a.id),
     ],
     sunExclusionAngle: play.sunExclusionAngle,
+    intensityFields,
+    ship: definition.ship,
   };
+  const hook = setup.environment;
   const sun = definition.world.sun;
   const initial: GameTruthState = {
     sim: simulation.initial,
@@ -133,7 +152,15 @@ export function createTruthStepper(setup: EncounterSetup): TruthStepper {
       const t = before.world.t;
 
       // 1. Environment at the start of the tick.
-      const env = buildEnvironment(before, environment);
+      const built = buildEnvironment(before, environment);
+      const env = hook ? hook(before, built) : built;
+      // The exposure account: this tick's intensity, held over the tick.
+      let exposure = state.exposure;
+      for (const id in env.intensity) {
+        const dose = env.intensity[id]! * definition.dt;
+        if (!(dose > 0)) continue;
+        exposure = { ...exposure, [id]: (exposure?.[id] ?? 0) + dose };
+      }
 
       // 2. Ship systems over [t, t + dt].
       const ship = stepShipSystems(
@@ -199,6 +226,20 @@ export function createTruthStepper(setup: EncounterSetup): TruthStepper {
           lostAt = contact.t;
         }
       }
+      // Critical electrical service (A18 (5)), on the systems as the tick left them. A collision
+      // this tick comes first; a power loss this tick comes before any objective it would meet.
+      let power = state.power;
+      if (!lost) {
+        const judged = evaluatePower(
+          power ?? initialPowerProgress,
+          ship.state,
+          definition.ship,
+          definition.dt,
+          play.power.lossGrace,
+        );
+        if (judged.progress !== (power ?? initialPowerProgress)) power = judged.progress;
+        if (judged.lost) lost = 'power';
+      }
       let objectives = state.objectives;
       if (lost) {
         events.push({ kind: 'ship-lost', t: lostAt, cause: lost });
@@ -223,7 +264,13 @@ export function createTruthStepper(setup: EncounterSetup): TruthStepper {
       events.sort((a, b) => a.t - b.t);
 
       return {
-        state: { sim, objectives, ...(lost ? { lost } : {}) },
+        state: {
+          sim,
+          objectives,
+          ...(power ? { power } : {}),
+          ...(exposure ? { exposure } : {}),
+          ...(lost ? { lost } : {}),
+        },
         executed,
         measurements: ship.measurements,
         events,
