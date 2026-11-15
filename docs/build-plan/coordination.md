@@ -4,7 +4,7 @@ The live state of the build between threads: who is running, who holds which sha
 
 **Integrator, after a compaction:** read this file first, then `git log --oneline -15`, then the handoffs of any thread marked running.
 
-**Last updated:** 2026-11-14, A21 (the opening) and A22 (audio); S23, OP and AU written. Unannounced checkpoints sit on 2D, 3B and 3C; merge them when announced.
+**Last updated:** 2026-11-14, 3A merged; console hardened; lint fixed. Unannounced checkpoints sit on 2D, 3B and 3C; merge them when announced.
 
 ## Threads
 
@@ -17,7 +17,7 @@ The live state of the build between threads: who is running, who holds which sha
 | 3B Inverse Wells | GPT/Codex | `.worktrees/3b` · `p3/3b-wells` | Running: field mechanics first | Layout from S16; loading via R1 | — |
 | 3C Chain Link Fence | GPT/Codex (GPT-6 Astra), reassigned by the owner | `.worktrees/3c` · `p3/3c-lattice` | Running: field and exposure mechanics first | S17's numbers when they land (R8) | — |
 | 3E playability harness | GPT/Codex | `.worktrees/3e` · `p3/3e-harness` | **Done**: `npm run harness` (smoke, reference, learning, routes, all); its pending-acceptance list names the gaps | — | `44db2fc` |
-| 3A power and thermal | GPT/Codex | `.worktrees/3a` · `p3/3a-power-thermal` | **Gate open**, ready to launch | Builds on 2G's speed pass; S21's power values; S17's causal failures with 3C | — |
+| 3A power and thermal | GPT/Codex | `.worktrees/3a` · `p3/3a-power-thermal` | **Done**: causal radiation and thermal faults, heaters, physical service signals (`electricalService`, `energizedEquipment`); command tape identical; 72 h transit sustainable | Its wiring is 2F's (R26) | `767100b` |
 | 3D expedition | Opus 5.5 | not created yet · `p3/3d-expedition` | **Gated** | After 2F's and 2C's first checkpoints merge | — |
 | 3F console v2 | Claude | — | **Gated** | After 2D hands off | — |
 | S16 Well Garden layout | GPT/Codex | `.worktrees/s16` · `st/s16-well-garden` | **Done**: three-well prototype, 25-entry catalogue, garden budget (A15 Q05) | — | `e6eb51d` |
@@ -65,7 +65,7 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 | R7 | S16 → 3B | Well Garden layout, seeds and vectors | **Done** `e6eb51d`: the three-well prototype for 3B's mechanics | The owner then asked for a big field (R12) |
 | R8 | S17 → 3C | First-contact numbers: dose, failure order, Black Box function cost, reconstruction | **Landed** `ba7568e`; relay with the owner's answers to S17's five questions | Also asks 3A (causal failures), 2C (reconstruction and retention), integrator (subtick acquisition schedule in `truth-step.ts`, contracts) |
 | R9 | 3C → 2C | The Black Box function in A16 (records sensors; FLIGHT shows the rebuilt lattice) | **Open:** 3C running | |
-| R10 | 3C ↔ 3A | Component faults from radiation: electrics and instruments (A16) | **Open:** 3C running; 3A gated | |
+| R10 | 3C ↔ 3A | Component faults from radiation: electrics and instruments (A16) | **Agreed and published**: 3A's `nextConditionBoundary`, `stepCondition` and `functionAvailable` are on main; 3C's sensor adapter merges with them | Raw thresholds 8/10/20 U (power switch/standard/hardened) |
 | R11 | 2G → integrator | Release check from A18 (7): achieved warp on the modest profile | **Measured; the limit is frames, not the ship.** Each frame runs exactly 8 ticks (the 10 ms budget is checked every 8 ticks, and 8 ticks already exceed it), so achieved warp = 8 ÷ frame interval: 67–264 ship-s per wall-s at best, under S15's pre-3D 270–490. 2G's cut saves about 2.7 ms per frame. See R18 | Rebaseline on a quiet machine; a real-laptop check |
 
 | R12 | S22 → 3B | Wells as real funnels (A19): pull, reversal along the axis, crush at the throat; 2,601 sites through 3D at random axes, 650 that appear (900 s precursor, 120 s ramp, a 240 s guard that cancels unsafe births); a reuse map | **Landed** `15171df`; relay once the owner answers S22's questions | Crossing ~122 kg main; slow bypass still 727 kg over 51.5 days; fast bypass 2,593 kg |
@@ -91,6 +91,10 @@ Status values: **open** (asked, not answered), **agreed** (answered, being built
 | R24 | AU → 2D | One mount line in `src/app/` for the audio module, plus a mute control | **Open** | |
 | R25 | AU → owner | The cue list in `docs/audio/cues.md` with ElevenLabs prompts; the owner generates the files into `public/audio/` | **Open**: waits on AU's first checkpoint | Credit ElevenLabs (A22) |
 
+| R26 | 3A → 2F | Wrap the ship step with `integrateConditionedInterval`, capping intervals at electrical, resource and intensity edges, and re-dispatching after every fault; drive A16's dual-PDU loss and A18's 120 s rule from `electricalService`; extend `unservedFunctions` with reboot and cold inhibition; on recurrence, clear an overtemperature indication but keep damage, freeze rupture and exposure | **Open**: relay | One loss watch, not two |
+| R27 | 3A → 2C | Consume `condition-changed` events with existing equipment IDs; no truth into the model or Black Box | **Open**: relay | |
+| R28 | 3A → integrator | Console set to the `hardened` radiation profile (A16) | **Done** (this commit) | Save/field chronology versioning when the encounters land |
+
 Add new rows at the bottom with the next ID. Never renumber.
 
 ## Owner decisions still open
@@ -105,7 +109,9 @@ Decided: A15 (S11's queue), A16 (the lattice), A17 (the ending) and A18 (the Gra
 
 | Commit | What |
 |---|---|
-| (this commit) | A21, A22; S23, OP, AU; R23–R25 |
+| (this commit) | Console hardened (R28); ESLint gives docs scripts Node globals (main had failed lint since `bc292a9`); ledger R26–R28 |
+| `767100b` | 3A: power, thermal and condition |
+| `b5f84ac` | A21, A22; S23, OP, AU; R23–R25 |
 | `bc292a9` | 2G's S15 rank 1 evidence |
 | `6b7a512` | A17's last moment; A21 |
 | `02cf2bf` | H02 rewritten for A17; R22 |
