@@ -7,3 +7,11 @@ licensed under the Apache License, Version 2.0. See LICENSE.
 Third-party code, data and media remain subject to their own terms and notices.
 See THIRD-PARTY-NOTICES.txt accompanying the browser distribution for its
 third-party code notices.
+
+AI disclosure: the code, tests and documentation were written with the
+assistance of generative AI tools (Claude by Anthropic, and OpenAI Codex) under
+the owner's direction. Every audio file (public/audio, src/trailer/audio) is
+AI-generated: made by the owner with ElevenLabs Sound Effects from text prompts
+(docs/audio/cues.md), and tagged as such in each file's metadata. No image or
+video in the game is AI-generated; every picture is drawn by the game's code.
+The reference trajectories under tests/vectors/gmat were computed by NASA GMAT.

@@ -174,16 +174,17 @@ describe('scripted opening', () => {
     expect(openingLaunch('new', false, false)).toBe('first');
   });
 
-  it('gates the app once per browser, ahead of the starting region only (A25)', async () => {
+  it('opens in the room; the opening plays only when asked for, ahead of the start region', async () => {
     const start = 'gravity-range';
-    // One marker whatever is loaded; recorded progress does not bypass it.
-    const gate = appOpening(start, start, '')!;
-    expect(gate).toEqual({ saveSlot: BROWSER_SLOT, hasProgress: false, replay: false });
-    expect(appOpening(start, start, '?encounter=gravity-range&opening=replay')!.replay).toBe(true);
+    // The owner's call (2026-11-15): no opening unless `?opening=replay` asks for it.
+    expect(appOpening(start, start, '')).toBeNull();
+    expect(appOpening(start, start, '?encounter=gravity-range')).toBeNull();
+    const gate = appOpening(start, start, '?encounter=gravity-range&opening=replay')!;
+    expect(gate).toEqual({ saveSlot: BROWSER_SLOT, hasProgress: false, replay: true });
     // A region opened by its own address keeps its normal entry.
     expect(appOpening('inverse-wells', start, '?encounter=inverse-wells')).toBeNull();
     expect(appOpening('chain-link', start, '?opening=replay')).toBeNull();
-    // First in this browser, then never again without an explicit replay; an erase restores it.
+    // The browser's marker still works as before, for the replay's launch and Skip.
     const launch = (replay = false) => openingLaunch(gate.saveSlot, gate.hasProgress, replay);
     expect(launch()).toBe('first');
     expect(await claimOpening(gate.saveSlot, new AbortController().signal)).toBe(true);

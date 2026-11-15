@@ -41,7 +41,7 @@ Recursion is a browser game about engineering a spacecraft home through an unfam
 ## 3. Project demo link
 
 ```text
-VIDEO LINK (the owner pastes it after upload)
+https://youtu.be/LnErsh-IKrQ
 ```
 
 The video is 30 seconds or less and must open with no sign-in (check it from a private window). The organizer asks that AI-generated audio is acknowledged in metadata as well as in text, so paste this as the video's description on the host:
@@ -71,7 +71,7 @@ The owner's notes ask for: what it does and how it works; its benefits; its inte
 ```text
 WHAT IT DOES AND HOW IT WORKS
 
-Recursion opens in a browser with nothing to install and no account. After a short opening the player stands in the ship's control room, with a window, a map, a hologram of the ship and a console. The console is the game's loop in six stages:
+Recursion opens in a browser with nothing to install and no account. The player stands in the ship's control room, with a window, a map, a hologram of the ship and a console; a HOW TO PLAY link in the room gives a short recipe for each region. The console is the game's loop in six stages:
 
 1. EXPLORATION: the region as the ship knows it, the objective, and the attempt's design (an evidence goal, a propellant reserve, a clearance margin).
 2. SYSTEMS: electrical supply against demand on one board, with the loads the player sets: camera, science processor, Black Box recording rate, communications.
@@ -197,7 +197,7 @@ Generative AI tools (described in the AI use field)
 
 Assets
 - No third-party images, 3D models, textures, music or fonts are in the game. The ship, the room and every view are drawn by the game's own code, and text uses fonts already on the player's device.
-- The video was recorded from the game with Windows Game Bar and trimmed in Clipchamp.
+- The video was recorded from the game's own trailer page with OBS Studio and trimmed with FFmpeg.
 
 Licence
 - Recursion's original code and documentation: Apache License 2.0. https://github.com/CoderofVibes/recursion/blob/main/LICENSE
@@ -244,6 +244,6 @@ Things that must be true at the moment of submission, each set by a later step o
 
 1. **The site and the repo are today's build.** The repository links above point at `main` on GitHub; they resolve once `main` is pushed. The GMAT links include the three inclined cases only after that push.
 2. **The audio line.** "Every sound in the game … acknowledged in the game's CREDITS page, in the README" is true once the credits and README changes are in and the trailer branch, which carries the sound files, is merged and pushed. If the game ships silent, change "in the game and in the video" to "in the video" in fields 5, 7 and 8.
-3. **The video's labels and tools.** Field 8 quotes the corner label and the final card as planned; field 7 says Game Bar and Clipchamp. Match them to the video as recorded.
+3. **The video's labels and tools.** Done: the corner label and the final card are as field 8 quotes them; field 7 names OBS Studio and FFmpeg.
 4. **The test count.** "More than 1,500 automated tests" follows 3F's last full check (1,554 passed); the final `npm run check` should confirm it.
-5. **The demo link.** Replace the placeholder in field 3 and open it from a private window.
+5. **The demo link.** Done: https://youtu.be/LnErsh-IKrQ opens with no sign-in (checked 2026-11-15).

@@ -9,6 +9,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { ConsoleScreen } from '../console/ConsoleScreen.tsx';
 import { Desk, useDesk } from '../console/desk.ts';
+import { HowToPlay } from './HowToPlay.tsx';
 import { loadEncounterPanels } from '../console/encounterPanels.ts';
 import { FlightHud } from '../console/FlightHud.tsx';
 import { MapPlate } from '../console/MapPlate.tsx';
@@ -214,6 +215,7 @@ export function ControlRoom({ game, modelError, erase }: ControlRoomProps) {
             <span className="cr-routes__hint">
               {ui.locked ? 'ESC FREES THE MOUSE' : 'CLICK TO LOOK · WASD TO WALK'}
             </span>
+            <HowToPlay />
           </nav>
         ) : null}
         {ui.mode === 'flight' && room ? (

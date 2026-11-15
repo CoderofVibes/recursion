@@ -10,7 +10,7 @@ It answers the challenge as a return mission redesigned in flight: objectives an
 
 Works in a current desktop browser with a keyboard and mouse. No install, no sign-in.
 
-- **The opening** plays once per browser (about 20 seconds). Add `?opening=replay` to the address to see it again, with Skip.
+- **The game opens in the ship's control room.** The **HOW TO PLAY** link at the bottom of the room opens these recipes. To see the 20-second opening, add `?opening=replay` to the address.
 - **The room.** Click to look, walk with **WASD**, or press **1** MAP, **2** SHIP, **3** CONSOLE, **4** FLIGHT (the same four are buttons at the bottom). **Esc** steps back.
 - **The console's six stages**, left to right: **EXPLORATION** (the region, the objective, the attempt's design), **SYSTEMS** (power, heat, the recorder), **PLAN** (a burn and its forecast), **FLIGHT**, **BLACK BOX** (predicted against flown, the debrief), **MODEL** (what the ship has learned, and the test of a new law).
 - **The region picker** is at the top of EXPLORATION: Twin Deeps, the Well Garden and the Unseen Cathedral. Each starts with a fresh ship and keeps its own records. Or open one directly: `?encounter=gravity-range`, `?encounter=inverse-wells`, `?encounter=chain-link`.

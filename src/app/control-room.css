@@ -279,6 +279,18 @@ body,
   margin-left: var(--rx-gap);
   color: var(--rx-ink-faint);
 }
+/* The judges' recipes (the README), in a new tab. */
+.cr-routes__help {
+  margin-left: var(--rx-gap);
+  color: var(--rx-ink-dim);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  pointer-events: auto;
+}
+.cr-routes__help:hover,
+.cr-routes__help:focus-visible {
+  color: var(--rx-ink);
+}
 /* While the mouse looks around, the routes are a reminder of the keys, not buttons. */
 .cr-routes[data-locked] .cr-route {
   pointer-events: none;

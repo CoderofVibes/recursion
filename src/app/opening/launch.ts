@@ -73,10 +73,11 @@ export const BROWSER_SLOT = 'recursion';
 
 /**
  * What the app hands the gate for the encounter it loaded, or null where the room is entered
- * directly. The opening wakes into the region the expedition starts in (`startRegion`); a
- * region opened by its own address keeps its normal entry and leaves the marker alone. Recorded
- * progress does not bypass it: the gate is the browser's, not a save's. `?opening=replay`
- * replays an opening this browser has already seen, with Skip.
+ * directly. The game opens in the room (owner, 2026-11-15, superseding A25's once-per-browser
+ * opening): the opening plays only when asked for with `?opening=replay` (Skip shows once this browser
+ * has seen it), and only
+ * ahead of the region the expedition starts in (`startRegion`). A region opened by its own
+ * address keeps its normal entry.
  */
 export function appOpening(
   region: string,
@@ -84,11 +85,8 @@ export function appOpening(
   search: string,
 ): { readonly saveSlot: string; readonly hasProgress: false; readonly replay: boolean } | null {
   if (region !== startRegion) return null;
-  return {
-    saveSlot: BROWSER_SLOT,
-    hasProgress: false,
-    replay: new URLSearchParams(search).get('opening') === 'replay',
-  };
+  if (new URLSearchParams(search).get('opening') !== 'replay') return null;
+  return { saveSlot: BROWSER_SLOT, hasProgress: false, replay: true };
 }
 
 const MOTION_PREFERENCE = 'recursion:opening-reduced-motion';
