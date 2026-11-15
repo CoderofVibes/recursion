@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { BED_ACCENTS, BED_LEAD, CUES, LATTICE_STRIKE, UNDER } from './cues.ts';
+import { BED_ACCENTS, BED_LEAD, CUES, LATTICE_STRIKE, QUIETER, UNDER } from './cues.ts';
 import { SNAPS, TOTAL, beat } from './timeline.ts';
 
 describe("the trailer's sound", () => {
@@ -72,7 +72,12 @@ describe("the trailer's sound", () => {
     expect(at('warning').every((g) => g === 0.6 * UNDER)).toBe(true);
     expect(at('title-hit')).toEqual([0.7]);
     expect(at('black-cut')).toEqual([0.6, 0.6]);
-    expect(at('final-hit')).toEqual([0.7]);
+    // The owner's calls: no final hit under the card, and the wells' and the lattice's own
+    // sounds a further 30% down.
+    expect(at('final-hit')).toEqual([]);
+    for (const file of ['well-hum', 'well-groan', 'ship-creak', 'lattice-strike', 'loss-failure'])
+      expect(at(file).every((g) => g < 6 * UNDER * QUIETER + 1e-9)).toBe(true);
+    expect(at('lattice-radiation')).toEqual([8 * UNDER * QUIETER]);
   });
 
   it("reuses the game's cues R56 names, where R56 puts them", () => {

@@ -2,102 +2,102 @@
   "url": "/src/trailer/?quality=full",
   "state": "ended",
   "beatChanges": 19,
-  "worstLateS": 0.0064,
+  "worstLateS": 0.006,
   "record": [
     {
       "beat": "open",
       "sheet": 0,
-      "late": 0.0042
+      "late": 0.0034
     },
     {
       "beat": "title",
       "sheet": 0.5,
-      "late": 0.0012
+      "late": 0.0002
     },
     {
       "beat": "after-title",
       "sheet": 2,
-      "late": 0.0042
+      "late": 0.0028
     },
     {
       "beat": "slingshot",
       "sheet": 2.3,
-      "late": 0.001
+      "late": 0.006
     },
     {
       "beat": "wells",
       "sheet": 4.8,
-      "late": 0.0035
+      "late": 0.0024
     },
     {
       "beat": "lattice",
       "sheet": 7.3,
-      "late": 0.0003
+      "late": 0.0051
     },
     {
       "beat": "braid",
       "sheet": 10.3,
-      "late": 0.006
+      "late": 0.0047
     },
     {
       "beat": "snap",
       "sheet": 12.8,
-      "late": 0.0024
+      "late": 0.0012
     },
     {
       "beat": "montage-flight",
       "sheet": 13.1,
-      "late": 0.0056
+      "late": 0.0043
     },
     {
       "beat": "montage-map",
       "sheet": 14.45,
-      "late": 0.0008
+      "late": 0.0055
     },
     {
       "beat": "montage-region",
       "sheet": 15.8,
-      "late": 0.002
+      "late": 0.0008
     },
     {
       "beat": "montage-explore",
       "sheet": 17.15,
-      "late": 0.0032
+      "late": 0.0023
     },
     {
       "beat": "montage-model",
       "sheet": 18.5,
-      "late": 0.0045
+      "late": 0.0036
     },
     {
       "beat": "montage-plan",
       "sheet": 19.85,
-      "late": 0.0058
+      "late": 0.0051
     },
     {
       "beat": "montage-blackbox",
       "sheet": 21.2,
-      "late": 0.0014
+      "late": 0.0002
     },
     {
       "beat": "montage-ship",
       "sheet": 22.55,
-      "late": 0.0027
+      "late": 0.0016
     },
     {
       "beat": "console",
       "sheet": 23.9,
-      "late": 0.0038
+      "late": 0.0027
     },
     {
       "beat": "before-card",
       "sheet": 26.2,
-      "late": 0.0064
+      "late": 0.0052
     },
     {
       "beat": "card",
       "sheet": 26.5,
-      "late": 0.0033
+      "late": 0.0024
     }
   ],
   "missingSounds": [],
@@ -117,70 +117,70 @@
   "gpu": "ANGLE (NVIDIA, NVIDIA GeForce RTX 4050 Laptop GPU (0x000028E1) Direct3D11 vs_5_0 ps_5_0, D3D11)",
   "frames": {
     "before": {
-      "frames": 50,
+      "frames": 54,
       "medianMs": 6.1,
-      "p95Ms": 11.9,
-      "worstMs": 12.1,
+      "p95Ms": 6.2,
+      "worstMs": 6.3,
       "over16_7": 0,
       "slowFrames": []
     },
     "open": {
-      "frames": 76,
+      "frames": 82,
       "medianMs": 6.1,
-      "p95Ms": 12,
-      "worstMs": 12.1,
+      "p95Ms": 6.3,
+      "worstMs": 6.4,
       "over16_7": 0,
       "slowFrames": []
     },
     "title": {
-      "frames": 240,
+      "frames": 248,
       "medianMs": 6.1,
-      "p95Ms": 6.3,
-      "worstMs": 12.1,
+      "p95Ms": 6.2,
+      "worstMs": 6.3,
       "over16_7": 0,
       "slowFrames": []
     },
     "after-title": {
-      "frames": 49,
+      "frames": 50,
       "medianMs": 6.1,
-      "p95Ms": 6.2,
-      "worstMs": 6.2,
+      "p95Ms": 6.3,
+      "worstMs": 6.3,
       "over16_7": 0,
       "slowFrames": []
     },
     "slingshot": {
-      "frames": 408,
-      "medianMs": 6.1,
-      "p95Ms": 6.2,
-      "worstMs": 18.1,
-      "over16_7": 1,
-      "slowFrames": [
-        17
-      ]
-    },
-    "wells": {
-      "frames": 405,
-      "medianMs": 6.1,
-      "p95Ms": 6.2,
-      "worstMs": 12.2,
-      "over16_7": 0,
-      "slowFrames": []
-    },
-    "lattice": {
-      "frames": 489,
-      "medianMs": 6.1,
-      "p95Ms": 6.3,
-      "worstMs": 12.3,
-      "over16_7": 0,
-      "slowFrames": []
-    },
-    "braid": {
       "frames": 412,
       "medianMs": 6.1,
       "p95Ms": 6.2,
       "worstMs": 6.4,
       "over16_7": 0,
       "slowFrames": []
+    },
+    "wells": {
+      "frames": 410,
+      "medianMs": 6.1,
+      "p95Ms": 6.2,
+      "worstMs": 12.1,
+      "over16_7": 0,
+      "slowFrames": []
+    },
+    "lattice": {
+      "frames": 493,
+      "medianMs": 6.1,
+      "p95Ms": 6.2,
+      "worstMs": 12.2,
+      "over16_7": 0,
+      "slowFrames": []
+    },
+    "braid": {
+      "frames": 404,
+      "medianMs": 6.1,
+      "p95Ms": 6.2,
+      "worstMs": 18.2,
+      "over16_7": 1,
+      "slowFrames": [
+        124
+      ]
     },
     "snap": {
       "frames": 50,
@@ -194,23 +194,23 @@
       "frames": 222,
       "medianMs": 6.1,
       "p95Ms": 6.2,
-      "worstMs": 6.4,
+      "worstMs": 11.9,
       "over16_7": 0,
       "slowFrames": []
     },
     "montage-map": {
-      "frames": 223,
+      "frames": 222,
       "medianMs": 6.1,
-      "p95Ms": 6.3,
-      "worstMs": 6.5,
+      "p95Ms": 6.2,
+      "worstMs": 6.3,
       "over16_7": 0,
       "slowFrames": []
     },
     "montage-region": {
       "frames": 223,
       "medianMs": 6.1,
-      "p95Ms": 6.3,
-      "worstMs": 6.4,
+      "p95Ms": 6.2,
+      "worstMs": 6.3,
       "over16_7": 0,
       "slowFrames": []
     },
@@ -218,72 +218,63 @@
       "frames": 223,
       "medianMs": 6.1,
       "p95Ms": 6.2,
-      "worstMs": 6.4,
+      "worstMs": 6.3,
       "over16_7": 0,
       "slowFrames": []
     },
     "montage-model": {
       "frames": 223,
       "medianMs": 6.1,
-      "p95Ms": 6.3,
-      "worstMs": 6.8,
+      "p95Ms": 6.2,
+      "worstMs": 6.3,
       "over16_7": 0,
       "slowFrames": []
     },
     "montage-plan": {
       "frames": 222,
       "medianMs": 6.1,
-      "p95Ms": 6.3,
-      "worstMs": 6.4,
+      "p95Ms": 6.2,
+      "worstMs": 6.3,
       "over16_7": 0,
       "slowFrames": []
     },
     "montage-blackbox": {
       "frames": 223,
       "medianMs": 6.1,
-      "p95Ms": 6.3,
-      "worstMs": 6.9,
+      "p95Ms": 6.2,
+      "worstMs": 6.4,
       "over16_7": 0,
       "slowFrames": []
     },
     "montage-ship": {
-      "frames": 219,
+      "frames": 221,
       "medianMs": 6.1,
       "p95Ms": 6.2,
-      "worstMs": 18.2,
-      "over16_7": 1,
-      "slowFrames": [
-        182
-      ]
+      "worstMs": 12.2,
+      "over16_7": 0,
+      "slowFrames": []
     },
     "console": {
-      "frames": 358,
+      "frames": 371,
       "medianMs": 6.1,
       "p95Ms": 6.2,
-      "worstMs": 18.2,
-      "over16_7": 4,
-      "slowFrames": [
-        3,
-        49,
-        168,
-        210
-      ]
+      "worstMs": 12.3,
+      "over16_7": 0,
+      "slowFrames": []
     },
     "before-card": {
       "frames": 49,
       "medianMs": 6.1,
       "p95Ms": 6.2,
-      "worstMs": 18.2,
-      "over16_7": 1,
-      "slowFrames": [
-        0
-      ]
+      "worstMs": 6.4,
+      "over16_7": 0,
+      "slowFrames": []
     },
     "card": {
       "frames": 578,
       "medianMs": 6.1,
       "p95Ms": 6.2,
-      "worstMs": 7.7,
+      "worstMs": 6.4,
       "over16_7": 0,
       "slowFrames": []
     }

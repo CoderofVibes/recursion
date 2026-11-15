@@ -5,7 +5,7 @@
  * Gains are first guesses, balanced once the owner's files are in.
  */
 import type { Cue as GameCue } from '../audio/catalogue.ts';
-import { BEATS, FLICKERS, SNAPS, TOTAL, beat } from './timeline.ts';
+import { BEATS, FLICKERS, SNAPS, beat } from './timeline.ts';
 
 export const TRAILER_FILES = [
   'title-hit',
@@ -58,6 +58,8 @@ export const ALARM_PERIOD = 0.9;
  * the snaps' cut and the final hit are not under the bed and keep their levels.
  */
 export const UNDER = 0.5;
+/** The wells' and the lattice's own sounds, a further 30% down (owner, 2026-11-15). */
+export const QUIETER = 0.7;
 
 const alarms: SoundCue[] = [];
 for (let at = LATTICE_STRIKE; at < SNAP; at = Math.round((at + ALARM_PERIOD) * 1000) / 1000) {
@@ -164,7 +166,7 @@ export const CUES: readonly SoundCue[] = [
     until: end('wells'),
     loop: true,
     // The owner's take is quiet (peak -17 dBFS, mean -30): lifted to sit under the groan.
-    gain: 3 * UNDER,
+    gain: 3 * UNDER * QUIETER,
   },
   {
     from: 'trailer',
@@ -177,7 +179,7 @@ export const CUES: readonly SoundCue[] = [
     offset: 0.13,
     rate: 0.87,
     fadeOut: 0.15,
-    gain: 5.9 * UNDER,
+    gain: 5.9 * UNDER * QUIETER,
   },
   {
     from: 'trailer',
@@ -185,7 +187,7 @@ export const CUES: readonly SoundCue[] = [
     at: start('wells') + 0.6,
     until: end('wells'),
     // The owner's take peaks at -9 dBFS: lifted to the sheet's level.
-    gain: 1 * UNDER,
+    gain: 1 * UNDER * QUIETER,
   },
 
   // The lattice: the cabin's quiet hum while the camera looks down at FLIGHT and up at the empty
@@ -199,8 +201,20 @@ export const CUES: readonly SoundCue[] = [
     gain: 0.35 * UNDER,
   },
   // The strike, its damage and the alarm, through the braid to the snap.
-  { from: 'trailer', file: 'lattice-strike', at: LATTICE_STRIKE, until: SNAP, gain: 0.7 * UNDER },
-  { from: 'game', file: 'loss-failure', at: LATTICE_STRIKE, until: SNAP, gain: 0.55 * UNDER },
+  {
+    from: 'trailer',
+    file: 'lattice-strike',
+    at: LATTICE_STRIKE,
+    until: SNAP,
+    gain: 0.7 * UNDER * QUIETER,
+  },
+  {
+    from: 'game',
+    file: 'loss-failure',
+    at: LATTICE_STRIKE,
+    until: SNAP,
+    gain: 0.55 * UNDER * QUIETER,
+  },
   {
     from: 'game',
     file: 'lattice-radiation',
@@ -209,7 +223,7 @@ export const CUES: readonly SoundCue[] = [
     loop: true,
     // The owner's take is very quiet (peak -26 dBFS, mean -47; owner's note: higher volume):
     // lifted so its ticks peak near -8 dBFS under the alarm (then put under the bed).
-    gain: 8 * UNDER,
+    gain: 8 * UNDER * QUIETER,
   },
   ...alarms,
   {
@@ -247,5 +261,6 @@ export const CUES: readonly SoundCue[] = [
   { from: 'game', file: 'black-cut', at: CARD_SNAP, until: start('card'), gain: 0.6 },
 
   // The final card.
-  { from: 'trailer', file: 'final-hit', at: start('card'), until: TOTAL, gain: 0.7 },
+  // No final hit under the card (owner, 2026-11-15: it read as a stray drum at the end); the
+  // card holds in silence after the snap.
 ];
