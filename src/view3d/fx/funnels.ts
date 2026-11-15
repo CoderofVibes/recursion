@@ -252,10 +252,11 @@ export function makeFunnelLight(options: FunnelSkyOptions): FunnelSky {
       b.culled++;
       return;
     }
-    // The theme's colour rule is linear in depth over [0, 1]: take it at the mouth and the
-    // throat once, then interpolate per segment.
-    const k = lineStyles.wellMouth.opacity * v.brightness;
-    mouth.set(colour.well).multiplyScalar(k * 0.48);
+    // Sparse distant support carries less integrated filament light. Keep that separate
+    // from observed brightness, which also drives the uninterrupted birth progression.
+    const detailGain = segments.length <= 4 ? 0.14 : segments.length <= 72 ? 0.65 : 1;
+    const k = lineStyles.wellMouth.opacity * v.brightness * detailGain;
+    mouth.set(colour.well).multiplyScalar(k * 0.35);
     throat.set(colour.latticeCore).multiplyScalar(k * 1.5);
     const r0 = mouth.r;
     const g0 = mouth.g;
@@ -286,7 +287,8 @@ export function makeFunnelLight(options: FunnelSkyOptions): FunnelSky {
         b.culled++;
         return;
       }
-      const d = s?.depth ?? NaN;
+      // 3B's optical contract: depth 0 is the bright throat, 1 is the mouth.
+      const d = 1 - (s?.depth ?? NaN);
       if (!p || !q || !(d >= 0 && d <= 1)) {
         b.culled++;
         return;
@@ -310,9 +312,10 @@ export function makeFunnelLight(options: FunnelSkyOptions): FunnelSky {
       positions[o + 3] = qx * radius;
       positions[o + 4] = qz * radius;
       positions[o + 5] = -qy * radius;
-      colours[o] = colours[o + 3] = r0 + dr * d;
-      colours[o + 1] = colours[o + 4] = g0 + dg * d;
-      colours[o + 2] = colours[o + 5] = b0 + db * d;
+      const hot = d * d * d;
+      colours[o] = colours[o + 3] = r0 + dr * hot;
+      colours[o + 1] = colours[o + 4] = g0 + dg * hot;
+      colours[o + 2] = colours[o + 5] = b0 + db * hot;
       n++;
     }
     b.n = n;

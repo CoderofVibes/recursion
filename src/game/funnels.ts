@@ -21,6 +21,7 @@
 
 import type { FieldInstanceSpec } from '../contracts/truth/index.ts';
 import type { JsonValue } from '../contracts/units.ts';
+import { createFunnelWindow } from './funnel-window.ts';
 import {
   advanceFunnelLifecycle,
   createFunnelHullHazards,
@@ -115,5 +116,10 @@ export function funnelHazards(specs: readonly FieldInstanceSpec[]): EncounterHaz
 export function withFunnels(setup: InverseWellsSetup): EncounterSetup {
   const lifecycle = setup.funnelLifecycle;
   if (!lifecycle) return setup;
-  return { ...setup, dynamics: funnelDynamics(lifecycle), hazards: funnelHazards };
+  return {
+    ...setup,
+    dynamics: funnelDynamics(lifecycle),
+    hazards: funnelHazards,
+    window: createFunnelWindow(setup),
+  };
 }

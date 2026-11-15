@@ -56,7 +56,7 @@ function funnel(
       segments.push({
         from: ray(at(t, (i * Math.PI) / 24)),
         to: ray(at(t, ((i + 1) * Math.PI) / 24)),
-        depth: t,
+        depth: 1 - t,
       });
     }
   for (let i = 0; i < 12; i++)
@@ -64,7 +64,7 @@ function funnel(
       segments.push({
         from: ray(at(j / 24, (i * Math.PI) / 6)),
         to: ray(at((j + 1) / 24, (i * Math.PI) / 6)),
-        depth: j / 24,
+        depth: 1 - j / 24,
       });
   return {
     kind: 'funnel',
