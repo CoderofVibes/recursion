@@ -6,7 +6,13 @@ export default mergeConfig(
   defineConfig({
     test: {
       include: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'tests/**/*.test.ts'],
-      exclude: ['**/node_modules/**', '**/dist/**', ...IGNORED_DIRS.map((dir) => `${dir}/**`)],
+      // The speed test runs alone after the suite (vitest.perf.config.ts), not under its load.
+      exclude: [
+        '**/node_modules/**',
+        '**/dist/**',
+        ...IGNORED_DIRS.map((dir) => `${dir}/**`),
+        'src/sim/performance.test.ts',
+      ],
       environment: 'node',
     },
   }),
