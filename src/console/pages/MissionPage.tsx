@@ -22,7 +22,7 @@ const modePower = (spec: EquipmentSpec | undefined, mode: string): number =>
 export function MissionPage({ desk }: { readonly desk: Desk }) {
   const { game, design } = desk;
   const status = game.status();
-  const snapshot = game.snapshot();
+  const snapshot = desk.snapshot();
   const ship = snapshot.world.ship;
   const camera = game.ship.equipment.find((e) => e.kind === 'optical-tracker');
   const recorderSpec = game.ship.equipment.find((e) => e.kind === 'recorder');
@@ -43,6 +43,9 @@ export function MissionPage({ desk }: { readonly desk: Desk }) {
       ? 15 + (35 - 15) * Math.max(0, (design.setup.recorderRate - 1 / 10) / (1 - 1 / 10))
       : 35 + ((100 - 35) * (design.setup.recorderRate - 10)) / 40;
   const ended = status.phase === 'ended';
+  const scheduled = status.planId
+    ? `${status.planId} · ${status.pending} commands pending`
+    : 'no maneuver scheduled';
 
   return (
     <div className="cs-grid">
@@ -178,7 +181,7 @@ export function MissionPage({ desk }: { readonly desk: Desk }) {
         title="Configuration"
         statusLine={
           desk.designedAt !== undefined
-            ? `design recorded T+${clock(desk.designedAt)}`
+            ? `design recorded T+${clock(desk.designedAt)} · ${scheduled}`
             : 'design not yet recorded for this attempt'
         }
         status={desk.designedAt !== undefined ? 'nominal' : 'caution'}
@@ -194,10 +197,20 @@ export function MissionPage({ desk }: { readonly desk: Desk }) {
           {status.attemptIndex} · {status.phase}
         </Line>
         <Line label="model">v{game.model.state().version}</Line>
+        <Line label="plan" status={status.planId ? 'nominal' : undefined}>
+          {scheduled}
+        </Line>
+        {/* Setting up changes equipment and records intent; it never plans a burn (S9 R2). */}
+        <p className="cs-note">
+          {status.phase === 'prepare'
+            ? 'prepare first; ENTER starts time. Recording the design sets the ship up; burns are planned on PLAN. Entering with no plan is allowed: the ship coasts'
+            : 'recording the design sets the ship up; burns are planned on PLAN'}
+        </p>
         <Actions>
           <Button primary tone="blackbox" disabled={ended} onClick={() => desk.commitDesign()}>
             RECORD DESIGN AND SET UP
           </Button>
+          <Button onClick={() => desk.setPage('plan')}>OPEN PLAN</Button>
           {status.phase === 'prepare' ? (
             <Button primary disabled={status.committing} onClick={() => enter(game)}>
               ENTER {game.briefing.name}

@@ -40,7 +40,7 @@ export function EquipmentDetail({
   readonly spec: EquipmentSpec;
 }) {
   const { game } = desk;
-  const ship = game.snapshot().world.ship;
+  const ship = desk.snapshot().world.ship;
   const status = ship.equipment[spec.id];
   const ended = game.status().phase === 'ended';
   if (!status) return <p className="cs-note">no report from {name(spec.id)}</p>;
@@ -120,7 +120,7 @@ export function EquipmentDetail({
 export function SystemsPage({ desk }: { readonly desk: Desk }) {
   const { game } = desk;
   const [selected, setSelected] = useState('camera');
-  const snapshot = game.snapshot();
+  const snapshot = desk.snapshot();
   const ship = snapshot.world.ship;
   const ended = game.status().phase === 'ended';
   const spec = game.ship.equipment.find((e) => e.id === selected);

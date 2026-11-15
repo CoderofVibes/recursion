@@ -93,8 +93,24 @@
   letter-spacing: var(--rx-tracking-label);
   color: var(--rx-ink-dim);
 }
+/* Narrow windows: the time block and the note give way; the mark and the way back never wrap. */
+.cs-foot > * {
+  flex: none;
+  white-space: nowrap;
+}
+.cs-foot > .cs-time {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+/* The reason warp dropped is kept whole; the next event gives way first. */
+.cs-foot .cs-time__eta {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .cs-foot__note {
-  flex: 1;
+  flex: 1 1 0;
   min-width: 0;
   overflow: hidden;
   white-space: nowrap;
@@ -302,6 +318,17 @@
   gap: var(--rx-unit);
   pointer-events: auto;
 }
+.cs-time__row {
+  display: flex;
+  align-items: center;
+  gap: var(--rx-unit);
+}
+/* Beside a hologram: the row, then the reason and the next event on lines of their own. */
+.cs-time[data-compact] {
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0;
+}
 .cs-time__met {
   margin-right: var(--rx-gap);
   font-size: var(--rx-size-value);
@@ -313,6 +340,28 @@
   margin-left: var(--rx-row-gap);
   color: var(--rx-caution);
   font-size: var(--rx-size-small);
+}
+/* How long the next event is, in ship time and in wall time at this warp (nominal). */
+.cs-time__eta {
+  margin-left: var(--rx-gap);
+  color: var(--rx-forecast);
+  font-size: var(--rx-size-small);
+  letter-spacing: var(--rx-tracking-label);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.cs-time[data-compact] .cs-time__eta,
+.cs-time[data-compact] .cs-time__reason {
+  margin-left: 0;
+}
+/* Why warp last dropped to 1×, kept beside the controls until warp is raised again. */
+.cs-time__reason {
+  margin-left: var(--rx-gap);
+  color: var(--rx-caution);
+  font-size: var(--rx-size-small);
+  letter-spacing: var(--rx-tracking-label);
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 /* ---- Strength against distance ---------------------------------------------------------------- */

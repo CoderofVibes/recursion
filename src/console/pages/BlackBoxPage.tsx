@@ -101,7 +101,7 @@ export function DebriefView({ report }: { readonly report: Debrief }) {
 export function BlackBoxPage({ desk }: { readonly desk: Desk }) {
   const { game } = desk;
   const status = game.status();
-  const snapshot = game.snapshot();
+  const snapshot = desk.snapshot();
   const archive = game.blackBox.archive();
   const live = game.blackBox.attempt(status.attemptId);
   // The archive holds finished attempts; the one in progress is read as it stands.

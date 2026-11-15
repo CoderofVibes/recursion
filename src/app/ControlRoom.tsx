@@ -14,7 +14,7 @@ import { MapPlate } from '../console/MapPlate.tsx';
 import { ShipPanels } from '../console/ShipPanels.tsx';
 import type { GameControls } from '../game/belief/controls.ts';
 import { applyTheme } from '../theme/index.ts';
-import { HOTSPOT_NAME } from '../view3d/room/layout.ts';
+import { HOTSPOT_NAME, PADS } from '../view3d/room/layout.ts';
 import type { ViewMode } from '../view3d/room/layout.ts';
 import type { RoomView } from '../view3d/room/RoomView.ts';
 import { AVAILABLE } from './hands.ts';
@@ -90,10 +90,29 @@ export function ControlRoom({ game, modelError, erase }: ControlRoomProps) {
       <div className="cr-hud" data-hidden={dying ? '' : undefined}>
         <div className="cr-title">{title}</div>
         {ui.mode !== 'room' && ui.mode !== 'console' ? (
-          <div className="cr-back">ESC ▸ STEP BACK</div>
+          <button type="button" className="cr-back" onClick={() => room?.back()}>
+            ESC ▸ STEP BACK
+          </button>
         ) : null}
-        {ui.mode === 'room' && !ui.locked ? (
-          <div className="cr-hint">CLICK TO LOOK · WASD TO WALK · AIM AT THE CONSOLE</div>
+        {ui.mode === 'room' ? (
+          // The four stations, by key or by click: the same routes as the pads on the console.
+          <nav className="cr-routes" aria-label="Stations" data-locked={ui.locked ? '' : undefined}>
+            {PADS.map((pad, i) => (
+              <button
+                key={pad}
+                type="button"
+                className="cr-route"
+                tabIndex={ui.locked ? -1 : undefined}
+                onClick={() => room?.go(pad)}
+              >
+                <kbd>{i + 1}</kbd>
+                {HOTSPOT_NAME[pad]}
+              </button>
+            ))}
+            <span className="cr-routes__hint">
+              {ui.locked ? 'ESC FREES THE MOUSE' : 'CLICK TO LOOK · WASD TO WALK'}
+            </span>
+          </nav>
         ) : null}
         {ui.mode === 'flight' && room ? (
           <FlightHud

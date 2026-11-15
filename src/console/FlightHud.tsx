@@ -56,7 +56,7 @@ export function FlightHud({ desk, available, headingUp, range, onHeadingUp }: Fl
   const keys: FlightKeys = { held: desk.keys, available };
   const miss = desk.flightMiss;
   const status = game.status();
-  const snapshot = game.snapshot();
+  const snapshot = desk.snapshot();
   const ship = snapshot.world.ship;
   const primary = snapshot.world.bodies[0];
   const speed = primary ? distance(ship.velocity, primary.velocity) : length(ship.velocity);
@@ -82,10 +82,6 @@ export function FlightHud({ desk, available, headingUp, range, onHeadingUp }: Fl
 
   return (
     <>
-      <div className="fh-top">
-        <TimeControls game={game} compact />
-      </div>
-
       <div className="fh-alerts">
         <AlertStack alerts={items} max={4} label="Flight alerts" />
       </div>
@@ -117,110 +113,118 @@ export function FlightHud({ desk, available, headingUp, range, onHeadingUp }: Fl
         )}
       </div>
 
-      <aside className="fh-side">
-        <Panel title="Flight" aside={headingUp ? 'heading up' : 'chart up'}>
-          <ReadoutGrid columns={2}>
-            <Readout label="Speed" value={fixed(speed, 2)} unit="m/s" size="readout" />
-            <Readout
-              label="Heading"
-              value={String(Math.round(degrees(heading(ship.attitude)))).padStart(3, '0')}
-              unit="°"
-              size="readout"
-            />
-            {snapshot.world.bodies.map((b) => (
+      {/* Time, then the panels, in one column: the lines under the warp steps push them down. */}
+      <div className="fh-right">
+        <div className="fh-top">
+          <TimeControls game={game} forecasts={snapshot.forecasts} reason={desk.warpDrop} compact />
+        </div>
+        <aside className="fh-side">
+          <Panel title="Flight" aside={headingUp ? 'heading up' : 'chart up'}>
+            <ReadoutGrid columns={2}>
+              <Readout label="Speed" value={fixed(speed, 2)} unit="m/s" size="readout" />
               <Readout
-                key={b.id}
-                label={b.name}
-                value={dist(distance(ship.position, b.position) - b.radius)}
-                status={b.tracked ? 'nominal' : 'stale'}
+                label="Heading"
+                value={String(Math.round(degrees(heading(ship.attitude)))).padStart(3, '0')}
+                unit="°"
+                size="readout"
               />
-            ))}
-          </ReadoutGrid>
-          <Actions>
-            <Button onClick={onHeadingUp}>{headingUp ? 'CHART UP' : 'HEADING UP'}</Button>
-            <span className="cs-note">range {dist(range)} · wheel</span>
-          </Actions>
-        </Panel>
-
-        <Panel title="Margins">
-          {main ? (
-            <LevelBar
-              label="Main propellant"
-              value={main.value}
-              max={main.max}
-              text={`${whole(main.value)} kg`}
-              status={main.status}
-              marks={[{ at: desk.design.reserve, kind: 'target', label: 'reserve' }]}
-            />
-          ) : null}
-          <LevelBar
-            label="RCS"
-            value={rcsNow}
-            max={rcsMax}
-            text={`${fixed(rcsNow, 1)} kg`}
-            status={rcsNow < rcsMax * 0.2 ? 'caution' : 'nominal'}
-          />
-          {bus ? (
-            <LevelBar
-              label={`Power · ${bus.label}`}
-              value={bus.value}
-              max={bus.max}
-              text={`${whole(bus.value)} W`}
-              status={bus.status}
-              marks={[{ at: bus.mark ?? bus.max, kind: 'caution' }]}
-            />
-          ) : null}
-          {battery ? (
-            <LevelBar
-              label="Batteries"
-              value={battery.value}
-              max={battery.max}
-              text={battery.text}
-              status={battery.status}
-            />
-          ) : null}
-          {node ? (
-            <LevelBar
-              label={`Heat · ${node.label}`}
-              value={node.value}
-              max={node.max}
-              text={node.text}
-              status={node.status}
-              marks={[{ at: node.mark ?? node.max, kind: 'warning' }]}
-            />
-          ) : null}
-          <LevelBar
-            label="Recorder"
-            value={rec.bytes}
-            max={rec.capacity}
-            text={`${bytes(rec.bytes)} · ${fixed(rec.rate, 2)} Hz`}
-            tone="blackbox"
-          />
-        </Panel>
-
-        {chosen ? (
-          <Panel
-            title={chosen.id}
-            aside={chosen.tracked ? 'tracked' : 'seen'}
-            status={chosen.tracked ? 'nominal' : 'stale'}
-          >
-            <Line label="range">
-              {dist(distance(ship.position, chosen.position) - chosen.radius)}
-            </Line>
-            <Line label="radius">{dist(chosen.radius)}</Line>
+              {snapshot.world.bodies.map((b) => (
+                <Readout
+                  key={b.id}
+                  label={b.name}
+                  value={dist(distance(ship.position, b.position) - b.radius)}
+                  status={b.tracked ? 'nominal' : 'stale'}
+                />
+              ))}
+            </ReadoutGrid>
             <Actions>
-              <Button
-                primary
-                disabled={ended}
-                onClick={() => game.command({ kind: 'point', sensor: 'camera', target: chosen.id })}
-              >
-                POINT CAMERA
-              </Button>
-              <Button onClick={() => desk.select(null)}>CLEAR</Button>
+              <Button onClick={onHeadingUp}>{headingUp ? 'CHART UP' : 'HEADING UP'}</Button>
+              <span className="cs-note">range {dist(range)} · wheel</span>
             </Actions>
           </Panel>
-        ) : null}
-      </aside>
+
+          <Panel title="Margins">
+            {main ? (
+              <LevelBar
+                label="Main propellant"
+                value={main.value}
+                max={main.max}
+                text={`${whole(main.value)} kg`}
+                status={main.status}
+                marks={[{ at: desk.design.reserve, kind: 'target', label: 'reserve' }]}
+              />
+            ) : null}
+            <LevelBar
+              label="RCS"
+              value={rcsNow}
+              max={rcsMax}
+              text={`${fixed(rcsNow, 1)} kg`}
+              status={rcsNow < rcsMax * 0.2 ? 'caution' : 'nominal'}
+            />
+            {bus ? (
+              <LevelBar
+                label={`Power · ${bus.label}`}
+                value={bus.value}
+                max={bus.max}
+                text={`${whole(bus.value)} W`}
+                status={bus.status}
+                marks={[{ at: bus.mark ?? bus.max, kind: 'caution' }]}
+              />
+            ) : null}
+            {battery ? (
+              <LevelBar
+                label="Batteries"
+                value={battery.value}
+                max={battery.max}
+                text={battery.text}
+                status={battery.status}
+              />
+            ) : null}
+            {node ? (
+              <LevelBar
+                label={`Heat · ${node.label}`}
+                value={node.value}
+                max={node.max}
+                text={node.text}
+                status={node.status}
+                marks={[{ at: node.mark ?? node.max, kind: 'warning' }]}
+              />
+            ) : null}
+            <LevelBar
+              label="Recorder"
+              value={rec.bytes}
+              max={rec.capacity}
+              text={`${bytes(rec.bytes)} · ${fixed(rec.rate, 2)} Hz`}
+              tone="blackbox"
+            />
+          </Panel>
+
+          {chosen ? (
+            <Panel
+              title={chosen.id}
+              aside={chosen.tracked ? 'tracked' : 'seen'}
+              status={chosen.tracked ? 'nominal' : 'stale'}
+            >
+              <Line label="range">
+                {dist(distance(ship.position, chosen.position) - chosen.radius)}
+              </Line>
+              <Line label="radius">{dist(chosen.radius)}</Line>
+              <Actions>
+                <Button
+                  primary
+                  disabled={ended}
+                  onClick={() =>
+                    game.command({ kind: 'point', sensor: 'camera', target: chosen.id })
+                  }
+                >
+                  POINT CAMERA
+                </Button>
+                <Button onClick={() => desk.select(null)}>CLEAR</Button>
+              </Actions>
+            </Panel>
+          ) : null}
+        </aside>
+      </div>
     </>
   );
 }

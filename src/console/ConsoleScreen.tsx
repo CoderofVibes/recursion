@@ -60,13 +60,16 @@ export function ConsoleScreen({
           {visible && desk.page === 'systems' ? <SystemsPage desk={desk} /> : null}
         </div>
         <footer className="cs-foot">
-          <TimeControls game={game} />
+          <TimeControls game={game} forecasts={desk.snapshot().forecasts} reason={desk.warpDrop} />
           <BlackBoxMark
             state={status.phase === 'ended' || status.paused ? 'idle' : 'recording'}
             label={`Attempt ${status.attemptIndex}`}
             detail={status.phase === 'ended' ? status.outcome.kind : status.phase}
           />
-          <span className="cs-foot__note">{desk.note}</span>
+          {/* The reason warp dropped is already beside the time controls. */}
+          <span className="cs-foot__note">
+            {desk.warpDrop && desk.note.endsWith(desk.warpDrop) ? '' : desk.note}
+          </span>
           <span className="cs-foot__back">ESC ▸ STEP BACK</span>
         </footer>
       </div>

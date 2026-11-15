@@ -125,10 +125,16 @@ export function startControlRoom(
     if (!view.dying()) game.advance(dt);
     status = game.status();
     const snapshot = game.snapshot();
+    desk.setFrame(snapshot);
 
     // The flight controls answer only inside the encounter.
     const flying = view.mode() === 'flight' && !view.dying() && status.phase === 'operate';
+    const warpBefore = status.warp;
     const hand = hands.update(view.keys, flying, dt);
+    // Flying by hand runs at 1× (a burn lasts as long as the key is held): say so beside time.
+    if (warpBefore > 1 && game.status().warp === 1) desk.dropWarp('flying by hand');
+    // The player raised warp again: the last reason it dropped no longer applies.
+    else if (desk.warpDrop && game.status().warp > 1) desk.warpDrop = null;
 
     if (status.phase === 'ended' && endHandled !== status.attemptId) {
       endHandled = status.attemptId;
@@ -168,7 +174,7 @@ export function startControlRoom(
       const first = seen.fresh[0];
       if (first && status.phase === 'operate' && game.status().warp > 1) {
         game.setWarp(1);
-        desk.say(`warp to 1× · ${first.text.toLowerCase()}`);
+        desk.dropWarp(first.text.toLowerCase());
       }
       desk.notify();
     }

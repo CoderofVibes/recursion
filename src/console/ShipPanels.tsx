@@ -46,7 +46,7 @@ function powerDiagram(desk: Desk): {
   cols: number;
 } {
   const { game } = desk;
-  const ship = game.snapshot().world.ship;
+  const ship = desk.snapshot().world.ship;
   const buses = game.ship.buses;
   const nodes: SchematicNode[] = [];
   const links: SchematicLink[] = [];
@@ -95,7 +95,7 @@ function SystemScreen({
   readonly parts: readonly EquipmentSpec[];
 }) {
   const { game } = desk;
-  const snapshot = game.snapshot();
+  const snapshot = desk.snapshot();
   const ship = snapshot.world.ship;
   switch (system) {
     case 'power': {
@@ -319,7 +319,7 @@ export function ShipPanels({ desk, holo }: { readonly desk: Desk; readonly holo:
   // Re-render when the hologram's system, selection or configuration changes.
   const drawn = (): string => `${holo.system()}|${holo.selected()}|${holo.config()}`;
   useSyncExternalStore((listener) => holo.onChange(listener), drawn, drawn);
-  const ship = game.snapshot().world.ship;
+  const ship = desk.snapshot().world.ship;
   const system = holo.system();
   const ended = game.status().phase === 'ended';
   const members = holo.parts().filter((p) => p.system === system);

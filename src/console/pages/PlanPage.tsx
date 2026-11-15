@@ -3,8 +3,12 @@
  * direction is relative to the body axis, the believed velocity or a chosen body; its size is a
  * speed change or a duration, at a throttle. PREVIEW draws a draft forecast; COMMIT issues the
  * forecast, frozen, and schedules the plan. Also saved procedures (P9) and voluntary Recall (P8).
+ *
+ * The rows being edited live on the desk (S9 R4), so they survive page and view changes; any
+ * edit makes a preview of the old inputs stale. A new attempt sets the draft aside and offers it
+ * back, unscheduled.
  */
-import { useState } from 'react';
+import { useEffect, useRef } from 'react';
 import type { AttitudeTarget, Procedure } from '../../contracts/index.ts';
 import { matchProcedure, saveProcedure } from '../../blackbox/index.ts';
 import type { PlanDraft } from '../../game/belief/controls.ts';
@@ -14,32 +18,10 @@ import { ModeChips, Panel, Readout, ReadoutGrid } from '../../theme/components/i
 import { holdFromNose } from '../../view3d/adapter.ts';
 import { Actions, Button, Caption, Line, NumberField, SelectField } from '../controls.tsx';
 import { visited } from '../data.ts';
-import type { Desk } from '../desk.ts';
+import type { BurnDirection, BurnRow, Desk, DraftState, PlanEdit, PointRow } from '../desk.ts';
 import { clock, dist, duration, fixed, name } from '../format.ts';
 
-type Direction = 'prograde' | 'retrograde' | 'toward' | 'away' | 'axis';
-type Sizing = 'deltaV' | 'duration';
-
-interface BurnRow {
-  readonly key: number;
-  readonly at: number;
-  readonly direction: Direction;
-  /** Body for toward/away. */
-  readonly target: string;
-  /** For `axis`: degrees to turn the nose to the left of where it points now. */
-  readonly offset: number;
-  readonly sizing: Sizing;
-  readonly amount: number;
-  readonly throttle: number;
-}
-
-interface PointRow {
-  readonly key: number;
-  readonly at: number;
-  readonly target: string;
-}
-
-const DIRECTIONS: readonly { value: Direction; label: string }[] = [
+const DIRECTIONS: readonly { value: BurnDirection; label: string }[] = [
   { value: 'prograde', label: 'PROGRADE' },
   { value: 'retrograde', label: 'RETROGRADE' },
   { value: 'toward', label: 'TOWARD' },
@@ -47,29 +29,38 @@ const DIRECTIONS: readonly { value: Direction; label: string }[] = [
   { value: 'axis', label: 'BODY AXIS' },
 ];
 
-let nextKey = 1;
-
-/** Saved procedures live in this browser, beside the Black Box records they came from. */
-const PROCEDURES_KEY = 'recursion.procedures';
-function loadProcedures(): Procedure[] {
-  try {
-    return JSON.parse(window.localStorage.getItem(PROCEDURES_KEY) ?? '[]') as Procedure[];
-  } catch {
-    return [];
-  }
-}
+const DRAFT_LINE: Readonly<Record<DraftState, string>> = {
+  empty: 'nothing planned: committing now issues a coasting forecast',
+  edited: 'draft · not previewed · not scheduled',
+  previewed: 'draft · previewed as shown · not scheduled',
+  committed: 'committed as shown',
+};
 
 export function PlanPage({ desk }: { readonly desk: Desk }) {
   const { game } = desk;
-  const [burns, setBurns] = useState<BurnRow[]>([]);
-  const [points, setPoints] = useState<PointRow[]>([]);
-  const [procedures, setProcedures] = useState<Procedure[]>(loadProcedures);
+  const { burns, points } = desk.planEdit;
   const status = game.status();
-  const snapshot = game.snapshot();
+  const snapshot = desk.snapshot();
   const ship = snapshot.world.ship;
   const bodies = snapshot.world.bodies;
   const primary = bodies[0]?.id ?? '';
   const ended = status.phase === 'ended';
+  const procedures = game.blackBox.archive().procedures;
+  const draftState = desk.draftState();
+
+  // Keyboard: a new row takes focus at its first field; a removed row hands it to the nearest
+  // surviving row, or to its add button (S9 R12).
+  const root = useRef<HTMLDivElement>(null);
+  const focusNext = useRef<string | null>(null);
+  useEffect(() => {
+    const selector = focusNext.current;
+    if (!selector) return;
+    focusNext.current = null;
+    root.current?.querySelector<HTMLElement>(selector)?.focus();
+  });
+  const firstField = (key: number): string =>
+    `[data-row="${key}"] :is(input, select):not(:disabled)`;
+  const edit = (change: (e: PlanEdit) => PlanEdit): void => desk.editPlan(change);
 
   const attitudeOf = (b: BurnRow): AttitudeTarget => {
     switch (b.direction) {
@@ -117,24 +108,47 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
     };
   };
 
-  const addBurn = (): void =>
-    setBurns((list) => [
-      ...list,
-      {
-        key: nextKey++,
-        at: 400 + list.length * 1200,
-        direction: 'prograde',
-        target: primary,
-        offset: 0,
-        sizing: 'deltaV',
-        amount: 5,
-        throttle: 1,
-      },
-    ]);
+  const addBurn = (): void => {
+    const key = desk.newRowKey();
+    focusNext.current = firstField(key);
+    edit((e) => ({
+      ...e,
+      burns: [
+        ...e.burns,
+        {
+          key,
+          at: 600 + e.burns.length * 1200,
+          direction: 'prograde',
+          target: primary,
+          offset: 0,
+          sizing: 'deltaV',
+          amount: 5,
+          throttle: 1,
+        },
+      ],
+    }));
+  };
   const patchBurn = (key: number, patch: Partial<BurnRow>): void =>
-    setBurns((list) => list.map((b) => (b.key === key ? { ...b, ...patch } : b)));
-  const addPoint = (): void =>
-    setPoints((list) => [...list, { key: nextKey++, at: 0, target: primary }]);
+    edit((e) => ({ ...e, burns: e.burns.map((b) => (b.key === key ? { ...b, ...patch } : b)) }));
+  const removeBurn = (key: number): void => {
+    const i = burns.findIndex((b) => b.key === key);
+    const near = burns[i + 1] ?? burns[i - 1];
+    focusNext.current = near ? firstField(near.key) : '[data-mark="add-burn"]';
+    edit((e) => ({ ...e, burns: e.burns.filter((b) => b.key !== key) }));
+  };
+  const addPoint = (): void => {
+    const key = desk.newRowKey();
+    focusNext.current = firstField(key);
+    edit((e) => ({ ...e, points: [...e.points, { key, at: 0, target: primary }] }));
+  };
+  const patchPoint = (key: number, patch: Partial<PointRow>): void =>
+    edit((e) => ({ ...e, points: e.points.map((p) => (p.key === key ? { ...p, ...patch } : p)) }));
+  const removePoint = (key: number): void => {
+    const i = points.findIndex((p) => p.key === key);
+    const near = points[i + 1] ?? points[i - 1];
+    focusNext.current = near ? firstField(near.key) : '[data-mark="add-point"]';
+    edit((e) => ({ ...e, points: e.points.filter((p) => p.key !== key) }));
+  };
 
   const targets = [
     ...bodies.map((b) => ({ value: b.id, label: b.name.toUpperCase() })),
@@ -161,9 +175,8 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
         to: status.t,
         tolerance: { position: 20_000, velocity: 2, attitude: 0.1 },
       });
-      const list = [...procedures, procedure];
-      setProcedures(list);
-      window.localStorage.setItem(PROCEDURES_KEY, JSON.stringify(list));
+      // Black Box keeps it with the records, across attempts and reloads (P9).
+      game.blackBox.saveProcedure(procedure);
       desk.say(`procedure saved: ${procedure.items.length} commands`);
     } catch (reason) {
       desk.say(`not saved · ${reason instanceof Error ? reason.message : String(reason)}`);
@@ -171,32 +184,59 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
   };
   const replay = (p: Procedure): void => {
     // A procedure replays as a plan from now; it matches exactly only from the same conditions.
-    desk.commitPlan({
-      name: p.name,
-      items: p.items
-        .filter((i) => i.command.kind !== 'mark')
-        .map((i) => ({ at: i.at, command: i.command })),
-    });
+    desk.commitPlan(
+      {
+        name: p.name,
+        items: p.items
+          .filter((i) => i.command.kind !== 'mark')
+          .map((i) => ({ at: i.at, command: i.command })),
+      },
+      false,
+    );
   };
   const forget = (id: string): void => {
-    const list = procedures.filter((p) => p.id !== id);
-    setProcedures(list);
-    window.localStorage.setItem(PROCEDURES_KEY, JSON.stringify(list));
+    game.blackBox.removeProcedure(id);
+    desk.say('procedure forgotten');
   };
 
   return (
-    <div className="cs-grid">
-      <Panel title="Burns" aside={`${burns.length} planned`} tone="measured">
+    <div className="cs-grid" ref={root}>
+      <Panel
+        title="Burns"
+        aside={`${burns.length} planned`}
+        tone="measured"
+        statusLine={DRAFT_LINE[draftState]}
+        status={draftState === 'committed' ? 'nominal' : undefined}
+      >
+        {desk.setAside ? (
+          <div className="cs-item">
+            <Line label="set aside" status="caution">
+              attempt {desk.setAside.attempt}&apos;s draft: {desk.setAside.edit.burns.length} burns,{' '}
+              {desk.setAside.edit.points.length} pointings, timed from that attempt&apos;s commit
+            </Line>
+            <Actions>
+              <Button disabled={ended} onClick={() => desk.restoreSetAside()}>
+                RESTORE AS DRAFT
+              </Button>
+            </Actions>
+          </div>
+        ) : null}
         {burns.map((b, i) => (
-          <div className="cs-item" key={b.key}>
+          <div
+            className="cs-item"
+            key={b.key}
+            data-row={b.key}
+            role="group"
+            aria-label={`Burn ${i + 1}`}
+          >
             <div className="cs-item__head">
               <span>BURN {i + 1}</span>
               <span className="cs-item__value">{fixed(durationOf(b), 1)} s · main engine</span>
               <button
                 type="button"
                 className="cs-item__close"
-                aria-label="Remove burn"
-                onClick={() => setBurns((list) => list.filter((x) => x.key !== b.key))}
+                aria-label={`Remove burn ${i + 1}`}
+                onClick={() => removeBurn(b.key)}
               >
                 ×
               </button>
@@ -214,7 +254,7 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
                 label="Direction"
                 value={b.direction}
                 options={DIRECTIONS}
-                onChange={(v) => patchBurn(b.key, { direction: v as Direction })}
+                onChange={(v) => patchBurn(b.key, { direction: v as BurnDirection })}
               />
               {b.direction === 'toward' || b.direction === 'away' ? (
                 <SelectField
@@ -240,7 +280,7 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
                   { value: 'deltaV', label: 'SPEED CHANGE' },
                   { value: 'duration', label: 'DURATION' },
                 ]}
-                onChange={(v) => patchBurn(b.key, { sizing: v as Sizing })}
+                onChange={(v) => patchBurn(b.key, { sizing: v as BurnRow['sizing'] })}
               />
               <NumberField
                 label={b.sizing === 'deltaV' ? 'Δv' : 'For'}
@@ -265,15 +305,31 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
           </div>
         ))}
         <Actions>
-          <Button onClick={addBurn} disabled={ended}>
+          <Button onClick={addBurn} disabled={ended} mark="add-burn">
             + BURN
           </Button>
+          {burns.length + points.length > 0 ? (
+            <Button
+              onClick={() => {
+                focusNext.current = '[data-mark="add-burn"]';
+                edit(() => ({ burns: [], points: [] }));
+              }}
+            >
+              CLEAR DRAFT
+            </Button>
+          ) : null}
         </Actions>
       </Panel>
 
       <Panel title="Sensor pointing" aside={`${points.length} planned`}>
-        {points.map((p) => (
-          <div className="cs-item" key={p.key}>
+        {points.map((p, i) => (
+          <div
+            className="cs-item"
+            key={p.key}
+            data-row={p.key}
+            role="group"
+            aria-label={`Pointing ${i + 1}`}
+          >
             <div className="cs-fields">
               <NumberField
                 label="In"
@@ -281,23 +337,19 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
                 min={0}
                 step={60}
                 value={p.at}
-                onChange={(v) =>
-                  setPoints((list) => list.map((x) => (x.key === p.key ? { ...x, at: v } : x)))
-                }
+                onChange={(v) => patchPoint(p.key, { at: v })}
               />
               <SelectField
                 label="Camera at"
                 value={p.target}
                 options={targets}
-                onChange={(v) =>
-                  setPoints((list) => list.map((x) => (x.key === p.key ? { ...x, target: v } : x)))
-                }
+                onChange={(v) => patchPoint(p.key, { target: v })}
               />
               <button
                 type="button"
                 className="cs-item__close"
-                aria-label="Remove pointing"
-                onClick={() => setPoints((list) => list.filter((x) => x.key !== p.key))}
+                aria-label={`Remove pointing ${i + 1}`}
+                onClick={() => removePoint(p.key)}
               >
                 ×
               </button>
@@ -308,7 +360,7 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
           tracking a rock is how the ship measures the pull at distances it has not flown
         </p>
         <Actions>
-          <Button onClick={addPoint} disabled={ended}>
+          <Button onClick={addPoint} disabled={ended} mark="add-point">
             + POINTING
           </Button>
         </Actions>
@@ -400,14 +452,14 @@ export function PlanPage({ desk }: { readonly desk: Desk }) {
           });
           const off = match.checks.filter((c) => !c.ok).map((c) => c.name);
           return (
-            <div className="cs-item" key={p.id}>
+            <div className="cs-item" key={p.id} role="group" aria-label={p.name}>
               <div className="cs-item__head">
                 <span>{p.name}</span>
                 <span className="cs-item__value">{p.items.length} commands</span>
                 <button
                   type="button"
                   className="cs-item__close"
-                  aria-label="Forget procedure"
+                  aria-label={`Forget ${p.name}`}
                   onClick={() => forget(p.id)}
                 >
                   ×

@@ -24,7 +24,7 @@ export function MapPlate({ desk, holo, region, onRegion }: MapPlateProps) {
   // With one region charted, it is the one the plate describes.
   const id = picked?.kind === 'region' ? picked.id : here;
   if (id !== here) return null;
-  const facts = regionFacts(game, game.blackBox.archive(), game.snapshot());
+  const facts = regionFacts(game, game.blackBox.archive(), desk.snapshot());
   return (
     <aside className="mp-plate">
       <Panel title={game.briefing.name} aside={region ? 'region view' : 'charted'}>
