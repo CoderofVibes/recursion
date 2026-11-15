@@ -29,6 +29,7 @@ import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import type { Object3D } from 'three';
 import { CSS2DRenderer } from 'three/addons/renderers/CSS2DRenderer.js';
 import type { ShipDefinition } from '../../contracts/index.ts';
 import {
@@ -46,6 +47,7 @@ import type { FlightFrame, FlightHolo } from '../flight/FlightHolo.ts';
 import { clamp, ease, thin } from '../gfx.ts';
 import { makeMapHolo } from '../map/MapHolo.ts';
 import type { Chart, MapHolo } from '../map/MapHolo.ts';
+import type { RoomShot } from '../opening/shot.ts';
 import { makeShipHolo } from '../ship/ShipHolo.ts';
 import type { ShipHolo } from '../ship/ShipHolo.ts';
 import { CON, DOOR, HOLO, REACH, ROOM, VIEW } from './layout.ts';
@@ -132,6 +134,7 @@ export class RoomView {
     labels: HTMLElement,
     definition: ShipDefinition,
     events: RoomEvents,
+    options?: { readonly scripted?: boolean },
   ) {
     this.canvas = canvas;
     this.events = events;
@@ -183,12 +186,36 @@ export class RoomView {
     this.map = makeMapHolo();
     this.holoTilt.add(this.flight.group, this.map.group, this.ship.group);
 
-    this.bind();
+    if (!options?.scripted) this.bind();
     this.resize();
     const pose = this.poseOf('room');
     this.camera.position.copy(pose.pos);
     this.camera.quaternion.copy(pose.quat);
     this.syncVisibility();
+  }
+
+  /** Replace the snapshot-driven window objects with a caller-owned set piece. */
+  setWindowScenery(scenery: Object3D | null): void {
+    this.outside.setScenery(scenery);
+  }
+
+  /** Draw one scripted frame without advancing the room clock, walking or updating a hologram. */
+  renderScriptedShot(shot: RoomShot): void {
+    this.resize();
+    if (this.width === 0 || this.height === 0) return;
+    const { camera } = this;
+    camera.position.set(...shot.position);
+    camera.rotation.set(...shot.rotation, 'YXZ');
+    this.shell.setLevel(shot.light);
+    this.shell.setConsole(shot.console, null);
+    this.shell.setHologramLight(0);
+    const hadHologram = this.holoRoot.visible;
+    const hadCone = this.cone.visible;
+    this.holoRoot.visible = false;
+    this.cone.visible = false;
+    this.composer.render();
+    this.holoRoot.visible = hadHologram;
+    this.cone.visible = hadCone;
   }
 
   mode(): ViewMode {
