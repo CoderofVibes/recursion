@@ -33,6 +33,21 @@ export type ObjectiveRule =
       readonly outer: Meters;
       readonly revolutions: number;
     }
+  /**
+   * Leave the encounter (A6): judged the first time the ship is farther than `beyond` from the
+   * massive bodies' barycentre, in any direction. Reached, completing the attempt, if its speed
+   * relative to that barycentre is at least `minSpeed` and, when `maxDeltaV` is given, it has
+   * spent no more than that (the time integral of net thrust over mass: main engine and RCS
+   * translation; balanced attitude couples add nothing). Otherwise missed, once; the attempt
+   * goes on.
+   */
+  | {
+      readonly kind: 'depart';
+      readonly objective: ObjectiveId;
+      readonly beyond: Meters;
+      readonly minSpeed: MetersPerSecond;
+      readonly maxDeltaV?: MetersPerSecond;
+    }
   /** Judged at completion: reached if the tank still holds at least `minimum`. */
   | {
       readonly kind: 'reserve';

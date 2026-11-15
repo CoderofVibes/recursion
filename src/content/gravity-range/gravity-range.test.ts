@@ -1,6 +1,7 @@
 /**
  * The Gravity range as authored: the world at arrival, what the briefing tells the ship, the
- * mismatch the encounter is built on, and a scripted flight that completes the objective.
+ * mismatch the encounter is built on, the ring about Beta, the slingshot that leaves the binary,
+ * and flights through the game loop.
  */
 
 import { describe, expect, it } from 'vitest';
@@ -8,21 +9,48 @@ import type { TruthWorld } from '../../contracts/truth/index.ts';
 import { burnDuration, burnSteps } from '../../game/belief/maneuver.ts';
 import { createBlackBox } from '../../game/belief/blackbox.ts';
 import { createStandInModel } from '../../game/belief/standin-model.ts';
+import { departStatus } from '../../game/objectives.ts';
 import { createGameSession } from '../../game/session.ts';
 import { hashState } from '../../lib/hash.ts';
-import { yawOf } from '../../lib/quat.ts';
+import { axisX } from '../../lib/quat.ts';
+import { add, cross, distance, length, scale, sub, type Vec3 } from '../../lib/vec3.ts';
 import { createSimulation, validateWorld, type SimState } from '../../sim/index.ts';
-import { ALPHA, BAND, BETA, LAW, RESERVE, SEPARATION, createGravityRange } from './index.ts';
+import {
+  ALPHA,
+  ALPHA_FIELD,
+  BELT,
+  BETA,
+  DEPART,
+  LAW,
+  SEPARATION,
+  createGravityRange,
+} from './index.ts';
 
 const setup = createGravityRange();
 const world = setup.definition.world;
+const HOUR = 3600;
 
 const relative = (w: TruthWorld) => {
   const alpha = w.bodies[0]!;
   const k = w.ship.kinematics;
   return {
-    r: Math.hypot(k.position.x - alpha.position.x, k.position.y - alpha.position.y),
-    v: Math.hypot(k.velocity.x - alpha.velocity.x, k.velocity.y - alpha.velocity.y),
+    r: distance(k.position, alpha.position),
+    v: length(sub(k.velocity, alpha.velocity)),
+  };
+};
+
+/** The state with the ship's velocity changed by `dv` (an instantaneous burn). */
+const kicked = (state: SimState, dv: Vec3): SimState => {
+  const ship = state.world.ship;
+  return {
+    ...state,
+    world: {
+      ...state.world,
+      ship: {
+        ...ship,
+        kinematics: { ...ship.kinematics, velocity: add(ship.kinematics.velocity, dv) },
+      },
+    },
   };
 };
 
@@ -31,25 +59,13 @@ const relative = (w: TruthWorld) => {
  * arrival; returns the lowest distance from Alpha and when, sampled every 30 s.
  */
 function coast(start: TruthWorld, deltaV: number, seconds: number) {
-  const k = start.ship.kinematics;
-  const yaw = yawOf(k.attitude);
-  const dir = { x: Math.cos(yaw), y: Math.sin(yaw) };
-  const kicked: TruthWorld = {
-    ...start,
-    ship: {
-      ...start.ship,
-      kinematics: {
-        ...k,
-        velocity: { x: k.velocity.x + dir.x * deltaV, y: k.velocity.y + dir.y * deltaV, z: 0 },
-      },
-    },
-  };
-  const sim = createSimulation(kicked, { dt: 1 });
+  const sim = createSimulation(start, { dt: 1 });
+  const nose = axisX(start.ship.kinematics.attitude);
   let lowest = Infinity;
   let highest = 0;
   let when = 0;
-  let asteroids = kicked.asteroids.length;
-  const result = sim.run(sim.initial, seconds, {
+  let asteroids = start.asteroids.length;
+  const result = sim.run(kicked(sim.initial, scale(nose, deltaV)), seconds, {
     sampleEvery: 30,
     onSample: (s: SimState) => {
       const { r } = relative(s.world);
@@ -64,6 +80,93 @@ function coast(start: TruthWorld, deltaV: number, seconds: number) {
   return { lowest, highest, when, asteroids, result };
 }
 
+interface Flight {
+  /** Closest approach to Beta's centre, m, and when, s. */
+  readonly pass: number;
+  readonly passAt: number;
+  /** +1 if the ship went round Beta the way Beta goes round Alpha (and the ring turns). */
+  readonly sense: number;
+  /** Height above the binary's plane at closest approach, m. */
+  readonly passHeight: number;
+  /** Speed relative to the pair's centre of mass on crossing `DEPART.beyond`, or undefined. */
+  readonly exitSpeed?: number;
+  readonly exitAt?: number;
+  /** The first hull impact, if any. */
+  readonly impact?: { readonly with: string; readonly speed: number; readonly t: number };
+}
+
+/**
+ * Fly the true world (no ship systems): an instantaneous burn of `dv` along the ship's motion
+ * about Alpha at time `at`, optionally a second one straight up out of the binary's plane, then
+ * coast until the ship leaves, hits something or `seconds` pass.
+ */
+function fly(
+  start: TruthWorld,
+  plan: { dv: number; at: number; hop?: { at: number; up: number } },
+  seconds: number,
+): Flight {
+  const sim = createSimulation(start, { dt: 1 });
+  let pass = Infinity;
+  let passAt = 0;
+  let sense = 0;
+  let passHeight = 0;
+  let exitSpeed: number | undefined;
+  let exitAt: number | undefined;
+  let impact: Flight['impact'];
+  const watch = (s: SimState): void => {
+    const beta = s.world.bodies[1]!;
+    const k = s.world.ship.kinematics;
+    const offset = sub(k.position, beta.position);
+    const d = length(offset);
+    if (d < pass) {
+      pass = d;
+      passAt = s.world.t;
+      sense = Math.sign(cross(offset, sub(k.velocity, beta.velocity)).z);
+      passHeight = k.position.z;
+    }
+    if (exitSpeed === undefined) {
+      const status = departStatus(s.world);
+      if (status.distance > DEPART.beyond) {
+        exitSpeed = status.speed;
+        exitAt = s.world.t;
+      }
+    }
+  };
+  const leg = (state: SimState, until: number): SimState => {
+    const steps = Math.round(until - state.world.t);
+    if (steps <= 0 || impact || exitSpeed !== undefined) return state;
+    const result = sim.run(state, steps, { sampleEvery: 20, onSample: watch, stopOnImpact: true });
+    const hit = result.events.find((e) => e.kind === 'impact');
+    if (hit && hit.kind === 'impact')
+      impact = { with: hit.with, speed: hit.relativeSpeed, t: hit.t };
+    return result.state;
+  };
+  let state = leg(sim.initial, plan.at);
+  const alpha = state.world.bodies[0]!;
+  const k = state.world.ship.kinematics;
+  const along = sub(k.velocity, alpha.velocity);
+  state = kicked(state, scale(along, plan.dv / length(along)));
+  if (plan.hop) {
+    state = leg(state, plan.hop.at);
+    state = kicked(state, { x: 0, y: 0, z: plan.hop.up });
+  }
+  // In legs of an hour, so the flight stops soon after the ship has left.
+  for (let t = state.world.t + HOUR; t <= seconds && !impact && exitSpeed === undefined; t += HOUR)
+    state = leg(state, t);
+  return {
+    pass,
+    passAt,
+    sense,
+    passHeight,
+    ...(exitSpeed !== undefined && exitAt !== undefined ? { exitSpeed, exitAt } : {}),
+    ...(impact ? { impact } : {}),
+  };
+}
+
+const withoutRocks = (w: TruthWorld): TruthWorld => ({ ...w, asteroids: [] });
+const ring = (w: TruthWorld) => w.asteroids.filter((a) => a.id.startsWith('b-'));
+const field = (w: TruthWorld) => w.asteroids.filter((a) => a.id.startsWith('a-'));
+
 describe('Gravity range: the world at arrival', () => {
   it('is a valid world at the P16 scale under the inverse-2.5 law', () => {
     expect(validateWorld(world)).toEqual([]);
@@ -73,17 +176,14 @@ describe('Gravity range: the world at arrival', () => {
       ['beta', 2.5e9, 160_000, false],
     ]);
     const [a, b] = world.bodies;
-    expect(Math.hypot(b!.position.x - a!.position.x, b!.position.y - a!.position.y)).toBeCloseTo(
-      SEPARATION,
-      3,
-    );
-    // 1B §6: the pair turns at 39.528 m/s relative speed.
-    expect(Math.hypot(b!.velocity.x - a!.velocity.x, b!.velocity.y - a!.velocity.y)).toBeCloseTo(
-      39.52847,
-      4,
-    );
+    expect(distance(b!.position, a!.position)).toBeCloseTo(SEPARATION, 3);
+    // 1B §6: the pair turns at 39.528 m/s relative speed, in the x–y plane.
+    expect(length(sub(b!.velocity, a!.velocity))).toBeCloseTo(39.52847, 4);
+    expect([a!.position.z, a!.velocity.z, b!.position.z, b!.velocity.z]).toEqual([0, 0, 0, 0]);
+    // One sun, 12° above that plane.
     expect(world.sun!.irradiance).toBe(600);
-    expect(Math.hypot(world.sun!.direction.x, world.sun!.direction.y)).toBeCloseTo(1, 12);
+    expect(length(world.sun!.direction)).toBeCloseTo(1, 12);
+    expect(Math.asin(world.sun!.direction.z)).toBeCloseTo((12 * Math.PI) / 180, 12);
     expect([ALPHA.id, BETA.id]).toEqual(['alpha', 'beta']);
   });
 
@@ -92,6 +192,14 @@ describe('Gravity range: the world at arrival', () => {
     const { r, v } = relative(world);
     expect(r).toBeCloseTo(LAW.referenceRadius, 3);
     expect(v).toBeCloseTo(100, 9);
+    // In the binary's plane, nose along its path.
+    expect(world.ship.kinematics.position.z).toBe(0);
+    expect(world.ship.kinematics.velocity.z).toBe(0);
+    const alpha = world.bodies[0]!;
+    const along = sub(world.ship.kinematics.velocity, alpha.velocity);
+    expect(
+      length(sub(axisX(world.ship.kinematics.attitude), scale(along, 1 / length(along)))),
+    ).toBeLessThan(1e-12);
     expect(world.ship.systems.tanks['main-propellant']).toBe(6000);
     expect(world.ship.systems.tanks['rcs-left']! + world.ship.systems.tanks['rcs-right']!).toBe(
       300,
@@ -108,18 +216,26 @@ describe('Gravity range: the world at arrival', () => {
     );
   });
 
-  it('has an asteroid field that lasts and leaves the arrival orbit clear', () => {
-    expect(world.asteroids).toHaveLength(20);
-    for (const a of world.asteroids) {
+  it('has a field about Alpha that lasts, is tilted out of the plane and leaves the arrival orbit clear', () => {
+    const rocks = field(world);
+    expect(rocks).toHaveLength(ALPHA_FIELD.disc + ALPHA_FIELD.dipping);
+    const alpha = world.bodies[0]!;
+    for (const a of rocks) {
       expect(a.radius).toBeGreaterThanOrEqual(400);
       expect(a.radius).toBeLessThanOrEqual(3500);
+      // Each orbit is tilted by at most 6° about its own line of nodes.
+      const offset = sub(a.position, alpha.position);
+      const normal = cross(offset, sub(a.velocity, alpha.velocity));
+      expect(Math.acos(normal.z / length(normal))).toBeLessThanOrEqual(
+        ALPHA_FIELD.maxInclination + 1e-9,
+      );
     }
-    // Two revolutions at r0 (35 h) with no burn: no impact, no asteroid lost to a body, and the
-    // orbit stays near r0 (Beta's pull makes it wobble a few percent).
-    const { lowest, highest, asteroids, result } = coast(world, 0, 126_000);
+    expect(rocks.some((a) => Math.abs(a.position.z) > 10_000)).toBe(true);
+    // Two revolutions at r0 (35 h) with no burn: no impact, none of the field lost to a body,
+    // and the orbit stays near r0 (Beta's pull makes it wobble a few percent).
+    const { lowest, highest, result } = coast(world, 0, 126_000);
     expect(result.events.filter((e) => e.kind === 'impact')).toEqual([]);
-    expect(result.absorbed).toEqual([]);
-    expect(asteroids).toBe(20);
+    expect(result.absorbed.filter((e) => e.asteroid.startsWith('a-'))).toEqual([]);
     expect(lowest).toBeGreaterThan(950_000);
     expect(highest).toBeLessThan(1_060_000);
     const closest = Math.min(
@@ -131,6 +247,52 @@ describe('Gravity range: the world at arrival', () => {
   });
 });
 
+describe('Gravity range: the ring about Beta (A6)', () => {
+  const beta = world.bodies[1]!;
+
+  it('is a thin prograde ring of rocks in the binary plane, where the slingshot goes', () => {
+    const rocks = ring(world);
+    expect(rocks).toHaveLength(BELT.count);
+    for (const rock of rocks) {
+      expect(rock.radius).toBeGreaterThanOrEqual(BELT.minRadius);
+      expect(rock.radius).toBeLessThanOrEqual(BELT.maxRadius);
+      const offset = sub(rock.position, beta.position);
+      const flat = Math.hypot(offset.x, offset.y);
+      expect(flat).toBeGreaterThan(BELT.inner - 1_000);
+      expect(flat).toBeLessThan(BELT.outer + 1_000);
+      // A few kilometres thick: about the size of the rocks.
+      expect(Math.abs(offset.z)).toBeLessThan(6 * BELT.thickness * BELT.outer);
+      // Round Beta the way Beta goes round Alpha (+z angular momentum).
+      expect(cross(offset, sub(rock.velocity, beta.velocity)).z).toBeGreaterThan(0);
+    }
+    const heights = rocks.map((rock) => rock.position.z - beta.position.z);
+    const rms = Math.sqrt(heights.reduce((s, z) => s + z * z, 0) / heights.length);
+    expect(rms).toBeGreaterThan(2_000);
+    expect(rms).toBeLessThan(8_000);
+  });
+
+  it('stays bound to Beta for the length of a run', { timeout: 120_000 }, () => {
+    // 80 h with the ship parked at Alpha: longer than a slingshot attempt takes.
+    const sim = createSimulation(world, { dt: 1 });
+    const result = sim.run(sim.initial, 80 * HOUR);
+    const end = result.state.world;
+    const there = end.bodies[1]!;
+    const left = ring(end);
+    const near = left.filter((rock) => {
+      const d = distance(rock.position, there.position);
+      return d > 300_000 && d < 1_500_000;
+    });
+    const fell = result.absorbed.filter((e) => e.asteroid.startsWith('b-')).length;
+    // Alpha's pull makes every orbit breathe, and sheds a few from the outer edge.
+    expect(near.length).toBeGreaterThanOrEqual(Math.round(0.97 * BELT.count));
+    expect(fell).toBeLessThanOrEqual(Math.round(0.02 * BELT.count));
+    // Still a thin ring in the binary's plane.
+    const heights = near.map((rock) => rock.position.z - there.position.z);
+    const rms = Math.sqrt(heights.reduce((s, z) => s + z * z, 0) / heights.length);
+    expect(rms).toBeLessThan(15_000);
+  });
+});
+
 describe('Gravity range: what the ship is told', () => {
   const briefing = setup.definition.briefing;
 
@@ -138,34 +300,32 @@ describe('Gravity range: what the ship is told', () => {
     expect(briefing.id).toBe('gravity-range');
     expect(briefing.knownBodies[0]).toMatchObject({
       id: 'alpha',
-      position: { x: 0, y: 0 },
-      velocity: { x: 0, y: 0 },
+      position: { x: 0, y: 0, z: 0 },
+      velocity: { x: 0, y: 0, z: 0 },
       radius: 250_000,
     });
+    expect(briefing.referenceRadius).toBe(LAW.referenceRadius);
     // Truth's frame is barycentric: Alpha sits 800 km from its origin, and moves.
     expect(world.bodies[0]!.position.x).toBeCloseTo(
       (-SEPARATION * BETA.gm) / (ALPHA.gm + BETA.gm),
       3,
     );
-    expect(Math.hypot(world.bodies[0]!.velocity.x, world.bodies[0]!.velocity.y)).toBeGreaterThan(7);
+    expect(length(world.bodies[0]!.velocity)).toBeGreaterThan(7);
   });
 
-  it('gives an arrival estimate that is honest about its error', () => {
+  it('gives an arrival estimate that is honest about its error, in three dimensions', () => {
     const alpha = world.bodies[0]!;
     const k = world.ship.kinematics;
     const e = briefing.arrivalEstimate;
-    const dp = Math.hypot(
-      e.position.x - (k.position.x - alpha.position.x),
-      e.position.y - (k.position.y - alpha.position.y),
-    );
-    const dv = Math.hypot(
-      e.velocity.x - (k.velocity.x - alpha.velocity.x),
-      e.velocity.y - (k.velocity.y - alpha.velocity.y),
-    );
-    // Not the truth, but within four of its own sigmas.
+    const dp = distance(e.position, sub(k.position, alpha.position));
+    const dv = distance(e.velocity, sub(k.velocity, alpha.velocity));
+    // Not the truth, but within four of its own sigmas, and it does not claim to know the
+    // height above the plane exactly.
     expect(dp).toBeGreaterThan(0);
-    expect(dp).toBeLessThan(4 * Math.sqrt(e.positionCov[0] + e.positionCov[3]));
-    expect(dv).toBeLessThan(4 * Math.sqrt(e.velocityCov[0] + e.velocityCov[3]));
+    expect(dp).toBeLessThan(4 * Math.sqrt(e.positionCov[0] + e.positionCov[3] + e.positionCov[5]));
+    expect(dv).toBeLessThan(4 * Math.sqrt(e.velocityCov[0] + e.velocityCov[3] + e.velocityCov[5]));
+    expect(e.position.z).not.toBe(0);
+    expect(e.positionCov[5]).toBeGreaterThan(0);
     expect(briefing.arrivalConfiguration).toBe('radiators');
   });
 
@@ -182,27 +342,39 @@ describe('Gravity range: what the ship is told', () => {
     expect(values).not.toContain(world.bodies[0]!.gm);
   });
 
-  it('names the objective and surveys the larger asteroids', () => {
-    expect(briefing.objectives.map((o) => [o.id, o.label])).toEqual([
-      ['low-orbit', 'ORBIT 450–550 KM'],
-      ['reserve', 'RESERVE 5600 KG'],
+  it('names the objective and surveys the ring and the larger asteroids', () => {
+    expect(briefing.objectives).toEqual([
+      {
+        id: 'depart',
+        kind: 'depart',
+        label: 'DEPART 50 M/S',
+        depart: { beyond: 9_000_000, minSpeed: 50 },
+        maxDeltaV: 16,
+      },
     ]);
-    expect(briefing.knownAsteroids.length).toBeGreaterThan(5);
-    expect(briefing.knownAsteroids.length).toBeLessThan(world.asteroids.length);
-    for (const a of briefing.knownAsteroids) expect(a.radius).toBeGreaterThanOrEqual(1000);
-    expect(setup.objectiveRules[0]).toMatchObject({
-      kind: 'orbit-band',
-      inner: BAND.inner,
-      outer: BAND.outer,
+    expect(setup.objectiveRules).toEqual([
+      { kind: 'depart', objective: 'depart', beyond: 9_000_000, minSpeed: 50, maxDeltaV: 16 },
+    ]);
+    // Every ring rock is big enough to be seen on arrival; Alpha's smallest are not.
+    const known = briefing.knownAsteroids;
+    expect(known.filter((a) => a.id.startsWith('b-'))).toHaveLength(BELT.count);
+    expect(known.length).toBeLessThan(world.asteroids.length);
+    for (const a of known) expect(a.radius).toBeGreaterThanOrEqual(1000);
+    // Surveyed, not known: each is kilometres from where the rock really is, in 3D.
+    const alpha = world.bodies[0]!;
+    const errors = known.map((a) => {
+      const truth = world.asteroids.find((rock) => rock.id === a.id)!;
+      return distance(a.position, sub(truth.position, alpha.position));
     });
-    expect(setup.objectiveRules[1]).toMatchObject({ kind: 'reserve', minimum: RESERVE.minimum });
+    expect(Math.min(...errors)).toBeGreaterThan(0);
+    expect(errors.reduce((s, d) => s + d, 0) / errors.length).toBeGreaterThan(4_000);
   });
 });
 
 describe('Gravity range: the mismatch the encounter is built on', () => {
   const newtonian: TruthWorld = { ...world, law: { ...world.law, exponent: 2 } };
 
-  it('a 9.85 m/s retrograde burn reaches the band; a Newtonian world would stop 180 km short', () => {
+  it('a 9.85 m/s retrograde burn dives to 500 km; a Newtonian world would stop 180 km short', () => {
     const real = coast(world, -9.85, 40_000);
     const forecast = coast(newtonian, -9.85, 40_000);
     expect(real.lowest / 1e3).toBeGreaterThan(485);
@@ -218,10 +390,10 @@ describe('Gravity range: the mismatch the encounter is built on', () => {
     const real = coast(world, -18.35, 40_000);
     expect(planned.lowest / 1e3).toBeGreaterThan(485);
     expect(planned.lowest / 1e3).toBeLessThan(505);
-    // Below the band, within 60 km of the 250 km surface, but not into it.
+    // Within 60 km of the 250 km surface, but not into it.
     expect(real.lowest / 1e3).toBeLessThan(310);
     expect(real.lowest / 1e3).toBeGreaterThan(260);
-    expect(real.result.events.filter((e) => e.kind === 'impact')).toEqual([]);
+    expect(real.result.events.filter((e) => e.kind === 'impact' && e.with === 'alpha')).toEqual([]);
   });
 
   it('a deeper Newtonian plan (300 km low point) hits Alpha', () => {
@@ -231,9 +403,121 @@ describe('Gravity range: the mismatch the encounter is built on', () => {
   });
 });
 
+describe('Gravity range: the slingshot past Beta (A6)', () => {
+  const clear = withoutRocks(world);
+  const BURN_AT = 1.1 * HOUR;
+
+  it(
+    '14 m/s along the orbit, 1.1 h after arrival, leaves the binary at over 60 m/s',
+    { timeout: 120_000 },
+    () => {
+      const flight = fly(clear, { dv: 14, at: BURN_AT }, 90 * HOUR);
+      expect(flight.impact).toBeUndefined();
+      // Past Beta at about 980 km, the way the ring turns, 30 h after arrival, in the plane.
+      expect(flight.pass / 1e3).toBeGreaterThan(940);
+      expect(flight.pass / 1e3).toBeLessThan(1_020);
+      expect(flight.passAt / HOUR).toBeGreaterThan(29.5);
+      expect(flight.passAt / HOUR).toBeLessThan(30.7);
+      expect(flight.sense).toBe(1);
+      expect(flight.passHeight).toBe(0);
+      expect(flight.exitSpeed).toBeGreaterThan(62);
+      expect(flight.exitSpeed).toBeLessThan(70);
+      expect(flight.exitAt! / HOUR).toBeLessThan(68);
+    },
+  );
+
+  it(
+    'the same burn without Beta to swing past does not leave fast enough',
+    { timeout: 120_000 },
+    () => {
+      // Half a turn later the ship leaves Alpha away from Beta: it escapes, slowly.
+      const flight = fly(clear, { dv: 14, at: BURN_AT + 8.7 * HOUR }, 140 * HOUR);
+      expect(flight.impact).toBeUndefined();
+      expect(flight.pass / 1e3).toBeGreaterThan(2_000);
+      expect(flight.exitSpeed).toBeGreaterThan(20);
+      expect(flight.exitSpeed).toBeLessThan(40);
+      expect(flight.exitSpeed).toBeLessThan(DEPART.minSpeed);
+    },
+  );
+
+  it(
+    'is aimed by a fraction of a metre per second: the pass moves about 700 km per m/s',
+    { timeout: 120_000 },
+    () => {
+      const short = fly(clear, { dv: 13.8, at: BURN_AT }, 40 * HOUR);
+      const long = fly(clear, { dv: 14.2, at: BURN_AT }, 40 * HOUR);
+      const perMps = (long.pass - short.pass) / 0.4;
+      expect(perMps / 1e3).toBeGreaterThan(550);
+      expect(perMps / 1e3).toBeLessThan(900);
+    },
+  );
+
+  it(
+    'a Newtonian plan for the same pass goes somewhere else entirely',
+    { timeout: 120_000 },
+    () => {
+      const newtonian: TruthWorld = { ...clear, law: { ...clear.law, exponent: 2 } };
+      const planned = fly(newtonian, { dv: 14, at: BURN_AT }, 60 * HOUR);
+      const real = fly(clear, { dv: 14, at: BURN_AT }, 60 * HOUR);
+      // What the model's law says this burn does, against what it does.
+      expect(Math.abs(planned.pass - real.pass) / 1e3).toBeGreaterThan(300);
+    },
+  );
+});
+
+describe('Gravity range: through the ring', () => {
+  const seeds = ['gravity-range-1', 'ring-2', 'ring-3', 'ring-4', 'ring-5', 'ring-6'];
+  const BURN = { dv: 13.8, at: 1.1 * HOUR };
+  const lostTo = (flight: Flight): boolean =>
+    flight.impact !== undefined && flight.impact.with.startsWith('b-') && flight.impact.speed >= 3;
+
+  it(
+    'a pass flown in the plane without looking is usually lost to a rock',
+    { timeout: 240_000 },
+    () => {
+      const flights = seeds.map((seed) =>
+        // 36 h: the pass is at 30 h and the ring is behind the ship three hours later.
+        fly(createGravityRange(seed).definition.world, BURN, 36 * HOUR),
+      );
+      const lost = flights.filter(lostTo);
+      expect(lost.length).toBeGreaterThanOrEqual(3);
+      // With the ring's flow: tens of metres per second, not hundreds.
+      for (const flight of lost) {
+        expect(flight.impact!.speed).toBeGreaterThan(5);
+        expect(flight.impact!.speed).toBeLessThan(60);
+      }
+    },
+  );
+
+  it(
+    'the same pass lifted over the ring by 1 m/s, eight hours out, usually gets through',
+    { timeout: 240_000 },
+    () => {
+      const flights = seeds.map((seed) =>
+        fly(
+          createGravityRange(seed).definition.world,
+          { ...BURN, hop: { at: 22.2 * HOUR, up: 1 } },
+          36 * HOUR,
+        ),
+      );
+      expect(flights.filter(lostTo).length).toBeLessThanOrEqual(1);
+      // Above the ring at the pass.
+      const through = flights.filter((flight) => !flight.impact);
+      for (const flight of through) expect(flight.passHeight).toBeGreaterThan(15_000);
+      // And the lifted pass still leaves fast (flown here without the rocks, to the exit).
+      const lifted = fly(
+        withoutRocks(world),
+        { ...BURN, hop: { at: 22.2 * HOUR, up: 1 } },
+        90 * HOUR,
+      );
+      expect(lifted.exitSpeed).toBeGreaterThan(DEPART.minSpeed + 5);
+    },
+  );
+});
+
 describe('Gravity range: flown through the game loop', () => {
   it(
-    'a scouting dive, a Recall and a second flight reach and hold the low orbit with the reserve',
+    'a scouting dive shows the forecast drifting and ending early, with no truth involved',
     { timeout: 180_000 },
     async () => {
       const model = createStandInModel({ referenceRadius: LAW.referenceRadius });
@@ -244,16 +528,14 @@ describe('Gravity range: flown through the game loop', () => {
         const w = model.believedWorld(session.status().t);
         const s = w.ship;
         const a = w.bodies[0]!;
-        const x = s.position.x - a.position.x;
-        const y = s.position.y - a.position.y;
-        const vx = s.velocity.x - a.velocity.x;
-        const vy = s.velocity.y - a.velocity.y;
-        const r = Math.hypot(x, y);
+        const offset = sub(s.position, a.position);
+        const velocity = sub(s.velocity, a.velocity);
+        const r = length(offset);
         return {
           position: s.position,
           r,
-          v: Math.hypot(vx, vy),
-          radial: (x * vx + y * vy) / r,
+          v: length(velocity),
+          radial: (offset.x * velocity.x + offset.y * velocity.y + offset.z * velocity.z) / r,
           mass: s.massProperties.mass,
         };
       };
@@ -266,19 +548,16 @@ describe('Gravity range: flown through the game loop', () => {
         }),
       });
 
-      // Attempt 1: commit the dive from the Newtonian model and watch where it really goes.
+      // Commit the dive from the Newtonian model and watch where it really goes.
       session.stepTicks(300);
       const forecast = await session.commit(dive());
-      session.stepTicks(700);
-      const achieved = (100 - believed().v) / 9.85;
       const miss = (t: number): number => {
         session.stepTicks(t - session.status().t);
         const sample = forecast.samples.find((s) => s.t >= t)!;
-        const now = believed().position;
-        return Math.hypot(sample.position.x - now.x, sample.position.y - now.y);
+        return distance(sample.position, believed().position);
       };
       // The forecast looks right at first and drifts as the ship leaves the arrival distance:
-      // visible from the navigation solution alone, with no truth involved.
+      // visible from the navigation solution alone.
       expect(miss(3600)).toBeLessThan(6_000);
       expect(miss(14_400)).toBeGreaterThan(10_000);
       while (believed().radial < 0) session.stepTicks(20);
@@ -291,53 +570,9 @@ describe('Gravity range: flown through the game loop', () => {
       // Recall. The world resets; what was measured is kept.
       session.recall();
       expect(session.status()).toMatchObject({ attemptIndex: 2, t: 0, phase: 'prepare' });
-
-      // Attempt 2: the same dive, then a burn at the measured low point to the circular speed
-      // the inverse-2.5 law gives there, scaled by what the engine actually delivered.
-      session.stepTicks(300);
-      await session.commit(dive());
-      session.stepTicks(lowPoint.t - 1000 - session.status().t);
-      const circular = Math.sqrt((ALPHA.gm * Math.sqrt(LAW.referenceRadius)) / lowPoint.r ** 1.5);
-      const duration = burnDuration(
-        session.ship,
-        believed().mass,
-        (lowPoint.v - circular) / achieved,
-      );
-      await session.commit({
-        name: 'Circularise',
-        items: burnSteps({
-          at: lowPoint.t - duration / 2 - session.status().t,
-          duration,
-          attitude: { reference: 'retrograde' },
-        }),
-      });
-      session.stepTicks(40_000);
-
-      const status = session.status();
-      expect(status.outcome).toMatchObject({ kind: 'completed', objective: 'low-orbit' });
-      expect(status.phase).toBe('ended');
-      const record = blackBox.attempt('attempt-0002')!;
-      expect(record.outcome).toEqual(status.outcome);
-      expect(
-        record.events.filter((e) => e.kind === 'objective').map((e) => [e.objective, e.status]),
-      ).toEqual([
-        ['low-orbit', 'reached'],
-        ['reserve', 'reached'],
-      ]);
-      expect(record.events.some((e) => e.kind === 'contact')).toBe(false);
-
-      // About 22 m/s of main propellant and one tenth of the RCS load for two turns.
-      const tanks = session.truth().sim.world.ship.systems.tanks;
-      expect(tanks['main-propellant']).toBeGreaterThan(5_750);
-      expect(tanks['main-propellant']).toBeLessThan(5_820);
-      expect(tanks['rcs-left']! + tanks['rcs-right']!).toBeGreaterThan(265);
-      // Under 12 hours of ship time, on fuel cells alone, with Black Box well within memory.
-      expect(status.t).toBeLessThan(43_200);
-      expect(tanks['fuel-cell-hydrogen']).toBeGreaterThan(3.5);
-      expect(record.measurements.length).toBeLessThan(50_000);
       expect(blackBox.archive().attempts.map((a) => a.outcome.kind)).toEqual([
         'recalled',
-        'completed',
+        'in-progress',
       ]);
     },
   );

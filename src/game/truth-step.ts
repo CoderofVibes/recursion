@@ -177,7 +177,20 @@ export function createTruthStepper(setup: EncounterSetup): TruthStepper {
       if (lost) {
         events.push({ kind: 'ship-lost', t: lostAt, cause: lost });
       } else {
-        const judged = evaluateObjectives(objectiveRules, objectives, sim.world);
+        // Δv spent this tick: the net thrust force over the mid-step mass (couples cancel).
+        let fx = 0;
+        let fy = 0;
+        let fz = 0;
+        for (const thrust of ship.actuators.thrusts) {
+          fx += thrust.force.x;
+          fy += thrust.force.y;
+          fz += thrust.force.z;
+        }
+        const midMass =
+          0.5 *
+          (before.world.ship.systems.massProperties.mass + ship.actuators.massProperties.mass);
+        const spent = (Math.hypot(fx, fy, fz) / midMass) * definition.dt;
+        const judged = evaluateObjectives(objectiveRules, objectives, sim.world, spent);
         objectives = judged.progress;
         events.push(...judged.events);
       }

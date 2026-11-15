@@ -135,10 +135,11 @@ describe('game session: prepare, operate', () => {
     expect(view.coverage.cones[0]).toMatchObject({ sensor: 'camera' });
     // The camera is locked on Alpha, so its cone points along the believed line to it.
     expect(Math.abs(v3.azimuthOf(view.coverage.cones[0]!.axis))).toBeLessThan(0.1);
-    // The objective ring follows Alpha's believed position.
+    // The objective is the briefing's: leave the binary (A6).
     expect(view.objectives[0]).toMatchObject({
-      id: 'low-orbit',
-      region: { center: alpha.position },
+      id: 'depart',
+      kind: 'depart',
+      depart: { minSpeed: 50 },
     });
     expect(view.world.ship.propellant['main-propellant']!.mean).toBe(6000);
   });
