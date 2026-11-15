@@ -31,7 +31,15 @@ import type { ExtensionRecord } from '../model/index.ts';
 
 const pending = <T,>(): Promise<T> => new Promise<T>(() => undefined);
 
-function stubGame(options: { model?: ModelState; snapshot?: ViewSnapshot; ended?: boolean } = {}) {
+function stubGame(
+  options: {
+    model?: ModelState;
+    snapshot?: ViewSnapshot;
+    ended?: boolean;
+    alerts?: readonly object[];
+    radiation?: object;
+  } = {},
+) {
   const commands: unknown[] = [];
   const current = attempts.at(-1)!;
   const game = {
@@ -55,6 +63,8 @@ function stubGame(options: { model?: ModelState; snapshot?: ViewSnapshot; ended?
       committing: false,
       outcome: options.ended ? current.outcome : { kind: 'in-progress' },
       pending: 0,
+      alerts: options.alerts ?? [],
+      ...(options.radiation ? { radiation: options.radiation } : {}),
     }),
     snapshot: () => options.snapshot ?? viewSnapshot,
     chart: () => ({
@@ -131,6 +141,35 @@ describe('console pages on the fixtures', () => {
     for (const file of ['LICENSE', 'NOTICE', 'THIRD-PARTY-NOTICES.txt'])
       expect(html).toContain(`href="${base}${file}"`);
     expect(html).toContain('#what-we-verified');
+  });
+
+  it("shows the radiation monitor's dose rate and its caution on SYSTEMS (A24)", () => {
+    const t = viewSnapshot.t;
+    const reading = {
+      source: 'flight-cpu-a',
+      t: t - 0.5,
+      rate: 0.03,
+      sigma: 0.0006,
+      saturated: false,
+      saturationRate: 25,
+      validUntil: t + 1.5,
+      threshold: 0.02,
+    };
+    const caution = { id: 'radiation-high', level: 'caution', rate: 0.03, threshold: 0.02 };
+    const { game } = stubGame({ radiation: reading, alerts: [caution] });
+    const desk = new Desk(game);
+    desk.page = 'systems';
+    const html = renderToStaticMarkup(<ConsoleScreen desk={desk} visible />);
+    expect(html).toContain('Radiation');
+    expect(html).toContain('0.0300 ± 0.0006');
+    expect(html).toContain('dose rate above the hazard threshold');
+    expect(html).toContain('0.0200 U');
+    // No reading yet: said so, never a zero.
+    const quiet = new Desk(stubGame().game);
+    quiet.page = 'systems';
+    const none = renderToStaticMarkup(<ConsoleScreen desk={quiet} visible />);
+    expect(none).toContain('no reading');
+    expect(none).not.toContain('0.0000');
   });
 
   it('mounts no page while the screen is down', () => {

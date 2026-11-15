@@ -4,6 +4,7 @@
  * Belief side (P11).
  */
 import type {
+  AttitudeTarget,
   BelievedShip,
   EquipmentSpec,
   Forecast,
@@ -12,6 +13,7 @@ import type {
   ShipDefinition,
   ViewSnapshot,
 } from '../contracts/index.ts';
+import type { DepartureProgress } from '../game/belief/departure.ts';
 import type { Status } from '../theme/components/index.ts';
 import { distance } from '../view3d/adapter.ts';
 import { whole } from './format.ts';
@@ -53,6 +55,93 @@ export function nearestClearance(
   for (const a of snapshot.world.asteroids)
     consider(a.id, a.id.toUpperCase(), a.position, a.radius, a.tracked);
   return best;
+}
+
+/** A `depart` objective's standing as the screens show it. */
+export interface Departure {
+  /** Speed relative to the bodies' believed centre of mass, m/s, and the rule's minimum. */
+  readonly speed: number;
+  readonly minSpeed: number;
+  /** Its part away from that centre, m/s, when known: the rule wants the ship moving out. */
+  readonly outward?: number;
+  /** From that centre, m, and the gate. */
+  readonly distance: number;
+  readonly beyond: number;
+  /** Δv by the propellant gauges since arrival, m/s: at most this counts against the cap. */
+  readonly gaugedDeltaV?: number;
+  readonly maxDeltaV?: number;
+  /** Closest believed approach to each body's centre so far, m. */
+  readonly closest?: Readonly<Record<string, number>>;
+  /** The ship's own verdict once the objective is judged. */
+  readonly status: 'pending' | 'reached' | 'missed';
+}
+
+/**
+ * The first `depart` objective's standing: the session's own reckoning (2F's
+ * `status().departure`: outward speed, gauged Δv, closest approaches, the verdict), or, before
+ * it has one, the console's from the snapshot and the model.
+ */
+export function departure(
+  status: { readonly departure?: readonly DepartureProgress[] },
+  snapshot: Pick<ViewSnapshot, 'world' | 'objectives'>,
+  model: Pick<ModelState, 'parameters'>,
+): Departure | null {
+  const objective = snapshot.objectives.find((o) => o.depart);
+  const reckoned =
+    status.departure?.find((d) => d.objective === objective?.id) ?? status.departure?.[0];
+  if (reckoned) return reckoned;
+  const own = departProgress(snapshot, model);
+  return own ? { ...own, status: 'pending' } : null;
+}
+
+/** Met as it stands now: moving out (where known) at the minimum speed, past the gate. */
+export const departMet = (d: Departure): boolean =>
+  d.speed >= d.minSpeed && d.distance >= d.beyond && (d.outward === undefined || d.outward > 0);
+
+/**
+ * The direction a planned burn will thrust along, as believed now (for `turnReadiness`):
+ * prograde along the believed velocity, toward or away from a believed position, or the held
+ * direction itself. Undefined where it cannot be told (no such body, no velocity).
+ */
+export function burnDirection(
+  target: AttitudeTarget,
+  ship: Pick<BelievedShip, 'position' | 'velocity'>,
+  world: Pick<ViewSnapshot['world'], 'bodies' | 'asteroids'>,
+): { x: number; y: number; z: number } | undefined {
+  const v = ship.velocity;
+  const z = (a: { z?: number }): number => a.z ?? 0;
+  switch (target.reference) {
+    case 'direction':
+      return target.direction;
+    case 'inertial': {
+      const q = target.attitude;
+      return {
+        x: 1 - 2 * (q.y * q.y + q.z * q.z),
+        y: 2 * (q.x * q.y + q.w * q.z),
+        z: 2 * (q.x * q.z - q.w * q.y),
+      };
+    }
+    case 'prograde':
+    case 'retrograde': {
+      const s = target.reference === 'prograde' ? 1 : -1;
+      return Math.hypot(v.x, v.y, z(v)) > 0 ? { x: s * v.x, y: s * v.y, z: s * z(v) } : undefined;
+    }
+    case 'toward':
+    case 'away': {
+      const p =
+        world.bodies.find((b) => b.id === target.target)?.position ??
+        world.asteroids.find((a) => a.id === target.target)?.position;
+      if (!p) return undefined;
+      const s = target.reference === 'toward' ? 1 : -1;
+      return {
+        x: s * (p.x - ship.position.x),
+        y: s * (p.y - ship.position.y),
+        z: s * (z(p) - z(ship.position)),
+      };
+    }
+    default:
+      return undefined;
+  }
 }
 
 /**

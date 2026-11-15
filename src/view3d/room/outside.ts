@@ -27,7 +27,11 @@ import type { Object3D, Scene, ShaderMaterial } from 'three';
 import type { ViewSnapshot, WindowView } from '../../contracts/index.ts';
 import { colour, hex, outsideStyle, render } from '../../theme/index.ts';
 import { bodyMaterial, rockMaterial, setSun } from '../../theme/three/index.ts';
-import { attitudeToScene, toScene } from '../adapter.ts';
+import { attitudeToScene, toScene, windowFields } from '../adapter.ts';
+import { windowViewFor } from '../windowViews.ts';
+import { FUNNEL_KIND, makeFunnelSky } from './funnelSky.ts';
+import type { FunnelSkyStats } from './funnelSky.ts';
+import type { WindowView as EyeView } from '../windowViews.ts';
 import { dressingRandom } from '../gfx.ts';
 import { HORIZON_Y } from './layout.ts';
 
@@ -38,6 +42,8 @@ const SPAN = 5000;
 /** Distance (game metres) at which an object sits half way out. */
 const HALF = 2_000_000;
 const STARS = 6000;
+/** Scene metres: the shell a phenomenon with no known range is drawn on, between the bodies and the stars. */
+const SHELL = NEAR + SPAN * 0.6;
 
 /**
  * Distances outside span metres to thousands of kilometres. Each object is drawn along its true
@@ -49,6 +55,8 @@ const compress = (d: number): number => NEAR + (SPAN * d) / (d + HALF);
 export interface Outside {
   update(snapshot: ViewSnapshot): void;
   setScenery(scenery: Object3D | null): void;
+  /** What the funnel sky drew last frame (offered, culled, thinned, drawn, segments). */
+  funnels(): FunnelSkyStats;
   dispose(): void;
 }
 
@@ -200,6 +208,42 @@ export function buildOutside(scene: Scene): Outside {
     rocks.instanceMatrix.needsUpdate = true;
   };
 
+  // Phenomena the eye can see (A19: the wells' funnels), each drawn by its section's window
+  // view (windowViews.ts) from the window channel's light-only data.
+  const phenomena = new Map<string, { kind: string; group: Group; view: EyeView }>();
+  // The wells' funnels, all of them in one draw (funnelSky.ts).
+  const sky = makeFunnelSky({ displayRadius: SHELL });
+  rot.add(sky.object);
+  let funnelStats: FunnelSkyStats = { offered: 0, culled: 0, thinned: 0, drawn: 0, segments: 0 };
+  const drawPhenomena = (view: object, t: number): void => {
+    const visible = new Set<string>();
+    for (const field of windowFields(view)) {
+      // Wells are drawn together by the funnel sky below, not one view each.
+      if (field.kind === FUNNEL_KIND) continue;
+      let entry = phenomena.get(field.id);
+      if (!entry || entry.kind !== field.kind) {
+        if (entry) retire(field.id);
+        const factory = windowViewFor(field.kind);
+        if (!factory) continue;
+        const group = new Group();
+        rot.add(group);
+        entry = { kind: field.kind, group, view: factory({ group, displayRadius: SHELL }) };
+        phenomena.set(field.id, entry);
+      }
+      entry.group.visible = true;
+      entry.view.update(field.visual, t);
+      visible.add(field.id);
+    }
+    for (const id of [...phenomena.keys()]) if (!visible.has(id)) retire(id);
+  };
+  const retire = (id: string): void => {
+    const entry = phenomena.get(id);
+    if (!entry) return;
+    entry.view.dispose();
+    rot.remove(entry.group);
+    phenomena.delete(id);
+  };
+
   return {
     setScenery(next) {
       if (scenery) scene.remove(scenery);
@@ -222,6 +266,8 @@ export function buildOutside(scene: Scene): Outside {
       for (const m of materials) setSun(m, [sunWorld.x, sunWorld.y, sunWorld.z]);
       if (view) {
         fromWindow(view);
+        drawPhenomena(view, snapshot.t);
+        funnelStats = sky.update(windowFields(view), snapshot.t, rot.quaternion);
         return;
       }
 
@@ -246,8 +292,11 @@ export function buildOutside(scene: Scene): Outside {
       rocks.count = n;
       rocks.instanceMatrix.needsUpdate = true;
     },
+    funnels: () => funnelStats,
     dispose() {
       if (scenery) scene.remove(scenery);
+      for (const id of [...phenomena.keys()]) retire(id);
+      sky.dispose();
       sphere.dispose();
       rockGeo.dispose();
       for (const m of materials) m.dispose();

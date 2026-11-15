@@ -6,9 +6,8 @@
  *
  * To add one, create `src/console/encounters/<encounter-id>/index.ts` that registers its panel
  * for its encounter id. Every such file is loaded with the console; nothing else needs editing.
- * Register through a dynamic import of this module (as `src/view3d/fields/lattice/index.ts`
- * does for its view): the eager load below imports the panel's module, so a static import back
- * would be a cycle.
+ * A static import of this module from the panel is safe (the registry is hoisted, below), as is
+ * a dynamic one (as `src/view3d/fields/lattice/index.ts` does for its view).
  *
  * A panel sees what the game shows the console (the snapshot and `GameControls`, P11) and acts
  * only through `command`, which sends each command to the ship exactly as SYSTEMS's controls do
@@ -29,21 +28,36 @@ export interface EncounterPanelProps {
 
 export type EncounterPanel = (props: EncounterPanelProps) => ReactElement | null;
 
-const registry = new Map<string, EncounterPanel>();
+interface Registry {
+  readonly panels: Map<string, EncounterPanel>;
+  readonly listeners: Set<() => void>;
+}
+
+/**
+ * The panels and their listeners live on a hoisted function, not module-level consts: Vite
+ * hoists the eager glob in `loadEncounterPanels` above every const, so a panel registering
+ * while this module is still being evaluated would meet them uninitialised (the integrator
+ * found the same in `src/view3d/fieldViews.ts`, R33).
+ */
+function registry(): Registry {
+  const self = registry as typeof registry & { state?: Registry };
+  return (self.state ??= { panels: new Map(), listeners: new Set() });
+}
 
 /** Register the panel for one encounter (`EncounterBriefing.id`). The last one registered wins. */
 export function registerEncounterPanel(encounterId: string, panel: EncounterPanel): void {
-  registry.set(encounterId, panel);
+  const { panels, listeners } = registry();
+  panels.set(encounterId, panel);
   for (const l of listeners) l();
 }
 
 export function encounterPanelFor(encounterId: string): EncounterPanel | undefined {
-  return registry.get(encounterId);
+  return registry().panels.get(encounterId);
 }
 
-const listeners = new Set<() => void>();
 /** Hear of panels registered after the console first drew (they register asynchronously). */
 export function onEncounterPanels(listener: () => void): () => void {
+  const { listeners } = registry();
   listeners.add(listener);
   return () => listeners.delete(listener);
 }

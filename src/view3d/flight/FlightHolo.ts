@@ -272,6 +272,27 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
   const inside = (scenePoint: Vector3, margin = 0.97): boolean =>
     tmp.copy(scenePoint).applyMatrix4(toHolo).length() < Rh * margin;
   const insideGame = (p: GameVec): boolean => inside(toScene(p, tmp2));
+  /** For field plugins (3B): the part of a→b inside the volume, exactly, as fractions of a→b. */
+  const lastHolo = new Matrix4();
+  let clipRevision = 0;
+  const clipA = new Vector3();
+  const clipD = new Vector3();
+  const clipSegment = (a: Vector3, b: Vector3): readonly [number, number] | undefined => {
+    clipA.copy(a).applyMatrix4(toHolo);
+    clipD.copy(b).applyMatrix4(toHolo).sub(clipA);
+    const r = Rh * 0.97;
+    // |A + s·D|² = r²: a quadratic in s.
+    const qa = clipD.lengthSq();
+    const qb = 2 * clipA.dot(clipD);
+    const qc = clipA.lengthSq() - r * r;
+    if (qa < 1e-24) return qc <= 0 ? [0, 1] : undefined;
+    const disc = qb * qb - 4 * qa * qc;
+    if (disc < 0) return undefined;
+    const root = Math.sqrt(disc);
+    const from = Math.max(0, (-qb - root) / (2 * qa));
+    const to = Math.min(1, (-qb + root) / (2 * qa));
+    return from < to ? [from, to] : undefined;
+  };
 
   // ---- Reference plane ---------------------------------------------------------------------
   const planeMat = holoPlaneMaterial(Rh);
@@ -974,6 +995,10 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
     rot.updateMatrix();
     trans.updateMatrix();
     toHolo.multiplyMatrices(rot.matrix, trans.matrix);
+    if (!toHolo.equals(lastHolo)) {
+      lastHolo.copy(toHolo);
+      clipRevision++;
+    }
     linesE.setPixelsPerUnit(pixelsPerMetre * Sh);
 
     // Reference plane: grid at a spacing that suits the range, what is sensed right now, and
@@ -1100,10 +1125,28 @@ export function makeFlightHolo(definition: ShipDefinition): FlightHolo {
         if (!factory) continue;
         const fieldGroup = new Group();
         trans.add(fieldGroup);
-        entry = { view: factory({ group: fieldGroup, lines: linesE }), group: fieldGroup };
+        entry = {
+          view: factory({
+            group: fieldGroup,
+            lines: linesE,
+            clipSegment,
+            clipRevision: () => clipRevision,
+          }),
+          group: fieldGroup,
+        };
         fieldViews.set(field.id, entry);
       }
-      entry.view.update({ field, snapshot, scale: Sh, radius: Rh, inside, dt, time });
+      entry.view.update({
+        field,
+        snapshot,
+        scale: Sh,
+        radius: Rh,
+        inside,
+        clipSegment,
+        clipRevision,
+        dt,
+        time,
+      });
     }
     for (const [id, entry] of fieldViews) {
       if (snapshot.world.fields.some((f) => f.id === id && f.detected)) continue;

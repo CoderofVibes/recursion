@@ -25,6 +25,14 @@ export interface FieldViewContext {
   readonly group: Group;
   /** Fat lines in this frame, with dashes kept in screen pixels. Use theme `LineStyle`s. */
   readonly lines: LineSet;
+  /**
+   * The part of the segment a→b (this frame) inside the projection volume, as fractions of a→b,
+   * against the hologram's current projection; undefined when none of it is (3B). The same as
+   * the frame's `clipSegment`, here for a plugin that clips outside `update`.
+   */
+  clipSegment?(a: Vector3, b: Vector3): readonly [from: number, to: number] | undefined;
+  /** The projection's current revision: changes whenever every clip would. */
+  clipRevision?(): number;
 }
 
 /** What a plugin is given every frame while its field is detected. */
@@ -37,6 +45,17 @@ export interface FieldViewFrame {
   readonly radius: number;
   /** Whether a point (environment frame) is inside the projection volume. */
   inside(point: Vector3): boolean;
+  /**
+   * The part of the segment a→b (environment frame) inside the projection volume, as fractions
+   * of the way from a to b, or undefined when none of it is. Exact against the hologram's own
+   * boundary: both ends outside with the middle crossing, tangency, one end inside (3B).
+   */
+  clipSegment?(a: Vector3, b: Vector3): readonly [from: number, to: number] | undefined;
+  /**
+   * Changes whenever the projection (and so every clip) changes: reuse clipped buffers until then.
+   * FLIGHT always supplies both; they are optional so frames built by hand in tests still fit.
+   */
+  readonly clipRevision?: number;
   /** Seconds: this frame, and since the view started. Real time, never warped. */
   readonly dt: number;
   readonly time: number;

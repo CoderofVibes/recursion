@@ -12,7 +12,7 @@ import {
   ReadoutGrid,
   Trend,
 } from '../theme/components/index.ts';
-import { distance, heading, length } from '../view3d/adapter.ts';
+import { distance, heading, length, pitch } from '../view3d/adapter.ts';
 import { flightAlerts } from './alerts.ts';
 import { Actions, Button, Line, SelectField, TimeControls, wallTime } from './controls.tsx';
 import { FramingControls } from './Framing.tsx';
@@ -21,7 +21,8 @@ import {
   batteries,
   busLoads,
   heat,
-  departProgress,
+  departMet,
+  departure,
   nearestClearance,
   recorder,
   spendable,
@@ -100,7 +101,7 @@ export function FlightHud({
   const forecast = snapshot.forecasts.at(-1);
   const end = forecast?.samples.at(-1);
   const nearest = nearestClearance(snapshot);
-  const depart = departProgress(snapshot, game.model.state());
+  const depart = departure(game.status(), snapshot, game.model.state());
   const budget = spendable(ship, game.ship, desk.design.reserve);
   let pass: NonNullable<typeof forecast>['closestApproaches'][number] | undefined;
   for (const c of forecast?.closestApproaches ?? [])
@@ -175,6 +176,12 @@ export function FlightHud({
                 value={String(Math.round(degrees(heading(ship.attitude)))).padStart(3, '0')}
                 unit="°"
                 size="readout"
+              />
+              {/* In 3D the nose also points up or down (S20: heading alone told half). */}
+              <Readout
+                label="Pitch"
+                value={fixed((pitch(ship.attitude) * 180) / Math.PI, 1)}
+                unit="°"
               />
               {snapshot.world.bodies.map((b) => (
                 <Readout
@@ -253,13 +260,20 @@ export function FlightHud({
               <Line
                 label="depart · c. of mass"
                 status={
-                  depart.speed >= depart.minSpeed && depart.distance >= depart.beyond
-                    ? 'nominal'
-                    : undefined
+                  depart.status === 'missed'
+                    ? 'caution'
+                    : departMet(depart) || depart.status === 'reached'
+                      ? 'nominal'
+                      : undefined
                 }
               >
-                {fixed(depart.speed, 1)} of {whole(depart.minSpeed)} m/s · {dist(depart.distance)}{' '}
-                of {dist(depart.beyond)}
+                {depart.status === 'reached'
+                  ? 'reached'
+                  : `${fixed(depart.speed, 1)} of ${whole(depart.minSpeed)} m/s${
+                      depart.outward !== undefined && depart.outward <= 0 ? ' inward' : ''
+                    } · ${dist(depart.distance)} of ${dist(depart.beyond)}${
+                      depart.status === 'missed' ? ' · missed' : ''
+                    }`}
               </Line>
             ) : null}
             <Trend

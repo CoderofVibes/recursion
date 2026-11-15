@@ -54,6 +54,7 @@ import type { ShipHolo } from '../ship/ShipHolo.ts';
 import { CON, DOOR, HOLO, REACH, ROOM, VIEW } from './layout.ts';
 import type { Hotspot, ViewMode } from './layout.ts';
 import { buildOutside } from './outside.ts';
+import type { Outside } from './outside.ts';
 import { buildRoom } from './shell.ts';
 
 export type LossStage = 'start' | 'black' | 'pip' | 'reset' | 'fade' | 'end';
@@ -274,6 +275,10 @@ export class RoomView {
   }
   dying(): boolean {
     return this.death !== null;
+  }
+  /** What the window's funnel sky drew last frame (for checks of its cost and culling). */
+  outsideStats(): ReturnType<Outside['funnels']> {
+    return this.outside.funnels();
   }
   /** No camera travel or loss sequence under way: the view is still (A20 may thin its frames). */
   settled(): boolean {

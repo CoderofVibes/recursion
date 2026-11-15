@@ -11,7 +11,7 @@
  *
  * Belief side only: the game is reached through `GameControls`.
  */
-import { flightAlerts, freshAlerts } from '../console/alerts.ts';
+import { flightAlerts, freshAlerts, newlyRaised } from '../console/alerts.ts';
 import type { Desk } from '../console/desk.ts';
 import { isHandsOnNeutral } from '../contracts/index.ts';
 import type { GameControls } from '../game/belief/controls.ts';
@@ -92,6 +92,12 @@ export function startControlRoom(
   let lastDraw = 0;
   let sinceDraw = 0;
   let sinceNotify = 0;
+  // The simulation's bigger slice (2F's `FrameBudget`) goes with the thinned frames and only
+  // with them: the game counts coasting from the same warp, and the slice is raised while the
+  // loop thins and put back the moment it stops, so a touch gives back the full frame rate.
+  const ordinary = game.setFrameBudget({ coastingFrom: coastCadence.warp }).ms;
+  game.setFrameBudget({ coastingMs: ordinary });
+  let thinning = false;
   const touched = (): void => {
     lastInput = performance.now();
   };
@@ -139,8 +145,15 @@ export function startControlRoom(
         if (!view.dying()) view.lose(false);
       }
     }
+    const prior = status;
     if (!view.dying()) game.advance(dt);
     status = game.status();
+    // The session drops warp itself on a new alert of its own (power, radiation: A12, A24) or a
+    // precursor in the window (A19): say which beside time.
+    if (prior.warp > 1 && status.warp === 1) {
+      const raised = newlyRaised(prior, status);
+      if (raised) desk.dropWarp(raised.text.toLowerCase());
+    }
 
     // The flight controls answer only inside the encounter.
     const flying = view.mode() === 'flight' && !view.dying() && status.phase === 'operate';
@@ -171,6 +184,10 @@ export function startControlRoom(
       isHandsOnNeutral(hand.input) &&
       view.settled() &&
       now - lastInput > coastCadence.quietAfterInput;
+    if (coasting !== thinning) {
+      thinning = coasting;
+      game.setFrameBudget({ coastingMs: coasting ? coastCadence.simulationMs : ordinary });
+    }
     if (coasting && now - lastDraw < 1000 / coastCadence.drawRate) {
       instruments(dt, true);
       return;

@@ -214,6 +214,29 @@ body,
 .cr-back:hover {
   color: var(--rx-ink-dim);
 }
+/* Sound on or off, quiet in the corner (AU, R24). */
+.cr-sound {
+  appearance: none;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+  pointer-events: auto;
+  right: var(--rx-hud-margin);
+  bottom: calc(var(--rx-hud-margin) / 2);
+  font-size: var(--rx-size-small);
+  letter-spacing: var(--rx-tracking-label);
+  color: var(--rx-ink-faint);
+}
+.cr-sound:hover {
+  color: var(--rx-ink-dim);
+}
+.cr-sound:focus-visible {
+  outline: var(--rx-line-rule) solid var(--rx-ink);
+  outline-offset: var(--rx-unit);
+}
 .cr-back:focus-visible,
 .cr-route:focus-visible {
   outline: var(--rx-line-rule) solid var(--rx-ink);

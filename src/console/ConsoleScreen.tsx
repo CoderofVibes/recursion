@@ -3,6 +3,7 @@
  * looks down into it (DECISIONS A8). Everything that is not a hologram lives here: the mission
  * design, the plan, the predictive model, Black Box and the ship's systems.
  */
+import type { ReactNode } from 'react';
 import { BlackBoxMark } from '../theme/components/index.ts';
 import { TimeControls } from './controls.tsx';
 import { useDesk } from './desk.ts';
@@ -27,11 +28,14 @@ export function ConsoleScreen({
   desk,
   visible,
   onBack,
+  footerExtra,
 }: {
   readonly desk: Desk;
   readonly visible: boolean;
   /** Leave the console for the room (the same as Escape). */
   readonly onBack?: () => void;
+  /** More in the footer beside the way back (the sound switch). */
+  readonly footerExtra?: ReactNode;
 }) {
   useDesk(desk);
   const { game } = desk;
@@ -90,6 +94,7 @@ export function ConsoleScreen({
           <span className="cs-foot__note">
             {desk.warpDrop && desk.note.endsWith(desk.warpDrop) ? '' : desk.note}
           </span>
+          {footerExtra}
           {onBack ? (
             <button type="button" className="cs-foot__back" onClick={onBack}>
               ESC ▸ STEP BACK

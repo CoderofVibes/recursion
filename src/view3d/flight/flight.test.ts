@@ -11,7 +11,10 @@ import {
   viewSnapshotCompare,
 } from '../../contracts/fixtures/index.ts';
 import type { ViewSnapshot } from '../../contracts/index.ts';
+import { Vector3 } from 'three';
+import { holoLines } from '../../theme/index.ts';
 import { registerFieldView } from '../fieldViews.ts';
+import { LineSet } from '../gfx.ts';
 import {
   makeFlightHolo,
   pastAndAhead,
@@ -229,5 +232,63 @@ describe('close range where an encounter is studied close (3C, R4)', () => {
     holo.setRangeMin(RANGE_MIN);
     expect(holo.range()).toBe(RANGE_MIN);
     holo.dispose();
+  });
+});
+
+describe('exact clipping for field plugins (3B)', () => {
+  it("gives a segment's part inside the volume, crossing, one end in, or none", () => {
+    let clip: ((a: Vector3, b: Vector3) => readonly [number, number] | undefined) | undefined;
+    let revision: number | undefined;
+    registerFieldView('test-clip', () => ({
+      update: (f) => {
+        clip = f.clipSegment;
+        revision = f.clipRevision;
+      },
+      dispose: () => undefined,
+    }));
+    const snapshot: ViewSnapshot = {
+      ...viewSnapshot,
+      world: { ...viewSnapshot.world, fields: [{ id: 'f', kind: 'test-clip', detected: true }] },
+    };
+    const holo = make();
+    holo.setHeadingUp(false);
+    holo.setRange(400_000);
+    holo.update(frame(snapshot), 0.016, 0);
+    expect(clip).toBeDefined();
+    expect(revision).toBeTypeOf('number');
+    const ship = viewSnapshot.world.ship.position;
+    const c = new Vector3(ship.x, ship.z ?? 0, -ship.y);
+    // Through the middle, both ends far outside: a stretch in the middle.
+    const through = clip!(
+      c.clone().add(new Vector3(-4e6, 0, 0)),
+      c.clone().add(new Vector3(4e6, 0, 0)),
+    );
+    expect(through).toBeDefined();
+    expect(through![0]).toBeGreaterThan(0.3);
+    expect(through![1]).toBeLessThan(0.7);
+    // One end at the centre: from the start to where it leaves.
+    const half = clip!(c, c.clone().add(new Vector3(4e6, 0, 0)));
+    expect(half![0]).toBe(0);
+    expect(half![1]).toBeGreaterThan(0);
+    expect(half![1]).toBeLessThan(1);
+    // Wholly outside: nothing.
+    expect(
+      clip!(c.clone().add(new Vector3(5e6, 0, 0)), c.clone().add(new Vector3(6e6, 0, 0))),
+    ).toBeUndefined();
+    holo.dispose();
+  });
+});
+
+describe('line materials released with their plugin (3B)', () => {
+  it('forgets a material when it is disposed or released', () => {
+    const lines = new LineSet();
+    const a = lines.fat([0, 0, 0, 1, 0, 0], holoLines.rim);
+    const b = lines.fat([0, 0, 0, 1, 0, 0], holoLines.rim);
+    expect(lines.size).toBe(2);
+    (a.material as { dispose(): void }).dispose();
+    expect(lines.size).toBe(1);
+    lines.release(b.material as Parameters<LineSet['release']>[0]);
+    expect(lines.size).toBe(0);
+    lines.dispose();
   });
 });
