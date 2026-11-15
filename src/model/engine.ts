@@ -48,6 +48,7 @@ import {
   type Arc,
   type ArcSolution as DynArcSolution,
   type BodyDef,
+  type ProfileDef,
   type EngineDef,
   type Ref,
   type Structure,
@@ -75,6 +76,7 @@ import {
   type LocalFitResult,
   type ProfileFit,
   type ReferenceLaw,
+  type Window,
   type WindowFit,
   type WindowRule,
 } from './tierL.ts';
@@ -202,7 +204,30 @@ function briefingBody(ctx: ModelContext, id: string): BelievedBody | undefined {
  * Other modelled bodies relative to the primary (primary at rest) at time t, from the briefing
  * at t = 0 propagated with the arrival priors. Rows: [x, y, vx, vy] per non-primary body.
  */
-export function briefingBodiesAt(ctx: ModelContext, spec: ModelSpec, t: number): number[][] {
+/** The law and masses in force: fitted values when there are any, else the arrival priors. */
+export interface LawInForce {
+  readonly n: number;
+  readonly mu: (body: string) => number;
+}
+
+export function lawInForce(
+  ctx: ModelContext,
+  spec: ModelSpec,
+  values?: Readonly<Record<string, number>>,
+): LawInForce {
+  const prior = (id: string) => priorOf(ctx, id)?.value;
+  return {
+    n: spec.exponent ? (values?.[EXPONENT_ID] ?? prior(EXPONENT_ID) ?? 2) : 2,
+    mu: (b) => values?.[muId(b)] ?? prior(muId(b)) ?? 0,
+  };
+}
+
+export function briefingBodiesAt(
+  ctx: ModelContext,
+  spec: ModelSpec,
+  t: number,
+  law: LawInForce = lawInForce(ctx, spec),
+): number[][] {
   const p = briefingBody(ctx, spec.primary);
   const rel = spec.bodies.slice(1).map((id) => {
     const b = briefingBody(ctx, id);
@@ -218,10 +243,10 @@ export function briefingBodiesAt(ctx: ModelContext, spec: ModelSpec, t: number):
   if (!spec.dynamic) return rel.map((r) => [r[0]! + r[2]! * t, r[1]! + r[3]! * t, r[2]!, r[3]!]);
   const st: Structure = {
     r0: spec.settings.r0,
-    n: 2,
+    n: law.n,
     bodies: spec.bodies.map((id, j) => ({
       id,
-      mu: priorOf(ctx, muId(id))?.value ?? 0,
+      mu: law.mu(id),
       state:
         j === 0 ? 'gauge' : (rel[j - 1] as unknown as readonly [number, number, number, number]),
     })),
@@ -270,8 +295,11 @@ export function tierGProblem(
   opts: {
     /** Tracked asteroids' probe arcs to fit as well (rule tests, §10 and A5). */
     readonly probes?: ReadonlyMap<AttemptId, readonly Arc[]>;
+    /** Values in force (an earlier fit) for propagating the briefing's bodies to arc epochs. */
+    readonly values?: Readonly<Record<string, number>>;
   } = {},
 ): TierGProblem {
+  const law = lawInForce(ctx, spec, opts.values);
   const s = spec.settings;
   const builds = new Map<AttemptId, ArcBuild>();
   const records = new Map(attempts.map((r) => [r.id, r] as const));
@@ -310,7 +338,7 @@ export function tierGProblem(
     if (!spec.dynamic) {
       const byArc: Record<string, readonly [number, number, number, number]> = {};
       for (const a of arcs) {
-        const r = briefingBodiesAt(arcCtx(a), spec, a.epoch)[j - 1]!;
+        const r = briefingBodiesAt(arcCtx(a), spec, a.epoch, law)[j - 1]!;
         byArc[a.id] = [r[0]!, r[1]!, 0, 0];
       }
       return { id, mu: muId(id), state: [0, 0, 0, 0], stateByArc: byArc };
@@ -405,7 +433,7 @@ export function tierGProblem(
     locals.push(...shipParams(a.id, guessShip(a, spec.primary, a.epoch)));
     if (spec.dynamic && others.length > 0) {
       const actx = arcCtx(a);
-      const prior = briefingBodiesAt(actx, spec, a.epoch);
+      const prior = briefingBodiesAt(actx, spec, a.epoch, law);
       const pBody = briefingBody(actx, spec.primary);
       others.forEach((id, k) => {
         const b = briefingBody(actx, id);
@@ -556,9 +584,11 @@ export function arcFit(
 
 export interface PresentState {
   readonly source: 'anchor' | 'arrival';
-  /** Time of the state. */
+  /** The body the state is relative to: the one tracked most recently (the primary at arrival). */
+  readonly body: string;
+  /** Time of the state (its last fix). */
   readonly t: number;
-  /** Ship relative to the primary (x, y, vx, vy), primary at rest at t. */
+  /** Ship relative to `body` (x, y, vx, vy), that body at rest at t. */
   readonly state: Float64Array;
   /** 4×4 covariance including s². */
   readonly covariance: Matrix;
@@ -633,7 +663,10 @@ export function referenceFor(
 
 /** State of body `id` relative to body `ref` (ref at rest) at t, from an arc solution. */
 function relativeState(
-  d: Pick<ModelDerived, 'spec'> & { readonly problem?: Pick<TierGProblem, 'records'> },
+  d: Pick<ModelDerived, 'spec'> & {
+    readonly problem?: Pick<TierGProblem, 'records'>;
+    readonly values?: Readonly<Record<string, number>>;
+  },
   ctx: ModelContext,
   sol: ArcSolution | undefined,
   arcId: string,
@@ -654,6 +687,7 @@ function relativeState(
       contextFor(ctx, d.problem?.records.get(attemptOfArc(arcId))),
       d.spec,
       t,
+      lawInForce(ctx, d.spec, d.values),
     );
     P = new Float64Array(2 * bodies.length);
     V = new Float64Array(2 * bodies.length);
@@ -695,8 +729,8 @@ export function buildModel(input: ModelInput, opts: BuildOptions = {}): ModelSna
   const attempts = [...input.attempts]
     .filter((a) => a.encounterId === ctx.encounterId)
     .sort((a, b) => a.index - b.index || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
-  const problem = tierGProblem(ctx, spec, attempts);
   const reuse = opts.reuse;
+  const problem = tierGProblem(ctx, spec, attempts, reuse ? { values: reuse.values } : {});
   let fit: FitResult | null = reuse ? reuse.fit : null;
   if (!reuse && problem.arcs.length > 0)
     fit = stagedFit(problem.structure, problem.arcs, problem.params, { dt: s.dt, h: s.fdStep });
@@ -960,15 +994,24 @@ export function presentState(
   const build = d.problem.builds.get(attemptId);
   const actx = contextFor(ctx, d.problem.records.get(attemptId));
   const arc = build?.arcs[build.arcs.length - 1];
-  const nFix = arc ? rangeFixes(arc, d.spec.primary).length : 0;
-  if (!arc || nFix < s.windowMinFixes) return arrivalState(actx, d.spec);
-  const wins = makeWindows(arc, d.spec.primary, windowRule(s))
-    .filter((w) => !w.powered && w.fixes.length >= s.windowKeepFixes)
-    .slice(-s.anchorWindows);
-  if (wins.length === 0) return arrivalState(actx, d.spec);
-  const prof = d.profiles.find((p) => p.body === d.spec.primary) ?? null;
-  const extra = d.profiles.filter((p) => p.body !== d.spec.primary);
-  const ref = referenceFor(d, d.spec.primary, arc.id, ctx);
+  if (!arc) return arrivalState(actx, d.spec);
+  // From whichever body the camera fixed most recently: pointing at the second body for
+  // hours must not leave the present state behind (2F request 12). Ties go to the primary.
+  let best: { body: string; wins: Window[]; end: number } | null = null;
+  for (const body of d.spec.bodies) {
+    if (rangeFixes(arc, body).length < s.windowMinFixes) continue;
+    const wins = makeWindows(arc, body, windowRule(s))
+      .filter((w) => !w.powered && w.fixes.length >= s.windowKeepFixes)
+      .slice(-s.anchorWindows);
+    if (wins.length === 0) continue;
+    const end = wins[wins.length - 1]!.t1;
+    if (!best || end > best.end) best = { body, wins, end };
+  }
+  if (!best) return arrivalState(actx, d.spec);
+  const wins = best.wins;
+  const prof = d.profiles.find((p) => p.body === best.body) ?? null;
+  const extra = d.profiles.filter((p) => p.body !== best.body);
+  const ref = referenceFor(d, best.body, arc.id, ctx);
   const anc = anchorState(ref, prof, arc, wins, s.dt, {
     h: s.fdStep,
     gPrior: [1, s.localScalePriorSigma],
@@ -977,7 +1020,181 @@ export function presentState(
   });
   const cov = zeros(4, 4);
   for (let i = 0; i < 16; i++) cov.data[i] = anc.covariance.data[i]! * d.noiseScale;
-  return { source: 'anchor', t: anc.tNow, state: anc.state, covariance: cov, anchor: anc };
+  return {
+    source: 'anchor',
+    body: best.body,
+    t: anc.tNow,
+    state: anc.state,
+    covariance: cov,
+    anchor: anc,
+  };
+}
+
+export interface BodiesAt {
+  /** Other modelled bodies' states relative to `ref` (ref at rest) at t: x, y, vx, vy. */
+  readonly state: Readonly<Record<string, readonly [number, number, number, number]>>;
+  /**
+   * Their 4×4 covariances: the arc fit's own, plus the hedge on the bodies' motion since the
+   * pair was last fixed (2F request 13): the law's pull between bodies is extrapolated too.
+   */
+  readonly cov: Readonly<Record<string, Matrix>>;
+}
+
+/** The other bodies relative to `ref` at time t of an arc, with honest uncertainty (§8.2). */
+export function bodiesAt(
+  d: ModelDerived,
+  ctx: ModelContext,
+  arcId: string,
+  ref: string,
+  t: number,
+): BodiesAt {
+  const spec = d.spec;
+  const s = spec.settings;
+  const others = spec.bodies.filter((b) => b !== ref);
+  const sol = d.solutions.get(arcId) ?? d.solutions.get(shipArcOf(arcId));
+  const arc = d.problem.arcs.find((a) => a.id === shipArcOf(arcId));
+  const actx = contextFor(ctx, d.problem.records.get(attemptOfArc(arcId)));
+  const law = lawInForce(ctx, spec, d.values);
+  const state: Record<string, readonly [number, number, number, number]> = {};
+  const cov: Record<string, Matrix> = {};
+  for (const o of others) {
+    state[o] = relativeState(d, ctx, sol, arcId, o, ref, t);
+    cov[o] = zeros(4, 4);
+  }
+  if (others.length === 0) return { state, cov };
+  // All bodies relative to ref at time u, from the arc's solution (or the briefing).
+  const allAt = (u: number, x?: ArrayLike<number>): Record<string, number[]> => {
+    const out: Record<string, number[]> = {};
+    if (sol && u >= sol.arc.epoch) {
+      const ca = compileArc(sol.structure, sol.arc, sol.idx);
+      const tr = simulate(ca, x ?? sol.x, [u], s.dt);
+      const P = tr.pos[0]!;
+      const V = tr.vel[0]!;
+      const r = ca.bodyIndex.get(ref)!;
+      for (const b of spec.bodies) {
+        const j = ca.bodyIndex.get(b)!;
+        out[b] = [P[2 * j]! - P[2 * r]!, P[2 * j + 1]! - P[2 * r + 1]!, V[2 * j]! - V[2 * r]!, V[2 * j + 1]! - V[2 * r + 1]!];
+      }
+      return out;
+    }
+    const rel = briefingBodiesAt(actx, spec, u, law); // relative to the primary
+    const p: Record<string, number[]> = { [spec.primary]: [0, 0, 0, 0] };
+    spec.bodies.slice(1).forEach((b, k) => (p[b] = rel[k]!));
+    for (const b of spec.bodies) out[b] = p[b]!.map((v, c) => v - p[ref]![c]!);
+    return out;
+  };
+  // The fit's own uncertainty, or the briefing's.
+  if (sol && sol.P && t >= sol.arc.epoch) {
+    const P = sol.P;
+    const n = P.cols;
+    const cols: Record<string, number[]>[] = [];
+    const xp = new Float64Array(sol.x);
+    for (const i of sol.rel) {
+      const step = s.fdStep * sol.scale[i]!;
+      xp[i] = sol.x[i]! + step;
+      const plus = allAt(t, xp);
+      xp[i] = sol.x[i]! - step;
+      const minus = allAt(t, xp);
+      xp[i] = sol.x[i]!;
+      const col: Record<string, number[]> = {};
+      for (const o of others) col[o] = plus[o]!.map((v, c) => (v - minus[o]![c]!) / (2 * step));
+      cols.push(col);
+    }
+    for (const o of others)
+      sol.rel.forEach((ia, a) =>
+        sol.rel.forEach((ib, b) => {
+          const pab = P.data[ia * n + ib]!;
+          if (pab === 0) return;
+          for (let u = 0; u < 4; u++)
+            for (let v = 0; v < 4; v++) cov[o]!.data[u * 4 + v]! += cols[a]![o]![u]! * pab * cols[b]![o]![v]!;
+        }),
+      );
+  } else if (!sol) {
+    const pc = (b: string) => {
+      const q = briefingBody(actx, b)?.positionCov ?? [0, 0, 0];
+      return Math.max(q[0], q[2]);
+    };
+    for (const o of others) {
+      const pv = pc(o) + pc(ref);
+      const vv = s.priorBodyVelocitySigma ** 2;
+      [pv, pv, vv, vv].forEach((v, i) => (cov[o]!.data[i * 4 + i] = v));
+    }
+  }
+  // The hedge on the bodies' mutual pull since the pair was last fixed.
+  const covered = (b: string) => d.profiles.find((p) => p.body === b) ?? d.flatProfiles.find((p) => p.body === b);
+  const lastFix = (b: string) => {
+    if (!arc) return 0;
+    const f = rangeFixes(arc, b);
+    return f.length > 0 ? f[f.length - 1]!.t : arc.epoch;
+  };
+  for (const o of others) {
+    const t0 = Math.min(lastFix(o), lastFix(ref), t);
+    if (t - t0 <= 0) continue;
+    const s0 = allAt(t0);
+    const names: string[] = [];
+    const sig: number[] = [];
+    const profiles: ProfileDef[] = [];
+    for (const b of spec.bodies) {
+      const p = covered(b);
+      if (!p) continue;
+      const v = d.validated[b];
+      names.push(`h.eta.${b}`);
+      sig.push(d.sigmaH0);
+      if (v && v.spans.length > 0) {
+        names.push(`h.etaE.${b}`);
+        sig.push(v.sigmaE);
+      }
+      const lr0 = Math.log(p.r0);
+      profiles.push({
+        body: b,
+        uNodes: [lr0 + p.uNodes[0]!, lr0 + p.uNodes[p.uNodes.length - 1]!],
+        gNodes: [1, 1],
+        rMin: p.rMin,
+        rMax: p.rMax,
+        eta: `h.eta.${b}`,
+        ...(v && v.spans.length > 0 ? { etaE: `h.etaE.${b}`, validated: v.spans } : {}),
+      });
+    }
+    if (names.length === 0) continue;
+    const st: Structure = {
+      r0: s.r0,
+      n: law.n,
+      bodies: spec.bodies.map((b) => ({
+        id: b,
+        mu: law.mu(b),
+        state: b === ref ? 'gauge' : (s0[b] as unknown as readonly [number, number, number, number]),
+      })),
+      ship: [1e15, 0, 0, 0],
+      dynamicBodies: true,
+      engine: { kE: 1, dE: 0 },
+      kA: 1,
+      camBias: 0,
+      profiles,
+    };
+    const idx = new Map(names.map((nm, i) => [nm, i]));
+    const ca = compileArc(st, { id: 'hedge', epoch: t0, commands: [] }, idx);
+    const iRef = ca.bodyIndex.get(ref)!;
+    const iO = ca.bodyIndex.get(o)!;
+    const at = (x: ArrayLike<number>) => {
+      const tr = simulate(ca, x, [t], s.dt);
+      const P = tr.pos[0]!;
+      const V = tr.vel[0]!;
+      return [P[2 * iO]! - P[2 * iRef]!, P[2 * iO + 1]! - P[2 * iRef + 1]!, V[2 * iO]! - V[2 * iRef]!, V[2 * iO + 1]! - V[2 * iRef + 1]!];
+    };
+    const x0 = new Float64Array(names.length);
+    names.forEach((_, i) => {
+      const step = 1e-3;
+      x0[i] = step;
+      const plus = at(x0);
+      x0[i] = -step;
+      const minus = at(x0);
+      x0[i] = 0;
+      const col = plus.map((v, c) => (v - minus[c]!) / (2 * step));
+      for (let u = 0; u < 4; u++)
+        for (let w = 0; w < 4; w++) cov[o]!.data[u * 4 + w]! += col[u]! * sig[i]! ** 2 * col[w]!;
+    });
+  }
+  return { state, cov };
 }
 
 /** Before enough fixes: the arrival estimate, relative to the primary's believed arrival state. */
@@ -1000,6 +1217,7 @@ export function arrivalState(ctx: ModelContext, spec: ModelSpec): PresentState {
   cov.data[15] = vc[2];
   return {
     source: 'arrival',
+    body: spec.primary,
     t: a.t,
     state: Float64Array.of(
       a.position.x - px,

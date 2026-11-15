@@ -16,6 +16,7 @@ import {
   type CompiledArc,
   type EstMeasurement,
   type ProfileDef,
+  type Ref,
   type Structure,
   type ThrustSegment,
 } from './dynamics.ts';
@@ -762,6 +763,8 @@ export interface CovSplit {
   readonly hedge: Matrix;
   readonly hedgeEarned: Matrix;
   readonly hedgeDefault: Matrix;
+  /** The other bodies' states at the start (their believed motion so far). */
+  readonly bodies: Matrix;
   readonly engine: Matrix;
   readonly mass: Matrix;
   readonly total: Matrix;
@@ -774,6 +777,10 @@ export interface ForecastCoreResult {
   /** Other modelled bodies relative to the reference body, per time: [x, y, vx, vy] per body. */
   readonly bodies: readonly Float64Array[];
   readonly cov: readonly CovSplit[];
+  /** Per time, per other body: covariance of its position relative to the reference body. */
+  readonly bodyCov: readonly Readonly<Record<string, Matrix>>[];
+  /** Per time, per other body: covariance of the ship's position relative to that body. */
+  readonly relCov: readonly Readonly<Record<string, Matrix>>[];
 }
 
 export interface ForecastCoreInput {
@@ -803,6 +810,8 @@ export interface ForecastCoreInput {
   readonly engineSigmas?: Readonly<Record<string, readonly [number, number]>>;
   /** σ of μ for frozen bodies without a profile (§8.2). */
   readonly muSigma?: Readonly<Record<string, number>>;
+  /** Per other body: 4×4 covariance of its state (x, y, vx, vy) relative to the reference body at tNow. */
+  readonly othersCov?: Readonly<Record<string, Matrix>>;
   readonly h?: number;
 }
 
@@ -860,23 +869,38 @@ export function forecastCore(inp: ForecastCoreInput): ForecastCoreResult {
     return profileDef(p, nodes, `f.eta${j}`, earned);
   });
   const muIdx: [number, number][] = [];
+  const stateIdx: { start: number; cov: Matrix }[] = [];
   const others = (ref.others ?? []).map((o) => {
     const sig = inp.muSigma?.[o.id];
+    let muRef: string | number = o.mu;
     if (sig !== undefined && sig > 0) {
       muIdx.push([names.length, sig]);
       names.push(`f.mu.${o.id}`);
       x.push(o.mu);
       scale.push(Math.max(1e-3 * Math.abs(o.mu), sig * 1e-2));
-      return { ...o, muRef: `f.mu.${o.id}` as string | number };
+      muRef = `f.mu.${o.id}`;
     }
-    return { ...o, muRef: o.mu as string | number };
+    const s0 = o.stateAt(inp.tNow);
+    const cov = inp.othersCov?.[o.id];
+    let stateRef: readonly [Ref, Ref, Ref, Ref] = s0;
+    if (cov) {
+      stateIdx.push({ start: names.length, cov });
+      const ks = ['x', 'y', 'vx', 'vy'];
+      stateRef = ks.map((k) => `f.st.${o.id}.${k}`) as unknown as readonly [Ref, Ref, Ref, Ref];
+      ks.forEach((k, i) => {
+        names.push(`f.st.${o.id}.${k}`);
+        x.push(s0[i]!);
+        scale.push(i < 2 ? 1e3 : 0.1);
+      });
+    }
+    return { ...o, muRef, stateRef };
   });
   const st: Structure = {
     r0: ref.r0,
     n: ref.n,
     bodies: [
       { id: ref.body, mu: ref.mu, state: 'gauge' },
-      ...others.map((o) => ({ id: o.id, mu: o.muRef, state: o.stateAt(inp.tNow) })),
+      ...others.map((o) => ({ id: o.id, mu: o.muRef, state: o.stateRef })),
     ],
     ship: ['fc.ship.x', 'fc.ship.y', 'fc.ship.vx', 'fc.ship.vy'],
     dynamicBodies: others.length > 0,
@@ -897,22 +921,58 @@ export function forecastCore(inp: ForecastCoreInput): ForecastCoreResult {
   const base = run(x);
   const q = x.length;
   const T = sortedTimes.length;
-  const S: Float64Array[] = []; // per param: d(rel pos)/dq, length 2T
+  const nO = others.length;
+  const S: Float64Array[] = []; // per param: d(ship rel pos)/dq, length 2T
+  const SB: Float64Array[] = []; // per param: d(other bodies' rel pos)/dq, length 2·nO·T
   const xp = Float64Array.from(x);
   for (let i = 0; i < q; i++) {
     const step = h * scale[i]!;
     xp[i] = x[i]! + step;
-    const plus = run(xp).rel;
+    const plus = run(xp);
     xp[i] = x[i]! - step;
-    const minus = run(xp).rel;
+    const minus = run(xp);
     xp[i] = x[i]!;
     const col = new Float64Array(2 * T);
+    const colB = new Float64Array(2 * nO * T);
     for (let k = 0; k < T; k++) {
-      col[2 * k] = (plus[k]![0]! - minus[k]![0]!) / (2 * step);
-      col[2 * k + 1] = (plus[k]![1]! - minus[k]![1]!) / (2 * step);
+      col[2 * k] = (plus.rel[k]![0]! - minus.rel[k]![0]!) / (2 * step);
+      col[2 * k + 1] = (plus.rel[k]![1]! - minus.rel[k]![1]!) / (2 * step);
+      for (let o = 0; o < nO; o++)
+        for (let c = 0; c < 2; c++)
+          colB[2 * nO * k + 2 * o + c] =
+            (plus.bodies[k]![4 * o + c]! - minus.bodies[k]![4 * o + c]!) / (2 * step);
     }
     S.push(col);
+    SB.push(colB);
   }
+  // Full parameter covariance (block diagonal by source) for body and relative covariances.
+  const C = zeros(q, q);
+  const setBlock = (idx: readonly number[], f: (a: number, b: number) => number) =>
+    idx.forEach((ia, a) => idx.forEach((ib, b) => (C.data[ia * q + ib] = f(a, b))));
+  setBlock([0, 1, 2, 3], (a, b) => inp.s2 * inp.PNow.data[a * 4 + b]!);
+  for (const [i, sg] of engineCols) C.data[i * q + i] = sg * sg;
+  for (const i of etaIdx) C.data[i * q + i] = inp.sigmaH * inp.sigmaH;
+  for (const [i, se] of etaEIdx) C.data[i * q + i] = se * se;
+  profiles.forEach((p, j) => setBlock(nodeIdx[j]!, (a, b) => p.covariance.data[a * p.covariance.cols + b]!));
+  for (const [i, sg] of muIdx) C.data[i * q + i] = sg * sg;
+  for (const st of stateIdx) setBlock([0, 1, 2, 3].map((c) => st.start + c), (a, b) => st.cov.data[a * 4 + b]!);
+  const nz: number[] = [];
+  for (let i = 0; i < q; i++) {
+    let any = false;
+    for (let j = 0; j < q; j++) if (C.data[i * q + j] !== 0) any = true;
+    if (any) nz.push(i);
+  }
+  /** a · C · bᵀ for two 2×q rows given by accessors. */
+  const quad = (ra: (i: number, c: number) => number, rb: (i: number, c: number) => number): Matrix => {
+    const m = zeros(2, 2);
+    for (const i of nz)
+      for (const j of nz) {
+        const cij = C.data[i * q + j]!;
+        if (cij === 0) continue;
+        for (let u = 0; u < 2; u++) for (let v = 0; v < 2; v++) m.data[u * 2 + v]! += ra(i, u) * cij * rb(j, v);
+      }
+    return m;
+  };
   const outer = (
     cols: readonly number[],
     C: (a: number, b: number) => number,
@@ -939,6 +999,8 @@ export function forecastCore(inp: ForecastCoreInput): ForecastCoreResult {
   };
   const sh2 = inp.sigmaH * inp.sigmaH;
   const covs: CovSplit[] = new Array(T);
+  const bodyCovs: Record<string, Matrix>[] = new Array(T);
+  const relCovs: Record<string, Matrix>[] = new Array(T);
   const means: Float64Array[] = new Array(T);
   const bodies: Float64Array[] = new Array(T);
   for (let k = 0; k < T; k++) {
@@ -957,6 +1019,9 @@ export function forecastCore(inp: ForecastCoreInput): ForecastCoreResult {
       ),
     );
     const mass = add(...muIdx.map(([i, sig]) => outer([i], () => sig * sig, k)));
+    const bodiesCov = add(
+      ...stateIdx.map((st) => outer([0, 1, 2, 3].map((c) => st.start + c), (a, b) => st.cov.data[a * 4 + b]!, k)),
+    );
     covs[k] = {
       state,
       profile,
@@ -965,8 +1030,19 @@ export function forecastCore(inp: ForecastCoreInput): ForecastCoreResult {
       hedgeDefault,
       engine,
       mass,
-      total: add(state, profile, hedge, engine, mass),
+      bodies: bodiesCov,
+      total: add(state, profile, hedge, engine, mass, bodiesCov),
     };
+    const bc: Record<string, Matrix> = {};
+    const rc: Record<string, Matrix> = {};
+    others.forEach((o, oi) => {
+      const sb = (i: number, c: number) => SB[i]![2 * nO * k + 2 * oi + c]!;
+      const sr = (i: number, c: number) => S[i]![2 * k + c]! - sb(i, c);
+      bc[o.id] = quad(sb, sb);
+      rc[o.id] = quad(sr, sr);
+    });
+    bodyCovs[k] = bc;
+    relCovs[k] = rc;
     means[k] = base.state[k]!;
     bodies[k] = base.bodies[k]!;
   }
@@ -974,12 +1050,23 @@ export function forecastCore(inp: ForecastCoreInput): ForecastCoreResult {
   const outMean: Float64Array[] = new Array(T);
   const outCov: CovSplit[] = new Array(T);
   const outBodies: Float64Array[] = new Array(T);
+  const outBodyCov: Record<string, Matrix>[] = new Array(T);
+  const outRelCov: Record<string, Matrix>[] = new Array(T);
   order.forEach(([, i], k) => {
     outMean[i] = means[k]!;
     outCov[i] = covs[k]!;
     outBodies[i] = bodies[k]!;
+    outBodyCov[i] = bodyCovs[k]!;
+    outRelCov[i] = relCovs[k]!;
   });
-  return { times: inp.times, mean: outMean, bodies: outBodies, cov: outCov };
+  return {
+    times: inp.times,
+    mean: outMean,
+    bodies: outBodies,
+    cov: outCov,
+    bodyCov: outBodyCov,
+    relCov: outRelCov,
+  };
 }
 
 /**

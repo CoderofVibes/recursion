@@ -485,6 +485,28 @@ export function simulate(
   }
 
   const r0sq = R.r0 * R.r0;
+  /**
+   * Calibration and hedge on body j's pull at ln-distance lr (§5.4, §8.2): it describes j's
+   * field, so it applies to anything at that distance, the other bodies included (their
+   * believed motion then carries the hedge outside the distances sampled).
+   */
+  const profMult = (pf: NonNullable<Resolved['prof'][number]>, lr: number): number => {
+    const nn = pf.un.length;
+    const uc = Math.min(Math.max(lr, pf.lmin), pf.lmax);
+    const xq = Math.min(Math.max((uc - pf.un[0]!) / (pf.un[1]! - pf.un[0]!), 0), nn - 1);
+    const i0 = Math.min(Math.floor(xq), nn - 2);
+    const wq = xq - i0;
+    const mult = (1 - wq) * pf.g[i0]! + wq * pf.g[i0 + 1]!;
+    const L = lr > pf.lmax ? lr - pf.lmax : lr < pf.lmin ? lr - pf.lmin : 0;
+    if (L === 0) return mult;
+    // Part of the stretch from the covered edge to r inside validated spans (§8.2).
+    let Le = 0;
+    for (const [vlo, vhi] of pf.spans) {
+      if (lr < pf.lmin) Le -= Math.max(Math.min(vhi, pf.lmin) - Math.max(vlo, lr), 0);
+      else Le += Math.max(Math.min(vhi, lr) - Math.max(vlo, pf.lmax), 0);
+    }
+    return mult * Math.exp(-pf.etaE * Le - pf.eta * (L - Le));
+  };
   const thr = new Float64Array(2);
   let empSeg = 0;
 
@@ -496,8 +518,11 @@ export function simulate(
           if (i === j) continue;
           const dx = p[2 * j]! - p[2 * i]!;
           const dy = p[2 * j + 1]! - p[2 * i + 1]!;
-          const r = Math.sqrt(dx * dx + dy * dy);
-          const k = ((R.mu[j]! / r0sq) * Math.pow(R.r0 / r, R.n)) / r;
+          const rr = dx * dx + dy * dy;
+          const r = Math.sqrt(rr);
+          let k = ((R.mu[j]! / r0sq) * Math.pow(R.r0 / r, R.n)) / r;
+          const pf = R.prof[j];
+          if (pf) k *= profMult(pf, 0.5 * Math.log(rr));
           a[2 * i]! += dx * k;
           a[2 * i + 1]! += dy * k;
         }
@@ -518,25 +543,7 @@ export function simulate(
       if (gs || pf) {
         const lr = 0.5 * Math.log(rr);
         if (gs) k *= gs.g0 + gs.g1 * (lr - gs.u0);
-        if (pf) {
-          const nn = pf.un.length;
-          const uc = Math.min(Math.max(lr, pf.lmin), pf.lmax);
-          const xq = Math.min(Math.max((uc - pf.un[0]!) / (pf.un[1]! - pf.un[0]!), 0), nn - 1);
-          const i0 = Math.min(Math.floor(xq), nn - 2);
-          const wq = xq - i0;
-          const mult = (1 - wq) * pf.g[i0]! + wq * pf.g[i0 + 1]!;
-          const L = lr > pf.lmax ? lr - pf.lmax : lr < pf.lmin ? lr - pf.lmin : 0;
-          if (L === 0) k *= mult;
-          else {
-            // Part of the stretch from the covered edge to r inside validated spans (§8.2).
-            let Le = 0;
-            for (const [vlo, vhi] of pf.spans) {
-              if (lr < pf.lmin) Le -= Math.max(Math.min(vhi, pf.lmin) - Math.max(vlo, lr), 0);
-              else Le += Math.max(Math.min(vhi, lr) - Math.max(vlo, pf.lmax), 0);
-            }
-            k *= mult * Math.exp(-pf.etaE * Le - pf.eta * (L - Le));
-          }
-        }
+        if (pf) k *= profMult(pf, lr);
       }
       ax += dx * k;
       ay += dy * k;

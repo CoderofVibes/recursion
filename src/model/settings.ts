@@ -29,6 +29,8 @@ export interface ModelSettings {
   readonly sigmaH: number;
   readonly sigmaHFloor: number;
   readonly horizonFraction: number;
+  /** [2C] A forecast whose present state is older than this is flagged stale, s. */
+  readonly presentStaleAfter: number;
   /**
    * Validated range transfer (§7.4, DECISIONS A5: "every body"): 1 = a rule shared by all bodies
    * applies its validated spans around every body (shared-law); 0 = the same body only.
@@ -102,6 +104,7 @@ export const DEFAULT_SETTINGS: ModelSettings = {
   sigmaH: 0.3,
   sigmaHFloor: 0.01,
   horizonFraction: 0.1,
+  presentStaleAfter: 3600,
   validatedRangeSharedLaw: 1,
   agingEngineScaleDay: 0.002,
   agingEngineScaleUse: 0.005,

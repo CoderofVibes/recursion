@@ -43,6 +43,7 @@ import {
   agingBetween,
   arcCalibration,
   arrivalState,
+  bodiesAt,
   contextFor,
   misalignId,
   presentState,
@@ -101,6 +102,15 @@ export interface ForecastDetail {
   /** How the present state was obtained. */
   readonly presentSource: PresentState['source'];
   readonly presentTime: number;
+  /**
+   * The body the present state was fixed against (the one tracked most recently) and the
+   * forecast's reference: its positions' covariances are relative to that body.
+   */
+  readonly presentBody: string;
+  /** Issue time minus the present state's time, s. */
+  readonly presentAge: number;
+  /** The present state is older than settings.presentStaleAfter: nothing recent was tracked. */
+  readonly stale: boolean;
   readonly asteroids: readonly AsteroidForecastNote[];
 }
 
@@ -175,7 +185,10 @@ export function buildForecast(
     arrivalState(ctx, spec);
   const tNow = present.t;
   const arcId = d.problem.builds.get(req.record.id)?.arcs.at(-1)?.id ?? req.record.id;
-  const ref = referenceFor(d, spec.primary, arcId, model);
+  // The forecast runs relative to the body the present state was fixed against (2F request 12).
+  const R = present.body;
+  const ref = referenceFor(d, R, arcId, model);
+  const bodiesNow = bodiesAt(d, model, arcId, R, tNow);
   const muOf = (id: string) => d.values[`body.${id}.mu`] ?? 0;
 
   // Executed burns not finished at the present state, then the plan's burns.
@@ -208,8 +221,8 @@ export function buildForecast(
   };
   /** Believed game-frame state of the ship and bodies at t. */
   const frameAt = (rel: Float64Array, bodies: Float64Array, t: number) => {
-    // bodies: [x, y, vx, vy] per other body, relative to the primary
-    let M = muOf(spec.primary);
+    // bodies: [x, y, vx, vy] per other body, relative to the reference body R
+    let M = muOf(R);
     let bx = 0;
     let by = 0;
     let bvx = 0;
@@ -223,7 +236,7 @@ export function buildForecast(
       bvy += m * bodies[4 * k + 3]!;
     });
     const fixed = !spec.dynamic;
-    const primary = ctx.bodies.find((b) => b.id === spec.primary);
+    const primary = ctx.bodies.find((b) => b.id === R);
     let px: number;
     let py: number;
     let pvx: number;
@@ -243,7 +256,7 @@ export function buildForecast(
       position: { x: px + rel[0]!, y: py + rel[1]! },
       velocity: { x: pvx + rel[2]!, y: pvy + rel[3]! },
     };
-    const bodyPos: Record<string, Vec2> = { [spec.primary]: { x: px, y: py } };
+    const bodyPos: Record<string, Vec2> = { [R]: { x: px, y: py } };
     others.forEach(
       (o, k) => (bodyPos[o.id] = { x: px + bodies[4 * k]!, y: py + bodies[4 * k + 1]! }),
     );
@@ -376,10 +389,12 @@ export function buildForecast(
     engineSigma: [0, 0],
     engineSigmas,
     muSigma,
+    othersCov: bodiesNow.cov,
     h: s.fdStep,
   });
 
-  // Horizon (§8.4) and samples.
+  // Horizon (§8.4) and samples. Distances and their uncertainty are relative to each body: the
+  // other bodies' believed motion is uncertain too (2F request 13).
   const radius = (id: string) => ctx.bodies.find((b) => b.id === id)?.radius ?? 0;
   const hull = Math.max(
     0,
@@ -401,12 +416,14 @@ export function buildForecast(
     const bodies = fc.bodies[k]!;
     const cv = fc.cov[k]!;
     const total = majorSigma(cv.total);
-    const dist: Record<string, number> = { [spec.primary]: Math.hypot(rel[0]!, rel[1]!) };
+    const dist: Record<string, number> = { [R]: Math.hypot(rel[0]!, rel[1]!) };
     others.forEach(
       (o, j) => (dist[o.id] = Math.hypot(rel[0]! - bodies[4 * j]!, rel[1]! - bodies[4 * j + 1]!)),
     );
-    const nearest = Math.min(...Object.values(dist));
-    if (total > s.horizonFraction * nearest) break;
+    const relCov = (id: string) => (id === R ? cv.total : fc.relCov[k]![id]!);
+    let nearestId = R;
+    for (const id of Object.keys(dist)) if (dist[id]! < dist[nearestId]!) nearestId = id;
+    if (majorSigma(relCov(nearestId)) > s.horizonFraction * dist[nearestId]!) break;
     const t = fc.times[k]!;
     const frame = frameAt(rel, bodies, t);
     // Extrapolating: outside the covered range of the body that pulls hardest here.
@@ -449,7 +466,8 @@ export function buildForecast(
     });
     for (const id of spec.bodies) {
       const bp = frame.bodyPos[id]!;
-      tracks.get(id)!.push({ t, position: bp, positionCov: [0, 0, 0] });
+      const bodyCov: Cov2 = id === R ? [0, 0, 0] : toCov2(fc.bodyCov[k]![id]!);
+      tracks.get(id)!.push({ t, position: bp, positionCov: bodyCov });
       const dx = frame.ship.position.x - bp.x;
       const dy = frame.ship.position.y - bp.y;
       const r = Math.hypot(dx, dy);
@@ -458,12 +476,8 @@ export function buildForecast(
       if (!prev || clearance < prev.distance) {
         const ux = dx / r;
         const uy = dy / r;
-        const sig = Math.sqrt(
-          Math.max(
-            0,
-            ux * ux * positionCov[0] + 2 * ux * uy * positionCov[1] + uy * uy * positionCov[2],
-          ),
-        );
+        const rc = toCov2(relCov(id));
+        const sig = Math.sqrt(Math.max(0, ux * ux * rc[0] + 2 * ux * uy * rc[1] + uy * uy * rc[2]));
         approach.set(id, { id, t, distance: clearance, sigma: sig });
       }
     }
@@ -613,6 +627,9 @@ export function buildForecast(
       sigmaMajor,
       presentSource: present.source,
       presentTime: tNow,
+      presentBody: R,
+      presentAge: req.issuedAt - tNow,
+      stale: req.issuedAt - tNow > s.presentStaleAfter,
       asteroids: asteroidNotes,
     },
   };
