@@ -1,0 +1,187 @@
+/**
+ * What is outside the window: the unaided eye's view (DECISIONS A8, P11). The window shows what
+ * light shows, bodies and sunlit rocks against the stars; it never shows anything that needs a
+ * sensor, and nothing here is a hologram. The room is the ship, so the outside turns as the ship
+ * turns and the ship's nose is always toward the window.
+ *
+ * Until the game layer supplies a window channel (see docs/handoffs/2D.md, requests), this is
+ * drawn from the believed world, so a rock the ship has never catalogued is not yet seen by eye
+ * either, and the sun's direction is a display value.
+ */
+import {
+  BufferGeometry,
+  Color,
+  Float32BufferAttribute,
+  Group,
+  IcosahedronGeometry,
+  InstancedMesh,
+  Matrix4,
+  Mesh,
+  Points,
+  PointsMaterial,
+  Quaternion,
+  SphereGeometry,
+  Vector3,
+} from 'three';
+import type { Scene, ShaderMaterial } from 'three';
+import type { ViewSnapshot } from '../../contracts/index.ts';
+import { colour, hex, outsideStyle, render } from '../../theme/index.ts';
+import { bodyMaterial, rockMaterial, setSun } from '../../theme/three/index.ts';
+import { attitudeToScene, toScene } from '../adapter.ts';
+import { dressingRandom } from '../gfx.ts';
+import { HORIZON_Y } from './layout.ts';
+
+const MAX_ROCKS = 512;
+/** Scene metres: nothing outside is drawn nearer than this, or farther than NEAR + SPAN. */
+const NEAR = 30;
+const SPAN = 5000;
+/** Distance (game metres) at which an object sits half way out. */
+const HALF = 2_000_000;
+const STARS = 6000;
+
+/**
+ * Distances outside span metres to thousands of kilometres. Each object is drawn along its true
+ * direction at a compressed distance, scaled to keep its true angular size, and the compression
+ * is monotonic so nearer things still cover farther ones.
+ */
+const compress = (d: number): number => NEAR + (SPAN * d) / (d + HALF);
+
+export interface Outside {
+  update(snapshot: ViewSnapshot): void;
+  dispose(): void;
+}
+
+export function buildOutside(scene: Scene): Outside {
+  const rot = new Group();
+  rot.position.set(0, HORIZON_Y, 0);
+  scene.add(rot);
+
+  const sunEnv = new Vector3(...render.keyLight).normalize();
+  const sunWorld = new Vector3();
+  const materials: ShaderMaterial[] = [];
+
+  // Bodies: one sphere per believed body, the secondary a little cooler than the primary.
+  const sphere = new SphereGeometry(1, 64, 40);
+  const bodies = new Map<string, Mesh>();
+  const bodyMesh = (id: string, index: number): Mesh => {
+    let m = bodies.get(id);
+    if (!m) {
+      const mat = bodyMaterial(index > 0 ? { lit: outsideStyle.bodyLitCool } : {});
+      materials.push(mat);
+      m = new Mesh(sphere, mat);
+      m.rotation.z = 0.3;
+      rot.add(m);
+      bodies.set(id, m);
+    }
+    return m;
+  };
+
+  // Rocks: irregular lumps, flat-shaded by the sun.
+  const rockGeo = new IcosahedronGeometry(1, 1);
+  {
+    const p = rockGeo.attributes.position!;
+    for (let i = 0; i < p.count; i++) {
+      const x = p.getX(i);
+      const y = p.getY(i);
+      const z = p.getZ(i);
+      const k =
+        0.78 + 0.42 * Math.abs((Math.sin(x * 12.9898 + y * 78.233 + z * 37.719) * 43758.5453) % 1);
+      p.setXYZ(i, x * k, y * k, z * k);
+    }
+    rockGeo.computeVertexNormals();
+  }
+  const rockMat = rockMaterial();
+  (rockMat.uniforms.cRock!.value as Color).set(hex(outsideStyle.rock));
+  materials.push(rockMat);
+  const rocks = new InstancedMesh(rockGeo, rockMat, MAX_ROCKS);
+  rocks.frustumCulled = false;
+  rocks.count = 0;
+  rot.add(rocks);
+
+  // Stars.
+  {
+    const r = dressingRandom(99);
+    const pos: number[] = [];
+    const col: number[] = [];
+    const [warmG, warmB] = outsideStyle.starWarm;
+    for (let i = 0; i < outsideStyle.starCount; i++) {
+      const u = r() * 2 - 1;
+      const a = r() * 2 * Math.PI;
+      const s = Math.sqrt(1 - u * u);
+      pos.push(Math.cos(a) * s * STARS, u * STARS, Math.sin(a) * s * STARS);
+      const b = outsideStyle.starMin + r() ** 4 * (1 - outsideStyle.starMin);
+      const warm = r();
+      col.push(b, b * (warmG + warm * (1 - warmG - 0.02)), b * (warmB + warm * (1 - warmB - 0.02)));
+    }
+    const g = new BufferGeometry();
+    g.setAttribute('position', new Float32BufferAttribute(pos, 3));
+    g.setAttribute('color', new Float32BufferAttribute(col, 3));
+    const stars = new Points(
+      g,
+      new PointsMaterial({
+        size: outsideStyle.starSize,
+        sizeAttenuation: false,
+        vertexColors: true,
+        color: hex(colour.ink),
+      }),
+    );
+    stars.frustumCulled = false;
+    rot.add(stars);
+  }
+
+  const q = new Quaternion();
+  const d = new Vector3();
+  const m4 = new Matrix4();
+  const scale = new Vector3();
+  const spin = new Quaternion();
+  const axis = new Vector3(0.3, 1, 0.2).normalize();
+
+  /** Place `object` along the true direction from the ship at its compressed distance. */
+  const place = (
+    from: { x: number; y: number; z?: number },
+    to: { x: number; y: number; z?: number },
+    radius: number,
+    out: Vector3,
+  ): number => {
+    toScene({ x: to.x - from.x, y: to.y - from.y, z: (to.z ?? 0) - (from.z ?? 0) }, out);
+    const dist = Math.max(out.length(), 1);
+    const drawn = compress(dist);
+    out.multiplyScalar(drawn / dist);
+    return (radius * drawn) / dist;
+  };
+
+  return {
+    update(snapshot) {
+      const ship = snapshot.world.ship;
+      // The room is the ship: bring the ship's nose onto the room's -z, the window.
+      rot.quaternion.copy(attitudeToScene(ship.attitude, q)).invert();
+      sunWorld.copy(sunEnv).applyQuaternion(rot.quaternion);
+      for (const m of materials) setSun(m, [sunWorld.x, sunWorld.y, sunWorld.z]);
+
+      snapshot.world.bodies.forEach((b, i) => {
+        const mesh = bodyMesh(b.id, i);
+        const r = place(ship.position, b.position, b.radius, mesh.position);
+        mesh.scale.setScalar(r);
+      });
+
+      let n = 0;
+      for (const a of snapshot.world.asteroids) {
+        if (n >= MAX_ROCKS) break;
+        const r = place(ship.position, a.position, a.radius, d);
+        // Each rock keeps its own orientation, from its id, so it does not pop between frames.
+        let h = 0;
+        for (let k = 0; k < a.id.length; k++) h = (h * 31 + a.id.charCodeAt(k)) % 6283;
+        spin.setFromAxisAngle(axis, h / 1000);
+        m4.compose(d, spin, scale.set(r, r * 0.8, r * 1.1));
+        rocks.setMatrixAt(n++, m4);
+      }
+      rocks.count = n;
+      rocks.instanceMatrix.needsUpdate = true;
+    },
+    dispose() {
+      sphere.dispose();
+      rockGeo.dispose();
+      for (const m of materials) m.dispose();
+    },
+  };
+}
